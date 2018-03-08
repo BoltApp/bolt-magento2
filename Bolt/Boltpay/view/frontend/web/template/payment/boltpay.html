@@ -1,0 +1,39 @@
+<!--
+/**
+ * Copyright © 2013-2017 Bolt, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * Bolt Payment html, checkout page
+ */
+-->
+<!-- ko if: true || isPaymentAvailable() -->
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="field choice">
+        <input type="radio"
+               name="payment[method]"
+               class="radio"
+               data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()" />
+        <label data-bind="attr: {'for': getCode()}" class="label">
+            <span data-bind="text: getTitle()"></span>
+            <div><img style="width:175px;" src="https://s3-us-west-1.amazonaws.com/bolt-public/magento-integration-release/powered_by_bolt_cards.png" alt="Mark" class="v-middle" /></div>
+        </label>
+    </div>
+    <div class="payment-method-content">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+        <div class="payment-method-billing-address">
+            <!-- ko foreach: $parent.getRegion(getBillingAddressFormName()) -->
+            <!-- ko template: getTemplate() --><!-- /ko -->
+            <!--/ko-->
+        </div>
+        <div class="actions-toolbar">
+            <div class="primary">
+                <input type="hidden" id="bolt-billing-address" data-bind="value: getBillingAddress()" />
+                <input type="hidden" id="bolt-place-order-payload" data-bind="value: getPlaceOrderPayload()" />
+                <div class="bolt-checkout-button with-cards"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /ko -->

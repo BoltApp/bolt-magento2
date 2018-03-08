@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Bolt All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * Define Bolt Default Configuration Parameters
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <boltpay>
+                <active>0</active>
+                <model>Bolt\Boltpay\Model\Payment</model>
+                <title>Bolt Pay</title>
+                <checkout_type>payment_only_checkout</checkout_type>
+                <sandbox_mode>1</sandbox_mode>
+                <debug>0</debug>
+                <automatic_capture_mode>0</automatic_capture_mode>
+                <allowspecific>0</allowspecific>
+                <order_status>new</order_status>
+                <currency>USD</currency>
+                <can_authorize>1</can_authorize>
+                <can_capture>1</can_capture>
+                <can_void>1</can_void>
+                <can_use_checkout>1</can_use_checkout>
+                <sort_order>0</sort_order>
+                <replace_selectors>button#top-cart-btn-checkout,
+button[data-role=proceed-to-checkout]|n</replace_selectors>
+                <success_page>checkout/onepage/success</success_page>
+            </boltpay>
+        </payment>
+    </default>
+</config>

@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2013-2017 Bolt Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * Bolt Admin Menu Item
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Bolt_Boltpay::boltpay_settings" title="Boltpay Settings" translate="title" module="Bolt_Boltpay" sortOrder="60" parent="Magento_Backend::stores" dependsOnModule="Bolt_Boltpay" resource="Bolt_Boltpay::boltpay_settings"/>
+    </menu>
+</config>

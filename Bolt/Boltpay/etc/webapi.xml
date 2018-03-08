@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2013-2017 Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ *
+ * Rest API router. Web hooks and Shipping and Tax.
+ */
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <!-- Order Update hook -->
+    <route url="/V1/bolt/boltpay/order/manage" method="POST">
+        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="manage"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+    <!-- Shipping and Tax hook -->
+    <route url="/V1/bolt/boltpay/shipping/methods" method="POST">
+        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getShippingMethods"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+</routes>

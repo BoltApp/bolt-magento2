@@ -1,0 +1,477 @@
+<?php
+/**
+ * Copyright © 2013-2017 Bolt, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+// @codingStandardsIgnoreFile
+?>
+<?php
+/**
+ * Replace js template
+ * Puts / replaces the checkout buttons according to defined selectors.
+ * Maintains Bolt checkout functionality.
+ *
+ * @var $block \Bolt\Boltpay\Block\Js
+ */
+
+if (!$this->isActive()) return;
+?>
+
+<script type="text/javascript">
+
+!function () {
+
+    ///////////////////////
+    // String.trim Polyfill
+    ///////////////////////
+    if (!String.prototype.trim) {
+        String.prototype.trim = function () {
+            return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+        };
+    }
+    ///////////////////////
+
+    /////////////////////////////////////////////////////////////////////////
+    // Using Mutation Observers to Watch for Element Availability and change.
+    // Since M2 supports modern browsers only, setInterval is easily avoided.
+    /////////////////////////////////////////////////////////////////////////
+    ! function(win) {
+        // 'use strict';
+
+        var listeners = [],
+            doc = win.document,
+            MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
+            observer,
+            attribute_listeners = [],
+            attribute_observer;
+
+        function ready(selector, fn) {
+            // Store the selector and callback to be monitored
+            listeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!observer) {
+                // Watch for changes in the document
+                observer = new MutationObserver(check);
+                observer.observe(doc.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+            // Check if the element is currently in the DOM
+            check();
+        }
+
+        function attributes_change(selector, filters, fn) {
+            // Store the selector and callback to be monitored
+            attribute_listeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!attribute_observer) {
+                // Watch for changes in the document
+                attribute_observer = new MutationObserver(check_attributes);
+                var config = {
+                    attributes: true,
+                    subtree: true
+                };
+                if (filters) config.attributeFilter = filters;
+                attribute_observer.observe(doc.documentElement, config);
+            }
+            // Check if the element attributes has changed
+            check_attributes();
+        }
+
+        function check_attributes() {
+            // Check the DOM for elements matching a stored selector
+            for (var i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
+                listener = attribute_listeners[i];
+                // Query for elements matching the specified selector
+                elements = doc.querySelectorAll(listener.selector);
+                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        }
+
+        function check() {
+            // Check the DOM for elements matching a stored selector
+            for (var i = 0, len = listeners.length, listener, elements; i < len; i++) {
+                listener = listeners[i];
+                // Query for elements matching the specified selector
+                elements = doc.querySelectorAll(listener.selector);
+                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Make sure the callback isn't invoked with the
+                    // same element more than once
+                    if (!element.ready) {
+                        element.ready = true;
+                        // Invoke the callback with the element
+                        listener.fn.call(element, element);
+                    }
+                }
+            }
+        }
+
+        // Expose methods
+        win.onElementReady     = ready;
+        win.onAttributesChange = attributes_change;
+
+    }(window);
+    ////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Pure javascript ajax POST request function
+     *
+     * param string     url                 The request url
+     * param array      params              The URL query string parameters
+     * param callable   callback            The callback function to pass the response data to
+     *
+     * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
+     */
+    var ajaxPost = function(url, params, callback, async, headers) {
+
+        var xhr;
+
+        if (typeof async === 'undefined') async = true;
+
+        if (typeof headers === 'undefined') {
+            headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+        }
+
+        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+
+        xhr.onload = function () {
+
+            var result;
+
+            if (xhr.responseType === 'json') {
+                result = xhr.response;
+            } else {
+                result = JSON.parse(xhr.responseText);
+            }
+
+            callback(result);
+        };
+
+        xhr.open('POST', url, async);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        for (var header in headers) {
+            if (headers.hasOwnProperty(header)) {
+                xhr.setRequestHeader(header, headers[header]);
+            }
+        }
+
+        xhr.send(params);
+
+        return xhr;
+    };
+
+    /**
+     * Get the current page checkout type.
+     * This function should be extended for Magento checkout extensions.
+     *
+     * return string
+     */
+    var getCheckoutType = function() {
+        return location.pathname === '/checkout/' && location.hash === '#payment' ? 'payment' : 'checkout';
+    };
+
+    /**
+     * Get the checkout key according to the checkout type.
+     *
+     * return string
+     */
+    var getCheckoutKey = function () {
+        var checkout_type = getCheckoutType();
+        var key = 'publishable_key_' + checkout_type;
+
+        return settings[key];
+    };
+
+    /**
+     * Apply function to every element with the specified selector.
+     *
+     * param selector   elements CSS selector
+     * param fn         function to apply
+     *
+     * return void
+     */
+    var selectorApply = function(selector, fn){
+
+        var elements = document.querySelectorAll(selector);
+
+        for (var i = 0, length = elements.length; i < length; i++ ) {
+            var element = elements[i];
+            fn.call(element, element)
+        }
+    };
+
+    /**
+     * Apply function to every bolt checkout button.
+     *
+     * param fn         function to apply
+     *
+     * return void
+     */
+    var checkoutButtonApply = function(fn) {
+        selectorApply(bolt_button_selector, fn);
+    };
+
+    /**
+     * Toggle checkout button multi-step class, `bolt-multi-step-checkout`, according to the checkout type.
+     *
+     * return void
+     */
+    var setCheckoutTypeStyle = function() {
+
+        var checkout_type = getCheckoutType();
+
+        checkoutButtonApply(function(button) {
+            if (checkout_type === 'payment') {
+                button.classList.remove(multi_step_css_class);
+            } else {
+                button.classList.add(multi_step_css_class);
+            }
+        });
+    };
+
+    /**
+     * Inject connect.js
+     * return void
+     */
+    var insertConnectScript = function() {
+
+        var scriptTag = document.getElementById('bolt-connect');
+
+        var publishableKey = getCheckoutKey();
+
+        if (scriptTag) {
+            scriptTag.setAttribute('data-publishable-key', publishableKey);
+            hints.publishableKey = publishableKey;
+            BoltConnect.process(cart, hints, callbacks);
+            return;
+        }
+
+        if (scriptTag) {
+            scriptTag.parentNode.removeChild(scriptTag);
+        }
+
+        window.BoltCheckout = null;
+        window.BoltConnect  = null;
+
+        scriptTag = document.createElement("script", {
+            type: "text/javascript",
+            async: true
+        });
+
+        scriptTag.setAttribute('src', settings.connect_url);
+        scriptTag.setAttribute('id', 'bolt-connect');
+        scriptTag.setAttribute('data-publishable-key', publishableKey);
+
+        hints.publishableKey = publishableKey;
+
+        scriptTag.onload = function() {BoltConnect.process(cart, hints, callbacks)};
+
+        document.head.appendChild(scriptTag);
+    };
+
+
+    /**
+     * Set checkout button CSS and load connect.js
+     * return void
+     */
+    var processButtons = function () {
+        if (getCheckoutKey() !== '') {
+            setCheckoutTypeStyle();
+            insertConnectScript();
+        }
+    };
+
+    // The configuration parameters passed from the block php
+    var settings = JSON.parse('<?=$this->getSettings();?>');
+
+    // TODO: make `with-cards` option backend configurable
+    var bolt_button_css_class    = 'bolt-checkout-button with-cards';
+    var bolt_button_selector     = '.bolt-checkout-button';
+    var multi_step_css_class     = 'bolt-multi-step-checkout';
+    var billing_address_selector = '#bolt-billing-address';
+    var place_order_payload_id   = 'bolt-place-order-payload';
+
+    // On multiple checkout open/close actions the success event remains registered
+    // resulting in making the success call multiple times. This variable stores
+    // the last request to be aborted before new one is sent. The requests are aborted
+    // before they are sent.
+    var save_request;
+
+    /////////////////////////////////
+    // BoltConnect.process parameters
+    /////////////////////////////////
+    var cart = {};
+
+    var hints = {};
+
+    var callbacks = {
+
+        close: function () {
+            // redirect on succes order save
+            if (callbacks.success_url) location.href = callbacks.success_url;
+        },
+
+        success: function (transaction, callback) {
+
+            // abort previously sent save order request.
+            if (save_request) save_request.abort();
+
+            // get thr transaction reference
+            var parameters = 'reference='+transaction.reference;
+
+            // update order ajax request callback
+            // sets the success order page redirect url from received data
+            // and calls the final Bolt defined callback
+            var onSuccess = function(data){
+                callbacks.success_url = data.success_url;
+                callback();
+            };
+
+            // ajax call to the update order transaction data endpoint.
+            // passes the bolt transaction reference
+            save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
+        },
+
+        // the Bolt order is created right after the checkout button is clicked
+        // and the checkout modal popup is opened only if order creation was successfull
+        check: function () {
+
+            // preset success conditioin to false
+            cart.orderToken = '';
+
+            // define the params sent with the request variable
+            var params = [];
+
+            // check and set payment_pnly flag
+            if (getCheckoutType() === 'payment' && window.checkoutConfig && window.checkoutConfig.boltpay_payment) {
+                params.push('payment_only=true')
+            }
+
+            // get additional page data to be sent with the request,
+            // one page checkout billing info, email, ...
+            var place_order_payload = document.getElementById(place_order_payload_id);
+            if (place_order_payload && place_order_payload.value) {
+                params.push('place_order_payload=' + place_order_payload.value);
+            }
+
+            params = params.join('&');
+
+            if (params === '') params = null;
+
+            // set cart and hints data in a response callback
+            var callback = function(data){
+                cart  = data.cart;
+                hints = data.hints;
+            };
+
+            // send create order request, synchronous
+            ajaxPost(settings.create_order_url, params, callback, false);
+
+            // set hints publishable key, toggles checkout type
+            hints.publishableKey = getCheckoutKey();
+
+            // reconfigure Bolt Checkout
+            BoltConnect.process(cart, hints, callbacks);
+
+            // if true the checkout window wil open
+            return cart.orderToken !== '';
+        }
+    };
+    /////////////////////////////////
+
+    /////////////////////////////////////////////////////
+    // Toggle checkout button visibility on payment page
+    // according to billing address edit state.
+    // While editing the address the value of the hidden
+    // element is "null" and checkout buttons are hidden.
+    /////////////////////////////////////////////////////
+    onAttributesChange(billing_address_selector, ['value'], function(element) {
+
+        var checkout_type = getCheckoutType();
+
+        checkoutButtonApply(function(button) {
+            if (checkout_type === 'payment' && element.value === 'null') {
+                button.style.display = 'none';
+            } else {
+                button.style.display = '';
+            }
+        });
+    });
+    /////////////////////////////////////////////////////
+
+    // Flag that is true if checkout buttons exists on the page
+    var checkout_buttons = false;
+
+    ////////////////////////////////////////////////
+    // process the button when available on the page
+    ////////////////////////////////////////////////
+    onElementReady(bolt_button_selector, function() {
+        checkout_buttons = true;
+        processButtons();
+    });
+    ////////////////////////////////////////////////
+
+    // loop through selectors array and set up the replacement
+    for (var i = 0, length = settings.selectors.length; i < length; i++ ) {
+
+        var selector = settings.selectors[i];
+
+        ! function(selector) {
+
+            var parts = selector.split('|');
+
+            // the CSS selector
+            var identifier = parts[0].trim();
+            // no flag, the default, deletes the element after bolt button is put next to it
+            // if the value is "n", the element stays on page alongside the bolt checkout button
+            var hide_flag = parts[1];
+
+            /////////////////////////////////////////////////////
+            // replace the selectors with bolt button identifiers
+            // if / when selectors are in the DOM
+            /////////////////////////////////////////////////////
+            onElementReady(identifier, function(element) {
+
+                if (getCheckoutKey() === '') return;
+
+                var bolt_button = document.createElement("div");
+                bolt_button.setAttribute("class", bolt_button_css_class);
+
+                element.parentNode.insertBefore(bolt_button, element);
+
+                // if hide_flag is not "n" delete the selector element
+                if (!(hide_flag && hide_flag.trim().toLowerCase() === 'n')) element.parentNode.removeChild(element);
+            });
+            /////////////////////////////////////////////////////
+
+        }(selector);
+    }
+
+    ////////////////////////////////////////////////////////
+    // on hash change reprocess the buttons due to
+    // possible transition from one checkout type to another
+    ////////////////////////////////////////////////////////
+    window.addEventListener("hashchange", function() {
+
+        if (checkout_buttons) {
+            checkoutButtonApply(function(button) {
+                button.style.display = '';
+            });
+            processButtons();
+        }
+    });
+    ////////////////////////////////////////////////////////
+}();
+
+</script>
