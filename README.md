@@ -52,6 +52,7 @@ setting up testing vs. production execution environment
 + **Automatic Capture Mode**  
 capturing funds configuration
 > **YES** - both authorization and capture are done in a single step
+>
 > **NO** - the funds are captured in a separate request, initiated either from the store admin panel or from the Bolt merchant dashboard
 
 ### 4. Bolt Merchant Dashboard configuration
