@@ -7,13 +7,11 @@
 
 ### 2. Plugin installation
 
-+ Download and unpack or clone the source code: https://github.com/BoltApp/bolt_integrations/tree/master/magento2
-+ Upload the `Bolt` directory to your `<MAGENTO_ROOT>/app/code` directory
 + Open command prompt, go to `<MAGENTO_ROOT>` folder and run the following
 commands:
 
 ```
-$ composer require "bugsnag/bugsnag:^3.0"
+$ composer require boltpay/boltpay
 $ php bin/magento setup:upgrade
 $ php bin/magento setup:static-content:deploy
 $ php bin/magento cache:clean
@@ -39,17 +37,17 @@ Select ***Yes*** to enable it.
 > https://merchant-sandbox.bolt.com"
 
 
-+ **API Key**  
++ **API Key**
 used for calling Bolt API from your back-end server
-+ **Signing Secret**  
++ **Signing Secret**
 used for signature verification in checking the authenticity of webhook requests
-+ **Publishable Key - Multi Step**  
++ **Publishable Key - Multi Step**
 used to open the Bolt Payment Popup typically on Shopping cart and product pages
-+ **Publishable Key - Payment Only**  
++ **Publishable Key - Payment Only**
 used to open the Bolt Payment Popup typically on checkout pages
-+ **Sandbox Mode**  
++ **Sandbox Mode**
 setting up testing vs. production execution environment
-+ **Automatic Capture Mode**  
++ **Automatic Capture Mode**
 capturing funds configuration
 > **YES** - both authorization and capture are done in a single step
 >
@@ -63,8 +61,8 @@ capturing funds configuration
 
 + Navigate to `Settings` > `Keys and URLs`
 + Scroll down to the `URL Configurations` section
-+ Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`  
-+ Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods`  
++ Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`
++ Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods`
 
-# Success!  
+# Success!
 Your Bolt Payment Plugin is now installed and configured.
