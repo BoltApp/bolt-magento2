@@ -27,7 +27,7 @@
                 <can_use_checkout>1</can_use_checkout>
                 <sort_order>0</sort_order>
                 <replace_selectors>button#top-cart-btn-checkout,
-button[data-role=proceed-to-checkout]|n</replace_selectors>
+button[data-role=proceed-to-checkout]|prepend</replace_selectors>
                 <success_page>checkout/onepage/success</success_page>
             </boltpay>
         </payment>
