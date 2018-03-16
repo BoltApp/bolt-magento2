@@ -19,6 +19,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 /**
  * Boltpay Cart helper
@@ -54,7 +55,12 @@ class Cart extends AbstractHelper
      */
     protected $configHelper;
 
-    // Billing / shipping address fields that are required when the address data is sent to Bolt.
+	/**
+	 * @var LogHelper
+	 */
+	protected $logHelper;
+
+	// Billing / shipping address fields that are required when the address data is sent to Bolt.
 	private $required_address_fields = [
 		'first_name',
 		'last_name',
@@ -74,6 +80,7 @@ class Cart extends AbstractHelper
 	 * @param ApiHelper         $apiHelper
 	 * @param configHelper      $configHelper
 	 * @param Session           $customerSession
+	 * @param LogHelper         $logHelper
 	 *
 	 * @codeCoverageIgnore
 	 */
@@ -84,15 +91,17 @@ class Cart extends AbstractHelper
         ProductModel    $productModel,
         ApiHelper       $apiHelper,
         configHelper    $configHelper,
-	    Session         $customerSession
+	    Session         $customerSession,
+	    LogHelper       $logHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
         $this->imageHelper     = $imageHelper;
         $this->productModel    = $productModel;
         $this->apiHelper       = $apiHelper;
-	    $this->configHelper   = $configHelper;
+	    $this->configHelper    = $configHelper;
 	    $this->customerSession = $customerSession;
+	    $this->logHelper       = $logHelper;
     }
 
 	/**
@@ -227,6 +236,10 @@ class Cart extends AbstractHelper
 		}
 
 		$quote->collectTotals();
+
+		$totals = $quote->getTotals();
+
+		$this->logHelper->addInfoLog(var_export(array_keys($totals), 1));
 
 		$cart = [];
 
