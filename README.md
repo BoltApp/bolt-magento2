@@ -49,10 +49,18 @@ used to open the Bolt Payment Popup typically on checkout pages
 setting up testing vs. production execution environment
 + **Automatic Capture Mode**
 capturing funds configuration
-> **YES** - both authorization and capture are done in a single step
->
-> **NO** - the funds are captured in a separate request, initiated either from the store admin panel or from the Bolt merchant dashboard
+>> **YES** - both authorization and capture are done in a single step
 
+>> **NO** - the funds are captured in a separate request, initiated either from the store admin panel or from the Bolt merchant dashboard
++ **Replace Button Selectors**
+comma separated list of CSS selectors matching the elements to be replaced with Bolt checkout buttons, or Bolt checkout buttons placed alongside them
+
+
+>> `no suffix` - the default, inserts the Bolt button in place of the element and removes the element
+
+>> `|append` suffix - *example-selector|append*, inserts Bolt button right after the element
+
+>> `|prepend` suffix - *example-selector|prepend*, inserts Bolt button right before the element
 ### 4. Bolt Merchant Dashboard configuration
 > #### Login to the Bolt Merchant Dashboard
 > **Production**: https://merchant.bolt.com
