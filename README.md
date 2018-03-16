@@ -11,7 +11,7 @@
 commands:
 
 ```
-$ composer require boltpay/boltpay
+$ composer require boltpay/bolt-magento2
 $ php bin/magento setup:upgrade
 $ php bin/magento setup:static-content:deploy
 $ php bin/magento cache:clean
