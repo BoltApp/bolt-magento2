@@ -72,6 +72,18 @@ class Cart extends AbstractHelper
 		'email',
 	];
 
+	///////////////////////////////////////////////////////
+	// Store discount types, internal and 3rd party.
+	// Can appear as keys in Quote::getTotals result array.
+	///////////////////////////////////////////////////////
+	private $discount_types = array(
+		'giftwrapping',
+		'giftvoucheraftertax',
+		'giftcardcreditaftertax',
+		'reward'
+	);
+	///////////////////////////////////////////////////////
+
 	/**
 	 * @param Context           $context
 	 * @param CheckoutSession   $checkoutSession
@@ -237,10 +249,6 @@ class Cart extends AbstractHelper
 
 		$quote->collectTotals();
 
-		$totals = $quote->getTotals();
-
-		$this->logHelper->addInfoLog(var_export(array_keys($totals), 1));
-
 		$cart = [];
 
 		// Order reference id
@@ -380,12 +388,29 @@ class Cart extends AbstractHelper
 
 		// add discount data
 		$cart['discounts'] = $shippingAddress->getDiscountAmount() ? [[
-			'description' => 'Discount',
+			'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
 			'amount'      => -$this->getRoundAmount($shippingAddress->getDiscountAmount())
-		]] : null;
+		]] : [];
+
+		$totals = $quote->getTotals();
+
+		$this->logHelper->addInfoLog(var_export($totals, 1));
+
+		foreach ($this->discount_types as $discount) {
+
+			if (@$totals[$discount] && @$totals[$discount]->getValue()) {
+
+				$cart['discounts'][] = [
+					'description' => @$totals[$discount]->getTitle(),
+					'amount'      => -$this->getRoundAmount(abs($totals[$discount]->getValue()))
+				];
+			}
+		}
 
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
+
+		$this->logHelper->addInfoLog(var_export(array_keys($cart), 1));
 
 		return ['cart' => $cart];
 	}
