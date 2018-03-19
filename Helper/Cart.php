@@ -77,9 +77,7 @@ class Cart extends AbstractHelper
 	// Can appear as keys in Quote::getTotals result array.
 	///////////////////////////////////////////////////////
 	private $discount_types = array(
-		'giftwrapping',
 		'giftvoucheraftertax',
-		'giftcardcreditaftertax',
 		'reward'
 	);
 	///////////////////////////////////////////////////////
@@ -410,7 +408,7 @@ class Cart extends AbstractHelper
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
 
-		$this->logHelper->addInfoLog(var_export(array_keys($cart), 1));
+		$this->logHelper->addInfoLog(var_export($cart, 1));
 
 		return ['cart' => $cart];
 	}
