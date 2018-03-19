@@ -408,7 +408,7 @@ class Cart extends AbstractHelper
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
 
-		$this->logHelper->addInfoLog(var_export($cart, 1));
+		$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT), 1);
 
 		return ['cart' => $cart];
 	}
@@ -431,10 +431,10 @@ class Cart extends AbstractHelper
     /**
      * Round amount helper
      *
-     * @return  string
+     * @return  int
      */
     public function getRoundAmount($amount)
     {
-	    return round($amount * 100);
+	    return (int)round($amount * 100);
     }
 }
