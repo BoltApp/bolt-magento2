@@ -387,7 +387,7 @@ class Cart extends AbstractHelper
 		// add discount data
 		$cart['discounts'] = $shippingAddress->getDiscountAmount() ? [[
 			'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
-			'amount'      => -$this->getRoundAmount($shippingAddress->getDiscountAmount())
+			'amount'      => abs($this->getRoundAmount($shippingAddress->getDiscountAmount()))
 		]] : [];
 
 		$totals = $quote->getTotals();
@@ -400,9 +400,16 @@ class Cart extends AbstractHelper
 
 				$cart['discounts'][] = [
 					'description' => @$totals[$discount]->getTitle(),
-					'amount'      => -$this->getRoundAmount(abs($totals[$discount]->getValue()))
+					'amount'      => abs($this->getRoundAmount($totals[$discount]->getValue()))
 				];
 			}
+		}
+
+		if (@$quote->getCustomerBalanceAmountUsed()) {
+			$cart['discounts'][] = [
+				'description' => __('1% Store Credit', $quote->getCustomerBalanceAmountUsed()),
+				'amount'      => abs($this->getRoundAmount($quote->getCustomerBalanceAmountUsed()))
+			];
 		}
 
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
