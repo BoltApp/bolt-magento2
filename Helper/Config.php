@@ -24,7 +24,7 @@ class Config extends AbstractHelper
     /**
      * @var EncryptorInterface
      */
-    protected $_encryptor;
+    protected $encryptor;
 
 	/**
 	 * Path for API Key
@@ -87,6 +87,26 @@ class Config extends AbstractHelper
 	const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
 
 	/**
+	 * Bolt sandbox url
+	 */
+	const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
+
+	/**
+	 * Bolt production url
+	 */
+	const API_URL_PRODUCTION = 'https://api.bolt.com/';
+
+	/**
+	 * Bolt sandbox cdn url
+	 */
+	const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+
+	/**
+	 * Bolt production cdn url
+	 */
+	const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
+
+	/**
 	 * @var ResourceInterface
 	 */
 	protected $moduleResource;
@@ -112,10 +132,39 @@ class Config extends AbstractHelper
 	    ProductMetadataInterface $productMetadata
     ) {
         parent::__construct($context);
-        $this->_encryptor      = $encryptor;
+        $this->encryptor      = $encryptor;
 	    $this->moduleResource  = $moduleResource;
 	    $this->productMetadata = $productMetadata;
     }
+
+	/**
+	 * Get Bolt API base URL
+	 *
+	 * @return  string
+	 */
+	public function getApiUrl() {
+		//Check for sandbox mode
+		if ($this->isSandboxModeSet()) {
+			return self::API_URL_SANDBOX;
+		} else {
+			return self::API_URL_PRODUCTION;
+		}
+	}
+
+	/**
+	 * Get Bolt JavaScript base URL
+	 *
+	 * @return  string
+	 */
+	public function getCdnUrl() {
+		//Check for sandbox mode
+		if ($this->isSandboxModeSet()) {
+			return self::CDN_URL_SANDBOX;
+		} else {
+			return self::CDN_URL_PRODUCTION;
+		}
+	}
+
 
 	/**
 	 * Get module version
@@ -150,7 +199,7 @@ class Config extends AbstractHelper
 		);
 
 		//Decrypt management key
-		$key = $this->_encryptor->decrypt($key);
+		$key = $this->encryptor->decrypt($key);
 		return $key;
 	}
 

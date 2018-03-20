@@ -30,7 +30,7 @@ define(
 
             // called to check if Bolt payment method should be displayed on the checkout page
             isPaymentAvailable: function () {
-                return window.checkoutConfig.boltpay_payment;
+                return !!window.boltConfig.publishable_key_payment;
             },
 
             // make quote data available to knockout template

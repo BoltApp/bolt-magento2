@@ -5,7 +5,6 @@
  */
 namespace Bolt\Boltpay\Block;
 
-use Bolt\Boltpay\Helper\Api;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\App\Request\Http as HttpRequest;
 use Magento\Framework\View\Element\Template;
@@ -19,15 +18,9 @@ use Magento\Framework\View\Element\Template\Context;
 class Js extends Template
 {
     /**
-     * @var Api
-     */
-    protected $_apiHelper;
-
-    /**
      * @var Config
      */
-    protected $_configHelper;
-
+    protected $configHelper;
 
     /**
      * @var HttpRequest
@@ -36,21 +29,18 @@ class Js extends Template
 
 	/**
 	 * @param Context $context
-	 * @param Api $apiHelper
 	 * @param Config $configHelper
 	 * @param HttpRequest $httpRequest
 	 * @param array $data
 	 */
     public function __construct(
         Context     $context,
-        Api         $apiHelper,
         Config      $configHelper,
         HttpRequest $httpRequest,
         array       $data = []
     ) {
         parent::__construct($context, $data);
-        $this->_apiHelper    = $apiHelper;
-        $this->_configHelper = $configHelper;
+        $this->configHelper = $configHelper;
         $this->httpRequest   = $httpRequest;
     }
 
@@ -62,7 +52,7 @@ class Js extends Template
     public function getTrackJsUrl()
     {
         //Get cdn url
-        $cdnUrl = $this->_apiHelper->getCdnUrl();
+        $cdnUrl = $this->configHelper->getCdnUrl();
 	    return $cdnUrl.'/track.js';
     }
 
@@ -74,7 +64,7 @@ class Js extends Template
     public function getConnectJsUrl()
     {
         //Get cdn url
-	    $cdnUrl = $this->_apiHelper->getCdnUrl();
+	    $cdnUrl = $this->configHelper->getCdnUrl();
 	    return $cdnUrl.'/connect.js';
     }
 
@@ -85,7 +75,7 @@ class Js extends Template
      */
     public function getCheckoutKey()
     {
-	    return $this->_configHelper->getAnyPublishableKey();
+	    return $this->configHelper->getAnyPublishableKey();
     }
 
 	/**
@@ -94,7 +84,7 @@ class Js extends Template
 	 * @return string
 	 */
 	function getReplaceSelectors() {
-		return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->_configHelper->getReplaceSelectors()))));
+		return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getReplaceSelectors()))));
 	}
 
 	/**
@@ -105,8 +95,8 @@ class Js extends Template
 
 		return json_encode([
 			'connect_url'              => $this->getConnectJsUrl(),
-			'publishable_key_payment'  => $this->_configHelper->getPublishableKeyPayment(),
-			'publishable_key_checkout' => $this->_configHelper->getPublishableKeyCheckout(),
+			'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
+			'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
 			'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
 			'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
 			'selectors'                => $this->getReplaceSelectors(),
@@ -118,6 +108,6 @@ class Js extends Template
 	 * @return bool
 	 */
 	function isActive() {
-		return $this->_configHelper->isActive();
+		return $this->configHelper->isActive();
 	}
 }

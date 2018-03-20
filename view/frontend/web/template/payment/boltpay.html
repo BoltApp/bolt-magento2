@@ -6,7 +6,7 @@
  * Bolt Payment html, checkout page
  */
 -->
-<!-- ko if: true || isPaymentAvailable() -->
+<!-- ko if: isPaymentAvailable() -->
 <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
     <div class="field choice">
         <input type="radio"

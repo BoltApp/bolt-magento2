@@ -88,7 +88,7 @@ class Cart extends AbstractHelper
 	 * @param ImageHelper       $imageHelper
 	 * @param ProductModel      $productModel
 	 * @param ApiHelper         $apiHelper
-	 * @param configHelper      $configHelper
+	 * @param ConfigHelper      $configHelper
 	 * @param Session           $customerSession
 	 * @param LogHelper         $logHelper
 	 *
@@ -99,8 +99,8 @@ class Cart extends AbstractHelper
         CheckoutSession $checkoutSession,
         ImageHelper     $imageHelper,
         ProductModel    $productModel,
-        ApiHelper       $apiHelper,
-        configHelper    $configHelper,
+	    ApiHelper       $apiHelper,
+	    ConfigHelper    $configHelper,
 	    Session         $customerSession,
 	    LogHelper       $logHelper
     ) {
@@ -182,15 +182,17 @@ class Cart extends AbstractHelper
 		$quote = $this->checkoutSession->getQuote();
 		$shippingAddress = $quote->getShippingAddress();
 
-		$place_order_payload = json_decode($place_order_payload);
-		$email = @$place_order_payload->email;
+		if ($place_order_payload) {
+			$place_order_payload = @json_decode($place_order_payload);
+			$email = @$place_order_payload->email;
+		}
 
 		$shippingStreetAddress = $shippingAddress->getStreet();
 		$hints = [
 			'prefill' => [
 				'firstName'    => $shippingAddress->getFirstname(),
 				'lastName'     => $shippingAddress->getLastname(),
-				'email'        => $shippingAddress->getEmail() ?: $email,
+				'email'        => $shippingAddress->getEmail() ?: @$email,
 				'phone'        => $shippingAddress->getTelephone(),
 				'addressLine1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
 				'addressLine2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
@@ -221,6 +223,8 @@ class Cart extends AbstractHelper
 					"nonce"            => $signResponse->nonce,
 				);
 			}
+
+			$hints['prefill']['email'] = @$hints['prefill']['email'] ?: $this->customerSession->getCustomer()->getEmail();
 		}
 
 		return $hints;
@@ -392,7 +396,7 @@ class Cart extends AbstractHelper
 
 		$totals = $quote->getTotals();
 
-		$this->logHelper->addInfoLog(var_export($totals, 1));
+		//$this->logHelper->addInfoLog(var_export($totals, 1));
 
 		foreach ($this->discount_types as $discount) {
 
@@ -415,7 +419,7 @@ class Cart extends AbstractHelper
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
 
-		$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT), 1);
+		//$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
 
 		return ['cart' => $cart];
 	}

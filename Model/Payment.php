@@ -85,7 +85,7 @@ class Payment extends AbstractMethod {
     /**
      * @var ConfigHelper
      */
-    protected $_configHelper;
+    protected $configHelper;
 
     /**
      * @var ApiHelper
@@ -156,7 +156,7 @@ class Payment extends AbstractMethod {
             $resourceCollection,
             $data
         );
-        $this->_configHelper = $configHelper;
+        $this->configHelper = $configHelper;
         $this->apiHelper = $apiHelper;
 	    $this->localeDate = $localeDate;
 	    $this->orderHelper = $orderHelper;
@@ -195,7 +195,7 @@ class Payment extends AbstractMethod {
 
 	        //Get transaction data
 	        $transactionData = ['transaction_id' => $hookTransactionId];
-	        $apiKey = $this->_configHelper->getApiKey();
+	        $apiKey = $this->configHelper->getApiKey();
 
 	        //Request Data
 	        $requestData = new DataObject();
@@ -289,7 +289,7 @@ class Payment extends AbstractMethod {
 				'currency'       => $order->getOrderCurrencyCode()
 			];
 
-			$apiKey = $this->_configHelper->getApiKey();
+			$apiKey = $this->configHelper->getApiKey();
 
 			//Request Data
 			$requestData = new DataObject();
@@ -357,7 +357,7 @@ class Payment extends AbstractMethod {
 	            'currency'       => $order->getOrderCurrencyCode()
 	        ];
 
-	        $apiKey = $this->_configHelper->getApiKey();
+	        $apiKey = $this->configHelper->getApiKey();
 
 	        //Request Data
 	        $requestData = new DataObject();

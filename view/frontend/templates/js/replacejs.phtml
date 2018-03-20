@@ -19,7 +19,12 @@ if (!$this->isActive()) return;
 
 <script type="text/javascript">
 
-!function () {
+// Store the configuration parameters passed from the php block
+// in the global object. Used in this file and on the payment page
+// in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
+window.boltConfig = <?=$this->getSettings(); ?>;
+
+window.onload = function () {
 
     ///////////////////////
     // String.trim Polyfill
@@ -132,7 +137,7 @@ if (!$this->isActive()) return;
      *
      * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
      */
-    var ajaxPost = function(url, params, callback, async, headers) {
+    var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
 
         var xhr;
 
@@ -154,8 +159,12 @@ if (!$this->isActive()) return;
                 result = JSON.parse(xhr.responseText);
             }
 
-            callback(result);
+            onSuccess(result);
         };
+
+        if (typeof onError === 'function') {
+            xhr.onerror = onError;
+        }
 
         xhr.open('POST', url, async);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -252,8 +261,7 @@ if (!$this->isActive()) return;
 
         if (scriptTag) {
             scriptTag.setAttribute('data-publishable-key', publishableKey);
-            hints.publishableKey = publishableKey;
-            if (window.BoltConnect) BoltConnect.process(cart, hints, callbacks);
+            createOrder();
             return;
         }
 
@@ -266,9 +274,7 @@ if (!$this->isActive()) return;
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
 
-        hints.publishableKey = publishableKey;
-
-        scriptTag.onload = function() {BoltConnect.process(cart, hints, callbacks)};
+        scriptTag.onload = createOrder;
 
         document.head.appendChild(scriptTag);
     };
@@ -285,8 +291,8 @@ if (!$this->isActive()) return;
         }
     };
 
-    // The configuration parameters passed from the block php
-    var settings = JSON.parse('<?=$this->getSettings();?>');
+    // The configuration parameters passed from the php block
+    var settings = window.boltConfig;
 
     // TODO: make `with-cards` option backend configurable
     var bolt_button_css_class    = 'bolt-checkout-button with-cards';
@@ -340,48 +346,55 @@ if (!$this->isActive()) return;
         // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
 
-            // preset success conditioin to false
-            cart.orderToken = '';
-
-            // define the params sent with the request variable
-            var params = [];
-
-            // check and set payment_pnly flag
-            if (getCheckoutType() === 'payment' && window.checkoutConfig && window.checkoutConfig.boltpay_payment) {
-                params.push('payment_only=true')
-            }
-
-            // get additional page data to be sent with the request,
-            // one page checkout billing info, email, ...
-            var place_order_payload = document.getElementById(place_order_payload_id);
-            if (place_order_payload && place_order_payload.value) {
-                params.push('place_order_payload=' + place_order_payload.value);
-            }
-
-            params = params.join('&');
-
-            if (params === '') params = null;
-
-            // set cart and hints data in a response callback
-            var callback = function(data){
-                cart  = data.cart;
-                hints = data.hints;
-            };
-
-            // send create order request, synchronous
-            ajaxPost(settings.create_order_url, params, callback, false);
-
-            // set hints publishable key, toggles checkout type
-            hints.publishableKey = getCheckoutKey();
-
-            // reconfigure Bolt Checkout
-            BoltConnect.process(cart, hints, callbacks);
-
-            // if true the checkout window wil open
-            return cart.orderToken !== '';
+            // if orderToken is set the checkout window will open
+            return !!cart.orderToken;
         }
     };
     /////////////////////////////////
+
+    var create_request;
+
+    var createOrder = function () {
+
+        if (create_request) create_request.abort();
+
+        // preset success conditioin to false
+        cart.orderToken = '';
+
+        // define the params sent with the request variable
+        var params = [];
+
+        // check and set payment_pnly flag
+        if (getCheckoutType() === 'payment' && settings && !!settings.publishable_key_payment) {
+            params.push('payment_only=true')
+        }
+
+        // get additional page data to be sent with the request,
+        // one page checkout billing info, email, ...
+        var place_order_payload = document.getElementById(place_order_payload_id);
+        if (place_order_payload && place_order_payload.value) {
+            params.push('place_order_payload=' + place_order_payload.value);
+        }
+
+        params = params.join('&');
+
+        if (params === '') params = null;
+
+        // set cart and hints data in a response callback
+        var onSuccess = function(data){
+            cart  = data.cart;
+            hints = data.hints;
+            hints.publishableKey = getCheckoutKey();
+            BoltConnect.process(cart, hints, callbacks);
+        };
+
+        var onError = function () {
+        };
+
+        // send create order request, synchronous
+        create_request = ajaxPost(settings.create_order_url, params, onSuccess);
+    };
+
 
     /////////////////////////////////////////////////////
     // Toggle checkout button visibility on payment page
@@ -389,19 +402,26 @@ if (!$this->isActive()) return;
     // While editing the address the value of the hidden
     // element is "null" and checkout buttons are hidden.
     /////////////////////////////////////////////////////
+    var billing_address_value;
     onAttributesChange(billing_address_selector, ['value'], function(element) {
 
         var checkout_type = getCheckoutType();
 
         checkoutButtonApply(function(button) {
-            if (checkout_type === 'payment' && element.value === 'null') {
+            if (checkout_type !== 'payment') return;
+            if (element.value === 'null') {
                 button.style.display = 'none';
             } else {
                 button.style.display = '';
+                if (element.value !== billing_address_value) {
+                    billing_address_value = element.value;
+                    createOrder();
+                }
             }
         });
     });
     /////////////////////////////////////////////////////
+
 
     // Flag that is true if checkout buttons exists on the page
     var checkout_buttons = false;
@@ -471,6 +491,6 @@ if (!$this->isActive()) return;
         }
     });
     ////////////////////////////////////////////////////////
-}();
+};
 
 </script>
