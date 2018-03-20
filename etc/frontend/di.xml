@@ -16,11 +16,4 @@
             </argument>
         </arguments>
     </type>
-    <type name="Magento\Checkout\Model\CompositeConfigProvider">
-        <arguments>
-            <argument name="configProviders" xsi:type="array">
-                <item name="bolt_boltpay_configprovider" xsi:type="object">Bolt\Boltpay\Model\BoltConfigProvider</item>
-            </argument>
-        </arguments>
-    </type>
 </config>

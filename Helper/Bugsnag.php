@@ -82,4 +82,16 @@ class Bugsnag extends AbstractHelper
 	{
 		$this->bugsnag->notifyException($throwable, $callback);
 	}
+
+	/**
+	 * Regsier a new notification callback.
+	 *
+	 * @param callable $callback
+	 *
+	 * @return void
+	 */
+	public function registerCallback(callable $callback)
+	{
+		$this->bugsnag->registerCallback($callback);
+	}
 }

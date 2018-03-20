@@ -11,7 +11,6 @@ use Bolt\Boltpay\Helper\Cart;
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-//use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\DataObject;
@@ -37,12 +36,12 @@ class Data extends Action
 	/**
 	 * @var Cart
 	 */
-	protected $_cartHelper;
+	protected $cartHelper;
 
 	/**
 	 * @var ConfigHelper
 	 */
-	protected $_configHelper;
+	protected $configHelper;
 
 	/**
 	 * @var Bugsnag
@@ -53,7 +52,7 @@ class Data extends Action
 	 * @param Context $context
 	 * @param JsonFactory $resultJsonFactory
 	 * @param Cart $cartHelper
-	 * @param configHelper $configHelper
+	 * @param ConfigHelper $configHelper
 	 * @param Bugsnag $bugsnag
 	 *
 	 * @codeCoverageIgnore
@@ -62,13 +61,13 @@ class Data extends Action
 		Context      $context,
 		JsonFactory  $resultJsonFactory,
 		Cart         $cartHelper,
-		configHelper $configHelper,
+		ConfigHelper $configHelper,
 		Bugsnag      $bugsnag
 	) {
 		parent::__construct($context);
 		$this->resultJsonFactory = $resultJsonFactory;
-		$this->_cartHelper       = $cartHelper;
-		$this->_configHelper     = $configHelper;
+		$this->cartHelper        = $cartHelper;
+		$this->configHelper      = $configHelper;
 		$this->bugsnag           = $bugsnag;
 	}
 
@@ -81,22 +80,23 @@ class Data extends Action
 	public function execute()
 	{
 		try {
+
 			// flag to determinate the type of checkout / data sent to Bolt
 			$payment_only        = $this->getRequest()->getParam('payment_only');
 			// additional data collected from the (one page checkout) page,
 			// i.e. billing address to be saved with the order
 			$place_order_payload = $this->getRequest()->getParam('place_order_payload');
 			// call the Bolt API
-			$boltpayOrder = $this->_cartHelper->getBoltpayOrder( $payment_only, $place_order_payload );
+			$boltpayOrder = $this->cartHelper->getBoltpayOrder( $payment_only, $place_order_payload );
 
 			// format and send the response
 
 			$cart = [
-				'orderToken'  => $boltpayOrder->getResponse()->token,
-				'authcapture' => $this->_configHelper->getAutomaticCaptureMode()
+				'orderToken'  => @$boltpayOrder->getResponse()->token,
+				'authcapture' => $this->configHelper->getAutomaticCaptureMode()
 			];
 
-			$hints = $this->_cartHelper->getHints($place_order_payload);
+			$hints = $this->cartHelper->getHints($place_order_payload);
 
 			$result = new DataObject();
 			$result->setData('cart', $cart);

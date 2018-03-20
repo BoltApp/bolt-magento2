@@ -20,6 +20,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Boltpay API helper
@@ -28,19 +29,6 @@ use Zend_Http_Client_Exception;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class Api extends AbstractHelper {
-
-
-    /**
-     * Bolt sandbox url
-     */
-    const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
-
-
-    /**
-     * Bolt production url
-     */
-    const API_URL_PRODUCTION = 'https://api.bolt.com/';
-
 
     /**
      * Api current version
@@ -91,18 +79,6 @@ class Api extends AbstractHelper {
 
 
     /**
-     * Bolt sandbox cdn url
-     */
-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
-
-
-    /**
-     * Bolt production cdn url
-     */
-    const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
-
-
-    /**
      * Path for sandbox mode
      */
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
@@ -142,6 +118,12 @@ class Api extends AbstractHelper {
     protected $requestFactory;
 
 
+	/**
+	 * @var Bugsnag
+	 */
+	protected $bugsnag;
+
+
     /**
      * @param Context           $context
      * @param ZendClientFactory $httpClientFactory
@@ -149,6 +131,7 @@ class Api extends AbstractHelper {
      * @param ResponseFactory   $responseFactory
      * @param RequestFactory    $requestFactory
      * @param LogHelper         $logHelper
+     * @param Bugsnag $bugsnag
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -157,44 +140,16 @@ class Api extends AbstractHelper {
 	    ConfigHelper      $configHelper,
 	    ResponseFactory   $responseFactory,
 	    RequestFactory    $requestFactory,
-	    LogHelper         $logHelper
+	    LogHelper         $logHelper,
+	    Bugsnag           $bugsnag
     ) {
         parent::__construct($context);
         $this->httpClientFactory = $httpClientFactory;
-        $this->configHelper     = $configHelper;
+        $this->configHelper      = $configHelper;
         $this->responseFactory   = $responseFactory;
         $this->requestFactory    = $requestFactory;
         $this->logHelper         = $logHelper;
-    }
-
-
-    /**
-     * Get Bolt API base URL
-     *
-     * @return  string
-     */
-    public function getApiUrl() {
-        //Check for sandbox mode
-        if ($this->configHelper->isSandboxModeSet()) {
-            return self::API_URL_SANDBOX;
-        } else {
-            return self::API_URL_PRODUCTION;
-        }
-    }
-
-
-    /**
-     * Get Bolt JavaScript base URL
-     *
-     * @return  string
-     */
-    public function getCdnUrl() {
-        //Check for sandbox mode
-        if ($this->configHelper->isSandboxModeSet()) {
-            return self::CDN_URL_SANDBOX;
-        } else {
-            return self::CDN_URL_PRODUCTION;
-        }
+	    $this->bugsnag           = $bugsnag;
     }
 
 
@@ -205,7 +160,7 @@ class Api extends AbstractHelper {
      * @return  string
      */
     public function getFullApiUrl($dynamicUrl) {
-        $staticUrl  = $this->getApiUrl();
+        $staticUrl  = $this->configHelper->getApiUrl();
 	    return $staticUrl . self::API_CURRENT_VERSION . $dynamicUrl;
     }
 
@@ -311,6 +266,13 @@ class Api extends AbstractHelper {
 	        'X-Nonce'               => rand(100000000000, 999999999999)
         ] + (array)$request->getHeaders();
 
+	    $request->setHeaders($headers);
+	    $this->bugsnag->registerCallback(function ($report) use ($request) {
+		    $report->setMetaData([
+			    'BOLT API REQUEST' => (array)$request
+		    ]);
+	    });
+
         $client->setHeaders($headers);
 
 	    $responseBody = null;
@@ -320,11 +282,18 @@ class Api extends AbstractHelper {
 
 	        $responseBody = $response->getBody();
 	        $debugData['response_data'] = $responseBody;
+	        $this->bugsnag->registerCallback(function ($report) use ($responseBody) {
+		        $report->setMetaData([
+			        'BOLT API RESPONSE' => [$responseBody]
+		        ]);
+	        });
         } catch (\Exception $e) {
+	        $this->bugsnag->registerCallback(function ($report) use ($e) {
+		        $report->setMetaData([
+			        'BOLT API RESPONSE' => [$e->getMessage()]
+		        ]);
+	        });
             throw new LocalizedException($this->wrapGatewayError($e->getMessage()));
-        } finally {
-	        $info = print_r($debugData, true);
-	        //$this->logHelper->addInfoLog($info);
         }
 
         if ($request->getStatusOnly() && $response) {

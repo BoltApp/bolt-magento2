@@ -19,6 +19,7 @@ use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 /**
  * Boltpay Cart helper
@@ -54,7 +55,12 @@ class Cart extends AbstractHelper
      */
     protected $configHelper;
 
-    // Billing / shipping address fields that are required when the address data is sent to Bolt.
+	/**
+	 * @var LogHelper
+	 */
+	protected $logHelper;
+
+	// Billing / shipping address fields that are required when the address data is sent to Bolt.
 	private $required_address_fields = [
 		'first_name',
 		'last_name',
@@ -66,14 +72,25 @@ class Cart extends AbstractHelper
 		'email',
 	];
 
+	///////////////////////////////////////////////////////
+	// Store discount types, internal and 3rd party.
+	// Can appear as keys in Quote::getTotals result array.
+	///////////////////////////////////////////////////////
+	private $discount_types = array(
+		'giftvoucheraftertax',
+		'reward'
+	);
+	///////////////////////////////////////////////////////
+
 	/**
 	 * @param Context           $context
 	 * @param CheckoutSession   $checkoutSession
 	 * @param ImageHelper       $imageHelper
 	 * @param ProductModel      $productModel
 	 * @param ApiHelper         $apiHelper
-	 * @param configHelper      $configHelper
+	 * @param ConfigHelper      $configHelper
 	 * @param Session           $customerSession
+	 * @param LogHelper         $logHelper
 	 *
 	 * @codeCoverageIgnore
 	 */
@@ -82,17 +99,19 @@ class Cart extends AbstractHelper
         CheckoutSession $checkoutSession,
         ImageHelper     $imageHelper,
         ProductModel    $productModel,
-        ApiHelper       $apiHelper,
-        configHelper    $configHelper,
-	    Session         $customerSession
+	    ApiHelper       $apiHelper,
+	    ConfigHelper    $configHelper,
+	    Session         $customerSession,
+	    LogHelper       $logHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
         $this->imageHelper     = $imageHelper;
         $this->productModel    = $productModel;
         $this->apiHelper       = $apiHelper;
-	    $this->configHelper   = $configHelper;
+	    $this->configHelper    = $configHelper;
 	    $this->customerSession = $customerSession;
+	    $this->logHelper       = $logHelper;
     }
 
 	/**
@@ -163,15 +182,17 @@ class Cart extends AbstractHelper
 		$quote = $this->checkoutSession->getQuote();
 		$shippingAddress = $quote->getShippingAddress();
 
-		$place_order_payload = json_decode($place_order_payload);
-		$email = @$place_order_payload->email;
+		if ($place_order_payload) {
+			$place_order_payload = @json_decode($place_order_payload);
+			$email = @$place_order_payload->email;
+		}
 
 		$shippingStreetAddress = $shippingAddress->getStreet();
 		$hints = [
 			'prefill' => [
 				'firstName'    => $shippingAddress->getFirstname(),
 				'lastName'     => $shippingAddress->getLastname(),
-				'email'        => $shippingAddress->getEmail() ?: $email,
+				'email'        => $shippingAddress->getEmail() ?: @$email,
 				'phone'        => $shippingAddress->getTelephone(),
 				'addressLine1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
 				'addressLine2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
@@ -202,6 +223,8 @@ class Cart extends AbstractHelper
 					"nonce"            => $signResponse->nonce,
 				);
 			}
+
+			$hints['prefill']['email'] = @$hints['prefill']['email'] ?: $this->customerSession->getCustomer()->getEmail();
 		}
 
 		return $hints;
@@ -367,12 +390,36 @@ class Cart extends AbstractHelper
 
 		// add discount data
 		$cart['discounts'] = $shippingAddress->getDiscountAmount() ? [[
-			'description' => 'Discount',
-			'amount'      => -$this->getRoundAmount($shippingAddress->getDiscountAmount())
-		]] : null;
+			'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
+			'amount'      => abs($this->getRoundAmount($shippingAddress->getDiscountAmount()))
+		]] : [];
+
+		$totals = $quote->getTotals();
+
+		//$this->logHelper->addInfoLog(var_export($totals, 1));
+
+		foreach ($this->discount_types as $discount) {
+
+			if (@$totals[$discount] && @$totals[$discount]->getValue()) {
+
+				$cart['discounts'][] = [
+					'description' => @$totals[$discount]->getTitle(),
+					'amount'      => abs($this->getRoundAmount($totals[$discount]->getValue()))
+				];
+			}
+		}
+
+		if (@$quote->getCustomerBalanceAmountUsed()) {
+			$cart['discounts'][] = [
+				'description' => __('1% Store Credit', $quote->getCustomerBalanceAmountUsed()),
+				'amount'      => abs($this->getRoundAmount($quote->getCustomerBalanceAmountUsed()))
+			];
+		}
 
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
+
+		//$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
 
 		return ['cart' => $cart];
 	}
@@ -395,10 +442,10 @@ class Cart extends AbstractHelper
     /**
      * Round amount helper
      *
-     * @return  string
+     * @return  int
      */
     public function getRoundAmount($amount)
     {
-	    return round($amount * 100);
+	    return (int)round($amount * 100);
     }
 }
