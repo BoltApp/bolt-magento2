@@ -396,7 +396,7 @@ class Cart extends AbstractHelper
 
 		$totals = $quote->getTotals();
 
-		//$this->logHelper->addInfoLog(var_export($totals, 1));
+		$this->logHelper->addInfoLog(var_export($totals, 1));
 
 		foreach ($this->discount_types as $discount) {
 
@@ -419,7 +419,7 @@ class Cart extends AbstractHelper
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
 		$cart['tax_amount']   = $taxAmount;
 
-		//$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
+		$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
 
 		return ['cart' => $cart];
 	}
