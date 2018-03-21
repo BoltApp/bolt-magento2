@@ -77,8 +77,8 @@ class Cart extends AbstractHelper
 	// Can appear as keys in Quote::getTotals result array.
 	///////////////////////////////////////////////////////
 	private $discount_types = array(
+		'reward',
 		'giftvoucheraftertax',
-		'reward'
 	);
 	///////////////////////////////////////////////////////
 
@@ -250,6 +250,9 @@ class Cart extends AbstractHelper
 		}
 
 		$quote->collectTotals();
+		$totals = $quote->getTotals();
+
+		$this->logHelper->addInfoLog(var_export($totals, 1));
 
 		$cart = [];
 
@@ -375,7 +378,6 @@ class Cart extends AbstractHelper
 		} else {
 
 			// multi-step checkout, get subtotal, no tax
-
 			$totalAmount = $quote->getSubtotalWithDiscount();
 			$taxAmount   = 0;
 		}
@@ -389,31 +391,38 @@ class Cart extends AbstractHelper
 		}
 
 		// add discount data
-		$cart['discounts'] = $shippingAddress->getDiscountAmount() ? [[
-			'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
-			'amount'      => abs($this->getRoundAmount($shippingAddress->getDiscountAmount()))
-		]] : [];
+		$cart['discounts'] = [];
 
-		$totals = $quote->getTotals();
-
-		$this->logHelper->addInfoLog(var_export($totals, 1));
+		if ($amount = @$shippingAddress->getDiscountAmount()) {
+			$cart['discounts'][] = [
+				'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
+				'amount'      => abs($this->getRoundAmount($amount)),
+			];
+		}
 
 		foreach ($this->discount_types as $discount) {
 
-			if (@$totals[$discount] && @$totals[$discount]->getValue()) {
+			if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
 
 				$cart['discounts'][] = [
 					'description' => @$totals[$discount]->getTitle(),
-					'amount'      => abs($this->getRoundAmount($totals[$discount]->getValue()))
+					'amount'      => abs($this->getRoundAmount($amount))
 				];
+
+				if (!$payment_only) {
+					$totalAmount -= abs($amount);
+				}
 			}
 		}
 
-		if (@$quote->getCustomerBalanceAmountUsed()) {
+		if ($amount = @$quote->getCustomerBalanceAmountUsed()) {
 			$cart['discounts'][] = [
-				'description' => __('1% Store Credit', $quote->getCustomerBalanceAmountUsed()),
-				'amount'      => abs($this->getRoundAmount($quote->getCustomerBalanceAmountUsed()))
+				'description' => __('%1 Store Credit', $amount),
+				'amount'      => abs($this->getRoundAmount($amount))
 			];
+			if (!$payment_only) {
+				$totalAmount -= abs($amount);
+			}
 		}
 
 		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
