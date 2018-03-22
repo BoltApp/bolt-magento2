@@ -461,7 +461,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     ////////////////////////////////////////////////
     // process the button when available on the page
     ////////////////////////////////////////////////
-    onElementReady(bolt_button_selector, function() {
+    onElementReady(bolt_button_selector, function(element) {
         checkout_buttons = true;
         processButtons();
     });
@@ -530,11 +530,18 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     // Bolt order creation on totals change. This event happens
     // when discounts are added / removed from the page and
     // totals updated wia ajax call.
+    // TODO: add this option to plugin configuration admin page
     ///////////////////////////////////////////////////////////
-    var opc_order_total_selector = '.opc-block-summary table.table-totals tr.grand.totals.incl td.amount span.price';
-    onDataChange(opc_order_total_selector, function(element) {
-        createOrder();
-    });
+    var order_total_selectors = [
+        '.opc-block-summary table.table-totals tr.grand.totals td.amount span.price'
+    ];
+
+    for (var i = 0, length = order_total_selectors.length; i < length; i++ ) {
+        var total_selector = order_total_selectors[i];
+        onDataChange(total_selector, function(element) {
+            createOrder();
+        });
+    }
     ///////////////////////////////////////////////////////////
 
 }();
