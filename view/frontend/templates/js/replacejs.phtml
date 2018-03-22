@@ -24,7 +24,7 @@ if (!$this->isActive()) return;
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
 window.boltConfig = <?=$this->getSettings(); ?>;
 
-window.onload = function () {
+! function() {
 
     ///////////////////////
     // String.trim Polyfill
@@ -48,7 +48,9 @@ window.onload = function () {
             MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
             observer,
             attribute_listeners = [],
-            attribute_observer;
+            attribute_observer,
+            data_listeners = [],
+            data_observer;
 
         function ready(selector, fn) {
             // Store the selector and callback to be monitored
@@ -66,40 +68,6 @@ window.onload = function () {
             }
             // Check if the element is currently in the DOM
             check();
-        }
-
-        function attributes_change(selector, filters, fn) {
-            // Store the selector and callback to be monitored
-            attribute_listeners.push({
-                selector: selector,
-                fn: fn
-            });
-            if (!attribute_observer) {
-                // Watch for changes in the document
-                attribute_observer = new MutationObserver(check_attributes);
-                var config = {
-                    attributes: true,
-                    subtree: true
-                };
-                if (filters) config.attributeFilter = filters;
-                attribute_observer.observe(doc.documentElement, config);
-            }
-            // Check if the element attributes has changed
-            check_attributes();
-        }
-
-        function check_attributes() {
-            // Check the DOM for elements matching a stored selector
-            for (var i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
-                listener = attribute_listeners[i];
-                // Query for elements matching the specified selector
-                elements = doc.querySelectorAll(listener.selector);
-                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
-                    element = elements[j];
-                    // Invoke the callback with the element
-                    listener.fn.call(element, element);
-                }
-            }
         }
 
         function check() {
@@ -121,9 +89,73 @@ window.onload = function () {
             }
         }
 
+        function attributes_change(selector, filters, fn) {
+            // Store the selector and callback to be monitored
+            attribute_listeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!attribute_observer) {
+                // Watch for attribut changes in the document
+                attribute_observer = new MutationObserver(check_attributes);
+                var config = {
+                    attributes: true,
+                    subtree: true
+                };
+                if (filters) config.attributeFilter = filters;
+                attribute_observer.observe(doc.documentElement, config);
+            }
+        }
+
+        function check_attributes() {
+            // Check the DOM for elements matching a stored selector
+            for (var i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
+                listener = attribute_listeners[i];
+                // Query for elements matching the specified selector
+                elements = doc.querySelectorAll(listener.selector);
+                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        }
+
+        function data_change(selector, fn) {
+            // Store the selector and callback to be monitored
+            data_listeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!data_observer) {
+                // Watch for data changes in the document
+                data_observer = new MutationObserver(check_data);
+                var config = {
+                    characterData: true,
+                    subtree: true
+                };
+                data_observer.observe(doc.documentElement, config);
+            }
+        }
+
+        function check_data() {
+            // Check the DOM for elements matching a stored selector
+            for (var i = 0, len = data_listeners.length, listener, elements; i < len; i++) {
+                listener = data_listeners[i];
+                // Query for elements matching the specified selector
+                elements = doc.querySelectorAll(listener.selector);
+                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        }
+
         // Expose methods
         win.onElementReady     = ready;
         win.onAttributesChange = attributes_change;
+        win.onDataChange       = data_change;
 
     }(window);
     ////////////////////////////////////////////////////////////////////////
@@ -491,6 +523,20 @@ window.onload = function () {
         }
     });
     ////////////////////////////////////////////////////////
-};
+
+
+    ///////////////////////////////////////////////////////////
+    // Monitor DOM element showing grand total and trigger
+    // Bolt order creation on totals change. This event happens
+    // when discounts are added / removed from the page and
+    // totals updated wia ajax call.
+    ///////////////////////////////////////////////////////////
+    var opc_order_total_selector = '.opc-block-summary table.table-totals tr.grand.totals.incl td.amount span.price';
+    onDataChange(opc_order_total_selector, function(element) {
+        createOrder();
+    });
+    ///////////////////////////////////////////////////////////
+
+}();
 
 </script>
