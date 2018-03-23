@@ -96,7 +96,7 @@ class OrderManagement implements OrderManagementInterface
     {
     	try {
 		    //$this->logHelper->addInfoLog("API Hook Called");
-		    //$this->logHelper->addInfoLog($this->request->getContent());
+		    $this->logHelper->addInfoLog($this->request->getContent());
 		    $this->hookHelper->verifyWebhook();
 
 		    if (empty($reference)) {
