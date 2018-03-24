@@ -14,6 +14,8 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Magento\Framework\Webapi\Rest\Response;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
  * Class OrderManagement
@@ -51,6 +53,15 @@ class OrderManagement implements OrderManagementInterface
 	 */
 	protected $bugsnag;
 
+	/**
+	 * @var Response
+	 */
+	protected $response;
+
+	/**
+	 * @var ConfigHelper
+	 */
+	protected $configHelper;
 
 	/**
 	 * @param HookHelper $hookHelper
@@ -58,19 +69,25 @@ class OrderManagement implements OrderManagementInterface
 	 * @param LogHelper $logHelper
 	 * @param Request $request
 	 * @param Bugsnag $bugsnag
+	 * @param Response $response
+	 * @param Config $configHelper
 	 */
     public function __construct(
-	    HookHelper  $hookHelper,
-        OrderHelper $orderHelper,
-        LogHelper   $logHelper,
-	    Request     $request,
-	    Bugsnag     $bugsnag
+	    HookHelper   $hookHelper,
+        OrderHelper  $orderHelper,
+        LogHelper    $logHelper,
+	    Request      $request,
+	    Bugsnag      $bugsnag,
+	    Response     $response,
+	    ConfigHelper $configHelper
     ) {
-	    $this->hookHelper  = $hookHelper;
-        $this->orderHelper = $orderHelper;
-        $this->logHelper   = $logHelper;
-	    $this->request     = $request;
-	    $this->bugsnag     = $bugsnag;
+	    $this->hookHelper   = $hookHelper;
+        $this->orderHelper  = $orderHelper;
+        $this->logHelper    = $logHelper;
+	    $this->request      = $request;
+	    $this->bugsnag      = $bugsnag;
+	    $this->response     = $response;
+	    $this->configHelper = $configHelper;
     }
 
 	/**
@@ -95,6 +112,9 @@ class OrderManagement implements OrderManagementInterface
     public function manage($quote_id = null, $reference, $transaction_id = null, $notification_type = null, $amount = null, $currency = null, $status = null, $display_id = null, $source_transaction_id = null, $source_transaction_reference = null)
     {
     	try {
+		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
+		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+
 		    //$this->logHelper->addInfoLog("API Hook Called");
 		    //$this->logHelper->addInfoLog($this->request->getContent());
 		    $this->hookHelper->verifyWebhook();
