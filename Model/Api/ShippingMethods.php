@@ -23,6 +23,8 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\Framework\Webapi\Rest\Response;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
  * Class ShippingMethods
@@ -90,6 +92,16 @@ class ShippingMethods implements ShippingMethodsInterface
 	protected $logHelper;
 
 	/**
+	 * @var Response
+	 */
+	protected $response;
+
+	/**
+	 * @var ConfigHelper
+	 */
+	protected $configHelper;
+
+	/**
 	 *
 	 * @param HookHelper $hookHelper
 	 * @param QuoteFactory $quoteFactory
@@ -102,6 +114,8 @@ class ShippingMethods implements ShippingMethodsInterface
 	 * @param ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
 	 * @param Bugsnag $bugsnag
 	 * @param LogHelper $logHelper
+	 * @param Response $response
+	 * @param Config $configHelper
 	 */
     public function __construct(
 	    HookHelper                      $hookHelper,
@@ -114,7 +128,9 @@ class ShippingMethods implements ShippingMethodsInterface
 	    ShippingMethodConverter         $converter,
 	    ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory,
 	    Bugsnag                         $bugsnag,
-	    LogHelper                       $logHelper
+	    LogHelper                       $logHelper,
+	    Response                        $response,
+	    ConfigHelper                    $configHelper
     ){
 	    $this->hookHelper                      = $hookHelper;
 	    $this->cartHelper                      = $cartHelper;
@@ -127,6 +143,8 @@ class ShippingMethods implements ShippingMethodsInterface
 	    $this->shippingOptionInterfaceFactory  = $shippingOptionInterfaceFactory;
 	    $this->bugsnag                         = $bugsnag;
 	    $this->logHelper                       = $logHelper;
+	    $this->response                        = $response;
+	    $this->configHelper                    = $configHelper;
     }
 
 	/**
@@ -143,6 +161,9 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
 	    try {
+		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
+		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+
 	        $this->hookHelper->verifyWebhook();
 
 	        $incrementId = $cart['display_id'];
