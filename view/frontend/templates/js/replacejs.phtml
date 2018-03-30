@@ -530,49 +530,25 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     // Bolt order creation on totals change. This event happens
     // when discounts are added / removed from the page and
     // totals updated wia ajax call.
-    // TODO: add this option to plugin configuration admin page
     ///////////////////////////////////////////////////////////
-    var order_total_selectors = [
-        '.opc-block-summary table.table-totals tr.grand.totals td.amount span.price'
-    ];
+    // TODO: add this option to plugin configuration admin page
+    var order_total_selectors = ['tr.grand.totals td.amount span.price'];
 
     for (var i = 0, length = order_total_selectors.length; i < length; i++ ) {
-        var total_selector = order_total_selectors[i];
-        onDataChange(total_selector, function(element) {
-            createOrder();
-        });
+
+        var order_total_selector = order_total_selectors[i];
+
+        onElementReady(order_total_selector, function(el) {
+            var order_total_value = el.textContent;
+            onDataChange(order_total_selector, function(element) {
+                if (element.offsetParent !== null && element.textContent !== order_total_value) {
+                    order_total_value = element.textContent;
+                    createOrder();
+                }
+            });
+        })
     }
     ///////////////////////////////////////////////////////////
-
-
-    ////////////////////////////////////////////////
-    // process adding reward points on the cart page
-    ////////////////////////////////////////////////
-    var rewardpoints_selector = 'tr.totals.rewardpoints  td.amount span.price';
-    var rewardpoints_element  = document.querySelector(rewardpoints_selector);
-    var rewardpoints_value    = rewardpoints_element ? rewardpoints_element.textContent : null;
-    onDataChange(rewardpoints_selector, function(element) {
-        if (element.textContent !== rewardpoints_value) {
-            rewardpoints_value = element.textContent;
-            createOrder();
-        }
-    });
-    ////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////
-    // process adding gift cards from the cart page
-    ////////////////////////////////////////////////
-    var giftcards_selector = 'tr.totals.discount td.amount span.price';
-    var giftcards_element  = document.querySelector(giftcards_selector);
-    var giftcards_value    = giftcards_element ? giftcards_element.textContent : null;
-    onDataChange(giftcards_selector, function(element) {
-        if (element.textContent !== giftcards_value) {
-            giftcards_value = element.textContent;
-            createOrder();
-        }
-    });
-    ////////////////////////////////////////////////
-
 }();
 
 </script>
