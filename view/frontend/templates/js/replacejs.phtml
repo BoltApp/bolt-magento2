@@ -544,6 +544,35 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     }
     ///////////////////////////////////////////////////////////
 
+
+    ////////////////////////////////////////////////
+    // process adding reward points on the cart page
+    ////////////////////////////////////////////////
+    var rewardpoints_selector = 'tr.totals.rewardpoints  td.amount span.price';
+    var rewardpoints_element  = document.querySelector(rewardpoints_selector);
+    var rewardpoints_value    = rewardpoints_element ? rewardpoints_element.textContent : null;
+    onDataChange(rewardpoints_selector, function(element) {
+        if (element.textContent !== rewardpoints_value) {
+            rewardpoints_value = element.textContent;
+            createOrder();
+        }
+    });
+    ////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////
+    // process adding gift cards from the cart page
+    ////////////////////////////////////////////////
+    var giftcards_selector = 'tr.totals.discount td.amount span.price';
+    var giftcards_element  = document.querySelector(giftcards_selector);
+    var giftcards_value    = giftcards_element ? giftcards_element.textContent : null;
+    onDataChange(giftcards_selector, function(element) {
+        if (element.textContent !== giftcards_value) {
+            giftcards_value = element.textContent;
+            createOrder();
+        }
+    });
+    ////////////////////////////////////////////////
+
 }();
 
 </script>
