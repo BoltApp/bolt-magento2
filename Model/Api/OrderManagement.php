@@ -116,7 +116,7 @@ class OrderManagement implements OrderManagementInterface
 		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
 		    //$this->logHelper->addInfoLog("API Hook Called");
-		    //$this->logHelper->addInfoLog($this->request->getContent());
+		    $this->logHelper->addInfoLog($this->request->getContent());
 		    $this->hookHelper->verifyWebhook();
 
 		    if (empty($reference)) {
