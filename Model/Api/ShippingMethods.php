@@ -121,7 +121,8 @@ class ShippingMethods implements ShippingMethodsInterface
 	 * @param Bugsnag $bugsnag
 	 * @param LogHelper $logHelper
 	 * @param Response $response
-	 * @param Config $configHelper
+	 * @param ConfigHelper $configHelper
+	 * @param Session $checkoutSession
 	 */
     public function __construct(
 	    HookHelper                      $hookHelper,
@@ -188,7 +189,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		    $this->checkoutSession->replaceQuote($quote);
 
-	         //Get region id
+	        // Get region id
 	        $region = $this->regionModel->loadByName($shipping_address['region'], $shipping_address['country_code']);
 
 	        $shipping_address = [
@@ -250,6 +251,8 @@ class ShippingMethods implements ShippingMethodsInterface
 		$shippingMethods = [];
 
 		foreach ($output as $shippingMethod) {
+
+			if ($shippingMethod->getErrorMessage()) continue;
 
 			$service    = $shippingMethod->getCarrierTitle() . " - " . $shippingMethod->getMethodTitle();
 			$carrier    = $shippingMethod->getCarrierCode() . "-" . $shippingMethod->getMethodCode();
