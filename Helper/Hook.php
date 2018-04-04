@@ -22,8 +22,7 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
  */
 class Hook extends AbstractHelper
 {
-	const HMAC_HEADER_RECEIVE = 'HTTP_X_BOLT_HMAC_SHA256';
-	const HMAC_HEADER_SEND    = 'X-Bolt-Hmac-Sha256';
+	const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
 	/**
 	 * @var ConfigHelper
@@ -86,7 +85,7 @@ class Hook extends AbstractHelper
 		$requestData->setApiKey($this->configHelper->getApiKey());
 
 		$headers = [
-			self::HMAC_HEADER_SEND => $hmac_header
+			self::HMAC_HEADER => $hmac_header
 		];
 
 		$requestData->setHeaders($headers);
@@ -128,7 +127,7 @@ class Hook extends AbstractHelper
 	public function verifyWebhook() {
 
 		$payload     = $this->request->getContent();
-		$hmac_header = $this->request->get(self::HMAC_HEADER_RECEIVE);
+		$hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
 		if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
 			throw new Exception(__('Unauthorized'), 0, Exception::HTTP_UNAUTHORIZED);

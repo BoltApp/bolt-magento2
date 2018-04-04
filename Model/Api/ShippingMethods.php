@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
+use Magento\Framework\Webapi\Rest\Request;
 
 /**
  * Class ShippingMethods
@@ -108,6 +109,11 @@ class ShippingMethods implements ShippingMethodsInterface
 	protected $checkoutSession;
 
 	/**
+	 * @var Request
+	 */
+	protected $request;
+
+	/**
 	 *
 	 * @param HookHelper $hookHelper
 	 * @param QuoteFactory $quoteFactory
@@ -123,6 +129,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	 * @param Response $response
 	 * @param ConfigHelper $configHelper
 	 * @param Session $checkoutSession
+	 * @param Request $request
 	 */
     public function __construct(
 	    HookHelper                      $hookHelper,
@@ -138,7 +145,8 @@ class ShippingMethods implements ShippingMethodsInterface
 	    LogHelper                       $logHelper,
 	    Response                        $response,
 	    ConfigHelper                    $configHelper,
-	    Session                         $checkoutSession
+	    Session                         $checkoutSession,
+	    Request                         $request
     ){
 	    $this->hookHelper                      = $hookHelper;
 	    $this->cartHelper                      = $cartHelper;
@@ -154,6 +162,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	    $this->response                        = $response;
 	    $this->configHelper                    = $configHelper;
 	    $this->checkoutSession                 = $checkoutSession;
+	    $this->request                         = $request;
     }
 
 	/**
@@ -170,6 +179,19 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
 	    try {
+
+		    if( $bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+
+			    $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
+				    $report->setMetaData([
+					    'BREADCRUMBS_' => [
+						    'bolt_trace_id' => $bolt_trace_id,
+					    ]
+				    ]);
+			    });
+
+		    }
+
 		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
 		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
@@ -250,14 +272,29 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		$shippingMethods = [];
 
-		foreach ($output as $shippingMethod) {
+		$errors = [];
 
-			if ($shippingMethod->getErrorMessage()) continue;
+		foreach ($output as $shippingMethod) {
 
 			$service    = $shippingMethod->getCarrierTitle() . " - " . $shippingMethod->getMethodTitle();
 			$carrier    = $shippingMethod->getCarrierCode() . "-" . $shippingMethod->getMethodCode();
 			$cost       = $this->cartHelper->getRoundAmount($shippingMethod->getPriceInclTax());
 			$tax_amount = $this->cartHelper->getRoundAmount($shippingMethod->getPriceInclTax() - $shippingMethod->getPriceExclTax());
+
+			$error = $shippingMethod->getErrorMessage();
+
+			if ($error) {
+
+				$errors[] = [
+					'service'    => $service,
+					'carrier'    => $carrier,
+					'cost'       => $cost,
+					'tax_amount' => $tax_amount,
+					'error'      => $error,
+				];
+
+				continue;
+			}
 
 			$shippingMethods[] = $this->shippingOptionInterfaceFactory
 				->create()
@@ -266,6 +303,18 @@ class ShippingMethods implements ShippingMethodsInterface
 				->setCarrier($carrier)
 				->setTaxAmount($tax_amount);
 		}
+
+		if ($errors) {
+
+			$this->bugsnag->registerCallback(function ($report) use ($errors) {
+				$report->setMetaData([
+					'SHIPPING METHOD' => $errors
+				]);
+			});
+
+			$this->bugsnag->notifyError('Shipping Method Error', $error);
+		}
+
 		return $shippingMethods;
 	}
 }

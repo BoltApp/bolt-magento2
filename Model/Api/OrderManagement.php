@@ -112,11 +112,23 @@ class OrderManagement implements OrderManagementInterface
     public function manage($quote_id = null, $reference, $transaction_id = null, $notification_type = null, $amount = null, $currency = null, $status = null, $display_id = null, $source_transaction_id = null, $source_transaction_reference = null)
     {
     	try {
+
+		    if( $bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+
+			    $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
+				    $report->setMetaData([
+					    'BREADCRUMBS_' => [
+						    'bolt_trace_id' => $bolt_trace_id,
+					    ]
+				    ]);
+			    });
+		    }
+
 		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
 		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
-		    //$this->logHelper->addInfoLog("API Hook Called");
-		    //$this->logHelper->addInfoLog($this->request->getContent());
+//		    $this->logHelper->addInfoLog("API Hook Called");
+//		    $this->logHelper->addInfoLog($this->request->getContent());
 		    $this->hookHelper->verifyWebhook();
 
 		    if (empty($reference)) {
