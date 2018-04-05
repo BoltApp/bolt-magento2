@@ -571,14 +571,14 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
 
 
-    ///////////////////////////////////////////////////////////
-    // Monitor DOM element showing grand total and trigger
-    // Bolt order creation on totals change. This event happens
-    // when discounts are added / removed from the page and
-    // totals updated via ajax call.
+    ///////////////////////////////////////////////////////////////
+    // Monitor DOM element showing grand total / cart item number
+    // and trigger Bolt order creation on totals change. This event
+    // happens when discounts are added / removed from the page and
+    // totals updated or items added via ajax call.
     // TODO: add this option to plugin configuration admin page
-    ///////////////////////////////////////////////////////////
-    var totals_change_selectors = ['tr.grand.totals td.amount span.price'];
+    ///////////////////////////////////////////////////////////////
+    var totals_change_selectors = ['tr.grand.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
     monitorDataChange(totals_change_selectors, createOrder, true, true);
     ///////////////////////////////////////////////////////////
 

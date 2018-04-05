@@ -268,15 +268,30 @@ class Cart extends AbstractHelper
 		// Get array of all items what can be display directly
 		$items = $quote->getAllVisibleItems();
 
+		$totalAmount = 0;
+		$diff = 0;
+
 		foreach($items as $item) {
+
 			$product = [];
 			$productId = $item->getProductId();
+
+			$unit_price   = $item->getCalculationPrice();
+			$total_amount = $unit_price * $item->getQty();
+
+			$rounded_total_amount = $this->getRoundAmount($total_amount);
+
+			// Aggregate eventual total differences if prices are stored with more than 2 decimal places
+			$diff += $total_amount * 100 -$rounded_total_amount;
+
+			// Aggregate cart total
+			$totalAmount += $rounded_total_amount;
 
 			$product['reference']    = $productId;
 			$product['name']         = $item->getName();
 			$product['description']  = $item->getDescription();
-			$product['total_amount'] = $this->getRoundAmount($item->getCalculationPrice() * $item->getQty());
-			$product['unit_price']   = $this->getRoundAmount($item->getCalculationPrice());
+			$product['total_amount'] = $rounded_total_amount;
+			$product['unit_price']   = $this->getRoundAmount($unit_price);
 			$product['quantity']     = $item->getQty();
 			$product['sku']          = $item->getSku();
 			//Get product Image
@@ -365,21 +380,37 @@ class Cart extends AbstractHelper
 				}
 			}
 
-			$cart['shipments'] = @$shipping_address ? [[
-				'cost'             => $this->getRoundAmount($shippingAddress->getShippingAmount()),
-				'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
-				'shipping_address' => $shipping_address,
-				'service'          => $shippingAddress->getShippingDescription(),
-			]] : null;
+			$cart['shipments'] = [];
 
-			$totalAmount = $quote->getGrandTotal();
-			$taxAmount   = $this->getRoundAmount($shippingAddress->getTaxAmount());
+
+			if (@$shipping_address) {
+
+				$cost         = $shippingAddress->getShippingAmount();
+				$rounded_cost = $this->getRoundAmount($cost);
+
+				$diff += $cost * 100 - $rounded_cost;
+				$totalAmount += $rounded_cost;
+
+				$cart['shipments'][] = [
+					'cost'             => $rounded_cost,
+					'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
+					'shipping_address' => $shipping_address,
+					'service'          => $shippingAddress->getShippingDescription(),
+				];
+			}
+
+			$tax_amount         = $shippingAddress->getTaxAmount();
+			$rounded_tax_amount = $this->getRoundAmount($tax_amount);
+
+			$diff = $tax_amount * 100 - $rounded_tax_amount;
+
+			$taxAmount = $rounded_tax_amount;
+			$totalAmount += $rounded_tax_amount;
 
 		} else {
 
-			// multi-step checkout, get subtotal, no tax
-			$totalAmount = $quote->getSubtotalWithDiscount();
-			$taxAmount   = 0;
+			// multi-step checkout, subtotal with discounts, no shipping, no tax
+			$taxAmount = 0;
 		}
 
 		// unset billing if not all required fields are present
@@ -394,41 +425,57 @@ class Cart extends AbstractHelper
 		$cart['discounts'] = [];
 
 		if ($amount = @$shippingAddress->getDiscountAmount()) {
+
+			$amount         = abs($amount);
+			$rounded_amount = $this->getRoundAmount($amount);
+
 			$cart['discounts'][] = [
 				'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
-				'amount'      => abs($this->getRoundAmount($amount)),
+				'amount'      => $rounded_amount,
 			];
+
+			$diff -= $amount * 100 - $rounded_amount;
+			$totalAmount -= $rounded_amount;
 		}
 
 		foreach ($this->discount_types as $discount) {
 
 			if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
 
+				$amount = abs($amount);
+				$rounded_amount = $this->getRoundAmount($amount);
+
 				$cart['discounts'][] = [
 					'description' => @$totals[$discount]->getTitle(),
-					'amount'      => abs($this->getRoundAmount($amount))
+					'amount'      => $rounded_amount,
 				];
 
-				if (!$payment_only) {
-					$totalAmount -= abs($amount);
-				}
+				$diff -= $amount * 100 - $rounded_amount;
+				$totalAmount -= $rounded_amount;
 			}
 		}
 
 		if ($amount = @$quote->getCustomerBalanceAmountUsed()) {
+
+			$amount = abs($amount);
+			$rounded_amount = $this->getRoundAmount($amount);
+
 			$cart['discounts'][] = [
 				'description' => __('%1 Store Credit', $amount),
-				'amount'      => abs($this->getRoundAmount($amount))
+				'amount'      => $rounded_amount,
 			];
-			if (!$payment_only) {
-				$totalAmount -= abs($amount);
-			}
+
+			$diff -= $amount * 100 - $rounded_amount;
+			$totalAmount -= $rounded_amount;
 		}
 
-		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
-		$cart['tax_amount']   = $taxAmount;
 
-		//$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
+		$cart['items'][0]['total_amount'] += round($diff);
+
+		$totalAmount += round($diff);
+
+		$cart['total_amount'] = $totalAmount;
+		$cart['tax_amount']   = $taxAmount;
 
 		return ['cart' => $cart];
 	}
@@ -455,6 +502,6 @@ class Cart extends AbstractHelper
      */
     public function getRoundAmount($amount)
     {
-	    return (int)round($amount * 100);
+	    return round($amount * 100);
     }
 }

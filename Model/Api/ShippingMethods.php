@@ -27,6 +27,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\App\CacheInterface;
 
 /**
  * Class ShippingMethods
@@ -114,6 +115,11 @@ class ShippingMethods implements ShippingMethodsInterface
 	protected $request;
 
 	/**
+	 * @var CacheInterface
+	 */
+	protected $cache;
+
+	/**
 	 *
 	 * @param HookHelper $hookHelper
 	 * @param QuoteFactory $quoteFactory
@@ -130,6 +136,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	 * @param ConfigHelper $configHelper
 	 * @param Session $checkoutSession
 	 * @param Request $request
+	 * @param CacheInterface $cache
 	 */
     public function __construct(
 	    HookHelper                      $hookHelper,
@@ -146,7 +153,8 @@ class ShippingMethods implements ShippingMethodsInterface
 	    Response                        $response,
 	    ConfigHelper                    $configHelper,
 	    Session                         $checkoutSession,
-	    Request                         $request
+	    Request                         $request,
+	    CacheInterface                  $cache
     ){
 	    $this->hookHelper                      = $hookHelper;
 	    $this->cartHelper                      = $cartHelper;
@@ -163,6 +171,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	    $this->configHelper                    = $configHelper;
 	    $this->checkoutSession                 = $checkoutSession;
 	    $this->request                         = $request;
+	    $this->cache                           = $cache;
     }
 
 	/**
@@ -191,6 +200,17 @@ class ShippingMethods implements ShippingMethodsInterface
 			    });
 
 		    }
+
+		    ////////////////////////////////////////////////////////////////////////////////////////
+		    // Check cache storage for estimate. If the order_reference, total_amount, country_code,
+		    // region and postal_code match then use the cached version.
+		    ////////////////////////////////////////////////////////////////////////////////////////
+		    $cache_identifier = $cart['order_reference'].'_'.$cart['total_amount'].'_'.$shipping_address['country_code'].'_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+
+		    if ($serialized = $this->cache->load($cache_identifier)) {
+			    return unserialize($serialized);
+		    }
+		    ////////////////////////////////////////////////////////////////////////////////////////
 
 		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
 		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
@@ -226,24 +246,36 @@ class ShippingMethods implements ShippingMethodsInterface
 	            'region_id'  => $region->getId(),
 	        ];
 
-	        //save shipping address in quote
+	        // update quote shipping address
 		    $shippingAddress = $quote->getShippingAddress();
-
 		    $shippingAddress->addData($shipping_address);
+
 		    $shippingAddress->setCollectShippingRates(true);
 
+		    $shippingAddress->setShippingMethod(null);
 		    $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
-	        $shippingMethods      = $this->getShippingOptions($quote);
-	        $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
-		    $shippingOptionsModel->setShippingOptions($shippingMethods);
+		    $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
 
 		    $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
 
-		    $shippingTaxModel->setAmount($this->cartHelper->getRoundAmount($shippingAddress->getBaseTaxAmount()));
+		    $tax_amount         = $shippingAddress->getTaxAmount();
+		    $rounded_tax_amount = $this->cartHelper->getRoundAmount($tax_amount);
+
+		    $diff = $tax_amount * 100 - $rounded_tax_amount;
+
+		    $shippingTaxModel->setAmount($rounded_tax_amount);
 		    $shippingOptionsModel->setTaxResult($shippingTaxModel);
 
-	        return $shippingOptionsModel;
+		    $shippingMethods      = $this->getShippingOptions($quote, $diff);
+		    $shippingOptionsModel->setShippingOptions($shippingMethods);
+
+		    //$this->logHelper->addInfoLog(var_export($shippingOptionsModel, 1));
+
+		    // Cache the calculated result
+		    $this->cache->save(serialize($shippingOptionsModel), $cache_identifier);
+
+		    return $shippingOptionsModel;
 	    } catch ( \Exception $e ) {
 		    $this->bugsnag->notifyException($e);
 		    throw $e;
@@ -257,7 +289,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	 *
 	 * @return ShippingOptionInterface[]
 	 */
-	private function getShippingOptions($quote)
+	private function getShippingOptions($quote ,$diff)
 	{
 		$output = [];
 
@@ -276,10 +308,18 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		foreach ($output as $shippingMethod) {
 
-			$service    = $shippingMethod->getCarrierTitle() . " - " . $shippingMethod->getMethodTitle();
-			$carrier    = $shippingMethod->getCarrierCode() . "-" . $shippingMethod->getMethodCode();
-			$cost       = $this->cartHelper->getRoundAmount($shippingMethod->getPriceInclTax());
-			$tax_amount = $this->cartHelper->getRoundAmount($shippingMethod->getPriceInclTax() - $shippingMethod->getPriceExclTax());
+			$service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
+			$method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
+
+			$shippingAddress->setShippingMethod($method);
+			$this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+
+			$cost         = $shippingAddress->getShippingAmount();
+			$rounded_cost = $this->cartHelper->getRoundAmount($cost);
+
+			$diff += $cost * 100 - $rounded_cost;
+
+			$tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getShippingTaxAmount() + $diff / 100);
 
 			$error = $shippingMethod->getErrorMessage();
 
@@ -287,8 +327,8 @@ class ShippingMethods implements ShippingMethodsInterface
 
 				$errors[] = [
 					'service'    => $service,
-					'carrier'    => $carrier,
-					'cost'       => $cost,
+					'carrier'    => $method,
+					'cost'       => $rounded_cost,
 					'tax_amount' => $tax_amount,
 					'error'      => $error,
 				];
@@ -299,8 +339,8 @@ class ShippingMethods implements ShippingMethodsInterface
 			$shippingMethods[] = $this->shippingOptionInterfaceFactory
 				->create()
 				->setService($service)
-				->setCost($cost)
-				->setCarrier($carrier)
+				->setCost($rounded_cost)
+				->setCarrier($method)
 				->setTaxAmount($tax_amount);
 		}
 
