@@ -20,6 +20,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Boltpay Cart helper
@@ -60,6 +61,11 @@ class Cart extends AbstractHelper
 	 */
 	protected $logHelper;
 
+	/**
+	 * @var Bugsnag
+	 */
+	protected $bugsnag;
+
 	// Billing / shipping address fields that are required when the address data is sent to Bolt.
 	private $required_address_fields = [
 		'first_name',
@@ -82,6 +88,9 @@ class Cart extends AbstractHelper
 	);
 	///////////////////////////////////////////////////////
 
+	// Totals adjustment treshold
+	private $treshold = 0.01;
+
 	/**
 	 * @param Context           $context
 	 * @param CheckoutSession   $checkoutSession
@@ -91,6 +100,7 @@ class Cart extends AbstractHelper
 	 * @param ConfigHelper      $configHelper
 	 * @param Session           $customerSession
 	 * @param LogHelper         $logHelper
+	 * @param Bugsnag $bugsnag
 	 *
 	 * @codeCoverageIgnore
 	 */
@@ -102,7 +112,8 @@ class Cart extends AbstractHelper
 	    ApiHelper       $apiHelper,
 	    ConfigHelper    $configHelper,
 	    Session         $customerSession,
-	    LogHelper       $logHelper
+	    LogHelper       $logHelper,
+	    Bugsnag         $bugsnag
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -112,6 +123,7 @@ class Cart extends AbstractHelper
 	    $this->configHelper    = $configHelper;
 	    $this->customerSession = $customerSession;
 	    $this->logHelper       = $logHelper;
+	    $this->bugsnag         = $bugsnag;
     }
 
 	/**
@@ -476,6 +488,18 @@ class Cart extends AbstractHelper
 
 		$cart['total_amount'] = $totalAmount;
 		$cart['tax_amount']   = $taxAmount;
+
+		if (abs($diff) >= $this->treshold) {
+			$this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
+				$report->setMetaData([
+					'TOTALS_DIFF' => [
+						'diff' => $diff,
+						'cart' => $cart,
+					]
+				]);
+			});
+			$this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
+		}
 
 		return ['cart' => $cart];
 	}

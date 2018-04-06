@@ -119,6 +119,11 @@ class ShippingMethods implements ShippingMethodsInterface
 	 */
 	protected $cache;
 
+	// Totals adjustment treshold
+	private $treshold = 0.01;
+
+	private $tax_adjusted = false;
+
 	/**
 	 *
 	 * @param HookHelper $hookHelper
@@ -270,10 +275,17 @@ class ShippingMethods implements ShippingMethodsInterface
 		    $shippingMethods      = $this->getShippingOptions($quote, $diff);
 		    $shippingOptionsModel->setShippingOptions($shippingMethods);
 
-		    //$this->logHelper->addInfoLog(var_export($shippingOptionsModel, 1));
-
 		    // Cache the calculated result
 		    $this->cache->save(serialize($shippingOptionsModel), $cache_identifier);
+
+		    if ($this->tax_adjusted) {
+			    $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
+				    $report->setMetaData([
+					    'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)]
+				    ]);
+			    });
+			    $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted.");
+		    }
 
 		    return $shippingOptionsModel;
 	    } catch ( \Exception $e ) {
@@ -289,7 +301,7 @@ class ShippingMethods implements ShippingMethodsInterface
 	 *
 	 * @return ShippingOptionInterface[]
 	 */
-	private function getShippingOptions($quote ,$diff)
+	private function getShippingOptions($quote, $diff)
 	{
 		$output = [];
 
@@ -317,9 +329,25 @@ class ShippingMethods implements ShippingMethodsInterface
 			$cost         = $shippingAddress->getShippingAmount();
 			$rounded_cost = $this->cartHelper->getRoundAmount($cost);
 
-			$diff += $cost * 100 - $rounded_cost;
+			$adjustment = $diff + $cost * 100 - $rounded_cost;
 
-			$tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getShippingTaxAmount() + $diff / 100);
+			$tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getShippingTaxAmount() + $adjustment / 100);
+
+			if (abs($adjustment) >= $this->treshold) {
+				$this->tax_adjusted = true;
+				$this->bugsnag->registerCallback(function ($report) use ($method, $adjustment, $service, $rounded_cost, $tax_amount) {
+					$report->setMetaData([
+						'TOTALS_DIFF' => [
+							$method => [
+								'diff'       => $adjustment,
+								'service'    => $service,
+								'cost'       => $rounded_cost,
+								'tax_amount' => $tax_amount,
+							]
+						]
+					]);
+				});
+			}
 
 			$error = $shippingMethod->getErrorMessage();
 
