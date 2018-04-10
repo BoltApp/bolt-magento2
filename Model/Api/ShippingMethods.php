@@ -206,17 +206,6 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		    }
 
-		    ////////////////////////////////////////////////////////////////////////////////////////
-		    // Check cache storage for estimate. If the order_reference, total_amount, country_code,
-		    // region and postal_code match then use the cached version.
-		    ////////////////////////////////////////////////////////////////////////////////////////
-		    $cache_identifier = $cart['order_reference'].'_'.$cart['total_amount'].'_'.$shipping_address['country_code'].'_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
-
-		    if ($serialized = $this->cache->load($cache_identifier)) {
-			    return unserialize($serialized);
-		    }
-		    ////////////////////////////////////////////////////////////////////////////////////////
-
 		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
 		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
@@ -236,7 +225,23 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		    $this->checkoutSession->replaceQuote($quote);
 
-	        // Get region id
+		    ////////////////////////////////////////////////////////////////////////////////////////
+		    // Check cache storage for estimate. If the total_amount, country_code,
+		    // region and postal_code match for the quote then use the cached version.
+		    ////////////////////////////////////////////////////////////////////////////////////////
+		    $cache_identifier = $cart['total_amount'].'_'.$shipping_address['country_code'].'_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+
+		    if ($this->cache->load("bolt_cache_identifier_".$quote->getId()) == $cache_identifier
+		        && $serialized = $this->cache->load("bolt_shipping_and_tax_".$quote->getId())
+		    ) {
+			    return unserialize($serialized);
+		    }
+		    $this->cache->remove("bolt_cache_identifier_".$quote->getId());
+		    $this->cache->remove("bolt_shipping_and_tax_".$quote->getId());
+		    ////////////////////////////////////////////////////////////////////////////////////////
+
+
+		    // Get region id
 	        $region = $this->regionModel->loadByName($shipping_address['region'], $shipping_address['country_code']);
 
 	        $shipping_address = [
@@ -276,7 +281,8 @@ class ShippingMethods implements ShippingMethodsInterface
 		    $shippingOptionsModel->setShippingOptions($shippingMethods);
 
 		    // Cache the calculated result
-		    $this->cache->save(serialize($shippingOptionsModel), $cache_identifier);
+		    $this->cache->save($cache_identifier, "bolt_cache_identifier_".$quote->getId());
+		    $this->cache->save(serialize($shippingOptionsModel), "bolt_shipping_and_tax_".$quote->getId());
 
 		    if ($this->tax_adjusted) {
 			    $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
