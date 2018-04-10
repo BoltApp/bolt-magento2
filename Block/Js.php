@@ -88,6 +88,15 @@ class Js extends Template
 	}
 
 	/**
+	 * Get Replace Button Selectors.
+	 *
+	 * @return string
+	 */
+	function getGlobalCSS() {
+		return $this->configHelper->getGlobalCSS();
+	}
+
+	/**
 	 * Get Javascript page settings.
 	 * @return string
 	 */

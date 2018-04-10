@@ -46,6 +46,9 @@
                 <field id="replace_selectors" translate="label" type="textarea" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Replace Button Selectors</label>
                 </field>
+                <field id="global_css" translate="label" type="textarea" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Global CSS</label>
+                </field>
                 <field id="success_page" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Success Page Redirect</label>
                 </field>

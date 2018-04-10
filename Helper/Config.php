@@ -54,6 +54,11 @@ class Config extends AbstractHelper
 	const XML_PATH_REPLACE_SELECTORS = 'payment/boltpay/replace_selectors';
 
 	/**
+	 * Path for Global CSS
+	 */
+	const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
+
+	/**
      * Automatic capture mode
      */
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
@@ -264,6 +269,19 @@ class Config extends AbstractHelper
 	{
 		return $this->scopeConfig->getValue(
 			self::XML_PATH_REPLACE_SELECTORS,
+			ScopeInterface::SCOPE_STORE
+		);
+	}
+
+	/**
+	 * Get Replace Selectors from config
+	 *
+	 * @return  string
+	 */
+	public function getGlobalCSS()
+	{
+		return $this->scopeConfig->getValue(
+			self::XML_PATH_GLOBAL_CSS,
 			ScopeInterface::SCOPE_STORE
 		);
 	}
