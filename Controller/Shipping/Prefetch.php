@@ -125,30 +125,32 @@ class Prefetch extends Action
 			$quote = $this->checkoutSession->getQuote();
 			if (!$quote->getId()) return;
 
+			$cart = $this->cartHelper->getCartData(null, null);
+
+
+			///////////////////////////////////////////////////////////////////////////
+			// Estimate shipping for geolocated address
+			///////////////////////////////////////////////////////////////////////////
 			$ip = $this->getIpAddress();
 
 			$client = $this->httpClientFactory->create();
 			$client->setUri(sprintf($this->locationURL, $ip));
 			$client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
-			$response     = $client->request();
-			$responseBody = $response->getBody();
+			$response = $client->request()->getBody();
+			$location = json_decode($response);
 
-			$location = json_decode($responseBody);
+			if ($location) {
 
-			$shipping_address = [
-				'country_code' => $location->country_code,
-				'postal_code'  => $location->zip_code,
-				'region'       => $location->region_name,
-				'locality'     => $location->city,
-			];
+				$shipping_address = [
+					'country_code' => $location->country_code,
+					'postal_code'  => $location->zip_code,
+					'region'       => $location->region_name,
+					'locality'     => $location->city,
+				];
 
-			$cart = $this->cartHelper->getCartData(null, null);
-
-			///////////////////////////////////////////////////////////////////////////
-			// Estimate shipping for geolocated address
-			///////////////////////////////////////////////////////////////////////////
-			$this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+				$this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+			}
 			///////////////////////////////////////////////////////////////////////////
 
 
@@ -157,12 +159,14 @@ class Prefetch extends Action
 			// Run the estimation with quote address unchanged
 			/////////////////////////////////////////////////////////////////////////////////
 			$shippingAddress = $quote->getShippingAddress();
+
 			$shipping_address = [
 				'country_code' => $shippingAddress->getData('country_id') ?: '',
 				'postal_code'  => $shippingAddress->getData('postcode') ?: '',
 				'region'       => $shippingAddress->getData('region') ?: '',
 				'locality'     => $shippingAddress->getData('city') ?: '',
 			];
+
 			$this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
 			/////////////////////////////////////////////////////////////////////////////////
 
