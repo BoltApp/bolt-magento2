@@ -225,64 +225,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
 		    $this->checkoutSession->replaceQuote($quote);
 
-		    ////////////////////////////////////////////////////////////////////////////////////////
-		    // Check cache storage for estimate. If the total_amount, country_code,
-		    // region and postal_code match for the quote then use the cached version.
-		    ////////////////////////////////////////////////////////////////////////////////////////
-		    $cache_identifier = $cart['total_amount'].'_'.$shipping_address['country_code'].'_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
-
-		    if ($this->cache->load("bolt_cache_identifier_".$quote->getId()) == $cache_identifier
-		        && $serialized = $this->cache->load("bolt_shipping_and_tax_".$quote->getId())
-		    ) {
-			    return unserialize($serialized);
-		    }
-		    $this->cache->remove("bolt_cache_identifier_".$quote->getId());
-		    $this->cache->remove("bolt_shipping_and_tax_".$quote->getId());
-		    ////////////////////////////////////////////////////////////////////////////////////////
-
-
-		    // Get region id
-	        $region = $this->regionModel->loadByName($shipping_address['region'], $shipping_address['country_code']);
-
-	        $shipping_address = [
-	            'firstname'  => $shipping_address['first_name'],
-	            'lastname'   => $shipping_address['last_name'],
-	            'street'     => $shipping_address['street_address1'],
-	            'city'       => $shipping_address['locality'],
-	            'country_id' => $shipping_address['country_code'],
-	            'region'     => $shipping_address['region'],
-	            'postcode'   => $shipping_address['postal_code'],
-	            'telephone'  => $shipping_address['phone'],
-	            'region_id'  => $region->getId(),
-	        ];
-
-	        // update quote shipping address
-		    $shippingAddress = $quote->getShippingAddress();
-		    $shippingAddress->addData($shipping_address);
-
-		    $shippingAddress->setCollectShippingRates(true);
-
-		    $shippingAddress->setShippingMethod(null);
-		    $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-
-		    $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
-
-		    $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
-
-		    $tax_amount         = $shippingAddress->getTaxAmount();
-		    $rounded_tax_amount = $this->cartHelper->getRoundAmount($tax_amount);
-
-		    $diff = $tax_amount * 100 - $rounded_tax_amount;
-
-		    $shippingTaxModel->setAmount($rounded_tax_amount);
-		    $shippingOptionsModel->setTaxResult($shippingTaxModel);
-
-		    $shippingMethods      = $this->getShippingOptions($quote, $diff);
-		    $shippingOptionsModel->setShippingOptions($shippingMethods);
-
-		    // Cache the calculated result
-		    $this->cache->save($cache_identifier, "bolt_cache_identifier_".$quote->getId());
-		    $this->cache->save(serialize($shippingOptionsModel), "bolt_shipping_and_tax_".$quote->getId());
+		    $shippingOptionsModel = $this->shippingEstimation($quote, $cart, $shipping_address);
 
 		    if ($this->tax_adjusted) {
 			    $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
@@ -304,15 +247,86 @@ class ShippingMethods implements ShippingMethodsInterface
 	 * Save shipping address in quote
 	 *
 	 * @param Quote $quote
+	 * @param array $cart
+	 * @param array $shipping_address
+	 *
+	 * @return ShippingOptionsInterface
+	 */
+    public function shippingEstimation($quote, $cart, $shipping_address) {
+
+	    ////////////////////////////////////////////////////////////////////////////////////////
+	    // Check cache storage for estimate. If the quote_id, total_amount, country_code,
+	    // region and postal_code match then use the cached version.
+	    ////////////////////////////////////////////////////////////////////////////////////////
+	    $cache_identifier = $cart['order_reference'].'_'.$cart['total_amount'].'_'.$shipping_address['country_code'].'_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+
+	    $prefetchShipping = $this->configHelper->getPrefetchShipping();
+
+	    if ($prefetchShipping && $serialized = $this->cache->load($cache_identifier)) {
+	    	return unserialize($serialized);
+	    }
+	    ////////////////////////////////////////////////////////////////////////////////////////
+
+	    // Get region id
+	    $region = $this->regionModel->loadByName(@$shipping_address['region'], @$shipping_address['country_code']);
+
+	    $shipping_address = [
+		    'country_id' => @$shipping_address['country_code'],
+		    'postcode'   => @$shipping_address['postal_code'],
+		    'region'     => @$shipping_address['region'],
+		    'region_id'  => $region ? $region->getId() : null,
+		    'firstname'  => @$shipping_address['first_name'],
+		    'lastname'   => @$shipping_address['last_name'],
+		    'street'     => @$shipping_address['street_address1'],
+		    'city'       => @$shipping_address['locality'],
+		    'telephone'  => @$shipping_address['phone'],
+	    ];
+
+	    foreach ($shipping_address as $key => $value) {
+		    if (empty($value)) {
+			    unset($shipping_address[$key]);
+		    }
+	    }
+
+	    $shippingMethods = $this->getShippingOptions($quote, $shipping_address);
+
+	    $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
+	    $shippingOptionsModel->setShippingOptions($shippingMethods);
+
+	    $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
+	    $shippingTaxModel->setAmount(0);
+	    $shippingOptionsModel->setTaxResult($shippingTaxModel);
+
+	    // Cache the calculated result
+	    if ($prefetchShipping) {
+	    	$this->cache->save(serialize($shippingOptionsModel), $cache_identifier, [], 3600);
+	    }
+
+		return $shippingOptionsModel;
+    }
+
+
+	/**
+	 * Save shipping address in quote
+	 *
+	 * @param Quote $quote
+	 * @param array $shipping_address
 	 *
 	 * @return ShippingOptionInterface[]
 	 */
-	private function getShippingOptions($quote, $diff)
+	private function getShippingOptions($quote, $shipping_address)
 	{
 		$output = [];
 
 		$shippingAddress = $quote->getShippingAddress();
-		$shippingRates   = $shippingAddress->getGroupedAllShippingRates();
+
+		$shippingAddress->addData($shipping_address);
+		$shippingAddress->setCollectShippingRates(true);
+
+		$shippingAddress->setShippingMethod(null);
+		$this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+
+		$shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
 		foreach ($shippingRates as $carrierRates) {
 			foreach ($carrierRates as $rate) {
@@ -335,17 +349,17 @@ class ShippingMethods implements ShippingMethodsInterface
 			$cost         = $shippingAddress->getShippingAmount();
 			$rounded_cost = $this->cartHelper->getRoundAmount($cost);
 
-			$adjustment = $diff + $cost * 100 - $rounded_cost;
+			$diff = $cost * 100 - $rounded_cost;
 
-			$tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getShippingTaxAmount() + $adjustment / 100);
+			$tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
-			if (abs($adjustment) >= $this->treshold) {
+			if (abs($diff) >= $this->treshold) {
 				$this->tax_adjusted = true;
-				$this->bugsnag->registerCallback(function ($report) use ($method, $adjustment, $service, $rounded_cost, $tax_amount) {
+				$this->bugsnag->registerCallback(function ($report) use ($method, $diff, $service, $rounded_cost, $tax_amount) {
 					$report->setMetaData([
 						'TOTALS_DIFF' => [
 							$method => [
-								'diff'       => $adjustment,
+								'diff'       => $diff,
 								'service'    => $service,
 								'cost'       => $rounded_cost,
 								'tax_amount' => $tax_amount,

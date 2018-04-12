@@ -133,7 +133,7 @@ class Cart extends AbstractHelper
 	 * @param string $place_order_payload      additional data collected from the (one page checkout) page,
 	 *                                         i.e. billing address to be saved with the order
 	 *
-	 * @return Response|int
+	 * @return Response|void
 	 * @throws Exception
 	 * @throws LocalizedException
 	 * @throws Zend_Http_Client_Exception
@@ -142,6 +142,7 @@ class Cart extends AbstractHelper
     {
         //Get cart data
         $cartData = $this->getCartData($payment_only, $place_order_payload);
+	    if (!$cartData) return;
 	    $apiKey   = $this->configHelper->getApiKey();
 
         //Request Data
@@ -257,16 +258,15 @@ class Cart extends AbstractHelper
 	{
 		$quote = $this->checkoutSession->getQuote();
 
+		$cart = [];
+
 		if (null === $quote->getId()) {
-			throw new LocalizedException(__('Non existing session quote object.'));
+			$this->bugsnag->notifyError('Get Cart Data Error', 'Non existing session quote object');
+			return $cart;
 		}
 
 		$quote->collectTotals();
 		$totals = $quote->getTotals();
-
-		//$this->logHelper->addInfoLog(var_export($totals, 1));
-
-		$cart = [];
 
 		// Order reference id
 		$cart['order_reference'] = $quote->getId();

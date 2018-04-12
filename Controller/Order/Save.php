@@ -30,22 +30,12 @@ use Bolt\Boltpay\Helper\Bugsnag;
 class Save extends Action
 {
     /**
-     * @var \Magento\Framework\Controller\Result\JsonFactory
+     * @var JsonFactory
      */
     protected $resultJsonFactory;
 
     /** @var CheckoutSession */
     protected $checkoutSession;
-
-   /**
-     * @var \Magento\Quote\Model\QuoteManagement
-     */
-    protected $quoteManagement;
-
-   /**
-     * @var \Magento\Sales\Model\Order\Payment\Transaction\Builder
-     */
-    protected $transactionBuilder;
 
 	/**
 	 * @var OrderHelper
@@ -93,7 +83,8 @@ class Save extends Action
 	 * @return Json
 	 * @throws Exception
 	 */
-	public function execute() {
+	public function execute()
+	{
 		try {
 			// get the transaction reference parameter
 			$reference = $this->getRequest()->getParam('reference');
@@ -129,8 +120,8 @@ class Save extends Action
     private function clearQuoteSession($quote)
     {
         $this->checkoutSession->setLastQuoteId($quote->getId())
-                    ->setLastSuccessQuoteId($quote->getId())
-                    ->clearHelperData();
+                              ->setLastSuccessQuoteId($quote->getId())
+                              ->clearHelperData();
     }
 
 	/**
@@ -143,7 +134,7 @@ class Save extends Action
 	private function clearOrderSession($order)
     {
         $this->checkoutSession->setLastOrderId($order->getId())
-            ->setLastRealOrderId($order->getIncrementId())
-            ->setLastOrderStatus($order->getStatus());
+                              ->setLastRealOrderId($order->getIncrementId())
+					          ->setLastOrderStatus($order->getStatus());
     }
 }

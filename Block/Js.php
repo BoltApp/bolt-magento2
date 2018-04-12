@@ -109,6 +109,8 @@ class Js extends Template
 			'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
 			'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
 			'selectors'                => $this->getReplaceSelectors(),
+			'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
+			'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
 		]);
 	}
 

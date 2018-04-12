@@ -395,7 +395,26 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 
 
     /////////////////////////////////////////////////////
-    // Create Bolt order and configure BoltConnect
+    // Call Shipping and Tax prefetch & cache endpoint
+    /////////////////////////////////////////////////////
+    var prefetchShipping = function() {
+
+        if (!settings.prefetch_shipping) return;
+
+        var xhr;
+        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+
+        xhr.open('GET', settings.shipping_prefetch_url);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.send();
+        return xhr;
+    };
+    /////////////////////////////////////////////////////
+
+
+    /////////////////////////////////////////////////////
+    // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
     var create_request;
     var createOrder = function () {
@@ -426,7 +445,9 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 
             hints.publishableKey = getCheckoutKey();
 
-            BoltCheckout.configure(cart, hints, callbacks);
+            if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+
+            prefetchShipping();
         };
         // send create order request
         create_request = ajaxPost(settings.create_order_url, params, onSuccess);
@@ -612,7 +633,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 
                 monitorAttributesChange(input_selectors, function(element) {
                     hints.prefill[prefill_key] = element.value;
-                    if (window.BoltConnect) BoltCheckout.configure(cart, hints, callbacks);
+                    if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
                 }, visible_only);
 
             } (input_name);
@@ -633,7 +654,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
             hints.prefill.country = element.value;
         }
         delete hints.prefill.state;
-        if (window.BoltConnect) BoltCheckout.configure(cart, hints, callbacks);
+        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     }, false, true);
     ///////////////////////////////////////////////////////////
 
@@ -649,7 +670,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
         else {
             hints.prefill.state = element.options[element.selectedIndex].text;
         }
-        if (window.BoltConnect) BoltCheckout.configure(cart, hints, callbacks);
+        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     });
     ///////////////////////////////////////////////////////////
 }();

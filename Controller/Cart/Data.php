@@ -7,12 +7,12 @@
 
 namespace Bolt\Boltpay\Controller\Cart;
 
-use Bolt\Boltpay\Helper\Cart;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObject;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -34,7 +34,7 @@ class Data extends Action
 	protected $resultJsonFactory;
 
 	/**
-	 * @var Cart
+	 * @var CartHelper
 	 */
 	protected $cartHelper;
 
@@ -51,7 +51,7 @@ class Data extends Action
 	/**
 	 * @param Context $context
 	 * @param JsonFactory $resultJsonFactory
-	 * @param Cart $cartHelper
+	 * @param CartHelper $cartHelper
 	 * @param ConfigHelper $configHelper
 	 * @param Bugsnag $bugsnag
 	 *
@@ -60,7 +60,7 @@ class Data extends Action
 	public function __construct(
 		Context      $context,
 		JsonFactory  $resultJsonFactory,
-		Cart         $cartHelper,
+		CartHelper   $cartHelper,
 		ConfigHelper $configHelper,
 		Bugsnag      $bugsnag
 	) {
@@ -74,7 +74,7 @@ class Data extends Action
 	/**
 	 * Get cart data for bolt pay ajax
 	 *
-	 * @return ResultInterface
+	 * @return Json
 	 * @throws Exception
 	 */
 	public function execute()
@@ -90,9 +90,8 @@ class Data extends Action
 			$boltpayOrder = $this->cartHelper->getBoltpayOrder( $payment_only, $place_order_payload );
 
 			// format and send the response
-
 			$cart = [
-				'orderToken'  => @$boltpayOrder->getResponse()->token,
+				'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
 				'authcapture' => $this->configHelper->getAutomaticCaptureMode()
 			];
 
@@ -102,7 +101,8 @@ class Data extends Action
 			$result->setData('cart', $cart);
 			$result->setData('hints', $hints);
 
-		return $this->resultJsonFactory->create()->setData($result->getData());
+			return $this->resultJsonFactory->create()->setData($result->getData());
+
 		} catch ( Exception $e ) {
 			$this->bugsnag->notifyException($e);
 			throw $e;
