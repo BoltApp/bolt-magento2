@@ -234,12 +234,12 @@ class Order extends AbstractHelper {
 		$request = $this->apiHelper->buildRequest($requestData);
 
 		$result = $this->apiHelper->sendRequest($request);
-		$response = $this->apiHelper->handleErrorResponse($result->getResponse());
+		$response = $result->getResponse();
 
-		$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
-		$logger = new \Zend\Log\Logger();
-		$logger->addWriter($writer);
-		$logger->info(json_encode($response, JSON_PRETTY_PRINT));
+//		$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
+//		$logger = new \Zend\Log\Logger();
+//		$logger->addWriter($writer);
+//		$logger->info(json_encode($response, JSON_PRETTY_PRINT));
 
 		return $response;
 	}
@@ -387,7 +387,7 @@ class Order extends AbstractHelper {
 
 		$this->setPaymentMethod($quote);
 
-		$quote->collectTotals();//->save();
+		$quote->collectTotals();
 
 		$this->quoteRepository->save($quote);
 

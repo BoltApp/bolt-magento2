@@ -21,6 +21,8 @@ use Magento\Store\Model\Store;
  */
 class Config extends AbstractHelper
 {
+	const BOLT_TRACE_ID_HEADER = 'X-bolt-trace-id';
+
     /**
      * @var EncryptorInterface
      */
@@ -52,11 +54,21 @@ class Config extends AbstractHelper
 	const XML_PATH_REPLACE_SELECTORS = 'payment/boltpay/replace_selectors';
 
 	/**
-     * Automatic capture mode
-     */
-    const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
+	 * Path for Global CSS
+	 */
+	const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
 
-    /**
+	/**
+	 * Automatic capture mode
+	 */
+	const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
+
+	/**
+	 * Prefetch shipping
+	 */
+	const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
+
+	/**
      * Enabled
      */
     const XML_PATH_ACTIVE = 'payment/boltpay/active';
@@ -70,6 +82,11 @@ class Config extends AbstractHelper
 	 * Create cart
 	 */
 	const CREATE_ORDER_ACTION = 'boltpay/cart/data';
+
+	/**
+	 * Prefetch Shipping
+	 */
+	const SHIPPING_PREFETCH_ACTION = 'boltpay/shipping/prefetch';
 
 	/**
 	 * Save order
@@ -267,6 +284,19 @@ class Config extends AbstractHelper
 	}
 
 	/**
+	 * Get Replace Selectors from config
+	 *
+	 * @return  string
+	 */
+	public function getGlobalCSS()
+	{
+		return $this->scopeConfig->getValue(
+			self::XML_PATH_GLOBAL_CSS,
+			ScopeInterface::SCOPE_STORE
+		);
+	}
+
+	/**
 	 * Get Success Page Redirect from config
 	 *
 	 * @return  string
@@ -280,24 +310,42 @@ class Config extends AbstractHelper
 	}
 
 	/**
-     * Get Automatic Capture mode from config
-     *
-     * @param int|string|Store $store
-     *
-     * @return  boolean
-     */
-    public function getAutomaticCaptureMode($store = null)
-    {
-        //Automatic capture mode
-        return $this->scopeConfig->isSetFlag(
-            self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
-            ScopeInterface::SCOPE_STORE,
-            $store
-        );
-    }
+	 * Get Automatic Capture mode from config
+	 *
+	 * @param int|string|Store $store
+	 *
+	 * @return  boolean
+	 */
+	public function getAutomaticCaptureMode($store = null)
+	{
+		//Automatic capture mode
+		return $this->scopeConfig->isSetFlag(
+			self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
+			ScopeInterface::SCOPE_STORE,
+			$store
+		);
+	}
 
 
-    /**
+	/**
+	 * Get Prefetch Shipping and Tax config
+	 *
+	 * @param int|string|Store $store
+	 *
+	 * @return  boolean
+	 */
+	public function getPrefetchShipping($store = null)
+	{
+		//Automatic capture mode
+		return $this->scopeConfig->isSetFlag(
+			self::XML_PATH_PREFETCH_SHIPPING,
+			ScopeInterface::SCOPE_STORE,
+			$store
+		);
+	}
+
+
+	/**
      * Check if module is enabled
      *
      * @param int|string|Store $store

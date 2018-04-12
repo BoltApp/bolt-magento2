@@ -20,6 +20,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Boltpay Cart helper
@@ -60,6 +61,11 @@ class Cart extends AbstractHelper
 	 */
 	protected $logHelper;
 
+	/**
+	 * @var Bugsnag
+	 */
+	protected $bugsnag;
+
 	// Billing / shipping address fields that are required when the address data is sent to Bolt.
 	private $required_address_fields = [
 		'first_name',
@@ -82,6 +88,9 @@ class Cart extends AbstractHelper
 	);
 	///////////////////////////////////////////////////////
 
+	// Totals adjustment treshold
+	private $treshold = 0.01;
+
 	/**
 	 * @param Context           $context
 	 * @param CheckoutSession   $checkoutSession
@@ -91,6 +100,7 @@ class Cart extends AbstractHelper
 	 * @param ConfigHelper      $configHelper
 	 * @param Session           $customerSession
 	 * @param LogHelper         $logHelper
+	 * @param Bugsnag $bugsnag
 	 *
 	 * @codeCoverageIgnore
 	 */
@@ -102,7 +112,8 @@ class Cart extends AbstractHelper
 	    ApiHelper       $apiHelper,
 	    ConfigHelper    $configHelper,
 	    Session         $customerSession,
-	    LogHelper       $logHelper
+	    LogHelper       $logHelper,
+	    Bugsnag         $bugsnag
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -112,6 +123,7 @@ class Cart extends AbstractHelper
 	    $this->configHelper    = $configHelper;
 	    $this->customerSession = $customerSession;
 	    $this->logHelper       = $logHelper;
+	    $this->bugsnag         = $bugsnag;
     }
 
 	/**
@@ -121,7 +133,7 @@ class Cart extends AbstractHelper
 	 * @param string $place_order_payload      additional data collected from the (one page checkout) page,
 	 *                                         i.e. billing address to be saved with the order
 	 *
-	 * @return Response|int
+	 * @return Response|void
 	 * @throws Exception
 	 * @throws LocalizedException
 	 * @throws Zend_Http_Client_Exception
@@ -130,6 +142,7 @@ class Cart extends AbstractHelper
     {
         //Get cart data
         $cartData = $this->getCartData($payment_only, $place_order_payload);
+	    if (!$cartData) return;
 	    $apiKey   = $this->configHelper->getApiKey();
 
         //Request Data
@@ -245,16 +258,15 @@ class Cart extends AbstractHelper
 	{
 		$quote = $this->checkoutSession->getQuote();
 
+		$cart = [];
+
 		if (null === $quote->getId()) {
-			throw new LocalizedException(__('Non existing session quote object.'));
+			$this->bugsnag->notifyError('Get Cart Data Error', 'Non existing session quote object');
+			return $cart;
 		}
 
 		$quote->collectTotals();
 		$totals = $quote->getTotals();
-
-		//$this->logHelper->addInfoLog(var_export($totals, 1));
-
-		$cart = [];
 
 		// Order reference id
 		$cart['order_reference'] = $quote->getId();
@@ -268,15 +280,30 @@ class Cart extends AbstractHelper
 		// Get array of all items what can be display directly
 		$items = $quote->getAllVisibleItems();
 
+		$totalAmount = 0;
+		$diff = 0;
+
 		foreach($items as $item) {
+
 			$product = [];
 			$productId = $item->getProductId();
+
+			$unit_price   = $item->getCalculationPrice();
+			$total_amount = $unit_price * $item->getQty();
+
+			$rounded_total_amount = $this->getRoundAmount($total_amount);
+
+			// Aggregate eventual total differences if prices are stored with more than 2 decimal places
+			$diff += $total_amount * 100 -$rounded_total_amount;
+
+			// Aggregate cart total
+			$totalAmount += $rounded_total_amount;
 
 			$product['reference']    = $productId;
 			$product['name']         = $item->getName();
 			$product['description']  = $item->getDescription();
-			$product['total_amount'] = $this->getRoundAmount($item->getCalculationPrice() * $item->getQty());
-			$product['unit_price']   = $this->getRoundAmount($item->getCalculationPrice());
+			$product['total_amount'] = $rounded_total_amount;
+			$product['unit_price']   = $this->getRoundAmount($unit_price);
 			$product['quantity']     = $item->getQty();
 			$product['sku']          = $item->getSku();
 			//Get product Image
@@ -365,21 +392,37 @@ class Cart extends AbstractHelper
 				}
 			}
 
-			$cart['shipments'] = @$shipping_address ? [[
-				'cost'             => $this->getRoundAmount($shippingAddress->getShippingAmount()),
-				'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
-				'shipping_address' => $shipping_address,
-				'service'          => $shippingAddress->getShippingDescription(),
-			]] : null;
+			$cart['shipments'] = [];
 
-			$totalAmount = $quote->getGrandTotal();
-			$taxAmount   = $this->getRoundAmount($shippingAddress->getTaxAmount());
+
+			if (@$shipping_address) {
+
+				$cost         = $shippingAddress->getShippingAmount();
+				$rounded_cost = $this->getRoundAmount($cost);
+
+				$diff += $cost * 100 - $rounded_cost;
+				$totalAmount += $rounded_cost;
+
+				$cart['shipments'][] = [
+					'cost'             => $rounded_cost,
+					'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
+					'shipping_address' => $shipping_address,
+					'service'          => $shippingAddress->getShippingDescription(),
+				];
+			}
+
+			$tax_amount         = $shippingAddress->getTaxAmount();
+			$rounded_tax_amount = $this->getRoundAmount($tax_amount);
+
+			$diff = $tax_amount * 100 - $rounded_tax_amount;
+
+			$taxAmount = $rounded_tax_amount;
+			$totalAmount += $rounded_tax_amount;
 
 		} else {
 
-			// multi-step checkout, get subtotal, no tax
-			$totalAmount = $quote->getSubtotalWithDiscount();
-			$taxAmount   = 0;
+			// multi-step checkout, subtotal with discounts, no shipping, no tax
+			$taxAmount = 0;
 		}
 
 		// unset billing if not all required fields are present
@@ -394,41 +437,69 @@ class Cart extends AbstractHelper
 		$cart['discounts'] = [];
 
 		if ($amount = @$shippingAddress->getDiscountAmount()) {
+
+			$amount         = abs($amount);
+			$rounded_amount = $this->getRoundAmount($amount);
+
 			$cart['discounts'][] = [
 				'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
-				'amount'      => abs($this->getRoundAmount($amount)),
+				'amount'      => $rounded_amount,
 			];
+
+			$diff -= $amount * 100 - $rounded_amount;
+			$totalAmount -= $rounded_amount;
 		}
 
 		foreach ($this->discount_types as $discount) {
 
 			if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
 
+				$amount = abs($amount);
+				$rounded_amount = $this->getRoundAmount($amount);
+
 				$cart['discounts'][] = [
 					'description' => @$totals[$discount]->getTitle(),
-					'amount'      => abs($this->getRoundAmount($amount))
+					'amount'      => $rounded_amount,
 				];
 
-				if (!$payment_only) {
-					$totalAmount -= abs($amount);
-				}
+				$diff -= $amount * 100 - $rounded_amount;
+				$totalAmount -= $rounded_amount;
 			}
 		}
 
 		if ($amount = @$quote->getCustomerBalanceAmountUsed()) {
+
+			$amount = abs($amount);
+			$rounded_amount = $this->getRoundAmount($amount);
+
 			$cart['discounts'][] = [
 				'description' => __('%1 Store Credit', $amount),
-				'amount'      => abs($this->getRoundAmount($amount))
+				'amount'      => $rounded_amount,
 			];
-			if (!$payment_only) {
-				$totalAmount -= abs($amount);
-			}
+
+			$diff -= $amount * 100 - $rounded_amount;
+			$totalAmount -= $rounded_amount;
 		}
 
-		$cart['total_amount'] = $this->getRoundAmount($totalAmount);
+
+		$cart['items'][0]['total_amount'] += round($diff);
+
+		$totalAmount += round($diff);
+
+		$cart['total_amount'] = $totalAmount;
 		$cart['tax_amount']   = $taxAmount;
 
-		//$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
+		if (abs($diff) >= $this->treshold) {
+			$this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
+				$report->setMetaData([
+					'TOTALS_DIFF' => [
+						'diff' => $diff,
+						'cart' => $cart,
+					]
+				]);
+			});
+			$this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
+		}
 
 		return ['cart' => $cart];
 	}
@@ -455,6 +526,6 @@ class Cart extends AbstractHelper
      */
     public function getRoundAmount($amount)
     {
-	    return (int)round($amount * 100);
+	    return round($amount * 100);
     }
 }

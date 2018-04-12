@@ -84,6 +84,20 @@ class Bugsnag extends AbstractHelper
 	}
 
 	/**
+	 * Notify Bugsnag of a non-fatal/handled error.
+	 *
+	 * @param string        $name     the name of the error, a short (1 word) string
+	 * @param string        $message  the error message
+	 * @param callable|null $callback the customization callback
+	 *
+	 * @return void
+	 */
+	public function notifyError($name, $message, callable $callback = null)
+	{
+		$this->bugsnag->notifyError($name, $message, $callback);
+	}
+
+	/**
 	 * Regsier a new notification callback.
 	 *
 	 * @param callable $callback
