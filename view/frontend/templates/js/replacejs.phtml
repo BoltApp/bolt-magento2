@@ -552,17 +552,21 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 
             var selector = selectors[i];
 
-            onElementReady(selector, function(el) {
-                var value = el.textContent;
-                onDataChange(selector, function(element) {
-                    if (visible_only && element.offsetParent === null) return;
-                    if (element.textContent !== value) {
-                        value = element.textContent;
-                        if (non_empty && !value) return;
-                        fn(element);
-                    }
-                });
-            })
+            ! function(selector) {
+
+                onElementReady(selector, function(el) {
+                    var value = el.textContent;
+                    onDataChange(selector, function(element) {
+                        if (visible_only && element.offsetParent === null) return;
+                        if (element.textContent !== value) {
+                            value = element.textContent;
+                            if (non_empty && !value) return;
+                            fn(element);
+                        }
+                    });
+                })
+
+            }(selector);
         }
     };
     ///////////////////////////////////////////////////////////
@@ -576,17 +580,21 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 
             var selector = selectors[i];
 
-            onElementReady(selector, function(el) {
-                if (on_ready) fn(el);
-                var value = el.value;
-                onAttributesChange(selector, function(element) {
-                    if (visible_only && element.offsetParent === null) return;
-                    if (element.value !== value) {
-                        value = element.value;
-                        fn(element);
-                    }
-                });
-            })
+            ! function(selector) {
+
+                onElementReady(selector, function(el) {
+                    if (on_ready) fn(el);
+                    var value = el.value;
+                    onAttributesChange(selector, function(element) {
+                        if (visible_only && element.offsetParent === null) return;
+                        if (element.value !== value) {
+                            value = element.value;
+                            fn(element);
+                        }
+                    });
+                })
+
+            }(selector);
         }
     };
     ///////////////////////////////////////////////////////////
