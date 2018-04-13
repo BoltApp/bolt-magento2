@@ -17,6 +17,7 @@ use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use \Magento\Customer\Model\Session as CustomerSession;
 
 
 /**
@@ -31,6 +32,9 @@ class Prefetch extends Action
 {
 	/** @var CheckoutSession */
 	protected $checkoutSession;
+
+	/** @var CustomerSession */
+	protected $customerSession;
 
 	/**
 	 * @var ZendClientFactory
@@ -70,6 +74,7 @@ class Prefetch extends Action
 	 * @param CartHelper $cartHelper
 	 * @param Bugsnag $bugsnag
 	 * @param ConfigHelper $configHelper
+	 * @param CustomerSession $customerSession
 	 *
 	 * @codeCoverageIgnore
 	 */
@@ -80,7 +85,8 @@ class Prefetch extends Action
 		ShippingMethods   $shippingMethods,
 		CartHelper        $cartHelper,
 		Bugsnag           $bugsnag,
-		configHelper     $configHelper
+		configHelper      $configHelper,
+		CustomerSession   $customerSession
 	) {
 		parent::__construct($context);
 		$this->checkoutSession   = $checkoutSession;
@@ -89,6 +95,7 @@ class Prefetch extends Action
 		$this->cartHelper        = $cartHelper;
 		$this->bugsnag           = $bugsnag;
 		$this->configHelper      = $configHelper;
+		$this->customerSession   = $customerSession;
 	}
 
 
@@ -129,7 +136,7 @@ class Prefetch extends Action
 
 
 			///////////////////////////////////////////////////////////////////////////
-			// Estimate shipping for geolocated address
+			// Prefetch shipping for geolocated address
 			///////////////////////////////////////////////////////////////////////////
 			$ip = $this->getIpAddress();
 
@@ -140,7 +147,7 @@ class Prefetch extends Action
 			$response = $client->request()->getBody();
 			$location = json_decode($response);
 
-			if ($location) {
+			if ($location && $location->country_code && $location->zip_code) {
 
 				$shipping_address = [
 					'country_code' => $location->country_code,
@@ -155,19 +162,46 @@ class Prefetch extends Action
 
 
 			/////////////////////////////////////////////////////////////////////////////////
-			// Quote address may have already been set - checkout page or logged in customer.
-			// Run the estimation with quote address unchanged
+			// Prefetch Shipping and Tax for existing shipping address
+			/////////////////////////////////////////////////////////////////////////////////
+			$prefetchForStoredAddress = function($shippingAddress) use ($quote, $cart) {
+
+				if ($shippingAddress &&
+				    ($country_code = $shippingAddress->getData('country_id')) &&
+				    ($postal_code  = $shippingAddress->getData('postcode'))
+				) {
+
+					$shipping_address = [
+						'country_code' => $country_code,
+						'postal_code'  => $postal_code,
+						'region'       => $shippingAddress->getData('region') ?: '',
+						'locality'     => $shippingAddress->getData('city') ?: '',
+					];
+
+					$this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+				}
+			};
+			/////////////////////////////////////////////////////////////////////////////////
+
+
+			/////////////////////////////////////////////////////////////////////////////////
+			// Quote address may have already been set in checkout page.
+			// Run the estimation for the quote shipping address.
 			/////////////////////////////////////////////////////////////////////////////////
 			$shippingAddress = $quote->getShippingAddress();
+			$prefetchForStoredAddress($shippingAddress);
+			/////////////////////////////////////////////////////////////////////////////////
 
-			$shipping_address = [
-				'country_code' => $shippingAddress->getData('country_id') ?: '',
-				'postal_code'  => $shippingAddress->getData('postcode') ?: '',
-				'region'       => $shippingAddress->getData('region') ?: '',
-				'locality'     => $shippingAddress->getData('city') ?: '',
-			];
 
-			$this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+			/////////////////////////////////////////////////////////////////////////////////
+			// Run the estimation for logged in customer default shipping address.
+			/////////////////////////////////////////////////////////////////////////////////
+			$customer = $this->customerSession->getCustomer();
+
+			if ($customer) {
+				$shippingAddress = $customer->getDefaultShippingAddress();
+				$prefetchForStoredAddress($shippingAddress);
+			}
 			/////////////////////////////////////////////////////////////////////////////////
 
 		} catch ( Exception $e ) {
