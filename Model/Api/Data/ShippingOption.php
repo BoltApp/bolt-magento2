@@ -30,7 +30,7 @@ class ShippingOption implements ShippingOptionInterface
 	/**
 	 * @var string
 	 */
-	protected $carrier;
+	protected $reference;
 
 	/**
 	 * @var int
@@ -84,25 +84,25 @@ class ShippingOption implements ShippingOptionInterface
 	}
 
 	/**
-	 * Get shipping carrier.
+	 * Get shipping reference.
 	 *
 	 * @api
 	 * @return string
 	 */
-	public function getCarrier() {
-		return $this->carrier;
+	public function getReference() {
+		return $this->reference;
 	}
 
 	/**
-	 * Set shipping carrier.
+	 * Set shipping reference.
 	 *
 	 * @api
-	 * @param $carrier
+	 * @param $reference
 	 *
 	 * @return $this
 	 */
-	public function setCarrier( $carrier ) {
-		$this->carrier = $carrier;
+	public function setReference( $reference ) {
+		$this->reference = $reference;
 		return $this;
 	}
 

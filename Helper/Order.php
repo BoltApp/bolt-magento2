@@ -254,23 +254,10 @@ class Order extends AbstractHelper {
 	 */
 	private function setShippingMethod($quote, $transaction) {
 
-		$service = @$transaction->order->cart->shipments[0]->service;
-
 		$shippingAddress = $quote->getShippingAddress();
-		$shippingAddress->setCollectShippingRates(true)->collectShippingRates();
-		$shippingRates   = $shippingAddress->getGroupedAllShippingRates();
+		$shippingAddress->setCollectShippingRates(true);
 
-		$shippingMethod = null;
-
-		foreach ($shippingRates as $carrierRates) {
-			foreach ($carrierRates as $rate) {
-				$method = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
-				if ($service == $method->getCarrierTitle() . " - " . $method->getMethodTitle()) {
-					$shippingMethod = $method->getCarrierCode() . "_" . $method->getMethodCode();
-					break 2;
-				}
-			}
-		}
+		$shippingMethod = $transaction->order->cart->shipments[0]->reference;
 		$shippingAddress->setShippingMethod($shippingMethod)->save();
 	}
 
@@ -452,6 +439,8 @@ class Order extends AbstractHelper {
 	{
 		// fetch transaction info transaction is not passed as a parameter
 		if ($reference && !$transaction) $transaction = $this->fetchTransactionInfo($reference);
+
+		if ($transaction->type == 'zero_amount') return;
 
 		/** @var PaymentModel $payment */
 		$payment = $order->getPayment();

@@ -361,6 +361,7 @@ class ShippingMethods implements ShippingMethodsInterface
 							$method => [
 								'diff'       => $diff,
 								'service'    => $service,
+								'reference'  => $method,
 								'cost'       => $rounded_cost,
 								'tax_amount' => $tax_amount,
 							]
@@ -375,7 +376,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
 				$errors[] = [
 					'service'    => $service,
-					'carrier'    => $method,
+					'reference'  => $method,
 					'cost'       => $rounded_cost,
 					'tax_amount' => $tax_amount,
 					'error'      => $error,
@@ -388,7 +389,7 @@ class ShippingMethods implements ShippingMethodsInterface
 				->create()
 				->setService($service)
 				->setCost($rounded_cost)
-				->setCarrier($method)
+				->setReference($method)
 				->setTaxAmount($tax_amount);
 		}
 

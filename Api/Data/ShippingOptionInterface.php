@@ -50,22 +50,22 @@ interface ShippingOptionInterface {
 	public function setCost($cost);
 
 	/**
-	 * Get shipping carrier.
+	 * Get shipping reference.
 	 *
 	 * @api
 	 * @return string
 	 */
-	public function getCarrier();
+	public function getReference();
 
 	/**
-	 * Set shipping carrier.
+	 * Set shipping reference.
 	 *
 	 * @api
-	 * @param $carrier
+	 * @param $reference
 	 *
 	 * @return $this
 	 */
-	public function setCarrier( $carrier );
+	public function setReference( $reference );
 
 	/**
 	 * Get shipping tax.
