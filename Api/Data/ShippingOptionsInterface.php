@@ -7,7 +7,6 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
-
 /**
  * Shipping options interface. Shipping options field of the Shipping and Tax response object.
  *
@@ -16,37 +15,37 @@ namespace Bolt\Boltpay\Api\Data;
  */
 interface ShippingOptionsInterface
 {
-	/**
-	 * Get all available shipping options.
-	 *
-	 * @api
-	 * @return \Bolt\Boltpay\Api\Data\ShippingOptionInterface[]
-	 */
-	public function getShippingOptions();
+    /**
+     * Get all available shipping options.
+     *
+     * @api
+     * @return \Bolt\Boltpay\Api\Data\ShippingOptionInterface[]
+     */
+    public function getShippingOptions();
 
-	/**
-	 * Set available shipping options.
-	 *
-	 * @api
-	 * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface[]
-	 * @return $this
-	 */
-	public function setShippingOptions($shippingOptions);
+    /**
+     * Set available shipping options.
+     *
+     * @api
+     * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface[]
+     * @return $this
+     */
+    public function setShippingOptions($shippingOptions);
 
-	/**
-	 * Get order tax result.
-	 *
-	 * @api
-	 * @return \Bolt\Boltpay\Api\Data\ShippingTaxInterface
-	 */
-	public function getTaxResult();
+    /**
+     * Get order tax result.
+     *
+     * @api
+     * @return \Bolt\Boltpay\Api\Data\ShippingTaxInterface
+     */
+    public function getTaxResult();
 
-	/**
-	 * Set available shipping options.
-	 *
-	 * @api
-	 * @param \Bolt\Boltpay\Api\Data\ShippingTaxInterface
-	 * @return $this
-	 */
-	public function setTaxResult($taxResult);
+    /**
+     * Set available shipping options.
+     *
+     * @api
+     * @param \Bolt\Boltpay\Api\Data\ShippingTaxInterface
+     * @return $this
+     */
+    public function setTaxResult($taxResult);
 }
