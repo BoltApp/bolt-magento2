@@ -28,7 +28,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class Api extends AbstractHelper {
+class Api extends AbstractHelper
+{
 
     /**
      * Api current version
@@ -36,37 +37,37 @@ class Api extends AbstractHelper {
     const API_CURRENT_VERSION = 'v1/';
 
 
-	/**
-	 * Api publish oauth tokens
-	 */
-	const API_VERIFY_SIGNATURE = 'merchant/verify_signature';
+    /**
+     * Api publish oauth tokens
+     */
+    const API_VERIFY_SIGNATURE = 'merchant/verify_signature';
 
 
-	/**
-	 * Api sign a payload end point
-	 */
-	const API_SIGN = 'merchant/sign';
+    /**
+     * Api sign a payload end point
+     */
+    const API_SIGN = 'merchant/sign';
 
 
-	/**
+    /**
      * Api create order
      */
     const API_CREATE_ORDER = 'merchant/orders';
 
 
-	/**
-	 * Api void transaction
-	 */
-	const API_VOID_TRANSACTION = 'merchant/transactions/void';
+    /**
+     * Api void transaction
+     */
+    const API_VOID_TRANSACTION = 'merchant/transactions/void';
 
 
-	/**
-	 * Api capture transaction
-	 */
-	const API_CAPTURE_TRANSACTION = 'merchant/transactions/capture';
+    /**
+     * Api capture transaction
+     */
+    const API_CAPTURE_TRANSACTION = 'merchant/transactions/capture';
 
 
-	/**
+    /**
      * Api refund transaction
      */
     const API_REFUND_TRANSACTION = 'merchant/transactions/credit';
@@ -118,10 +119,10 @@ class Api extends AbstractHelper {
     protected $requestFactory;
 
 
-	/**
-	 * @var Bugsnag
-	 */
-	protected $bugsnag;
+    /**
+     * @var Bugsnag
+     */
+    protected $bugsnag;
 
 
     /**
@@ -135,13 +136,13 @@ class Api extends AbstractHelper {
      * @codeCoverageIgnore
      */
     public function __construct(
-    	Context           $context,
-	    ZendClientFactory $httpClientFactory,
-	    ConfigHelper      $configHelper,
-	    ResponseFactory   $responseFactory,
-	    RequestFactory    $requestFactory,
-	    LogHelper         $logHelper,
-	    Bugsnag           $bugsnag
+        Context $context,
+        ZendClientFactory $httpClientFactory,
+        ConfigHelper $configHelper,
+        ResponseFactory $responseFactory,
+        RequestFactory $requestFactory,
+        LogHelper $logHelper,
+        Bugsnag $bugsnag
     ) {
         parent::__construct($context);
         $this->httpClientFactory = $httpClientFactory;
@@ -149,7 +150,7 @@ class Api extends AbstractHelper {
         $this->responseFactory   = $responseFactory;
         $this->requestFactory    = $requestFactory;
         $this->logHelper         = $logHelper;
-	    $this->bugsnag           = $bugsnag;
+        $this->bugsnag           = $bugsnag;
     }
 
 
@@ -159,67 +160,71 @@ class Api extends AbstractHelper {
      * @param  string $dynamicUrl
      * @return  string
      */
-    private function getFullApiUrl($dynamicUrl) {
+    private function getFullApiUrl($dynamicUrl)
+    {
         $staticUrl  = $this->configHelper->getApiUrl();
-	    return $staticUrl . self::API_CURRENT_VERSION . $dynamicUrl;
+        return $staticUrl . self::API_CURRENT_VERSION . $dynamicUrl;
     }
 
 
-	/**
-	 * Checks if the Bolt API response indicates an error.
-	 *
-	 * @param  mixed $response    Bolt API response
-	 * @return bool               true if there is an error, false otherwise
-	 */
-	private function isResponseError($response) {
-		$arr = (array)$response;
-		return array_key_exists('errors', $arr) || array_key_exists('error_code', $arr);
-	}
+    /**
+     * Checks if the Bolt API response indicates an error.
+     *
+     * @param  mixed $response    Bolt API response
+     * @return bool               true if there is an error, false otherwise
+     */
+    private function isResponseError($response)
+    {
+        $arr = (array)$response;
+        return array_key_exists('errors', $arr) || array_key_exists('error_code', $arr);
+    }
 
 
-	/**
-	 * A helper methond for checking errors in JSON object.
-	 *
-	 * @return null|string
-	 */
-	private function handleJsonParseError() {
-		switch (json_last_error()) {
-			case JSON_ERROR_NONE:
-				return null;
+    /**
+     * A helper methond for checking errors in JSON object.
+     *
+     * @return null|string
+     */
+    private function handleJsonParseError()
+    {
+        switch (json_last_error()) {
+            case JSON_ERROR_NONE:
+                return null;
 
-			case JSON_ERROR_DEPTH:
-				return 'Maximum stack depth exceeded';
+            case JSON_ERROR_DEPTH:
+                return 'Maximum stack depth exceeded';
 
-			case JSON_ERROR_STATE_MISMATCH:
-				return 'Underflow or the modes mismatch';
+            case JSON_ERROR_STATE_MISMATCH:
+                return 'Underflow or the modes mismatch';
 
-			case JSON_ERROR_CTRL_CHAR:
-				return 'Unexpected control character found';
+            case JSON_ERROR_CTRL_CHAR:
+                return 'Unexpected control character found';
 
-			case JSON_ERROR_SYNTAX:
-				return 'Syntax error, malformed JSON';
+            case JSON_ERROR_SYNTAX:
+                return 'Syntax error, malformed JSON';
 
-			case JSON_ERROR_UTF8:
-				return 'Malformed UTF-8 characters, possibly incorrectly encoded';
+            case JSON_ERROR_UTF8:
+                return 'Malformed UTF-8 characters, possibly incorrectly encoded';
 
-			default:
-				return 'Unknown error';
-		}
-	}
+            default:
+                return 'Unknown error';
+        }
+    }
 
 
-	/**
-	 * Send request to Bolt Gateway and return response
-	 *
-	 * @param Request $request
-	 *
-	 * @return Response|int
-	 * @throws LocalizedException
-	 * @throws Zend_Http_Client_Exception
-	 */
-    public function sendRequest(Request $request) {
+    /**
+     * Send request to Bolt Gateway and return response
+     *
+     * @param Request $request
+     *
+     * @return Response|int
+     * @throws LocalizedException
+     * @throws Zend_Http_Client_Exception
+     */
+    public function sendRequest(Request $request)
+    {
 
-	    $result = $this->responseFactory->create();
+        $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
 
         $apiData = $request->getApiData();
@@ -228,81 +233,79 @@ class Api extends AbstractHelper {
         $requestMethod = $request->getRequestMethod();
 
 
-	    $requestData = $requestMethod !== "GET" ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
+        $requestData = $requestMethod !== "GET" ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
 
         $client->setUri($apiUrl);
 
         $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
         $headers =  [
-	        'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
-	        'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
-	        'Content-Type'          => 'application/json',
-	        'Content-Length'        => $requestData ? strlen($requestData) : null,
-	        'X-Api-Key'             => $apiKey,
-	        'X-Nonce'               => rand(100000000000, 999999999999)
+            'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+            'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
+            'Content-Type'          => 'application/json',
+            'Content-Length'        => $requestData ? strlen($requestData) : null,
+            'X-Api-Key'             => $apiKey,
+            'X-Nonce'               => rand(100000000000, 999999999999)
         ] + (array)$request->getHeaders();
 
-	    $request->setHeaders($headers);
+        $request->setHeaders($headers);
 
-	    $this->bugsnag->registerCallback(function ($report) use ($request) {
-		    $report->setMetaData([
-			    'BOLT API REQUEST' => $request->getData()
-		    ]);
-	    });
+        $this->bugsnag->registerCallback(function ($report) use ($request) {
+            $report->setMetaData([
+                'BOLT API REQUEST' => $request->getData()
+            ]);
+        });
 
         $client->setHeaders($headers);
 
-	    $responseBody = null;
+        $responseBody = null;
 
         try {
-
             $response     = $client->setRawData($requestData, 'application/json')->request($requestMethod);
-	        $responseBody = $response->getBody();
+            $responseBody = $response->getBody();
 
-	        $this->bugsnag->registerCallback(function ($report) use ($response) {
-		        $report->setMetaData([
-			        'BOLT API RESPONSE' => [
-				        'headers' => $response->getHeaders(),
-				        'body'    => $response->getBody(),
-			        ]
-		        ]);
-	        });
+            $this->bugsnag->registerCallback(function ($report) use ($response) {
+                $report->setMetaData([
+                    'BOLT API RESPONSE' => [
+                        'headers' => $response->getHeaders(),
+                        'body'    => $response->getBody(),
+                    ]
+                ]);
+            });
 
-	        $this->bugsnag->registerCallback(function ($report) use ($response) {
-	        	$headers = $response->getHeaders();
-		        $report->setMetaData([
-			        'BREADCRUMBS_' => [
-				        'bolt_trace_id' => @$headers[ConfigHelper::BOLT_TRACE_ID_HEADER],
-			        ]
-		        ]);
-	        });
-
+            $this->bugsnag->registerCallback(function ($report) use ($response) {
+                $headers = $response->getHeaders();
+                $report->setMetaData([
+                    'BREADCRUMBS_' => [
+                        'bolt_trace_id' => @$headers[ConfigHelper::BOLT_TRACE_ID_HEADER],
+                    ]
+                ]);
+            });
         } catch (\Exception $e) {
-	        throw new LocalizedException($this->wrapGatewayError($e->getMessage()));
+            throw new LocalizedException($this->wrapGatewayError($e->getMessage()));
         }
 
         if ($request->getStatusOnly() && $response) {
-        	return $response->getStatus();
+            return $response->getStatus();
         }
 
         if ($responseBody) {
             $resultFromJSON = json_decode($responseBody);
-	        $jsonError  = $this->handleJsonParseError();
-	        if ($jsonError != null) {
-		        $message = __("JSON Parse Error: " . $jsonError);
-		        throw new LocalizedException($message);
-	        }
+            $jsonError  = $this->handleJsonParseError();
+            if ($jsonError != null) {
+                $message = __("JSON Parse Error: " . $jsonError);
+                throw new LocalizedException($message);
+            }
 
-	        if ($this->isResponseError($resultFromJSON))  {
-		        $message = __("Bolt API Error Response");
-		        throw new LocalizedException($message);
-	        }
+            if ($this->isResponseError($resultFromJSON)) {
+                $message = __("Bolt API Error Response");
+                throw new LocalizedException($message);
+            }
 
             $result->setResponse($resultFromJSON);
         } else {
             throw new LocalizedException(
-            __('Something went wrong in the payment gateway.')
+                __('Something went wrong in the payment gateway.')
             );
         }
         return $result;
@@ -314,35 +317,37 @@ class Api extends AbstractHelper {
      * @param string $text
      * @return Phrase
      */
-    private function wrapGatewayError($text) {
+    private function wrapGatewayError($text)
+    {
         return __('Gateway error: %1', $text);
     }
 
 
-	/**
-	 * Build request
-	 *
-	 * @param DataObject $requestData
-	 *
-	 * @return Request
-	 */
-    public function buildRequest($requestData) {
+    /**
+     * Build request
+     *
+     * @param DataObject $requestData
+     *
+     * @return Request
+     */
+    public function buildRequest($requestData)
+    {
         $apiData       = $requestData->getApiData();
         $dynamicApiUrl = $requestData->getDynamicApiUrl();
         $apiKey        = $requestData->getApiKey();
         $requestMethod = empty($requestData->getRequestMethod()) ? 'POST' : $requestData->getRequestMethod();
         $apiUrl        = $this->getFullApiUrl($dynamicApiUrl);
 
-	    $headers    = (array)$requestData->getHeaders();
-	    $statusOnly = (bool)$requestData->getStatusOnly();
+        $headers    = (array)$requestData->getHeaders();
+        $statusOnly = (bool)$requestData->getStatusOnly();
 
         $request = $this->requestFactory->create();
         $request->setApiData($apiData);
         $request->setApiUrl($apiUrl);
-	    $request->setApiKey($apiKey);
-	    $request->setRequestMethod($requestMethod);
-	    $request->setHeaders($headers);
-	    $request->setStatusOnly($statusOnly);
+        $request->setApiKey($apiKey);
+        $request->setRequestMethod($requestMethod);
+        $request->setHeaders($headers);
+        $request->setStatusOnly($statusOnly);
         return $request;
     }
 }

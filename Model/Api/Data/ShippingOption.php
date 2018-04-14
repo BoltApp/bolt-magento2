@@ -16,115 +16,124 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
  */
 class ShippingOption implements ShippingOptionInterface
 {
-	/**
-	 * @var string
-	 */
-	protected $service;
+    /**
+     * @var string
+     */
+    protected $service;
 
-	/**
-	 * @var int
-	 */
-	protected $cost;
+    /**
+     * @var int
+     */
+    protected $cost;
 
 
-	/**
-	 * @var string
-	 */
-	protected $reference;
+    /**
+     * @var string
+     */
+    protected $reference;
 
-	/**
-	 * @var int
-	 */
-	protected $tax_amount;
+    /**
+     * @var int
+     */
+    protected $tax_amount;
 
-	/**
-	 * Get shipping service.
-	 *
-	 * @api
-	 * @return string
-	 */
-	public function getService() {
-		return $this->service;
-	}
+    /**
+     * Get shipping service.
+     *
+     * @api
+     * @return string
+     */
+    public function getService()
+    {
+        return $this->service;
+    }
 
-	/**
-	 * Set shipping service.
-	 *
-	 * @api
-	 * @param string $service
-	 *
-	 * @return $this
-	 */
-	public function setService( $service ) {
-		$this->service = $service;
-		return $this;
-	}
+    /**
+     * Set shipping service.
+     *
+     * @api
+     * @param string $service
+     *
+     * @return $this
+     */
+    public function setService($service)
+    {
+        $this->service = $service;
+        return $this;
+    }
 
-	/**
-	 * Get shipping cost.
-	 *
-	 * @api
-	 * @return int
-	 */
-	public function getCost() {
-		return $this->cost;
-	}
+    /**
+     * Get shipping cost.
+     *
+     * @api
+     * @return int
+     */
+    public function getCost()
+    {
+        return $this->cost;
+    }
 
-	/**
-	 * Set shipping cost.
-	 *
-	 * @api
-	 * @param int $cost
-	 *
-	 * @return $this
-	 */
-	public function setCost( $cost ) {
-		$this->cost = $cost;
-		return $this;
-	}
+    /**
+     * Set shipping cost.
+     *
+     * @api
+     * @param int $cost
+     *
+     * @return $this
+     */
+    public function setCost($cost)
+    {
+        $this->cost = $cost;
+        return $this;
+    }
 
-	/**
-	 * Get shipping reference.
-	 *
-	 * @api
-	 * @return string
-	 */
-	public function getReference() {
-		return $this->reference;
-	}
+    /**
+     * Get shipping reference.
+     *
+     * @api
+     * @return string
+     */
+    public function getReference()
+    {
+        return $this->reference;
+    }
 
-	/**
-	 * Set shipping reference.
-	 *
-	 * @api
-	 * @param $reference
-	 *
-	 * @return $this
-	 */
-	public function setReference( $reference ) {
-		$this->reference = $reference;
-		return $this;
-	}
+    /**
+     * Set shipping reference.
+     *
+     * @api
+     * @param $reference
+     *
+     * @return $this
+     */
+    public function setReference($reference)
+    {
+        $this->reference = $reference;
+        return $this;
+    }
 
-	/**
-	 * Get shipping tax.
-	 *
-	 * @api
-	 * @return int
-	 */
-	public function getTaxAmount() {
-		return $this->tax_amount;
-	}
+    /**
+     * Get shipping tax.
+     *
+     * @api
+     * @return int
+     */
+    public function getTaxAmount()
+    {
+        return $this->tax_amount;
+    }
 
-	/**
-	 * Set shipping tax.
-	 *
-	 * @api
-	 * @param $tax_amount
-	 *
-	 * @return $this
-	 */
-	public function setTaxAmount( $tax_amount ) {
-		$this->tax_amount = $tax_amount;
-		return $this;
-}}
+    /**
+     * Set shipping tax.
+     *
+     * @api
+     * @param $tax_amount
+     *
+     * @return $this
+     */
+    public function setTaxAmount($tax_amount)
+    {
+        $this->tax_amount = $tax_amount;
+        return $this;
+    }
+}

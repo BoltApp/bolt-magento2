@@ -45,16 +45,16 @@ class Log extends AbstractHelper
         $this->configHelper = $configHelper;
     }
 
-	/**
-	 * Add info log
-	 *
-	 * @param mixed $info log message
-	 *
-	 * @return Log
-	 */
+    /**
+     * Add info log
+     *
+     * @param mixed $info log message
+     *
+     * @return Log
+     */
     public function addInfoLog($info)
     {
-        if($this->configHelper->isDebugModeOn()){
+        if ($this->configHelper->isDebugModeOn()) {
             $this->boltLogger->info($info);
         }
         return $this;

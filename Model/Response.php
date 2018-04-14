@@ -10,4 +10,7 @@ use Magento\Framework\DataObject;
 /**
  * Response object
  */
-class Response extends DataObject {}
+class Response extends DataObject
+{
+
+}

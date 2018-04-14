@@ -18,17 +18,17 @@ use Bolt\Boltpay\Api\Data\ShippingTaxInterface;
  */
 class ShippingOptions implements ShippingOptionsInterface
 {
-	/**
-	 * @var array
-	 */
-	protected $shippingOptions = [];
+    /**
+     * @var array
+     */
+    protected $shippingOptions = [];
 
-	/**
-	 * @var ShippingTaxInterface
-	 */
-	protected $taxResult;
+    /**
+     * @var ShippingTaxInterface
+     */
+    protected $taxResult;
 
-	/**
+    /**
      * Get all available shipping options.
      *
      * @api
@@ -36,7 +36,7 @@ class ShippingOptions implements ShippingOptionsInterface
      */
     public function getShippingOptions()
     {
-	    return $this->shippingOptions;
+        return $this->shippingOptions;
     }
 
     /**
@@ -52,26 +52,28 @@ class ShippingOptions implements ShippingOptionsInterface
         return $this;
     }
 
-	/**
-	 * Get order tax result.
-	 *
-	 * @api
-	 * @return ShippingTaxInterface
-	 */
-	public function getTaxResult() {
-		return $this->taxResult;
-	}
+    /**
+     * Get order tax result.
+     *
+     * @api
+     * @return ShippingTaxInterface
+     */
+    public function getTaxResult()
+    {
+        return $this->taxResult;
+    }
 
-	/**
-	 * Set available shipping options.
-	 *
-	 * @api
-	 * @param ShippingTaxInterface
-	 *
-	 * @return $this
-	 */
-	public function setTaxResult( $taxResult ) {
-		$this->taxResult = $taxResult;
-		return $this;
-	}
+    /**
+     * Set available shipping options.
+     *
+     * @api
+     * @param ShippingTaxInterface
+     *
+     * @return $this
+     */
+    public function setTaxResult($taxResult)
+    {
+        $this->taxResult = $taxResult;
+        return $this;
+    }
 }
