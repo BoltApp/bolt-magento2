@@ -34,7 +34,7 @@ define(
             },
 
             // make quote data available to knockout template
-            getPlaceOrderPayload: function() {
+            getPlaceOrderPayload: function () {
                 var payload = {
                     cartId: quote.getQuoteId(),
                     billingAddress: quote.billingAddress(),
@@ -46,9 +46,10 @@ define(
                 return JSON.stringify(payload);
             },
 
-            getBillingAddress: function() {
+            getBillingAddress: function () {
                 return JSON.stringify(quote.billingAddress());
             }
         });
     }
 );
+
