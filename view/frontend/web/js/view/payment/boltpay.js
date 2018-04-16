@@ -13,14 +13,14 @@ define(
     function (
         Component,
         rendererList
-    ) {
+   ) {
         'use strict';
         rendererList.push(
             {
                 type: 'boltpay',
                 component: 'Bolt_Boltpay/js/view/payment/method-renderer/boltpay'
             }
-        );
+       );
         /** Add view logic here if needed */
         return Component.extend({});
     }

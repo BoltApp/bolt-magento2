@@ -6,8 +6,10 @@
  * Replace js template
  * Puts / replaces the checkout buttons according to defined selectors.
  * Maintains Bolt checkout functionality.
+ *
+ * @var $block \Bolt\Boltpay\Block\Js
  */
-if (!$this->isActive()) return;
+if (!$block->isEnabled()) return;
 ?>
 
 <script type="text/javascript">
@@ -15,7 +17,7 @@ if (!$this->isActive()) return;
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-window.boltConfig = <?=$this->getSettings(); ?>;
+window.boltConfig = <?php echo $block->getSettings(); ?>;
 
 ! function() {
 
@@ -266,7 +268,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
      */
     var selectorApply = function(selector, fn){
         var elements = document.querySelectorAll(selector);
-        for (var i = 0, length = elements.length; i < length; i++ ) {
+        for (var i = 0, length = elements.length; i < length; i++) {
             var element = elements[i];
             fn.call(element, element)
         }
@@ -496,7 +498,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     //////////////////////////////////////////////////////////
     // loop through selectors array and set up the replacement
     //////////////////////////////////////////////////////////
-    for (var i = 0, length = settings.selectors.length; i < length; i++ ) {
+    for (var i = 0, length = settings.selectors.length; i < length; i++) {
         var selector = settings.selectors[i];
         ! function(selector) {
             var parts = selector.split('|');
@@ -548,7 +550,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     // Run function fn on element underlying data change
     ///////////////////////////////////////////////////////////
     var monitorDataChange = function(selectors, fn, visible_only, non_empty) {
-        for (var i = 0, length = selectors.length; i < length; i++ ) {
+        for (var i = 0, length = selectors.length; i < length; i++) {
 
             var selector = selectors[i];
 
@@ -576,7 +578,7 @@ window.boltConfig = <?=$this->getSettings(); ?>;
     // Run function fn on element attributes change
     ///////////////////////////////////////////////////////////
     var monitorAttributesChange = function(selectors, fn, visible_only, on_ready) {
-        for (var i = 0, length = selectors.length; i < length; i++ ) {
+        for (var i = 0, length = selectors.length; i < length; i++) {
 
             var selector = selectors[i];
 
@@ -686,5 +688,5 @@ window.boltConfig = <?=$this->getSettings(); ?>;
 </script>
 
 <style>
-    <?=$this->getGlobalCSS();?>
+    <?php echo $block->getGlobalCSS();?>
 </style>

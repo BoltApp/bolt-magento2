@@ -7,10 +7,10 @@ namespace Bolt\Boltpay\Helper;
 
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\DataObject;
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\Webapi\Exception;
+use Magento\Framework\Webapi\Exception as WebapiException;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 
@@ -22,115 +22,125 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
  */
 class Hook extends AbstractHelper
 {
-	const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
+    const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
-	/**
-	 * @var ConfigHelper
-	 */
-	protected $configHelper;
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
 
-	/**
-	 * @var LogHelper
-	 */
-	protected $logHelper;
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
-	/**
-	 * @var ApiHelper
-	 */
-	protected $apiHelper;
+    /**
+     * @var ApiHelper
+     */
+    private $apiHelper;
 
-	/**
-	 * @var Request
-	 */
-	protected $request;
+    /**
+     * @var Request
+     */
+    private $request;
 
-	/**
-	 * @param Context $context
-	 * @param Request $request
-	 * @param Config  $configHelper
-	 * @param Log     $logHelper
-	 * @param Api     $apiHelper
-	 *
-	 * @codeCoverageIgnore
-	 */
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @param Context $context
+     * @param Request $request
+     * @param Config  $configHelper
+     * @param Log     $logHelper
+     * @param Api     $apiHelper
+     * @param DataObjectFactory $dataObjectFactory
+     *
+     * @codeCoverageIgnore
+     */
     public function __construct(
-        Context      $context,
-	    Request      $request,
-	    ConfigHelper $configHelper,
-	    LogHelper    $logHelper,
-		ApiHelper    $apiHelper
+        Context $context,
+        Request $request,
+        ConfigHelper $configHelper,
+        LogHelper $logHelper,
+        ApiHelper $apiHelper,
+        DataObjectFactory $dataObjectFactory
     ) {
         parent::__construct($context);
         $this->request      = $request;
-	    $this->configHelper = $configHelper;
-	    $this->logHelper    = $logHelper;
-	    $this->apiHelper    = $apiHelper;
+        $this->configHelper = $configHelper;
+        $this->logHelper    = $logHelper;
+        $this->apiHelper    = $apiHelper;
+        $this->dataObjectFactory = $dataObjectFactory;
     }
 
+    /**
+     * Verifying Hook Requests via API call.
+     *
+     * @param string $payload
+     * @param string $hmac_header
+     *
+     * @return bool
+     */
+    private function verifyWebhookApi($payload, $hmac_header)
+    {
 
-	/**
-	 * Verifying Hook Requests via API call.
-	 *
-	 * @param string $payload
-	 * @param string $hmac_header
-	 *
-	 * @return bool
-	 */
-	private function verifyWebhookApi($payload, $hmac_header) {
+        //Request Data
+        $requestData = $this->dataObjectFactory->create();
+        $requestData->setApiData(json_decode($payload));
+        $requestData->setDynamicApiUrl(ApiHelper::API_VERIFY_SIGNATURE);
+        $requestData->setApiKey($this->configHelper->getApiKey());
 
-		//Request Data
-		$requestData = new DataObject();
-		$requestData->setApiData(json_decode($payload));
-		$requestData->setDynamicApiUrl(ApiHelper::API_VERIFY_SIGNATURE);
-		$requestData->setApiKey($this->configHelper->getApiKey());
+        $headers = [
+            self::HMAC_HEADER => $hmac_header
+        ];
 
-		$headers = [
-			self::HMAC_HEADER => $hmac_header
-		];
+        $requestData->setHeaders($headers);
 
-		$requestData->setHeaders($headers);
+        $requestData->setStatusOnly(true);
 
-		$requestData->setStatusOnly(true);
+        //Build Request
+        $request = $this->apiHelper->buildRequest($requestData);
+        try {
+            $result = $this->apiHelper->sendRequest($request);
+        } catch (\Exception $e) {
+            return false;
+        }
 
-		//Build Request
-		$request = $this->apiHelper->buildRequest($requestData);
-		try {
-			$result = $this->apiHelper->sendRequest( $request );
-		} catch ( \Exception $e ) {
-			return false;
-		}
+        return $result == 200;
+    }
 
-		return $result == 200;
-	}
+    /**
+     * Verifying Hook Request using pre-exchanged signing secret key.
+     *
+     * @param string $payload
+     * @param string $hmac_header
+     *
+     * @return bool
+     */
+    public function verifyWebhookSecret($payload, $hmac_header)
+    {
 
-	/**
-	 * Verifying Hook Request using pre-exchanged signing secret key.
-	 *
-	 * @param string $payload
-	 * @param string $hmac_header
-	 *
-	 * @return bool
-	 */
-	public function verifyWebhookSecret($payload, $hmac_header) {
+        $signing_secret = $this->configHelper->getSigningSecret();
+        $computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
 
-		$signing_secret = $this->configHelper->getSigningSecret();
-		$computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
+        return $computed_hmac == $hmac_header;
+    }
 
-		return $computed_hmac == $hmac_header;
-	}
+    /**
+     * Verifying Hook Request. If signing secret is not defined or fails fallback to api call.
+     *
+     * @throws WebapiException
+     */
+    public function verifyWebhook()
+    {
 
-	/**
-	 * Verifying Hook Request. If signing secret is not defined or fails fallback to api call.
-	 *
-	 * @throws Exception
-	 */
-	public function verifyWebhook() {
+        $payload     = $this->request->getContent();
+        $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
-		$payload     = $this->request->getContent();
-		$hmac_header = $this->request->getHeader(self::HMAC_HEADER);
-
-		if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
-			throw new Exception(__('Unauthorized'), 0, Exception::HTTP_UNAUTHORIZED);
-		}
-	}
+        if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
+            throw new WebapiException(__('Unauthorized'), 0, Exception::HTTP_UNAUTHORIZED);
+        }
+    }
 }
