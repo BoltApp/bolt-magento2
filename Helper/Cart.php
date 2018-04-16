@@ -415,6 +415,7 @@ class Cart extends AbstractHelper
                     'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
                     'shipping_address' => $shipping_address,
                     'service'          => $shippingAddress->getShippingDescription(),
+                    'reference'        => $shippingAddress->getShippingMethod(),
                 ];
             }
 
