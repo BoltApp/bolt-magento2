@@ -422,7 +422,7 @@ class Cart extends AbstractHelper
             $tax_amount         = $shippingAddress->getTaxAmount();
             $rounded_tax_amount = $this->getRoundAmount($tax_amount);
 
-            $diff = $tax_amount * 100 - $rounded_tax_amount;
+            $diff += $tax_amount * 100 - $rounded_tax_amount;
 
             $taxAmount = $rounded_tax_amount;
             $totalAmount += $rounded_tax_amount;
