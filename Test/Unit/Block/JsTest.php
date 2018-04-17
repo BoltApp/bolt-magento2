@@ -44,9 +44,13 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
 
+        $methods = [
+            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
+            'getReplaceSelectors', 'getGlobalCSS'
+        ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
-            ->setMethods(['isSandboxModeSet', 'isActive', 'getAnyPublishableKey', 'getReplaceSelectors'])
+            ->setMethods($methods)
             ->setConstructorArgs(
                 [
                     $this->helperContextMock,
@@ -100,6 +104,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->checkEquals($result, true, 'connect.js');
     }
 
+    /**
+     * @inheritdoc
+     */
     public function testGetCheckoutKey()
     {
         $storeId = 0;
@@ -114,6 +121,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals(strlen($key), strlen($result), '"Any Publishable Key" have invalid length');
     }
 
+    /**
+     * @inheritdoc
+     */
     public function testGetReplaceSelectors()
     {
         $value = '.replaceable-example-selector1|append
@@ -124,7 +134,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
             '.replaceable-example-selector3'
         ];
 
-
         $this->configHelper->expects($this->once())
             ->method('getReplaceSelectors')
             ->will($this->returnValue($value));
@@ -132,7 +141,24 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->getReplaceSelectors();
 
         $this->assertEquals($correctResult, $result, 'getReplaceSelectors() method: not working properly');
+    }
 
+    /**
+     * @inheritdoc
+     */
+    public function testGetGlobalCSS()
+    {
+        $value = '.replaceable-example-selector1 {
+            color: red;
+        }';
+
+        $this->configHelper->expects($this->once())
+            ->method('getGlobalCSS')
+            ->will($this->returnValue($value));
+
+        $result = $this->block->getGlobalCSS();
+
+        $this->assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
     }
 
     /**
