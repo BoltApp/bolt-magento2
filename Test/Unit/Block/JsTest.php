@@ -46,7 +46,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
-            ->setMethods(['isSandboxModeSet'])
+            ->setMethods(['isSandboxModeSet', 'isActive', 'getAnyPublishableKey', 'getReplaceSelectors'])
             ->setConstructorArgs(
                 [
                     $this->helperContextMock,
@@ -100,6 +100,56 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->checkEquals($result, true, 'connect.js');
     }
 
+    public function testGetCheckoutKey()
+    {
+        $storeId = 0;
+        $key = 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TEST';
+        $this->configHelper->expects($this->any())
+            ->method('getAnyPublishableKey')
+            ->will($this->returnValue($key));
+
+        $result = $this->block->getCheckoutKey();
+
+        $this->assertStringStartsWith('pKv_', $result, '"Any Publishable Key" not working properly');
+        $this->assertEquals(strlen($key), strlen($result), '"Any Publishable Key" have invalid length');
+    }
+
+    public function testGetReplaceSelectors()
+    {
+        $value = '.replaceable-example-selector1|append
+.replaceable-example-selector2|prepend,.replaceable-example-selector3';
+
+        $correctResult = [
+            '.replaceable-example-selector1|append .replaceable-example-selector2|prepend',
+            '.replaceable-example-selector3'
+        ];
+
+
+        $this->configHelper->expects($this->once())
+            ->method('getReplaceSelectors')
+            ->will($this->returnValue($value));
+
+        $result = $this->block->getReplaceSelectors();
+
+        $this->assertEquals($correctResult, $result, 'getReplaceSelectors() method: not working properly');
+
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testIsEnabled()
+    {
+        $storeId = 0;
+        $this->configHelper->expects($this->any())
+            ->method('isActive')
+            ->with($storeId)
+            ->will($this->returnValue(true));
+
+        $result = $this->block->isEnabled();
+
+        $this->assertTrue($result, 'IsEnabled() method: not working properly');
+    }
     /**
      * Check if CDN Url equal or not.
      *
