@@ -71,22 +71,23 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTrackJsUrl()
     {
-        $file = 'track.js';
-
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
         $result = $this->block->getTrackJsUrl();
-        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . $file;
+        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . 'track.js';
 
         $this->assertEquals($expectedUrl, $result, 'Not equal CDN Url in Sandbox mode');
+    }
 
-        // ReInit for production mode.
-        $this->setUp();
-
+    /**
+     * @inheritdoc
+     */
+    public function testGetTrackJsUrlForProductionMode()
+    {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
         $result = $this->block->getTrackJsUrl();
-        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . $file;
+        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . 'track.js';
 
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Production mode');
     }
@@ -96,21 +97,19 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetConnectJsUrl()
     {
-        $file = 'connect.js';
-
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
         $result = $this->block->getConnectJsUrl();
-        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . $file;
+        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . 'connect.js';
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
+    }
 
-        // ReInit for production mode.
-        $this->setUp();
-
+    public function testGetConnectJsUrlForProductionMode()
+    {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
         $result = $this->block->getConnectJsUrl();
-        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . $file;
+        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . 'connect.js';
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Production mode');
     }
 
