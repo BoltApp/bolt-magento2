@@ -39,7 +39,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
-            'getReplaceSelectors', 'getGlobalCSS'
+            'getPublishableKeyPayment', 'getPublishableKeyCheckout',
+            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -55,7 +56,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper'])
+            ->setMethods(['configHelper', 'getUrl'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
@@ -168,6 +169,27 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->getGlobalCSS();
 
         $this->assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetSettings()
+    {
+        $result = $this->block->getSettings();
+
+        $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
+
+        $array = json_decode($result, true);
+        $message = 'Cannot find in the Settings the key: ';
+        $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
+        $this->assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
+        $this->assertArrayHasKey('publishable_key_checkout', $array, $message . 'publishable_key_checkout');
+        $this->assertArrayHasKey('create_order_url', $array, $message . 'create_order_url');
+        $this->assertArrayHasKey('save_order_url', $array, $message . 'save_order_url');
+        $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
+        $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
+        $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
     }
 
     /**
