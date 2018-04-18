@@ -1,11 +1,6 @@
 <?php
-/**
- * Copyright © 2013-2017 Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
 namespace Bolt\Boltpay\Test\Unit\Block;
 
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager as UnitObjectManager;
 use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 
@@ -39,8 +34,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     protected function setUp()
     {
-//        $objectManager = new UnitObjectManager($this);
-
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
 
@@ -77,15 +70,24 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetTrackJsUrl()
     {
+        $file = 'track.js';
+
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
         $result = $this->block->getTrackJsUrl();
-        $this->checkEquals($result, true, 'track.js');
+        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . $file;
+
+        $this->assertEquals($expectedUrl, $result, 'Not equal CDN Url in Sandbox mode');
+
+        // ReInit for production mode.
+        $this->setUp();
 
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
         $result = $this->block->getTrackJsUrl();
-        $this->checkEquals($result, true, 'track.js');
+        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . $file;
+
+        $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Production mode');
     }
 
     /**
@@ -93,15 +95,22 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function testGetConnectJsUrl()
     {
+        $file = 'connect.js';
+
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
         $result = $this->block->getConnectJsUrl();
-        $this->checkEquals($result, true, 'connect.js');
+        $expectedUrl = HelperConfig::CDN_URL_SANDBOX . DIRECTORY_SEPARATOR . $file;
+        $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
+
+        // ReInit for production mode.
+        $this->setUp();
 
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
         $result = $this->block->getConnectJsUrl();
-        $this->checkEquals($result, true, 'connect.js');
+        $expectedUrl = HelperConfig::CDN_URL_PRODUCTION . DIRECTORY_SEPARATOR . $file;
+        $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Production mode');
     }
 
     /**
@@ -175,20 +184,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->isEnabled();
 
         $this->assertTrue($result, 'IsEnabled() method: not working properly');
-    }
-    /**
-     * Check if CDN Url equal or not.
-     *
-     * @param bool   $sandbox
-     * @param string $file
-     */
-    public function checkEquals($result, $sandbox = true, $file = '')
-    {
-        $mode = ($sandbox) ? HelperConfig::CDN_URL_SANDBOX : HelperConfig::CDN_URL_PRODUCTION;
-        $expectedUrl = $mode . DIRECTORY_SEPARATOR . $file;
-        $modeMessage = ($sandbox) ? 'Sandbox' : 'Production';
-
-        $this->assertEquals($expectedUrl, $result, 'Not equal CDN Url in '.$modeMessage.' mode');
     }
 
     /**
