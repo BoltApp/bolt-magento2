@@ -106,7 +106,7 @@ class OrderManagement implements OrderManagementInterface
      * @throws \Exception
      */
     public function manage(
-        $quote_id,
+        $quote_id = null,
         $reference,
         $transaction_id = null,
         $notification_type = null,
@@ -118,6 +118,9 @@ class OrderManagement implements OrderManagementInterface
         $source_transaction_reference = null
     ) {
         try {
+
+            $this->logHelper->addInfoLog($this->request->getContent());
+
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
                     $report->setMetaData([
@@ -131,7 +134,6 @@ class OrderManagement implements OrderManagementInterface
             $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
             $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
-            // $this->logHelper->addInfoLog($this->request->getContent());
             $this->hookHelper->verifyWebhook();
 
             if (empty($reference)) {

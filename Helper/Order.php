@@ -37,6 +37,7 @@ use Zend_Http_Client_Exception;
 use Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
+use Magento\Checkout\Model\Session;
 
 /**
  * Class Order
@@ -133,6 +134,11 @@ class Order extends AbstractHelper
     private $dataObjectFactory;
 
     /**
+     * @var Session
+     */
+    private $checkoutSession;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -150,6 +156,7 @@ class Order extends AbstractHelper
      * @param TransactionBuilder $transactionBuilder
      * @param TimezoneInterface $timezone
      * @param DataObjectFactory $dataObjectFactory
+     * @param Session $checkoutSession
      *
      * @codeCoverageIgnore
      */
@@ -170,7 +177,8 @@ class Order extends AbstractHelper
         InvoiceSender $invoiceSender,
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
-        DataObjectFactory $dataObjectFactory
+        DataObjectFactory $dataObjectFactory,
+        Session $checkoutSession
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -189,6 +197,7 @@ class Order extends AbstractHelper
         $this->transactionBuilder    = $transactionBuilder;
         $this->timezone              = $timezone;
         $this->dataObjectFactory     = $dataObjectFactory;
+        $this->checkoutSession       = $checkoutSession;
     }
 
     /**
@@ -264,11 +273,11 @@ class Order extends AbstractHelper
      */
     private function setShippingMethod($quote, $transaction)
     {
-
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
 
         $shippingMethod = $transaction->order->cart->shipments[0]->reference;
+
         $shippingAddress->setShippingMethod($shippingMethod)->save();
     }
 
@@ -372,14 +381,16 @@ class Order extends AbstractHelper
      * Transform Quote to Order and send email to the customer.
      *
      * @param Quote $quote
-     * @param $transaction
+     * @param mixed $transaction
+     * @param bool $frontend
      *
      * @return AbstractExtensibleModel|OrderInterface|null|object
-     * @throws Exception
      * @throws LocalizedException
+     * @throws Exception
      */
-    private function createOrder($quote, $transaction)
+    private function createOrder($quote, $transaction, $frontend)
     {
+        $this->checkoutSession->replaceQuote($quote);
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
@@ -400,7 +411,10 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
-        $this->emailSender->send($order);
+        // Internal email sending method does not work from API,
+        // breaks on loading template from path.
+        // Send for frontend created orders only.
+        if ($frontend) $this->emailSender->send($order);
 
         return $order;
     }
@@ -435,7 +449,7 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            $order = $this->createOrder($quote, $transaction);
+            $order = $this->createOrder($quote, $transaction, $frontend);
         }
 
         // update order payment transactions
@@ -464,12 +478,47 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
-        if ($transaction->type == 'zero_amount') {
-            return;
-        }
-
         /** @var PaymentModel $payment */
         $payment = $order->getPayment();
+
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Process zero-amount transactions
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if ($transaction->type == 'zero_amount') {
+
+            $last_transaction_timestamp = (int)$payment->getAdditionalInformation('last_transaction_timestamp');
+            $date = $transaction->date;
+
+            if ($date <= $last_transaction_timestamp) {
+                return;
+            }
+
+            $comment = __(
+                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Reference: %2 Status: %3 Amount: 0',
+                $transaction->id,
+                $transaction->reference,
+                strtoupper($transaction->status)
+            );
+
+            $order->setStatus(OrderModel::STATE_PROCESSING)
+                  ->setState(OrderModel::STATE_PROCESSING);
+
+            $order->addStatusHistoryComment($comment);
+
+            $paymentData = [
+                'last_transaction_timestamp' => $date,
+                'real_transaction_id'        => $transaction->id,
+                'transaction_reference'      => $transaction->reference,
+            ];
+
+            $payment->setAdditionalInformation($paymentData);
+
+            $payment->save();
+            $order->save();
+
+            return;
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // sort transaction timeline data ascendingly, it comes in descending order
         $timeline = array_reverse($transaction->timeline);

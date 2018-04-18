@@ -19,7 +19,6 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\DataObjectFactory;
 
 /**
@@ -88,7 +87,7 @@ class Cart extends AbstractHelper
     // Can appear as keys in Quote::getTotals result array.
     ///////////////////////////////////////////////////////
     private $discount_types = [
-        'reward',
+//        'reward',
         'giftvoucheraftertax',
     ];
     ///////////////////////////////////////////////////////
@@ -277,6 +276,14 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
+        // Get array of all items what can be display directly
+        $items = $quote->getAllVisibleItems();
+
+        if (!$items) {
+            $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
+            return $cart;
+        }
+
         $quote->collectTotals();
         $totals = $quote->getTotals();
 
@@ -288,9 +295,6 @@ class Cart extends AbstractHelper
 
         //Currency
         $cart['currency'] = $quote->getQuoteCurrencyCode();
-
-        // Get array of all items what can be display directly
-        $items = $quote->getAllVisibleItems();
 
         $totalAmount = 0;
         $diff = 0;
@@ -470,24 +474,101 @@ class Cart extends AbstractHelper
             }
         }
 
-        if ($amount = @$quote->getCustomerBalanceAmountUsed()) {
-            $amount = abs($amount);
-            $rounded_amount = $this->getRoundAmount($amount);
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($quote->getUseCustomerBalance()) {
 
-            $cart['discounts'][] = [
-                'description' => __('%1 Store Credit', $amount),
-                'amount'      => $rounded_amount,
-            ];
+            if ($payment_only && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
 
-            $diff -= $amount * 100 - $rounded_amount;
-            $totalAmount -= $rounded_amount;
+                $rounded_amount = $this->getRoundAmount($amount);
+
+                $cart['discounts'][] = [
+                    'description' => 'Store Credit',
+                    'amount'      => $rounded_amount,
+                ];
+
+                $diff -= $amount * 100 - $rounded_amount;
+                $totalAmount -= $rounded_amount;
+
+            } else {
+
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $balanceModel = $objectManager->create('Magento\CustomerBalance\Model\Balance');
+
+                $balanceModel->setCustomer(
+                    $this->customerSession->getCustomer()
+                )->setWebsiteId(
+                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                );
+                $balanceModel->loadByCustomer();
+
+                if ($amount = abs($balanceModel->getAmount())) {
+
+                    $rounded_amount = $this->getRoundAmount($amount);
+
+                    $cart['discounts'][] = [
+                        'description' => 'Store Credit',
+                        'amount'      => $rounded_amount,
+                        'type'        => 'fixed_amount',
+                    ];
+
+                    $totalAmount -= $rounded_amount;
+                }
+            }
         }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Reward Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($quote->getUseRewardPoints()) {
+
+            if ($payment_only && $amount = abs($quote->getRewardCurrencyAmount())) {
+
+                $rounded_amount = $this->getRoundAmount($amount);
+
+                $cart['discounts'][] = [
+                    'description' => 'Reward Points',
+                    'amount'      => $rounded_amount,
+                ];
+
+                $diff -= $amount * 100 - $rounded_amount;
+                $totalAmount -= $rounded_amount;
+
+            } else {
+
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $rewardModel = $objectManager->create('Magento\Reward\Model\Reward');
+
+                $rewardModel->setCustomer(
+                    $this->customerSession->getCustomer()
+                )->setWebsiteId(
+                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                );
+                $rewardModel->loadByCustomer();
+
+                if ($amount = abs($rewardModel->getCurrencyAmount())) {
+
+                    $rounded_amount = $this->getRoundAmount($amount);
+
+                    $cart['discounts'][] = [
+                        'description' => 'Reward Points',
+                        'amount'      => $rounded_amount,
+                        'type'        => 'fixed_amount',
+                    ];
+
+                    $totalAmount -= $rounded_amount;
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
 
         $cart['items'][0]['total_amount'] += round($diff);
 
         $totalAmount += round($diff);
 
-        $cart['total_amount'] = $totalAmount;
+        $cart['total_amount'] = $totalAmount >= 0 ? $totalAmount : 0;
         $cart['tax_amount']   = $taxAmount;
 
         if (abs($diff) >= $this->treshold) {

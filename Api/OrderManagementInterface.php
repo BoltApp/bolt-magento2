@@ -39,7 +39,7 @@ interface OrderManagementInterface
      * @return void
      */
     public function manage(
-        $quote_id,
+        $quote_id = null,
         $reference,
         $transaction_id = null,
         $notification_type = null,

@@ -643,6 +643,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
                 monitorAttributesChange(input_selectors, function(element) {
                     hints.prefill[prefill_key] = element.value;
+
                     if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
                 }, visible_only);
 
@@ -664,6 +665,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             hints.prefill.country = element.value;
         }
         delete hints.prefill.state;
+
         if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     }, false, true);
     ///////////////////////////////////////////////////////////
@@ -680,6 +682,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         else {
             hints.prefill.state = element.options[element.selectedIndex].text;
         }
+
         if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     });
     ///////////////////////////////////////////////////////////

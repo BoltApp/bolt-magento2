@@ -131,6 +131,7 @@ class Prefetch extends Action
                 return;
             }
 
+            /** @var Quote */
             $quote = $this->checkoutSession->getQuote();
             if (!$quote->getId()) {
                 return;
