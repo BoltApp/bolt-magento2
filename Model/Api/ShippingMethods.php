@@ -251,16 +251,31 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param array $shipping_address
      *
      * @return ShippingOptionsInterface
+     * @throws LocalizedException
      */
     public function shippingEstimation($quote, $cart, $shipping_address)
     {
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, country_code,
         // region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
         $cache_identifier = $cart['order_reference'].'_'.$cart['total_amount'].'_'.$shipping_address['country_code'].
             '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+
+        // get custom address fields to be included in cache key
+        $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
+        // trim values and filter out empty strings
+        $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
+        // convert to PascalCase
+        $prefetchAddressFields = array_map(function ($el) { return str_replace('_', '', ucwords($el, '_'));}, $prefetchAddressFields);
+
+        $shippingAddress = $quote->getShippingAddress();
+        // get the value of each valid field and include it in the cache identifier
+        foreach ($prefetchAddressFields as $key) {
+            $getter = 'get'.$key;
+            $value = $shippingAddress->$getter();
+            if ($value) $cache_identifier .= '_'.$value;
+        }
 
         $prefetchShipping = $this->configHelper->getPrefetchShipping();
 

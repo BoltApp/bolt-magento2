@@ -449,6 +449,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
 
+            // prefetch Shipping and Tax
             prefetchShipping();
         };
         // send create order request
