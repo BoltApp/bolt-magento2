@@ -225,7 +225,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->checkoutSession->replaceQuote($quote);
 
-            $shippingOptionsModel = $this->shippingEstimation($quote, $cart, $shipping_address);
+            $shippingOptionsModel = $this->shippingEstimation($quote, $shipping_address);
 
             if ($this->tax_adjusted) {
                 $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
@@ -253,13 +253,13 @@ class ShippingMethods implements ShippingMethodsInterface
      * @return ShippingOptionsInterface
      * @throws LocalizedException
      */
-    public function shippingEstimation($quote, $cart, $shipping_address)
+    public function shippingEstimation($quote, $shipping_address)
     {
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, country_code,
         // region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
-        $cache_identifier = $cart['order_reference'].'_'.$cart['total_amount'].'_'.$shipping_address['country_code'].
+        $cache_identifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.$shipping_address['country_code'].
             '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
 
         // get custom address fields to be included in cache key

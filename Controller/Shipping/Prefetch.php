@@ -137,8 +137,6 @@ class Prefetch extends Action
                 return;
             }
 
-            $cart = $this->cartHelper->getCartData(null, null);
-
             ///////////////////////////////////////////////////////////////////////////
             // Prefetch shipping for geolocated address
             ///////////////////////////////////////////////////////////////////////////
@@ -159,14 +157,14 @@ class Prefetch extends Action
                     'locality'     => $location->city,
                 ];
 
-                $this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+                $this->shippingMethods->shippingEstimation($quote, $shipping_address);
             }
             ///////////////////////////////////////////////////////////////////////////
 
             /////////////////////////////////////////////////////////////////////////////////
             // Prefetch Shipping and Tax for existing shipping address
             /////////////////////////////////////////////////////////////////////////////////
-            $prefetchForStoredAddress = function ($shippingAddress) use ($quote, $cart) {
+            $prefetchForStoredAddress = function ($shippingAddress) use ($quote) {
 
                 if ($shippingAddress &&
                     ($country_code = $shippingAddress->getData('country_id')) &&
@@ -179,7 +177,7 @@ class Prefetch extends Action
                         'locality'     => $shippingAddress->getData('city') ?: '',
                     ];
 
-                    $this->shippingMethods->shippingEstimation($quote, $cart['cart'], $shipping_address);
+                    $this->shippingMethods->shippingEstimation($quote, $shipping_address);
                 }
             };
             /////////////////////////////////////////////////////////////////////////////////
