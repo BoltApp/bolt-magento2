@@ -91,10 +91,10 @@ class OrderManagement implements OrderManagementInterface
      *
      * @api
      *
-     * @param mixed $quote_id
+     * @param mixed $id
      * @param mixed $reference
-     * @param mixed $transaction_id
-     * @param mixed $notification_type
+     * @param mixed $order
+     * @param mixed $type
      * @param mixed $amount
      * @param mixed $currency
      * @param mixed $status
@@ -106,10 +106,10 @@ class OrderManagement implements OrderManagementInterface
      * @throws \Exception
      */
     public function manage(
-        $quote_id = null,
+        $id,
         $reference,
-        $transaction_id = null,
-        $notification_type = null,
+        $order = null,
+        $type = null,
         $amount = null,
         $currency = null,
         $status = null,

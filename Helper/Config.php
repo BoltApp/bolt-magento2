@@ -59,6 +59,11 @@ class Config extends AbstractHelper
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
 
     /**
+     * Path for Custom Prefetch Address Fields
+     */
+    const XML_PATH_PREFETCH_ADDRESS_FIELDS = 'payment/boltpay/prefetch_address_fields';
+
+    /**
      * Automatic capture mode
      */
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
@@ -295,6 +300,19 @@ class Config extends AbstractHelper
     {
         return $this->scopeConfig->getValue(
             self::XML_PATH_GLOBAL_CSS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * Get Custom Prefetch Address Fields
+     *
+     * @return  string
+     */
+    public function getPrefetchAddressFields()
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
             ScopeInterface::SCOPE_STORE
         );
     }

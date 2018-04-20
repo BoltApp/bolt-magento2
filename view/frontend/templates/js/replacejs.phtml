@@ -31,7 +31,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     }
     ///////////////////////
 
-
     /////////////////////////////////////////////////////////////////////////
     // Using Mutation Observers to Watch for Element Availability and change.
     /////////////////////////////////////////////////////////////////////////
@@ -153,7 +152,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     }(window);
     ////////////////////////////////////////////////////////////////////////
 
-
     ////////////////////////////////
     // Merge objects
     ////////////////////////////////
@@ -161,7 +159,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         return (item && typeof item === 'object' && !Array.isArray(item));
     };
 
-    var deepMeggeObjects = function () {
+    var deepMergeObjects = function () {
 
         // Variables
         var extended = {};
@@ -175,7 +173,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 if (obj.hasOwnProperty(prop)) {
                     if (isObject(obj[prop])) {
                         // If the property is an object
-                        extended[prop] = deepMeggeObjects(extended[prop], obj[prop]);
+                        extended[prop] = deepMergeObjects(extended[prop], obj[prop]);
                     } else {
                         // Otherwise, do a regular merge
                         extended[prop] = obj[prop];
@@ -193,7 +191,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         return extended;
     };
     ////////////////////////////////
-
 
     /**
      * Pure javascript ajax POST request function
@@ -234,7 +231,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         return xhr;
     };
 
-
     /**
      * Get the current page checkout type.
      * This function should be extended for Magento checkout extensions.
@@ -244,7 +240,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var getCheckoutType = function() {
         return location.pathname === '/checkout/' && location.hash === '#payment' ? 'payment' : 'checkout';
     };
-
 
     /**
      * Get the checkout key according to the checkout type.
@@ -256,7 +251,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         var key = 'publishable_key_' + checkout_type;
         return settings[key];
     };
-
 
     /**
      * Apply function to every element with the specified selector.
@@ -274,7 +268,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
     };
 
-
     /**
      * Apply function to every bolt checkout button.
      *
@@ -285,7 +278,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var checkoutButtonApply = function(fn) {
         selectorApply(bolt_button_selector, fn);
     };
-
 
     /**
      * Toggle checkout button multi-step class, `bolt-multi-step-checkout`, according to the checkout type.
@@ -302,7 +294,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             }
         });
     };
-
 
     /**
      * Inject connect.js
@@ -326,7 +317,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         document.head.appendChild(scriptTag);
     };
 
-
     /**
      * Set checkout button CSS and load connect.js
      * return void
@@ -338,7 +328,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
     };
 
-
     // The configuration parameters passed from the php block
     var settings = window.boltConfig;
     // TODO: make `with-cards` option backend configurable
@@ -348,16 +337,14 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var billing_address_selector = '#bolt-billing-address';
     var place_order_payload_id   = 'bolt-place-order-payload';
 
-
     // On multiple checkout open/close actions the success event remains registered
     // resulting in making the success call multiple times. This variable stores
     // the last request to be aborted before new one is sent.
     var save_request;
 
-
-    /////////////////////////////////
+    ////////////////////////////////////
     // BoltCheckout.configure parameters
-    /////////////////////////////////
+    ////////////////////////////////////
     var cart = {};
 
     var hints = {prefill:{}};
@@ -393,8 +380,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             return !!cart.orderToken;
         }
     };
-    /////////////////////////////////
-
+    ////////////////////////////////////
 
     /////////////////////////////////////////////////////
     // Call Shipping and Tax prefetch & cache endpoint
@@ -413,7 +399,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         return xhr;
     };
     /////////////////////////////////////////////////////
-
 
     /////////////////////////////////////////////////////
     // Create Bolt order and configure BoltCheckout
@@ -439,23 +424,23 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         if (params === '') params = null;
         // set cart and hints data in a response callback
         var onSuccess = function(data){
-            cart  = data.cart;
+            cart = data.cart;
 
-            var prefill = isObject(data.hints.prefill) ? deepMeggeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
-            hints = deepMeggeObjects(hints, data.hints);
+            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+            hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
             hints.publishableKey = getCheckoutKey();
 
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
 
+            // prefetch Shipping and Tax
             prefetchShipping();
         };
         // send create order request
         create_request = ajaxPost(settings.create_order_url, params, onSuccess);
     };
     /////////////////////////////////////////////////////
-
 
     /////////////////////////////////////////////////////
     // Toggle checkout button visibility on payment page
@@ -481,7 +466,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     });
     /////////////////////////////////////////////////////
 
-
     /////////////////////////////////////////////////////
     // Flag that is true if checkout buttons exists on the page
     var checkout_buttons = false;
@@ -493,7 +477,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         processButtons();
     });
     ////////////////////////////////////////////////
-
 
     //////////////////////////////////////////////////////////
     // loop through selectors array and set up the replacement
@@ -530,7 +513,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     }
     //////////////////////////////////////////////////////////
 
-
     ////////////////////////////////////////////////////////
     // on hash change reprocess the buttons due to
     // possible transition from one checkout type to another
@@ -545,11 +527,10 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     });
     ////////////////////////////////////////////////////////
 
-
     ///////////////////////////////////////////////////////////
     // Run function fn on element underlying data change
     ///////////////////////////////////////////////////////////
-    var monitorDataChange = function(selectors, fn, visible_only, non_empty) {
+    var monitorDataChange = function(selectors, fn, non_empty, visible_only) {
         for (var i = 0, length = selectors.length; i < length; i++) {
 
             var selector = selectors[i];
@@ -573,11 +554,10 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
     ///////////////////////////////////////////////////////////
 
-
     ///////////////////////////////////////////////////////////
     // Run function fn on element attributes change
     ///////////////////////////////////////////////////////////
-    var monitorAttributesChange = function(selectors, fn, visible_only, on_ready) {
+    var monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
         for (var i = 0, length = selectors.length; i < length; i++) {
 
             var selector = selectors[i];
@@ -601,7 +581,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
     ///////////////////////////////////////////////////////////
 
-
     ///////////////////////////////////////////////////////////////
     // Monitor DOM element showing grand total / cart item number
     // and trigger Bolt order creation on totals change. This event
@@ -613,6 +592,30 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     monitorDataChange(totals_change_selectors, createOrder, true, true);
     ///////////////////////////////////////////////////////////
 
+    ///////////////////////////////////////////////////////////
+    // Reconfigure BoltCheckout with page collected hints data
+    ///////////////////////////////////////////////////////////
+    var old_hints;
+    var configureHints = function() {
+
+        // wait 3 seconds for the field(s) to be fully filled,
+        // do not react on every keypress
+        setTimeout(
+
+            function() {
+
+                var new_hints = JSON.stringify(hints);
+
+                if (old_hints !== new_hints && window.BoltCheckout) {
+
+                    BoltCheckout.configure(cart, hints, callbacks);
+                    old_hints = new_hints;
+                }
+            },
+            3000
+        );
+    };
+    ///////////////////////////////////////////////////////////
 
     // Map from address input field names to hints.prefill keys
     var input_name_to_hints_prefill = {
@@ -626,10 +629,44 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         'postcode':  'zip'
     };
 
+    // CSS selectors of the hints prefill elements parents
+    // used to distinct hints related fields from others with the same name
+    var input_name_to_hints_prefill_prefixes = [
+        '.fieldset.estimate',
+        '#checkout-step-shipping'
+    ];
 
     /////////////////////////////////////////////////////////////////////
     // Monitor address text input fields and update hints on value change
     /////////////////////////////////////////////////////////////////////
+    for (var i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
+
+        var prefix = input_name_to_hints_prefill_prefixes[i];
+
+        ! function (prefix) {
+
+            for (var input_name in input_name_to_hints_prefill) {
+
+                if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
+
+                    ! function (input_name) {
+
+                        var prefill_key = input_name_to_hints_prefill[input_name];
+                        var input_selectors = [prefix + ' input[name="' + input_name + '"]'];
+
+                        monitorAttributesChange(input_selectors, function(element) {
+                            hints.prefill[prefill_key] = element.value;
+
+                            configureHints();
+                        });
+
+                    } (input_name);
+                }
+            }
+
+        } (prefix);
+    }
+
     for (var input_name in input_name_to_hints_prefill) {
 
         if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
@@ -639,19 +676,16 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 var prefill_key = input_name_to_hints_prefill[input_name];
                 var input_selectors = ['input[name="' + input_name + '"]'];
 
-                var visible_only = input_name !== 'telephone';
-
                 monitorAttributesChange(input_selectors, function(element) {
                     hints.prefill[prefill_key] = element.value;
 
-                    if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
-                }, visible_only);
+                    configureHints();
+                });
 
             } (input_name);
         }
     }
     /////////////////////////////////////////////////////////////////////
-
 
     ///////////////////////////////////////////////////////////
     // Monitor Country DOM element change and update hints
@@ -666,10 +700,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
         delete hints.prefill.state;
 
-        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
-    }, false, true);
+        configureHints();
+    }, true);
     ///////////////////////////////////////////////////////////
-
 
     ///////////////////////////////////////////////////////////
     // Monitor State DOM element change and update hints
@@ -683,7 +716,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             hints.prefill.state = element.options[element.selectedIndex].text;
         }
 
-        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+        configureHints();
     });
     ///////////////////////////////////////////////////////////
 }();
