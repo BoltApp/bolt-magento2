@@ -161,7 +161,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         return (item && typeof item === 'object' && !Array.isArray(item));
     };
 
-    var deepMeggeObjects = function () {
+    var deepMergeObjects = function () {
 
         // Variables
         var extended = {};
@@ -175,7 +175,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 if (obj.hasOwnProperty(prop)) {
                     if (isObject(obj[prop])) {
                         // If the property is an object
-                        extended[prop] = deepMeggeObjects(extended[prop], obj[prop]);
+                        extended[prop] = deepMergeObjects(extended[prop], obj[prop]);
                     } else {
                         // Otherwise, do a regular merge
                         extended[prop] = obj[prop];
@@ -439,10 +439,10 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         if (params === '') params = null;
         // set cart and hints data in a response callback
         var onSuccess = function(data){
-            cart  = data.cart;
+            cart = data.cart;
 
-            var prefill = isObject(data.hints.prefill) ? deepMeggeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
-            hints = deepMeggeObjects(hints, data.hints);
+            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+            hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
             hints.publishableKey = getCheckoutKey();
@@ -615,6 +615,26 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
 
 
+    var old_hints;
+    var configureHints = function() {
+
+        var new_hints = JSON.stringify(hints);
+
+        console.log('old_hints', old_hints);
+        console.log('new_hints', new_hints);
+        console.log(old_hints !== new_hints);
+
+        if (old_hints !== new_hints && window.BoltCheckout) {
+
+            console.log(hints);
+
+            BoltCheckout.configure(cart, hints, callbacks);
+            old_hints = new_hints;
+        }
+
+    };
+
+
     // Map from address input field names to hints.prefill keys
     var input_name_to_hints_prefill = {
         'firstname': 'firstName',
@@ -642,10 +662,13 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
                 var visible_only = input_name !== 'telephone';
 
+                visible_only = false;
+
                 monitorAttributesChange(input_selectors, function(element) {
                     hints.prefill[prefill_key] = element.value;
 
-                    if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+                    configureHints();
+                    //if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
                 }, visible_only);
 
             } (input_name);
@@ -667,7 +690,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
         delete hints.prefill.state;
 
-        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+        configureHints();
+        //if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     }, false, true);
     ///////////////////////////////////////////////////////////
 
@@ -684,7 +708,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             hints.prefill.state = element.options[element.selectedIndex].text;
         }
 
-        if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+        configureHints();
+        //if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
     });
     ///////////////////////////////////////////////////////////
 }();
