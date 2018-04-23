@@ -435,6 +435,11 @@ class Cart extends AbstractHelper
             $taxAmount = 0;
         }
 
+        // include potential rounding difference and reset $diff accumulator
+        $cart['items'][0]['total_amount'] += round($diff);
+        $totalAmount += round($diff);
+        $diff = 0;
+
         // unset billing if not all required fields are present
         foreach ($this->required_address_fields as $field) {
             if (empty($cart['billing_address'][$field])) {
