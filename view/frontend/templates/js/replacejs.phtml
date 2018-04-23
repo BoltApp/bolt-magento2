@@ -588,7 +588,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // totals updated or items added via ajax call.
     // TODO: add this option to plugin configuration admin page
     ///////////////////////////////////////////////////////////////
-    var totals_change_selectors = ['tr.grand.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
+    var totals_change_selectors = ['tr.grand.totals td.amount span.price', 'tr.shipping.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
     monitorDataChange(totals_change_selectors, createOrder, true, true);
     ///////////////////////////////////////////////////////////
 

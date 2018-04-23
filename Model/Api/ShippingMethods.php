@@ -180,6 +180,59 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * Check if cart items data has changed by comparing
+     * product IDs and quantities in quote and received cart data.
+     * Also checks an empty cart case.
+     *
+     * @param array $cart cart details
+     * @param Quote $quote
+     * @throws LocalizedException
+     */
+    private function checkCartItems($cart, $quote) {
+
+        $cartItems = [];
+        foreach ($cart['items'] as $item) {
+            $cartItems[$item['reference']] = $item['quantity'];
+        }
+
+        $quoteItems = [];
+        foreach ($quote->getAllVisibleItems() as $item) {
+            $quoteItems[$item->getProductId()] = $item->getQty();
+        }
+
+        if ($cartItems != $quoteItems || !$cartItems) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
+
+                $quote_items = array_map(function($item){
+                    $product = [];
+                    $productId = $item->getProductId();
+                    $unit_price   = $item->getCalculationPrice();
+                    $total_amount = $unit_price * $item->getQty();
+                    $rounded_total_amount = $this->cartHelper->getRoundAmount($total_amount);
+                    $product['reference']    = $productId;
+                    $product['name']         = $item->getName();
+                    $product['description']  = $item->getDescription();
+                    $product['total_amount'] = $rounded_total_amount;
+                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
+                    $product['quantity']     = $item->getQty();
+                    $product['sku']          = $item->getSku();
+                    return $product;
+                }, $quote->getAllVisibleItems());
+
+                $report->setMetaData([
+                    'CART_MISMATCH' => [
+                        'cart_items' => $cart['items'],
+                        'quote_items' => $quote_items,
+                    ]
+                ]);
+            });
+            throw new LocalizedException(
+                __('Cart Items data data has changed.')
+            );
+        }
+    }
+
+    /**
      * Get all available shipping methods.
      *
      * @api
@@ -224,6 +277,8 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             $this->checkoutSession->replaceQuote($quote);
+
+            $this->checkCartItems($cart, $quote);
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $shipping_address);
 

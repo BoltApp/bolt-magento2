@@ -435,6 +435,11 @@ class Cart extends AbstractHelper
             $taxAmount = 0;
         }
 
+        // include potential rounding difference and reset $diff accumulator
+        $cart['items'][0]['total_amount'] += round($diff);
+        $totalAmount += round($diff);
+        $diff = 0;
+
         // unset billing if not all required fields are present
         foreach ($this->required_address_fields as $field) {
             if (empty($cart['billing_address'][$field])) {
@@ -446,6 +451,9 @@ class Cart extends AbstractHelper
         // add discount data
         $cart['discounts'] = [];
 
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process store integral discounts and coupons
+        /////////////////////////////////////////////////////////////////////////////////
         if ($amount = @$shippingAddress->getDiscountAmount()) {
             $amount         = abs($amount);
             $rounded_amount = $this->getRoundAmount($amount);
@@ -458,21 +466,7 @@ class Cart extends AbstractHelper
             $diff -= $amount * 100 - $rounded_amount;
             $totalAmount -= $rounded_amount;
         }
-
-        foreach ($this->discount_types as $discount) {
-            if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
-                $amount = abs($amount);
-                $rounded_amount = $this->getRoundAmount($amount);
-
-                $cart['discounts'][] = [
-                    'description' => @$totals[$discount]->getTitle(),
-                    'amount'      => $rounded_amount,
-                ];
-
-                $diff -= $amount * 100 - $rounded_amount;
-                $totalAmount -= $rounded_amount;
-            }
-        }
+        /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
         // Process Store Credit
@@ -564,11 +558,42 @@ class Cart extends AbstractHelper
         }
         /////////////////////////////////////////////////////////////////////////////////
 
-        $cart['items'][0]['total_amount'] += round($diff);
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process other discounts, stored in totals array
+        /////////////////////////////////////////////////////////////////////////////////
+        foreach ($this->discount_types as $discount) {
+            if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                $amount = abs($amount);
+                $rounded_amount = $this->getRoundAmount($amount);
 
-        $totalAmount += round($diff);
+                $cart['discounts'][] = [
+                    'description' => @$totals[$discount]->getTitle(),
+                    'amount'      => $rounded_amount,
+                ];
 
-        $cart['total_amount'] = $totalAmount >= 0 ? $totalAmount : 0;
+                $diff -= $amount * 100 - $rounded_amount;
+                $totalAmount -= $rounded_amount;
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Add fixed amount type to all discounts if total amount is negative
+        // and set total to 0. Otherwise add calculated diff to cart total.
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($totalAmount < 0) {
+            $totalAmount = 0;
+            foreach ($cart['discounts'] as &$discount) {
+                $discount['type'] = 'fixed_amount';
+            }
+        } else {
+            // add the diff to first item total to pass bolt order create check
+            $cart['items'][0]['total_amount'] += round($diff);
+            $totalAmount += round($diff);
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        $cart['total_amount'] = $totalAmount;
         $cart['tax_amount']   = $taxAmount;
 
         if (abs($diff) >= $this->treshold) {
@@ -582,6 +607,8 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
+
+        $this->logHelper->addInfoLog(var_export($cart, 1));
 
         return ['cart' => $cart];
     }
