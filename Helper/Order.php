@@ -473,7 +473,7 @@ class Order extends AbstractHelper
      */
     public function updateOrderPayment($order, $transaction = null, $reference = null)
     {
-        // fetch transaction info transaction is not passed as a parameter
+        // fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
             $transaction = $this->fetchTransactionInfo($reference);
         }
