@@ -233,7 +233,7 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * Get all available shipping methods.
+     * Get all available shipping methods and tax data.
      *
      * @api
      *
@@ -299,10 +299,9 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * Save shipping address in quote
+     * Get Shipping and Tax from cache or run the Shipping options collection routine, store it in cache and return.
      *
      * @param Quote $quote
-     * @param array $cart
      * @param array $shipping_address
      *
      * @return ShippingOptionsInterface
@@ -378,7 +377,7 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * Save shipping address in quote
+     * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
      * @param array $shipping_address

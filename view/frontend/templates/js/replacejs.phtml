@@ -406,11 +406,11 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var create_request;
     var createOrder = function () {
         if (create_request) create_request.abort();
-        // preset success conditioin to false
+        // preset success condition to false
         cart.orderToken = '';
         // define the params sent with the request variable
         var params = [];
-        // check and set payment_pnly flag
+        // check and set payment_only flag
         if (getCheckoutType() === 'payment' && settings && !!settings.publishable_key_payment) {
             params.push('payment_only=true')
         }
@@ -665,25 +665,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             }
 
         } (prefix);
-    }
-
-    for (var input_name in input_name_to_hints_prefill) {
-
-        if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
-
-            ! function (input_name) {
-
-                var prefill_key = input_name_to_hints_prefill[input_name];
-                var input_selectors = ['input[name="' + input_name + '"]'];
-
-                monitorAttributesChange(input_selectors, function(element) {
-                    hints.prefill[prefill_key] = element.value;
-
-                    configureHints();
-                });
-
-            } (input_name);
-        }
     }
     /////////////////////////////////////////////////////////////////////
 
