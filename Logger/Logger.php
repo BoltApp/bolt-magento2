@@ -10,4 +10,6 @@ namespace Bolt\Boltpay\Logger;
  *
  * @package Bolt\Boltpay\Logger
  */
-class Logger extends \Monolog\Logger {}
+class Logger extends \Monolog\Logger
+{
+}

@@ -21,7 +21,8 @@ define([
      * @param {Number} length - length for need string
      * @returns {String}
      */
-    function generateRandomString(chars, length) {
+    function generateRandomString(chars, length)
+    {
         var result = '';
 
         length = length > 0 ? length : 1;
@@ -43,7 +44,8 @@ define([
         /**
          * @param {jQuery} element - Comment holder
          */
-        (function lookup(element) {
+        (function lookup(element)
+        {
             var iframeHostName;
 
             // prevent cross origin iframe content reading
@@ -307,3 +309,4 @@ define([
         'msgBox': $.mage.msgBox
     };
 });
+

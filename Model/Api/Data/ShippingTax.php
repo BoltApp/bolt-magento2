@@ -15,31 +15,33 @@ use Bolt\Boltpay\Api\Data\ShippingTaxInterface;
  */
 class ShippingTax implements ShippingTaxInterface
 {
-	/**
-	 * @var int
-	 */
-	protected $amount;
+    /**
+     * @var int
+     */
+    private $amount;
 
-	/**
-	 * Get tax amount.
-	 *
-	 * @api
-	 * @return int
-	 */
-	public function getAmount() {
-		return $this->amount;
-	}
+    /**
+     * Get tax amount.
+     *
+     * @api
+     * @return int
+     */
+    public function getAmount()
+    {
+        return $this->amount;
+    }
 
-	/**
-	 * Set tax amount.
-	 *
-	 * @api
-	 * @param int $amount
-	 *
-	 * @return $this
-	 */
-	public function setAmount( $amount ) {
-		$this->amount = $amount;
-		return $this;
-	}
+    /**
+     * Set tax amount.
+     *
+     * @api
+     * @param int $amount
+     *
+     * @return $this
+     */
+    public function setAmount($amount)
+    {
+        $this->amount = $amount;
+        return $this;
+    }
 }

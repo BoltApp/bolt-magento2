@@ -13,10 +13,9 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
-use Magento\Framework\DataObject;
+use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-
 
 /**
  * Class Data.
@@ -28,84 +27,90 @@ use Bolt\Boltpay\Helper\Bugsnag;
  */
 class Data extends Action
 {
-	/**
-	 * @var JsonFactory
-	 */
-	protected $resultJsonFactory;
+    /**
+     * @var JsonFactory
+     */
+    private $resultJsonFactory;
 
-	/**
-	 * @var CartHelper
-	 */
-	protected $cartHelper;
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
-	/**
-	 * @var ConfigHelper
-	 */
-	protected $configHelper;
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
 
-	/**
-	 * @var Bugsnag
-	 */
-	protected $bugsnag;
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
 
-	/**
-	 * @param Context $context
-	 * @param JsonFactory $resultJsonFactory
-	 * @param CartHelper $cartHelper
-	 * @param ConfigHelper $configHelper
-	 * @param Bugsnag $bugsnag
-	 *
-	 * @codeCoverageIgnore
-	 */
-	public function __construct(
-		Context      $context,
-		JsonFactory  $resultJsonFactory,
-		CartHelper   $cartHelper,
-		ConfigHelper $configHelper,
-		Bugsnag      $bugsnag
-	) {
-		parent::__construct($context);
-		$this->resultJsonFactory = $resultJsonFactory;
-		$this->cartHelper        = $cartHelper;
-		$this->configHelper      = $configHelper;
-		$this->bugsnag           = $bugsnag;
-	}
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
 
-	/**
-	 * Get cart data for bolt pay ajax
-	 *
-	 * @return Json
-	 * @throws Exception
-	 */
-	public function execute()
-	{
-		try {
+    /**
+     * @param Context $context
+     * @param JsonFactory $resultJsonFactory
+     * @param CartHelper $cartHelper
+     * @param ConfigHelper $configHelper
+     * @param Bugsnag $bugsnag
+     * @param DataObjectFactory $dataObjectFactory
+     *
+     * @codeCoverageIgnore
+     */
+    public function __construct(
+        Context $context,
+        JsonFactory $resultJsonFactory,
+        CartHelper $cartHelper,
+        ConfigHelper $configHelper,
+        Bugsnag $bugsnag,
+        DataObjectFactory $dataObjectFactory
+    ) {
+        parent::__construct($context);
+        $this->resultJsonFactory = $resultJsonFactory;
+        $this->cartHelper        = $cartHelper;
+        $this->configHelper      = $configHelper;
+        $this->bugsnag           = $bugsnag;
+        $this->dataObjectFactory = $dataObjectFactory;
+    }
 
-			// flag to determinate the type of checkout / data sent to Bolt
-			$payment_only        = $this->getRequest()->getParam('payment_only');
-			// additional data collected from the (one page checkout) page,
-			// i.e. billing address to be saved with the order
-			$place_order_payload = $this->getRequest()->getParam('place_order_payload');
-			// call the Bolt API
-			$boltpayOrder = $this->cartHelper->getBoltpayOrder( $payment_only, $place_order_payload );
+    /**
+     * Get cart data for bolt pay ajax
+     *
+     * @return Json
+     * @throws Exception
+     */
+    public function execute()
+    {
+        try {
+            // flag to determinate the type of checkout / data sent to Bolt
+            $payment_only        = $this->getRequest()->getParam('payment_only');
+            // additional data collected from the (one page checkout) page,
+            // i.e. billing address to be saved with the order
+            $place_order_payload = $this->getRequest()->getParam('place_order_payload');
+            // call the Bolt API
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
-			// format and send the response
-			$cart = [
-				'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-				'authcapture' => $this->configHelper->getAutomaticCaptureMode()
-			];
+            // format and send the response
+            $cart = [
+                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
+                'authcapture' => $this->configHelper->getAutomaticCaptureMode()
+            ];
 
-			$hints = $this->cartHelper->getHints($place_order_payload);
+            $hints = $this->cartHelper->getHints($place_order_payload);
 
-			$result = new DataObject();
-			$result->setData('cart', $cart);
-			$result->setData('hints', $hints);
+            $result = $this->dataObjectFactory->create();
+            $result->setData('cart', $cart);
+            $result->setData('hints', $hints);
 
-			return $this->resultJsonFactory->create()->setData($result->getData());
-
-		} catch ( Exception $e ) {
-			$this->bugsnag->notifyException($e);
-			throw $e;
-		}
-	}
+            return $this->resultJsonFactory->create()->setData($result->getData());
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }
+    }
 }

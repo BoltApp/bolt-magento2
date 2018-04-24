@@ -4,7 +4,6 @@
  * See COPYING.txt for license details.
  */
 
-
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OrderManagementInterface;
@@ -25,121 +24,127 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
  */
 class OrderManagement implements OrderManagementInterface
 {
-	/**
-	 * @var HookHelper
-	 */
-	protected $hookHelper;
+    /**
+     * @var HookHelper
+     */
+    private $hookHelper;
 
-
-	/**
+    /**
      * @var OrderHelper
      */
-    protected $orderHelper;
+    private $orderHelper;
 
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
-	/**
-	 * @var LogHelper
-	 */
-	protected $logHelper;
+    /**
+     * @var Request
+     */
+    private $request;
 
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
 
-	/**
-	 * @var Request
-	 */
-	protected $request;
+    /**
+     * @var Response
+     */
+    private $response;
 
-	/**
-	 * @var Bugsnag
-	 */
-	protected $bugsnag;
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
 
-	/**
-	 * @var Response
-	 */
-	protected $response;
-
-	/**
-	 * @var ConfigHelper
-	 */
-	protected $configHelper;
-
-	/**
-	 * @param HookHelper $hookHelper
-	 * @param OrderHelper $orderHelper
-	 * @param LogHelper $logHelper
-	 * @param Request $request
-	 * @param Bugsnag $bugsnag
-	 * @param Response $response
-	 * @param Config $configHelper
-	 */
+    /**
+     * @param HookHelper $hookHelper
+     * @param OrderHelper $orderHelper
+     * @param LogHelper $logHelper
+     * @param Request $request
+     * @param Bugsnag $bugsnag
+     * @param Response $response
+     * @param Config $configHelper
+     */
     public function __construct(
-	    HookHelper   $hookHelper,
-        OrderHelper  $orderHelper,
-        LogHelper    $logHelper,
-	    Request      $request,
-	    Bugsnag      $bugsnag,
-	    Response     $response,
-	    ConfigHelper $configHelper
+        HookHelper $hookHelper,
+        OrderHelper $orderHelper,
+        LogHelper $logHelper,
+        Request $request,
+        Bugsnag $bugsnag,
+        Response $response,
+        ConfigHelper $configHelper
     ) {
-	    $this->hookHelper   = $hookHelper;
+        $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
         $this->logHelper    = $logHelper;
-	    $this->request      = $request;
-	    $this->bugsnag      = $bugsnag;
-	    $this->response     = $response;
-	    $this->configHelper = $configHelper;
+        $this->request      = $request;
+        $this->bugsnag      = $bugsnag;
+        $this->response     = $response;
+        $this->configHelper = $configHelper;
     }
 
-	/**
-	 * Manage order.
-	 *
-	 * @api
-	 *
-	 * @param mixed $quote_id
-	 * @param mixed $reference
-	 * @param mixed $transaction_id
-	 * @param mixed $notification_type
-	 * @param mixed $amount
-	 * @param mixed $currency
-	 * @param mixed $status
-	 * @param mixed $display_id
-	 * @param mixed $source_transaction_id
-	 * @param mixed $source_transaction_reference
-	 *
-	 * @return void
-	 * @throws \Exception
-	 */
-    public function manage($quote_id = null, $reference, $transaction_id = null, $notification_type = null, $amount = null, $currency = null, $status = null, $display_id = null, $source_transaction_id = null, $source_transaction_reference = null)
-    {
-    	try {
+    /**
+     * Manage order.
+     *
+     * @api
+     *
+     * @param mixed $id
+     * @param mixed $reference
+     * @param mixed $order
+     * @param mixed $type
+     * @param mixed $amount
+     * @param mixed $currency
+     * @param mixed $status
+     * @param mixed $display_id
+     * @param mixed $source_transaction_id
+     * @param mixed $source_transaction_reference
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function manage(
+        $id,
+        $reference,
+        $order = null,
+        $type = null,
+        $amount = null,
+        $currency = null,
+        $status = null,
+        $display_id = null,
+        $source_transaction_id = null,
+        $source_transaction_reference = null
+    ) {
+        try {
 
-		    if( $bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+            $this->logHelper->addInfoLog($this->request->getContent());
 
-			    $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
-				    $report->setMetaData([
-					    'BREADCRUMBS_' => [
-						    'bolt_trace_id' => $bolt_trace_id,
-					    ]
-				    ]);
-			    });
-		    }
+            if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+                $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
+                    $report->setMetaData([
+                        'BREADCRUMBS_' => [
+                            'bolt_trace_id' => $bolt_trace_id,
+                        ]
+                    ]);
+                });
+            }
 
-		    $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
-		    $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+            $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
+            $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
-//		    $this->logHelper->addInfoLog("API Hook Called");
-//		    $this->logHelper->addInfoLog($this->request->getContent());
-		    $this->hookHelper->verifyWebhook();
+            $this->hookHelper->verifyWebhook();
 
-		    if (empty($reference)) {
-			    throw new LocalizedException(
-				    __('Missing required parameters.')
-			    );
-		    }
-		    $this->orderHelper->saveUpdateOrder($reference, false);
-	    } catch ( \Exception $e ) {
-			$this->bugsnag->notifyException($e);
-			throw $e;
-		}
+            if (empty($reference)) {
+                throw new LocalizedException(
+                    __('Missing required parameters.')
+                );
+            }
+            $this->orderHelper->saveUpdateOrder($reference, false);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }
     }
 }
