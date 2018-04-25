@@ -64,6 +64,11 @@ class Config extends AbstractHelper
     const XML_PATH_PREFETCH_ADDRESS_FIELDS = 'payment/boltpay/prefetch_address_fields';
 
     /**
+     * Path for Custom Javascript function call on success
+     */
+    const XML_PATH_JAVASCRIPT_SUCCESS = 'payment/boltpay/javascript_success';
+
+    /**
      * Automatic capture mode
      */
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
@@ -326,6 +331,19 @@ class Config extends AbstractHelper
     {
         return $this->scopeConfig->getValue(
             self::XML_PATH_SUCCESS_PAGE_REDIRECT,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+     /**
+     * Get Custom javascript function call on success
+     *
+     * @return  string
+     */
+    public function getjavascriptSuccess()
+    {
+        return $this->scopeConfig->getValue(
+            self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE
         );
     }
