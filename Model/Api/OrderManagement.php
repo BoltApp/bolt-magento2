@@ -106,7 +106,7 @@ class OrderManagement implements OrderManagementInterface
      * @throws \Exception
      */
     public function manage(
-        $id,
+        $id = null,
         $reference,
         $order = null,
         $type = null,
@@ -141,7 +141,9 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
+
             $this->orderHelper->saveUpdateOrder($reference, false);
+
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;

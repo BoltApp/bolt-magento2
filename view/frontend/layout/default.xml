@@ -11,7 +11,7 @@
     <body>
         <referenceBlock name="head.additional">
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
-            <block class="Bolt\Boltpay\Block\Js" name="trackjs"   template="Bolt_Boltpay::js/trackjs.phtml"/>
+            <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
         </referenceBlock>
     </body>
 </page>
