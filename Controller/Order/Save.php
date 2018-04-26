@@ -109,11 +109,17 @@ class Save extends Action
             // return the success page redirect URL
             $result = $this->dataObjectFactory->create();
             $result->setData('success_url', $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()));
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+            // Return Json with error to prevent 500 internal error and stuck checkout process
+            $result = $this->dataObjectFactory->create();
+            $result->setData('success_url', $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()));
+            $result->setData('status', 'error');
+            $result->setData('code', '1001');
+            $result->setData('message', $e->getMessage());
         }
+        return $this->resultJsonFactory->create()->setData($result->getData());
     }
 
     /**
