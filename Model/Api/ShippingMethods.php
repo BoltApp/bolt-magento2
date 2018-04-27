@@ -119,8 +119,8 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $cache;
 
-    // Totals adjustment treshold
-    private $treshold = 0.01;
+    // Totals adjustment threshold
+    private $threshold = 0.01;
 
     private $tax_adjusted = false;
 
@@ -313,28 +313,36 @@ class ShippingMethods implements ShippingMethodsInterface
         // Check cache storage for estimate. If the quote_id, total_amount, country_code,
         // region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
-        $cache_identifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.$shipping_address['country_code'].
-            '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+        if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
 
-        // get custom address fields to be included in cache key
-        $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
-        // trim values and filter out empty strings
-        $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
-        // convert to PascalCase
-        $prefetchAddressFields = array_map(function ($el) { return str_replace('_', '', ucwords($el, '_'));}, $prefetchAddressFields);
+            $cache_identifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.
+                $shipping_address['country_code']. '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
 
-        $shippingAddress = $quote->getShippingAddress();
-        // get the value of each valid field and include it in the cache identifier
-        foreach ($prefetchAddressFields as $key) {
-            $getter = 'get'.$key;
-            $value = $shippingAddress->$getter();
-            if ($value) $cache_identifier .= '_'.$value;
-        }
+            // include products in cache key
+            foreach($quote->getAllVisibleItems() as $item) {
+                $cache_identifier .= '_'.$item->getProductId().'_'.$item->getQty();
+            }
 
-        $prefetchShipping = $this->configHelper->getPrefetchShipping();
+            // get custom address fields to be included in cache key
+            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
+            // trim values and filter out empty strings
+            $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
+            // convert to PascalCase
+            $prefetchAddressFields = array_map(function ($el) { return str_replace('_', '', ucwords($el, '_'));}, $prefetchAddressFields);
 
-        if ($prefetchShipping && $serialized = $this->cache->load($cache_identifier)) {
-            return unserialize($serialized);
+            $shippingAddress = $quote->getShippingAddress();
+            // get the value of each valid field and include it in the cache identifier
+            foreach ($prefetchAddressFields as $key) {
+                $getter = 'get'.$key;
+                $value = $shippingAddress->$getter();
+                if ($value) $cache_identifier .= '_'.$value;
+            }
+
+            $cache_identifier = md5($cache_identifier);
+
+            if ($serialized = $this->cache->load($cache_identifier)) {
+                return unserialize($serialized);
+            }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -398,6 +406,9 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
+        $shippingAddress->removeAllShippingRates();
+        $shippingAddress->setCollectShippingRates(true);
+
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
                 $output[] = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
@@ -412,6 +423,9 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
+            $shippingAddress->removeAllShippingRates();
+            $shippingAddress->setCollectShippingRates(true);
+
             $shippingAddress->setShippingMethod($method);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
@@ -422,7 +436,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
-            if (abs($diff) >= $this->treshold) {
+            if (abs($diff) >= $this->threshold) {
                 $this->tax_adjusted = true;
                 $this->bugsnag->registerCallback(function ($report) use (
                     $method,
