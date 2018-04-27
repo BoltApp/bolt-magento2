@@ -90,6 +90,16 @@ class Js extends Template
     }
 
     /**
+     * Get Javascript function call on success.
+     *
+     * @return string
+     */
+    public function getJavascriptSuccess()
+    {
+        return $this->configHelper->getJavascriptSuccess();
+    }
+
+    /**
      * Get Javascript page settings.
      * @return string
      */
