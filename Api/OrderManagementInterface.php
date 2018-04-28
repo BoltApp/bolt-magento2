@@ -39,7 +39,7 @@ interface OrderManagementInterface
      * @return void
      */
     public function manage(
-        $id,
+        $id = null,
         $reference,
         $order = null,
         $type = null,

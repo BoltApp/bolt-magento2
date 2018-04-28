@@ -66,6 +66,7 @@ class Bugsnag extends AbstractHelper
 
         $this->bugsnag = \Bugsnag\Client::make(self::API_KEY);
         $this->bugsnag->getConfig()->setReleaseStage($release_stage);
+        $this->bugsnag->getConfig()->setAppVersion($this->configHelper->getModuleVersion());
         \Bugsnag\Handler::register($this->bugsnag);
     }
 
