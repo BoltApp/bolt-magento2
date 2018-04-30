@@ -319,7 +319,7 @@ class Cart extends AbstractHelper
             $product['description']  = $item->getDescription();
             $product['total_amount'] = $rounded_total_amount;
             $product['unit_price']   = $this->getRoundAmount($unit_price);
-            $product['quantity']     = $item->getQty();
+            $product['quantity']     = round($item->getQty());
             $product['sku']          = $item->getSku();
             //Get product Image
             $_product = $this->productModel->load($productId);
