@@ -38,6 +38,7 @@ use Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session;
+use Magento\Framework\App\State;
 
 /**
  * Class Order
@@ -50,6 +51,9 @@ use Magento\Checkout\Model\Session;
  */
 class Order extends AbstractHelper
 {
+
+    /** @var State */
+    private $appState;
 
     /**
      * @var ApiHelper
@@ -157,6 +161,7 @@ class Order extends AbstractHelper
      * @param TimezoneInterface $timezone
      * @param DataObjectFactory $dataObjectFactory
      * @param Session $checkoutSession
+     * @param State $appState
      *
      * @codeCoverageIgnore
      */
@@ -178,7 +183,8 @@ class Order extends AbstractHelper
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
-        Session $checkoutSession
+        Session $checkoutSession,
+        State $appState
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -198,6 +204,7 @@ class Order extends AbstractHelper
         $this->timezone              = $timezone;
         $this->dataObjectFactory     = $dataObjectFactory;
         $this->checkoutSession       = $checkoutSession;
+        $this->appState              = $appState;
     }
 
     /**
@@ -303,7 +310,7 @@ class Order extends AbstractHelper
             'region'       => @$address->region,
             'postcode'     => @$address->postal_code,
             'telephone'    => @$address->phone_number,
-            'region_id'    => @$region->getId(),
+            'region_id'    => $region ? $region->getId() : null,
             'email'        => @$address->email_address,
         ];
         $quoteAddress->setShouldIgnoreValidation(true);
@@ -404,17 +411,19 @@ class Order extends AbstractHelper
         }
 
         $this->setPaymentMethod($quote);
-
         $quote->collectTotals();
 
         $this->quoteRepository->save($quote);
 
         $order = $this->quoteManagement->submit($quote);
 
-        // Internal email sending method does not work from API,
-        // breaks on loading template from path.
-        // Send for frontend created orders only.
-        if ($frontend) $this->emailSender->send($order);
+        // Send order confirmation email to customer.
+        // Emulate frontend area in order for email
+        // template to be loaded from the correct path
+        // even if run from the hook.
+        $this->appState->emulateAreaCode('frontend', function () use ($order){
+            $this->emailSender->send($order);
+        });
 
         return $order;
     }

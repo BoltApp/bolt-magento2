@@ -106,7 +106,7 @@ class OrderManagement implements OrderManagementInterface
      * @throws \Exception
      */
     public function manage(
-        $id,
+        $id = null,
         $reference,
         $order = null,
         $type = null,
@@ -145,12 +145,13 @@ class OrderManagement implements OrderManagementInterface
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode(array('status' => 'success','message' => 'Order creation was successful')));
             $this->response->sendResponse();
-            
-        } catch (\Exception $e) {
+          
+       } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode(array('status' => 'error', 'code' => '1000', 'message' => $e->getMessage())));  
-           $this->response->sendResponse();             
+            $this->response->sendResponse();
+          
         }
     }
 }

@@ -11,6 +11,7 @@
  */
 if (!$block->isEnabled()) return;
 ?>
+<?php $success = $block->getjavascriptSuccess(); ?>
 
 <script type="text/javascript">
 
@@ -365,6 +366,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
+                <?php echo $success; ?>
                 callbacks.success_url = data.success_url;
                 callback();
             };
