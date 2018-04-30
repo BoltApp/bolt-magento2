@@ -272,7 +272,10 @@ class Cart extends AbstractHelper
         $cart = [];
 
         if (null === $quote->getId()) {
-            $this->bugsnag->notifyError('Get Cart Data Error', 'Non existing session quote object');
+            // The cart creation sometimes gets called from frontend event when no quote exists.
+            // It is store specific, for example a minicart with 0 items.
+            // Commenting this bugsnag notification out. It uselessly bloats the log.
+            // $this->bugsnag->notifyError('Get Cart Data Error', 'Non existing session quote object');
             return $cart;
         }
 
