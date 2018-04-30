@@ -482,9 +482,12 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($errors) {
-            $this->bugsnag->registerCallback(function ($report) use ($errors) {
+            $this->bugsnag->registerCallback(function ($report) use ($errors, $shipping_address) {
                 $report->setMetaData([
-                    'SHIPPING METHOD' => $errors
+                    'SHIPPING METHOD' => [
+                      'address' => $shipping_address,
+                      'errors'  => $errors
+                    ]
                 ]);
             });
 
