@@ -17,7 +17,7 @@
 
     <type name="Bolt\Boltpay\Logger\Logger">
         <arguments>
-            <argument name="name" xsi:type="string">customLogHandler</argument>
+            <argument name="name" xsi:type="string">Bolt</argument>
             <argument name="handlers"  xsi:type="array">
                 <item name="system" xsi:type="object">Bolt\Boltpay\Logger\Handler</item>
             </argument>
