@@ -283,7 +283,9 @@ class Cart extends AbstractHelper
         $items = $quote->getAllVisibleItems();
 
         if (!$items) {
-            $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
+            // This is the case when customer empties the cart.
+            // Not an error. Commenting out bugsnag report for now.
+            // $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
             return $cart;
         }
 
