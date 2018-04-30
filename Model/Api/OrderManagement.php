@@ -141,12 +141,17 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
-
             $this->orderHelper->saveUpdateOrder($reference, false);
-
-        } catch (\Exception $e) {
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode(array('status' => 'success','message' => 'Order creation was successful')));
+            $this->response->sendResponse();
+          
+       } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode(array('status' => 'error', 'code' => '1000', 'message' => $e->getMessage())));  
+            $this->response->sendResponse();
+          
         }
     }
 }

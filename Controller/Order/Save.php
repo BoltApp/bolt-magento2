@@ -107,12 +107,17 @@ class Save extends Action
                 $this->clearOrderSession($order);
             }
             // return the success page redirect URL
-            $result = $this->dataObjectFactory->create();
+            $result = $this->resultJsonFactory->create();
             $result->setData('success_url', $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()));
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            return $result;
+
         } catch (Exception $e) {
+            
             $this->bugsnag->notifyException($e);
-            throw $e;
+            $result = $this->resultJsonFactory->create();
+            $result->setHttpResponseCode(422);
+            $result->setData(json_encode(array('status' => 'error', 'code' => '1000','message' => $e->getMessage())));
+            return $result;
         }
     }
 
