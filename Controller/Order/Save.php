@@ -108,7 +108,7 @@ class Save extends Action
             }
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
-            $result->setData('success_url', $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()));
+            $result->setData(array('success_url' => $this->_url->getUrl($this->configHelper->getSuccessPageRedirect())));
             return $result;
 
         } catch (Exception $e) {
@@ -116,7 +116,7 @@ class Save extends Action
             $this->bugsnag->notifyException($e);
             $result = $this->resultJsonFactory->create();
             $result->setHttpResponseCode(422);
-            $result->setData(json_encode(array('status' => 'error', 'code' => '1000','message' => $e->getMessage())));
+            $result->setData(array('status' => 'error', 'code' => '1000','message' => $e->getMessage()));
             return $result;
         }
     }
