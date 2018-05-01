@@ -192,12 +192,12 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $cartItems = [];
         foreach ($cart['items'] as $item) {
-            $cartItems[$item['reference']] = $item['quantity'];
+            $cartItems[$item['sku']] = $item['quantity'];
         }
 
         $quoteItems = [];
         foreach ($quote->getAllVisibleItems() as $item) {
-            $quoteItems[$item->getProductId()] = $item->getQty();
+            $quoteItems[$item->getSku()] = round($item->getQty());
         }
 
         if ($cartItems != $quoteItems || !$cartItems) {
@@ -214,7 +214,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     $product['description']  = $item->getDescription();
                     $product['total_amount'] = $rounded_total_amount;
                     $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
-                    $product['quantity']     = $item->getQty();
+                    $product['quantity']     = round($item->getQty());
                     $product['sku']          = $item->getSku();
                     return $product;
                 }, $quote->getAllVisibleItems());
@@ -229,6 +229,39 @@ class ShippingMethods implements ShippingMethodsInterface
             throw new LocalizedException(
                 __('Cart Items data data has changed.')
             );
+        }
+
+        try {
+            $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
+
+                $quote_items = array_map(function($item){
+                    $product = [];
+                    $productId = $item->getProductId();
+                    $unit_price   = $item->getCalculationPrice();
+                    $total_amount = $unit_price * $item->getQty();
+                    $rounded_total_amount = $this->cartHelper->getRoundAmount($total_amount);
+                    $product['reference']    = $productId;
+                    $product['name']         = $item->getName();
+                    $product['description']  = $item->getDescription();
+                    $product['total_amount'] = $rounded_total_amount;
+                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
+                    $product['quantity']     = round($item->getQty());
+                    $product['sku']          = $item->getSku();
+                    return $product;
+                }, $quote->getAllVisibleItems());
+
+                $report->setMetaData([
+                    'CART_MISMATCH' => [
+                        'cart_items' => $cart['items'],
+                        'quote_items' => $quote_items,
+                    ]
+                ]);
+            });
+            throw new LocalizedException(
+                __('DEBUG: Cart Items data data has changed.')
+            );
+        } catch (LocalizedException $e) {
+
         }
     }
 
@@ -320,7 +353,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
-                $cache_identifier .= '_'.$item->getProductId().'_'.$item->getQty();
+                $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
             }
 
             // get custom address fields to be included in cache key
