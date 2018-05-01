@@ -1,4 +1,39 @@
 language: php
 
+php:
+  - 7.0
+
+deploy:
+  - github-token: $GITHUB_TOKEN
+
+env:
+  global:
+    - COMPOSER_BIN_DIR=~/bin
+    - DB_NAME="magento2_travis"
+  matrix:
+    - TEST_SUITE=unit
+
+cache:
+  apt: true
+  directories:
+    - $HOME/.composer/cache
+
+before_install:
+  - mysql -e 'DROP DATABASE IF EXISTS `$DB_NAME`;'
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS `$DB_NAME`;'
+
+before_script:
+  - composer self-update -q
+  - if [ -n "$GITHUB_TOKEN" ]; then composer config github-oauth.github.com ${GITHUB_TOKEN}; fi;
+  - composer show -i
+  - echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}" > $HOME/.composer/auth.json
+  - cd /home/travis/build/
+  - composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition magento/
+
 script:
-    - echo 'no test'
+  - cd /home/travis/build/
+  - cp -r BoltApp/bolt-magento2/. magento/app/code/
+  - cd magento/
+  - ./app/code/Bolt/Boltpay/.travis/before_script.sh
+  - php vendor/bin/phpunit -c dev/tests/unit/bolt_phpunit.xml
+
