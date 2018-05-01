@@ -230,39 +230,6 @@ class ShippingMethods implements ShippingMethodsInterface
                 __('Cart Items data data has changed.')
             );
         }
-
-        try {
-            $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
-
-                $quote_items = array_map(function($item){
-                    $product = [];
-                    $productId = $item->getProductId();
-                    $unit_price   = $item->getCalculationPrice();
-                    $total_amount = $unit_price * $item->getQty();
-                    $rounded_total_amount = $this->cartHelper->getRoundAmount($total_amount);
-                    $product['reference']    = $productId;
-                    $product['name']         = $item->getName();
-                    $product['description']  = $item->getDescription();
-                    $product['total_amount'] = $rounded_total_amount;
-                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
-                    $product['quantity']     = round($item->getQty());
-                    $product['sku']          = $item->getSku();
-                    return $product;
-                }, $quote->getAllVisibleItems());
-
-                $report->setMetaData([
-                    'CART_MISMATCH' => [
-                        'cart_items' => $cart['items'],
-                        'quote_items' => $quote_items,
-                    ]
-                ]);
-            });
-            throw new LocalizedException(
-                __('DEBUG: Cart Items data data has changed.')
-            );
-        } catch (LocalizedException $e) {
-
-        }
     }
 
     /**
@@ -439,8 +406,21 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
-        $shippingAddress->removeAllShippingRates();
-        $shippingAddress->setCollectShippingRates(true);
+        ////////////////////////////////////////////////////////////////
+        /// On some store setups shipping prices are conditionally changed
+        /// depending on some custom logic. If it is done as a plugin for
+        /// some method in the Magento shipping flow, then that method
+        /// may be (indirectly) called from our Shipping And Tax flow more
+        /// than once, resulting in wrong prices. This function resets
+        /// address shipping calculation but can drasticaly slow down the
+        /// process. Use it carefully only when necesarry.
+        ////////////////////////////////////////////////////////////////
+        $resetShippingCalculation = function () use ($shippingAddress) {
+            $shippingAddress->removeAllShippingRates();
+            $shippingAddress->setCollectShippingRates(true);
+        };
+        //$resetShippingCalculation();
+        ////////////////////////////////////////////////////////////////
 
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
@@ -456,8 +436,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
-            $shippingAddress->removeAllShippingRates();
-            $shippingAddress->setCollectShippingRates(true);
+            //$resetShippingCalculation();
 
             $shippingAddress->setShippingMethod($method);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
