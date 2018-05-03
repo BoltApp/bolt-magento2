@@ -419,8 +419,13 @@ class ShippingMethods implements ShippingMethodsInterface
             $shippingAddress->removeAllShippingRates();
             $shippingAddress->setCollectShippingRates(true);
         };
-        //$resetShippingCalculation();
         ////////////////////////////////////////////////////////////////
+
+        ///////////////////////////////////
+        /// Restaurant Supply customization
+        ///////////////////////////////////
+        $resetShippingCalculation();
+        ///////////////////////////////////
 
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
@@ -436,7 +441,11 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
-            //$resetShippingCalculation();
+            ///////////////////////////////////
+            /// Restaurant Supply customization
+            ///////////////////////////////////
+            $resetShippingCalculation();
+            ///////////////////////////////////
 
             $shippingAddress->setShippingMethod($method);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
