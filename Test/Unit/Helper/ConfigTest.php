@@ -18,7 +18,7 @@ class ConfigTest extends TestCase
     private $encryptor;
 
     /**
-     * @var ResourceInterface
+     * @var ModuleResource
      */
     private $moduleResource;
 
@@ -48,11 +48,16 @@ class ConfigTest extends TestCase
         $this->encryptor = $this->createMock(EncryptorInterface::class);
         $this->moduleResource = $this->createMock(ModuleResource::class);
 
-        $this->scopeConfig = $this->createPartialMock(ScopeConfigInterface::class, ['getValue', 'isSetFlag']);
+        $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
 
+        $methods = ['getGlobalCSS', 'isDebugModeOn', 'getScopeConfig'];
         $this->currentMock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods($methods)
+            ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
                     $this->contextHelper,
@@ -62,6 +67,9 @@ class ConfigTest extends TestCase
                 ]
             )
             ->getMock();
+
+        $this->currentMock->method('getScopeConfig')
+            ->will($this->returnValue($this->scopeConfig));
     }
 
     /**
@@ -114,7 +122,26 @@ class ConfigTest extends TestCase
 
     public function testGetCdnUrl()
     {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
 
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(false));
+
+
+        $result = $mock->getCdnUrl();
+
+        $this->assertEquals(BoltConfig::CDN_URL_PRODUCTION, $result, 'getCdnUrl() method: not working properly');
     }
 
     public function testGetPublishableKeyPayment()
@@ -124,33 +151,41 @@ class ConfigTest extends TestCase
 
     public function testIsActive()
     {
-        $this->currentMock->expects($this->once())->method('isActive')
+        $this->scopeConfig->method('isSetFlag')
+            ->with(BoltConfig::XML_PATH_ACTIVE)
             ->will($this->returnValue(true));
 
-        $this->assertTrue($this->currentMock->isActive(), 'isActive() method: not working properly');
+
+        $result = $this->currentMock->isActive();
+
+        $this->assertTrue($result, 'isActive() method: not working properly');
     }
 
     public function testGetReplaceSelectors()
     {
-        $text = '.replace-example-selector1';
-        $this->currentMock->expects($this->once())->method('getReplaceSelectors')
-            ->will($this->returnValue($text));
+        $value = 'button#top-cart-btn-checkout, button[data-role=proceed-to-checkout]|prepend';
 
-        $this->assertEquals($text, $this->currentMock->getReplaceSelectors(), 'getReplaceSelectors() method: not working properly');
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_REPLACE_SELECTORS)
+            ->will($this->returnValue($value));
+
+        $this->assertEquals($value, $this->currentMock->getReplaceSelectors(), 'getReplaceSelectors() method: not working properly');
     }
 
     public function testGetSuccessPageRedirect()
     {
-        $text = 'checkout/onepage/success';
-        $this->currentMock->expects($this->once())->method('getSuccessPageRedirect')
-            ->will($this->returnValue($text));
+        $value = 'checkout/onepage/success';
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_SUCCESS_PAGE_REDIRECT)
+            ->will($this->returnValue($value));
 
-        $this->assertEquals($text, $this->currentMock->getSuccessPageRedirect(), 'getSuccessPageRedirect() method: not working properly');
+        $this->assertEquals($value, $this->currentMock->getSuccessPageRedirect(), 'getSuccessPageRedirect() method: not working properly');
     }
 
     public function testIsSandboxModeSet()
     {
-        $this->currentMock->expects($this->once())->method('isSandboxModeSet')
+        $this->scopeConfig->method('isSetFlag')
+            ->with(BoltConfig::XML_PATH_SANDBOX_MODE)
             ->will($this->returnValue(true));
 
         $this->assertTrue($this->currentMock->isSandboxModeSet(), 'IsSandboxModeSet() method: not working properly');
@@ -158,23 +193,32 @@ class ConfigTest extends TestCase
 
     public function testGetAutomaticCaptureMode()
     {
-        $this->currentMock->expects($this->once())->method('getAutomaticCaptureMode')
-            ->will($this->returnValue(true));
+        $this->scopeConfig->method('isSetFlag')
+            ->with(BoltConfig::XML_PATH_AUTOMATIC_CAPTURE_MODE)
+            ->will($this->returnValue(false));
 
-        $this->assertTrue($this->currentMock->getAutomaticCaptureMode(), 'getAutomaticCaptureMode() method: not working properly');
+        $this->assertFalse($this->currentMock->getAutomaticCaptureMode(), 'getAutomaticCaptureMode() method: not working properly');
     }
 
     public function testGetPrefetchShipping()
     {
-        $this->currentMock->expects($this->once())->method('getPrefetchShipping')
-            ->will($this->returnValue(true));
+        $this->scopeConfig->method('isSetFlag')
+            ->with(BoltConfig::XML_PATH_PREFETCH_SHIPPING)
+            ->will($this->returnValue(TRUE));
 
         $this->assertTrue($this->currentMock->getPrefetchShipping(), 'getPrefetchShipping() method: not working properly');
     }
 
     public function testGetModuleVersion()
     {
+        $moduleVersion = '1.0.10';
+        $this->moduleResource->method('getDataVersion')
+            ->with('Bolt_Boltpay')
+            ->will($this->returnValue($moduleVersion));
 
+        $result = $this->currentMock->getModuleVersion();
+
+        $this->assertEquals($moduleVersion, $result, 'getModuleVersion() method: not working properly');
     }
 
     public function testGetSigningSecret()
