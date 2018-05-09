@@ -34,6 +34,5 @@ script:
   - cd /home/travis/build/
   - cp -r BoltApp/bolt-magento2/. magento/app/code/
   - cd magento/
-  - ./app/code/Bolt/Boltpay/.travis/before_script.sh
+  - sh app/code/Bolt/Boltpay/.travis/before_script.sh
   - php vendor/bin/phpunit -c dev/tests/unit/bolt_phpunit.xml
-
