@@ -32,7 +32,13 @@ before_script:
 
 script:
   - cd /home/travis/build/
-  - mkdir magento/app/code/Bolt/Boltpay/
+  - ls -la
+  - ls -la magento
+  - ls -la magento/app/
+  - ls -la magento/app/code/
+
+  - mkdir magento/app/code/Bolt
+  - mkdir magento/app/code/Bolt/Boltpay
   - cp -r BoltApp/bolt-magento2/. magento/app/code/Bolt/Boltpay/
   - cd magento/
   - bash app/code/Bolt/Boltpay/.travis/before_script.sh
