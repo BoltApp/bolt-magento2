@@ -25,6 +25,6 @@ php bin/magento setup:install -q \
     --admin-password="123123q"
 
 echo "Enabling production mode"
-# php bin/magento deploy:mode:set production
+php bin/magento deploy:mode:set production
 
 
