@@ -9,12 +9,12 @@ trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit
 # prepare for test suite
 
 echo "Installing Magento"
-mysql -uroot -e 'CREATE DATABASE magento2_travis;'
+mysql -uroot -e 'CREATE DATABASE magento2;'
 php bin/magento setup:install -q \
     --language="en_US" \
     --timezone="UTC" \
     --currency="USD" \
-    --base-url="http://travis.magento.local/" \
+    --base-url="http://${MAGENTO_HOST_NAME}/" \
     --admin-firstname="John" \
     --admin-lastname="Doe" \
     --backend-frontname="backend" \
@@ -25,6 +25,6 @@ php bin/magento setup:install -q \
     --admin-password="123123q"
 
 echo "Enabling production mode"
-php bin/magento deploy:mode:set production
+# php bin/magento deploy:mode:set production
 
-cp app/code/Bolt/Boltpay/Test/Unit/phpunit.xml dev/tests/unit/bolt_phpunit.xml
+
