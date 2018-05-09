@@ -32,7 +32,8 @@ before_script:
 
 script:
   - cd /home/travis/build/
-  - cp -r BoltApp/bolt-magento2/. magento/app/code/
+  - mkdir magento/app/code/Bolt/Boltpay/
+  - cp -r BoltApp/bolt-magento2/. magento/app/code/Bolt/Boltpay/
   - cd magento/
-  - sh app/code/Bolt/Boltpay/.travis/before_script.sh
+  - bash app/code/Bolt/Boltpay/.travis/before_script.sh
   - php vendor/bin/phpunit -c dev/tests/unit/bolt_phpunit.xml
