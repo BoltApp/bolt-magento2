@@ -147,13 +147,92 @@ class ConfigTest extends TestCase
      */
     public function testGetAnyPublishableKey()
     {
+        $decryptedKey = 'pKv_p0zR1E1I.Y0jBkEIjgggR.4e1911f1d15511cd7548c1953f2479b2689f2e5a20188c5d7f666c1149136300';
 
+        $currentMock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['getPublishableKeyCheckout'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
+
+        $currentMock->method('getPublishableKeyCheckout')
+            ->will($this->returnValue($decryptedKey));
+
+        $result = $currentMock->getAnyPublishableKey();
+
+        $this->assertEquals($decryptedKey, $result, 'getAnyPublishableKey() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetAnyPublishableKeyIfCheckoutKeyIsEmpty()
+    {
+        $decryptedCheckoutKey = '';
+        $decryptedPaymentKey = 'pKv_pOzR4ElI.iCXN0f1DX7j6.43dd17e5a78fda11a854839561458f522b847094d19b621e08187426c335b201';
+
+        $currentMock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['getPublishableKeyCheckout', 'getPublishableKeyPayment'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
+
+        $currentMock->method('getPublishableKeyCheckout')
+            ->will($this->returnValue($decryptedCheckoutKey));
+
+        $currentMock->method('getPublishableKeyPayment')
+            ->will($this->returnValue($decryptedPaymentKey));
+
+        $result = $currentMock->getAnyPublishableKey();
+
+        $this->assertEquals($decryptedPaymentKey, $result, 'getAnyPublishableKey() method: not working properly');
     }
 
     /**
      * @inheritdoc
      */
     public function testGetCdnUrl()
+    {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
+
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(true));
+
+
+        $result = $mock->getCdnUrl();
+
+        $this->assertEquals(BoltConfig::CDN_URL_SANDBOX, $result, 'getCdnUrl() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetCdnUrlInProductionMode()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
             ->setMethods(['isSandboxModeSet'])
@@ -311,7 +390,53 @@ class ConfigTest extends TestCase
      */
     public function testGetApiUrl()
     {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
 
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(true));
+
+
+        $result = $mock->getApiUrl();
+
+        $this->assertEquals(BoltConfig::API_URL_SANDBOX, $result, 'getApiUrl() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetApiUrlInProductionMode()
+    {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->contextHelper,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata
+                ]
+            )
+            ->getMock();
+
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(false));
+
+
+        $result = $mock->getApiUrl();
+
+        $this->assertEquals(BoltConfig::API_URL_PRODUCTION, $result, 'getApiUrl() method: not working properly');
     }
 
     /**
@@ -319,6 +444,41 @@ class ConfigTest extends TestCase
      */
     public function testGetApiKey()
     {
+        $configValue = '0:2:zWKTWcrt1CUe1PzR1h73oa8PNgknv2dV:ZaCiGOAwUsUSt76s49kji8Je9ybOK0MFlS774xtr+xh4YrdMQaIW5s8yP/8M4/U0KBY/VbplggggSCojP8uGcg==';
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_API_KEY)
+            ->will($this->returnValue($configValue));
 
+        $decryptedKey = '60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b';
+        $this->encryptor->method('decrypt')
+            ->with($configValue)
+            ->will($this->returnValue($decryptedKey));
+
+        $this->assertEquals($decryptedKey, $this->currentMock->getApiKey(), 'getApiKey() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetjavascriptSuccess()
+    {
+        $configValue = "(function() { alert('Test: get js success'); })";
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_JAVASCRIPT_SUCCESS)
+            ->will($this->returnValue($configValue));
+
+        $result = $this->currentMock->getjavascriptSuccess();
+
+        $this->assertEquals($configValue, $result, 'getjavascriptSuccess() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetScopeConfig()
+    {
+        $result = $this->currentMock->getScopeConfig();
+
+        $this->assertInstanceOf(ScopeConfigInterface::class, $result, 'getScopeConfig() method: not working properly');
     }
 }
