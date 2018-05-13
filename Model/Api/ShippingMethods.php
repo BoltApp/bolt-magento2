@@ -323,6 +323,10 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
             }
 
+            // include applied rule ids (discounts) in cache key
+            $rule_ids = str_replace(',', '_', $quote->getAppliedRuleIds());
+            if ($rule_ids) $cache_identifier .= '_'.$rule_ids;
+
             // get custom address fields to be included in cache key
             $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
             // trim values and filter out empty strings
@@ -398,7 +402,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingAddress = $quote->getShippingAddress();
 
-        $shippingAddress->addData($shipping_address);
+        $shippingAddress->addData($shipping_address)->save();
         $shippingAddress->setCollectShippingRates(true);
 
         $shippingAddress->setShippingMethod(null);
