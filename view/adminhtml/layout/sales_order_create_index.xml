@@ -1,0 +1,15 @@
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="header">
+            <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml"/>
+            <!--<block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::boltpay/js/boltjs.phtml"/>-->
+        </referenceContainer>
+        <referenceBlock name="order_create_billing_form">
+            <action method="setMethodFormTemplate">
+                <!-- your method code and template -->
+                <argument name="method" xsi:type="string">boltpay</argument>
+                <argument name="template" xsi:type="string">Bolt_Boltpay::boltpay/button.phtml</argument>
+            </action>
+        </referenceBlock>
+    </body>
+</page>
