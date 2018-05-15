@@ -24,4 +24,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!-- Discount Code Validation hook -->
+    <route url="/V1/bolt/boltpay/discount/validate" method="POST">
+        <service class="Bolt\Boltpay\Api\DiscountCodeValidationInterface" method="validate"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>
