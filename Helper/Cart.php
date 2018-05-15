@@ -7,7 +7,7 @@ namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
 use Exception;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Catalog\Model\Product as ProductModel;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -29,7 +29,7 @@ use Magento\Framework\DataObjectFactory;
  */
 class Cart extends AbstractHelper
 {
-    /** @var CheckoutSession */
+    /** @var \Magento\Checkout\Model\Session | \Magento\Backend\Model\Session\Quote */
     private $checkoutSession;
 
     /** @var CustomerSession */
@@ -122,6 +122,7 @@ class Cart extends AbstractHelper
         DataObjectFactory $dataObjectFactory
     ) {
         parent::__construct($context);
+
         $this->checkoutSession = $checkoutSession;
         $this->imageHelper     = $imageHelper;
         $this->productModel    = $productModel;
@@ -163,6 +164,7 @@ class Cart extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
         $result  = $this->apiHelper->sendRequest($request);
+
         return $result;
     }
 
@@ -199,10 +201,11 @@ class Cart extends AbstractHelper
      *                                         i.e. billing address to be saved with the order
      *
      * @return array
+     * @throws LocalizedException
      */
     public function getHints($place_order_payload)
     {
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuote();
         $shippingAddress = $quote->getShippingAddress();
 
         if ($place_order_payload) {
@@ -267,7 +270,8 @@ class Cart extends AbstractHelper
      */
     public function getCartData($payment_only, $place_order_payload)
     {
-        $quote = $this->checkoutSession->getQuote();
+        /** @var Quote $quote */
+        $quote = $this->getQuote();
 
         $cart = [];
 
@@ -498,7 +502,7 @@ class Cart extends AbstractHelper
                 $balanceModel->setCustomer(
                     $this->customerSession->getCustomer()
                 )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                    $this->getQuote()->getStore()->getWebsiteId()
                 );
                 $balanceModel->loadByCustomer();
 
@@ -543,7 +547,7 @@ class Cart extends AbstractHelper
                 $rewardModel->setCustomer(
                     $this->customerSession->getCustomer()
                 )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                    $this->getQuote()->getStore()->getWebsiteId()
                 );
                 $rewardModel->loadByCustomer();
 
@@ -626,11 +630,20 @@ class Cart extends AbstractHelper
      */
     public function setReserveOrderId()
     {
-        /** @var Quote  */
-        $quote = $this->checkoutSession->getQuote();
+        /** @var Quote */
+        $quote = $this->getQuote();
         $quote->reserveOrderId()->save();
         $reserveOrderId = $quote->getReservedOrderId();
+
         return $reserveOrderId;
+    }
+
+    /**
+     * @return Quote
+     */
+    public function getQuote()
+    {
+        return $this->checkoutSession->getQuote();
     }
 
     /**

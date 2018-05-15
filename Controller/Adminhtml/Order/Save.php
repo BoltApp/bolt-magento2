@@ -15,7 +15,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Helper\Admin\Order as orderAdminHelper;
+use Bolt\Boltpay\Helper\Order as orderHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -61,7 +61,7 @@ class Save extends Action
      * @param Context           $context
      * @param JsonFactory       $resultJsonFactory
      * @param CheckoutSession   $checkoutSession
-     * @param orderAdminHelper  $orderAdminHelper
+     * @param orderHelper       $orderHelper
      * @param ConfigHelper      $configHelper
      * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
@@ -72,7 +72,7 @@ class Save extends Action
         Context $context,
         JsonFactory $resultJsonFactory,
         CheckoutSession $checkoutSession,
-        orderAdminHelper $orderAdminHelper,
+        orderHelper $orderHelper,
         configHelper $configHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory
@@ -80,7 +80,7 @@ class Save extends Action
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->checkoutSession   = $checkoutSession;
-        $this->orderAdminHelper  = $orderAdminHelper;
+        $this->orderHelper       = $orderHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
         $this->dataObjectFactory = $dataObjectFactory;
@@ -96,7 +96,7 @@ class Save extends Action
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
             // call order save and update
-            list($quote, $order) = $this->orderAdminHelper->saveUpdateOrder($reference, false);
+            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, false);
 
             $orderId = $order->getId();
             // clear the session data
@@ -109,7 +109,8 @@ class Save extends Action
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
 
-            $result->setData(array('success_url' => $this->_url->getUrl('test/test/test/')));
+            $result->setData(array('success_url' => $this->_url->getUrl('sales/order/view/', ['order_id' => $orderId])));
+
             return $result;
 
         } catch (Exception $e) {

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Bolt\Boltpay\Helper\Cart">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
+        </arguments>
+    </type>
+</config>

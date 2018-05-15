@@ -218,6 +218,7 @@ class Order extends AbstractHelper
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('increment_id', $incrementId, 'eq')->create();
         $order = $this->orderRepository->getList($searchCriteria)->getFirstItem();
+
         return $order;
     }
 
@@ -250,7 +251,6 @@ class Order extends AbstractHelper
      */
     public function fetchTransactionInfo($reference)
     {
-
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
@@ -298,7 +298,6 @@ class Order extends AbstractHelper
      */
     private function setAddress($quoteAddress, $address)
     {
-
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
         $address_data = [
@@ -464,9 +463,9 @@ class Order extends AbstractHelper
         // update order payment transactions
         $this->updateOrderPayment($order, $transaction);
 
-        if ($frontend) {
+//        if ($frontend) {
             return [$quote, $order];
-        }
+//        }
     }
 
     /**
@@ -751,6 +750,7 @@ class Order extends AbstractHelper
                 __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
             )->setIsCustomerNotified(true)->save();
         }
+
         return true;
     }
 }

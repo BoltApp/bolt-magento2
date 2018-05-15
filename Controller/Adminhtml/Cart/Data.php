@@ -7,7 +7,7 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Cart;
 
-use Bolt\Boltpay\Helper\Admin\Cart as CartAdminHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -33,9 +33,9 @@ class Data extends Action
     private $resultJsonFactory;
 
     /**
-     * @var CartAdminHelper
+     * @var CartHelper
      */
-    private $cartAdminHelper;
+    private $cartHelper;
 
     /**
      * @var ConfigHelper
@@ -55,7 +55,7 @@ class Data extends Action
     /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
-     * @param CartAdminHelper $cartAdminHelper
+     * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
      * @param DataObjectFactory $dataObjectFactory
@@ -65,14 +65,14 @@ class Data extends Action
     public function __construct(
         Context $context,
         JsonFactory $resultJsonFactory,
-        CartAdminHelper $cartAdminHelper,
+        CartHelper $cartHelper,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->cartAdminHelper        = $cartAdminHelper;
+        $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
         $this->dataObjectFactory = $dataObjectFactory;
@@ -93,7 +93,7 @@ class Data extends Action
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
-            $boltpayOrder = $this->cartAdminHelper->getBoltpayAdminOrder($payment_only, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
             // format and send the response
             $cart = [
@@ -101,7 +101,7 @@ class Data extends Action
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode()
             ];
 
-            $hints = $this->cartAdminHelper->getHints($place_order_payload);
+            $hints = $this->cartHelper->getHints($place_order_payload);
 
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
