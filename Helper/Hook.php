@@ -139,7 +139,7 @@ class Hook extends AbstractHelper
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
         if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
-            throw new WebapiException(__('Unauthorized'), 0, WebapiException::HTTP_UNAUTHORIZED);
+            throw new WebapiException(__('Precondition Failed'), 6001, 412);
         }
     }
 }

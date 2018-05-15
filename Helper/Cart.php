@@ -8,8 +8,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Model\Response;
 use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Catalog\Helper\Image as ImageHelper;
-use Magento\Catalog\Model\Product as ProductModel;
+use Magento\Catalog\Model\ProductFactory;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -20,6 +19,9 @@ use Magento\Quote\Model\Quote;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\View\Element\BlockFactory;
+use Magento\Store\Model\App\Emulation;
+use Magento\Customer\Model\Address;
 
 /**
  * Boltpay Cart helper
@@ -36,19 +38,14 @@ class Cart extends AbstractHelper
     private $customerSession;
 
     /**
-     * @var ImageHelper
-     */
-    private $imageHelper;
-
-    /**
      * @var ApiHelper
      */
     private $apiHelper;
 
     /**
-     * @var ProductModel
+     * @var ProductFactory
      */
-    private $productModel;
+    private $productFactory;
 
     /**
      * @var ConfigHelper
@@ -70,6 +67,16 @@ class Cart extends AbstractHelper
      */
     private $dataObjectFactory;
 
+    /**
+     * @var BlockFactory
+     */
+    private  $blockFactory;
+
+    /**
+     * @var Emulation
+     */
+    private  $appEmulation;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $required_address_fields = [
         'first_name',
@@ -79,6 +86,9 @@ class Cart extends AbstractHelper
         'region',
         'postal_code',
         'country_code',
+    ];
+
+    private $required_billing_address_fields  = [
         'email',
     ];
 
@@ -87,7 +97,6 @@ class Cart extends AbstractHelper
     // Can appear as keys in Quote::getTotals result array.
     ///////////////////////////////////////////////////////
     private $discount_types = [
-//        'reward',
         'giftvoucheraftertax',
     ];
     ///////////////////////////////////////////////////////
@@ -98,38 +107,41 @@ class Cart extends AbstractHelper
     /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
-     * @param ImageHelper       $imageHelper
-     * @param ProductModel      $productModel
+     * @param ProductFactory    $productFactory
      * @param ApiHelper         $apiHelper
      * @param ConfigHelper      $configHelper
      * @param CustomerSession   $customerSession
      * @param LogHelper         $logHelper
-     * @param Bugsnag $bugsnag
+     * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
+     * @param BlockFactory      $blockFactory
+     * @param Emulation         $appEmulation
      *
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
-        ImageHelper $imageHelper,
-        ProductModel $productModel,
+        ProductFactory $productFactory,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
         CustomerSession $customerSession,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
-        DataObjectFactory $dataObjectFactory
+        DataObjectFactory $dataObjectFactory,
+        BlockFactory $blockFactory,
+        Emulation $appEmulation
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
-        $this->imageHelper     = $imageHelper;
-        $this->productModel    = $productModel;
+        $this->productFactory    = $productFactory;
         $this->apiHelper       = $apiHelper;
         $this->configHelper    = $configHelper;
         $this->customerSession = $customerSession;
         $this->logHelper       = $logHelper;
         $this->bugsnag         = $bugsnag;
+        $this->blockFactory    = $blockFactory;
+        $this->appEmulation    = $appEmulation;
         $this->dataObjectFactory = $dataObjectFactory;
     }
 
@@ -152,11 +164,11 @@ class Cart extends AbstractHelper
         if (!$cartData) {
             return;
         }
-        $apiKey   = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey();
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
-        $requestData->setApiData($cartData);
+        $requestData->setApiData(['cart' => $cartData]);
         $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_ORDER);
         $requestData->setApiKey($apiKey);
 
@@ -203,16 +215,26 @@ class Cart extends AbstractHelper
     public function getHints($place_order_payload)
     {
         $quote = $this->checkoutSession->getQuote();
-        $shippingAddress = $quote->getShippingAddress();
 
         if ($place_order_payload) {
             $place_order_payload = @json_decode($place_order_payload);
             $email = @$place_order_payload->email;
         }
 
-        $shippingStreetAddress = $shippingAddress->getStreet();
-        $hints = [
-            'prefill' => [
+        $hints = ['prefill' => []];
+
+        /**
+         * Update hints from address data
+         *
+         * @param Address $shippingAddress
+         */
+        $prefillHints = function($shippingAddress) use (&$hints) {
+
+            if (!$shippingAddress) return;
+
+            $shippingStreetAddress = $shippingAddress->getStreet();
+
+            $prefill = [
                 'firstName'    => $shippingAddress->getFirstname(),
                 'lastName'     => $shippingAddress->getLastname(),
                 'email'        => $shippingAddress->getEmail() ?: @$email,
@@ -223,23 +245,29 @@ class Cart extends AbstractHelper
                 'state'        => $shippingAddress->getRegion(),
                 'zip'          => $shippingAddress->getPostcode(),
                 'country'      => $shippingAddress->getCountryId(),
-            ]
-        ];
+            ];
 
-        foreach ($hints['prefill'] as $name => $value) {
-            if (empty($value)) {
-                unset($hints['prefill'][$name]);
+            foreach ($prefill as $name => $value) {
+                if (empty($value)) {
+                    unset($prefill[$name]);
+                }
             }
-        }
 
+            $hints['prefill'] = array_merge($hints['prefill'], $prefill);
+        };
+
+        // Logged in customes.
+        // Merchant scope and prefill.
         if ($this->customerSession->isLoggedIn()) {
-            // Customer is logged in
+
+            $customer = $this->customerSession->getCustomer();
+
             $signRequest = [
-                'merchant_user_id' => $this->customerSession->getCustomer()->getId(),
+                'merchant_user_id' => $customer->getId(),
             ];
             $signResponse = $this->getSignResponse($signRequest)->getResponse();
 
-            if ($signResponse != null) {
+            if ($signResponse) {
                 $hints['signed_merchant_user_id'] = [
                     "merchant_user_id" => $signResponse->merchant_user_id,
                     "signature"        => $signResponse->signature,
@@ -247,9 +275,14 @@ class Cart extends AbstractHelper
                 ];
             }
 
-            $hints['prefill']['email'] = @$hints['prefill']['email'] ?:
-                $this->customerSession->getCustomer()->getEmail();
+            $prefillHints($customer->getDefaultShippingAddress());
+
+            $hints['prefill']['email'] = @$hints['prefill']['email'] ?: $customer->getEmail();
         }
+
+        // Quote shipping address.
+        // If assigned it takes precedence over logged in user default address.
+        $prefillHints($quote->getShippingAddress());
 
         return $hints;
     }
@@ -261,13 +294,16 @@ class Cart extends AbstractHelper
      * @param bool $payment_only               flag that represents the type of checkout
      * @param string $place_order_payload      additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
+     * param Quote $quote
      *
      * @return array
      * @throws Exception
      */
-    public function getCartData($payment_only, $place_order_payload)
+    public function getCartData($payment_only, $place_order_payload, $quote = null)
     {
-        $quote = $this->checkoutSession->getQuote();
+        // If quote is not passed load it from the session.
+        // The quote is passed from an API call (i.e. discount code validation)
+        $quote = $quote ?: $this->checkoutSession->getQuote();
 
         $cart = [];
 
@@ -304,7 +340,18 @@ class Cart extends AbstractHelper
         $totalAmount = 0;
         $diff = 0;
 
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->startEnvironmentEmulation(
+            $quote->getStoreId(),
+            \Magento\Framework\App\Area::AREA_FRONTEND,
+            true
+        );
+        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
+
         foreach ($items as $item) {
+
             $product = [];
             $productId = $item->getProductId();
 
@@ -321,27 +368,41 @@ class Cart extends AbstractHelper
 
             $product['reference']    = $productId;
             $product['name']         = $item->getName();
-            $product['description']  = $item->getDescription();
             $product['total_amount'] = $rounded_total_amount;
             $product['unit_price']   = $this->getRoundAmount($unit_price);
             $product['quantity']     = round($item->getQty());
-            $product['sku']          = $item->getSku();
-            //Get product Image
-            $_product = $this->productModel->load($productId);
-            $product['image_url'] = $this->imageHelper->init($_product, 'category_page_list')->getUrl();
+            $product['sku']          = trim($item->getSku());
+
+            ////////////////////////////////////
+            // Get product description and image
+            ////////////////////////////////////
+            /**
+             * @var \Magento\Catalog\Model\Product
+             */
+            $_product = $this->productFactory->create()->load($productId);
+            // ignore description, reduce the payload until its use is confirmed
+            // $product['description'] = strip_tags($_product->getDescription());
+            $productImage = $imageBlock->getImage($_product, 'product_small_image');
+            $product['image_url'] = $productImage->getImageUrl();
+            ////////////////////////////////////
+
             //Add product to items array
             $cart['items'][] = $product;
         }
 
+        $this->appEmulation->stopEnvironmentEmulation();
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        $billingAddress  = $quote->getBillingAddress();
+        $shippingAddress = $quote->getShippingAddress();
+
         // Billing address
-        $billingAddress       = $quote->getBillingAddress();
         $billingStreetAddress = $billingAddress->getStreet();
         $cart['billing_address'] = [
             'first_name'      => $billingAddress->getFirstname(),
             'last_name'       => $billingAddress->getLastname(),
             'company'         => $billingAddress->getCompany(),
             'phone'           => $billingAddress->getTelephone(),
-            'email'           => $billingAddress->getEmail(),
             'street_address1' => array_key_exists(0, $billingStreetAddress) ? $billingStreetAddress[0] : '',
             'street_address2' => array_key_exists(1, $billingStreetAddress) ? $billingStreetAddress[1] : '',
             'locality'        => $billingAddress->getCity(),
@@ -350,13 +411,13 @@ class Cart extends AbstractHelper
             'country_code'    => $billingAddress->getCountryId(),
         ];
 
-        $shippingAddress = $quote->getShippingAddress();
+        $email = $billingAddress->getEmail() ?: $shippingAddress->getEmail() ?: $this->customerSession->getCustomer()->getEmail();
 
         // additional data sent, i.e. billing address from checkout page
         if ($place_order_payload) {
             $place_order_payload = json_decode($place_order_payload);
 
-            $email                = @$place_order_payload->email;
+            $email                = @$place_order_payload->email ?: $email;
             $billingAddress       = @$place_order_payload->billingAddress;
             $billingStreetAddress = (array)@$billingAddress->street;
 
@@ -375,9 +436,10 @@ class Cart extends AbstractHelper
                 ];
             }
 
-            if ($email) {
-                $cart['billing_address']['email'] = $email;
-            }
+        }
+
+        if ($email) {
+            $cart['billing_address']['email'] = $email;
         }
 
         if ($payment_only) {
@@ -390,7 +452,6 @@ class Cart extends AbstractHelper
                 'last_name'       => $shippingAddress->getLastname(),
                 'company'         => $shippingAddress->getCompany(),
                 'phone'           => $shippingAddress->getTelephone(),
-                'email'           => $shippingAddress->getEmail(),
                 'street_address1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
                 'street_address2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
                 'locality'        => $shippingAddress->getCity(),
@@ -399,7 +460,8 @@ class Cart extends AbstractHelper
                 'country_code'    => $shippingAddress->getCountryId(),
             ];
 
-            if (@$email) {
+            $email = $shippingAddress->getEmail() ?: $email;
+            if ($email) {
                 $shipping_address['email'] = $email;
             }
 
@@ -410,8 +472,6 @@ class Cart extends AbstractHelper
                 }
             }
 
-            $cart['shipments'] = [];
-
             if (@$shipping_address) {
                 $cost         = $shippingAddress->getShippingAmount();
                 $rounded_cost = $this->getRoundAmount($cost);
@@ -419,13 +479,13 @@ class Cart extends AbstractHelper
                 $diff += $cost * 100 - $rounded_cost;
                 $totalAmount += $rounded_cost;
 
-                $cart['shipments'][] = [
+                $cart['shipments'] = [[
                     'cost'             => $rounded_cost,
                     'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
                     'shipping_address' => $shipping_address,
                     'service'          => $shippingAddress->getShippingDescription(),
                     'reference'        => $shippingAddress->getShippingMethod(),
-                ];
+                ]];
             }
 
             $tax_amount         = $shippingAddress->getTaxAmount();
@@ -446,7 +506,7 @@ class Cart extends AbstractHelper
         $diff = 0;
 
         // unset billing if not all required fields are present
-        foreach ($this->required_address_fields as $field) {
+        foreach ($this->required_address_fields + $this->required_billing_address_fields as $field) {
             if (empty($cart['billing_address'][$field])) {
                 unset($cart['billing_address']);
                 break;
@@ -613,9 +673,9 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
-//        $this->logHelper->addInfoLog(var_export($cart, 1));
+        //$this->logHelper->addInfoLog(var_export($cart, 1));
 
-        return ['cart' => $cart];
+        return $cart;
     }
 
     /**
