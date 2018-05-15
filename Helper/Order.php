@@ -420,9 +420,11 @@ class Order extends AbstractHelper
         // Emulate frontend area in order for email
         // template to be loaded from the correct path
         // even if run from the hook.
-        $this->appState->emulateAreaCode('frontend', function () use ($order){
-            $this->emailSender->send($order);
-        });
+        if ($frontend) {
+            $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                $this->emailSender->send($order);
+            });
+        }
 
         return $order;
     }
