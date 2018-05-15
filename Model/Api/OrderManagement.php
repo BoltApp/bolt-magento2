@@ -131,7 +131,10 @@ class OrderManagement implements OrderManagementInterface
                 });
             }
 
-            $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
+            $this->response->setHeader(
+                'User-Agent',
+                'BoltPay/Magento-' . $this->configHelper->getStoreVersion()
+            );
             $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
 
             $this->hookHelper->verifyWebhook();
@@ -143,15 +146,29 @@ class OrderManagement implements OrderManagementInterface
             }
             $this->orderHelper->saveUpdateOrder($reference, false);
             $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode(array('status' => 'success','message' => 'Order creation was successful')));
-            $this->response->sendResponse();
-          
-       } catch (\Exception $e) {
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'message' => 'Order creation / upadte was successful',
+            ]));
+
+        } catch (\Magento\Framework\Webapi\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->response->setHttpResponseCode($e->getHttpCode());
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]));
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->response->setHttpResponseCode(422);
-            $this->response->setBody(json_encode(array('status' => 'error', 'code' => '1000', 'message' => $e->getMessage())));  
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => '6009',
+                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
+            ]));
+        } finally {
             $this->response->sendResponse();
-          
         }
     }
 }

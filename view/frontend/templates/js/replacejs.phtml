@@ -157,7 +157,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // Merge objects
     ////////////////////////////////
     var isObject = function (item) {
-        return (item && typeof item === 'object' && !Array.isArray(item));
+        return (item && typeof item == 'object' && !Array.isArray(item));
     };
 
     var deepMergeObjects = function () {
@@ -204,21 +204,21 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      */
     var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
         var xhr;
-        if (typeof async === 'undefined') async = true;
-        if (typeof headers === 'undefined') {
+        if (typeof async == 'undefined') async = true;
+        if (typeof headers == 'undefined') {
             headers = {'Content-Type': 'application/x-www-form-urlencoded'};
         }
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
         xhr.onload = function () {
             var result;
-            if (xhr.responseType === 'json') {
+            if (xhr.responseType == 'json') {
                 result = xhr.response;
             } else {
                 result = JSON.parse(xhr.responseText);
             }
             onSuccess(result);
         };
-        if (typeof onError === 'function') {
+        if (typeof onError == 'function') {
             xhr.onerror = onError;
         }
         xhr.open('POST', url, async);
@@ -239,7 +239,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutType = function() {
-        return location.pathname === '/checkout/' && location.hash === '#payment' ? 'payment' : 'checkout';
+        return location.pathname == '/checkout/' && location.hash == '#payment' ? 'payment' : 'checkout';
     };
 
     /**
@@ -248,8 +248,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutKey = function () {
-        var checkout_type = getCheckoutType();
-        var key = 'publishable_key_' + checkout_type;
+        var key = 'publishable_key_' + getCheckoutType();
         return settings[key];
     };
 
@@ -288,7 +287,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var setCheckoutTypeStyle = function() {
         var checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
-            if (checkout_type === 'payment') {
+            if (checkout_type == 'payment') {
                 button.classList.remove(multi_step_css_class);
             } else {
                 button.classList.add(multi_step_css_class);
@@ -398,7 +397,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
         xhr.send();
-        return xhr;
     };
     /////////////////////////////////////////////////////
 
@@ -413,7 +411,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         // define the params sent with the request variable
         var params = [];
         // check and set payment_only flag
-        if (getCheckoutType() === 'payment' && settings && !!settings.publishable_key_payment) {
+        if (getCheckoutType() == 'payment' && settings && !!settings.publishable_key_payment) {
             params.push('payment_only=true')
         }
         // get additional page data to be sent with the request,
@@ -436,8 +434,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
 
-            // prefetch Shipping and Tax
-            prefetchShipping();
+            // prefetch Shipping and Tax for multi-step checkout
+            if (getCheckoutType() == 'checkout') prefetchShipping();
         };
         // send create order request
         create_request = ajaxPost(settings.create_order_url, params, onSuccess);
@@ -454,8 +452,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     onAttributesChange(billing_address_selector, function(element) {
         var checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
-            if (checkout_type !== 'payment') return;
-            if (element.value === 'null') {
+            if (checkout_type != 'payment') return;
+            if (element.value == 'null') {
                 button.style.display = 'none';
             } else {
                 button.style.display = '';
@@ -500,7 +498,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 var bolt_button = document.createElement("div");
                 bolt_button.setAttribute("class", bolt_button_css_class);
                 // place the button before or after selector element
-                if (position && position.trim().toLowerCase() === 'append') {
+                if (position && position.trim().toLowerCase() == 'append') {
                     element.parentNode.insertBefore(bolt_button, element.nextSibling);
                 } else {
                     element.parentNode.insertBefore(bolt_button, element);
