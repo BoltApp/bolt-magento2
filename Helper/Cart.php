@@ -380,9 +380,8 @@ class Cart extends AbstractHelper
              * @var \Magento\Catalog\Model\Product
              */
             $_product = $this->productFactory->create()->load($productId);
-            // ignore description, reduce the payload until its use is confirmed
-            // $product['description'] = strip_tags($_product->getDescription());
-            $productImage = $imageBlock->getImage($_product, 'product_small_image');
+            $product['description'] = strip_tags($_product->getDescription());
+            $productImage = $imageBlock->getImage($_product, 'product_small_image') ?: $imageBlock->getImage($_product, 'product_image');
             $product['image_url'] = $productImage->getImageUrl();
             ////////////////////////////////////
 
