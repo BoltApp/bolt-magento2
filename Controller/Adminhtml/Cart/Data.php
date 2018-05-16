@@ -87,13 +87,11 @@ class Data extends Action
     public function execute()
     {
         try {
-            // flag to determinate the type of checkout / data sent to Bolt
-            $payment_only        = $this->getRequest()->getParam('payment_only');
             // additional data collected from the (one page checkout) page,
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
 
             // format and send the response
             $cart = [

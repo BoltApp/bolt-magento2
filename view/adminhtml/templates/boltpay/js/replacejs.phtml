@@ -37,7 +37,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     /////////////////////////////////////////////////////////////////////////
     ! function(win) {
 
-        var listeners = [],
+        let listeners = [],
             doc = win.document,
             MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
             observer,
@@ -66,11 +66,11 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
         function check() {
             // Check the DOM for elements matching a stored selector
-            for (var i = 0, len = listeners.length, listener, elements; i < len; i++) {
+            for (let i = 0, len = listeners.length, listener, elements; i < len; i++) {
                 listener = listeners[i];
                 // Query for elements matching the specified selector
                 elements = doc.querySelectorAll(listener.selector);
-                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
                     element = elements[j];
                     // Make sure the callback isn't invoked with the
                     // same element more than once
@@ -92,7 +92,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             if (!attribute_observer) {
                 // Watch for attribut changes in the document
                 attribute_observer = new MutationObserver(check_attributes);
-                var config = {
+                let config = {
                     attributes: true,
                     subtree: true
                 };
@@ -102,11 +102,11 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
         function check_attributes() {
             // Check the DOM for elements matching a stored selector
-            for (var i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
+            for (let i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
                 listener = attribute_listeners[i];
                 // Query for elements matching the specified selector
                 elements = doc.querySelectorAll(listener.selector);
-                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
                     element = elements[j];
                     // Invoke the callback with the element
                     listener.fn.call(element, element);
@@ -123,7 +123,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             if (!data_observer) {
                 // Watch for data changes in the document
                 data_observer = new MutationObserver(check_data);
-                var config = {
+                let config = {
                     characterData: true,
                     subtree: true
                 };
@@ -133,11 +133,11 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
         function check_data() {
             // Check the DOM for elements matching a stored selector
-            for (var i = 0, len = data_listeners.length, listener, elements; i < len; i++) {
+            for (let i = 0, len = data_listeners.length, listener, elements; i < len; i++) {
                 listener = data_listeners[i];
                 // Query for elements matching the specified selector
                 elements = doc.querySelectorAll(listener.selector);
-                for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
                     element = elements[j];
                     // Invoke the callback with the element
                     listener.fn.call(element, element);
@@ -163,13 +163,12 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var deepMergeObjects = function () {
 
         // Variables
-        var extended = {};
-        var i = 0;
+        let extended = {},
+            i = 0;
 
         // Merge the object into the extended object
         var merge = function (obj) {
-
-            for (var prop in obj) {
+            for (let prop in obj) {
 
                 if (obj.hasOwnProperty(prop)) {
                     if (isObject(obj[prop])) {
@@ -181,7 +180,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                     }
                 }
             }
-
         };
 
         // Loop through each object and conduct a merge
@@ -203,15 +201,15 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
      */
     var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
-        var xhr;
+        let xhr;
         if (typeof async === 'undefined') async = true;
         if (typeof headers === 'undefined') {
             headers = {'Content-Type': 'application/x-www-form-urlencoded'};
         }
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
         xhr.onload = function () {
-            var result;
-            debugger;
+            let result;
+
             if (xhr.responseType === 'json') {
                 result = xhr.response;
             } else {
@@ -224,7 +222,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
         xhr.open('POST', url, async);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        for (var header in headers) {
+        for (let header in headers) {
             if (headers.hasOwnProperty(header)) {
                 xhr.setRequestHeader(header, headers[header]);
             }
@@ -249,8 +247,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutKey = function () {
-        var checkout_type = getCheckoutType();
-        var key = 'publishable_key_' + checkout_type;
+        let checkout_type = getCheckoutType(),
+            key = 'publishable_key_' + checkout_type;
+
         return settings[key];
     };
 
@@ -263,9 +262,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var selectorApply = function(selector, fn){
-        var elements = document.querySelectorAll(selector);
-        for (var i = 0, length = elements.length; i < length; i++) {
-            var element = elements[i];
+        let elements = document.querySelectorAll(selector);
+        for (let i = 0, length = elements.length; i < length; i++) {
+            let element = elements[i];
             fn.call(element, element)
         }
     };
@@ -287,7 +286,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var setCheckoutTypeStyle = function() {
-        var checkout_type = getCheckoutType();
+        let checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
             if (checkout_type === 'payment') {
                 button.classList.remove(multi_step_css_class);
@@ -302,8 +301,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var insertConnectScript = function() {
-        var scriptTag = document.getElementById('bolt-connect');
-        var publishableKey = getCheckoutKey();
+        let scriptTag = document.getElementById('bolt-connect'),
+            publishableKey = getCheckoutKey();
         if (scriptTag) {
             scriptTag.setAttribute('data-publishable-key', publishableKey);
             createOrder();
@@ -323,7 +322,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * Set checkout button CSS and load connect.js
      * return void
      */
-    var processButtons = function () {
+    let processButtons = function () {
         if (getCheckoutKey() !== '') {
             setCheckoutTypeStyle();
             insertConnectScript();
@@ -331,27 +330,27 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
 
     // The configuration parameters passed from the php block
-    var settings = window.boltConfig;
+    let settings = window.boltConfig,
     // TODO: make `with-cards` option backend configurable
-    var bolt_button_css_class    = 'bolt-checkout-button with-cards';
-    var bolt_button_selector     = '.bolt-checkout-button';
-    var multi_step_css_class     = 'bolt-multi-step-checkout';
-    var billing_address_selector = '#bolt-billing-address';
-    var place_order_payload_id   = 'bolt-place-order-payload';
+        bolt_button_css_class    = 'bolt-checkout-button with-cards',
+        bolt_button_selector     = '.bolt-checkout-button',
+        multi_step_css_class     = 'bolt-multi-step-checkout',
+        billing_address_selector = '#bolt-billing-address',
+        place_order_payload_id   = 'bolt-place-order-payload';
 
     // On multiple checkout open/close actions the success event remains registered
     // resulting in making the success call multiple times. This variable stores
     // the last request to be aborted before new one is sent.
-    var save_request;
+    let save_request;
 
     ////////////////////////////////////
     // BoltCheckout.configure parameters
     ////////////////////////////////////
-    var cart = {};
+    let cart = {};
 
-    var hints = {prefill:{}};
+    let hints = {prefill:{}};
 
-    var callbacks = {
+    let callbacks = {
 
         close: function () {
             // redirect on success order save
@@ -362,14 +361,14 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             // abort previously sent save order request.
             if (save_request) save_request.abort();
             // get thr transaction reference
-            var parameters = 'reference='+transaction.reference;
+            let parameters = 'reference='+transaction.reference;
             // update order ajax request callback
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
-            var onSuccess = function(data){
-                debugger;
+            let onSuccess = function(data){
+
                 <?php echo $success; ?>
-                debugger;
+
                 callbacks.success_url = data.success_url;
                 callback();
             };
@@ -381,61 +380,63 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         // the Bolt order is created right after the checkout button is clicked
         // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
+            let errors = [],
+                shippingMethodContainer = jQuery('#order-shipping_method'),
+                infoShipmentMethod = shippingMethodContainer.find('.order-shipping-method-info dl.admin__order-shipment-methods dt')
+            ;
+
+            if (!cart.orderToken) {
+                errors.push('Invalid Order Token');
+            }
+
+            if (!infoShipmentMethod.length) {
+                errors.push('Please specify the "Shipping Method"!');
+            }
+
+            if (errors.length) {
+                let errorMsg = errors.join(', ');
+
+                console.error('BoltPay Check: ', errorMsg);
+                alert(errorMsg);
+
+                return false;
+            }
+
+            return true;
             // if orderToken is set the checkout window will open
-            return !!cart.orderToken;
+            // return !!cart.orderToken;
         }
     };
     ////////////////////////////////////
 
     /////////////////////////////////////////////////////
-    // Call Shipping and Tax prefetch & cache endpoint
-    /////////////////////////////////////////////////////
-    var prefetchShipping = function() {
-
-        if (!settings.prefetch_shipping) return;
-
-        var xhr;
-        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-
-        xhr.open('GET', settings.shipping_prefetch_url);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
-        xhr.send();
-        return xhr;
-    };
-    /////////////////////////////////////////////////////
-
-    /////////////////////////////////////////////////////
     // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
     var create_request;
-    var createOrder = function () {
-        // debugger;
+    let createOrder = function () {
         if (create_request) create_request.abort();
         // preset success condition to false
         cart.orderToken = '';
         // define the params sent with the request variable
-        var params = [];
-        // check and set payment_only flag
-        //if (getCheckoutType() === 'payment' && settings && !!settings.publishable_key_payment) {
-            params.push('payment_only=true')
-        //}
+        let params = [];
+
+        params.push('payment_only=true');
+
         // get additional page data to be sent with the request,
         // one page checkout billing info, email, ...
-        var place_order_payload = document.getElementById(place_order_payload_id);
+        let place_order_payload = document.getElementById(place_order_payload_id);
+
         if (place_order_payload && place_order_payload.value) {
             params.push('place_order_payload=' + place_order_payload.value);
         }
         params = params.join('&');
-        console.log('### DEBUG ###');
-        console.log(params);
-        // debugger;
+
         if (params === '') params = null;
         // set cart and hints data in a response callback
-        var onSuccess = function(data){
+        let onSuccess = function(data){
             cart = data.cart;
 
-            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+            let prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
@@ -443,8 +444,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
 
-            // prefetch Shipping and Tax
-            // prefetchShipping();
         };
         // send create order request
         create_request = ajaxPost(settings.create_order_url, params, onSuccess);
@@ -457,9 +456,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // While editing the address the value of the hidden
     // element is "null" and checkout buttons are hidden.
     /////////////////////////////////////////////////////
-    var billing_address_value;
+    let billing_address_value;
     onAttributesChange(billing_address_selector, function(element) {
-        var checkout_type = getCheckoutType();
+        let checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
             if (checkout_type !== 'payment') return;
             if (element.value === 'null') {
@@ -477,7 +476,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
     /////////////////////////////////////////////////////
     // Flag that is true if checkout buttons exists on the page
-    var checkout_buttons = false;
+    let checkout_buttons = false;
     ////////////////////////////////////////////////
     // process the button when available on the page
     ////////////////////////////////////////////////
@@ -490,21 +489,22 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     //////////////////////////////////////////////////////////
     // loop through selectors array and set up the replacement
     //////////////////////////////////////////////////////////
-    for (var i = 0, length = settings.selectors.length; i < length; i++) {
-        var selector = settings.selectors[i];
+    for (let i = 0, length = settings.selectors.length; i < length; i++) {
+        let selector = settings.selectors[i];
         ! function(selector) {
-            var parts = selector.split('|');
-            // the CSS selector
-            var identifier = parts[0].trim();
-            // button placement regarding the selector element, prepend, append
-            var position =  parts[1];
+            let parts = selector.split('|'),
+                // the CSS selector
+                identifier = parts[0].trim(),
+                // button placement regarding the selector element, prepend, append
+                position =  parts[1];
             /////////////////////////////////////////////////////
             // replace the selectors with bolt button identifiers
             // if / when selectors are in the DOM
             /////////////////////////////////////////////////////
             onElementReady(identifier, function(element) {
                 if (getCheckoutKey() === '') return;
-                var bolt_button = document.createElement("div");
+                let bolt_button = document.createElement("div");
+
                 bolt_button.setAttribute("class", bolt_button_css_class);
                 // place the button before or after selector element
                 if (position && position.trim().toLowerCase() === 'append') {
@@ -537,45 +537,42 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////
-    // Run function fn on element underlying data change
+    // Reconfigure BoltCheckout with page collected hints data
     ///////////////////////////////////////////////////////////
-    var monitorDataChange = function(selectors, fn, non_empty, visible_only) {
-        for (var i = 0, length = selectors.length; i < length; i++) {
+    let old_hints;
+    let configureHints = function() {
 
-            var selector = selectors[i];
+        // wait 3 seconds for the field(s) to be fully filled,
+        // do not react on every keypress
+        setTimeout(
 
-            ! function(selector) {
+            function() {
+                let new_hints = JSON.stringify(hints);
 
-                onElementReady(selector, function(el) {
-                    var value = el.textContent;
-                    onDataChange(selector, function(element) {
-                        if (visible_only && element.offsetParent === null) return;
-                        if (element.textContent !== value) {
-                            value = element.textContent;
-                            if (non_empty && !value) return;
-                            fn(element);
-                        }
-                    });
-                })
+                if (old_hints !== new_hints && window.BoltCheckout) {
 
-            }(selector);
-        }
+                    BoltCheckout.configure(cart, hints, callbacks);
+                    old_hints = new_hints;
+                }
+            },
+            3000
+        );
     };
     ///////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////
     // Run function fn on element attributes change
     ///////////////////////////////////////////////////////////
-    var monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
-        for (var i = 0, length = selectors.length; i < length; i++) {
+    let monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
+        for (let i = 0, length = selectors.length; i < length; i++) {
 
-            var selector = selectors[i];
+            let selector = selectors[i];
 
             ! function(selector) {
 
                 onElementReady(selector, function(el) {
                     if (on_ready) fn(el);
-                    var value = el.value;
+                    let value = el.value;
                     onAttributesChange(selector, function(element) {
                         if (visible_only && element.offsetParent === null) return;
                         if (element.value !== value) {
@@ -590,44 +587,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
     ///////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////
-    // Monitor DOM element showing grand total / cart item number
-    // and trigger Bolt order creation on totals change. This event
-    // happens when discounts are added / removed from the page and
-    // totals updated or items added via ajax call.
-    // TODO: add this option to plugin configuration admin page
-    ///////////////////////////////////////////////////////////////
-    // var totals_change_selectors = ['tr.grand.totals td.amount span.price', 'tr.shipping.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
-    // monitorDataChange(totals_change_selectors, createOrder, true, true);
-    ///////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Reconfigure BoltCheckout with page collected hints data
-    ///////////////////////////////////////////////////////////
-    var old_hints;
-    var configureHints = function() {
-
-        // wait 3 seconds for the field(s) to be fully filled,
-        // do not react on every keypress
-        setTimeout(
-
-            function() {
-// debugger;
-                var new_hints = JSON.stringify(hints);
-
-                if (old_hints !== new_hints && window.BoltCheckout) {
-
-                    BoltCheckout.configure(cart, hints, callbacks);
-                    old_hints = new_hints;
-                }
-            },
-            3000
-        );
-    };
-    ///////////////////////////////////////////////////////////
-
     // Map from address input field names to hints.prefill keys
-    var input_name_to_hints_prefill = {
+    let input_name_to_hints_prefill = {
         'order[billing_address][firstname]': 'firstname',
         'order[billing_address][lastname]': 'lastname',
         'order[account][email]': 'username',
@@ -640,39 +601,32 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
     // CSS selectors of the hints prefill elements parents
     // used to distinct hints related fields from others with the same name
-    var input_name_to_hints_prefill_prefixes = [
+    let input_name_to_hints_prefill_prefixes = [
         '#order-billing_address_fields'
     ];
 
     /////////////////////////////////////////////////////////////////////
     // Monitor address text input fields and update hints on value change
     /////////////////////////////////////////////////////////////////////
-    for (var i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
+    for (let i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
 
-        var prefix = input_name_to_hints_prefill_prefixes[i];
+        let prefix = input_name_to_hints_prefill_prefixes[i];
 
         ! function (prefix) {
 
-            for (var input_name in input_name_to_hints_prefill) {
+            for (let input_name in input_name_to_hints_prefill) {
 
-                console.log('for vat in: ', input_name);
                 if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
 
                     ! function (input_name) {
+                        let prefill_key = input_name_to_hints_prefill[input_name],
+                            input_selectors = [prefix + ' input[name="' + input_name + '"]'];
 
-                        var prefill_key = input_name_to_hints_prefill[input_name];
-                        var input_selectors = [prefix + ' input[name="' + input_name + '"]'];
+                        monitorAttributesChange(input_selectors, function(element) {
+                            hints.prefill[prefill_key] = element.value;
 
-                        console.log(prefill_key);
-                        console.log(input_selectors);
-                        hints.prefill[prefill_key] = jQuery(input_selectors).val();
-                        configureHints();
-                        // monitorAttributesChange(input_selectors, function(element) {
-                        //     console.log('ElementValue: ', element.value);
-                        //     hints.prefill[prefill_key] = element.value;
-                        //
-                        //     configureHints();
-                        // });
+                            configureHints();
+                        });
 
                     } (input_name);
                 }
@@ -685,7 +639,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Monitor Country DOM element change and update hints
     ///////////////////////////////////////////////////////////
-    var country_selectors = ['select[name="order[billing_address][country_id]"]'];
+    let country_selectors = ['select[name="order[billing_address][country_id]"]'];
     monitorAttributesChange(country_selectors, function(element) {
         if (!element.value) {
             delete hints.prefill.country;
@@ -702,7 +656,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Monitor State DOM element change and update hints
     ///////////////////////////////////////////////////////////
-    var state_selectors = ['select[name="order[billing_address][region_id]"]'];
+    let state_selectors = ['select[name="order[billing_address][region_id]"]'];
     monitorAttributesChange(state_selectors, function(element) {
         if (!element.value) {
             delete hints.prefill.state;
