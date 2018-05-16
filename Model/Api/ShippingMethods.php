@@ -258,11 +258,10 @@ class ShippingMethods implements ShippingMethodsInterface
                 });
             }
 
-            $this->response->setHeader(
-                'User-Agent',
-                'BoltPay/Magento-'.$this->configHelper->getStoreVersion()
-            );
-            $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+            $this->response->getHeaders()->addHeaders([
+                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
+            ]);
 
             $this->hookHelper->verifyWebhook();
 
