@@ -135,7 +135,10 @@ class OrderManagement implements OrderManagementInterface
                 'User-Agent',
                 'BoltPay/Magento-' . $this->configHelper->getStoreVersion()
             );
-            $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+            $this->response->setHeader(
+                'X-Bolt-Plugin-Version',
+                $this->configHelper->getModuleVersion()
+            );
 
             $this->hookHelper->verifyWebhook();
 
