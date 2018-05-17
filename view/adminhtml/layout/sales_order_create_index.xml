@@ -2,7 +2,6 @@
     <body>
         <referenceContainer name="header">
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml"/>
-            <!--<block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::boltpay/js/boltjs.phtml"/>-->
         </referenceContainer>
         <referenceBlock name="order_create_billing_form">
             <action method="setMethodFormTemplate">

@@ -137,8 +137,7 @@ class Form extends PaymentForm
     {
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
-//            'publishable_key_payment'  => 'pKv_pOzRLElI.RFzTjXPCL4AN.5b9038ecea9471aeb24de1f2df1cc3a7ec5e0dede6dec95fc3167e388fc13813',
-            'publishable_key_payment'  => $this->getCheckoutKey,
+            'publishable_key_payment'  => $this->getCheckoutKey(),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
