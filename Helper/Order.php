@@ -39,6 +39,7 @@ use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 /**
  * Class Order
@@ -143,6 +144,11 @@ class Order extends AbstractHelper
     private $checkoutSession;
 
     /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -162,6 +168,7 @@ class Order extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param Session $checkoutSession
      * @param State $appState
+     * @param LogHelper $logHelper
      *
      * @codeCoverageIgnore
      */
@@ -184,7 +191,8 @@ class Order extends AbstractHelper
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
         Session $checkoutSession,
-        State $appState
+        State $appState,
+        LogHelper $logHelper
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -205,6 +213,7 @@ class Order extends AbstractHelper
         $this->dataObjectFactory     = $dataObjectFactory;
         $this->checkoutSession       = $checkoutSession;
         $this->appState              = $appState;
+        $this->logHelper             = $logHelper;
     }
 
     /**
@@ -487,6 +496,8 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
+        //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
+
         /** @var PaymentModel $payment */
         $payment = $order->getPayment();
 
@@ -569,9 +580,10 @@ class Order extends AbstractHelper
             // amount, invoice transaction id, transaction reference
             switch ($record->type) {
                 case 'review':
-                    $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     // REVIEW, IRREVERSIBLE_REJECT, REVERSIBLE_REJECT
                     $status = strtoupper($record->review->decision);
+                    $order_state = $status == 'IRREVERSIBLE_REJECT' ? OrderModel::STATE_CANCELED :
+                        $status == 'REVERSIBLE_REJECT' ? OrderModel::STATE_HOLDED : OrderModel::STATE_PAYMENT_REVIEW;
                     $comment = __(
                         'BOLTPAY INFO :: THE PAYMENT IS UNDER REVIEW. Reference: %1 Status: %2',
                         $transaction_reference,
