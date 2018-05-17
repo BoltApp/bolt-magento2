@@ -67,7 +67,13 @@ class Bugsnag extends AbstractHelper
         $this->bugsnag = \Bugsnag\Client::make(self::API_KEY);
         $this->bugsnag->getConfig()->setReleaseStage($release_stage);
         $this->bugsnag->getConfig()->setAppVersion($this->configHelper->getModuleVersion());
-        \Bugsnag\Handler::register($this->bugsnag);
+
+        ////////////////////////////////////////////////////////////////////////
+        // Reporting unhandled exceptions. This option is turned off by default.
+        // All Bolt plugin errors are handled properly.
+        ////////////////////////////////////////////////////////////////////////
+        // \Bugsnag\Handler::register($this->bugsnag);
+        ////////////////////////////////////////////////////////////////////////
     }
 
     /**

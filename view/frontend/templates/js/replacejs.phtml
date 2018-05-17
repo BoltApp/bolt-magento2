@@ -248,8 +248,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutKey = function () {
-        var checkout_type = getCheckoutType();
-        var key = 'publishable_key_' + checkout_type;
+        var key = 'publishable_key_' + getCheckoutType();
         return settings[key];
     };
 
@@ -398,7 +397,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
         xhr.send();
-        return xhr;
     };
     /////////////////////////////////////////////////////
 
@@ -436,8 +434,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
 
-            // prefetch Shipping and Tax
-            prefetchShipping();
+            // prefetch Shipping and Tax for multi-step checkout
+            if (getCheckoutType() === 'checkout') prefetchShipping();
         };
         // send create order request
         create_request = ajaxPost(settings.create_order_url, params, onSuccess);
