@@ -582,10 +582,18 @@ class Order extends AbstractHelper
                 case 'review':
                     // REVIEW, IRREVERSIBLE_REJECT, REVERSIBLE_REJECT
                     $status = strtoupper($record->review->decision);
-                    $order_state = $status == 'IRREVERSIBLE_REJECT' ? OrderModel::STATE_CANCELED :
-                        $status == 'REVERSIBLE_REJECT' ? OrderModel::STATE_HOLDED : OrderModel::STATE_PAYMENT_REVIEW;
+                    switch ($status) {
+                        case 'IRREVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_CANCELED;
+                            break;
+                        case 'REVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_HOLDED;
+                            break;
+                        default:
+                            $order_state = OrderModel::STATE_PAYMENT_REVIEW;
+                    }
                     $comment = __(
-                        'BOLTPAY INFO :: THE PAYMENT IS UNDER REVIEW. Reference: %1 Status: %2',
+                        'BOLTPAY INFO :: PAYMENT TRANSACTION Reference: %1 Status: %2',
                         $transaction_reference,
                         $status
                     );
