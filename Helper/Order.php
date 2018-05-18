@@ -420,11 +420,11 @@ class Order extends AbstractHelper
         // Emulate frontend area in order for email
         // template to be loaded from the correct path
         // even if run from the hook.
-        if ($frontend) {
-            $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                $this->emailSender->send($order);
-            });
-        }
+        $areaCode = $frontend ? 'frontend' : \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE;
+
+        $this->appState->emulateAreaCode($areaCode, function () use ($order) {
+            $this->emailSender->send($order);
+        });
 
         return $order;
     }
@@ -465,9 +465,7 @@ class Order extends AbstractHelper
         // update order payment transactions
         $this->updateOrderPayment($order, $transaction);
 
-//        if ($frontend) {
-            return [$quote, $order];
-//        }
+        return [$quote, $order];
     }
 
     /**
