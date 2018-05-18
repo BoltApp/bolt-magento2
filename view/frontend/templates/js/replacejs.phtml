@@ -209,15 +209,17 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             headers = {'Content-Type': 'application/x-www-form-urlencoded'};
         }
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-        xhr.onload = function () {
-            var result;
-            if (xhr.responseType === 'json') {
-                result = xhr.response;
-            } else {
-                result = JSON.parse(xhr.responseText);
-            }
-            onSuccess(result);
-        };
+        if (typeof onSuccess === 'function') {
+            xhr.onload = function () {
+                var result;
+                if (xhr.responseType === 'json') {
+                    result = xhr.response;
+                } else {
+                    result = JSON.parse(xhr.responseText);
+                }
+                onSuccess(result);
+            };
+        }
         if (typeof onError === 'function') {
             xhr.onerror = onError;
         }
@@ -379,6 +381,13 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         check: function () {
             // if orderToken is set the checkout window will open
             return !!cart.orderToken;
+        },
+
+        onEmailEnter: function(email) {
+            if (callbacks.email !== email) {
+                ajaxPost(settings.save_email_url, 'email='+email);
+                callbacks.email = email;
+            }
         }
     };
     ////////////////////////////////////
