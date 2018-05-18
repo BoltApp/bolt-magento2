@@ -10,31 +10,32 @@ namespace Bolt\Boltpay\Controller\Cart;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Quote\Model\Quote;
+use \Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
- * Class Prefetch.
- * Gets user location data from geolocation API.
- * Calls shipping estimation with the location data.
- * Shipping is prefetched and cached.
+ * Class Email.
+ * Associate email to current quote
+ * so the email notiffication system can react on abandoned cart event.
  *
- * @package Bolt\Boltpay\Controller\Shipping
+ * @package Bolt\Boltpay\Controller\Cart
  */
 class Email extends Action
 {
     /** @var CheckoutSession */
     private $checkoutSession;
 
-    /**
-     * @var Bugsnag
-     */
+    /** @var CustomerSession */
+    private $customerSession;
+
+    /** @var Bugsnag */
     private $bugsnag;
 
     /**
      * @param Context $context
      * @param CheckoutSession $checkoutSession
+     * @param CustomerSession $customerSession
      * @param Bugsnag $bugsnag
      *
      * @codeCoverageIgnore
@@ -42,10 +43,12 @@ class Email extends Action
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
+        CustomerSession $customerSession,
         Bugsnag $bugsnag
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
+        $this->customerSession = $customerSession;
         $this->bugsnag = $bugsnag;
     }
 
@@ -57,14 +60,15 @@ class Email extends Action
     {
         try {
 
-            /** @var Quote */
             $quote = $this->checkoutSession->getQuote();
 
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(__('Quote does not exist.'));
             }
 
-            $email = $this->getRequest()->getParam('email');
+            $email = $this->customerSession->isLoggedIn() ?
+                $this->customerSession->getCustomer()->getEmail() :
+                $this->getRequest()->getParam('email');
 
             if (!$email) {
                 throw new LocalizedException(__('No email received.'));
