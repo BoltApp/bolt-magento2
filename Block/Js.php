@@ -115,6 +115,7 @@ class Js extends Template
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
+            'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
         ]);
     }
 
