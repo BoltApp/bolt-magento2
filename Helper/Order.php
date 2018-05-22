@@ -415,6 +415,9 @@ class Order extends AbstractHelper
 
         $this->quoteRepository->save($quote);
 
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
+
         $order = $this->quoteManagement->submit($quote);
 
         // Send order confirmation email to customer.
