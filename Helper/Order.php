@@ -23,7 +23,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
-use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -39,6 +39,7 @@ use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 /**
  * Class Order
@@ -143,6 +144,11 @@ class Order extends AbstractHelper
     private $checkoutSession;
 
     /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -162,6 +168,7 @@ class Order extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param Session $checkoutSession
      * @param State $appState
+     * @param LogHelper $logHelper
      *
      * @codeCoverageIgnore
      */
@@ -184,7 +191,8 @@ class Order extends AbstractHelper
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
         Session $checkoutSession,
-        State $appState
+        State $appState,
+        LogHelper $logHelper
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -205,6 +213,7 @@ class Order extends AbstractHelper
         $this->dataObjectFactory     = $dataObjectFactory;
         $this->checkoutSession       = $checkoutSession;
         $this->appState              = $appState;
+        $this->logHelper             = $logHelper;
     }
 
     /**
@@ -486,6 +495,8 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
+        //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
+
         /** @var PaymentModel $payment */
         $payment = $order->getPayment();
 
@@ -568,11 +579,20 @@ class Order extends AbstractHelper
             // amount, invoice transaction id, transaction reference
             switch ($record->type) {
                 case 'review':
-                    $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     // REVIEW, IRREVERSIBLE_REJECT, REVERSIBLE_REJECT
                     $status = strtoupper($record->review->decision);
+                    switch ($status) {
+                        case 'IRREVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_CANCELED;
+                            break;
+                        case 'REVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_HOLDED;
+                            break;
+                        default:
+                            $order_state = OrderModel::STATE_PAYMENT_REVIEW;
+                    }
                     $comment = __(
-                        'BOLTPAY INFO :: THE PAYMENT IS UNDER REVIEW. Reference: %1 Status: %2',
+                        'BOLTPAY INFO :: PAYMENT TRANSACTION Reference: %1 Status: %2',
                         $transaction_reference,
                         $status
                     );
