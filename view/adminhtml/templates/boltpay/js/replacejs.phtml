@@ -277,7 +277,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var checkoutButtonApply = function(fn) {
-        selectorApply(bolt_button_selector, fn);
+        if (jQuery('#payment_form_boltpay').is(':visible')) {
+            selectorApply(bolt_button_selector, fn);
+        }
     };
 
     /**
@@ -522,20 +524,6 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     }
     //////////////////////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////
-    // on hash change reprocess the buttons due to
-    // possible transition from one checkout type to another
-    ////////////////////////////////////////////////////////
-    window.addEventListener("hashchange", function() {
-        if (checkout_buttons) {
-            checkoutButtonApply(function(button) {
-                button.style.display = '';
-            });
-            processButtons();
-        }
-    });
-    ////////////////////////////////////////////////////////
-
     ///////////////////////////////////////////////////////////
     // Reconfigure BoltCheckout with page collected hints data
     ///////////////////////////////////////////////////////////
@@ -608,26 +596,23 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     /////////////////////////////////////////////////////////////////////
     // Monitor address text input fields and update hints on value change
     /////////////////////////////////////////////////////////////////////
-    for (let i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
-
+    for (let i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++)
+    {
         let prefix = input_name_to_hints_prefill_prefixes[i];
 
-        ! function (prefix) {
-
+        ! function (prefix)
+        {
             for (let input_name in input_name_to_hints_prefill) {
-
-                if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
-
+                if (input_name_to_hints_prefill.hasOwnProperty(input_name))
+                {
                     ! function (input_name) {
                         let prefill_key = input_name_to_hints_prefill[input_name],
                             input_selectors = [prefix + ' input[name="' + input_name + '"]'];
 
                         monitorAttributesChange(input_selectors, function(element) {
                             hints.prefill[prefill_key] = element.value;
-
                             configureHints();
                         });
-
                     } (input_name);
                 }
             }
