@@ -464,7 +464,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                     if (create_request_no > request_no) return;
                     createOrder();
                 },
-                500
+                100
             )
         }(create_request_no);
     };
