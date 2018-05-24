@@ -417,11 +417,11 @@ class Order extends AbstractHelper
      * @param mixed $transaction
      * @param bool $frontend
      *
+     * @param string|null $bolt_trace_id
      * @return AbstractExtensibleModel|OrderInterface|null|object
      * @throws LocalizedException
-     * @throws Exception
      */
-    private function createOrder($quote, $transaction, $frontend)
+    private function createOrder($quote, $transaction, $frontend, $bolt_trace_id = null)
     {
         $this->checkoutSession->replaceQuote($quote);
 
@@ -444,7 +444,13 @@ class Order extends AbstractHelper
         $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
         $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
 
+        /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
+
+        if (!$frontend) {
+            $order->addStatusHistoryComment( __("BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK (Bolt traceId: $bolt_trace_id)"));
+            $order->save();
+        }
 
         // Send order confirmation email to customer.
         // Emulate frontend area in order for email
@@ -469,7 +475,7 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $frontend = true)
+    public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
 
         $transaction = $this->fetchTransactionInfo($reference);
@@ -487,7 +493,7 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            $order = $this->createOrder($quote, $transaction, $frontend);
+            $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
         }
 
         // update order payment transactions
@@ -518,19 +524,27 @@ class Order extends AbstractHelper
 
         //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
 
+        // format bolt transaction fetch url
+        $reference_url = function($reference) {
+            return $this->configHelper->getApiUrl() . ApiHelper::API_CURRENT_VERSION .
+                ApiHelper::API_FETCH_TRANSACTION . "/" . $reference;
+        };
+
         ////////////////////////////////////////////////////////////////////////////
         /// Record total amount mismatch between magento and bolt order.
         /// Log the error in order comments and report via bugsnag.
         ////////////////////////////////////////////////////////////////////////////
-        $record_order_mismatch = function ($bolt_total) use ($order, $transaction) {
+        $record_order_mismatch = function ($bolt_total) use ($order, $transaction, $reference_url) {
 
             $order->setStatus(OrderModel::STATE_HOLDED);
             $order->setState(OrderModel::STATE_HOLDED);
 
             $comment = __(
-                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED. Paid amount:%1 Recorded amount: %2',
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED. 
+                 Paid amount: %1 Recorded amount: %2 Bolt transaction: %3',
                 $bolt_total / 100,
-                $order->getGrandTotal()
+                $order->getGrandTotal(),
+                $reference_url($transaction->reference)
             );
 
             $order->addStatusHistoryComment($comment);
@@ -567,10 +581,10 @@ class Order extends AbstractHelper
             }
 
             $comment = __(
-                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Reference: %2 Status: %3 Amount: 0',
+                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0 Bolt transaction: %3',
                 $transaction->id,
-                $transaction->reference,
-                strtoupper($transaction->status)
+                strtoupper($transaction->status),
+                $reference_url($transaction->reference)
             );
 
             $order->setStatus(OrderModel::STATE_PROCESSING);
@@ -651,15 +665,18 @@ class Order extends AbstractHelper
                             $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     }
                     $comment = __(
-                        'BOLTPAY INFO :: PAYMENT TRANSACTION Reference: %1 Status: %2',
-                        $transaction_reference,
-                        $status
+                        'BOLTPAY INFO :: PAYMENT Status: %1 Bolt transaction: %2',
+                        $status,
+                        $reference_url($transaction_reference)
                     );
                     break;
                 case 'failed':
                     $order_state = OrderModel::STATE_CANCELED;
                     $status = 'FAILED';
-                    $comment = __('BOLTPAY INFO :: THE TRANSACTION HAS FAILED');
+                    $comment = __(
+                        'BOLTPAY INFO :: THE TRANSACTION HAS FAILED. Bolt transaction: %1',
+                        $reference_url($transaction_reference)
+                    );
                     break;
                 case 'authorized':
                     $order_state = OrderModel::STATE_PROCESSING;
@@ -701,8 +718,11 @@ class Order extends AbstractHelper
                     $transaction_reference = $record->transaction->reference;
                     $status = 'REFUNDED';
                     $comment =__(
-                        'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD. IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND. AMOUNT REFUNDED: %1',
-                        $amount->amount / 100
+                        'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
+                         IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
+                         AMOUNT REFUNDED: %1 Bolt transaction: %2',
+                        $amount->amount / 100,
+                        $reference_url($transaction_reference)
                     );
                     break;
                 // if type is "credit_completed" fetch the parent transaction info,
@@ -743,7 +763,11 @@ class Order extends AbstractHelper
 
                 // format the additional transaction data
                 $transactionData = [
-                    'Time'      => $result = $this->timezone->formatDateTime(date('Y-m-d H:i:s', $date / 1000), 2, 2),
+                    'Time'      => $result = $this->timezone->formatDateTime(
+                        date('Y-m-d H:i:s', $date / 1000),
+                        2,
+                        2
+                    ),
                     'Reference' => $transaction_reference,
                     'Amount'    => $formattedPrice,
                     'Real ID'   => $transaction->id,
@@ -768,10 +792,10 @@ class Order extends AbstractHelper
 
                 // format transaction info message and add it to the order comments
                 $message = __(
-                    'BOLTPAY INFO :: Reference: %1 Status: %2 Amount: %3',
-                    $transaction_reference,
+                    'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2 Bolt transaction: %3',
                     $status,
-                    $formattedPrice
+                    $formattedPrice,
+                    $reference_url($transaction_reference)
                 );
 
                 $payment->addTransactionCommentsToOrder(
