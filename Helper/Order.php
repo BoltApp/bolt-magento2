@@ -544,7 +544,6 @@ class Order extends AbstractHelper
                     'ORDER_MISMATCH' => [
                         'Bolt' => $transaction->order->cart,
                         'Store' => $cart,
-                        'token' => $transaction->order->token,
                     ]
                 ]);
             });
