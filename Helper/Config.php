@@ -104,6 +104,11 @@ class Config extends AbstractHelper
     const SAVE_ORDER_ACTION = 'boltpay/order/save';
 
     /**
+     * Save Email to Quote
+     */
+    const SAVE_EMAIL_ACTION = 'boltpay/cart/email';
+
+    /**
      * Save order
      */
     const XML_PATH_SUCCESS_PAGE_REDIRECT = 'payment/boltpay/success_page';
@@ -223,7 +228,7 @@ class Config extends AbstractHelper
     private function getEncryptedKey($path)
     {
         //Get management key
-        $key =  $this->scopeConfig->getValue(
+        $key =  $this->getScopeConfig()->getValue(
             $path,
             ScopeInterface::SCOPE_STORE
         );
@@ -290,7 +295,7 @@ class Config extends AbstractHelper
      */
     public function getReplaceSelectors()
     {
-        return $this->scopeConfig->getValue(
+        return $this->getScopeConfig()->getValue(
             self::XML_PATH_REPLACE_SELECTORS,
             ScopeInterface::SCOPE_STORE
         );
@@ -303,7 +308,7 @@ class Config extends AbstractHelper
      */
     public function getGlobalCSS()
     {
-        return $this->scopeConfig->getValue(
+        return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
             ScopeInterface::SCOPE_STORE
         );
@@ -316,7 +321,7 @@ class Config extends AbstractHelper
      */
     public function getPrefetchAddressFields()
     {
-        return $this->scopeConfig->getValue(
+        return $this->getScopeConfig()->getValue(
             self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
             ScopeInterface::SCOPE_STORE
         );
@@ -329,7 +334,7 @@ class Config extends AbstractHelper
      */
     public function getSuccessPageRedirect()
     {
-        return $this->scopeConfig->getValue(
+        return $this->getScopeConfig()->getValue(
             self::XML_PATH_SUCCESS_PAGE_REDIRECT,
             ScopeInterface::SCOPE_STORE
         );
@@ -342,7 +347,7 @@ class Config extends AbstractHelper
      */
     public function getjavascriptSuccess()
     {
-        return $this->scopeConfig->getValue(
+        return $this->getScopeConfig()->getValue(
             self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE
         );
@@ -358,7 +363,7 @@ class Config extends AbstractHelper
     public function getAutomaticCaptureMode($store = null)
     {
         //Automatic capture mode
-        return $this->scopeConfig->isSetFlag(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
             ScopeInterface::SCOPE_STORE,
             $store
@@ -375,7 +380,7 @@ class Config extends AbstractHelper
     public function getPrefetchShipping($store = null)
     {
         //Automatic capture mode
-        return $this->scopeConfig->isSetFlag(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PREFETCH_SHIPPING,
             ScopeInterface::SCOPE_STORE,
             $store
@@ -391,7 +396,7 @@ class Config extends AbstractHelper
      */
     public function isActive($store = null)
     {
-        return $this->scopeConfig->isSetFlag(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_ACTIVE,
             ScopeInterface::SCOPE_STORE,
             $store
@@ -407,7 +412,7 @@ class Config extends AbstractHelper
      */
     public function isDebugModeOn($store = null)
     {
-        return $this->scopeConfig->isSetFlag(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_DEBUG,
             ScopeInterface::SCOPE_STORE,
             $store
@@ -425,10 +430,18 @@ class Config extends AbstractHelper
      */
     public function isSandboxModeSet($store = null)
     {
-        return $this->scopeConfig->isSetFlag(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_SANDBOX_MODE,
             ScopeInterface::SCOPE_STORE,
             $store
         );
+    }
+
+    /**
+     * @return \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    public function getScopeConfig()
+    {
+        return $this->scopeConfig;
     }
 }

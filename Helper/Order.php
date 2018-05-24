@@ -23,7 +23,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
-use Magento\Quote\Model\QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -39,6 +39,8 @@ use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class Order
@@ -143,6 +145,21 @@ class Order extends AbstractHelper
     private $checkoutSession;
 
     /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -162,6 +179,9 @@ class Order extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param Session $checkoutSession
      * @param State $appState
+     * @param LogHelper $logHelper
+     * @param Bugsnag $bugsnag
+     * @param CartHelper $cartHelper
      *
      * @codeCoverageIgnore
      */
@@ -184,7 +204,10 @@ class Order extends AbstractHelper
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
         Session $checkoutSession,
-        State $appState
+        State $appState,
+        LogHelper $logHelper,
+        Bugsnag $bugsnag,
+        CartHelper $cartHelper
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -205,6 +228,9 @@ class Order extends AbstractHelper
         $this->dataObjectFactory     = $dataObjectFactory;
         $this->checkoutSession       = $checkoutSession;
         $this->appState              = $appState;
+        $this->logHelper             = $logHelper;
+        $this->bugsnag               = $bugsnag;
+        $this->cartHelper            = $cartHelper;
     }
 
     /**
@@ -490,6 +516,42 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
+        //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
+
+        ////////////////////////////////////////////////////////////////////////////
+        /// Record total amount mismatch between magento and bolt order.
+        /// Log the error in order comments and report via bugsnag.
+        ////////////////////////////////////////////////////////////////////////////
+        $record_order_mismatch = function ($bolt_total) use ($order, $transaction) {
+
+            $order->setStatus(OrderModel::STATE_HOLDED);
+            $order->setState(OrderModel::STATE_HOLDED);
+
+            $comment = __(
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED. Paid amount:%1 Recorded amount: %2',
+                $bolt_total / 100,
+                $order->getGrandTotal()
+            );
+
+            $order->addStatusHistoryComment($comment);
+
+            $quote = $this->loadQuote($order->getIncrementId());
+
+            $cart = $this->cartHelper->getCartData(true, false, $quote);
+
+            $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
+                $report->setMetaData([
+                    'ORDER_MISMATCH' => [
+                        'Bolt' => $transaction->order->cart,
+                        'Store' => $cart,
+                        'token' => $transaction->order->token,
+                    ]
+                ]);
+            });
+            $this->bugsnag->notifyError('Order Data Mismatch', $comment);
+        };
+        ////////////////////////////////////////////////////////////////////////////
+
         /** @var PaymentModel $payment */
         $payment = $order->getPayment();
 
@@ -512,8 +574,8 @@ class Order extends AbstractHelper
                 strtoupper($transaction->status)
             );
 
-            $order->setStatus(OrderModel::STATE_PROCESSING)
-                  ->setState(OrderModel::STATE_PROCESSING);
+            $order->setStatus(OrderModel::STATE_PROCESSING);
+            $order->setState(OrderModel::STATE_PROCESSING);
 
             $order->addStatusHistoryComment($comment);
 
@@ -524,6 +586,11 @@ class Order extends AbstractHelper
             ];
 
             $payment->setAdditionalInformation($paymentData);
+
+            // Check for total amount mismatch between magento and bolt order.
+            if (round($order->getGrandTotal() * 100) > 0) {
+                $record_order_mismatch(0);
+            }
 
             $payment->save();
             $order->save();
@@ -572,11 +639,20 @@ class Order extends AbstractHelper
             // amount, invoice transaction id, transaction reference
             switch ($record->type) {
                 case 'review':
-                    $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     // REVIEW, IRREVERSIBLE_REJECT, REVERSIBLE_REJECT
                     $status = strtoupper($record->review->decision);
+                    switch ($status) {
+                        case 'IRREVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_CANCELED;
+                            break;
+                        case 'REVERSIBLE_REJECT':
+                            $order_state = OrderModel::STATE_HOLDED;
+                            break;
+                        default:
+                            $order_state = OrderModel::STATE_PAYMENT_REVIEW;
+                    }
                     $comment = __(
-                        'BOLTPAY INFO :: THE PAYMENT IS UNDER REVIEW. Reference: %1 Status: %2',
+                        'BOLTPAY INFO :: PAYMENT TRANSACTION Reference: %1 Status: %2',
                         $transaction_reference,
                         $status
                     );
@@ -593,6 +669,8 @@ class Order extends AbstractHelper
                     $parent_transaction_id = null;
                     $status = 'AUTHORIZED';
                     $close_transaction = false;
+                    // Bolt payment amount to check against Magento order total
+                    $payment_amount = $amount->amount;
                     break;
                 case 'voided':
                     $order_state = OrderModel::STATE_CANCELED;
@@ -606,6 +684,8 @@ class Order extends AbstractHelper
                     $transaction_id = $transaction->id.'-capture';
                     $status = 'COMPLETED';
                     $amount = $transaction->capture->amount;
+                    // Bolt payment amount to check against Magento order total
+                    $payment_amount = $amount->amount;
                     if (!$payment_authorized) {
                         $parent_transaction_id = null;
                         $invoice_transaction = $transaction_id;
@@ -635,7 +715,7 @@ class Order extends AbstractHelper
                     continue 2;
             }
 
-            // set the order status
+            // set order status
             $order->setStatus($order_state);
             $order->setState($order_state);
 
@@ -707,6 +787,11 @@ class Order extends AbstractHelper
                 $payment->setAdditionalInformation($paymentData);
             }
 
+            // Check for total amount mismatch between magento and bolt order.
+            if (isset($payment_amount) && $payment_amount != round($order->getGrandTotal() * 100)) {
+                $record_order_mismatch($payment_amount);
+            }
+
             // save payment and order
             $payment->save();
             $order->save();
@@ -746,8 +831,13 @@ class Order extends AbstractHelper
             );
             $transactionSave->save();
 
-            //Send invoice mail
-            $this->invoiceSender->send($invoice);
+            // Send invoice mail to customer.
+            // Emulate frontend area in order for email
+            // template to be loaded from the correct path
+            // even if run from the hook.
+            $this->appState->emulateAreaCode('frontend', function () use ($invoice){
+                $this->invoiceSender->send($invoice);
+            });
 
             //Add notification comment to order
             $order->addStatusHistoryComment(

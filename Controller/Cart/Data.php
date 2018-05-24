@@ -13,7 +13,6 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
-use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 
@@ -48,17 +47,11 @@ class Data extends Action
     private $bugsnag;
 
     /**
-     * @var DataObjectFactory
-     */
-    private $dataObjectFactory;
-
-    /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
      *
      * @codeCoverageIgnore
      */
@@ -67,15 +60,13 @@ class Data extends Action
         JsonFactory $resultJsonFactory,
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag,
-        DataObjectFactory $dataObjectFactory
+        Bugsnag $bugsnag
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
-        $this->dataObjectFactory = $dataObjectFactory;
     }
 
     /**
@@ -103,11 +94,14 @@ class Data extends Action
 
             $hints = $this->cartHelper->getHints($place_order_payload);
 
-            $result = $this->dataObjectFactory->create();
-            $result->setData('cart', $cart);
-            $result->setData('hints', $hints);
+            $result = $this->resultJsonFactory->create();
 
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            return $result->setData([
+                'status' => 'success',
+                'cart' =>$cart,
+                'hints' =>$hints,
+            ]);
+
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
