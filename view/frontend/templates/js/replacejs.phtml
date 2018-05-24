@@ -306,7 +306,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         var publishableKey = getCheckoutKey();
         if (scriptTag) {
             scriptTag.setAttribute('data-publishable-key', publishableKey);
-            createOrder();
+            createOrderDelayed();
             return;
         }
         scriptTag = document.createElement('script');
@@ -315,7 +315,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         scriptTag.setAttribute('src', settings.connect_url);
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
-        scriptTag.onload = createOrder;
+        scriptTag.onload = createOrderDelayed;
         document.head.appendChild(scriptTag);
     };
 
@@ -451,6 +451,25 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
     /////////////////////////////////////////////////////
 
+    /////////////////////////////////////////////////////////
+    // Do not send multiple subsequent create order requests.
+    // Wait for a timeout and sent only the last one.
+    /////////////////////////////////////////////////////////
+    var create_request_no = 0;
+    var createOrderDelayed = function() {
+        create_request_no++;
+        ! function(request_no) {
+            setTimeout(
+                function() {
+                    if (create_request_no > request_no) return;
+                    createOrder();
+                },
+                100
+            )
+        }(create_request_no);
+    };
+    /////////////////////////////////////////////////////////
+
     /////////////////////////////////////////////////////
     // Toggle checkout button visibility on payment page
     // according to billing address edit state.
@@ -468,7 +487,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 button.style.display = '';
                 if (element.value !== billing_address_value) {
                     billing_address_value = element.value;
-                    createOrder();
+                    createOrderDelayed();
                 }
             }
         });
@@ -598,7 +617,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // TODO: add this option to plugin configuration admin page
     ///////////////////////////////////////////////////////////////
     var totals_change_selectors = ['tr.grand.totals td.amount span.price', 'tr.shipping.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
-    monitorDataChange(totals_change_selectors, createOrder, true, true);
+    monitorDataChange(totals_change_selectors, createOrderDelayed, true, true);
     ///////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////
