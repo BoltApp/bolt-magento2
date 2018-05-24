@@ -420,6 +420,7 @@ class Order extends AbstractHelper
      * @param string|null $bolt_trace_id
      * @return AbstractExtensibleModel|OrderInterface|null|object
      * @throws LocalizedException
+     * @throws Exception
      */
     private function createOrder($quote, $transaction, $frontend, $bolt_trace_id = null)
     {
@@ -444,11 +445,24 @@ class Order extends AbstractHelper
         $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
         $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
 
+        // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
+        $order = $this->loadOrder($quote->getReservedOrderId());
+
+        if ($order && $order->getId()) {
+
+            $this->bugsnag->notifyError(
+                'Duplicate Order Creation Attempt',
+                'Order #' . $quote->getReservedOrderId() . ' already exists.'
+            );
+
+            return $order;
+        }
+
         $order = $this->quoteManagement->submit($quote);
 
         if (!$frontend) {
-            $order->addStatusHistoryComment( __("BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK (Bolt traceId: $bolt_trace_id)"));
+            $order->addStatusHistoryComment( "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id");
             $order->save();
         }
 
@@ -540,8 +554,8 @@ class Order extends AbstractHelper
             $order->setState(OrderModel::STATE_HOLDED);
 
             $comment = __(
-                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED. 
-                 Paid amount: %1 Recorded amount: %2 Bolt transaction: %3',
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
+                Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
                 $bolt_total / 100,
                 $order->getGrandTotal(),
                 $reference_url($transaction->reference)
@@ -581,7 +595,7 @@ class Order extends AbstractHelper
             }
 
             $comment = __(
-                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0 Bolt transaction: %3',
+                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0<br>Bolt transaction: %3',
                 $transaction->id,
                 strtoupper($transaction->status),
                 $reference_url($transaction->reference)
@@ -665,7 +679,7 @@ class Order extends AbstractHelper
                             $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     }
                     $comment = __(
-                        'BOLTPAY INFO :: PAYMENT Status: %1 Bolt transaction: %2',
+                        'BOLTPAY INFO :: PAYMENT Status: %1<br>Bolt transaction: %2',
                         $status,
                         $reference_url($transaction_reference)
                     );
@@ -674,7 +688,7 @@ class Order extends AbstractHelper
                     $order_state = OrderModel::STATE_CANCELED;
                     $status = 'FAILED';
                     $comment = __(
-                        'BOLTPAY INFO :: THE TRANSACTION HAS FAILED. Bolt transaction: %1',
+                        'BOLTPAY INFO :: THE TRANSACTION HAS FAILED.<br>Bolt transaction: %1',
                         $reference_url($transaction_reference)
                     );
                     break;
@@ -720,7 +734,7 @@ class Order extends AbstractHelper
                     $comment =__(
                         'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
                          IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
-                         AMOUNT REFUNDED: %1 Bolt transaction: %2',
+                         <br>AMOUNT REFUNDED:%1<br>Bolt transaction: %2',
                         $amount->amount / 100,
                         $reference_url($transaction_reference)
                     );
@@ -792,7 +806,7 @@ class Order extends AbstractHelper
 
                 // format transaction info message and add it to the order comments
                 $message = __(
-                    'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2 Bolt transaction: %3',
+                    'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
                     $status,
                     $formattedPrice,
                     $reference_url($transaction_reference)
