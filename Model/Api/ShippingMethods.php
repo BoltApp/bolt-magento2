@@ -200,7 +200,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quoteItems[trim($item->getSku())] = round($item->getQty());
         }
 
-        if ($cartItems != $quoteItems || !$cartItems) {
+        if (!$quoteItems || $cartItems != $quoteItems) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
                 $quote_items = array_map(function($item){
