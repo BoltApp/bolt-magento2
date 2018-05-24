@@ -197,7 +197,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $quoteItems = [];
         foreach ($quote->getAllVisibleItems() as $item) {
-            $quoteItems[$item->getSku()] = round($item->getQty());
+            $quoteItems[trim($item->getSku())] = round($item->getQty());
         }
 
         if ($cartItems != $quoteItems || !$cartItems) {
@@ -215,7 +215,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     $product['total_amount'] = $rounded_total_amount;
                     $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
                     $product['quantity']     = round($item->getQty());
-                    $product['sku']          = $item->getSku();
+                    $product['sku']          = trim($item->getSku());
                     return $product;
                 }, $quote->getAllVisibleItems());
 
@@ -259,8 +259,10 @@ class ShippingMethods implements ShippingMethodsInterface
                 });
             }
 
-            $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
-            $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+            $this->response->getHeaders()->addHeaders([
+                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
+            ]);
 
             $this->hookHelper->verifyWebhook();
 
@@ -292,9 +294,25 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             return $shippingOptionsModel;
+
+        } catch (\Magento\Framework\Webapi\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->response->setHttpResponseCode($e->getHttpCode());
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage()
+            ]));
+            $this->response->sendResponse();
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => '6009',
+                'message' => 'Unprocessable Entity: ' . $e->getMessage()
+            ]));
+            $this->response->sendResponse();
         }
     }
 
@@ -310,8 +328,8 @@ class ShippingMethods implements ShippingMethodsInterface
     public function shippingEstimation($quote, $shipping_address)
     {
         ////////////////////////////////////////////////////////////////////////////////////////
-        // Check cache storage for estimate. If the quote_id, total_amount, country_code,
-        // region and postal_code match then use the cached version.
+        // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
+        // applied rules (discounts), region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
 
@@ -323,12 +341,21 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
             }
 
+            // include applied rule ids (discounts) in cache key
+            $rule_ids = str_replace(',', '_', $quote->getAppliedRuleIds());
+            if ($rule_ids) $cache_identifier .= '_'.$rule_ids;
+
             // get custom address fields to be included in cache key
             $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
             // trim values and filter out empty strings
             $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
             // convert to PascalCase
-            $prefetchAddressFields = array_map(function ($el) { return str_replace('_', '', ucwords($el, '_'));}, $prefetchAddressFields);
+            $prefetchAddressFields = array_map(
+                function ($el) {
+                    return str_replace('_', '', ucwords($el, '_'));
+                },
+                $prefetchAddressFields
+            );
 
             $shippingAddress = $quote->getShippingAddress();
             // get the value of each valid field and include it in the cache identifier
@@ -341,6 +368,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $cache_identifier = md5($cache_identifier);
 
             if ($serialized = $this->cache->load($cache_identifier)) {
+                $shippingAddress->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
         }
@@ -359,6 +387,7 @@ class ShippingMethods implements ShippingMethodsInterface
             'street'     => @$shipping_address['street_address1'],
             'city'       => @$shipping_address['locality'],
             'telephone'  => @$shipping_address['phone'],
+            'email'      => @$shipping_address['email'],
         ];
 
         foreach ($shipping_address as $key => $value) {
@@ -398,7 +427,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingAddress = $quote->getShippingAddress();
 
-        $shippingAddress->addData($shipping_address);
+        $shippingAddress->addData($shipping_address)->save();
         $shippingAddress->setCollectShippingRates(true);
 
         $shippingAddress->setShippingMethod(null);
@@ -419,13 +448,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $shippingAddress->removeAllShippingRates();
             $shippingAddress->setCollectShippingRates(true);
         };
+        //$resetShippingCalculation();
         ////////////////////////////////////////////////////////////////
-
-        ///////////////////////////////////
-        /// Restaurant Supply customization
-        ///////////////////////////////////
-        $resetShippingCalculation();
-        ///////////////////////////////////
 
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
@@ -441,11 +465,11 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
-            ///////////////////////////////////
-            /// Restaurant Supply customization
-            ///////////////////////////////////
-            $resetShippingCalculation();
-            ///////////////////////////////////
+            ////////////////////////////////////////////////////////////////
+            /// Use carefully only when necesarry.
+            ////////////////////////////////////////////////////////////////
+            // $resetShippingCalculation();
+            ////////////////////////////////////////////////////////////////
 
             $shippingAddress->setShippingMethod($method);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
@@ -501,6 +525,8 @@ class ShippingMethods implements ShippingMethodsInterface
                 ->setReference($method)
                 ->setTaxAmount($tax_amount);
         }
+
+        $shippingAddress->setShippingMethod(null)->save();
 
         if ($errors) {
             $this->bugsnag->registerCallback(function ($report) use ($errors, $shipping_address) {
