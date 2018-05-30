@@ -98,9 +98,9 @@ class Save extends Action
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
 
-            $orderId = $order->getId();
             // clear the session data
-            if ($orderId) {
+            if ($order->getId()) {
+                $this->checkoutSession->replaceQuote($quote);
                 //Clear quote session
                 $this->clearQuoteSession($quote);
                 //Clear order session

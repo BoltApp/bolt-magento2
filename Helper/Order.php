@@ -455,21 +455,24 @@ class Order extends AbstractHelper
         $this->quoteRepository->save($quote);
 
         // assign credit card info to the payment instance
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData(
+            'cc_last_4',
+            @$transaction->from_credit_card->last4
+        );
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData(
+            'cc_type',
+            @$transaction->from_credit_card->network
+        );
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
         $order = $this->loadOrder($quote->getReservedOrderId());
 
         if ($order && $order->getId()) {
-
-            $this->bugsnag->notifyError(
-                'Duplicate Order Creation Attempt',
-                'Order #' . $quote->getReservedOrderId() . ' already exists.'
-            );
-
-            return $order;
+            throw new LocalizedException(__(
+                'Duplicate Order Creation Attempt. Order #: %1',
+                $quote->getReservedOrderId()
+            ));
         }
 
         $order = $this->quoteManagement->submit($quote);
@@ -478,17 +481,22 @@ class Order extends AbstractHelper
         $this->deleteRedundantQuotes($quote);
 
         if (!$frontend) {
-            $order->addStatusHistoryComment( "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id");
+            $order->addStatusHistoryComment(
+                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
+            );
             $order->save();
-        }
 
-        // Send order confirmation email to customer.
-        // Emulate frontend area in order for email
-        // template to be loaded from the correct path
-        // even if run from the hook.
-        $this->appState->emulateAreaCode('frontend', function () use ($order){
+            // Send order confirmation email to customer.
+            // Emulate frontend area in order for email
+            // template to be loaded from the correct path
+            // even if run from the hook.
+            $this->appState->emulateAreaCode('frontend', function () use ($order){
+                $this->emailSender->send($order);
+            });
+        } else {
+            // Send order confirmation email to customer.
             $this->emailSender->send($order);
-        });
+        }
 
         return $order;
     }
@@ -569,8 +577,6 @@ class Order extends AbstractHelper
         if ($reference && !$transaction) {
             $transaction = $this->fetchTransactionInfo($reference);
         }
-
-        //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
 
         // format bolt transaction fetch url
         $reference_url = function($reference) {
@@ -903,12 +909,7 @@ class Order extends AbstractHelper
             $transactionSave->save();
 
             // Send invoice mail to customer.
-            // Emulate frontend area in order for email
-            // template to be loaded from the correct path
-            // even if run from the hook.
-            $this->appState->emulateAreaCode('frontend', function () use ($invoice){
-                $this->invoiceSender->send($invoice);
-            });
+            $this->invoiceSender->send($invoice);
 
             //Add notification comment to order
             $order->addStatusHistoryComment(

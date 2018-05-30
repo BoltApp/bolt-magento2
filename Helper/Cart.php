@@ -726,8 +726,6 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
-        //$this->logHelper->addInfoLog(var_export($cart, 1));
-
         return [
             'cart' => $cart,
         ];
