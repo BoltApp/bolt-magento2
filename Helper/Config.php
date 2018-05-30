@@ -104,6 +104,11 @@ class Config extends AbstractHelper
     const SAVE_ORDER_ACTION = 'boltpay/order/save';
 
     /**
+     * Save Email to Quote
+     */
+    const SAVE_EMAIL_ACTION = 'boltpay/cart/email';
+
+    /**
      * Save order
      */
     const XML_PATH_SUCCESS_PAGE_REDIRECT = 'payment/boltpay/success_page';

@@ -294,7 +294,7 @@ class Cart extends AbstractHelper
      * @param bool $payment_only               flag that represents the type of checkout
      * @param string $place_order_payload      additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * param Quote $quote
+     * @param Quote $quote
      *
      * @return array
      * @throws Exception
@@ -332,7 +332,7 @@ class Cart extends AbstractHelper
         $cart['order_reference'] = $quote->getId();
 
         //Set display_id as reserve order id
-        $cart['display_id'] = $this->setReserveOrderId();
+        $cart['display_id'] = $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
 
         //Currency
         $cart['currency'] = $quote->getQuoteCurrencyCode();
@@ -679,14 +679,13 @@ class Cart extends AbstractHelper
 
     /**
      * Reserve order id for the quote
+     * @param Quote $quote
      *
      * @return  string
      * @throws Exception
      */
-    public function setReserveOrderId()
+    public function setReservedOrderId($quote)
     {
-        /** @var Quote  */
-        $quote = $this->checkoutSession->getQuote();
         $quote->reserveOrderId()->save();
         $reserveOrderId = $quote->getReservedOrderId();
         return $reserveOrderId;

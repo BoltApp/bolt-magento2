@@ -209,15 +209,17 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             headers = {'Content-Type': 'application/x-www-form-urlencoded'};
         }
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-        xhr.onload = function () {
-            var result;
-            if (xhr.responseType === 'json') {
-                result = xhr.response;
-            } else {
-                result = JSON.parse(xhr.responseText);
-            }
-            onSuccess(result);
-        };
+        if (typeof onSuccess === 'function') {
+            xhr.onload = function () {
+                var result;
+                if (xhr.responseType === 'json') {
+                    result = xhr.response;
+                } else {
+                    result = JSON.parse(xhr.responseText);
+                }
+                onSuccess(result);
+            };
+        }
         if (typeof onError === 'function') {
             xhr.onerror = onError;
         }
@@ -304,7 +306,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         var publishableKey = getCheckoutKey();
         if (scriptTag) {
             scriptTag.setAttribute('data-publishable-key', publishableKey);
-            createOrder();
+            createOrderDelayed();
             return;
         }
         scriptTag = document.createElement('script');
@@ -313,7 +315,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         scriptTag.setAttribute('src', settings.connect_url);
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
-        scriptTag.onload = createOrder;
+        scriptTag.onload = createOrderDelayed;
         document.head.appendChild(scriptTag);
     };
 
@@ -379,6 +381,13 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         check: function () {
             // if orderToken is set the checkout window will open
             return !!cart.orderToken;
+        },
+
+        onEmailEnter: function(email) {
+            if (callbacks.email !== email) {
+                ajaxPost(settings.save_email_url, 'email='+email);
+                callbacks.email = email;
+            }
         }
     };
     ////////////////////////////////////
@@ -442,6 +451,25 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
     /////////////////////////////////////////////////////
 
+    /////////////////////////////////////////////////////////
+    // Do not send multiple subsequent create order requests.
+    // Wait for a timeout and sent only the last one.
+    /////////////////////////////////////////////////////////
+    var create_request_no = 0;
+    var createOrderDelayed = function() {
+        create_request_no++;
+        ! function(request_no) {
+            setTimeout(
+                function() {
+                    if (create_request_no > request_no) return;
+                    createOrder();
+                },
+                100
+            )
+        }(create_request_no);
+    };
+    /////////////////////////////////////////////////////////
+
     /////////////////////////////////////////////////////
     // Toggle checkout button visibility on payment page
     // according to billing address edit state.
@@ -459,7 +487,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
                 button.style.display = '';
                 if (element.value !== billing_address_value) {
                     billing_address_value = element.value;
-                    createOrder();
+                    createOrderDelayed();
                 }
             }
         });
@@ -588,9 +616,14 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // totals updated or items added via ajax call.
     // TODO: add this option to plugin configuration admin page
     ///////////////////////////////////////////////////////////////
-    var totals_change_selectors = ['tr.grand.totals td.amount span.price', 'tr.shipping.totals td.amount span.price', '.minicart-wrapper .counter.qty span.counter-number'];
-    monitorDataChange(totals_change_selectors, createOrder, true, true);
-    ///////////////////////////////////////////////////////////
+    var totals_change_selectors = [
+        'tr.grand.totals td.amount span.price',
+        'tr.shipping.totals td.amount span.price',
+        '.minicart-wrapper .counter.qty span.counter-number'
+    ];
+    ///////////////////////////////////
+    monitorDataChange(totals_change_selectors, createOrderDelayed, true, true);
+    ///////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////
     // Reconfigure BoltCheckout with page collected hints data

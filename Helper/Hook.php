@@ -53,7 +53,7 @@ class Hook extends AbstractHelper
      * @param Context $context
      * @param Request $request
      * @param Config  $configHelper
-     * @param Log     $logHelper
+     * @param LogHelper $logHelper
      * @param Api     $apiHelper
      * @param DataObjectFactory $dataObjectFactory
      *
