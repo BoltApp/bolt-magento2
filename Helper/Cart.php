@@ -22,6 +22,8 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\View\Element\BlockFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Customer\Model\Address;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\Quote\TotalsCollector;
 
 /**
  * Boltpay Cart helper
@@ -77,6 +79,16 @@ class Cart extends AbstractHelper
      */
     private  $appEmulation;
 
+    /**
+     * @var QuoteFactory
+     */
+    private $quoteFactory;
+
+    /**
+     * @var TotalsCollector
+     */
+    private $totalsCollector;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $required_address_fields = [
         'first_name',
@@ -116,6 +128,8 @@ class Cart extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param BlockFactory      $blockFactory
      * @param Emulation         $appEmulation
+     * @param QuoteFactory      $quoteFactory
+     * @param TotalsCollector   $totalsCollector
      *
      * @codeCoverageIgnore
      */
@@ -130,19 +144,23 @@ class Cart extends AbstractHelper
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory,
         BlockFactory $blockFactory,
-        Emulation $appEmulation
+        Emulation $appEmulation,
+        QuoteFactory $quoteFactory,
+        TotalsCollector $totalsCollector
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
-        $this->productFactory    = $productFactory;
-        $this->apiHelper       = $apiHelper;
-        $this->configHelper    = $configHelper;
+        $this->productFactory = $productFactory;
+        $this->apiHelper = $apiHelper;
+        $this->configHelper = $configHelper;
         $this->customerSession = $customerSession;
-        $this->logHelper       = $logHelper;
-        $this->bugsnag         = $bugsnag;
-        $this->blockFactory    = $blockFactory;
-        $this->appEmulation    = $appEmulation;
+        $this->logHelper = $logHelper;
+        $this->bugsnag = $bugsnag;
+        $this->blockFactory = $blockFactory;
+        $this->appEmulation = $appEmulation;
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->quoteFactory = $quoteFactory;
+        $this->totalsCollector = $totalsCollector;
     }
 
     /**
@@ -160,15 +178,16 @@ class Cart extends AbstractHelper
     public function getBoltpayOrder($payment_only, $place_order_payload)
     {
         //Get cart data
-        $cartData = $this->getCartData($payment_only, $place_order_payload);
-        if (!$cartData) {
+        $cart = $this->getCartData($payment_only, $place_order_payload);
+        if (!$cart) {
             return;
         }
+
         $apiKey = $this->configHelper->getApiKey();
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
-        $requestData->setApiData(['cart' => $cartData]);
+        $requestData->setApiData($cart);
         $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_ORDER);
         $requestData->setApiKey($apiKey);
 
@@ -214,6 +233,7 @@ class Cart extends AbstractHelper
      */
     public function getHints($place_order_payload)
     {
+        /** @var  Quote */
         $quote = $this->checkoutSession->getQuote();
 
         if ($place_order_payload) {
@@ -228,7 +248,7 @@ class Cart extends AbstractHelper
          *
          * @param Address $shippingAddress
          */
-        $prefillHints = function($shippingAddress) use (&$hints) {
+        $prefillHints = function($shippingAddress) use (&$hints, $quote) {
 
             if (!$shippingAddress) return;
 
@@ -237,7 +257,7 @@ class Cart extends AbstractHelper
             $prefill = [
                 'firstName'    => $shippingAddress->getFirstname(),
                 'lastName'     => $shippingAddress->getLastname(),
-                'email'        => $shippingAddress->getEmail() ?: @$email,
+                'email'        => @$email ?: $shippingAddress->getEmail() ?: $quote->getCustomerEmail(),
                 'phone'        => $shippingAddress->getTelephone(),
                 'addressLine1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
                 'addressLine2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
@@ -315,8 +335,39 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
+        $quote->setBoltParentQuoteId($quote->getId());
+        $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
+
+        ////////////////////////////////////////////////////////
+        // CLONE THE QUOTE and quote billing / shipping  address
+        ////////////////////////////////////////////////////////
+        $clone = $this->quoteFactory->create();
+
+        $clone->merge($quote);
+
+        foreach ($quote->getData() as $key => $value) {
+            $clone->setData($key, $value);
+        }
+
+        $clone->setId(null);
+        $clone->setIsActive(false);
+        $clone->save();
+
+        foreach ($quote->getBillingAddress()->getData() as $key => $value) {
+            if ($key != 'address_id') $clone->getBillingAddress()->setData($key, $value);
+        }
+
+        foreach ($quote->getShippingAddress()->getData() as $key => $value) {
+            if ($key != 'address_id') $clone->getShippingAddress()->setData($key, $value);
+        }
+
+
+        $billingAddress  = $clone->getBillingAddress()->save();
+        $shippingAddress = $clone->getShippingAddress()->save();
+        ////////////////////////////////////////////////////////
+
         // Get array of all items what can be display directly
-        $items = $quote->getAllVisibleItems();
+        $items = $clone->getAllVisibleItems();
 
         if (!$items) {
             // This is the case when customer empties the cart.
@@ -325,17 +376,17 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
-        $quote->collectTotals();
-        $totals = $quote->getTotals();
+        $clone->collectTotals();
+        $totals = $clone->getTotals();
 
         // Order reference id
-        $cart['order_reference'] = $quote->getId();
+        $cart['order_reference'] = $clone->getId();
 
         //Set display_id as reserve order id
-        $cart['display_id'] = $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
+        $cart['display_id'] = $clone->getReservedOrderId();
 
         //Currency
-        $cart['currency'] = $quote->getQuoteCurrencyCode();
+        $cart['currency'] = $clone->getQuoteCurrencyCode();
 
         $totalAmount = 0;
         $diff = 0;
@@ -348,6 +399,7 @@ class Cart extends AbstractHelper
             \Magento\Framework\App\Area::AREA_FRONTEND,
             true
         );
+        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
         $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
 
         foreach ($items as $item) {
@@ -392,9 +444,6 @@ class Cart extends AbstractHelper
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        $billingAddress  = $quote->getBillingAddress();
-        $shippingAddress = $quote->getShippingAddress();
-
         // Billing address
         $billingStreetAddress = $billingAddress->getStreet();
         $cart['billing_address'] = [
@@ -434,15 +483,20 @@ class Cart extends AbstractHelper
                     'country_code'    => @$billingAddress->countryId,
                 ];
             }
-
         }
 
         if ($email) {
             $cart['billing_address']['email'] = $email;
         }
 
+        // payment only checkout, include shipments, tax and grand total
         if ($payment_only) {
-            // payment only checkout, include shipments, tax and grand total
+
+            // assign parent shipping method to clone
+            $shippingAddress->setCollectShippingRates(true);
+            $shippingAddress->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
+            $this->totalsCollector->collectAddressTotals($clone, $shippingAddress);
+            $shippingAddress->save();
 
             // Shipping address
             $shippingStreetAddress = $shippingAddress->getStreet();
@@ -535,9 +589,9 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if ($quote->getUseCustomerBalance()) {
+        if ($clone->getUseCustomerBalance()) {
 
-            if ($payment_only && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
+            if ($payment_only && $amount = abs($clone->getCustomerBalanceAmountUsed())) {
 
                 $rounded_amount = $this->getRoundAmount($amount);
 
@@ -580,9 +634,9 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
-        if ($quote->getUseRewardPoints()) {
+        if ($clone->getUseRewardPoints()) {
 
-            if ($payment_only && $amount = abs($quote->getRewardCurrencyAmount())) {
+            if ($payment_only && $amount = abs($clone->getRewardCurrencyAmount())) {
 
                 $rounded_amount = $this->getRoundAmount($amount);
 
@@ -674,7 +728,9 @@ class Cart extends AbstractHelper
 
         //$this->logHelper->addInfoLog(var_export($cart, 1));
 
-        return $cart;
+        return [
+            'cart' => $cart,
+        ];
     }
 
     /**
@@ -699,5 +755,23 @@ class Cart extends AbstractHelper
     public function getRoundAmount($amount)
     {
         return round($amount * 100);
+    }
+
+    /**
+     * Email validator
+     *
+     * @param string $email
+     * @return bool
+     * @throws \Zend_Validate_Exception
+     */
+    public function validateEmail($email) {
+
+        $emailClass = version_compare(
+            $this->configHelper->getStoreVersion(),
+            '2.2.0',
+            '<'
+        ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
+
+        return \Zend_Validate::is($email, $emailClass);
     }
 }

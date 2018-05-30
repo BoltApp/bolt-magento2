@@ -41,6 +41,7 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use \Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 
 /**
  * Class Order
@@ -160,6 +161,11 @@ class Order extends AbstractHelper
     private $cartHelper;
 
     /**
+     * @var QuoteCollectionFactory
+     */
+    protected $quoteCollectionFactory;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -182,6 +188,7 @@ class Order extends AbstractHelper
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
+     * @param QuoteCollectionFactory $quoteCollectionFactory
      *
      * @codeCoverageIgnore
      */
@@ -207,7 +214,8 @@ class Order extends AbstractHelper
         State $appState,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        QuoteCollectionFactory $quoteCollectionFactory
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -231,6 +239,7 @@ class Order extends AbstractHelper
         $this->logHelper             = $logHelper;
         $this->bugsnag               = $bugsnag;
         $this->cartHelper            = $cartHelper;
+        $this->quoteCollectionFactory = $quoteCollectionFactory;
     }
 
     /**
@@ -324,7 +333,6 @@ class Order extends AbstractHelper
      */
     private function setAddress($quoteAddress, $address)
     {
-
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
         $address_data = [
@@ -337,8 +345,12 @@ class Order extends AbstractHelper
             'postcode'     => @$address->postal_code,
             'telephone'    => @$address->phone_number,
             'region_id'    => $region ? $region->getId() : null,
-            'email'        => @$address->email_address,
         ];
+
+        if ($this->cartHelper->validateEmail(@$address->email_address)) {
+            $address_data['email'] = $address->email_address;
+        }
+
         $quoteAddress->setShouldIgnoreValidation(true);
         $quoteAddress->addData($address_data)->save();
     }
@@ -462,6 +474,9 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
+        // Delete redundant clones and parent quote
+        $this->deleteRedundantQuotes($quote);
+
         if (!$frontend) {
             $order->addStatusHistoryComment( "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id");
             $order->save();
@@ -476,6 +491,19 @@ class Order extends AbstractHelper
         });
 
         return $order;
+    }
+
+    /**
+     * Delete redundant clones and parent quote.
+     *
+     * @param Quote $quote
+     */
+    private function deleteRedundantQuotes($quote) {
+        /** @var $quotes \Magento\Quote\Model\ResourceModel\Quote\Collection */
+        $quotes = $this->quoteCollectionFactory->create();
+        $quotes->addFieldToFilter('bolt_parent_quote_id', $quote->getBoltParentQuoteId());
+        $quotes->addFieldToFilter('entity_id', ['neq' => $quote->getId()]);
+        $quotes->walk('delete');
     }
 
     /**
@@ -497,10 +525,15 @@ class Order extends AbstractHelper
         $incrementId = $transaction->order->cart->display_id;
 
         // load the quote from reserved order id
-        $quote = $this->loadQuote($incrementId);
+        // $quote = $this->loadQuote($incrementId);
+
+        // Load quote from entity id
+        $quoteId = $transaction->order->cart->order_reference;
+        $quote = $this->quoteFactory->create()->load($quoteId);
+        //$quote = $this->quoteRepository->get($quoteId);
 
         if (!$quote || !$quote->getId()) {
-            throw new LocalizedException(__('Unknown order id.'));
+            throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
         }
 
         // check if the order exists
@@ -572,7 +605,7 @@ class Order extends AbstractHelper
                 $report->setMetaData([
                     'ORDER_MISMATCH' => [
                         'Bolt' => $transaction->order->cart,
-                        'Store' => $cart,
+                        'Store' => $cart['cart'],
                     ]
                 ]);
             });
