@@ -211,6 +211,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     $rounded_total_amount = $this->cartHelper->getRoundAmount($total_amount);
                     $product['reference']    = $productId;
                     $product['name']         = $item->getName();
+                    $product['description']  = $item->getDescription();
                     $product['total_amount'] = $rounded_total_amount;
                     $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
                     $product['quantity']     = round($item->getQty());
@@ -260,7 +261,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->response->getHeaders()->addHeaders([
                 'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
-                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
+                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
             ]);
 
             $this->hookHelper->verifyWebhook();

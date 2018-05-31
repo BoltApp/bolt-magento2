@@ -40,6 +40,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class Order
@@ -149,6 +150,16 @@ class Order extends AbstractHelper
     private $logHelper;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -169,6 +180,8 @@ class Order extends AbstractHelper
      * @param Session $checkoutSession
      * @param State $appState
      * @param LogHelper $logHelper
+     * @param Bugsnag $bugsnag
+     * @param CartHelper $cartHelper
      *
      * @codeCoverageIgnore
      */
@@ -192,7 +205,9 @@ class Order extends AbstractHelper
         DataObjectFactory $dataObjectFactory,
         Session $checkoutSession,
         State $appState,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        Bugsnag $bugsnag,
+        CartHelper $cartHelper
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -214,6 +229,8 @@ class Order extends AbstractHelper
         $this->checkoutSession       = $checkoutSession;
         $this->appState              = $appState;
         $this->logHelper             = $logHelper;
+        $this->bugsnag               = $bugsnag;
+        $this->cartHelper            = $cartHelper;
     }
 
     /**
@@ -399,11 +416,12 @@ class Order extends AbstractHelper
      * @param mixed $transaction
      * @param bool $frontend
      *
+     * @param string|null $bolt_trace_id
      * @return AbstractExtensibleModel|OrderInterface|null|object
      * @throws LocalizedException
      * @throws Exception
      */
-    private function createOrder($quote, $transaction, $frontend)
+    private function createOrder($quote, $transaction, $frontend, $bolt_trace_id = null)
     {
         $this->checkoutSession->replaceQuote($quote);
 
@@ -423,7 +441,30 @@ class Order extends AbstractHelper
 
         $this->quoteRepository->save($quote);
 
+        // assign credit card info to the payment instance
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
+        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
+
+        // check if the order has been created in the meanwhile
+        /** @var OrderModel $order */
+        $order = $this->loadOrder($quote->getReservedOrderId());
+
+        if ($order && $order->getId()) {
+
+            $this->bugsnag->notifyError(
+                'Duplicate Order Creation Attempt',
+                'Order #' . $quote->getReservedOrderId() . ' already exists.'
+            );
+
+            return $order;
+        }
+
         $order = $this->quoteManagement->submit($quote);
+
+        if (!$frontend) {
+            $order->addStatusHistoryComment( "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id");
+            $order->save();
+        }
 
         // Send order confirmation email to customer.
         // Emulate frontend area in order for email
@@ -450,7 +491,7 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $frontend = true)
+    public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
 
         $transaction = $this->fetchTransactionInfo($reference);
@@ -468,7 +509,7 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            $order = $this->createOrder($quote, $transaction, $frontend);
+            $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
         }
 
         // update order payment transactions
@@ -497,6 +538,47 @@ class Order extends AbstractHelper
 
         //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
 
+        // format bolt transaction fetch url
+        $reference_url = function($reference) {
+            return $this->configHelper->getApiUrl() . ApiHelper::API_CURRENT_VERSION .
+                ApiHelper::API_FETCH_TRANSACTION . "/" . $reference;
+        };
+
+        ////////////////////////////////////////////////////////////////////////////
+        /// Record total amount mismatch between magento and bolt order.
+        /// Log the error in order comments and report via bugsnag.
+        ////////////////////////////////////////////////////////////////////////////
+        $record_order_mismatch = function ($bolt_total) use ($order, $transaction, $reference_url) {
+
+            $order->setStatus(OrderModel::STATE_HOLDED);
+            $order->setState(OrderModel::STATE_HOLDED);
+
+            $comment = __(
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
+                Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
+                $bolt_total / 100,
+                $order->getGrandTotal(),
+                $reference_url($transaction->reference)
+            );
+
+            $order->addStatusHistoryComment($comment);
+
+            $quote = $this->loadQuote($order->getIncrementId());
+
+            $cart = $this->cartHelper->getCartData(true, false, $quote);
+
+            $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
+                $report->setMetaData([
+                    'ORDER_MISMATCH' => [
+                        'Bolt' => $transaction->order->cart,
+                        'Store' => $cart,
+                    ]
+                ]);
+            });
+            $this->bugsnag->notifyError('Order Data Mismatch', $comment);
+        };
+        ////////////////////////////////////////////////////////////////////////////
+
         /** @var PaymentModel $payment */
         $payment = $order->getPayment();
 
@@ -513,14 +595,14 @@ class Order extends AbstractHelper
             }
 
             $comment = __(
-                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Reference: %2 Status: %3 Amount: 0',
+                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0<br>Bolt transaction: %3',
                 $transaction->id,
-                $transaction->reference,
-                strtoupper($transaction->status)
+                strtoupper($transaction->status),
+                $reference_url($transaction->reference)
             );
 
-            $order->setStatus(OrderModel::STATE_PROCESSING)
-                  ->setState(OrderModel::STATE_PROCESSING);
+            $order->setStatus(OrderModel::STATE_PROCESSING);
+            $order->setState(OrderModel::STATE_PROCESSING);
 
             $order->addStatusHistoryComment($comment);
 
@@ -531,6 +613,11 @@ class Order extends AbstractHelper
             ];
 
             $payment->setAdditionalInformation($paymentData);
+
+            // Check for total amount mismatch between magento and bolt order.
+            if (round($order->getGrandTotal() * 100) > 0) {
+                $record_order_mismatch(0);
+            }
 
             $payment->save();
             $order->save();
@@ -592,15 +679,18 @@ class Order extends AbstractHelper
                             $order_state = OrderModel::STATE_PAYMENT_REVIEW;
                     }
                     $comment = __(
-                        'BOLTPAY INFO :: PAYMENT TRANSACTION Reference: %1 Status: %2',
-                        $transaction_reference,
-                        $status
+                        'BOLTPAY INFO :: PAYMENT Status: %1<br>Bolt transaction: %2',
+                        $status,
+                        $reference_url($transaction_reference)
                     );
                     break;
                 case 'failed':
                     $order_state = OrderModel::STATE_CANCELED;
                     $status = 'FAILED';
-                    $comment = __('BOLTPAY INFO :: THE TRANSACTION HAS FAILED');
+                    $comment = __(
+                        'BOLTPAY INFO :: THE TRANSACTION HAS FAILED.<br>Bolt transaction: %1',
+                        $reference_url($transaction_reference)
+                    );
                     break;
                 case 'authorized':
                     $order_state = OrderModel::STATE_PROCESSING;
@@ -609,6 +699,8 @@ class Order extends AbstractHelper
                     $parent_transaction_id = null;
                     $status = 'AUTHORIZED';
                     $close_transaction = false;
+                    // Bolt payment amount to check against Magento order total
+                    $payment_amount = $amount->amount;
                     break;
                 case 'voided':
                     $order_state = OrderModel::STATE_CANCELED;
@@ -622,6 +714,8 @@ class Order extends AbstractHelper
                     $transaction_id = $transaction->id.'-capture';
                     $status = 'COMPLETED';
                     $amount = $transaction->capture->amount;
+                    // Bolt payment amount to check against Magento order total
+                    $payment_amount = $amount->amount;
                     if (!$payment_authorized) {
                         $parent_transaction_id = null;
                         $invoice_transaction = $transaction_id;
@@ -638,8 +732,11 @@ class Order extends AbstractHelper
                     $transaction_reference = $record->transaction->reference;
                     $status = 'REFUNDED';
                     $comment =__(
-                        'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD. IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND. AMOUNT REFUNDED: %1',
-                        $amount->amount / 100
+                        'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
+                         IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
+                         <br>AMOUNT REFUNDED:%1<br>Bolt transaction: %2',
+                        $amount->amount / 100,
+                        $reference_url($transaction_reference)
                     );
                     break;
                 // if type is "credit_completed" fetch the parent transaction info,
@@ -651,7 +748,7 @@ class Order extends AbstractHelper
                     continue 2;
             }
 
-            // set the order status
+            // set order status
             $order->setStatus($order_state);
             $order->setState($order_state);
 
@@ -680,7 +777,11 @@ class Order extends AbstractHelper
 
                 // format the additional transaction data
                 $transactionData = [
-                    'Time'      => $result = $this->timezone->formatDateTime(date('Y-m-d H:i:s', $date / 1000), 2, 2),
+                    'Time'      => $result = $this->timezone->formatDateTime(
+                        date('Y-m-d H:i:s', $date / 1000),
+                        2,
+                        2
+                    ),
                     'Reference' => $transaction_reference,
                     'Amount'    => $formattedPrice,
                     'Real ID'   => $transaction->id,
@@ -705,10 +806,10 @@ class Order extends AbstractHelper
 
                 // format transaction info message and add it to the order comments
                 $message = __(
-                    'BOLTPAY INFO :: Reference: %1 Status: %2 Amount: %3',
-                    $transaction_reference,
+                    'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
                     $status,
-                    $formattedPrice
+                    $formattedPrice,
+                    $reference_url($transaction_reference)
                 );
 
                 $payment->addTransactionCommentsToOrder(
@@ -721,6 +822,11 @@ class Order extends AbstractHelper
                 // the last_transaction_timestamp field is mandatory for avoiding duplicates
                 // so this data is stored regardless of creating the new transaction record
                 $payment->setAdditionalInformation($paymentData);
+            }
+
+            // Check for total amount mismatch between magento and bolt order.
+            if (isset($payment_amount) && $payment_amount != round($order->getGrandTotal() * 100)) {
+                $record_order_mismatch($payment_amount);
             }
 
             // save payment and order
@@ -762,8 +868,13 @@ class Order extends AbstractHelper
             );
             $transactionSave->save();
 
-            //Send invoice mail
-            $this->invoiceSender->send($invoice);
+            // Send invoice mail to customer.
+            // Emulate frontend area in order for email
+            // template to be loaded from the correct path
+            // even if run from the hook.
+            $this->appState->emulateAreaCode('frontend', function () use ($invoice){
+                $this->invoiceSender->send($invoice);
+            });
 
             //Add notification comment to order
             $order->addStatusHistoryComment(
