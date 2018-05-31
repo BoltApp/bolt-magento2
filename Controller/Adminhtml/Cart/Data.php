@@ -87,8 +87,6 @@ class Data extends Action
     public function execute()
     {
         try {
-            // additional data collected from the (one page checkout) page,
-            // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
@@ -96,7 +94,7 @@ class Data extends Action
             // format and send the response
             $cart = [
                 'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode()
+                'authcapture' => true
             ];
 
             $hints = $this->cartHelper->getHints($place_order_payload);

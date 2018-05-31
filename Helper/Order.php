@@ -466,10 +466,6 @@ class Order extends AbstractHelper
             $order->save();
         }
 
-        // Send order confirmation email to customer.
-        // Emulate frontend area in order for email
-        // template to be loaded from the correct path
-        // even if run from the hook.
         $areaCode = $frontend ? 'frontend' : \Magento\Backend\App\Area\FrontNameResolver::AREA_CODE;
 
         $this->appState->emulateAreaCode($areaCode, function () use ($order) {

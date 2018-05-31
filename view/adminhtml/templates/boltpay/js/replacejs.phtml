@@ -247,8 +247,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutKey = function () {
-        let checkout_type = getCheckoutType(),
-            key = 'publishable_key_' + checkout_type;
+        let key = 'publishable_key_back_office';
 
         return settings[key];
     };
@@ -277,7 +276,8 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var checkoutButtonApply = function(fn) {
-        if (jQuery('#payment_form_boltpay').is(':visible')) {
+        let elm = document.getElementById('payment_form_boltpay');
+        if (elm.style.visibility = 'visible') {
             selectorApply(bolt_button_selector, fn);
         }
     };

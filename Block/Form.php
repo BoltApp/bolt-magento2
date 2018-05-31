@@ -136,11 +136,10 @@ class Form extends PaymentForm
     public function getSettings()
     {
         return json_encode([
-            'connect_url'              => $this->getConnectJsUrl(),
-            'publishable_key_payment'  => $this->getCheckoutKey(),
-            'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
-            'selectors'                => $this->getReplaceSelectors(),
+            'connect_url'                   => $this->getConnectJsUrl(),
+            'publishable_key_back_office'   => $this->getBackOfficeKey(),
+            'create_order_url'              => $this->getUrl(Config::CREATE_ORDER_ACTION),
+            'save_order_url'                => $this->getUrl(Config::SAVE_ORDER_ACTION),
         ]);
     }
 
@@ -160,19 +159,9 @@ class Form extends PaymentForm
      *
      * @return  string
      */
-    public function getCheckoutKey()
+    public function getBackOfficeKey()
     {
-        return $this->configHelper->getPublishableKeyPayment();
-    }
-
-    /**
-     * Get Replace Button Selectors.
-     *
-     * @return string
-     */
-    public function getReplaceSelectors()
-    {
-        return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getReplaceSelectors()))));
+        return $this->configHelper->getPublishableKeyBackOffice();
     }
 
     /**

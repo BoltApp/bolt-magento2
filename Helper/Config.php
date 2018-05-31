@@ -44,9 +44,9 @@ class Config extends AbstractHelper
     const XML_PATH_PUBLISHABLE_KEY_PAYMENT = 'payment/boltpay/publishable_key_payment';
 
     /**
-     * Path for publishable key multi-step
+     * Path for publishable key back office
      */
-    const XML_PATH_PUBLISHABLE_KEY_CHECKOUT = 'payment/boltpay/publishable_key_checkout';
+    const XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE = 'payment/boltpay/publishable_key_back_office';
 
     /**
      * Path for Replace Selectors
@@ -286,6 +286,16 @@ class Config extends AbstractHelper
     public function getPublishableKeyPayment()
     {
         return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT);
+    }
+
+    /**
+     * Get Payment Only Publishable Key from config
+     *
+     * @return  string
+     */
+    public function getPublishableKeyBackOffice()
+    {
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE);
     }
 
     /**
