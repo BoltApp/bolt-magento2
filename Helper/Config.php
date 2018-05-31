@@ -44,6 +44,11 @@ class Config extends AbstractHelper
     const XML_PATH_PUBLISHABLE_KEY_PAYMENT = 'payment/boltpay/publishable_key_payment';
 
     /**
+     * Path for publishable key multi-step
+     */
+    const XML_PATH_PUBLISHABLE_KEY_CHECKOUT = 'payment/boltpay/publishable_key_checkout';
+
+    /**
      * Path for publishable key back office
      */
     const XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE = 'payment/boltpay/publishable_key_back_office';
