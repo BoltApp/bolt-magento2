@@ -6,7 +6,6 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
-use Exception;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Catalog\Model\ProductFactory;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -171,7 +170,7 @@ class Cart extends AbstractHelper
      *                                         i.e. billing address to be saved with the order
      *
      * @return Response|void
-     * @throws Exception
+     * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
@@ -317,7 +316,7 @@ class Cart extends AbstractHelper
      * @param Quote $quote
      *
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
     public function getCartData($payment_only, $place_order_payload, $quote = null)
     {
@@ -433,8 +432,21 @@ class Cart extends AbstractHelper
              */
             $_product = $this->productFactory->create()->load($productId);
             $product['description'] = strip_tags($_product->getDescription());
-            $productImage = $imageBlock->getImage($_product, 'product_small_image') ?: $imageBlock->getImage($_product, 'product_image');
-            $product['image_url'] = $productImage->getImageUrl();
+            try {
+                $productImage = $imageBlock->getImage($_product, 'product_small_image');
+            } catch (\Exception $e) {
+                try {
+                    $productImage = $imageBlock->getImage($_product, 'product_image');
+                } catch (\Exception $e) {
+                    $this->bugsnag->registerCallback(function ($report) use ($product) {
+                        $report->setMetaData([
+                            'ITEM' => $product
+                        ]);
+                    });
+                    $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
+                }
+            }
+            if (@$productImage) $product['image_url'] = $productImage->getImageUrl();
             ////////////////////////////////////
 
             //Add product to items array
@@ -736,7 +748,7 @@ class Cart extends AbstractHelper
      * @param Quote $quote
      *
      * @return  string
-     * @throws Exception
+     * @throws \Exception
      */
     public function setReservedOrderId($quote)
     {
