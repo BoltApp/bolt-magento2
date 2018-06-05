@@ -186,7 +186,7 @@ class Cart extends AbstractHelper
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
-        $requestData->setApiData($cart);
+        $requestData->setApiData(['cart' => $cart]);
         $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_ORDER);
         $requestData->setApiKey($apiKey);
 
@@ -738,9 +738,7 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
-        return [
-            'cart' => $cart,
-        ];
+        return $cart;
     }
 
     /**

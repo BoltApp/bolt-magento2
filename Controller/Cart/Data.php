@@ -87,9 +87,12 @@ class Data extends Action
             $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
             // format and send the response
+            $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
+
             $cart = [
-                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode()
+                'orderToken'  => $response ? $response->token : '',
+                'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
+                'orderReference' => $response ? $response->cart->order_reference : '',
             ];
 
             $hints = $this->cartHelper->getHints($place_order_payload);

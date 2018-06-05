@@ -611,7 +611,7 @@ class Order extends AbstractHelper
                 $report->setMetaData([
                     'ORDER_MISMATCH' => [
                         'Bolt' => $transaction->order->cart,
-                        'Store' => $cart['cart'],
+                        'Store' => $cart,
                     ]
                 ]);
             });
