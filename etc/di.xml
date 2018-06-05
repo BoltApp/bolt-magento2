@@ -32,4 +32,7 @@
     <preference for="Bolt\Boltpay\Api\Data\ShippingOptionsInterface" type="Bolt\Boltpay\Model\Api\Data\ShippingOptions" />
     <preference for="Bolt\Boltpay\Api\Data\ShippingOptionInterface"  type="Bolt\Boltpay\Model\Api\Data\ShippingOption" />
     <preference for="Bolt\Boltpay\Api\Data\ShippingTaxInterface"     type="Bolt\Boltpay\Model\Api\Data\ShippingTax" />
+
+    <!-- For rest api discount code validation -->
+    <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
 </config>
