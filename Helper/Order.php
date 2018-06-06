@@ -445,9 +445,7 @@ class Order extends AbstractHelper
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
 
-        if ($email) {
-            $this->addCutomerDetails($quote, $email);
-        }
+        $this->addCutomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
         $quote->collectTotals();

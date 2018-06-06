@@ -360,7 +360,6 @@ class Cart extends AbstractHelper
             if ($key != 'address_id') $clone->getShippingAddress()->setData($key, $value);
         }
 
-
         $billingAddress  = $clone->getBillingAddress()->save();
         $shippingAddress = $clone->getShippingAddress()->save();
         ////////////////////////////////////////////////////////

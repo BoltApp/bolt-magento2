@@ -92,7 +92,6 @@ class Email extends Action
                 $this->bugsnag->notifyError('Invalid email address', "quote_id: {$quote->getId()} email: $email");
             }
 
-            //$quote->setCheckoutMethod($quote->getCheckoutMethod() ?: 'guest');
             $quote->setCustomerEmail($email)->save();
 
         } catch (\Exception $e) {
