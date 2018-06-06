@@ -402,7 +402,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         var xhr;
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
 
-        xhr.open('GET', settings.shipping_prefetch_url);
+        xhr.open('GET', settings.shipping_prefetch_url + '?orderReference=' + cart.orderReference);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
         xhr.send();

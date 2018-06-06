@@ -266,15 +266,13 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->hookHelper->verifyWebhook();
 
-            $incrementId = $cart['display_id'];
+            // Load quote from entity id
+            $quoteId = $cart['order_reference'];
+            $quote = $this->quoteFactory->create()->load($quoteId);
 
-            // Get quote from increment id
-            $quote   = $this->quoteFactory->create()->load($incrementId, 'reserved_order_id');
-            $quoteId = $quote->getId();
-
-            if (empty($quoteId)) {
+            if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(
-                    __('Invalid display_id :%1.', $incrementId)
+                    __('Unknown quote id: %1.', $quoteId)
                 );
             }
 
@@ -338,7 +336,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
-                $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
+                $cache_identifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key
@@ -377,6 +375,9 @@ class ShippingMethods implements ShippingMethodsInterface
         // Get region id
         $region = $this->regionModel->loadByName(@$shipping_address['region'], @$shipping_address['country_code']);
 
+        // Check the email address
+        $email = $this->cartHelper->validateEmail(@$shipping_address['email']) ? $shipping_address['email'] : null;
+
         $shipping_address = [
             'country_id' => @$shipping_address['country_code'],
             'postcode'   => @$shipping_address['postal_code'],
@@ -387,7 +388,7 @@ class ShippingMethods implements ShippingMethodsInterface
             'street'     => @$shipping_address['street_address1'],
             'city'       => @$shipping_address['locality'],
             'telephone'  => @$shipping_address['phone'],
-            'email'      => @$shipping_address['email'],
+            'email'      => $email,
         ];
 
         foreach ($shipping_address as $key => $value) {
