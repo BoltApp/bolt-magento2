@@ -336,7 +336,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
-                $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
+                $cache_identifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key
