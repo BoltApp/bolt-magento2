@@ -12,7 +12,6 @@ use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote\TotalsCollector;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -28,8 +27,9 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
-use \Magento\Customer\Model\Session as CustomerSession;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\CustomerFactory;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 
 /**
  * Class ShippingMethods
@@ -48,11 +48,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var CartHelper
      */
     private $cartHelper;
-
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
 
     /**
      * @var RegionModel
@@ -129,6 +124,10 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $customerFactory;
 
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
 
     // Totals adjustment threshold
     private $threshold = 0.01;
@@ -138,7 +137,6 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      *
      * @param HookHelper $hookHelper
-     * @param QuoteFactory $quoteFactory
      * @param RegionModel $regionModel
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
      * @param ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory
@@ -155,10 +153,10 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface $cache
      * @param CustomerSession $customerSession
      * @param CustomerFactory $customerFactory
+     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         HookHelper $hookHelper,
-        QuoteFactory $quoteFactory,
         RegionModel $regionModel,
         ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory,
         ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory,
@@ -174,11 +172,11 @@ class ShippingMethods implements ShippingMethodsInterface
         Request $request,
         CacheInterface $cache,
         CustomerSession $customerSession,
-        CustomerFactory $customerFactory
+        CustomerFactory $customerFactory,
+        QuoteRepository $quoteRepository
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
-        $this->quoteFactory = $quoteFactory;
         $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
         $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
@@ -194,6 +192,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->customerSession = $customerSession;
         $this->customerFactory = $customerFactory;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -285,7 +284,8 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // Load quote from entity id
             $quoteId = $cart['order_reference'];
-            $quote = $this->quoteFactory->create()->load($quoteId);
+
+            $quote = $this->quoteRepository->get($quoteId);
 
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(
