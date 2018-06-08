@@ -28,6 +28,8 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
+use \Magento\Customer\Model\Session as CustomerSession;
+use Magento\Customer\Model\CustomerFactory;
 
 /**
  * Class ShippingMethods
@@ -119,6 +121,15 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $cache;
 
+    /** @var CustomerSession */
+    private $customerSession;
+
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
+
+
     // Totals adjustment threshold
     private $threshold = 0.01;
 
@@ -142,6 +153,8 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Session $checkoutSession
      * @param Request $request
      * @param CacheInterface $cache
+     * @param CustomerSession $customerSession
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -159,24 +172,28 @@ class ShippingMethods implements ShippingMethodsInterface
         ConfigHelper $configHelper,
         Session $checkoutSession,
         Request $request,
-        CacheInterface $cache
+        CacheInterface $cache,
+        CustomerSession $customerSession,
+        CustomerFactory $customerFactory
     ) {
-        $this->hookHelper                      = $hookHelper;
-        $this->cartHelper                      = $cartHelper;
-        $this->quoteFactory                    = $quoteFactory;
-        $this->regionModel                     = $regionModel;
+        $this->hookHelper = $hookHelper;
+        $this->cartHelper = $cartHelper;
+        $this->quoteFactory = $quoteFactory;
+        $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
-        $this->shippingTaxInterfaceFactory     = $shippingTaxInterfaceFactory;
-        $this->totalsCollector                 = $totalsCollector;
-        $this->converter                       = $converter;
-        $this->shippingOptionInterfaceFactory  = $shippingOptionInterfaceFactory;
-        $this->bugsnag                         = $bugsnag;
-        $this->logHelper                       = $logHelper;
-        $this->response                        = $response;
-        $this->configHelper                    = $configHelper;
-        $this->checkoutSession                 = $checkoutSession;
-        $this->request                         = $request;
-        $this->cache                           = $cache;
+        $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
+        $this->totalsCollector = $totalsCollector;
+        $this->converter = $converter;
+        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
+        $this->bugsnag = $bugsnag;
+        $this->logHelper = $logHelper;
+        $this->response = $response;
+        $this->configHelper = $configHelper;
+        $this->checkoutSession = $checkoutSession;
+        $this->request = $request;
+        $this->cache = $cache;
+        $this->customerSession = $customerSession;
+        $this->customerFactory = $customerFactory;
     }
 
     /**
@@ -276,9 +293,15 @@ class ShippingMethods implements ShippingMethodsInterface
                 );
             }
 
-            $this->checkoutSession->replaceQuote($quote);
-
             $this->checkCartItems($cart, $quote);
+
+            if ($customerId = $quote->getCustomerId()) {
+                $this->customerSession->setCustomer(
+                    $this->customerFactory->create()->load($customerId)
+                );
+            }
+
+            $this->checkoutSession->replaceQuote($quote);
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $shipping_address);
 
