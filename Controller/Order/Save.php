@@ -100,7 +100,7 @@ class Save extends Action
 
             // clear the session data
             if ($order->getId()) {
-                $this->checkoutSession->replaceQuote($quote);
+                $this->replaceQuote($quote);
                 //Clear quote session
                 $this->clearQuoteSession($quote);
                 //Clear order session
@@ -127,9 +127,17 @@ class Save extends Action
     }
 
     /**
+     * @param Quote $quote
+     * @return void
+     */
+    private function replaceQuote($quote) {
+        $this->checkoutSession->replaceQuote($quote);
+    }
+
+    /**
      * Clear quote session after successful order
      *
-     * @param Quote
+     * @param Quote $quote
      *
      * @return void
      */
@@ -143,7 +151,7 @@ class Save extends Action
     /**
      * Clear order session after successful order
      *
-     * @param Order
+     * @param Order $order
      *
      * @return void
      */

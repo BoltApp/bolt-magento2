@@ -163,7 +163,12 @@ class Order extends AbstractHelper
     /**
      * @var QuoteCollectionFactory
      */
-    protected $quoteCollectionFactory;
+    private $quoteCollectionFactory;
+
+    /**
+     * @var \Magento\Payment\Model\Info
+     */
+    private $quotePaymentInfoInstance = null;
 
     /**
      * @param Context $context
@@ -452,14 +457,12 @@ class Order extends AbstractHelper
 
         $this->quoteRepository->save($quote);
 
-        // assign credit card info to the payment instance
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData(
-            'cc_last_4',
-            @$transaction->from_credit_card->last4
-        );
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData(
-            'cc_type',
-            @$transaction->from_credit_card->network
+        // assign credit card info to the payment info instance
+        $this->setQuotePaymentInfoData(
+            $quote, [
+                'cc_last_4' => @$transaction->from_credit_card->last4,
+                'cc_type' => @$transaction->from_credit_card->network
+            ]
         );
 
         // check if the order has been created in the meanwhile
@@ -497,6 +500,26 @@ class Order extends AbstractHelper
         }
 
         return $order;
+    }
+
+    /**
+     * @param Quote $quote
+     * @param array $data
+     * @return void
+     */
+    private function setQuotePaymentInfoData($quote, $data) {
+        foreach ($data as $key => $value) {
+            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value);
+        }
+    }
+
+    /**
+     * @param Quote $quote
+     * @return \Magento\Payment\Model\Info
+     */
+    private function getQuotePaymentInfoInstance($quote) {
+        return $this->quotePaymentInfoInstance ?:
+            $this->quotePaymentInfoInstance = $quote->getPayment()->getMethodInstance()->getInfoInstance();
     }
 
     /**
