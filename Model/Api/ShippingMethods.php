@@ -12,7 +12,6 @@ use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote\TotalsCollector;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -28,6 +27,9 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
+use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Customer\Model\CustomerFactory;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 
 /**
  * Class ShippingMethods
@@ -46,11 +48,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var CartHelper
      */
     private $cartHelper;
-
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
 
     /**
      * @var RegionModel
@@ -119,6 +116,19 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $cache;
 
+    /** @var CustomerSession */
+    private $customerSession;
+
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
+
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
+
     // Totals adjustment threshold
     private $threshold = 0.01;
 
@@ -127,7 +137,6 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      *
      * @param HookHelper $hookHelper
-     * @param QuoteFactory $quoteFactory
      * @param RegionModel $regionModel
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
      * @param ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory
@@ -142,10 +151,12 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Session $checkoutSession
      * @param Request $request
      * @param CacheInterface $cache
+     * @param CustomerSession $customerSession
+     * @param CustomerFactory $customerFactory
+     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         HookHelper $hookHelper,
-        QuoteFactory $quoteFactory,
         RegionModel $regionModel,
         ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory,
         ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory,
@@ -159,24 +170,29 @@ class ShippingMethods implements ShippingMethodsInterface
         ConfigHelper $configHelper,
         Session $checkoutSession,
         Request $request,
-        CacheInterface $cache
+        CacheInterface $cache,
+        CustomerSession $customerSession,
+        CustomerFactory $customerFactory,
+        QuoteRepository $quoteRepository
     ) {
-        $this->hookHelper                      = $hookHelper;
-        $this->cartHelper                      = $cartHelper;
-        $this->quoteFactory                    = $quoteFactory;
-        $this->regionModel                     = $regionModel;
+        $this->hookHelper = $hookHelper;
+        $this->cartHelper = $cartHelper;
+        $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
-        $this->shippingTaxInterfaceFactory     = $shippingTaxInterfaceFactory;
-        $this->totalsCollector                 = $totalsCollector;
-        $this->converter                       = $converter;
-        $this->shippingOptionInterfaceFactory  = $shippingOptionInterfaceFactory;
-        $this->bugsnag                         = $bugsnag;
-        $this->logHelper                       = $logHelper;
-        $this->response                        = $response;
-        $this->configHelper                    = $configHelper;
-        $this->checkoutSession                 = $checkoutSession;
-        $this->request                         = $request;
-        $this->cache                           = $cache;
+        $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
+        $this->totalsCollector = $totalsCollector;
+        $this->converter = $converter;
+        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
+        $this->bugsnag = $bugsnag;
+        $this->logHelper = $logHelper;
+        $this->response = $response;
+        $this->configHelper = $configHelper;
+        $this->checkoutSession = $checkoutSession;
+        $this->request = $request;
+        $this->cache = $cache;
+        $this->customerSession = $customerSession;
+        $this->customerFactory = $customerFactory;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -266,21 +282,26 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->hookHelper->verifyWebhook();
 
-            $incrementId = $cart['display_id'];
+            // Load quote from entity id
+            $quoteId = $cart['order_reference'];
 
-            // Get quote from increment id
-            $quote   = $this->quoteFactory->create()->load($incrementId, 'reserved_order_id');
-            $quoteId = $quote->getId();
+            $quote = $this->quoteRepository->get($quoteId);
 
-            if (empty($quoteId)) {
+            if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(
-                    __('Invalid display_id :%1.', $incrementId)
+                    __('Unknown quote id: %1.', $quoteId)
+                );
+            }
+
+            $this->checkCartItems($cart, $quote);
+
+            if ($customerId = $quote->getCustomerId()) {
+                $this->customerSession->setCustomer(
+                    $this->customerFactory->create()->load($customerId)
                 );
             }
 
             $this->checkoutSession->replaceQuote($quote);
-
-            $this->checkCartItems($cart, $quote);
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $shipping_address);
 
@@ -338,7 +359,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
-                $cache_identifier .= '_'.$item->getSku().'_'.$item->getQty();
+                $cache_identifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key
@@ -377,6 +398,9 @@ class ShippingMethods implements ShippingMethodsInterface
         // Get region id
         $region = $this->regionModel->loadByName(@$shipping_address['region'], @$shipping_address['country_code']);
 
+        // Check the email address
+        $email = $this->cartHelper->validateEmail(@$shipping_address['email']) ? $shipping_address['email'] : null;
+
         $shipping_address = [
             'country_id' => @$shipping_address['country_code'],
             'postcode'   => @$shipping_address['postal_code'],
@@ -387,7 +411,7 @@ class ShippingMethods implements ShippingMethodsInterface
             'street'     => @$shipping_address['street_address1'],
             'city'       => @$shipping_address['locality'],
             'telephone'  => @$shipping_address['phone'],
-            'email'      => @$shipping_address['email'],
+            'email'      => $email,
         ];
 
         foreach ($shipping_address as $key => $value) {

@@ -41,6 +41,7 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use \Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
 
 /**
  * Class Order
@@ -160,6 +161,16 @@ class Order extends AbstractHelper
     private $cartHelper;
 
     /**
+     * @var QuoteCollectionFactory
+     */
+    private $quoteCollectionFactory;
+
+    /**
+     * @var \Magento\Payment\Model\Info
+     */
+    private $quotePaymentInfoInstance = null;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -182,6 +193,7 @@ class Order extends AbstractHelper
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
+     * @param QuoteCollectionFactory $quoteCollectionFactory
      *
      * @codeCoverageIgnore
      */
@@ -207,7 +219,8 @@ class Order extends AbstractHelper
         State $appState,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        QuoteCollectionFactory $quoteCollectionFactory
     ) {
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
@@ -231,6 +244,7 @@ class Order extends AbstractHelper
         $this->logHelper             = $logHelper;
         $this->bugsnag               = $bugsnag;
         $this->cartHelper            = $cartHelper;
+        $this->quoteCollectionFactory = $quoteCollectionFactory;
     }
 
     /**
@@ -324,7 +338,6 @@ class Order extends AbstractHelper
      */
     private function setAddress($quoteAddress, $address)
     {
-
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
         $address_data = [
@@ -337,8 +350,12 @@ class Order extends AbstractHelper
             'postcode'     => @$address->postal_code,
             'telephone'    => @$address->phone_number,
             'region_id'    => $region ? $region->getId() : null,
-            'email'        => @$address->email_address,
         ];
+
+        if ($this->cartHelper->validateEmail(@$address->email_address)) {
+            $address_data['email'] = $address->email_address;
+        }
+
         $quoteAddress->setShouldIgnoreValidation(true);
         $quoteAddress->addData($address_data)->save();
     }
@@ -433,49 +450,89 @@ class Order extends AbstractHelper
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
 
-        if ($email) {
-            $this->addCutomerDetails($quote, $email);
-        }
+        $this->addCutomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
         $quote->collectTotals();
 
         $this->quoteRepository->save($quote);
 
-        // assign credit card info to the payment instance
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_last_4', @$transaction->from_credit_card->last4);
-        $quote->getPayment()->getMethodInstance()->getInfoInstance()->setData('cc_type', @$transaction->from_credit_card->network);
+        // assign credit card info to the payment info instance
+        $this->setQuotePaymentInfoData(
+            $quote, [
+                'cc_last_4' => @$transaction->from_credit_card->last4,
+                'cc_type' => @$transaction->from_credit_card->network
+            ]
+        );
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
         $order = $this->loadOrder($quote->getReservedOrderId());
 
         if ($order && $order->getId()) {
-
-            $this->bugsnag->notifyError(
-                'Duplicate Order Creation Attempt',
-                'Order #' . $quote->getReservedOrderId() . ' already exists.'
-            );
-
-            return $order;
+            throw new LocalizedException(__(
+                'Duplicate Order Creation Attempt. Order #: %1',
+                $quote->getReservedOrderId()
+            ));
         }
 
         $order = $this->quoteManagement->submit($quote);
 
+        // Delete redundant clones and parent quote
+        $this->deleteRedundantQuotes($quote);
+
         if (!$frontend) {
-            $order->addStatusHistoryComment( "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id");
+            $order->addStatusHistoryComment(
+                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
+            );
             $order->save();
+
+            // Send order confirmation email to customer.
+            // Emulate frontend area in order for email
+            // template to be loaded from the correct path
+            // even if run from the hook.
+            $this->appState->emulateAreaCode('frontend', function () use ($order){
+                $this->emailSender->send($order);
+            });
+        } else {
+            // Send order confirmation email to customer.
+            $this->emailSender->send($order);
         }
 
-        // Send order confirmation email to customer.
-        // Emulate frontend area in order for email
-        // template to be loaded from the correct path
-        // even if run from the hook.
-        $this->appState->emulateAreaCode('frontend', function () use ($order){
-            $this->emailSender->send($order);
-        });
-
         return $order;
+    }
+
+    /**
+     * @param Quote $quote
+     * @param array $data
+     * @return void
+     */
+    private function setQuotePaymentInfoData($quote, $data) {
+        foreach ($data as $key => $value) {
+            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value);
+        }
+    }
+
+    /**
+     * @param Quote $quote
+     * @return \Magento\Payment\Model\Info
+     */
+    private function getQuotePaymentInfoInstance($quote) {
+        return $this->quotePaymentInfoInstance ?:
+            $this->quotePaymentInfoInstance = $quote->getPayment()->getMethodInstance()->getInfoInstance();
+    }
+
+    /**
+     * Delete redundant clones and parent quote.
+     *
+     * @param Quote $quote
+     */
+    private function deleteRedundantQuotes($quote) {
+        /** @var $quotes \Magento\Quote\Model\ResourceModel\Quote\Collection */
+        $quotes = $this->quoteCollectionFactory->create();
+        $quotes->addFieldToFilter('bolt_parent_quote_id', $quote->getBoltParentQuoteId());
+        $quotes->addFieldToFilter('entity_id', ['neq' => $quote->getId()]);
+        $quotes->walk('delete');
     }
 
     /**
@@ -497,10 +554,15 @@ class Order extends AbstractHelper
         $incrementId = $transaction->order->cart->display_id;
 
         // load the quote from reserved order id
-        $quote = $this->loadQuote($incrementId);
+        // $quote = $this->loadQuote($incrementId);
+
+        // Load quote from entity id
+        $quoteId = $transaction->order->cart->order_reference;
+        $quote = $this->quoteFactory->create()->load($quoteId);
+        //$quote = $this->quoteRepository->get($quoteId);
 
         if (!$quote || !$quote->getId()) {
-            throw new LocalizedException(__('Unknown order id.'));
+            throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
         }
 
         // check if the order exists
@@ -536,8 +598,6 @@ class Order extends AbstractHelper
         if ($reference && !$transaction) {
             $transaction = $this->fetchTransactionInfo($reference);
         }
-
-        //$this->logHelper->addInfoLog(json_encode($transaction,JSON_PRETTY_PRINT));
 
         // format bolt transaction fetch url
         $reference_url = function($reference) {
@@ -870,12 +930,7 @@ class Order extends AbstractHelper
             $transactionSave->save();
 
             // Send invoice mail to customer.
-            // Emulate frontend area in order for email
-            // template to be loaded from the correct path
-            // even if run from the hook.
-            $this->appState->emulateAreaCode('frontend', function () use ($invoice){
-                $this->invoiceSender->send($invoice);
-            });
+            $this->invoiceSender->send($invoice);
 
             //Add notification comment to order
             $order->addStatusHistoryComment(

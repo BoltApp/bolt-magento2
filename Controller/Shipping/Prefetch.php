@@ -18,6 +18,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use \Magento\Customer\Model\Session as CustomerSession;
+use Magento\Quote\Model\QuoteFactory;
 
 /**
  * Class Prefetch.
@@ -60,6 +61,11 @@ class Prefetch extends Action
      */
     private $configHelper;
 
+    /**
+     * @var QuoteFactory
+     */
+    private $quoteFactory;
+
     // GeoLocation API endpoint
     private $locationURL = "http://freegeoip.net/json/%s";
 
@@ -72,6 +78,7 @@ class Prefetch extends Action
      * @param Bugsnag $bugsnag
      * @param ConfigHelper $configHelper
      * @param CustomerSession $customerSession
+     * @param QuoteFactory $quoteFactory
      *
      * @codeCoverageIgnore
      */
@@ -83,7 +90,8 @@ class Prefetch extends Action
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         configHelper $configHelper,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        QuoteFactory $quoteFactory
     ) {
         parent::__construct($context);
         $this->checkoutSession   = $checkoutSession;
@@ -93,6 +101,7 @@ class Prefetch extends Action
         $this->bugsnag           = $bugsnag;
         $this->configHelper      = $configHelper;
         $this->customerSession   = $customerSession;
+        $this->quoteFactory      = $quoteFactory;
     }
 
     /**
@@ -131,9 +140,12 @@ class Prefetch extends Action
                 return;
             }
 
+            $quoteId = $this->getRequest()->getParam('orderReference');
+
             /** @var Quote */
-            $quote = $this->checkoutSession->getQuote();
-            if (!$quote->getId()) {
+            $quote = $this->quoteFactory->create()->load($quoteId);
+
+            if (!$quote || !$quote->getId()) {
                 return;
             }
 
@@ -200,6 +212,7 @@ class Prefetch extends Action
                 $prefetchForStoredAddress($shippingAddress);
             }
             /////////////////////////////////////////////////////////////////////////////////
+
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
