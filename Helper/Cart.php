@@ -251,15 +251,13 @@ class Cart extends AbstractHelper
 
             if (!$shippingAddress) return;
 
-            $shippingStreetAddress = $shippingAddress->getStreet();
-
             $prefill = [
                 'firstName'    => $shippingAddress->getFirstname(),
                 'lastName'     => $shippingAddress->getLastname(),
                 'email'        => @$email ?: $shippingAddress->getEmail() ?: $quote->getCustomerEmail(),
                 'phone'        => $shippingAddress->getTelephone(),
-                'addressLine1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
-                'addressLine2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
+                'addressLine1' => $shippingAddress->getStreetLine(1),
+                'addressLine2' => $shippingAddress->getStreetLine(2),
                 'city'         => $shippingAddress->getCity(),
                 'state'        => $shippingAddress->getRegion(),
                 'zip'          => $shippingAddress->getPostcode(),
@@ -456,14 +454,13 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // Billing address
-        $billingStreetAddress = $billingAddress->getStreet();
         $cart['billing_address'] = [
             'first_name'      => $billingAddress->getFirstname(),
             'last_name'       => $billingAddress->getLastname(),
             'company'         => $billingAddress->getCompany(),
             'phone'           => $billingAddress->getTelephone(),
-            'street_address1' => array_key_exists(0, $billingStreetAddress) ? $billingStreetAddress[0] : '',
-            'street_address2' => array_key_exists(1, $billingStreetAddress) ? $billingStreetAddress[1] : '',
+            'street_address1' => $billingAddress->getStreetLine(1),
+            'street_address2' => $billingAddress->getStreetLine(2),
             'locality'        => $billingAddress->getCity(),
             'region'          => $billingAddress->getRegion(),
             'postal_code'     => $billingAddress->getPostcode(),
@@ -486,8 +483,8 @@ class Cart extends AbstractHelper
                     'last_name'       => @$billingAddress->lastname,
                     'company'         => @$billingAddress->company,
                     'phone'           => @$billingAddress->telephone,
-                    'street_address1' => array_key_exists(0, $billingStreetAddress) ? $billingStreetAddress[0] : '',
-                    'street_address2' => array_key_exists(1, $billingStreetAddress) ? $billingStreetAddress[1] : '',
+                    'street_address1' => (string)@$billingStreetAddress[0],
+                    'street_address2' => (string)@$billingStreetAddress[1],
                     'locality'        => @$billingAddress->city,
                     'region'          => @$billingAddress->region,
                     'postal_code'     => @$billingAddress->postcode,
@@ -510,14 +507,13 @@ class Cart extends AbstractHelper
             $shippingAddress->save();
 
             // Shipping address
-            $shippingStreetAddress = $shippingAddress->getStreet();
             $shipping_address = [
                 'first_name'      => $shippingAddress->getFirstname(),
                 'last_name'       => $shippingAddress->getLastname(),
                 'company'         => $shippingAddress->getCompany(),
                 'phone'           => $shippingAddress->getTelephone(),
-                'street_address1' => array_key_exists(0, $shippingStreetAddress) ? $shippingStreetAddress[0] : '',
-                'street_address2' => array_key_exists(1, $shippingStreetAddress) ? $shippingStreetAddress[1] : '',
+                'street_address1' => $shippingAddress->getStreetLine(1),
+                'street_address2' => $shippingAddress->getStreetLine(2),
                 'locality'        => $shippingAddress->getCity(),
                 'region'          => $shippingAddress->getRegion(),
                 'postal_code'     => $shippingAddress->getPostcode(),
@@ -570,7 +566,8 @@ class Cart extends AbstractHelper
         $diff = 0;
 
         // unset billing if not all required fields are present
-        foreach ($this->required_address_fields + $this->required_billing_address_fields as $field) {
+        $required_billing_fields = array_merge($this->required_address_fields, $this->required_billing_address_fields);
+        foreach ($required_billing_fields as $field) {
             if (empty($cart['billing_address'][$field])) {
                 unset($cart['billing_address']);
                 break;
