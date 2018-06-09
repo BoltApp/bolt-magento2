@@ -408,7 +408,7 @@ class ShippingMethods implements ShippingMethodsInterface
             'region_id'  => $region ? $region->getId() : null,
             'firstname'  => @$shipping_address['first_name'],
             'lastname'   => @$shipping_address['last_name'],
-            'street'     => @$shipping_address['street_address1'],
+            'street'     => trim(@$shipping_address['street_address1'] . "\n" . @$shipping_address['street_address2']),
             'city'       => @$shipping_address['locality'],
             'telephone'  => @$shipping_address['phone'],
             'email'      => $email,

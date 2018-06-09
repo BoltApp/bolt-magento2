@@ -343,7 +343,7 @@ class Order extends AbstractHelper
         $address_data = [
             'firstname'    => @$address->first_name,
             'lastname'     => @$address->last_name,
-            'street'       => @$address->street_address1,
+            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
             'city'         => @$address->locality,
             'country_id'   => @$address->country_code,
             'region'       => @$address->region,
