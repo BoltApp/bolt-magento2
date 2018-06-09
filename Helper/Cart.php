@@ -570,7 +570,8 @@ class Cart extends AbstractHelper
         $diff = 0;
 
         // unset billing if not all required fields are present
-        foreach ($this->required_address_fields + $this->required_billing_address_fields as $field) {
+        $required_billing_fields = array_merge($this->required_address_fields, $this->required_billing_address_fields);
+        foreach ($required_billing_fields as $field) {
             if (empty($cart['billing_address'][$field])) {
                 unset($cart['billing_address']);
                 break;
