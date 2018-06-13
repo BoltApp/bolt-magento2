@@ -8,6 +8,7 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -21,18 +22,25 @@ class Js extends Template
      */
     private $configHelper;
 
+    /** @var CheckoutSession */
+    private $checkoutSession;
+
+
     /**
      * @param Context $context
      * @param Config $configHelper
+     * @param CheckoutSession $checkoutSession
      * @param array $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
+        CheckoutSession $checkoutSession,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -105,7 +113,6 @@ class Js extends Template
      */
     public function getSettings()
     {
-
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
             'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
@@ -116,6 +123,7 @@ class Js extends Template
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'quote_is_virtual'         => $this->getQuoteIsVirtual(),
         ]);
     }
 
@@ -126,5 +134,14 @@ class Js extends Template
     public function isEnabled()
     {
         return $this->configHelper->isActive();
+    }
+
+    /**
+     * Get quote is virtual flag, false if no existing quote
+     * @return bool
+     */
+    private function getQuoteIsVirtual() {
+        $quote = $this->checkoutSession->getQuote();
+        return $quote ? $quote->isVirtual() : false;
     }
 }

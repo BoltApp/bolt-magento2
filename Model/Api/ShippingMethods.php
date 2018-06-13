@@ -263,7 +263,7 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         try {
 
-            //$this->logHelper->addInfoLog($this->request->getContent());
+            $this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
@@ -341,12 +341,12 @@ class ShippingMethods implements ShippingMethodsInterface
      * Get Shipping and Tax from cache or run the Shipping options collection routine, store it in cache and return.
      *
      * @param Quote $quote
-     * @param array $shipping_address
+     * @param array $address_data
      *
      * @return ShippingOptionsInterface
      * @throws LocalizedException
      */
-    public function shippingEstimation($quote, $shipping_address)
+    public function shippingEstimation($quote, $address_data)
     {
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
@@ -355,7 +355,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
 
             $cache_identifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.
-                $shipping_address['country_code']. '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+                $address_data['country_code']. '_'.$address_data['region'].'_'.$address_data['postal_code'];
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
@@ -378,49 +378,47 @@ class ShippingMethods implements ShippingMethodsInterface
                 $prefetchAddressFields
             );
 
-            $shippingAddress = $quote->getShippingAddress();
+            $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+
             // get the value of each valid field and include it in the cache identifier
             foreach ($prefetchAddressFields as $key) {
                 $getter = 'get'.$key;
-                $value = $shippingAddress->$getter();
+                $value = $address->$getter();
                 if ($value) $cache_identifier .= '_'.$value;
             }
 
             $cache_identifier = md5($cache_identifier);
 
             if ($serialized = $this->cache->load($cache_identifier)) {
-                $shippingAddress->setShippingMethod(null)->save();
+                $address->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // Get region id
-        $region = $this->regionModel->loadByName(@$shipping_address['region'], @$shipping_address['country_code']);
+        $region = $this->regionModel->loadByName(@$address_data['region'], @$address_data['country_code']);
 
         // Check the email address
-        $email = $this->cartHelper->validateEmail(@$shipping_address['email']) ? $shipping_address['email'] : null;
+        $email = $this->cartHelper->validateEmail(@$address_data['email']) ? $address_data['email'] : null;
 
-        $shipping_address = [
-            'country_id' => @$shipping_address['country_code'],
-            'postcode'   => @$shipping_address['postal_code'],
-            'region'     => @$shipping_address['region'],
+        // Reformat address data
+        $address_data = [
+            'country_id' => @$address_data['country_code'],
+            'postcode'   => @$address_data['postal_code'],
+            'region'     => @$address_data['region'],
             'region_id'  => $region ? $region->getId() : null,
-            'firstname'  => @$shipping_address['first_name'],
-            'lastname'   => @$shipping_address['last_name'],
-            'street'     => trim(@$shipping_address['street_address1'] . "\n" . @$shipping_address['street_address2']),
-            'city'       => @$shipping_address['locality'],
-            'telephone'  => @$shipping_address['phone'],
+            'street'     => trim(@$address_data['street_address1'] . "\n" . @$address_data['street_address2']),
             'email'      => $email,
         ];
 
-        foreach ($shipping_address as $key => $value) {
+        foreach ($address_data as $key => $value) {
             if (empty($value)) {
-                unset($shipping_address[$key]);
+                unset($address_data[$key]);
             }
         }
 
-        $shippingMethods = $this->getShippingOptions($quote, $shipping_address);
+        $shippingMethods = $this->getShippingOptions($quote, $address_data);
 
         $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
         $shippingOptionsModel->setShippingOptions($shippingMethods);
@@ -441,22 +439,43 @@ class ShippingMethods implements ShippingMethodsInterface
      * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
-     * @param array $shipping_address
+     * @param array $address_data
      *
      * @return ShippingOptionInterface[]
      */
-    private function getShippingOptions($quote, $shipping_address)
+    private function getShippingOptions($quote, $address_data)
     {
+        if ($quote->isVirtual()) {
+
+            $billingAddress = $quote->getBillingAddress();
+            $billingAddress->addData($address_data);//->save();
+
+            $quote->collectTotals();
+
+            $this->totalsCollector->collectAddressTotals($quote, $billingAddress);
+            $tax_amount = $this->cartHelper->getRoundAmount($billingAddress->getTaxAmount());
+
+            return [
+                $this->shippingOptionInterfaceFactory
+                    ->create()
+                    ->setService('No Shipping Required')
+                    ->setCost(0)
+                    ->setReference(null)
+                    ->setTaxAmount($tax_amount)
+            ];
+        }
+
         $output = [];
 
         $shippingAddress = $quote->getShippingAddress();
+        $shippingAddress->addData($address_data);//->save();
 
-        $shippingAddress->addData($shipping_address)->save();
         $shippingAddress->setCollectShippingRates(true);
-
         $shippingAddress->setShippingMethod(null);
-        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
+        $quote->collectTotals();
+
+        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
         ////////////////////////////////////////////////////////////////
@@ -465,8 +484,9 @@ class ShippingMethods implements ShippingMethodsInterface
         /// some method in the Magento shipping flow, then that method
         /// may be (indirectly) called from our Shipping And Tax flow more
         /// than once, resulting in wrong prices. This function resets
-        /// address shipping calculation but can drasticaly slow down the
-        /// process. Use it carefully only when necesarry.
+        /// address shipping calculation but can seriously slow down the
+        /// process (on a system with many shipping options available).
+        /// Use it carefully only when necesarry.
         ////////////////////////////////////////////////////////////////
         $resetShippingCalculation = function () use ($shippingAddress) {
             $shippingAddress->removeAllShippingRates();
@@ -553,10 +573,10 @@ class ShippingMethods implements ShippingMethodsInterface
         $shippingAddress->setShippingMethod(null)->save();
 
         if ($errors) {
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $shipping_address) {
+            $this->bugsnag->registerCallback(function ($report) use ($errors, $address_data) {
                 $report->setMetaData([
                     'SHIPPING METHOD' => [
-                      'address' => $shipping_address,
+                      'address' => $address_data,
                       'errors'  => $errors
                     ]
                 ]);

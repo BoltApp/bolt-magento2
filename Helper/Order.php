@@ -323,7 +323,7 @@ class Order extends AbstractHelper
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
 
-        $shippingMethod = $transaction->order->cart->shipments[0]->reference;
+        $shippingMethod = @$transaction->order->cart->shipments[0]->reference ?: null;
 
         $shippingAddress->setShippingMethod($shippingMethod)->save();
     }
@@ -549,17 +549,13 @@ class Order extends AbstractHelper
      */
     public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
-
         $transaction = $this->fetchTransactionInfo($reference);
         $incrementId = $transaction->order->cart->display_id;
 
-        // load the quote from reserved order id
-        // $quote = $this->loadQuote($incrementId);
-
         // Load quote from entity id
         $quoteId = $transaction->order->cart->order_reference;
-        $quote = $this->quoteFactory->create()->load($quoteId);
-        //$quote = $this->quoteRepository->get($quoteId);
+        //$quote = $this->quoteFactory->create()->load($quoteId);
+        $quote = $this->quoteRepository->get($quoteId);
 
         if (!$quote || !$quote->getId()) {
             throw new LocalizedException(__('Unknown quote id: %1', $quoteId));

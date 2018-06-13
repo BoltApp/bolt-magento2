@@ -474,21 +474,21 @@ class Cart extends AbstractHelper
             $place_order_payload = json_decode($place_order_payload);
 
             $email                = @$place_order_payload->email ?: $email;
-            $billingAddress       = @$place_order_payload->billingAddress;
-            $billingStreetAddress = (array)@$billingAddress->street;
+            $billing_address      = @$place_order_payload->billingAddress;
+            $billingStreetAddress = (array)@$billing_address->street;
 
-            if ($billingAddress) {
+            if ($billing_address) {
                 $cart['billing_address'] = [
-                    'first_name'      => @$billingAddress->firstname,
-                    'last_name'       => @$billingAddress->lastname,
-                    'company'         => @$billingAddress->company,
-                    'phone'           => @$billingAddress->telephone,
+                    'first_name'      => @$billing_address->firstname,
+                    'last_name'       => @$billing_address->lastname,
+                    'company'         => @$billing_address->company,
+                    'phone'           => @$billing_address->telephone,
                     'street_address1' => (string)@$billingStreetAddress[0],
                     'street_address2' => (string)@$billingStreetAddress[1],
-                    'locality'        => @$billingAddress->city,
-                    'region'          => @$billingAddress->region,
-                    'postal_code'     => @$billingAddress->postcode,
-                    'country_code'    => @$billingAddress->countryId,
+                    'locality'        => @$billing_address->city,
+                    'region'          => @$billing_address->region,
+                    'postal_code'     => @$billing_address->postcode,
+                    'country_code'    => @$billing_address->countryId,
                 ];
             }
         }
@@ -497,58 +497,67 @@ class Cart extends AbstractHelper
             $cart['billing_address']['email'] = $email;
         }
 
+        $address = $clone->isVirtual() ? $billingAddress : $shippingAddress;
+
         // payment only checkout, include shipments, tax and grand total
         if ($payment_only) {
 
-            // assign parent shipping method to clone
-            $shippingAddress->setCollectShippingRates(true);
-            $shippingAddress->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
-            $this->totalsCollector->collectAddressTotals($clone, $shippingAddress);
-            $shippingAddress->save();
+            if (! $clone->isVirtual()) {
 
-            // Shipping address
-            $shipping_address = [
-                'first_name'      => $shippingAddress->getFirstname(),
-                'last_name'       => $shippingAddress->getLastname(),
-                'company'         => $shippingAddress->getCompany(),
-                'phone'           => $shippingAddress->getTelephone(),
-                'street_address1' => $shippingAddress->getStreetLine(1),
-                'street_address2' => $shippingAddress->getStreetLine(2),
-                'locality'        => $shippingAddress->getCity(),
-                'region'          => $shippingAddress->getRegion(),
-                'postal_code'     => $shippingAddress->getPostcode(),
-                'country_code'    => $shippingAddress->getCountryId(),
-            ];
+                // assign parent shipping method to clone
+                $address->setCollectShippingRates(true);
+                $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
 
-            $email = $shippingAddress->getEmail() ?: $email;
-            if ($email) {
-                $shipping_address['email'] = $email;
-            }
+                $this->totalsCollector->collectAddressTotals($clone, $address);
+                $address->save();
 
-            foreach ($this->required_address_fields as $field) {
-                if (empty($shipping_address[$field])) {
-                    unset($shipping_address);
-                    break;
+                // Shipping address
+                $shipping_address = [
+                    'first_name' => $address->getFirstname(),
+                    'last_name' => $address->getLastname(),
+                    'company' => $address->getCompany(),
+                    'phone' => $address->getTelephone(),
+                    'street_address1' => $address->getStreetLine(1),
+                    'street_address2' => $address->getStreetLine(2),
+                    'locality' => $address->getCity(),
+                    'region' => $address->getRegion(),
+                    'postal_code' => $address->getPostcode(),
+                    'country_code' => $address->getCountryId(),
+                ];
+
+                $email = $address->getEmail() ?: $email;
+                if ($email) {
+                    $shipping_address['email'] = $email;
                 }
+
+                foreach ($this->required_address_fields as $field) {
+                    if (empty($shipping_address[$field])) {
+                        unset($shipping_address);
+                        break;
+                    }
+                }
+
+                if (@$shipping_address) {
+                    $cost = $address->getShippingAmount();
+                    $rounded_cost = $this->getRoundAmount($cost);
+
+                    $diff += $cost * 100 - $rounded_cost;
+                    $totalAmount += $rounded_cost;
+
+                    $cart['shipments'] = [[
+                        'cost' => $rounded_cost,
+                        'tax_amount' => $this->getRoundAmount($address->getShippingTaxAmount()),
+                        'shipping_address' => $shipping_address,
+                        'service' => $shippingAddress->getShippingDescription(),
+                        'reference' => $shippingAddress->getShippingMethod(),
+                    ]];
+                }
+            } else {
+                $this->totalsCollector->collectAddressTotals($clone, $address);
+                $address->save();
             }
 
-            if (@$shipping_address) {
-                $cost         = $shippingAddress->getShippingAmount();
-                $rounded_cost = $this->getRoundAmount($cost);
-
-                $diff += $cost * 100 - $rounded_cost;
-                $totalAmount += $rounded_cost;
-
-                $cart['shipments'] = [[
-                    'cost'             => $rounded_cost,
-                    'tax_amount'       => $this->getRoundAmount($shippingAddress->getShippingTaxAmount()),
-                    'shipping_address' => $shipping_address,
-                    'service'          => $shippingAddress->getShippingDescription(),
-                    'reference'        => $shippingAddress->getShippingMethod(),
-                ]];
-            }
-
-            $tax_amount         = $shippingAddress->getTaxAmount();
+            $tax_amount         = $address->getTaxAmount();
             $rounded_tax_amount = $this->getRoundAmount($tax_amount);
 
             $diff += $tax_amount * 100 - $rounded_tax_amount;
@@ -580,12 +589,12 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process store integral discounts and coupons
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = @$shippingAddress->getDiscountAmount()) {
+        if ($amount = @$address->getDiscountAmount()) {
             $amount         = abs($amount);
             $rounded_amount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
-                'description' => __('Discount ') . $shippingAddress->getDiscountDescription(),
+                'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $rounded_amount,
             ];
 
@@ -733,6 +742,8 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
+
+        $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
 
         return $cart;
     }

@@ -11,16 +11,13 @@
  */
 if (!$block->isEnabled()) return;
 ?>
-<?php $success = $block->getjavascriptSuccess(); ?>
 
 <script type="text/javascript">
 
-// Store the configuration parameters passed from the php block
-// in the global object. Used in this file and on the payment page
-// in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-window.boltConfig = <?php echo $block->getSettings(); ?>;
-
-! function() {
+    // Store the configuration parameters passed from the php block
+    // in the global object. Used in this file and on the payment page
+    // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
+    window.boltConfig = <?php echo $block->getSettings(); ?>;
 
     ///////////////////////
     // String.trim Polyfill
@@ -153,590 +150,687 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     }(window);
     ////////////////////////////////////////////////////////////////////////
 
-    ////////////////////////////////
-    // Merge objects
-    ////////////////////////////////
-    var isObject = function (item) {
-        return (item && typeof item === 'object' && !Array.isArray(item));
-    };
+    ////////////////////////////////////////////////////
+    // DI: Inserting required Magento objects
+    // the code below is dependant on.
+    ////////////////////////////////////////////////////
+    require([
+        'jquery',
+        'Magento_Customer/js/model/authentication-popup',
+        'Magento_Customer/js/customer-data',
+        'mage/validation/validation'
+    ], function ($, authenticationPopup, customerData) {
+    ////////////////////////////////////////////////////
 
-    var deepMergeObjects = function () {
+        ////////////////////////////////
+        // Merge objects
+        ////////////////////////////////
+        var isObject = function (item) {
+            return (item && typeof item === 'object' && !Array.isArray(item));
+        };
 
-        // Variables
-        var extended = {};
-        var i = 0;
+        var deepMergeObjects = function () {
 
-        // Merge the object into the extended object
-        var merge = function (obj) {
+            // Variables
+            var extended = {};
+            var i = 0;
 
-            for (var prop in obj) {
+            // Merge the object into the extended object
+            var merge = function (obj) {
 
-                if (obj.hasOwnProperty(prop)) {
-                    if (isObject(obj[prop])) {
-                        // If the property is an object
-                        extended[prop] = deepMergeObjects(extended[prop], obj[prop]);
-                    } else {
-                        // Otherwise, do a regular merge
-                        extended[prop] = obj[prop];
+                for (var prop in obj) {
+
+                    if (obj.hasOwnProperty(prop)) {
+                        if (isObject(obj[prop])) {
+                            // If the property is an object
+                            extended[prop] = deepMergeObjects(extended[prop], obj[prop]);
+                        } else {
+                            // Otherwise, do a regular merge
+                            extended[prop] = obj[prop];
+                        }
                     }
                 }
+
+            };
+
+            // Loop through each object and conduct a merge
+            for (; i < arguments.length; i++) {
+                merge(arguments[i]);
             }
 
+            return extended;
+        };
+        ////////////////////////////////
+
+        /**
+         * Pure javascript ajax POST request function
+         *
+         * param string     url                 The request url
+         * param array      params              The URL query string parameters
+         * param callable   callback            The callback function to pass the response data to
+         *
+         * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
+         */
+        var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
+            var xhr;
+            if (typeof async === 'undefined') async = true;
+            if (typeof headers === 'undefined') {
+                headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+            }
+            xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+            if (typeof onSuccess === 'function') {
+                xhr.onload = function () {
+                    var result;
+                    if (xhr.responseType === 'json') {
+                        result = xhr.response;
+                    } else {
+                        result = JSON.parse(xhr.responseText);
+                    }
+                    onSuccess(result);
+                };
+            }
+            if (typeof onError === 'function') {
+                xhr.onerror = onError;
+            }
+            xhr.open('POST', url, async);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            for (var header in headers) {
+                if (headers.hasOwnProperty(header)) {
+                    xhr.setRequestHeader(header, headers[header]);
+                }
+            }
+            xhr.send(params);
+            return xhr;
         };
 
-        // Loop through each object and conduct a merge
-        for (; i < arguments.length; i++) {
-            merge(arguments[i]);
-        }
-
-        return extended;
-    };
-    ////////////////////////////////
-
-    /**
-     * Pure javascript ajax POST request function
-     *
-     * param string     url                 The request url
-     * param array      params              The URL query string parameters
-     * param callable   callback            The callback function to pass the response data to
-     *
-     * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
-     */
-    var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
-        var xhr;
-        if (typeof async === 'undefined') async = true;
-        if (typeof headers === 'undefined') {
-            headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-        }
-        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-        if (typeof onSuccess === 'function') {
-            xhr.onload = function () {
-                var result;
-                if (xhr.responseType === 'json') {
-                    result = xhr.response;
-                } else {
-                    result = JSON.parse(xhr.responseText);
-                }
-                onSuccess(result);
-            };
-        }
-        if (typeof onError === 'function') {
-            xhr.onerror = onError;
-        }
-        xhr.open('POST', url, async);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        for (var header in headers) {
-            if (headers.hasOwnProperty(header)) {
-                xhr.setRequestHeader(header, headers[header]);
-            }
-        }
-        xhr.send(params);
-        return xhr;
-    };
-
-    /**
-     * Get the current page checkout type.
-     * This function should be extended for Magento checkout extensions.
-     *
-     * return string
-     */
-    var getCheckoutType = function() {
-        return location.pathname === '/checkout/' && location.hash === '#payment' ? 'payment' : 'checkout';
-    };
-
-    /**
-     * Get the checkout key according to the checkout type.
-     *
-     * return string
-     */
-    var getCheckoutKey = function () {
-        var key = 'publishable_key_' + getCheckoutType();
-        return settings[key];
-    };
-
-    /**
-     * Apply function to every element with the specified selector.
-     *
-     * param selector   elements CSS selector
-     * param fn         function to apply
-     *
-     * return void
-     */
-    var selectorApply = function(selector, fn){
-        var elements = document.querySelectorAll(selector);
-        for (var i = 0, length = elements.length; i < length; i++) {
-            var element = elements[i];
-            fn.call(element, element)
-        }
-    };
-
-    /**
-     * Apply function to every bolt checkout button.
-     *
-     * param fn         function to apply
-     *
-     * return void
-     */
-    var checkoutButtonApply = function(fn) {
-        selectorApply(bolt_button_selector, fn);
-    };
-
-    /**
-     * Toggle checkout button multi-step class, `bolt-multi-step-checkout`, according to the checkout type.
-     *
-     * return void
-     */
-    var setCheckoutTypeStyle = function() {
-        var checkout_type = getCheckoutType();
-        checkoutButtonApply(function(button) {
-            if (checkout_type === 'payment') {
-                button.classList.remove(multi_step_css_class);
-            } else {
-                button.classList.add(multi_step_css_class);
-            }
-        });
-    };
-
-    /**
-     * Inject connect.js
-     * return void
-     */
-    var insertConnectScript = function() {
-        var scriptTag = document.getElementById('bolt-connect');
-        var publishableKey = getCheckoutKey();
-        if (scriptTag) {
-            scriptTag.setAttribute('data-publishable-key', publishableKey);
-            createOrderDelayed();
-            return;
-        }
-        scriptTag = document.createElement('script');
-        scriptTag.setAttribute('type', 'text/javascript');
-        scriptTag.setAttribute('async', '');
-        scriptTag.setAttribute('src', settings.connect_url);
-        scriptTag.setAttribute('id', 'bolt-connect');
-        scriptTag.setAttribute('data-publishable-key', publishableKey);
-        scriptTag.onload = createOrderDelayed;
-        document.head.appendChild(scriptTag);
-    };
-
-    /**
-     * Set checkout button CSS and load connect.js
-     * return void
-     */
-    var processButtons = function () {
-        if (getCheckoutKey() !== '') {
-            setCheckoutTypeStyle();
-            insertConnectScript();
-        }
-    };
-
-    // The configuration parameters passed from the php block
-    var settings = window.boltConfig;
-    // TODO: make `with-cards` option backend configurable
-    var bolt_button_css_class    = 'bolt-checkout-button with-cards';
-    var bolt_button_selector     = '.bolt-checkout-button';
-    var multi_step_css_class     = 'bolt-multi-step-checkout';
-    var billing_address_selector = '#bolt-billing-address';
-    var place_order_payload_id   = 'bolt-place-order-payload';
-
-    // On multiple checkout open/close actions the success event remains registered
-    // resulting in making the success call multiple times. This variable stores
-    // the last request to be aborted before new one is sent.
-    var save_request;
-
-    ////////////////////////////////////
-    // BoltCheckout.configure parameters
-    ////////////////////////////////////
-    var cart = {};
-
-    var hints = {prefill:{}};
-
-    var callbacks = {
-
-        close: function () {
-            // redirect on succes order save
-            if (callbacks.success_url) location.href = callbacks.success_url;
-        },
-
-        success: function (transaction, callback) {
-            // abort previously sent save order request.
-            if (save_request) save_request.abort();
-            // get thr transaction reference
-            var parameters = 'reference='+transaction.reference;
-            // update order ajax request callback
-            // sets the success order page redirect url from received data
-            // and calls the final Bolt defined callback
-            var onSuccess = function(data){
-                <?php echo $success; ?>
-                callbacks.success_url = data.success_url;
-                callback();
-            };
-            // ajax call to the update order transaction data endpoint.
-            // passes the bolt transaction reference
-            save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
-        },
-
-        // the Bolt order is created right after the checkout button is clicked
-        // and the checkout modal popup is opened only if order creation was successfull
-        check: function () {
-            // if orderToken is set the checkout window will open
-            return !!cart.orderToken;
-        },
-
-        onEmailEnter: function(email) {
-            if (callbacks.email !== email) {
-                ajaxPost(settings.save_email_url, 'email='+email+'&orderReference='+cart.orderReference);
-                callbacks.email = email;
-            }
-        }
-    };
-    ////////////////////////////////////
-
-    /////////////////////////////////////////////////////
-    // Call Shipping and Tax prefetch & cache endpoint
-    /////////////////////////////////////////////////////
-    var prefetchShipping = function() {
-
-        if (!settings.prefetch_shipping) return;
-
-        var xhr;
-        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-
-        xhr.open('GET', settings.shipping_prefetch_url+'?orderReference='+cart.orderReference);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
-        xhr.send();
-    };
-    /////////////////////////////////////////////////////
-
-    /////////////////////////////////////////////////////
-    // Create Bolt order and configure BoltCheckout
-    /////////////////////////////////////////////////////
-    var create_request;
-    var createOrder = function () {
-        if (create_request) create_request.abort();
-        // preset success condition to false
-        cart.orderToken = '';
-        // define the params sent with the request variable
-        var params = [];
-        // check and set payment_only flag
-        if (getCheckoutType() === 'payment' && settings && !!settings.publishable_key_payment) {
-            params.push('payment_only=true')
-        }
-        // get additional page data to be sent with the request,
-        // one page checkout billing info, email, ...
-        var place_order_payload = document.getElementById(place_order_payload_id);
-        if (place_order_payload && place_order_payload.value) {
-            params.push('place_order_payload=' + place_order_payload.value);
-        }
-        params = params.join('&');
-        if (params === '') params = null;
-        // set cart and hints data in a response callback
-        var onSuccess = function(data){
-            cart = data.cart;
-
-            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
-            hints = deepMergeObjects(hints, data.hints);
-            hints.prefill = prefill;
-
-            hints.publishableKey = getCheckoutKey();
-
-            if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
-
-            // prefetch Shipping and Tax for multi-step checkout
-            if (getCheckoutType() === 'checkout') prefetchShipping();
+        /**
+         * Get the current page checkout type.
+         * This function should be extended for Magento checkout extensions.
+         *
+         * return string
+         */
+        var getCheckoutType = function() {
+            return location.pathname === '/checkout/' && (settings.quote_is_virtual || location.hash === '#payment') ? 'payment' : 'checkout';
         };
-        // send create order request
-        create_request = ajaxPost(settings.create_order_url, params, onSuccess);
-    };
-    /////////////////////////////////////////////////////
 
-    /////////////////////////////////////////////////////////
-    // Do not send multiple subsequent create order requests.
-    // Wait for a timeout and sent only the last one.
-    /////////////////////////////////////////////////////////
-    var create_request_no = 0;
-    var createOrderDelayed = function() {
-        create_request_no++;
-        ! function(request_no) {
-            setTimeout(
-                function() {
-                    if (create_request_no > request_no) return;
-                    createOrder();
-                },
-                100
-            )
-        }(create_request_no);
-    };
-    /////////////////////////////////////////////////////////
+        /**
+         * Get the checkout key according to the checkout type.
+         *
+         * return string
+         */
+        var getCheckoutKey = function () {
+            var key = 'publishable_key_' + getCheckoutType();
+            return settings[key];
+        };
 
-    /////////////////////////////////////////////////////
-    // Toggle checkout button visibility on payment page
-    // according to billing address edit state.
-    // While editing the address the value of the hidden
-    // element is "null" and checkout buttons are hidden.
-    /////////////////////////////////////////////////////
-    var billing_address_value;
-    onAttributesChange(billing_address_selector, function(element) {
-        var checkout_type = getCheckoutType();
-        checkoutButtonApply(function(button) {
-            if (checkout_type !== 'payment') return;
-            if (element.value === 'null') {
-                button.style.display = 'none';
-            } else {
-                button.style.display = '';
-                if (element.value !== billing_address_value) {
-                    billing_address_value = element.value;
-                    createOrderDelayed();
-                }
+        /**
+         * Apply function to every element with the specified selector.
+         *
+         * param selector   elements CSS selector
+         * param fn         function to apply
+         *
+         * return void
+         */
+        var selectorApply = function(selector, fn){
+            var elements = document.querySelectorAll(selector);
+            for (var i = 0, length = elements.length; i < length; i++) {
+                var element = elements[i];
+                fn.call(element, element)
             }
-        });
-    });
-    /////////////////////////////////////////////////////
+        };
 
-    /////////////////////////////////////////////////////
-    // Flag that is true if checkout buttons exists on the page
-    var checkout_buttons = false;
-    ////////////////////////////////////////////////
-    // process the button when available on the page
-    ////////////////////////////////////////////////
-    onElementReady(bolt_button_selector, function(element) {
-        checkout_buttons = true;
-        processButtons();
-    });
-    ////////////////////////////////////////////////
+        /**
+         * Apply function to every bolt checkout button.
+         *
+         * param fn         function to apply
+         *
+         * return void
+         */
+        var checkoutButtonApply = function(fn) {
+            selectorApply(bolt_button_selector, fn);
+        };
 
-    //////////////////////////////////////////////////////////
-    // loop through selectors array and set up the replacement
-    //////////////////////////////////////////////////////////
-    for (var i = 0, length = settings.selectors.length; i < length; i++) {
-        var selector = settings.selectors[i];
-        ! function(selector) {
-            var parts = selector.split('|');
-            // the CSS selector
-            var identifier = parts[0].trim();
-            // button placement regarding the selector element, prepend, append
-            var position =  parts[1];
-            /////////////////////////////////////////////////////
-            // replace the selectors with bolt button identifiers
-            // if / when selectors are in the DOM
-            /////////////////////////////////////////////////////
-            onElementReady(identifier, function(element) {
-                if (getCheckoutKey() === '') return;
-                var bolt_button = document.createElement("div");
-                bolt_button.setAttribute("class", bolt_button_css_class);
-                // place the button before or after selector element
-                if (position && position.trim().toLowerCase() === 'append') {
-                    element.parentNode.insertBefore(bolt_button, element.nextSibling);
-                } else {
-                    element.parentNode.insertBefore(bolt_button, element);
-                }
-                // if no position is specified remove the selector element
-                if (!position) {
-                    element.parentNode.removeChild(element);
-                }
-            });
-            /////////////////////////////////////////////////////
-        }(selector);
-    }
-    //////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////
-    // on hash change reprocess the buttons due to
-    // possible transition from one checkout type to another
-    ////////////////////////////////////////////////////////
-    window.addEventListener("hashchange", function() {
-        if (checkout_buttons) {
+        /**
+         * Toggle checkout button multi-step class, `bolt-multi-step-checkout`, according to the checkout type.
+         *
+         * return void
+         */
+        var setCheckoutTypeStyle = function() {
+            var checkout_type = getCheckoutType();
             checkoutButtonApply(function(button) {
-                button.style.display = '';
-            });
-            processButtons();
-        }
-    });
-    ////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Run function fn on element underlying data change
-    ///////////////////////////////////////////////////////////
-    var monitorDataChange = function(selectors, fn, non_empty, visible_only) {
-        for (var i = 0, length = selectors.length; i < length; i++) {
-
-            var selector = selectors[i];
-
-            ! function(selector) {
-
-                onElementReady(selector, function(el) {
-                    var value = el.textContent;
-                    onDataChange(selector, function(element) {
-                        if (visible_only && element.offsetParent === null) return;
-                        if (element.textContent !== value) {
-                            value = element.textContent;
-                            if (non_empty && !value) return;
-                            fn(element);
-                        }
-                    });
-                })
-
-            }(selector);
-        }
-    };
-    ///////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Run function fn on element attributes change
-    ///////////////////////////////////////////////////////////
-    var monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
-        for (var i = 0, length = selectors.length; i < length; i++) {
-
-            var selector = selectors[i];
-
-            ! function(selector) {
-
-                onElementReady(selector, function(el) {
-                    if (on_ready) fn(el);
-                    var value = el.value;
-                    onAttributesChange(selector, function(element) {
-                        if (visible_only && element.offsetParent === null) return;
-                        if (element.value !== value) {
-                            value = element.value;
-                            fn(element);
-                        }
-                    });
-                })
-
-            }(selector);
-        }
-    };
-    ///////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////
-    // Monitor DOM element showing grand total / cart item number
-    // and trigger Bolt order creation on totals change. This event
-    // happens when discounts are added / removed from the page and
-    // totals updated or items added via ajax call.
-    // TODO: add this option to plugin configuration admin page
-    ///////////////////////////////////////////////////////////////
-    var totals_change_selectors = [
-        'tr.grand.totals td.amount span.price',
-        'tr.shipping.totals td.amount span.price',
-        '.minicart-wrapper .counter.qty span.counter-number'
-    ];
-    ///////////////////////////////////
-    monitorDataChange(totals_change_selectors, createOrderDelayed, true, true);
-    ///////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Reconfigure BoltCheckout with page collected hints data
-    ///////////////////////////////////////////////////////////
-    var old_hints;
-    var configureHints = function() {
-
-        // wait 3 seconds for the field(s) to be fully filled,
-        // do not react on every keypress
-        setTimeout(
-
-            function() {
-
-                var new_hints = JSON.stringify(hints);
-
-                if (old_hints !== new_hints && window.BoltCheckout) {
-
-                    BoltCheckout.configure(cart, hints, callbacks);
-                    old_hints = new_hints;
+                if (checkout_type === 'payment') {
+                    button.classList.remove(multi_step_css_class);
+                } else {
+                    button.classList.add(multi_step_css_class);
                 }
+            });
+        };
+
+        /**
+         * Inject connect.js
+         * return void
+         */
+        var insertConnectScript = function() {
+            var scriptTag = document.getElementById('bolt-connect');
+            var publishableKey = getCheckoutKey();
+            if (scriptTag) {
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                createOrderDelayed();
+                return;
+            }
+            scriptTag = document.createElement('script');
+            scriptTag.setAttribute('type', 'text/javascript');
+            scriptTag.setAttribute('async', '');
+            scriptTag.setAttribute('src', settings.connect_url);
+            scriptTag.setAttribute('id', 'bolt-connect');
+            scriptTag.setAttribute('data-publishable-key', publishableKey);
+            scriptTag.onload = createOrderDelayed;
+            document.head.appendChild(scriptTag);
+        };
+
+        /**
+         * Set checkout button CSS and load connect.js
+         * return void
+         */
+        var processButtons = function () {
+            if (getCheckoutKey() !== '') {
+                setCheckoutTypeStyle();
+                insertConnectScript();
+            }
+        };
+
+        // The configuration parameters passed from the php block
+        var settings = window.boltConfig;
+        // TODO: make `with-cards` option backend configurable
+        var bolt_button_css_class    = 'bolt-checkout-button with-cards';
+        var bolt_button_selector     = '.bolt-checkout-button';
+        var multi_step_css_class     = 'bolt-multi-step-checkout';
+        var billing_address_selector = '#bolt-billing-address';
+        var place_order_payload_id   = 'bolt-place-order-payload';
+        var bolt_clickable_selector  = '.bolt-checkout-button-button';
+        var customer_email_selector  = '#customer-email';
+
+        // On multiple checkout open/close actions the success event remains registered
+        // resulting in making the success call multiple times. This variable stores
+        // the last request to be aborted before new one is sent.
+        var save_request;
+
+        ////////////////////////////////////
+        // BoltCheckout.configure parameters
+        ////////////////////////////////////
+        var cart = {orderToken:''};
+
+        var hints = {prefill:{}};
+
+        var callbacks = {
+
+            close: function () {
+                // redirect on succes order save
+                if (callbacks.success_url) location.href = callbacks.success_url;
             },
-            3000
-        );
-    };
-    ///////////////////////////////////////////////////////////
 
-    // Map from address input field names to hints.prefill keys
-    var input_name_to_hints_prefill = {
-        'firstname': 'firstName',
-        'lastname':  'lastName',
-        'username':  'email',
-        'telephone': 'phone',
-        'street[0]': 'addressLine1',
-        'street[1]': 'addressLine2',
-        'city':      'city',
-        'postcode':  'zip'
-    };
+            success: function (transaction, callback) {
+                // abort previously sent save order request.
+                if (save_request) save_request.abort();
+                // get thr transaction reference
+                var parameters = 'reference='+transaction.reference;
+                // update order ajax request callback
+                // sets the success order page redirect url from received data
+                // and calls the final Bolt defined callback
+                var onSuccess = function(data){
+                    <?php echo $block->getjavascriptSuccess(); ?>
+                    callbacks.success_url = data.success_url;
+                    callback();
+                };
+                // ajax call to the update order transaction data endpoint.
+                // passes the bolt transaction reference
+                save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
+            },
 
-    // CSS selectors of the hints prefill elements parents
-    // used to distinct hints related fields from others with the same name
-    var input_name_to_hints_prefill_prefixes = [
-        '.fieldset.estimate',
-        '#checkout-step-shipping'
-    ];
+            // the Bolt order is created right after the checkout button is clicked
+            // and the checkout modal popup is opened only if order creation was successfull
+            check: function () {
+                // if orderToken is set the checkout window will open
+                return cart.orderToken !== '';
+            },
 
-    /////////////////////////////////////////////////////////////////////
-    // Monitor address text input fields and update hints on value change
-    /////////////////////////////////////////////////////////////////////
-    for (var i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
-
-        var prefix = input_name_to_hints_prefill_prefixes[i];
-
-        ! function (prefix) {
-
-            for (var input_name in input_name_to_hints_prefill) {
-
-                if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
-
-                    ! function (input_name) {
-
-                        var prefill_key = input_name_to_hints_prefill[input_name];
-                        var input_selectors = [prefix + ' input[name="' + input_name + '"]'];
-
-                        monitorAttributesChange(input_selectors, function(element) {
-                            hints.prefill[prefill_key] = element.value;
-
-                            configureHints();
-                        });
-
-                    } (input_name);
+            onEmailEnter: function(email) {
+                if (callbacks.email !== email) {
+                    ajaxPost(settings.save_email_url, 'email='+email+'&orderReference='+cart.orderReference);
+                    callbacks.email = email;
                 }
             }
+        };
+        ////////////////////////////////////
 
-        } (prefix);
-    }
-    /////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////
+        // Call Shipping and Tax prefetch & cache endpoint
+        /////////////////////////////////////////////////////
+        var prefetchShipping = function() {
 
-    ///////////////////////////////////////////////////////////
-    // Monitor Country DOM element change and update hints
-    ///////////////////////////////////////////////////////////
-    var country_selectors = ['select[name=country_id]'];
-    monitorAttributesChange(country_selectors, function(element) {
-        if (!element.value) {
-            delete hints.prefill.country;
+            if (!settings.prefetch_shipping) return;
+
+            var xhr;
+            xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+
+            xhr.open('GET', settings.shipping_prefetch_url+'?orderReference='+cart.orderReference);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.send();
+        };
+        /////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////
+        // Create Bolt order and configure BoltCheckout
+        /////////////////////////////////////////////////////
+        var create_request;
+        var createOrder = function () {
+            if (create_request) create_request.abort();
+            // preset success condition to false
+            cart.orderToken = '';
+            // define the params sent with the request variable
+            var params = [];
+
+            // check and set payment_only flag
+            if (getCheckoutType() === 'payment') {
+
+                // stop if customer email field is present and invalid
+                var customer_email = $(customer_email_selector);
+                var form = customer_email.closest('form');
+                if (typeof customer_email.val() !== 'undefined'
+                    && (customer_email.val().trim() === ''
+                        || (form.validation() && form.validation('isValid') === false)
+                )) return;
+
+                if (settings && !!settings.publishable_key_payment) {
+                    params.push('payment_only=true')
+                } else {
+                    return;
+                }
+
+                // get additional page data to be sent with the request,
+                // one page checkout billing info, email, ...
+                var place_order_payload = document.getElementById(place_order_payload_id);
+                if (place_order_payload && place_order_payload.value) {
+
+                    // stop if customer billing address is not set
+                    if ($(billing_address_selector).val() === 'null') return;
+
+                    // update payload email, use the value from the page
+                    var place_order_payload_obj = JSON.parse(place_order_payload.value);
+                    if (customer_email.val()) {
+                        place_order_payload_obj.email = customer_email.val();
+                        place_order_payload.value = JSON.stringify(place_order_payload_obj);
+                    }
+
+                    params.push('place_order_payload=' + place_order_payload.value);
+                }
+            }
+            params = params.join('&');
+            if (params === '') params = null;
+            // set cart and hints data in a response callback
+            var onSuccess = function(data){
+                cart = data.cart;
+
+                var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                hints = deepMergeObjects(hints, data.hints);
+                hints.prefill = prefill;
+
+                hints.publishableKey = getCheckoutKey();
+
+                if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+
+                // prefetch Shipping and Tax for multi-step checkout
+                if (getCheckoutType() === 'checkout') prefetchShipping();
+            };
+            // send create order request
+            create_request = ajaxPost(settings.create_order_url, params, onSuccess);
+        };
+        /////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////
+        // Do not send multiple subsequent create order requests.
+        // Wait for a timeout and sent only the last one.
+        /////////////////////////////////////////////////////////
+        var create_request_no = 0;
+        var createOrderDelayed = function() {
+            create_request_no++;
+            ! function(request_no) {
+                setTimeout(
+                    function() {
+                        if (create_request_no > request_no) return;
+                        createOrder();
+                    },
+                    100
+                )
+            }(create_request_no);
+        };
+        /////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////
+        // Call Bolt order creation Magento endpoint on
+        // customer billing address change on payment only page,
+        // storing the live page data in Bolt cart.
+        /////////////////////////////////////////////////////
+        var billing_address_value;
+        onAttributesChange(billing_address_selector, function(element) {
+
+            var checkout_type = getCheckoutType();
+            var address = element.value;
+            if (checkout_type !== 'payment' || address === 'null') return;
+
+            if (address !== billing_address_value) {
+                billing_address_value = address;
+                createOrderDelayed();
+            }
+
+        });
+        /////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////
+        // Call Bolt order creation Magento endpoint on
+        // customer email change on payment only page, storing
+        // the live page data in Bolt cart.
+        /////////////////////////////////////////////////////
+        var customer_email_value;
+        onAttributesChange(customer_email_selector, function(element) {
+
+            var checkout_type = getCheckoutType();
+            var email = element.value.trim();
+            if (checkout_type !== 'payment'|| email === "") return;
+
+            if (email !== customer_email_value) {
+                customer_email_value = email;
+                createOrderDelayed();
+            }
+        });
+        /////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////
+        // Flag that is true if checkout buttons exists on the page
+        var checkout_buttons = false;
+        ////////////////////////////////////////////////
+        // process the button when available on the page
+        ////////////////////////////////////////////////
+        onElementReady(bolt_button_selector, function(element) {
+            checkout_buttons = true;
+            processButtons();
+        });
+        ////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////////
+        // loop through selectors array and set up the replacement
+        //////////////////////////////////////////////////////////
+        for (var i = 0, length = settings.selectors.length; i < length; i++) {
+            var selector = settings.selectors[i];
+            ! function(selector) {
+                var parts = selector.split('|');
+                // the CSS selector
+                var identifier = parts[0].trim();
+                // button placement regarding the selector element, prepend, append
+                var position =  parts[1];
+                /////////////////////////////////////////////////////
+                // replace the selectors with bolt button identifiers
+                // if / when selectors are in the DOM
+                /////////////////////////////////////////////////////
+                onElementReady(identifier, function(element) {
+                    if (getCheckoutKey() === '') return;
+                    var bolt_button = document.createElement('div');
+                    bolt_button.setAttribute('class', bolt_button_css_class);
+                    // place the button before or after selector element
+                    if (position && position.trim().toLowerCase() === 'append') {
+                        element.parentNode.insertBefore(bolt_button, element.nextSibling);
+                    } else {
+                        element.parentNode.insertBefore(bolt_button, element);
+                    }
+                    // if no position is specified remove the selector element
+                    if (!position) {
+                        element.parentNode.removeChild(element);
+                    }
+                });
+                /////////////////////////////////////////////////////
+            }(selector);
         }
-        else {
-            hints.prefill.country = element.value;
+        //////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////
+        // on hash change reprocess the buttons due to
+        // possible transition from one checkout type to another
+        ////////////////////////////////////////////////////////
+        window.addEventListener('hashchange', function() {
+            if (checkout_buttons) {
+                checkoutButtonApply(function(button) {
+                    button.style.display = '';
+                });
+                processButtons();
+            }
+        });
+        ////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // Run function fn on element underlying data change
+        ///////////////////////////////////////////////////////////
+        var monitorDataChange = function(selectors, fn, non_empty, visible_only) {
+            for (var i = 0, length = selectors.length; i < length; i++) {
+
+                var selector = selectors[i];
+
+                ! function(selector) {
+
+                    onElementReady(selector, function(el) {
+                        var value = el.textContent;
+                        onDataChange(selector, function(element) {
+                            if (visible_only && element.offsetParent === null) return;
+                            if (element.textContent !== value) {
+                                value = element.textContent;
+                                if (non_empty && !value) return;
+                                fn(element);
+                            }
+                        });
+                    })
+
+                }(selector);
+            }
+        };
+        ///////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // Run function fn on element attributes change
+        ///////////////////////////////////////////////////////////
+        var monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
+            for (var i = 0, length = selectors.length; i < length; i++) {
+
+                var selector = selectors[i];
+
+                ! function(selector) {
+
+                    onElementReady(selector, function(el) {
+                        if (on_ready) fn(el);
+                        var value = el.value;
+                        onAttributesChange(selector, function(element) {
+                            if (visible_only && element.offsetParent === null) return;
+                            if (element.value !== value) {
+                                value = element.value;
+                                fn(element);
+                            }
+                        });
+                    })
+
+                }(selector);
+            }
+        };
+        ///////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////////
+        // Monitor DOM element showing grand total / cart item number
+        // and trigger Bolt order creation on totals change. This event
+        // happens when discounts are added / removed from the page and
+        // totals updated or items added via ajax call.
+        // TODO: add this option to plugin configuration admin page
+        ///////////////////////////////////////////////////////////////
+        var totals_change_selectors = [
+            'tr.grand.totals td.amount span.price',
+            'tr.shipping.totals td.amount span.price',
+            '.minicart-wrapper .counter.qty span.counter-number'
+        ];
+        ///////////////////////////////////
+        monitorDataChange(totals_change_selectors, createOrderDelayed, true, true);
+        ///////////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // Reconfigure BoltCheckout with page collected hints data
+        ///////////////////////////////////////////////////////////
+        var old_hints;
+        var configureHints = function() {
+
+            // wait 3 seconds for the field(s) to be fully filled,
+            // do not react on every keypress
+            setTimeout(
+
+                function() {
+
+                    var new_hints = JSON.stringify(hints);
+
+                    if (old_hints !== new_hints && window.BoltCheckout) {
+
+                        BoltCheckout.configure(cart, hints, callbacks);
+                        old_hints = new_hints;
+                    }
+                },
+                3000
+            );
+        };
+        ///////////////////////////////////////////////////////////
+
+        // Map from address input field names to hints.prefill keys
+        var input_name_to_hints_prefill = {
+            'firstname': 'firstName',
+            'lastname':  'lastName',
+            'username':  'email',
+            'telephone': 'phone',
+            'street[0]': 'addressLine1',
+            'street[1]': 'addressLine2',
+            'city':      'city',
+            'postcode':  'zip'
+        };
+
+        // CSS selectors of the hints prefill elements parents
+        // used to distinct hints related fields from others with the same name
+        var input_name_to_hints_prefill_prefixes = [
+            '.fieldset.estimate',
+            '#checkout-step-shipping'
+        ];
+
+        /////////////////////////////////////////////////////////////////////
+        // Monitor address text input fields and update hints on value change
+        /////////////////////////////////////////////////////////////////////
+        for (var i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++) {
+
+            var prefix = input_name_to_hints_prefill_prefixes[i];
+
+            ! function (prefix) {
+
+                for (var input_name in input_name_to_hints_prefill) {
+
+                    if (input_name_to_hints_prefill.hasOwnProperty(input_name)) {
+
+                        ! function (input_name) {
+
+                            var prefill_key = input_name_to_hints_prefill[input_name];
+                            var input_selectors = [prefix + ' input[name="' + input_name + '"]'];
+
+                            monitorAttributesChange(input_selectors, function(element) {
+                                hints.prefill[prefill_key] = element.value;
+
+                                configureHints();
+                            });
+
+                        } (input_name);
+                    }
+                }
+
+            } (prefix);
         }
-        delete hints.prefill.state;
+        /////////////////////////////////////////////////////////////////////
 
-        configureHints();
-    }, true);
-    ///////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Monitor State DOM element change and update hints
-    ///////////////////////////////////////////////////////////
-    var state_selectors = ['select[name=region_id]'];
-    monitorAttributesChange(state_selectors, function(element) {
-        if (!element.value) {
+        ///////////////////////////////////////////////////////////
+        // Monitor Country DOM element change and update hints
+        ///////////////////////////////////////////////////////////
+        var country_selectors = ['select[name=country_id]'];
+        monitorAttributesChange(country_selectors, function(element) {
+            if (!element.value) {
+                delete hints.prefill.country;
+            }
+            else {
+                hints.prefill.country = element.value;
+            }
             delete hints.prefill.state;
-        }
-        else {
-            hints.prefill.state = element.options[element.selectedIndex].text;
-        }
 
-        configureHints();
+            configureHints();
+        }, true);
+        ///////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // Monitor State DOM element change and update hints
+        ///////////////////////////////////////////////////////////
+        var state_selectors = ['select[name=region_id]'];
+        monitorAttributesChange(state_selectors, function(element) {
+            if (!element.value) {
+                delete hints.prefill.state;
+            }
+            else {
+                hints.prefill.state = element.options[element.selectedIndex].text;
+            }
+
+            configureHints();
+        });
+        ///////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // On Bolt button click check if guest checkout is allowed.
+        // Display login popup to guest customers if it is not. The
+        // Magento customerData and authenticationPopup objects are
+        // used. Also trigger click on boltpay radio if the button
+        // clicked is in minicart or other (voluntary) location
+        // and trigger email validation.
+        ///////////////////////////////////////////////////////////
+        onElementReady(bolt_clickable_selector, function(element) {
+
+            // get default handler
+            var elementOnClick = element.onclick;
+
+            element.onclick = function (event) {
+
+                // trigger click on boltpay radio
+                if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
+
+                // check if guest checkout is allowed
+                var customer = customerData.get('customer');
+                var shoppingCart = customerData.get('cart');
+                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+                    authenticationPopup.showModal();
+                    event.preventDefault();
+                    return;
+                }
+
+                // stop if customer email field exists and is not valid on paymtnt only page
+                if (getCheckoutType() === 'payment') {
+                    var customer_email = $(customer_email_selector);
+                    var form = customer_email.closest('form');
+                    if (form.validation() && form.validation('isValid') === false) {
+                        event.preventDefault();
+                        return;
+                    }
+                }
+
+                // call default handler
+                elementOnClick.call(element);
+            };
+        });
+        ///////////////////////////////////////////////////////////
     });
-    ///////////////////////////////////////////////////////////
-}();
-
 </script>
 
 <style>
-    <?php echo $block->getGlobalCSS();?>
+    <?php echo $block->getGlobalCSS(); ?>
 </style>

@@ -41,7 +41,7 @@ define(
                     paymentMethod: quote.paymentMethod()
                 };
                 if (!customer.isLoggedIn()) {
-                    payload.email = quote.guestEmail;
+                    payload.email = quote.guestEmail || $('#customer-email').val();
                 }
                 return JSON.stringify(payload);
             },

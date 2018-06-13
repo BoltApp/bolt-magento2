@@ -27,8 +27,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'nullable' => true,
                 'default' => null,
                 'unsigned' => true,
-                'comment' => 'Original Quote ID',
+                'comment' => 'Original Quote ID'
             ]
+        );
+
+        $setup->getConnection()->addIndex(
+            $setup->getTable('quote'),
+            $setup->getIdxName('quote', ['bolt_parent_quote_id']),
+            ['bolt_parent_quote_id']
         );
 
         $setup->endSetup();

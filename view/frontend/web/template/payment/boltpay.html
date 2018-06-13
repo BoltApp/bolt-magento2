@@ -31,9 +31,19 @@
             <div class="primary">
                 <input type="hidden" id="bolt-billing-address" data-bind="value: getBillingAddress()" />
                 <input type="hidden" id="bolt-place-order-payload" data-bind="value: getPlaceOrderPayload()" />
-                <div class="bolt-checkout-button with-cards"></div>
+                <div class="bolt-checkout-button with-cards"
+                     data-bind="css: {disabled: !isPlaceOrderActionAllowed()}">
+                </div>
             </div>
         </div>
     </div>
 </div>
 <!-- /ko -->
+
+<style>
+.bolt-checkout-button.disabled {
+    opacity: 0.5;
+    cursor: default;
+    pointer-events: none;
+}
+</style>
