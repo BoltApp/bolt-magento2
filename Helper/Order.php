@@ -21,7 +21,6 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\Data\OrderInterface;
@@ -74,11 +73,6 @@ class Order extends AbstractHelper
      * @var ShippingMethodConverter
      */
     private $converter;
-
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
 
     /**
      * @var RegionModel
@@ -174,7 +168,6 @@ class Order extends AbstractHelper
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
-     * @param QuoteFactory $quoteFactory
      * @param ShippingMethodConverter $converter
      * @param RegionModel $regionModel
      * @param QuoteManagement $quoteManagement
@@ -201,7 +194,6 @@ class Order extends AbstractHelper
         Context $context,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
-        QuoteFactory $quoteFactory,
         ShippingMethodConverter $converter,
         RegionModel $regionModel,
         QuoteManagement $quoteManagement,
@@ -225,7 +217,6 @@ class Order extends AbstractHelper
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
         $this->configHelper          = $configHelper;
-        $this->quoteFactory          = $quoteFactory;
         $this->converter             = $converter;
         $this->regionModel           = $regionModel;
         $this->quoteManagement       = $quoteManagement;
@@ -320,6 +311,8 @@ class Order extends AbstractHelper
      */
     private function setShippingMethod($quote, $transaction)
     {
+        if ($quote->isVirtual()) return;
+
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
 
@@ -554,7 +547,6 @@ class Order extends AbstractHelper
 
         // Load quote from entity id
         $quoteId = $transaction->order->cart->order_reference;
-        //$quote = $this->quoteFactory->create()->load($quoteId);
         $quote = $this->quoteRepository->get($quoteId);
 
         if (!$quote || !$quote->getId()) {
