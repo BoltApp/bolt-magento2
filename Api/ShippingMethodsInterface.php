@@ -20,8 +20,8 @@ interface ShippingMethodsInterface
      *
      * @api
      * @param mixed $cart cart details
-     * @param mixed $addressData shipping address
+     * @param mixed $shipping_address shipping address
      * @return \Bolt\Boltpay\Api\Data\ShippingOptionsInterface
      */
-    public function getShippingMethods($cart, $addressData);
+    public function getShippingMethods($cart, $shipping_address);
 }

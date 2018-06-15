@@ -256,16 +256,20 @@ class ShippingMethods implements ShippingMethodsInterface
      * @api
      *
      * @param array $cart cart details
-     * @param array $addressData shipping address
+     * @param array $shipping_address shipping address
      *
      * @return ShippingOptionsInterface
      * @throws \Exception
      */
-    public function getShippingMethods($cart, $addressData)
+    public function getShippingMethods($cart, $shipping_address)
     {
         try {
 
-            //$this->logHelper->addInfoLog($this->request->getContent());
+            // kepping variable names camelCased.
+            // shipping_address is expected REST parameter name, must stay in snake_case.
+            $addressData = $shipping_address;
+
+            $this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
