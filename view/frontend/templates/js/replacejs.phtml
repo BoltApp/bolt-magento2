@@ -378,7 +378,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
         check: function () {
             if (createRequest || !cart.orderToken) {
-                console.log("Retrieving order token from server... not ready to checkout yet."):
+                console.log("Retrieving order token from server... not ready to checkout yet.");
                 return false;
             }
             return true;
@@ -448,7 +448,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         };
         var onError = function(error) {
             createRequest = null;
-        }
+        };
         // send create order request
         createRequest = ajaxPost(settings.create_order_url, params, onSuccess, onError);
     };
