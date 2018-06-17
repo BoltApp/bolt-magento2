@@ -385,7 +385,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
         onEmailEnter: function(email) {
             if (callbacks.email !== email) {
-                ajaxPost(settings.save_email_url, 'email='+email+'&orderReference='+cart.orderReference);
+                ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email)+'&orderReference='+cart.orderReference);
                 callbacks.email = email;
             }
         }
