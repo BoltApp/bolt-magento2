@@ -41,6 +41,7 @@ class ShippingMethods implements ShippingMethodsInterface
 {
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
+
     /**
      * @var HookHelper
      */

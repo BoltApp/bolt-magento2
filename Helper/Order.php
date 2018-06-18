@@ -316,7 +316,7 @@ class Order extends AbstractHelper
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
 
-        $shippingMethod = @$transaction->order->cart->shipments[0]->reference ?: null;
+        $shippingMethod = $transaction->order->cart->shipments[0]->reference;
 
         $shippingAddress->setShippingMethod($shippingMethod)->save();
     }
