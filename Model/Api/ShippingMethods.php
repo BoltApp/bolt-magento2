@@ -29,7 +29,6 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\CustomerFactory;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 
 /**
  * Class ShippingMethods
@@ -127,11 +126,6 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $customerFactory;
 
-    /**
-     * @var QuoteRepository
-     */
-    private $quoteRepository;
-
     // Totals adjustment threshold
     private $threshold = 0.01;
 
@@ -156,7 +150,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface $cache
      * @param CustomerSession $customerSession
      * @param CustomerFactory $customerFactory
-     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -175,8 +168,7 @@ class ShippingMethods implements ShippingMethodsInterface
         Request $request,
         CacheInterface $cache,
         CustomerSession $customerSession,
-        CustomerFactory $customerFactory,
-        QuoteRepository $quoteRepository
+        CustomerFactory $customerFactory
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -195,7 +187,6 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->customerSession = $customerSession;
         $this->customerFactory = $customerFactory;
-        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -292,7 +283,7 @@ class ShippingMethods implements ShippingMethodsInterface
             // Load quote from entity id
             $quoteId = $cart['order_reference'];
 
-            $quote = $this->quoteRepository->get($quoteId);
+            $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(

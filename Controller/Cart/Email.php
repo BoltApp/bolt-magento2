@@ -15,7 +15,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Quote\Model\QuoteFactory;
 
 /**
  * Class Email.
@@ -41,9 +40,6 @@ class Email extends Action
     /** @var CartHelper */
     private $cartHelper;
 
-    /** @var QuoteFactory */
-    private $quoteFactory;
-
     /**
      * @param Context $context
      * @param CheckoutSession $checkoutSession
@@ -51,7 +47,6 @@ class Email extends Action
      * @param Bugsnag $bugsnag
      * @param ConfigHelper $configHelper
      * @param CartHelper $cartHelper
-     * @param QuoteFactory $quoteFactory
      *
      * @codeCoverageIgnore
      */
@@ -61,8 +56,7 @@ class Email extends Action
         CustomerSession $customerSession,
         Bugsnag $bugsnag,
         ConfigHelper $configHelper,
-        CartHelper $cartHelper,
-        QuoteFactory $quoteFactory
+        CartHelper $cartHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -70,7 +64,6 @@ class Email extends Action
         $this->bugsnag = $bugsnag;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
-        $this->quoteFactory = $quoteFactory;
     }
 
     /**
@@ -84,7 +77,7 @@ class Email extends Action
             $quoteId = $this->getRequest()->getParam('orderReference');
 
             /** @var Quote */
-            $quote = $this->quoteFactory->create()->load($quoteId);
+            $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(

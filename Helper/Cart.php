@@ -23,6 +23,10 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Customer\Model\Address;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 
 /**
  * Boltpay Cart helper
@@ -88,6 +92,26 @@ class Cart extends AbstractHelper
      */
     private $totalsCollector;
 
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
+
+    /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var QuoteResource
+     */
+    private $quoteResource;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -99,7 +123,7 @@ class Cart extends AbstractHelper
         'country_code',
     ];
 
-        private $requiredBillingAddressFields  = [
+    private $requiredBillingAddressFields  = [
         'email',
     ];
 
@@ -129,6 +153,10 @@ class Cart extends AbstractHelper
      * @param Emulation         $appEmulation
      * @param QuoteFactory      $quoteFactory
      * @param TotalsCollector   $totalsCollector
+     * @param QuoteRepository   $quoteRepository
+     * @param OrderRepository   $orderRepository
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param QuoteResource     $quoteResource
      *
      * @codeCoverageIgnore
      */
@@ -145,7 +173,11 @@ class Cart extends AbstractHelper
         BlockFactory $blockFactory,
         Emulation $appEmulation,
         QuoteFactory $quoteFactory,
-        TotalsCollector $totalsCollector
+        TotalsCollector $totalsCollector,
+        QuoteRepository $quoteRepository,
+        OrderRepository $orderRepository,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        QuoteResource $quoteResource
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -160,6 +192,53 @@ class Cart extends AbstractHelper
         $this->dataObjectFactory = $dataObjectFactory;
         $this->quoteFactory = $quoteFactory;
         $this->totalsCollector = $totalsCollector;
+        $this->quoteRepository = $quoteRepository;
+        $this->orderRepository = $orderRepository;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->quoteResource = $quoteResource;
+    }
+
+    /**
+     * Load Quote by id
+     * @param $quoteId
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getQuoteById($quoteId) {
+        return $this->quoteRepository->get($quoteId);
+    }
+
+    /**
+     * Load Quote by reserved_order_id
+     * @param $reservedOrderId
+     * @return \Magento\Quote\Api\Data\CartInterface|mixed
+     */
+    public function getQuoteByReservedOrderId($reservedOrderId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('reserved_order_id', $reservedOrderId, 'eq')->create();
+        $collection = $this->quoteRepository->getList($searchCriteria)->getItems();
+        return reset($collection);
+    }
+
+    /**
+     * Load Order by increment id
+     * @param $incrementId
+     * @return \Magento\Sales\Api\Data\OrderInterface|mixed
+     */
+    public function getOrderByIncrementId($incrementId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('increment_id', $incrementId, 'eq')->create();
+        $collection = $this->orderRepository->getList($searchCriteria)->getItems();
+        return reset($collection);
+    }
+
+    /**
+     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     */
+    public function saveQuote($quote) {
+        $this->quoteRepository->save($quote);
     }
 
     /**
@@ -235,7 +314,7 @@ class Cart extends AbstractHelper
     {
         /** @var Quote */
         $quote = $orderReference ?
-            $this->quoteFactory->create()->load($orderReference) :
+            $this->getQuoteById($orderReference) :
             $this->checkoutSession->getQuote();
 
         if ($placeOrderPayload) {
@@ -356,7 +435,7 @@ class Cart extends AbstractHelper
 
         $immutableQuote->setId(null);
         $immutableQuote->setIsActive(false);
-        $immutableQuote->save();
+        $this->quoteResource->save($immutableQuote);
 
         foreach ($quote->getBillingAddress()->getData() as $key => $value) {
             if ($key != 'address_id') $immutableQuote->getBillingAddress()->setData($key, $value);
