@@ -376,16 +376,17 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
         },
 
-        // the Bolt order is created right after the checkout button is clicked
-        // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
-            // if orderToken is set the checkout window will open
-            return !!cart.orderToken;
+            if (createRequest || !cart.orderToken) {
+                console.log("Retrieving order token from server... not ready to checkout yet.");
+                return false;
+            }
+            return true;
         },
 
         onEmailEnter: function(email) {
             if (callbacks.email !== email) {
-                ajaxPost(settings.save_email_url, 'email='+email);
+                ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email)+'&orderReference='+cart.orderReference);
                 callbacks.email = email;
             }
         }
@@ -402,7 +403,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         var xhr;
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
 
-        xhr.open('GET', settings.shipping_prefetch_url);
+        xhr.open('GET', settings.shipping_prefetch_url+'?orderReference='+cart.orderReference);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
         xhr.send();
@@ -412,11 +413,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     /////////////////////////////////////////////////////
     // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
-    var create_request;
+    var createRequest;
     var createOrder = function () {
-        if (create_request) create_request.abort();
-        // preset success condition to false
-        cart.orderToken = '';
+        if (createRequest) createRequest.abort();
         // define the params sent with the request variable
         var params = [];
         // check and set payment_only flag
@@ -434,6 +433,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         // set cart and hints data in a response callback
         var onSuccess = function(data){
             cart = data.cart;
+            createRequest = null;
 
             var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
             hints = deepMergeObjects(hints, data.hints);
@@ -446,8 +446,11 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             // prefetch Shipping and Tax for multi-step checkout
             if (getCheckoutType() === 'checkout') prefetchShipping();
         };
+        var onError = function(error) {
+            createRequest = null;
+        };
         // send create order request
-        create_request = ajaxPost(settings.create_order_url, params, onSuccess);
+        createRequest = ajaxPost(settings.create_order_url, params, onSuccess, onError);
     };
     /////////////////////////////////////////////////////
 
