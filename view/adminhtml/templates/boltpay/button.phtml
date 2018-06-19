@@ -10,7 +10,7 @@ $helper = $this->helper(Bolt\Boltpay\Helper\Config::class);
     <script
         id="bolt-connect" type="text/javascript"
         src="<?php echo $block->getConnectJsUrl(); ?>"
-        data-publishable-key="<?php echo $helper->getPublishableKeyPayment() ?>">
+        data-publishable-key="<?php echo $helper->getPublishableKeyBackOffice() ?>">
     </script>
 
     <input type="hidden" id="bolt-billing-address" value='<?php echo $block->getBillingAddress() ?>' />
