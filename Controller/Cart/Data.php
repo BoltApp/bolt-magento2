@@ -13,7 +13,6 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
-use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 
@@ -48,17 +47,11 @@ class Data extends Action
     private $bugsnag;
 
     /**
-     * @var DataObjectFactory
-     */
-    private $dataObjectFactory;
-
-    /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
      *
      * @codeCoverageIgnore
      */
@@ -67,15 +60,13 @@ class Data extends Action
         JsonFactory $resultJsonFactory,
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag,
-        DataObjectFactory $dataObjectFactory
+        Bugsnag $bugsnag
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
-        $this->dataObjectFactory = $dataObjectFactory;
     }
 
     /**
@@ -96,18 +87,24 @@ class Data extends Action
             $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
             // format and send the response
+            $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
+
             $cart = [
-                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode()
+                'orderToken'  => $response ? $response->token : '',
+                'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
+                'orderReference' => $response ? $response->cart->order_reference : '',
             ];
 
             $hints = $this->cartHelper->getHints($place_order_payload);
 
-            $result = $this->dataObjectFactory->create();
-            $result->setData('cart', $cart);
-            $result->setData('hints', $hints);
+            $result = $this->resultJsonFactory->create();
 
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            return $result->setData([
+                'status' => 'success',
+                'cart' =>$cart,
+                'hints' =>$hints,
+            ]);
+
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;

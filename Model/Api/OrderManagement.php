@@ -106,7 +106,7 @@ class OrderManagement implements OrderManagementInterface
      * @throws \Exception
      */
     public function manage(
-        $id,
+        $id = null,
         $reference,
         $order = null,
         $type = null,
@@ -131,8 +131,10 @@ class OrderManagement implements OrderManagementInterface
                 });
             }
 
-            $this->response->setHeader('User-Agent', 'BoltPay/Magento-'.$this->configHelper->getStoreVersion());
-            $this->response->setHeader('X-Bolt-Plugin-Version', $this->configHelper->getModuleVersion());
+            $this->response->getHeaders()->addHeaders([
+                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
+            ]);
 
             $this->hookHelper->verifyWebhook();
 
@@ -141,10 +143,31 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
-            $this->orderHelper->saveUpdateOrder($reference, false);
+            $this->orderHelper->saveUpdateOrder($reference, false, $bolt_trace_id);
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'message' => 'Order creation / upadte was successful',
+            ]));
+
+        } catch (\Magento\Framework\Webapi\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->response->setHttpResponseCode($e->getHttpCode());
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]));
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => '6009',
+                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
+            ]));
+        } finally {
+            $this->response->sendResponse();
         }
     }
 }

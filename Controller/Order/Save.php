@@ -98,28 +98,46 @@ class Save extends Action
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
 
-            $orderId = $order->getId();
             // clear the session data
-            if ($orderId) {
+            if ($order->getId()) {
+                $this->replaceQuote($quote);
                 //Clear quote session
                 $this->clearQuoteSession($quote);
                 //Clear order session
                 $this->clearOrderSession($order);
             }
             // return the success page redirect URL
-            $result = $this->dataObjectFactory->create();
-            $result->setData('success_url', $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()));
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            $result = $this->resultJsonFactory->create();
+            return $result->setData([
+                'status' => 'success',
+                'success_url' => $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()),
+            ]);
+
         } catch (Exception $e) {
+
             $this->bugsnag->notifyException($e);
-            throw $e;
+            $result = $this->resultJsonFactory->create();
+            $result->setHttpResponseCode(422);
+            return $result->setData([
+                'status' => 'error',
+                'code' => 6009,
+                'message' => $e->getMessage(),
+            ]);
         }
+    }
+
+    /**
+     * @param Quote $quote
+     * @return void
+     */
+    private function replaceQuote($quote) {
+        $this->checkoutSession->replaceQuote($quote);
     }
 
     /**
      * Clear quote session after successful order
      *
-     * @param Quote
+     * @param Quote $quote
      *
      * @return void
      */
@@ -133,7 +151,7 @@ class Save extends Action
     /**
      * Clear order session after successful order
      *
-     * @param Order
+     * @param Order $order
      *
      * @return void
      */

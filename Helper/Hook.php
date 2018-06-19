@@ -53,7 +53,7 @@ class Hook extends AbstractHelper
      * @param Context $context
      * @param Request $request
      * @param Config  $configHelper
-     * @param Log     $logHelper
+     * @param LogHelper $logHelper
      * @param Api     $apiHelper
      * @param DataObjectFactory $dataObjectFactory
      *
@@ -82,10 +82,10 @@ class Hook extends AbstractHelper
      * @param string $hmac_header
      *
      * @return bool
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     private function verifyWebhookApi($payload, $hmac_header)
     {
-
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData(json_decode($payload));
@@ -121,7 +121,6 @@ class Hook extends AbstractHelper
      */
     public function verifyWebhookSecret($payload, $hmac_header)
     {
-
         $signing_secret = $this->configHelper->getSigningSecret();
         $computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
 
@@ -132,15 +131,15 @@ class Hook extends AbstractHelper
      * Verifying Hook Request. If signing secret is not defined or fails fallback to api call.
      *
      * @throws WebapiException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function verifyWebhook()
     {
-
         $payload     = $this->request->getContent();
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
         if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
-            throw new WebapiException(__('Unauthorized'), 0, Exception::HTTP_UNAUTHORIZED);
+            throw new WebapiException(__('Precondition Failed'), 6001, 412);
         }
     }
 }
