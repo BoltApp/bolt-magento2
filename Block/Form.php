@@ -50,7 +50,9 @@ class Form extends PaymentForm
     }
 
     /**
-     * Should have the content like:
+     * Return billing address information formatted to be used for magento order creation.
+     *
+     * Example return value:
      * {"customerAddressId":"404","countryId":"US","regionId":"12","regionCode":"CA","region":"California",
      * "customerId":"202","street":["adasdasd 1234"],"telephone":"314-123-4125","postcode":"90014",
      * "city":"Los Angeles","firstname":"YevhenTest","lastname":"BoltDev",
@@ -83,10 +85,10 @@ class Form extends PaymentForm
             'telephone'         => $billingAddress->getTelephone(),
             'postcode'          => $billingAddress->getPostcode(),
             'city'              => $billingAddress->getCity(),
-            'firstname'     => $billingAddress->getFirstname(),
-            'lastname'      => $billingAddress->getLastname(),
+            'firstname'         => $billingAddress->getFirstname(),
+            'lastname'          => $billingAddress->getLastname(),
             'extensionAttributes'   => ['checkoutFields' => []],
-            'saveInAddressBook'     => null
+            'saveInAddressBook'     => $billingAddress->getSaveInAddressBook()
         ];
 
         return ($needJsonEncode) ? json_encode($result) : $result;

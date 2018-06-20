@@ -463,6 +463,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         let checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
             if (checkout_type !== 'payment') return;
+
             if (element.value === 'null') {
                 button.style.display = 'none';
             } else {
