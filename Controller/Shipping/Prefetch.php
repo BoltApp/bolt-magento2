@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Controller\Shipping;
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\HTTP\ZendClientFactory;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
@@ -39,9 +38,6 @@ use \Magento\Customer\Model\Session as CustomerSession;
  */
 class Prefetch extends Action
 {
-    /** @var CheckoutSession */
-    private $checkoutSession;
-
     /** @var CustomerSession */
     private $customerSession;
 
@@ -75,7 +71,6 @@ class Prefetch extends Action
 
     /**
      * @param Context $context
-     * @param CheckoutSession $checkoutSession
      * @param ZendClientFactory $httpClientFactory
      * @param ShippingMethods $shippingMethods
      * @param CartHelper $cartHelper
@@ -87,7 +82,6 @@ class Prefetch extends Action
      */
     public function __construct(
         Context $context,
-        CheckoutSession $checkoutSession,
         ZendClientFactory $httpClientFactory,
         ShippingMethods $shippingMethods,
         CartHelper $cartHelper,
@@ -96,7 +90,6 @@ class Prefetch extends Action
         CustomerSession $customerSession
     ) {
         parent::__construct($context);
-        $this->checkoutSession   = $checkoutSession;
         $this->httpClientFactory = $httpClientFactory;
         $this->shippingMethods   = $shippingMethods;
         $this->cartHelper        = $cartHelper;

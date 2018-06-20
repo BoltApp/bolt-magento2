@@ -436,7 +436,7 @@ if (!$block->isEnabled()) return;
 
             onEmailEnter: function(email) {
                 if (callbacks.email !== email) {
-                    ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email)+'&orderReference='+cart.orderReference);
+                    ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email));
                     callbacks.email = email;
                 }
             }
