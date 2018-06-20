@@ -448,7 +448,7 @@ if (!$block->isEnabled()) return;
         /////////////////////////////////////////////////////
         var prefetchShipping = function() {
 
-            if (!settings.prefetch_shipping) return;
+            if (!settings.prefetch_shipping || !cart.orderReference) return;
 
             var xhr;
             xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
