@@ -5,7 +5,6 @@
         </referenceContainer>
         <referenceBlock name="order_create_billing_form">
             <action method="setMethodFormTemplate">
-                <!-- your method code and template -->
                 <argument name="method" xsi:type="string">boltpay</argument>
                 <argument name="template" xsi:type="string">Bolt_Boltpay::boltpay/button.phtml</argument>
             </action>

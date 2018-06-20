@@ -19,7 +19,7 @@ define(
         return Component.extend({
             defaults: {
                 template: 'Bolt_Boltpay/payment/boltpay',
-                timeoutMessage: 'Sorry, but something went wrong. Please contact the seller.'
+                timeoutMessage: 'Sorry, but something went wrong.'
             },
 
             /**

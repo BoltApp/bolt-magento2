@@ -157,7 +157,7 @@ class Form extends PaymentForm
     }
 
     /**
-     * Get checkout key. Any of the defined publishable keys for use with track.js.
+     * Get back office key
      *
      * @return  string
      */
