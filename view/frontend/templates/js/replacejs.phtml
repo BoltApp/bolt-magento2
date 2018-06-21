@@ -380,6 +380,16 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
+
+                // show alert message on error
+                if (data.status !== 'success') {
+                    if (data.message) {
+                        console.log(data.message);
+                        alert(data.message);
+                    }
+                    return false;
+                }
+                
                 <?php echo $success; ?>
                 callbacks.success_url = data.success_url;
                 callback();
