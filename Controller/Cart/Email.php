@@ -23,9 +23,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use \Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Quote\Model\QuoteFactory;
 
 /**
  * Class Email.
@@ -45,23 +43,15 @@ class Email extends Action
     /** @var Bugsnag */
     private $bugsnag;
 
-    /** @var ConfigHelper */
-    private $configHelper;
-
     /** @var CartHelper */
     private $cartHelper;
-
-    /** @var QuoteFactory */
-    private $quoteFactory;
 
     /**
      * @param Context $context
      * @param CheckoutSession $checkoutSession
      * @param CustomerSession $customerSession
      * @param Bugsnag $bugsnag
-     * @param ConfigHelper $configHelper
      * @param CartHelper $cartHelper
-     * @param QuoteFactory $quoteFactory
      *
      * @codeCoverageIgnore
      */
@@ -70,17 +60,13 @@ class Email extends Action
         CheckoutSession $checkoutSession,
         CustomerSession $customerSession,
         Bugsnag $bugsnag,
-        ConfigHelper $configHelper,
-        CartHelper $cartHelper,
-        QuoteFactory $quoteFactory
+        CartHelper $cartHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
         $this->customerSession = $customerSession;
         $this->bugsnag = $bugsnag;
-        $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
-        $this->quoteFactory = $quoteFactory;
     }
 
     /**
@@ -91,15 +77,11 @@ class Email extends Action
     {
         try {
 
-            $quoteId = $this->getRequest()->getParam('orderReference');
-
             /** @var Quote */
-            $quote = $this->quoteFactory->create()->load($quoteId);
+            $quote = $this->checkoutSession->getQuote();
 
             if (!$quote || !$quote->getId()) {
-                throw new LocalizedException(
-                    __('Unknown quote id: %1.', $quoteId)
-                );
+                throw new LocalizedException(__('Quote does not exist.'));
             }
 
             $email = $this->customerSession->isLoggedIn() ?
