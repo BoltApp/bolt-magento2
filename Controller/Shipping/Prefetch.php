@@ -1,16 +1,25 @@
 <?php
 /**
- *
- * Copyright © 2013-2017 Bolt, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
+* Bolt magento2 plugin
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Open Software License (OSL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/osl-3.0.php
+*
+* @category   Bolt
+* @package    Bolt_Boltpay
+* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+*/
 
 namespace Bolt\Boltpay\Controller\Shipping;
 
 use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\HTTP\ZendClientFactory;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
@@ -18,7 +27,6 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use \Magento\Customer\Model\Session as CustomerSession;
-use Magento\Quote\Model\QuoteFactory;
 
 /**
  * Class Prefetch.
@@ -30,9 +38,6 @@ use Magento\Quote\Model\QuoteFactory;
  */
 class Prefetch extends Action
 {
-    /** @var CheckoutSession */
-    private $checkoutSession;
-
     /** @var CustomerSession */
     private $customerSession;
 
@@ -61,47 +66,36 @@ class Prefetch extends Action
      */
     private $configHelper;
 
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
-
     // GeoLocation API endpoint
     private $locationURL = "http://freegeoip.net/json/%s";
 
     /**
      * @param Context $context
-     * @param CheckoutSession $checkoutSession
      * @param ZendClientFactory $httpClientFactory
      * @param ShippingMethods $shippingMethods
      * @param CartHelper $cartHelper
      * @param Bugsnag $bugsnag
      * @param ConfigHelper $configHelper
      * @param CustomerSession $customerSession
-     * @param QuoteFactory $quoteFactory
      *
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
-        CheckoutSession $checkoutSession,
         ZendClientFactory $httpClientFactory,
         ShippingMethods $shippingMethods,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         configHelper $configHelper,
-        CustomerSession $customerSession,
-        QuoteFactory $quoteFactory
+        CustomerSession $customerSession
     ) {
         parent::__construct($context);
-        $this->checkoutSession   = $checkoutSession;
         $this->httpClientFactory = $httpClientFactory;
         $this->shippingMethods   = $shippingMethods;
         $this->cartHelper        = $cartHelper;
         $this->bugsnag           = $bugsnag;
         $this->configHelper      = $configHelper;
         $this->customerSession   = $customerSession;
-        $this->quoteFactory      = $quoteFactory;
     }
 
     /**
@@ -143,7 +137,7 @@ class Prefetch extends Action
             $quoteId = $this->getRequest()->getParam('orderReference');
 
             /** @var Quote */
-            $quote = $this->quoteFactory->create()->load($quoteId);
+            $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {
                 return;

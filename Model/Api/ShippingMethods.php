@@ -1,9 +1,19 @@
 <?php
 /**
- * Copyright © 2013-2017 Bolt, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
-
+* Bolt magento2 plugin
+*
+* NOTICE OF LICENSE
+*
+* This source file is subject to the Open Software License (OSL 3.0)
+* that is bundled with this package in the file LICENSE.txt.
+* It is also available through the world-wide-web at this URL:
+* http://opensource.org/licenses/osl-3.0.php
+*
+* @category   Bolt
+* @package    Bolt_Boltpay
+* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+*/
 
 namespace Bolt\Boltpay\Model\Api;
 
@@ -12,7 +22,6 @@ use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote\TotalsCollector;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -28,6 +37,8 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
+use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Customer\Model\CustomerFactory;
 
 /**
  * Class ShippingMethods
@@ -37,6 +48,9 @@ use Magento\Framework\App\CacheInterface;
  */
 class ShippingMethods implements ShippingMethodsInterface
 {
+    const NO_SHIPPING_SERVICE = 'No Shipping Required';
+    const NO_SHIPPING_REFERENCE = 'noshipping';
+
     /**
      * @var HookHelper
      */
@@ -46,11 +60,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var CartHelper
      */
     private $cartHelper;
-
-    /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
 
     /**
      * @var RegionModel
@@ -119,15 +128,22 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $cache;
 
+    /** @var CustomerSession */
+    private $customerSession;
+
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
+
     // Totals adjustment threshold
     private $threshold = 0.01;
 
-    private $tax_adjusted = false;
+    private $taxAdjusted = false;
 
     /**
      *
      * @param HookHelper $hookHelper
-     * @param QuoteFactory $quoteFactory
      * @param RegionModel $regionModel
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
      * @param ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory
@@ -142,10 +158,11 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Session $checkoutSession
      * @param Request $request
      * @param CacheInterface $cache
+     * @param CustomerSession $customerSession
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
         HookHelper $hookHelper,
-        QuoteFactory $quoteFactory,
         RegionModel $regionModel,
         ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory,
         ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory,
@@ -159,24 +176,27 @@ class ShippingMethods implements ShippingMethodsInterface
         ConfigHelper $configHelper,
         Session $checkoutSession,
         Request $request,
-        CacheInterface $cache
+        CacheInterface $cache,
+        CustomerSession $customerSession,
+        CustomerFactory $customerFactory
     ) {
-        $this->hookHelper                      = $hookHelper;
-        $this->cartHelper                      = $cartHelper;
-        $this->quoteFactory                    = $quoteFactory;
-        $this->regionModel                     = $regionModel;
+        $this->hookHelper = $hookHelper;
+        $this->cartHelper = $cartHelper;
+        $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
-        $this->shippingTaxInterfaceFactory     = $shippingTaxInterfaceFactory;
-        $this->totalsCollector                 = $totalsCollector;
-        $this->converter                       = $converter;
-        $this->shippingOptionInterfaceFactory  = $shippingOptionInterfaceFactory;
-        $this->bugsnag                         = $bugsnag;
-        $this->logHelper                       = $logHelper;
-        $this->response                        = $response;
-        $this->configHelper                    = $configHelper;
-        $this->checkoutSession                 = $checkoutSession;
-        $this->request                         = $request;
-        $this->cache                           = $cache;
+        $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
+        $this->totalsCollector = $totalsCollector;
+        $this->converter = $converter;
+        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
+        $this->bugsnag = $bugsnag;
+        $this->logHelper = $logHelper;
+        $this->response = $response;
+        $this->configHelper = $configHelper;
+        $this->checkoutSession = $checkoutSession;
+        $this->request = $request;
+        $this->cache = $cache;
+        $this->customerSession = $customerSession;
+        $this->customerFactory = $customerFactory;
     }
 
     /**
@@ -203,17 +223,17 @@ class ShippingMethods implements ShippingMethodsInterface
         if (!$quoteItems || $cartItems != $quoteItems) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
-                $quote_items = array_map(function($item){
+                $quoteItems = array_map(function($item){
                     $product = [];
                     $productId = $item->getProductId();
-                    $unit_price   = $item->getCalculationPrice();
-                    $total_amount = $unit_price * $item->getQty();
-                    $rounded_total_amount = $this->cartHelper->getRoundAmount($total_amount);
+                    $unitPrice   = $item->getCalculationPrice();
+                    $totalAmount = $unitPrice * $item->getQty();
+                    $roundedTotalAmount = $this->cartHelper->getRoundAmount($totalAmount);
                     $product['reference']    = $productId;
                     $product['name']         = $item->getName();
                     $product['description']  = $item->getDescription();
-                    $product['total_amount'] = $rounded_total_amount;
-                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unit_price);
+                    $product['total_amount'] = $roundedTotalAmount;
+                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unitPrice);
                     $product['quantity']     = round($item->getQty());
                     $product['sku']          = trim($item->getSku());
                     return $product;
@@ -222,7 +242,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $report->setMetaData([
                     'CART_MISMATCH' => [
                         'cart_items' => $cart['items'],
-                        'quote_items' => $quote_items,
+                        'quote_items' => $quoteItems,
                     ]
                 ]);
             });
@@ -247,7 +267,11 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         try {
 
-            //$this->logHelper->addInfoLog($this->request->getContent());
+            // kepping variable names camelCased.
+            // shipping_address is expected REST parameter name, must stay in snake_case.
+            $addressData = $shipping_address;
+
+            $this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
@@ -268,7 +292,8 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // Load quote from entity id
             $quoteId = $cart['order_reference'];
-            $quote = $this->quoteFactory->create()->load($quoteId);
+
+            $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(
@@ -276,13 +301,19 @@ class ShippingMethods implements ShippingMethodsInterface
                 );
             }
 
-            $this->checkoutSession->replaceQuote($quote);
-
             $this->checkCartItems($cart, $quote);
 
-            $shippingOptionsModel = $this->shippingEstimation($quote, $shipping_address);
+            if ($customerId = $quote->getCustomerId()) {
+                $this->customerSession->setCustomer(
+                    $this->customerFactory->create()->load($customerId)
+                );
+            }
 
-            if ($this->tax_adjusted) {
+            $this->checkoutSession->replaceQuote($quote);
+
+            $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
+
+            if ($this->taxAdjusted) {
                 $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
                     $report->setMetaData([
                         'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)]
@@ -318,12 +349,12 @@ class ShippingMethods implements ShippingMethodsInterface
      * Get Shipping and Tax from cache or run the Shipping options collection routine, store it in cache and return.
      *
      * @param Quote $quote
-     * @param array $shipping_address
+     * @param array $addressData
      *
      * @return ShippingOptionsInterface
      * @throws LocalizedException
      */
-    public function shippingEstimation($quote, $shipping_address)
+    public function shippingEstimation($quote, $addressData)
     {
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
@@ -331,17 +362,17 @@ class ShippingMethods implements ShippingMethodsInterface
         ////////////////////////////////////////////////////////////////////////////////////////
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
 
-            $cache_identifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.
-                $shipping_address['country_code']. '_'.$shipping_address['region'].'_'.$shipping_address['postal_code'];
+            $cacheIdentifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.
+                $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code'];
 
             // include products in cache key
             foreach($quote->getAllVisibleItems() as $item) {
-                $cache_identifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
+                $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key
-            $rule_ids = str_replace(',', '_', $quote->getAppliedRuleIds());
-            if ($rule_ids) $cache_identifier .= '_'.$rule_ids;
+            $ruleIds = str_replace(',', '_', $quote->getAppliedRuleIds());
+            if ($ruleIds) $cacheIdentifier .= '_'.$ruleIds;
 
             // get custom address fields to be included in cache key
             $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
@@ -355,49 +386,48 @@ class ShippingMethods implements ShippingMethodsInterface
                 $prefetchAddressFields
             );
 
-            $shippingAddress = $quote->getShippingAddress();
+            $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+
             // get the value of each valid field and include it in the cache identifier
             foreach ($prefetchAddressFields as $key) {
                 $getter = 'get'.$key;
-                $value = $shippingAddress->$getter();
-                if ($value) $cache_identifier .= '_'.$value;
+                $value = $address->$getter();
+                if ($value) $cacheIdentifier .= '_'.$value;
             }
 
-            $cache_identifier = md5($cache_identifier);
+            $cacheIdentifier = md5($cacheIdentifier);
 
-            if ($serialized = $this->cache->load($cache_identifier)) {
-                $shippingAddress->setShippingMethod(null)->save();
+            if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $address->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // Get region id
-        $region = $this->regionModel->loadByName(@$shipping_address['region'], @$shipping_address['country_code']);
+        $region = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
 
         // Check the email address
-        $email = $this->cartHelper->validateEmail(@$shipping_address['email']) ? $shipping_address['email'] : null;
+        $email = $this->cartHelper->validateEmail(@$addressData['email']) ? $addressData['email'] : null;
 
-        $shipping_address = [
-            'country_id' => @$shipping_address['country_code'],
-            'postcode'   => @$shipping_address['postal_code'],
-            'region'     => @$shipping_address['region'],
+        // Reformat address data
+        $addressData = [
+            'country_id' => @$addressData['country_code'],
+            'postcode'   => @$addressData['postal_code'],
+            'region'     => @$addressData['region'],
             'region_id'  => $region ? $region->getId() : null,
-            'firstname'  => @$shipping_address['first_name'],
-            'lastname'   => @$shipping_address['last_name'],
-            'street'     => @$shipping_address['street_address1'],
-            'city'       => @$shipping_address['locality'],
-            'telephone'  => @$shipping_address['phone'],
+            'city'       => @$addressData['locality'],
+            'street'     => trim(@$addressData['street_address1'] . "\n" . @$addressData['street_address2']),
             'email'      => $email,
         ];
 
-        foreach ($shipping_address as $key => $value) {
+        foreach ($addressData as $key => $value) {
             if (empty($value)) {
-                unset($shipping_address[$key]);
+                unset($addressData[$key]);
             }
         }
 
-        $shippingMethods = $this->getShippingOptions($quote, $shipping_address);
+        $shippingMethods = $this->getShippingOptions($quote, $addressData);
 
         $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
         $shippingOptionsModel->setShippingOptions($shippingMethods);
@@ -408,7 +438,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Cache the calculated result
         if ($prefetchShipping) {
-            $this->cache->save(serialize($shippingOptionsModel), $cache_identifier, [], 3600);
+            $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
         }
 
         return $shippingOptionsModel;
@@ -418,22 +448,43 @@ class ShippingMethods implements ShippingMethodsInterface
      * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
-     * @param array $shipping_address
+     * @param array $addressData
      *
      * @return ShippingOptionInterface[]
      */
-    private function getShippingOptions($quote, $shipping_address)
+    private function getShippingOptions($quote, $addressData)
     {
+        if ($quote->isVirtual()) {
+
+            $billingAddress = $quote->getBillingAddress();
+            $billingAddress->addData($addressData);
+
+            $quote->collectTotals();
+
+            $this->totalsCollector->collectAddressTotals($quote, $billingAddress);
+            $taxAmount = $this->cartHelper->getRoundAmount($billingAddress->getTaxAmount());
+
+            return [
+                $this->shippingOptionInterfaceFactory
+                    ->create()
+                    ->setService(self::NO_SHIPPING_SERVICE)
+                    ->setCost(0)
+                    ->setReference(self::NO_SHIPPING_REFERENCE)
+                    ->setTaxAmount($taxAmount)
+            ];
+        }
+
         $output = [];
 
         $shippingAddress = $quote->getShippingAddress();
+        $shippingAddress->addData($addressData);
 
-        $shippingAddress->addData($shipping_address)->save();
         $shippingAddress->setCollectShippingRates(true);
-
         $shippingAddress->setShippingMethod(null);
-        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
+        $quote->collectTotals();
+
+        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
         ////////////////////////////////////////////////////////////////
@@ -442,8 +493,9 @@ class ShippingMethods implements ShippingMethodsInterface
         /// some method in the Magento shipping flow, then that method
         /// may be (indirectly) called from our Shipping And Tax flow more
         /// than once, resulting in wrong prices. This function resets
-        /// address shipping calculation but can drasticaly slow down the
-        /// process. Use it carefully only when necesarry.
+        /// address shipping calculation but can seriously slow down the
+        /// process (on a system with many shipping options available).
+        /// Use it carefully only when necesarry.
         ////////////////////////////////////////////////////////////////
         $resetShippingCalculation = function () use ($shippingAddress) {
             $shippingAddress->removeAllShippingRates();
@@ -476,20 +528,20 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
             $cost         = $shippingAddress->getShippingAmount();
-            $rounded_cost = $this->cartHelper->getRoundAmount($cost);
+            $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
-            $diff = $cost * 100 - $rounded_cost;
+            $diff = $cost * 100 - $roundedCost;
 
-            $tax_amount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
+            $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
             if (abs($diff) >= $this->threshold) {
-                $this->tax_adjusted = true;
+                $this->taxAdjusted = true;
                 $this->bugsnag->registerCallback(function ($report) use (
                     $method,
                     $diff,
                     $service,
-                    $rounded_cost,
-                    $tax_amount
+                    $roundedCost,
+                    $taxAmount
                 ) {
                     $report->setMetaData([
                         'TOTALS_DIFF' => [
@@ -497,8 +549,8 @@ class ShippingMethods implements ShippingMethodsInterface
                                 'diff'       => $diff,
                                 'service'    => $service,
                                 'reference'  => $method,
-                                'cost'       => $rounded_cost,
-                                'tax_amount' => $tax_amount,
+                                'cost'       => $roundedCost,
+                                'tax_amount' => $taxAmount,
                             ]
                         ]
                     ]);
@@ -511,8 +563,8 @@ class ShippingMethods implements ShippingMethodsInterface
                 $errors[] = [
                     'service'    => $service,
                     'reference'  => $method,
-                    'cost'       => $rounded_cost,
-                    'tax_amount' => $tax_amount,
+                    'cost'       => $roundedCost,
+                    'tax_amount' => $taxAmount,
                     'error'      => $error,
                 ];
 
@@ -522,18 +574,18 @@ class ShippingMethods implements ShippingMethodsInterface
             $shippingMethods[] = $this->shippingOptionInterfaceFactory
                 ->create()
                 ->setService($service)
-                ->setCost($rounded_cost)
+                ->setCost($roundedCost)
                 ->setReference($method)
-                ->setTaxAmount($tax_amount);
+                ->setTaxAmount($taxAmount);
         }
 
         $shippingAddress->setShippingMethod(null)->save();
 
         if ($errors) {
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $shipping_address) {
+            $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
                 $report->setMetaData([
                     'SHIPPING METHOD' => [
-                      'address' => $shipping_address,
+                      'address' => $addressData,
                       'errors'  => $errors
                     ]
                 ]);

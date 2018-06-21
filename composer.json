@@ -8,7 +8,6 @@
         "magento/module-payment": "100.*|101.*",
         "magento/module-tax": "100.*|101.*",
         "magento/framework": "100.*|101.*",
-        "magento/magento-composer-installer": "*",
         "bugsnag/bugsnag": "^3.4"
     },
     "require-dev": {
