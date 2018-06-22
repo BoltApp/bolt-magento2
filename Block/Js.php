@@ -129,6 +129,7 @@ class Js extends Template
             'connect_url'              => $this->getConnectJsUrl(),
             'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
             'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
+            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
