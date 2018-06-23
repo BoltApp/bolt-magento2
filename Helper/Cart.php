@@ -433,6 +433,7 @@ class Cart extends AbstractHelper
 
         $quote->setBoltParentQuoteId($quote->getId());
         $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
+        $this->quoteResource->save($quote);
 
         ////////////////////////////////////////////////////////
         // CLONE THE QUOTE and quote billing / shipping  address
