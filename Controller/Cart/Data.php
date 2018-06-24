@@ -99,20 +99,22 @@ class Data extends Action
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
+            $orderReference = $response ? $response->cart->order_reference : '';
+
             $cart = [
                 'orderToken'  => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
-                'orderReference' => $response ? $response->cart->order_reference : '',
+                'orderReference' => $orderReference,
             ];
 
-            $hints = $this->cartHelper->getHints($place_order_payload);
+            $hints = $this->cartHelper->getHints($place_order_payload, $orderReference);
 
             $result = $this->resultJsonFactory->create();
 
             return $result->setData([
                 'status' => 'success',
-                'cart' =>$cart,
-                'hints' =>$hints,
+                'cart'   => $cart,
+                'hints'  => $hints,
             ]);
 
         } catch (Exception $e) {

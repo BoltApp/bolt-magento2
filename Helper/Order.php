@@ -23,7 +23,6 @@ use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
 use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DB\Transaction as DbTransaction;
@@ -33,9 +32,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
-use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteManagement;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -43,7 +40,6 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment as PaymentModel;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
-use Magento\Sales\Model\OrderRepository;
 use Magento\Sales\Model\Service\InvoiceService;
 use Zend_Http_Client_Exception;
 use Exception;
@@ -88,11 +84,6 @@ class Order extends AbstractHelper
     private $converter;
 
     /**
-     * @var QuoteFactory
-     */
-    private $quoteFactory;
-
-    /**
      * @var RegionModel
      */
     private $regionModel;
@@ -106,21 +97,6 @@ class Order extends AbstractHelper
      * @var OrderSender
      */
     private $emailSender;
-
-    /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    private $searchCriteriaBuilder;
-
-    /**
-     * @var QuoteRepository
-     */
-    private $quoteRepository;
 
     /**
      * @var InvoiceService
@@ -186,14 +162,10 @@ class Order extends AbstractHelper
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
-     * @param QuoteFactory $quoteFactory
      * @param ShippingMethodConverter $converter
      * @param RegionModel $regionModel
      * @param QuoteManagement $quoteManagement
      * @param OrderSender $emailSender
-     * @param OrderRepository $orderRepository
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param QuoteRepository $quoteRepository
      * @param InvoiceService $invoiceService
      * @param DbTransaction $dbTransaction
      * @param InvoiceSender $invoiceSender
@@ -213,14 +185,10 @@ class Order extends AbstractHelper
         Context $context,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
-        QuoteFactory $quoteFactory,
         ShippingMethodConverter $converter,
         RegionModel $regionModel,
         QuoteManagement $quoteManagement,
         OrderSender $emailSender,
-        OrderRepository $orderRepository,
-        SearchCriteriaBuilder $searchCriteriaBuilder,
-        QuoteRepository $quoteRepository,
         InvoiceService $invoiceService,
         DbTransaction $dbTransaction,
         InvoiceSender $invoiceSender,
@@ -237,14 +205,10 @@ class Order extends AbstractHelper
         parent::__construct($context);
         $this->apiHelper             = $apiHelper;
         $this->configHelper          = $configHelper;
-        $this->quoteFactory          = $quoteFactory;
         $this->converter             = $converter;
         $this->regionModel           = $regionModel;
         $this->quoteManagement       = $quoteManagement;
         $this->emailSender           = $emailSender;
-        $this->orderRepository       = $orderRepository;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->quoteRepository       = $quoteRepository;
         $this->invoiceService        = $invoiceService;
         $this->dbTransaction         = $dbTransaction;
         $this->invoiceSender         = $invoiceSender;
@@ -257,36 +221,6 @@ class Order extends AbstractHelper
         $this->bugsnag               = $bugsnag;
         $this->cartHelper            = $cartHelper;
         $this->quoteCollectionFactory = $quoteCollectionFactory;
-    }
-
-    /**
-     * Load Order by increment id
-     * @param $incrementId
-     *
-     * @return OrderModel
-     */
-    public function loadOrder($incrementId)
-    {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('increment_id', $incrementId, 'eq')->create();
-        $order = $this->orderRepository->getList($searchCriteria)->getFirstItem();
-        return $order;
-    }
-
-    /**
-     * Load Quote by increment id, reserved_order_id
-     * @param $incrementId
-     *
-     * @return \Magento\Quote\Api\Data\CartInterface|Quote
-     */
-    public function loadQuote($incrementId)
-    {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('reserved_order_id', $incrementId, 'eq')->create();
-        $collection = $this->quoteRepository->getList($searchCriteria)->getItems();
-        foreach ($collection as $quote) {
-            return $quote;
-        }
     }
 
     /**
@@ -332,6 +266,8 @@ class Order extends AbstractHelper
      */
     private function setShippingMethod($quote, $transaction)
     {
+        if ($quote->isVirtual()) return;
+
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
 
@@ -467,7 +403,7 @@ class Order extends AbstractHelper
         $this->setPaymentMethod($quote);
         $quote->collectTotals();
 
-        $this->quoteRepository->save($quote);
+        $this->cartHelper->saveQuote($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -479,7 +415,7 @@ class Order extends AbstractHelper
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
-        $order = $this->loadOrder($quote->getReservedOrderId());
+        $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
 
         if ($order && $order->getId()) {
             throw new LocalizedException(__(
@@ -561,24 +497,19 @@ class Order extends AbstractHelper
      */
     public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
-
         $transaction = $this->fetchTransactionInfo($reference);
         $incrementId = $transaction->order->cart->display_id;
 
-        // load the quote from reserved order id
-        // $quote = $this->loadQuote($incrementId);
-
         // Load quote from entity id
         $quoteId = $transaction->order->cart->order_reference;
-        $quote = $this->quoteFactory->create()->load($quoteId);
-        //$quote = $this->quoteRepository->get($quoteId);
+        $quote = $this->cartHelper->getQuoteById($quoteId);
 
         if (!$quote || !$quote->getId()) {
             throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
         }
 
         // check if the order exists
-        $order = $this->loadOrder($incrementId);
+        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -636,7 +567,7 @@ class Order extends AbstractHelper
 
             $order->addStatusHistoryComment($comment);
 
-            $quote = $this->loadQuote($order->getIncrementId());
+            $quote = $this->cartHelper->getQuoteByReservedOrderId($order->getIncrementId());
 
             $cart = $this->cartHelper->getCartData(true, false, $quote);
 
