@@ -57,6 +57,11 @@ class Payment extends AbstractMethod
     protected $_code = 'boltpay';
 
     /**
+     * @var string
+     */
+    protected $_formBlockType = \Bolt\Boltpay\Block\Form::class;
+
+    /**
      * Payment Method feature
      *
      * @var bool

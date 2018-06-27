@@ -60,7 +60,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
-            'getPublishableKeyPayment', 'getPublishableKeyCheckout',
+            'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping'
         ];
 
@@ -206,6 +206,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
         $this->assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
         $this->assertArrayHasKey('publishable_key_checkout', $array, $message . 'publishable_key_checkout');
+        $this->assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
         $this->assertArrayHasKey('create_order_url', $array, $message . 'create_order_url');
         $this->assertArrayHasKey('save_order_url', $array, $message . 'save_order_url');
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');

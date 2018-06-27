@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Catalog\Model\ProductFactory;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -433,6 +433,7 @@ class Cart extends AbstractHelper
 
         $quote->setBoltParentQuoteId($quote->getId());
         $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
+        $this->quoteResource->save($quote);
 
         ////////////////////////////////////////////////////////
         // CLONE THE QUOTE and quote billing / shipping  address
