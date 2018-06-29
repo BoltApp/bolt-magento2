@@ -432,7 +432,7 @@ class Cart extends AbstractHelper
         }
 
         $quote->setBoltParentQuoteId($quote->getId());
-        $quote->getReservedOrderId() ?: $this->setReservedOrderId($quote);
+        $quote->reserveOrderId();
         $this->quoteResource->save($quote);
 
         ////////////////////////////////////////////////////////
@@ -848,20 +848,6 @@ class Cart extends AbstractHelper
         //$this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT));
 
         return $cart;
-    }
-
-    /**
-     * Reserve order id for the quote
-     * @param Quote $quote
-     *
-     * @return  string
-     * @throws \Exception
-     */
-    public function setReservedOrderId($quote)
-    {
-        $quote->reserveOrderId()->save();
-        $reserveOrderId = $quote->getReservedOrderId();
-        return $reserveOrderId;
     }
 
     /**
