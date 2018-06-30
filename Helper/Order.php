@@ -429,7 +429,10 @@ class Order extends AbstractHelper
         // Delete redundant clones and parent quote
         $this->deleteRedundantQuotes($quote);
 
-        if (!$frontend) {
+        if ($frontend) {
+            // Send order confirmation email to customer.
+            $this->emailSender->send($order);
+        } else {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
             );
@@ -442,9 +445,6 @@ class Order extends AbstractHelper
             $this->appState->emulateAreaCode('frontend', function () use ($order){
                 $this->emailSender->send($order);
             });
-        } else {
-            // Send order confirmation email to customer.
-            $this->emailSender->send($order);
         }
 
         return $order;
@@ -498,21 +498,23 @@ class Order extends AbstractHelper
     public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
         $transaction = $this->fetchTransactionInfo($reference);
-        $incrementId = $transaction->order->cart->display_id;
 
-        // Load quote from entity id
-        $quoteId = $transaction->order->cart->order_reference;
-        $quote = $this->cartHelper->getQuoteById($quoteId);
-
-        if (!$quote || !$quote->getId()) {
-            throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
-        }
+        // get order id and immutable quote id stored with transaction
+        list($incrementId, $quoteId) = explode(' / ', $transaction->order->cart->display_id);
 
         // check if the order exists
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
+        // Load (immutable) quote from entity id
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+
         // if not create the order
         if (!$order || !$order->getId()) {
+
+            if (!$quote || !$quote->getId()) {
+                throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
+            }
+
             $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
         }
 
@@ -545,7 +547,7 @@ class Order extends AbstractHelper
         // format bolt transaction fetch url
         $reference_url = function($reference) {
             return $this->configHelper->getApiUrl() . ApiHelper::API_CURRENT_VERSION .
-                ApiHelper::API_FETCH_TRANSACTION . "/" . $reference;
+                ApiHelper::API_FETCH_TRANSACTION . '/' . $reference;
         };
 
         ////////////////////////////////////////////////////////////////////////////
@@ -567,7 +569,9 @@ class Order extends AbstractHelper
 
             $order->addStatusHistoryComment($comment);
 
-            $quote = $this->cartHelper->getQuoteByReservedOrderId($order->getIncrementId());
+            list(, $quoteId) = explode(' / ', $transaction->order->cart->display_id);
+
+            $quote = $this->cartHelper->getQuoteById($quoteId);
 
             $cart = $this->cartHelper->getCartData(true, false, $quote);
 

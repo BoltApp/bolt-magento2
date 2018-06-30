@@ -134,7 +134,7 @@ class Prefetch extends Action
                 return;
             }
 
-            $quoteId = $this->getRequest()->getParam('orderReference');
+            $quoteId = $this->getRequest()->getParam('cartReference');
 
             /** @var Quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
@@ -144,7 +144,25 @@ class Prefetch extends Action
             }
 
             ///////////////////////////////////////////////////////////////////////////
-            // Prefetch shipping for geolocated address
+            // Prefetch Shipping and Tax for received location data
+            ///////////////////////////////////////////////////////////////////////////
+            $country  = $this->getRequest()->getParam('country');
+            $region   = $this->getRequest()->getParam('region');
+            $postcode = $this->getRequest()->getParam('postcode');
+
+            if ($country && $region && $postcode) {
+                $shipping_address = [
+                    'country_code' => $country,
+                    'postal_code'  => $postcode,
+                    'region'       => $region,
+                ];
+
+                $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+            }
+            ///////////////////////////////////////////////////////////////////////////
+
+            ///////////////////////////////////////////////////////////////////////////
+            // Prefetch Shipping and Tax for geolocated address
             ///////////////////////////////////////////////////////////////////////////
             $ip = $this->getIpAddress();
 

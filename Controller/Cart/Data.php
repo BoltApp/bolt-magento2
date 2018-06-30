@@ -99,12 +99,13 @@ class Data extends Action
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
-            $orderReference = $response ? $response->cart->order_reference : '';
+            // get immutable quote id stored with cart data
+            list(, $orderReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
             $cart = [
                 'orderToken'  => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
-                'orderReference' => $orderReference,
+                'cartReference' => $orderReference,
             ];
 
             $hints = $this->cartHelper->getHints($place_order_payload, $orderReference);
