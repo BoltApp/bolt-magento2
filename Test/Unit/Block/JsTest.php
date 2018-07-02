@@ -67,7 +67,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
-            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getJavascriptSuccess'
+            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -247,23 +247,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
     }
-
-    /**
-     * @inheritdoc
-     */
-    public function testGetJavascriptSuccess()
-    {
-        $value = 'function() {console.log("test");}';
-
-        $this->configHelper->expects($this->once())
-            ->method('getJavascriptSuccess')
-            ->will($this->returnValue($value));
-
-        $result = $this->block->getJavascriptSuccess();
-
-        $this->assertEquals($value, $result, 'getJavascriptSuccess() method: not working properly');
-    }
-
+    
     /**
      * Call protected/private method of a class.
      *
