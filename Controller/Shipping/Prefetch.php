@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Controller\Shipping;
 
-use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Quote\Model\Quote;
@@ -125,7 +124,7 @@ class Prefetch extends Action
 
     /**
      * @return void
-     * @throws Exception
+     * @throws \Exception
      */
     public function execute()
     {
@@ -170,18 +169,24 @@ class Prefetch extends Action
             $client->setUri(sprintf($this->locationURL, $ip));
             $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
-            $response = $client->request()->getBody();
-            $location = json_decode($response);
+            // Dependant on third party API, wrapping in try/catch block.
+            // On error notify bugsnag and proceed
+            try {
+                $response = $client->request()->getBody();
+                $location = json_decode($response);
 
-            if ($location && $location->country_code && $location->zip_code) {
-                $shipping_address = [
-                    'country_code' => $location->country_code,
-                    'postal_code'  => $location->zip_code,
-                    'region'       => $location->region_name,
-                    'locality'     => $location->city,
-                ];
+                if ($location && $location->country_code && $location->zip_code) {
+                    $shipping_address = [
+                        'country_code' => $location->country_code,
+                        'postal_code'  => $location->zip_code,
+                        'region'       => $location->region_name,
+                        'locality'     => $location->city,
+                    ];
 
-                $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+                    $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+                }
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
             }
             ///////////////////////////////////////////////////////////////////////////
 
@@ -225,7 +230,7 @@ class Prefetch extends Action
             }
             /////////////////////////////////////////////////////////////////////////////////
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
         }
