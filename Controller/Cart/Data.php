@@ -100,15 +100,15 @@ class Data extends Action
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
             // get immutable quote id stored with cart data
-            list(, $orderReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
+            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
             $cart = [
                 'orderToken'  => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
-                'cartReference' => $orderReference,
+                'cartReference' => $cartReference,
             ];
 
-            $hints = $this->cartHelper->getHints($place_order_payload, $orderReference);
+            $hints = $this->cartHelper->getHints($place_order_payload, $cartReference);
 
             $result = $this->resultJsonFactory->create();
 

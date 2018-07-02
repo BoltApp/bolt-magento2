@@ -305,15 +305,15 @@ class Cart extends AbstractHelper
      *
      * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param string $orderReference        (immutable) quote id
+     * @param string $cartReference         (immutable) quote id
      *
      * @return array
      */
-    public function getHints($placeOrderPayload, $orderReference)
+    public function getHints($placeOrderPayload, $cartReference)
     {
         /** @var Quote */
-        $quote = $orderReference ?
-            $this->getQuoteById($orderReference) :
+        $quote = $cartReference ?
+            $this->getQuoteById($cartReference) :
             $this->checkoutSession->getQuote();
 
         if ($placeOrderPayload) {
