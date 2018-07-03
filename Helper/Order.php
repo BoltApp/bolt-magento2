@@ -502,11 +502,11 @@ class Order extends AbstractHelper
         // get order id and immutable quote id stored with transaction
         list($incrementId, $quoteId) = explode(' / ', $transaction->order->cart->display_id);
 
+        // load (immutable) quote from entity id
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+
         // check if the order exists
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
-
-        // Load (immutable) quote from entity id
-        $quote = $this->cartHelper->getQuoteById($quoteId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
