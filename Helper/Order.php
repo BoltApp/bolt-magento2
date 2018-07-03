@@ -732,7 +732,7 @@ class Order extends AbstractHelper
                     }
                     break;
                 case 'credited':
-                    $order_state = OrderModel::STATE_PROCESSING;
+                    $order_state = OrderModel::STATE_HOLDED;
                     $transaction_type = Transaction::TYPE_REFUND;
                     $transaction_id = $transaction->id.'-capture-refund';
                     $parent_transaction_id = $transaction->id.'-capture';
