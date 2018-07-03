@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Controller\Shipping;
 
-use Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Quote\Model\Quote;
@@ -125,7 +124,7 @@ class Prefetch extends Action
 
     /**
      * @return void
-     * @throws Exception
+     * @throws \Exception
      */
     public function execute()
     {
@@ -134,7 +133,7 @@ class Prefetch extends Action
                 return;
             }
 
-            $quoteId = $this->getRequest()->getParam('orderReference');
+            $quoteId = $this->getRequest()->getParam('cartReference');
 
             /** @var Quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
@@ -144,7 +143,25 @@ class Prefetch extends Action
             }
 
             ///////////////////////////////////////////////////////////////////////////
-            // Prefetch shipping for geolocated address
+            // Prefetch Shipping and Tax for received location data
+            ///////////////////////////////////////////////////////////////////////////
+            $country  = $this->getRequest()->getParam('country');
+            $region   = $this->getRequest()->getParam('region');
+            $postcode = $this->getRequest()->getParam('postcode');
+
+            if ($country && $region && $postcode) {
+                $shipping_address = [
+                    'country_code' => $country,
+                    'postal_code'  => $postcode,
+                    'region'       => $region,
+                ];
+
+                $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+            }
+            ///////////////////////////////////////////////////////////////////////////
+
+            ///////////////////////////////////////////////////////////////////////////
+            // Prefetch Shipping and Tax for geolocated address
             ///////////////////////////////////////////////////////////////////////////
             $ip = $this->getIpAddress();
 
@@ -152,18 +169,24 @@ class Prefetch extends Action
             $client->setUri(sprintf($this->locationURL, $ip));
             $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
-            $response = $client->request()->getBody();
-            $location = json_decode($response);
+            // Dependant on third party API, wrapping in try/catch block.
+            // On error notify bugsnag and proceed
+            try {
+                $response = $client->request()->getBody();
+                $location = json_decode($response);
 
-            if ($location && $location->country_code && $location->zip_code) {
-                $shipping_address = [
-                    'country_code' => $location->country_code,
-                    'postal_code'  => $location->zip_code,
-                    'region'       => $location->region_name,
-                    'locality'     => $location->city,
-                ];
+                if ($location && $location->country_code && $location->zip_code) {
+                    $shipping_address = [
+                        'country_code' => $location->country_code,
+                        'postal_code'  => $location->zip_code,
+                        'region'       => $location->region_name,
+                        'locality'     => $location->city,
+                    ];
 
-                $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+                    $this->shippingMethods->shippingEstimation($quote, $shipping_address);
+                }
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
             }
             ///////////////////////////////////////////////////////////////////////////
 
@@ -207,7 +230,7 @@ class Prefetch extends Action
             }
             /////////////////////////////////////////////////////////////////////////////////
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
         }

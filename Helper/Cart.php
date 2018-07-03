@@ -221,19 +221,6 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Load Quote by reserved_order_id
-     * @param $reservedOrderId
-     * @return \Magento\Quote\Api\Data\CartInterface|mixed
-     */
-    public function getQuoteByReservedOrderId($reservedOrderId)
-    {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('reserved_order_id', $reservedOrderId, 'eq')->create();
-        $collection = $this->quoteRepository->getList($searchCriteria)->getItems();
-        return reset($collection);
-    }
-
-    /**
      * Load Order by increment id
      * @param $incrementId
      * @return \Magento\Sales\Api\Data\OrderInterface|mixed
@@ -318,15 +305,15 @@ class Cart extends AbstractHelper
      *
      * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param string $orderReference        (immutable) quote id
+     * @param string $cartReference         (immutable) quote id
      *
      * @return array
      */
-    public function getHints($placeOrderPayload, $orderReference)
+    public function getHints($placeOrderPayload, $cartReference)
     {
         /** @var Quote */
-        $quote = $orderReference ?
-            $this->getQuoteById($orderReference) :
+        $quote = $cartReference ?
+            $this->getQuoteById($cartReference) :
             $this->checkoutSession->getQuote();
 
         if ($placeOrderPayload) {
@@ -417,8 +404,15 @@ class Cart extends AbstractHelper
      */
     public function getCartData($paymentOnly, $placeOrderPayload, $quote = null)
     {
+        // If the quote is passed to the method it is already cloned and immmutable,
+        // and the purpose of the call is not creating the order on Bolt side but
+        // collectiong the data for bugsnag report
+        // set the $immutableQuote to prevent additional redundant cloning
+        $immutableQuote = $quote;
+
         // If quote is not passed load it from the session.
         // The quote is passed from an API call (i.e. discount code validation)
+        /** @var Quote $quote */
         $quote = $quote ?: $this->checkoutSession->getQuote();
 
         $cart = [];
@@ -437,29 +431,34 @@ class Cart extends AbstractHelper
 
         ////////////////////////////////////////////////////////
         // CLONE THE QUOTE and quote billing / shipping  address
+        // if quote is not passed to the method - the cart data
+        // is being created for sending to Bolt create order API
+        // otherwise skip this step
         ////////////////////////////////////////////////////////
-        $immutableQuote = $this->quoteFactory->create();
+        if (!$immutableQuote) {
+            $immutableQuote = $this->quoteFactory->create();
 
-        $immutableQuote->merge($quote);
+            $immutableQuote->merge($quote);
 
-        foreach ($quote->getData() as $key => $value) {
-            $immutableQuote->setData($key, $value);
+            foreach ($quote->getData() as $key => $value) {
+                $immutableQuote->setData($key, $value);
+            }
+
+            $immutableQuote->setId(null);
+            $immutableQuote->setIsActive(false);
+            $this->quoteResource->save($immutableQuote);
+
+            foreach ($quote->getBillingAddress()->getData() as $key => $value) {
+                if ($key != 'address_id') $immutableQuote->getBillingAddress()->setData($key, $value);
+            }
+
+            foreach ($quote->getShippingAddress()->getData() as $key => $value) {
+                if ($key != 'address_id') $immutableQuote->getShippingAddress()->setData($key, $value);
+            }
+
+            $billingAddress  = $immutableQuote->getBillingAddress()->save();
+            $shippingAddress = $immutableQuote->getShippingAddress()->save();
         }
-
-        $immutableQuote->setId(null);
-        $immutableQuote->setIsActive(false);
-        $this->quoteResource->save($immutableQuote);
-
-        foreach ($quote->getBillingAddress()->getData() as $key => $value) {
-            if ($key != 'address_id') $immutableQuote->getBillingAddress()->setData($key, $value);
-        }
-
-        foreach ($quote->getShippingAddress()->getData() as $key => $value) {
-            if ($key != 'address_id') $immutableQuote->getShippingAddress()->setData($key, $value);
-        }
-
-        $billingAddress  = $immutableQuote->getBillingAddress()->save();
-        $shippingAddress = $immutableQuote->getShippingAddress()->save();
         ////////////////////////////////////////////////////////
 
         // Get array of all items what can be display directly
@@ -475,11 +474,13 @@ class Cart extends AbstractHelper
         $immutableQuote->collectTotals();
         $totals = $immutableQuote->getTotals();
 
-        // Order reference id
-        $cart['order_reference'] = $immutableQuote->getId();
+        // Set order_reference to parent quote id.
+        // This is the constraint field on Bolt side and this way
+        // duplicate payments / orders are prevented/
+        $cart['order_reference'] = $quote->getId();
 
-        //Set display_id as reserve order id
-        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+        //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immitable quote id
+        $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
 
         //Currency
         $cart['currency'] = $immutableQuote->getQuoteCurrencyCode();

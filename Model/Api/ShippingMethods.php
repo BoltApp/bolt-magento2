@@ -271,7 +271,7 @@ class ShippingMethods implements ShippingMethodsInterface
             // shipping_address is expected REST parameter name, must stay in snake_case.
             $addressData = $shipping_address;
 
-            $this->logHelper->addInfoLog($this->request->getContent());
+            //$this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
@@ -290,9 +290,10 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->hookHelper->verifyWebhook();
 
-            // Load quote from entity id
-            $quoteId = $cart['order_reference'];
+            // get immutable quote id stored with transaction
+            list(, $quoteId) = explode(' / ', $cart['display_id']);
 
+            // Load quote from entity id
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {

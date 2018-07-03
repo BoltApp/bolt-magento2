@@ -426,7 +426,7 @@ if (!$block->isEnabled()) return;
                         }
                         return false;
                     }
-                    
+
                     <?php echo $block->getjavascriptSuccess(); ?>
                     callbacks.success_url = data.success_url;
                     callback();
@@ -458,15 +458,20 @@ if (!$block->isEnabled()) return;
         /////////////////////////////////////////////////////
         var prefetchShipping = function() {
 
-            if (!settings.prefetch_shipping || !cart.orderReference) return;
+            if (!settings.prefetch_shipping || !cart.cartReference) return;
 
-            var xhr;
-            xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+            var params = 'cartReference='+cart.cartReference;
 
-            xhr.open('GET', settings.shipping_prefetch_url+'?orderReference='+cart.orderReference);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+            // parse Estimate Shipping and Tax location fields
+            var country  = $('select[name=country_id]').val(),
+                region   = $('select[name=region_id] option:selected').text(),
+                postcode = $('input[name=postcode]').val();
 
-            xhr.send();
+            if (country && region && postcode) {
+                params += '&country='+country+'&region='+region+'&postcode='+postcode;
+            }
+
+            ajaxPost(settings.shipping_prefetch_url, params);
         };
         /////////////////////////////////////////////////////
 
