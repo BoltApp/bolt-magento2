@@ -526,6 +526,11 @@ class Order extends AbstractHelper
         }
     }
 
+    public function formatReferenceUrl($reference) {
+        $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
+        return '<a target="_blank" href="'.$url.'">'.$reference.'</a>';
+    }
+
     /**
      * Update order payment / transaction data
      *
@@ -544,17 +549,11 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
-        // format bolt transaction fetch url
-        $reference_url = function($reference) {
-            return $this->configHelper->getApiUrl() . ApiHelper::API_CURRENT_VERSION .
-                ApiHelper::API_FETCH_TRANSACTION . '/' . $reference;
-        };
-
         ////////////////////////////////////////////////////////////////////////////
         /// Record total amount mismatch between magento and bolt order.
         /// Log the error in order comments and report via bugsnag.
         ////////////////////////////////////////////////////////////////////////////
-        $record_order_mismatch = function ($bolt_total) use ($order, $transaction, $reference_url) {
+        $record_order_mismatch = function ($bolt_total) use ($order, $transaction) {
 
             $order->setStatus(OrderModel::STATE_HOLDED);
             $order->setState(OrderModel::STATE_HOLDED);
@@ -564,7 +563,7 @@ class Order extends AbstractHelper
                 Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
                 $bolt_total / 100,
                 $order->getGrandTotal(),
-                $reference_url($transaction->reference)
+                $this->formatReferenceUrl($transaction->reference)
             );
 
             $order->addStatusHistoryComment($comment);
@@ -606,7 +605,7 @@ class Order extends AbstractHelper
                 'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0<br>Bolt transaction: %3',
                 $transaction->id,
                 strtoupper($transaction->status),
-                $reference_url($transaction->reference)
+                $this->formatReferenceUrl($transaction->reference)
             );
 
             $order->setStatus(OrderModel::STATE_PROCESSING);
@@ -689,7 +688,7 @@ class Order extends AbstractHelper
                     $comment = __(
                         'BOLTPAY INFO :: PAYMENT Status: %1<br>Bolt transaction: %2',
                         $status,
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 case 'failed':
@@ -697,7 +696,7 @@ class Order extends AbstractHelper
                     $status = 'FAILED';
                     $comment = __(
                         'BOLTPAY INFO :: THE TRANSACTION HAS FAILED.<br>Bolt transaction: %1',
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 case 'authorized':
@@ -744,7 +743,7 @@ class Order extends AbstractHelper
                          IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
                          <br>AMOUNT REFUNDED:%1<br>Bolt transaction: %2',
                         $amount->amount / 100,
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 // if type is "credit_completed" fetch the parent transaction info,
@@ -817,7 +816,7 @@ class Order extends AbstractHelper
                     'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
                     $status,
                     $formattedPrice,
-                    $reference_url($transaction_reference)
+                    $this->formatReferenceUrl($transaction_reference)
                 );
 
                 $payment->addTransactionCommentsToOrder(
