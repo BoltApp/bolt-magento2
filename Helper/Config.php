@@ -156,6 +156,16 @@ class Config extends AbstractHelper
     const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
 
     /**
+     * Bolt merchant sandbox url
+     */
+    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.bolt.com';
+
+    /**
+     * Bolt merchant production url
+     */
+    const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
+
+    /**
      * @var ResourceInterface
      */
     private $moduleResource;
@@ -198,6 +208,21 @@ class Config extends AbstractHelper
             return self::API_URL_SANDBOX;
         } else {
             return self::API_URL_PRODUCTION;
+        }
+    }
+
+    /**
+     * Get Bolt Merchant Dashboard URL
+     *
+     * @return  string
+     */
+    public function getMerchantDashboardUrl()
+    {
+        //Check for sandbox mode
+        if ($this->isSandboxModeSet()) {
+            return self::MERCHANT_DASH_SANDBOX;
+        } else {
+            return self::MERCHANT_DASH_PRODUCTION;
         }
     }
 
