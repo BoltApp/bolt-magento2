@@ -456,6 +456,8 @@ if (!$block->isEnabled()) return;
         /////////////////////////////////////////////////////
         // Call Shipping and Tax prefetch & cache endpoint
         /////////////////////////////////////////////////////
+        // array to store sent requests
+        var prefetch_list = [];
         var prefetchShipping = function() {
 
             if (!settings.prefetch_shipping || !cart.cartReference) return;
@@ -470,8 +472,11 @@ if (!$block->isEnabled()) return;
             if (country && region && postcode) {
                 params += '&country='+country+'&region='+region+'&postcode='+postcode;
             }
-
-            ajaxPost(settings.shipping_prefetch_url, params);
+            // do not run the same request twice
+            if (prefetch_list.indexOf(params) == -1) {
+                prefetch_list.push(params);
+                ajaxPost(settings.shipping_prefetch_url, params);
+            }
         };
         /////////////////////////////////////////////////////
 
@@ -865,6 +870,12 @@ if (!$block->isEnabled()) return;
                 elementOnClick.call(element);
             };
         });
+        ///////////////////////////////////////////////////////////
+
+        ///////////////////////////////////////////////////////////
+        // Call prefetch shipping on shipping optioins field change
+        ///////////////////////////////////////////////////////////
+        monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
     });
 </script>
