@@ -499,8 +499,19 @@ class Order extends AbstractHelper
     {
         $transaction = $this->fetchTransactionInfo($reference);
 
-        // get order id and immutable quote id stored with transaction
-        list($incrementId, $quoteId) = explode(' / ', $transaction->order->cart->display_id);
+        ///////////////////////////////////////////////////////////////
+        // Get order id and immutable quote id stored with transaction.
+        // Take into account orders created with data in old format
+        // where only reserved_order_id was stored in display_id field
+        // and the immutable quote_id in order_reference
+        ///////////////////////////////////////////////////////////////
+        list($incrementId, $quoteId) = array_pad(
+            explode(' / ', $transaction->order->cart->display_id),
+            2,
+            null
+        );
+        if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
+        ///////////////////////////////////////////////////////////////
 
         // load (immutable) quote from entity id
         $quote = $this->cartHelper->getQuoteById($quoteId);
@@ -568,11 +579,20 @@ class Order extends AbstractHelper
 
             $order->addStatusHistoryComment($comment);
 
-            list(, $quoteId) = explode(' / ', $transaction->order->cart->display_id);
+            list(, $quoteId) = array_pad(
+                explode(' / ', $transaction->order->cart->display_id),
+                2,
+                null
+            );
+            if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
 
-            $quote = $this->cartHelper->getQuoteById($quoteId);
-
-            $cart = $this->cartHelper->getCartData(true, false, $quote);
+            try {
+                $quote = $this->cartHelper->getQuoteById($quoteId);
+                $cart = $this->cartHelper->getCartData(true, false, $quote);
+            } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                // Old quote cleaned by cron
+                $cart = ['The quote does not exist.'];
+            }
 
             $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
                 $report->setMetaData([
@@ -741,7 +761,7 @@ class Order extends AbstractHelper
                     $comment =__(
                         'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
                          IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
-                         <br>AMOUNT REFUNDED:%1<br>Bolt transaction: %2',
+                         <br>AMOUNT REFUNDED: %1<br>Bolt transaction: %2',
                         $amount->amount / 100,
                         $this->formatReferenceUrl($transaction_reference)
                     );
