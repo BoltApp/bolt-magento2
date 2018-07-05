@@ -451,14 +451,15 @@ class Cart extends AbstractHelper
             foreach ($quote->getBillingAddress()->getData() as $key => $value) {
                 if ($key != 'address_id') $immutableQuote->getBillingAddress()->setData($key, $value);
             }
+            $immutableQuote->getBillingAddress()->save();
 
             foreach ($quote->getShippingAddress()->getData() as $key => $value) {
                 if ($key != 'address_id') $immutableQuote->getShippingAddress()->setData($key, $value);
             }
-
-            $billingAddress  = $immutableQuote->getBillingAddress()->save();
-            $shippingAddress = $immutableQuote->getShippingAddress()->save();
+            $immutableQuote->getShippingAddress()->save();
         }
+        $billingAddress  = $immutableQuote->getBillingAddress();
+        $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
 
         // Get array of all items what can be display directly
