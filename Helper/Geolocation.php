@@ -26,7 +26,8 @@ use Magento\Framework\HTTP\ZendClientFactory;
 use Magento\Framework\App\CacheInterface;
 
 /**
- * Boltpay Bugsnag wrapper helper
+ * Boltpay Geolocation helper
+ * Look up customer address by IP
  *
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
