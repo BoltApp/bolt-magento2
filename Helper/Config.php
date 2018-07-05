@@ -166,6 +166,12 @@ class Config extends AbstractHelper
     const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
 
     /**
+     * Path for API Key
+     */
+    const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
+
+
+    /**
      * @var ResourceInterface
      */
     private $moduleResource;
@@ -495,5 +501,15 @@ class Config extends AbstractHelper
     public function getScopeConfig()
     {
         return $this->scopeConfig;
+    }
+
+    /**
+     * Get Geolocation API Key from config
+     *
+     * @return  string
+     */
+    public function getGeolocationApiKey()
+    {
+        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY);
     }
 }
