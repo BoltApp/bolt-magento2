@@ -125,12 +125,14 @@ class Geolocation extends AbstractHelper
 
     /**
      * @param string $ip        The IP address
+     * @param $apiKey           ipstack.com API key
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
-    private function getLocationJson($ip) {
 
-        $endpoint = sprintf($this->endpointFormat, $ip, $this->getApiKey());
+    private function getLocationJson($ip, $apiKey) {
+
+        $endpoint = sprintf($this->endpointFormat, $ip, $apiKey);
 
         $client = $this->httpClientFactory->create();
         $client->setUri($endpoint);
@@ -147,38 +149,33 @@ class Geolocation extends AbstractHelper
     }
 
     /**
-     * @param bool $useCache    flag that represents if Magento cache is used for reading / storing the result
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
-    public function getLocation($useCache = true) {
+    public function getLocation() {
+
+        if (! $apiKey = $this->getApiKey()) return null;
 
         $ip = $this->getIpAddress();
 
-        if ($useCache) {
+        // try getting location from cache
+        $cacheIdentifier = md5(self::CACHE_PREFIX.$ip);
+        $locationJson = $this->cache->load($cacheIdentifier);
 
-            // try getting location from cache
-            $cacheIdentifier = md5(self::CACHE_PREFIX.$ip);
-            $locationJson = $this->cache->load($cacheIdentifier);
-
-            // if found return it
-            if ($locationJson) {
-                return $locationJson;
-            }
-
-            // otherwise call the API
-            $locationJson = $this->getLocationJson($ip);
-
-            // if no error cache it and return it
-            if ($locationJson) {
-                $this->cache->save($locationJson, $cacheIdentifier, [], 86400);
-                return $locationJson;
-            }
-
-            return null;
-
-        } else {
-            return $this->getLocationJson($ip);
+        // if found return it
+        if ($locationJson) {
+            return $locationJson;
         }
+
+        // otherwise call the API
+        $locationJson = $this->getLocationJson($ip, $apiKey);
+
+        // if no error cache it and return it
+        if ($locationJson) {
+            $this->cache->save($locationJson, $cacheIdentifier, [], 86400);
+            return $locationJson;
+        }
+
+        return null;
     }
 }
