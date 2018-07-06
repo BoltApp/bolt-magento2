@@ -105,7 +105,7 @@ class Data extends Action
                 'authcapture' => true
             ];
 
-            $hints = $this->cartHelper->getHints($place_order_payload);
+            $hints = $this->cartHelper->getHints($place_order_payload, null);
 
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);

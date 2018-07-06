@@ -49,7 +49,8 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use \Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Class Order
@@ -149,14 +150,14 @@ class Order extends AbstractHelper
     private $cartHelper;
 
     /**
-     * @var QuoteCollectionFactory
-     */
-    private $quoteCollectionFactory;
-
-    /**
      * @var \Magento\Payment\Model\Info
      */
     private $quotePaymentInfoInstance = null;
+
+    /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
 
     /**
      * @param Context $context
@@ -177,7 +178,7 @@ class Order extends AbstractHelper
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
-     * @param QuoteCollectionFactory $quoteCollectionFactory
+     * @param ResourceConnection $resourceConnection
      *
      * @codeCoverageIgnore
      */
@@ -200,27 +201,27 @@ class Order extends AbstractHelper
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
-        QuoteCollectionFactory $quoteCollectionFactory
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
-        $this->apiHelper             = $apiHelper;
-        $this->configHelper          = $configHelper;
-        $this->converter             = $converter;
-        $this->regionModel           = $regionModel;
-        $this->quoteManagement       = $quoteManagement;
-        $this->emailSender           = $emailSender;
-        $this->invoiceService        = $invoiceService;
-        $this->dbTransaction         = $dbTransaction;
-        $this->invoiceSender         = $invoiceSender;
-        $this->transactionBuilder    = $transactionBuilder;
-        $this->timezone              = $timezone;
-        $this->dataObjectFactory     = $dataObjectFactory;
-        $this->checkoutSession       = $checkoutSession;
-        $this->appState              = $appState;
-        $this->logHelper             = $logHelper;
-        $this->bugsnag               = $bugsnag;
-        $this->cartHelper            = $cartHelper;
-        $this->quoteCollectionFactory = $quoteCollectionFactory;
+        $this->apiHelper = $apiHelper;
+        $this->configHelper = $configHelper;
+        $this->converter = $converter;
+        $this->regionModel = $regionModel;
+        $this->quoteManagement = $quoteManagement;
+        $this->emailSender = $emailSender;
+        $this->invoiceService = $invoiceService;
+        $this->dbTransaction = $dbTransaction;
+        $this->invoiceSender = $invoiceSender;
+        $this->transactionBuilder = $transactionBuilder;
+        $this->timezone = $timezone;
+        $this->dataObjectFactory = $dataObjectFactory;
+        $this->checkoutSession = $checkoutSession;
+        $this->appState = $appState;
+        $this->logHelper = $logHelper;
+        $this->bugsnag = $bugsnag;
+        $this->cartHelper = $cartHelper;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -429,7 +430,10 @@ class Order extends AbstractHelper
         // Delete redundant clones and parent quote
         $this->deleteRedundantQuotes($quote);
 
-        if (!$frontend) {
+        if ($frontend) {
+            // Send order confirmation email to customer.
+            $this->emailSender->send($order);
+        } else {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
             );
@@ -442,9 +446,6 @@ class Order extends AbstractHelper
             $this->appState->emulateAreaCode('frontend', function () use ($order){
                 $this->emailSender->send($order);
             });
-        } else {
-            // Send order confirmation email to customer.
-            $this->emailSender->send($order);
         }
 
         return $order;
@@ -476,11 +477,19 @@ class Order extends AbstractHelper
      * @param Quote $quote
      */
     private function deleteRedundantQuotes($quote) {
-        /** @var $quotes \Magento\Quote\Model\ResourceModel\Quote\Collection */
-        $quotes = $this->quoteCollectionFactory->create();
-        $quotes->addFieldToFilter('bolt_parent_quote_id', $quote->getBoltParentQuoteId());
-        $quotes->addFieldToFilter('entity_id', ['neq' => $quote->getId()]);
-        $quotes->walk('delete');
+
+        $connection = $this->resourceConnection->getConnection();
+
+        // get table name with prefix
+        $tableName = $this->resourceConnection->getTableName('quote');
+
+        $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
+        $bind = [
+            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'entity_id' => $quote->getId()
+        ];
+
+        $connection->query($sql, $bind);
     }
 
     /**
@@ -498,21 +507,51 @@ class Order extends AbstractHelper
     public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
     {
         $transaction = $this->fetchTransactionInfo($reference);
-        $incrementId = $transaction->order->cart->display_id;
 
-        // Load quote from entity id
-        $quoteId = $transaction->order->cart->order_reference;
-        $quote = $this->cartHelper->getQuoteById($quoteId);
+        ///////////////////////////////////////////////////////////////
+        // Get order id and immutable quote id stored with transaction.
+        // Take into account orders created with data in old format
+        // where only reserved_order_id was stored in display_id field
+        // and the immutable quote_id in order_reference
+        ///////////////////////////////////////////////////////////////
+        list($incrementId, $quoteId) = array_pad(
+            explode(' / ', $transaction->order->cart->display_id),
+            2,
+            null
+        );
+        if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
+        ///////////////////////////////////////////////////////////////
 
-        if (!$quote || !$quote->getId()) {
-            throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
+        ///////////////////////////////////////////////////////////////
+        // try loading (immutable) quote from entity id. if called from
+        // hook the quote might have been cleared, resulting in error.
+        // prevent failure and log event to bugsnag.
+        ///////////////////////////////////////////////////////////////
+        try {
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+        } catch (NoSuchEntityException $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId) {
+                $report->setMetaData([
+                    'ORDER' => [
+                        'incrementId' => $incrementId,
+                        'quoteId' => $quoteId,
+                    ]
+                ]);
+            });
+            $quote = null;
         }
+        ///////////////////////////////////////////////////////////////
 
         // check if the order exists
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
+
+            if (!$quote || !$quote->getId()) {
+                throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
+            }
+
             $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
         }
 
@@ -522,6 +561,11 @@ class Order extends AbstractHelper
         if ($frontend) {
             return [$quote, $order];
         }
+    }
+
+    public function formatReferenceUrl($reference) {
+        $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
+        return '<a target="_blank" href="'.$url.'">'.$reference.'</a>';
     }
 
     /**
@@ -542,17 +586,11 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         }
 
-        // format bolt transaction fetch url
-        $reference_url = function($reference) {
-            return $this->configHelper->getApiUrl() . ApiHelper::API_CURRENT_VERSION .
-                ApiHelper::API_FETCH_TRANSACTION . "/" . $reference;
-        };
-
         ////////////////////////////////////////////////////////////////////////////
         /// Record total amount mismatch between magento and bolt order.
         /// Log the error in order comments and report via bugsnag.
         ////////////////////////////////////////////////////////////////////////////
-        $record_order_mismatch = function ($bolt_total) use ($order, $transaction, $reference_url) {
+        $record_order_mismatch = function ($bolt_total) use ($order, $transaction) {
 
             $order->setStatus(OrderModel::STATE_HOLDED);
             $order->setState(OrderModel::STATE_HOLDED);
@@ -562,14 +600,25 @@ class Order extends AbstractHelper
                 Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
                 $bolt_total / 100,
                 $order->getGrandTotal(),
-                $reference_url($transaction->reference)
+                $this->formatReferenceUrl($transaction->reference)
             );
 
             $order->addStatusHistoryComment($comment);
 
-            $quote = $this->cartHelper->getQuoteByReservedOrderId($order->getIncrementId());
+            list(, $quoteId) = array_pad(
+                explode(' / ', $transaction->order->cart->display_id),
+                2,
+                null
+            );
+            if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
 
-            $cart = $this->cartHelper->getCartData(true, false, $quote);
+            try {
+                $quote = $this->cartHelper->getQuoteById($quoteId);
+                $cart = $this->cartHelper->getCartData(true, false, $quote);
+            } catch (NoSuchEntityException $e) {
+                // Old quote cleaned by cron
+                $cart = ['The quote does not exist.'];
+            }
 
             $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
                 $report->setMetaData([
@@ -602,7 +651,7 @@ class Order extends AbstractHelper
                 'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0<br>Bolt transaction: %3',
                 $transaction->id,
                 strtoupper($transaction->status),
-                $reference_url($transaction->reference)
+                $this->formatReferenceUrl($transaction->reference)
             );
 
             $order->setStatus(OrderModel::STATE_PROCESSING);
@@ -685,7 +734,7 @@ class Order extends AbstractHelper
                     $comment = __(
                         'BOLTPAY INFO :: PAYMENT Status: %1<br>Bolt transaction: %2',
                         $status,
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 case 'failed':
@@ -693,7 +742,7 @@ class Order extends AbstractHelper
                     $status = 'FAILED';
                     $comment = __(
                         'BOLTPAY INFO :: THE TRANSACTION HAS FAILED.<br>Bolt transaction: %1',
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 case 'authorized':
@@ -728,7 +777,7 @@ class Order extends AbstractHelper
                     }
                     break;
                 case 'credited':
-                    $order_state = OrderModel::STATE_PROCESSING;
+                    $order_state = OrderModel::STATE_HOLDED;
                     $transaction_type = Transaction::TYPE_REFUND;
                     $transaction_id = $transaction->id.'-capture-refund';
                     $parent_transaction_id = $transaction->id.'-capture';
@@ -738,9 +787,9 @@ class Order extends AbstractHelper
                     $comment =__(
                         'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
                          IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
-                         <br>AMOUNT REFUNDED:%1<br>Bolt transaction: %2',
+                         <br>AMOUNT REFUNDED: %1<br>Bolt transaction: %2',
                         $amount->amount / 100,
-                        $reference_url($transaction_reference)
+                        $this->formatReferenceUrl($transaction_reference)
                     );
                     break;
                 // if type is "credit_completed" fetch the parent transaction info,
@@ -813,7 +862,7 @@ class Order extends AbstractHelper
                     'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
                     $status,
                     $formattedPrice,
-                    $reference_url($transaction_reference)
+                    $this->formatReferenceUrl($transaction_reference)
                 );
 
                 $payment->addTransactionCommentsToOrder(
