@@ -20,12 +20,12 @@ namespace Bolt\Boltpay\Controller\Shipping;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Quote\Model\Quote;
-use Magento\Framework\HTTP\ZendClientFactory;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use \Magento\Customer\Model\Session as CustomerSession;
+use Bolt\Boltpay\Helper\Geolocation;
 
 /**
  * Class Prefetch.
@@ -37,13 +37,10 @@ use \Magento\Customer\Model\Session as CustomerSession;
  */
 class Prefetch extends Action
 {
-    /** @var CustomerSession */
-    private $customerSession;
-
     /**
-     * @var ZendClientFactory
+     * @var CustomerSession
      */
-    private $httpClientFactory;
+    private $customerSession;
 
     /**
      * @var ShippingMethods
@@ -65,61 +62,38 @@ class Prefetch extends Action
      */
     private $configHelper;
 
-    // GeoLocation API endpoint
-    private $locationURL = "http://freegeoip.net/json/%s";
+    /**
+     * @var Geolocation
+     */
+    private $geolocation;
 
     /**
      * @param Context $context
-     * @param ZendClientFactory $httpClientFactory
      * @param ShippingMethods $shippingMethods
      * @param CartHelper $cartHelper
      * @param Bugsnag $bugsnag
      * @param ConfigHelper $configHelper
      * @param CustomerSession $customerSession
+     * @param Geolocation $geolocation
      *
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
-        ZendClientFactory $httpClientFactory,
         ShippingMethods $shippingMethods,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         configHelper $configHelper,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        Geolocation $geolocation
     ) {
         parent::__construct($context);
-        $this->httpClientFactory = $httpClientFactory;
-        $this->shippingMethods   = $shippingMethods;
-        $this->cartHelper        = $cartHelper;
-        $this->bugsnag           = $bugsnag;
-        $this->configHelper      = $configHelper;
-        $this->customerSession   = $customerSession;
-    }
-
-    /**
-     * Gets the IP address of the requesting customer.
-     * This is used instead of simply $_SERVER['REMOTE_ADDR'] to give more accurate IPs if a proxy is being used.
-     *
-     * @return string  The IP address of the customer
-     */
-    private function getIpAddress()
-    {
-        foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
-                'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
-            if ($ips = $this->getRequest()->getServer($key, false)) {
-                foreach (explode(',', $ips) as $ip) {
-                    $ip = trim($ip); // just to be safe
-                    if (filter_var(
-                        $ip,
-                        FILTER_VALIDATE_IP,
-                        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-                    ) !== false) {
-                        return $ip;
-                    }
-                }
-            }
-        }
+        $this->shippingMethods = $shippingMethods;
+        $this->cartHelper = $cartHelper;
+        $this->bugsnag  = $bugsnag;
+        $this->configHelper = $configHelper;
+        $this->customerSession = $customerSession;
+        $this->geolocation = $geolocation;
     }
 
     /**
@@ -163,30 +137,20 @@ class Prefetch extends Action
             ///////////////////////////////////////////////////////////////////////////
             // Prefetch Shipping and Tax for geolocated address
             ///////////////////////////////////////////////////////////////////////////
-            $ip = $this->getIpAddress();
+            if ($locationJson = $this->geolocation->getLocation()) {
 
-            $client = $this->httpClientFactory->create();
-            $client->setUri(sprintf($this->locationURL, $ip));
-            $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
+                $location = json_decode($locationJson);
 
-            // Dependant on third party API, wrapping in try/catch block.
-            // On error notify bugsnag and proceed
-            try {
-                $response = $client->request()->getBody();
-                $location = json_decode($response);
-
-                if ($location && $location->country_code && $location->zip_code) {
+                // at least country code and zip are needed for shipping estimation
+                if ($location && @$location->country_code && @$location->zip) {
                     $shipping_address = [
                         'country_code' => $location->country_code,
-                        'postal_code'  => $location->zip_code,
-                        'region'       => $location->region_name,
-                        'locality'     => $location->city,
+                        'postal_code'  => $location->zip,
+                        'region'       => @$location->region_name,
+                        'locality'     => @$location->city,
                     ];
-
                     $this->shippingMethods->shippingEstimation($quote, $shipping_address);
                 }
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
             }
             ///////////////////////////////////////////////////////////////////////////
 
@@ -229,7 +193,6 @@ class Prefetch extends Action
                 $prefetchForStoredAddress($shippingAddress);
             }
             /////////////////////////////////////////////////////////////////////////////////
-
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
