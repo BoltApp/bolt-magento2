@@ -49,7 +49,7 @@ use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use \Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Class Order
@@ -149,14 +149,14 @@ class Order extends AbstractHelper
     private $cartHelper;
 
     /**
-     * @var QuoteCollectionFactory
-     */
-    private $quoteCollectionFactory;
-
-    /**
      * @var \Magento\Payment\Model\Info
      */
     private $quotePaymentInfoInstance = null;
+
+    /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
 
     /**
      * @param Context $context
@@ -177,7 +177,7 @@ class Order extends AbstractHelper
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
-     * @param QuoteCollectionFactory $quoteCollectionFactory
+     * @param ResourceConnection $resourceConnection
      *
      * @codeCoverageIgnore
      */
@@ -200,27 +200,27 @@ class Order extends AbstractHelper
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
-        QuoteCollectionFactory $quoteCollectionFactory
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
-        $this->apiHelper             = $apiHelper;
-        $this->configHelper          = $configHelper;
-        $this->converter             = $converter;
-        $this->regionModel           = $regionModel;
-        $this->quoteManagement       = $quoteManagement;
-        $this->emailSender           = $emailSender;
-        $this->invoiceService        = $invoiceService;
-        $this->dbTransaction         = $dbTransaction;
-        $this->invoiceSender         = $invoiceSender;
-        $this->transactionBuilder    = $transactionBuilder;
-        $this->timezone              = $timezone;
-        $this->dataObjectFactory     = $dataObjectFactory;
-        $this->checkoutSession       = $checkoutSession;
-        $this->appState              = $appState;
-        $this->logHelper             = $logHelper;
-        $this->bugsnag               = $bugsnag;
-        $this->cartHelper            = $cartHelper;
-        $this->quoteCollectionFactory = $quoteCollectionFactory;
+        $this->apiHelper = $apiHelper;
+        $this->configHelper = $configHelper;
+        $this->converter = $converter;
+        $this->regionModel = $regionModel;
+        $this->quoteManagement = $quoteManagement;
+        $this->emailSender = $emailSender;
+        $this->invoiceService = $invoiceService;
+        $this->dbTransaction = $dbTransaction;
+        $this->invoiceSender = $invoiceSender;
+        $this->transactionBuilder = $transactionBuilder;
+        $this->timezone = $timezone;
+        $this->dataObjectFactory = $dataObjectFactory;
+        $this->checkoutSession = $checkoutSession;
+        $this->appState = $appState;
+        $this->logHelper = $logHelper;
+        $this->bugsnag = $bugsnag;
+        $this->cartHelper = $cartHelper;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -476,11 +476,19 @@ class Order extends AbstractHelper
      * @param Quote $quote
      */
     private function deleteRedundantQuotes($quote) {
-        /** @var $quotes \Magento\Quote\Model\ResourceModel\Quote\Collection */
-        $quotes = $this->quoteCollectionFactory->create();
-        $quotes->addFieldToFilter('bolt_parent_quote_id', $quote->getBoltParentQuoteId());
-        $quotes->addFieldToFilter('entity_id', ['neq' => $quote->getId()]);
-        $quotes->walk('delete');
+
+        $connection = $this->resourceConnection->getConnection();
+
+        // get table name with prefix
+        $tableName = $this->resourceConnection->getTableName('quote');
+
+        $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
+        $bind = [
+            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'entity_id' => $quote->getId()
+        ];
+
+        $connection->query($sql, $bind);
     }
 
     /**
