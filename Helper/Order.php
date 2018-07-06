@@ -50,6 +50,7 @@ use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Class Order
@@ -521,8 +522,25 @@ class Order extends AbstractHelper
         if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
         ///////////////////////////////////////////////////////////////
 
-        // load (immutable) quote from entity id
-        $quote = $this->cartHelper->getQuoteById($quoteId);
+        ///////////////////////////////////////////////////////////////
+        // try loading (immutable) quote from entity id. if called from
+        // hook the quote might have been cleared, resulting in error.
+        // prevent failure and log event to bugsnag.
+        ///////////////////////////////////////////////////////////////
+        try {
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+        } catch (NoSuchEntityException $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId) {
+                $report->setMetaData([
+                    'ORDER' => [
+                        'incrementId' => $incrementId,
+                        'quoteId' => $quoteId,
+                    ]
+                ]);
+            });
+            $quote = null;
+        }
+        ///////////////////////////////////////////////////////////////
 
         // check if the order exists
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
@@ -597,7 +615,7 @@ class Order extends AbstractHelper
             try {
                 $quote = $this->cartHelper->getQuoteById($quoteId);
                 $cart = $this->cartHelper->getCartData(true, false, $quote);
-            } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            } catch (NoSuchEntityException $e) {
                 // Old quote cleaned by cron
                 $cart = ['The quote does not exist.'];
             }
