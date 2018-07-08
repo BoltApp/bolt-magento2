@@ -52,6 +52,12 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['bolt_parent_quote_id']
         );
 
+        $setup->getConnection()->addIndex(
+            $setup->getTable('quote'),
+            $setup->getIdxName('quote', ['is_active']),
+            ['is_active']
+        );
+
         $setup->endSetup();
     }
 }
