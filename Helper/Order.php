@@ -427,6 +427,9 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
+        // Set parent quote as inactive
+        $this->deactivateParentQuote($quote);
+
         // Delete redundant clones and parent quote
         $this->deleteRedundantQuotes($quote);
 
@@ -490,6 +493,17 @@ class Order extends AbstractHelper
         ];
 
         $connection->query($sql, $bind);
+    }
+
+    /**
+     * Set parent quote as inactive.
+     *
+     * @param Quote $quote
+     */
+    public function deactivateParentQuote($quote) {
+        $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
+        $parentQuote->setIsActive(false);
+        $this->cartHelper->saveQuote($parentQuote);
     }
 
     /**
