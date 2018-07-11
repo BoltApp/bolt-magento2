@@ -143,7 +143,7 @@ class ShippingMethods implements ShippingMethodsInterface
     private $priceHelper;
 
     // Totals adjustment threshold
-    private $threshold = 0.01;
+    private $threshold = 0.5;
 
     private $taxAdjusted = false;
 
