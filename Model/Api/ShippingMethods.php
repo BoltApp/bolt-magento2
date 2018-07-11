@@ -39,6 +39,7 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\CustomerFactory;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 
 /**
  * Class ShippingMethods
@@ -136,6 +137,11 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $customerFactory;
 
+    /**
+     * @var PriceHelper
+     */
+    private $priceHelper;
+
     // Totals adjustment threshold
     private $threshold = 0.01;
 
@@ -160,6 +166,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface $cache
      * @param CustomerSession $customerSession
      * @param CustomerFactory $customerFactory
+     * @param PriceHelper $priceHelper
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -178,7 +185,8 @@ class ShippingMethods implements ShippingMethodsInterface
         Request $request,
         CacheInterface $cache,
         CustomerSession $customerSession,
-        CustomerFactory $customerFactory
+        CustomerFactory $customerFactory,
+        PriceHelper $priceHelper
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -197,6 +205,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->customerSession = $customerSession;
         $this->customerFactory = $customerFactory;
+        $this->priceHelper = $priceHelper;
     }
 
     /**
@@ -526,14 +535,21 @@ class ShippingMethods implements ShippingMethodsInterface
             ////////////////////////////////////////////////////////////////
 
             $shippingAddress->setShippingMethod($method);
+            // in order to get correct shipping discounts
+            // the following method must be called twice
+            $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
-            $cost         = $shippingAddress->getShippingAmount();
+            $cost        = $shippingAddress->getShippingAmount() - $shippingAddress->getShippingDiscountAmount();
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
             $diff = $cost * 100 - $roundedCost;
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
+
+            $discount = $this->priceHelper->currency($shippingAddress->getShippingDiscountAmount(), true, false);
+
+            if ($shippingAddress->getShippingDiscountAmount()) $service .= " [$discount" . "_discount]";
 
             if (abs($diff) >= $this->threshold) {
                 $this->taxAdjusted = true;
