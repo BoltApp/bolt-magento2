@@ -372,7 +372,11 @@ class ShippingMethods implements ShippingMethodsInterface
         ////////////////////////////////////////////////////////////////////////////////////////
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
 
-            $cacheIdentifier = $quote->getId().'_'.round($quote->getSubtotal()*100).'_'.
+            // use parent quote id for caching.
+            // if everything else matches the cache is used more efficiently this way
+            $parentQuoteId =$quote->getBoltParentQuoteId();
+
+            $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
                 $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code'];
 
             // include products in cache key
@@ -540,16 +544,24 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
-            $cost        = $shippingAddress->getShippingAmount() - $shippingAddress->getShippingDiscountAmount();
+            $discountAmount = $shippingAddress->getShippingDiscountAmount();
+
+            $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
             $diff = $cost * 100 - $roundedCost;
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
-            $discount = $this->priceHelper->currency($shippingAddress->getShippingDiscountAmount(), true, false);
-
-            if ($shippingAddress->getShippingDiscountAmount()) $service .= " [$discount" . "_discount]";
+            if ($discountAmount) {
+                if ($cost == 0) {
+                    $service .= ' [free&nbsp;shipping&nbsp;discount]';
+                } else {
+                    $discount = $this->priceHelper->currency($discountAmount, true, false);
+                    $service .= " [$discount" . "&nbsp;discount]";
+                }
+                $service = html_entity_decode($service);
+            }
 
             if (abs($diff) >= $this->threshold) {
                 $this->taxAdjusted = true;
