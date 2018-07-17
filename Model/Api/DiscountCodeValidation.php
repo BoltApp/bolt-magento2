@@ -193,7 +193,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             $request = json_decode($this->request->getContent());
 
-            $couponCode = $request->coupon;
+            $couponCode = $request->discount_code;
 
             $coupon = $this->couponFactory->create()->loadByCode($couponCode);
             $rule = $this->ruleFactory->create()->load($coupon->getRuleId());
