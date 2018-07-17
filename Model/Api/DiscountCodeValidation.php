@@ -33,6 +33,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
 
 /**
  * Discount Code Validation class
@@ -54,11 +56,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var CouponManagement
      */
     private $couponManagement;
-
-    /**
-     * @var CartRepositoryInterface
-     */
-    private $quoteRepository;
 
     /**
      * @var CouponFactory
@@ -119,7 +116,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param Request $request
      * @param Response $response
      * @param CouponManagement $couponManagement
-     * @param CartRepositoryInterface $quoteRepository
      * @param CouponFactory $couponFactory
      * @param RuleFactory $ruleFactory
      * @param LogHelper $logHelper
@@ -136,7 +132,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         Request $request,
         Response $response,
         CouponManagement $couponManagement,
-        CartRepositoryInterface $quoteRepository,
         CouponFactory $couponFactory,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
@@ -152,7 +147,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->request = $request;
         $this->response = $response;
         $this->couponManagement = $couponManagement;
-        $this->quoteRepository = $quoteRepository;
         $this->couponFactory = $couponFactory;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
@@ -189,7 +183,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
             ]);
 
-            $this->hookHelper->verifyWebhook();
+            //  $this->hookHelper->verifyWebhook();
 
             $request = json_decode($this->request->getContent());
 
@@ -209,16 +203,31 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             $couponId= $coupon->getId();
 
-            $quote_id = $request->order_reference;
+            // We have parent and child (cloned) quotes.
+            // Apply coupon to both of them so the changes
+            // are also persistent to the parent and visible
+            // if user opens another tab in the same session
+            list($incrementId, $quoteId) = explode(' / ', $request->cart->display_id);
+            $parentQuoteId = $request->order_reference;
+
+            // check if the order has been created in the meanwhile
+            $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
             try {
-                /** @var  \Magento\Quote\Model\Quote $quote */
-                $quote = $this->quoteRepository->getActive($quote_id);
+                /** @var Quote $parentQuote */
+                $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+            } catch (\Exception $e) {
+                $parentQuote = null;
+            }
+
+            try {
+                /** @var Quote $quote */
+                $quote = $this->cartHelper->getQuoteById($quoteId);
             } catch (\Exception $e) {
                 $quote = null;
             }
 
-            if (!$quote) {
+            if (!$parentQuote || $order && $order->getId()) {
                 $result['error'] = [
                     'code' => 5,
                     'description' => 'The cart does not exist',
@@ -233,12 +242,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     'code' => 7,
                     'description' => 'Code does not exist',
                 ];
-            } elseif (date('Y-m-d', strtotime($rule->getToDate())) < date('Y-m-d')) {
+            } elseif ($date = $rule->getToDate() && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
                 $result['error'] = [
                     'code' => 1,
-                    'description' => 'Code has expired',
+                    'description' => 'Code has expired'
                 ];
-            } elseif (date('Y-m-d', strtotime($rule->getFromDate())) > date('Y-m-d')) {
+            } elseif ($date = $rule->getFromDate() && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
                 $result['error'] = [
                     'code' => 8,
                     'description' => 'Code available from ' . $this->timezone->formatDate(
@@ -292,25 +301,56 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return;
             }
 
-            try {
-                $oldCouponCode = $quote->getCouponCode();
-                $this->couponManagement->set($quote_id, $couponCode);
-                $shippingAddress = $quote->getShippingAddress();
-                $result['description'] = __('Discount ') . $shippingAddress->getDiscountDescription();
-                $result['amount'] = abs(round($shippingAddress->getDiscountAmount() * 100));
-                $result['status'] = 'success';
-            } catch (\Exception $e) {
-                $result['error'] = [
-                    'code' => 7,
-                    'description' => $e->getMessage()
-                ];
-                // try to reapply the old coupon code
+            /**
+             * @param Quote $quote
+             * @param $quoteId
+             * @param $couponCode
+             */
+            $applyCoupon = function($quote, $couponCode) use (& $result) {
                 try {
-                    $this->couponManagement->set($quote_id, $oldCouponCode);
+                    $oldCouponCode = $quote->getCouponCode();
+                    $quoteId = $quote->getId();
+                    $this->couponManagement->set($quoteId, $couponCode);
+                    $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+                    $result['description'] = __('Discount ') . $address->getDiscountDescription();
+                    $result['amount'] = abs(round($address->getDiscountAmount() * 100));
+                    $result['status'] = 'success';
                 } catch (\Exception $e) {
-                    // do nothing. The result will be visible in cart data
+                    $result['error'] = [
+                        'code' => 7,
+                        'description' => $e->getMessage()
+                    ];
+                    // try to reapply the old coupon code
+                    try {
+                        $this->couponManagement->set($quoteId, $oldCouponCode);
+                    } catch (\Exception $e) {
+                        // do nothing. The result will be visible in cart data
+                    }
                 }
-            }
+            };
+
+            $applyCoupon($parentQuote, $couponCode);
+            $applyCoupon($quote, $couponCode);
+
+//            try {
+//                $oldCouponCode = $quote->getCouponCode();
+//                $this->couponManagement->set($quoteId, $couponCode);
+//                $shippingAddress = $quote->getShippingAddress();
+//                $result['description'] = __('Discount ') . $shippingAddress->getDiscountDescription();
+//                $result['amount'] = abs(round($shippingAddress->getDiscountAmount() * 100));
+//                $result['status'] = 'success';
+//            } catch (\Exception $e) {
+//                $result['error'] = [
+//                    'code' => 7,
+//                    'description' => $e->getMessage()
+//                ];
+//                // try to reapply the old coupon code
+//                try {
+//                    $this->couponManagement->set($quoteId, $oldCouponCode);
+//                } catch (\Exception $e) {
+//                    // do nothing. The result will be visible in cart data
+//                }
+//            }
 
             $sendResponse($result);
 
