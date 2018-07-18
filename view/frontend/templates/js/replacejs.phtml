@@ -199,7 +199,7 @@ if (!$block->isEnabled()) return;
         'Magento_Customer/js/customer-data',
         'mage/validation/validation'
     ], function ($, authenticationPopup, customerData) {
-        ////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
 
         ////////////////////////////////
         // Merge objects
@@ -498,7 +498,7 @@ if (!$block->isEnabled()) return;
                 if (typeof customer_email.val() !== 'undefined'
                     && (customer_email.val().trim() === ''
                         || (form.validation() && form.validation('isValid') === false)
-                    )) return;
+                )) return;
 
                 if (settings && !!settings.publishable_key_payment) {
                     params.push('payment_only=true')
