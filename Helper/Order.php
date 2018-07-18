@@ -505,6 +505,7 @@ class Order extends AbstractHelper
                     'QUOTE' => [
                         'quoteId' => $quote->getId(),
                         'parentId' => $quote->getBoltParentQuoteId(),
+                        'orderId' => $quote->getReservedOrderId()
                     ]
                 ]);
             });
