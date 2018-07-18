@@ -48,6 +48,9 @@ use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
  */
 class Cart extends AbstractHelper
 {
+    const ITEM_TYPE_PHYSICAL = 'physical';
+    const ITEM_TYPE_DIGITAL  = 'digital';
+
     /** @var CheckoutSession */
     private $checkoutSession;
 
@@ -522,6 +525,7 @@ class Cart extends AbstractHelper
             $product['unit_price']   = $this->getRoundAmount($unitPrice);
             $product['quantity']     = round($item->getQty());
             $product['sku']          = trim($item->getSku());
+            $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
 
             ////////////////////////////////////
             // Get product description and image
