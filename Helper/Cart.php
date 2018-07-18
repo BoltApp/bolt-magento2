@@ -443,9 +443,9 @@ class Cart extends AbstractHelper
 
         ////////////////////////////////////////////////////////
         // CLONE THE QUOTE and quote billing / shipping  address
-        // if quote is not passed to the method - the cart data
-        // is being created for sending to Bolt create order API
-        // otherwise skip this step
+        // if immutable quote is not passed to the method - the
+        // cart data is being created for sending to Bolt create
+        // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
 
@@ -547,7 +547,7 @@ class Cart extends AbstractHelper
              * @var \Magento\Catalog\Model\Product
              */
             $_product = $this->productFactory->create()->load($productId);
-            //$product['description'] = strip_tags($_product->getDescription());
+            $product['description'] = strip_tags($_product->getDescription());
             try {
                 $productImage = $imageBlock->getImage($_product, 'product_small_image');
             } catch (\Exception $e) {
