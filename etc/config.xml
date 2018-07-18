@@ -40,6 +40,7 @@
 button[data-role=proceed-to-checkout]|prepend</replace_selectors>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>
+                <reset_shipping_calculation>0</reset_shipping_calculation>
             </boltpay>
         </payment>
     </default>
