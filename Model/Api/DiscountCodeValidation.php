@@ -40,6 +40,15 @@ use Bolt\Boltpay\Helper\Hook as HookHelper;
  */
 class DiscountCodeValidation implements DiscountCodeValidationInterface
 {
+    const ERR_INSUFFICIENT_INFORMATION     = 6200;
+    const ERR_CODE_INVALID                 = 6201;
+    const ERR_CODE_EXPIRED                 = 6202;
+    const ERR_CODE_NOT_AVAILABLE           = 6203;
+    const ERR_CODE_LIMIT_REACHED           = 6204;
+    const ERR_MINIMUM_CART_AMOUNT_REQUIRED = 6205;
+    const ERR_UNIQUE_EMAIL_REQUIRED        = 6206;
+    const ERR_ITEMS_NOT_ELIGIBLE           = 6207;
+
     /**
      * @var Request
      */
@@ -218,29 +227,34 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $quote = null;
             }
 
-            if (!$quote) {
+            if ($couponCode === '') {
                 $result['error'] = [
-                    'code' => 5,
+                    'code' => self::ERR_CODE_INVALID,
+                    'description' => 'The coupon code is invalid',
+                ];
+            } elseif (!$quote) {
+                $result['error'] = [
+                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
                     'description' => 'The cart does not exist',
                 ];
             } elseif (!$quote->getItemsCount()) {
                 $result['error'] = [
-                    'code' => 5,
+                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
                     'description' => 'The cart is empty',
                 ];
             } elseif (!$couponId || !$ruleId) {
                 $result['error'] = [
-                    'code' => 7,
+                    'code' => self::ERR_CODE_INVALID,
                     'description' => 'Code does not exist',
                 ];
             } elseif (date('Y-m-d', strtotime($rule->getToDate())) < date('Y-m-d')) {
                 $result['error'] = [
-                    'code' => 1,
+                    'code' => self::ERR_CODE_EXPIRED,
                     'description' => 'Code has expired',
                 ];
             } elseif (date('Y-m-d', strtotime($rule->getFromDate())) > date('Y-m-d')) {
                 $result['error'] = [
-                    'code' => 8,
+                    'code' => self::ERR_CODE_NOT_AVAILABLE,
                     'description' => 'Code available from ' . $this->timezone->formatDate(
                         new \DateTime($rule->getFromDate()),
                         \IntlDateFormatter::MEDIUM
@@ -248,7 +262,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 ];
             } elseif ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
                 $result['error'] = [
-                    'code' => 4,
+                    'code' => self::ERR_CODE_LIMIT_REACHED,
                     'description' => 'Usage limit reached',
                 ];
             } elseif ($customerId = $quote->getCustomerId()) {
@@ -262,7 +276,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     if ($couponUsage->getCouponId() &&
                         $couponUsage->getTimesUsed() >= $usagePerCustomer) {
                         $result['error'] = [
-                            'code' => 4,
+                            'code' => self::ERR_CODE_LIMIT_REACHED,
                             'description' => "$usagePerCustomer use per cutomer limit reached",
                         ];
                     }
@@ -271,7 +285,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $ruleCustomer = $this->customerFactory->create()->loadByCustomerRule($customerId, $ruleId);
                     if ($ruleCustomer->getId() && $ruleCustomer->getTimesUsed() >= $rule->getUsesPerCustomer()) {
                         $result['error'] = [
-                            'code' => 4,
+                            'code' => self::ERR_CODE_LIMIT_REACHED,
                             'description' => "$usesPerCustomer use per cutomer limit reached",
                         ];
                     }
@@ -297,11 +311,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $this->couponManagement->set($quote_id, $couponCode);
                 $shippingAddress = $quote->getShippingAddress();
                 $result['description'] = __('Discount ') . $shippingAddress->getDiscountDescription();
-                $result['amount'] = abs(round($shippingAddress->getDiscountAmount() * 100));
+                $result['discount_amount'] = abs(round($shippingAddress->getDiscountAmount() * 100));
+                // TODO set discount type
+                // $result['discount_type'] = "flat_amount|percentage|shipping"
                 $result['status'] = 'success';
             } catch (\Exception $e) {
                 $result['error'] = [
-                    'code' => 7,
+                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
                     'description' => $e->getMessage()
                 ];
                 // try to reapply the old coupon code
