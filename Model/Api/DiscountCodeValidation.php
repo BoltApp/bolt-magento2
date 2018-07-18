@@ -209,7 +209,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             $couponId= $coupon->getId();
 
-            $quote_id = $request->order_reference;
+            $quote_id = $request->cart->order_reference;
 
             try {
                 /** @var  \Magento\Quote\Model\Quote $quote */
