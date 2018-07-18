@@ -437,10 +437,44 @@ if (!$block->isEnabled()) return;
             },
 
             check: function () {
+
                 if (createRequest || !cart.orderToken) {
                     console.log("Retrieving order token from server... not ready to checkout yet.");
                     return false;
                 }
+
+                ///////////////////////////////////////////////////////////
+                // On Bolt button click check if guest checkout is allowed.
+                // Display login popup to guest customers if it is not. The
+                // Magento customerData and authenticationPopup objects are
+                // used.
+                ///////////////////////////////////////////////////////////
+                var customer = customerData.get('customer');
+                var shoppingCart = customerData.get('cart');
+                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+                    authenticationPopup.showModal();
+                    return false;
+                }
+
+                ///////////////////////////////////////////////////////////
+                // On Magento checkout page - Bolt payment only checkout
+                // trigger click on boltpay radio if the button clicked is
+                // in minicart panel or other (voluntary) location
+                // and trigger email validation.
+                ///////////////////////////////////////////////////////////
+                if (getCheckoutType() === 'payment') {
+
+                    // trigger click on boltpay radio
+                    if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
+
+                    // stop if customer email field exists and is not valid on paymtnt only page
+                    var customer_email = $(customer_email_selector);
+                    var form = customer_email.closest('form');
+                    if (form.validation() && form.validation('isValid') === false) {
+                        return false;
+                    }
+                }
+
                 return true;
             },
 
@@ -831,49 +865,6 @@ if (!$block->isEnabled()) return;
             }
 
             configureHints();
-        });
-        ///////////////////////////////////////////////////////////
-
-        ///////////////////////////////////////////////////////////
-        // On Bolt button click check if guest checkout is allowed.
-        // Display login popup to guest customers if it is not. The
-        // Magento customerData and authenticationPopup objects are
-        // used. Also trigger click on boltpay radio if the button
-        // clicked is in minicart or other (voluntary) location
-        // and trigger email validation.
-        ///////////////////////////////////////////////////////////
-        onElementReady(bolt_clickable_selector, function(element) {
-
-            // get default handler
-            var elementOnClick = element.onclick;
-
-            element.onclick = function (event) {
-
-                // trigger click on boltpay radio
-                if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
-
-                // check if guest checkout is allowed
-                var customer = customerData.get('customer');
-                var shoppingCart = customerData.get('cart');
-                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
-                    authenticationPopup.showModal();
-                    event.preventDefault();
-                    return;
-                }
-
-                // stop if customer email field exists and is not valid on paymtnt only page
-                if (getCheckoutType() === 'payment') {
-                    var customer_email = $(customer_email_selector);
-                    var form = customer_email.closest('form');
-                    if (form.validation() && form.validation('isValid') === false) {
-                        event.preventDefault();
-                        return;
-                    }
-                }
-
-                // call default handler
-                elementOnClick.call(element);
-            };
         });
         ///////////////////////////////////////////////////////////
 
