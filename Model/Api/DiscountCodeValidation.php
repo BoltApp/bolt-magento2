@@ -334,7 +334,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Check per customer usage limits
-            if ($customerId = $quote->getCustomerId()) {
+            if ($customerId = $parentQuote->getCustomerId()) {
                 // coupon per customer usage
                 if ($usagePerCustomer = $coupon->getUsagePerCustomer()) {
                     $couponUsage = $this->objectFactory->create();
