@@ -49,6 +49,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     const ERR_UNIQUE_EMAIL_REQUIRED        = 6206;
     const ERR_ITEMS_NOT_ELIGIBLE           = 6207;
 
+    // TODO: move this to a global const within the plugin.
+    const ERR_SERVICE                      = 6001;
+
     /**
      * @var Request
      */
@@ -202,70 +205,57 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             $request = json_decode($this->request->getContent());
 
-            $couponCode = $request->discount_code;
+            $couponCode = trim($request->discount_code);
+            if ($couponCode === '') {
+                return $this->sendErrorResponse(self::ERR_CODE_INVALID, 'No coupon code provided', 422);
+            }
 
             $coupon = $this->couponFactory->create()->loadByCode($couponCode);
+            if (empty($coupon)) {
+                return $this->sendErrorResponse(self::ERR_CODE_INVALID, sprintf('The coupon code %s is not found', $couponCode), 404);
+            }
+
             $rule = $this->ruleFactory->create()->load($coupon->getRuleId());
 
-            $result = [
-                'discount_code' => $couponCode,
-                'status'        => 'failure',
-            ];
-
-            if ($ruleId = $rule->getId()) {
-                $result['type'] = $rule->getSimpleAction();
-            }
 
             $couponId= $coupon->getId();
 
+            // Load the and validate the quote.
             $quote_id = $request->cart->order_reference;
-
+            if (empty($quote_id)) {
+                return $this->sendErrorResponse(self::ERR_INSUFFICIENT_INFORMATION, 'The order reference is invalid.', 422);
+            }
             try {
                 /** @var  \Magento\Quote\Model\Quote $quote */
                 $quote = $this->quoteRepository->getActive($quote_id);
             } catch (\Exception $e) {
                 $quote = null;
             }
+            if (empty($quote)) {
+                return $this->sendErrorResponse(self::ERR_INSUFFICIENT_INFORMATION, sprintf('The order reference [%s] is not found.', $quote_id), 404);
+            }
+            if (!$quote->getItemsCount()) {
+                return $this->sendErrorResponse(self::ERR_INSUFFICIENT_INFORMATION, sprintf('The cart for order reference [%s] is empty.', $quote_id), 422);
+            }
 
-            if ($couponCode === '') {
-                $result['error'] = [
-                    'code' => self::ERR_CODE_INVALID,
-                    'description' => 'The coupon code is invalid',
-                ];
-            } elseif (!$quote) {
-                $result['error'] = [
-                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
-                    'description' => 'The cart does not exist',
-                ];
-            } elseif (!$quote->getItemsCount()) {
-                $result['error'] = [
-                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
-                    'description' => 'The cart is empty',
-                ];
-            } elseif (!$couponId || !$ruleId) {
-                $result['error'] = [
-                    'code' => self::ERR_CODE_INVALID,
-                    'description' => 'Code does not exist',
-                ];
-            } elseif (date('Y-m-d', strtotime($rule->getToDate())) < date('Y-m-d')) {
-                $result['error'] = [
-                    'code' => self::ERR_CODE_EXPIRED,
-                    'description' => 'Code has expired',
-                ];
-            } elseif (date('Y-m-d', strtotime($rule->getFromDate())) > date('Y-m-d')) {
-                $result['error'] = [
-                    'code' => self::ERR_CODE_NOT_AVAILABLE,
-                    'description' => 'Code available from ' . $this->timezone->formatDate(
-                        new \DateTime($rule->getFromDate()),
-                        \IntlDateFormatter::MEDIUM
-                    ),
-                ];
-            } elseif ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
-                $result['error'] = [
-                    'code' => self::ERR_CODE_LIMIT_REACHED,
-                    'description' => 'Usage limit reached',
-                ];
-            } elseif ($customerId = $quote->getCustomerId()) {
+            // Check date validity.
+            if (date('Y-m-d', strtotime($rule->getToDate())) < date('Y-m-d')) {
+                return $this->sendErrorResponse(self::ERR_CODE_EXPIRED, sprintf('The code [%s] has expired.', $couponCode), 422);
+            }
+            if (date('Y-m-d', strtotime($rule->getFromDate())) > date('Y-m-d')) {
+                $desc = 'Code available from ' . $this->timezone->formatDate(
+                    new \DateTime($rule->getFromDate()),
+                    \IntlDateFormatter::MEDIUM
+                );
+                return $this->sendErrorResponse(self::ERR_CODE_NOT_AVAILABLE, $desc, 422);
+            }
+
+            // Check usage limits.
+            if ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
+                return $this->sendErrorResponse(self::ERR_CODE_LIMIT_REACHED, sprintf('The code [%s] has exceeded usage limit.', $couponCode), 422);
+            }
+
+            if ($customerId = $quote->getCustomerId()) {
                 if ($usagePerCustomer = $coupon->getUsagePerCustomer()) {
                     $couponUsage = $this->objectFactory->create();
                     $this->usageFactory->create()->loadByCustomerCoupon(
@@ -292,18 +282,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 }
             }
 
-            $sendResponse = function ($result) use ($quote) {
-                if ($quote) {
-                    $payment_only = (bool)$quote->getShippingAddress()->getShippingMethod();
-                    $result['cart'] = $this->cartHelper->getCartData($payment_only,null, $quote);
-                }
-                $this->response->setBody(json_encode($result));
-                $this->response->sendResponse();
-            };
+            $result = [
+                'discount_code' => $couponCode,
+                'status'        => 'failure',
+            ];
 
-            if (@$result['error']) {
-                $sendResponse($result);
-                return;
+            if ($ruleId = $rule->getId()) {
+                // TODO set discount type
+                // $result['discount_type'] = "flat_amount|percentage|shipping"
+                $result['type'] = $rule->getSimpleAction();
             }
 
             try {
@@ -312,42 +299,49 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $shippingAddress = $quote->getShippingAddress();
                 $result['description'] = __('Discount ') . $shippingAddress->getDiscountDescription();
                 $result['discount_amount'] = abs(round($shippingAddress->getDiscountAmount() * 100));
-                // TODO set discount type
-                // $result['discount_type'] = "flat_amount|percentage|shipping"
                 $result['status'] = 'success';
             } catch (\Exception $e) {
-                $result['error'] = [
-                    'code' => self::ERR_INSUFFICIENT_INFORMATION,
-                    'description' => $e->getMessage()
-                ];
                 // try to reapply the old coupon code
                 try {
                     $this->couponManagement->set($quote_id, $oldCouponCode);
                 } catch (\Exception $e) {
                     // do nothing. The result will be visible in cart data
                 }
+                $this->sendErrorResponse(self::ERR_SERVICE, $e->getMessage(), 422);
             }
-
-            $sendResponse($result);
+            $this->sendSuccessResponse($result, $quote);
 
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode($e->getHttpCode());
-            $this->response->setBody(json_encode([
-                'status' => 'error',
-                'code' => $e->getCode(),
-                'message' => $e->getMessage(),
-            ]));
-            $this->response->sendResponse();
+            $this->sendErrorResponse(self::ERR_SERVICE, $e->getMessage(), $e->getHttpCode());
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode(422);
-            $this->response->setBody(json_encode([
-                'status' => 'error',
-                'code' => '6009',
-                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
-            ]));
-            $this->response->sendResponse();
+            $errMsg = 'Unprocessable Entity: ' . $e->getMessage();
+            $this->sendErrorResponse(self::ERR_SERVICE, $errMsg, 422);
         }
+    }
+
+    private function sendErrorResponse($errCode, $message, $httpStatusCode) {
+        $errResponse = [
+            'status' => 'error',
+            'error' => [
+                'code' => $errCode,
+                'message' => $message,
+            ],
+        ];
+        $this->response->setHttpResponseCode($httpStatusCode);
+        $this->response->setBody(json_encode($errResponse));
+        $this->response->sendResponse();
+        return;
+    }
+
+    private function sendSuccessResponse($result, $quote) {
+        if ($quote) {
+            $payment_only = (bool)$quote->getShippingAddress()->getShippingMethod();
+            $result['cart'] = $this->cartHelper->getCartData($payment_only, null, $quote);
+        }
+        $this->response->setBody(json_encode($result));
+        $this->response->sendResponse();
+        return;
     }
 }
