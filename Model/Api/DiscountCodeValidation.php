@@ -207,7 +207,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $request = json_decode($this->request->getContent());
 
             // get the coupon code
-            $couponCode = $request->discount_code;
+            $couponCode = trim($request->discount_code);
 
             // check if empty coupon was sent
             if ($couponCode === '') {
