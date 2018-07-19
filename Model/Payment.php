@@ -297,7 +297,7 @@ class Payment extends AbstractMethod
             $order = $payment->getOrder();
 
             if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for refund.'));
+                throw new LocalizedException(__('Invalid amount for capture.'));
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
