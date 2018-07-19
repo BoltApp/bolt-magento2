@@ -269,7 +269,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The order #%s has already been created.', $parentQuoteId),
-                    404
+                    422
                 );
             }
 
