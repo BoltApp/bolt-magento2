@@ -408,15 +408,21 @@ class Cart extends AbstractHelper
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
-     * @param bool $paymentOnly               flag that represents the type of checkout
-     * @param string $placeOrderPayload      additional data collected from the (one page checkout) page,
+     * @param bool $paymentOnly             flag that represents the type of checkout
+     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
      * @param Quote $immutableQuote
+     * @param bool $recreate                If set to `true` create a new clone. This is used when discount codes
+     *                                          are applied from the bolt checkout. Instead of updating the clone
+     *                                          create and return a new one, keeping the immutability prospect of clones
+     *                                          TODO: consider upadting existing clone instead of creating a new one
+     *                                                and change the name from $immutableQuote to something more
+     *                                                semantically correct
      *
      * @return array
      * @throws \Exception
      */
-    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
+    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null, $recreate = false)
     {
         $cart = [];
 
@@ -450,7 +456,7 @@ class Cart extends AbstractHelper
         // cart data is being created for sending to Bolt create
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
-        if (!$immutableQuote) {
+        if (!$immutableQuote || $recreate) {
 
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();
