@@ -202,7 +202,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
             ]);
 
-            $this->hookHelper->verifyWebhook();
+            //$this->hookHelper->verifyWebhook();
 
             $request = json_decode($this->request->getContent());
 
@@ -269,7 +269,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The order #%s has already been created.', $parentQuoteId),
-                    404
+                    422
                 );
             }
 
@@ -307,7 +307,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Check date validity if "To" date is set for the rule
-            if ($date = $rule->getToDate() && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
+            $date = $rule->getToDate();
+            if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
                 return $this->sendErrorResponse(
                     self::ERR_CODE_EXPIRED,
                     sprintf('The code [%s] has expired.', $couponCode),
@@ -316,7 +317,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Check date validity if "From" date is set for the rule
-            if ($date = $rule->getFromDate() && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
+            $date = $rule->getFromDate();
+            if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
                 $desc = 'Code available from ' . $this->timezone->formatDate(
                         new \DateTime($rule->getFromDate()),
                         \IntlDateFormatter::MEDIUM
