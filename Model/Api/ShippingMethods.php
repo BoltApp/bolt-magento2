@@ -434,6 +434,7 @@ class ShippingMethods implements ShippingMethodsInterface
             'city'       => @$addressData['locality'],
             'street'     => trim(@$addressData['street_address1'] . "\n" . @$addressData['street_address2']),
             'email'      => $email,
+            'company'    => @$addressData['company'],
         ];
 
         foreach ($addressData as $key => $value) {
