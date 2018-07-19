@@ -143,11 +143,12 @@ class ShippingMethods implements ShippingMethodsInterface
     private $priceHelper;
 
     // Totals adjustment threshold
-    private $threshold = 0.5;
+    private $threshold = 1;
 
     private $taxAdjusted = false;
 
     /**
+     * Assigns local references to global resources
      *
      * @param HookHelper $hookHelper
      * @param RegionModel $regionModel
@@ -459,6 +460,27 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * Reset shipping calculation
+     *
+     * On some store setups shipping prices are conditionally changed
+     * depending on some custom logic. If it is done as a plugin for
+     * some method in the Magento shipping flow, then that method
+     * may be (indirectly) called from our Shipping And Tax flow more
+     * than once, resulting in wrong prices. This function resets
+     * address shipping calculation but can seriously slow down the
+     * process (on a system with many shipping options available).
+     * Use it carefully only when necesarry.
+     *
+     * @param \Magento\Quote\Model\Quote\Address $shippingAddress
+     */
+    private function resetShippingCalculationIfNeeded ($shippingAddress) {
+        if ($this->configHelper->getResetShippingCalculation()) {
+            $shippingAddress->removeAllShippingRates();
+            $shippingAddress->setCollectShippingRates(true);
+        }
+    }
+
+    /**
      * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
@@ -501,22 +523,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
-        ////////////////////////////////////////////////////////////////
-        /// On some store setups shipping prices are conditionally changed
-        /// depending on some custom logic. If it is done as a plugin for
-        /// some method in the Magento shipping flow, then that method
-        /// may be (indirectly) called from our Shipping And Tax flow more
-        /// than once, resulting in wrong prices. This function resets
-        /// address shipping calculation but can seriously slow down the
-        /// process (on a system with many shipping options available).
-        /// Use it carefully only when necesarry.
-        ////////////////////////////////////////////////////////////////
-        $resetShippingCalculation = function () use ($shippingAddress) {
-            $shippingAddress->removeAllShippingRates();
-            $shippingAddress->setCollectShippingRates(true);
-        };
-        //$resetShippingCalculation();
-        ////////////////////////////////////////////////////////////////
+        $this->resetShippingCalculationIfNeeded($shippingAddress);
 
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
@@ -532,15 +539,13 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
-            ////////////////////////////////////////////////////////////////
-            /// Use carefully only when necesarry.
-            ////////////////////////////////////////////////////////////////
-            // $resetShippingCalculation();
-            ////////////////////////////////////////////////////////////////
+            $this->resetShippingCalculationIfNeeded($shippingAddress);
 
             $shippingAddress->setShippingMethod($method);
-            // in order to get correct shipping discounts
-            // the following method must be called twice
+            // In order to get correct shipping discounts the following method must be called twice.
+            // Being a bug in Magento, or a bug in the tested store version, shipping discounts
+            // are not collected the first time the method is called.
+            // There was one loop step delay in applying discount to shipping options when method was called once.
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 

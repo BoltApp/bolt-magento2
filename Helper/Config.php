@@ -96,6 +96,11 @@ class Config extends AbstractHelper
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
 
     /**
+     * Reset Shipping Calculation
+     */
+    const XML_PATH_RESET_SHIPPING_CALCULATION = 'payment/boltpay/reset_shipping_calculation';
+
+    /**
      * Enabled
      */
     const XML_PATH_ACTIVE = 'payment/boltpay/active';
@@ -420,7 +425,6 @@ class Config extends AbstractHelper
      */
     public function getAutomaticCaptureMode($store = null)
     {
-        //Automatic capture mode
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
             ScopeInterface::SCOPE_STORE,
@@ -437,9 +441,24 @@ class Config extends AbstractHelper
      */
     public function getPrefetchShipping($store = null)
     {
-        //Automatic capture mode
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PREFETCH_SHIPPING,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Reset Shipping Calculation config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getResetShippingCalculation($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_RESET_SHIPPING_CALCULATION,
             ScopeInterface::SCOPE_STORE,
             $store
         );
