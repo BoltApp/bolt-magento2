@@ -202,7 +202,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
             ]);
 
-            //$this->hookHelper->verifyWebhook();
+            $this->hookHelper->verifyWebhook();
 
             $request = json_decode($this->request->getContent());
 
