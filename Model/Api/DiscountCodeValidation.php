@@ -366,9 +366,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 }
             }
 
-            // TODO set discount type
-            // $result['discount_type'] = "flat_amount|percentage|shipping"
-
             try {
                 $this->couponManagement->set($parentQuoteId, $couponCode);
                 $address = $parentQuote->isVirtual() ?
@@ -383,9 +380,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'discount_code'   => $couponCode,
                 'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
                 'description'     =>  __('Discount ') . $address->getDiscountDescription(),
-                'type'            => $rule->getSimpleAction(),
-                // TODO set discount type
-                // 'discount_type' => "flat_amount|percentage|shipping"
+                'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
             ];
 
             $this->sendSuccessResponse($result, $immutableQuote);
@@ -420,5 +415,18 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
         return;
+    }
+
+    private function convertToBoltDiscountType($type): string {
+        switch ($type) {
+            case "by_fixed":
+            case "cart_fixed":
+                return "fixed_amount";
+            case "by_percent":
+                return "percentage";
+            case "by_shipping":
+                return "shipping";
+        }
+        return "";
     }
 }
