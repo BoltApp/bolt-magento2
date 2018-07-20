@@ -366,9 +366,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 }
             }
 
-            // TODO set discount type
-            // $result['discount_type'] = "flat_amount|percentage|shipping"
-
             try {
                 $this->couponManagement->set($parentQuoteId, $couponCode);
                 $address = $parentQuote->isVirtual() ?
@@ -383,9 +380,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'discount_code'   => $couponCode,
                 'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
                 'description'     =>  __('Discount ') . $address->getDiscountDescription(),
-                'type'            => $rule->getSimpleAction(),
-                // TODO set discount type
-                // 'discount_type' => "flat_amount|percentage|shipping"
+                'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
             ];
 
             $this->sendSuccessResponse($result, $immutableQuote);
@@ -400,6 +395,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
     }
 
+    /**
+     * @param $errCode
+     * @param $message
+     * @param $httpStatusCode
+     */
     private function sendErrorResponse($errCode, $message, $httpStatusCode) {
         $errResponse = [
             'status' => 'error',
@@ -414,11 +414,33 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         return;
     }
 
+    /**
+     * @param $result
+     * @param $quote
+     * @throws \Exception
+     */
     private function sendSuccessResponse($result, $quote) {
         $payment_only = (bool)$quote->getShippingAddress()->getShippingMethod();
         $result['cart'] = $this->cartHelper->getCartData($payment_only, null, $quote, true);
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
         return;
+    }
+
+    /**
+     * @param string $type
+     * @return string
+     */
+    private function convertToBoltDiscountType($type) {
+        switch ($type) {
+            case "by_fixed":
+            case "cart_fixed":
+                return "fixed_amount";
+            case "by_percent":
+                return "percentage";
+            case "by_shipping":
+                return "shipping";
+        }
+        return "";
     }
 }
