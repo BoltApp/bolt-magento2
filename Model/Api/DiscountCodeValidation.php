@@ -395,6 +395,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
     }
 
+    /**
+     * @param $errCode
+     * @param $message
+     * @param $httpStatusCode
+     */
     private function sendErrorResponse($errCode, $message, $httpStatusCode) {
         $errResponse = [
             'status' => 'error',
@@ -409,6 +414,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         return;
     }
 
+    /**
+     * @param $result
+     * @param $quote
+     * @throws \Exception
+     */
     private function sendSuccessResponse($result, $quote) {
         $payment_only = (bool)$quote->getShippingAddress()->getShippingMethod();
         $result['cart'] = $this->cartHelper->getCartData($payment_only, null, $quote, true);
@@ -417,7 +427,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         return;
     }
 
-    private function convertToBoltDiscountType($type): string {
+    /**
+     * @param string $type
+     * @return string
+     */
+    private function convertToBoltDiscountType($type) {
         switch ($type) {
             case "by_fixed":
             case "cart_fixed":
