@@ -312,7 +312,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return $this->sendErrorResponse(
                     self::ERR_CODE_EXPIRED,
                     sprintf('The code [%s] has expired.', $couponCode),
-                    422
+                    422,
+                    $immutableQuote
                 );
             }
 
@@ -323,7 +324,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         new \DateTime($rule->getFromDate()),
                         \IntlDateFormatter::MEDIUM
                     );
-                return $this->sendErrorResponse(self::ERR_CODE_NOT_AVAILABLE, $desc, 422);
+                return $this->sendErrorResponse(
+                    self::ERR_CODE_NOT_AVAILABLE,
+                    $desc,
+                    422,
+                    $immutableQuote
+                );
             }
 
             // Check coupon usage limits.
@@ -331,7 +337,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return $this->sendErrorResponse(
                     self::ERR_CODE_LIMIT_REACHED,
                     sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                    422
+                    422,
+                    $immutableQuote
                 );
             }
 
@@ -349,7 +356,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         return $this->sendErrorResponse(
                             self::ERR_CODE_LIMIT_REACHED,
                             sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                            422
+                            422,
+                            $immutableQuote
                         );
                     }
                 }
@@ -360,7 +368,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         return $this->sendErrorResponse(
                             self::ERR_CODE_LIMIT_REACHED,
                             sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                            422
+                            422,
+                            $immutableQuote
                         );
                     }
                 }
@@ -372,7 +381,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $parentQuote->getBillingAddress() :
                     $parentQuote->getShippingAddress();
             } catch (\Exception $e) {
-                $this->sendErrorResponse(self::ERR_SERVICE, $e->getMessage(), 422);
+                $this->sendErrorResponse(
+                    self::ERR_SERVICE,
+                    $e->getMessage(),
+                    422,
+                    $immutableQuote
+                );
             }
 
             $result = [
@@ -387,11 +401,21 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->sendErrorResponse(self::ERR_SERVICE, $e->getMessage(), $e->getHttpCode());
+            $this->sendErrorResponse(
+                self::ERR_SERVICE,
+                $e->getMessage(),
+                $e->getHttpCode(),
+                $immutableQuote
+            );
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $errMsg = 'Unprocessable Entity: ' . $e->getMessage();
-            $this->sendErrorResponse(self::ERR_SERVICE, $errMsg, 422);
+            $this->sendErrorResponse(
+                self::ERR_SERVICE,
+                $errMsg,
+                422,
+                $immutableQuote
+            );
         }
     }
 
@@ -400,7 +424,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param $message
      * @param $httpStatusCode
      */
-    private function sendErrorResponse($errCode, $message, $httpStatusCode) {
+    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null) {
         $errResponse = [
             'status' => 'error',
             'error' => [
@@ -408,6 +432,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'message' => $message,
             ],
         ];
+        if ($quote) $errResponse['cart'] = $this->cartHelper->getCartData(false, null, $quote, true);
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody(json_encode($errResponse));
         $this->response->sendResponse();
@@ -420,8 +445,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @throws \Exception
      */
     private function sendSuccessResponse($result, $quote) {
-        $payment_only = (bool)$quote->getShippingAddress()->getShippingMethod();
-        $result['cart'] = $this->cartHelper->getCartData($payment_only, null, $quote, true);
+        $result['cart'] = $this->cartHelper->getCartData(false, null, $quote, true);
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
         return;
