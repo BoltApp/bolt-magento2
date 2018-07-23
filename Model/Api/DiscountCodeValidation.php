@@ -268,7 +268,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if ($this->cartHelper->getOrderByIncrementId($incrementId)) {
                 return $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The order #%s has already been created.', $parentQuoteId),
+                    sprintf('The order #%s has already been created.', $incrementId),
                     422
                 );
             }
@@ -285,24 +285,24 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 );
             }
 
-            // check if cart is empty
-            if (!$parentQuote->getItemsCount()) {
-                return $this->sendErrorResponse(
-                    self::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart for order reference [%s] is empty.', $parentQuoteId),
-                    422
-                );
-            }
-
             // check the existence of child quote
             try {
-                /** @var Quote $parentQuote */
+                /** @var Quote $immutableQuote */
                 $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
             } catch (\Exception $e) {
                 return $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
                     404
+                );
+            }
+
+            // check if cart is empty
+            if (!$immutableQuote->getItemsCount()) {
+                return $this->sendErrorResponse(
+                    self::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
+                    422
                 );
             }
 
@@ -343,7 +343,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Check per customer usage limits
-            if ($customerId = $parentQuote->getCustomerId()) {
+            if ($customerId = $immutableQuote->getCustomerId()) {
                 // coupon per customer usage
                 if ($usagePerCustomer = $coupon->getUsagePerCustomer()) {
                     $couponUsage = $this->objectFactory->create();
@@ -376,10 +376,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             try {
-                $this->couponManagement->set($parentQuoteId, $couponCode);
-                $address = $parentQuote->isVirtual() ?
-                    $parentQuote->getBillingAddress() :
-                    $parentQuote->getShippingAddress();
+                // try applying to parent first
+                $this->setCouponCode($parentQuote, $couponCode);
+                // apply coupon to clone
+                $this->setCouponCode($immutableQuote, $couponCode);
             } catch (\Exception $e) {
                 $this->sendErrorResponse(
                     self::ERR_SERVICE,
@@ -388,6 +388,19 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $immutableQuote
                 );
             }
+
+            if ($immutableQuote->getCouponCode() != $couponCode) {
+                $this->sendErrorResponse(
+                    self::ERR_SERVICE,
+                    $e->getMessage(),
+                    422,
+                    $immutableQuote
+                );
+            }
+
+            $address = $immutableQuote->isVirtual() ?
+                $immutableQuote->getBillingAddress() :
+                $immutableQuote->getShippingAddress();
 
             $result = [
                 'status'          => 'success',
@@ -420,9 +433,24 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $errCode
-     * @param $message
-     * @param $httpStatusCode
+     * @param Quote $quote
+     * @return array
+     * @throws \Exception
+     */
+    private function getCartTotals($quote) {
+
+        $cart = $this->cartHelper->getCartData(false, null, $quote);
+        return [
+            'total_amount' => $cart['total_amount'],
+            'tax_amount'   => $cart['tax_amount'],
+            'discounts'    => $cart['discounts'],
+        ];
+    }
+
+    /**
+     * @param int $errCode
+     * @param string $message
+     * @param int $httpStatusCode
      */
     private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null) {
         $errResponse = [
@@ -432,7 +460,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'message' => $message,
             ],
         ];
-        if ($quote) $errResponse['cart'] = $this->cartHelper->getCartData(false, null, $quote, true);
+        if ($quote) $errResponse['cart'] = $this->getCartTotals($quote);
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody(json_encode($errResponse));
         $this->response->sendResponse();
@@ -440,12 +468,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $result
-     * @param $quote
+     * @param array $result
+     * @param Quote $quote
      * @throws \Exception
      */
     private function sendSuccessResponse($result, $quote) {
-        $result['cart'] = $this->cartHelper->getCartData(false, null, $quote, true);
+        $result['cart'] = $this->getCartTotals($quote);
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
         return;
@@ -466,5 +494,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return "shipping";
         }
         return "";
+    }
+
+    /**
+     * @param Quote $quote
+     * @param string $couponCode
+     */
+    private function setCouponCode($quote, $couponCode) {
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->setCouponCode($couponCode);
+        $this->cartHelper->saveQuote($quote->collectTotals());
     }
 }
