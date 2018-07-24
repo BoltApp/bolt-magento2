@@ -279,8 +279,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // kepping variable names camelCased.
             // shipping_address is expected REST parameter name, must stay in snake_case.
-            $addressData = $shipping_address;
-
+            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
             //$this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
