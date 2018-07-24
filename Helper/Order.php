@@ -287,6 +287,8 @@ class Order extends AbstractHelper
      */
     private function setAddress($quoteAddress, $address)
     {
+        $address = $this->cartHelper->handleSpecialAddressCases($address);
+
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
         $address_data = [

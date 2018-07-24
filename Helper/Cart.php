@@ -904,4 +904,30 @@ class Cart extends AbstractHelper
 
         return \Zend_Validate::is($email, $emailClass);
     }
+
+    /**
+     * Special address cases handler
+     *
+     * @param array|object $addressData
+     * @return array|object
+     */
+    public function handleSpecialAddressCases($addressData) {
+        return $this->handlePuertoRico($addressData);
+    }
+
+    /**
+     * Handle Puerto Rico address special case. Bolt thinks Puerto Rico is a country magento thinks it is US.
+     *
+     * @param array|object $addressData
+     * @return array|object
+     */
+    private function handlePuertoRico($addressData) {
+        $address = (array)$addressData;
+        if ($address['country_code'] === 'PR') {
+            $address['country_code'] = 'US';
+            $address['country'] = 'United States';
+            $address['region'] = 'Puerto Rico';
+        }
+        return is_object($addressData) ? (object)$address : $address;
+    }
 }
