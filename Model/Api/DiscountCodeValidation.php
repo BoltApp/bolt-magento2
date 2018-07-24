@@ -20,8 +20,6 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Model\CouponManagement;
-use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\RuleFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -33,7 +31,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 
 /**
@@ -62,16 +59,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var Response
      */
     private $response;
-
-    /**
-     * @var CouponManagement
-     */
-    private $couponManagement;
-
-    /**
-     * @var CartRepositoryInterface
-     */
-    private $quoteRepository;
 
     /**
      * @var CouponFactory
@@ -131,8 +118,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @param Request $request
      * @param Response $response
-     * @param CouponManagement $couponManagement
-     * @param CartRepositoryInterface $quoteRepository
      * @param CouponFactory $couponFactory
      * @param RuleFactory $ruleFactory
      * @param LogHelper $logHelper
@@ -148,8 +133,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     public function __construct(
         Request $request,
         Response $response,
-        CouponManagement $couponManagement,
-        CartRepositoryInterface $quoteRepository,
         CouponFactory $couponFactory,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
@@ -164,8 +147,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     ) {
         $this->request = $request;
         $this->response = $response;
-        $this->couponManagement = $couponManagement;
-        $this->quoteRepository = $quoteRepository;
         $this->couponFactory = $couponFactory;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
