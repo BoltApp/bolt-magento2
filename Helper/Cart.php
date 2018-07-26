@@ -411,18 +411,13 @@ class Cart extends AbstractHelper
      * @param bool $paymentOnly             flag that represents the type of checkout
      * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param Quote $immutableQuote
-     * @param bool $recreate                If set to `true` create a new clone. This is used when discount codes
-     *                                          are applied from the bolt checkout. Instead of updating the clone
-     *                                          create and return a new one, keeping the immutability prospect of clones
-     *                                          TODO: consider upadting existing clone instead of creating a new one
-     *                                                and change the name from $immutableQuote to something more
-     *                                                semantically correct
+     * @param Quote $immutableQuote         If passed do not create new clone, get data existing one data.
+     *                                          discount validation, bugsnag report
      *
      * @return array
      * @throws \Exception
      */
-    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null, $recreate = false)
+    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
     {
         $cart = [];
 
@@ -456,7 +451,7 @@ class Cart extends AbstractHelper
         // cart data is being created for sending to Bolt create
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
-        if (!$immutableQuote || $recreate) {
+        if (!$immutableQuote) {
 
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();

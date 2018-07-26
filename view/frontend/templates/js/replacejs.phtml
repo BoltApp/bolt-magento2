@@ -314,7 +314,7 @@ if (!$block->isEnabled()) return;
             var elements = document.querySelectorAll(selector);
             for (var i = 0, length = elements.length; i < length; i++) {
                 var element = elements[i];
-                fn.call(element, element)
+                fn.call(element, element);
             }
         };
 
@@ -538,7 +538,7 @@ if (!$block->isEnabled()) return;
                 )) return;
 
                 if (settings && !!settings.publishable_key_payment) {
-                    params.push('payment_only=true')
+                    params.push('payment_only=true');
                 } else {
                     return;
                 }
@@ -714,7 +714,7 @@ if (!$block->isEnabled()) return;
                                 fn(element);
                             }
                         });
-                    })
+                    });
 
                 }(selector);
             }
@@ -741,7 +741,7 @@ if (!$block->isEnabled()) return;
                                 fn(element);
                             }
                         });
-                    })
+                    });
 
                 }(selector);
             }
