@@ -188,7 +188,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $request = json_decode($this->request->getContent());
 
             // get the coupon code
-            $couponCode = trim($request->discount_code);
+            $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
+            $couponCode = trim($discount_code);
 
             // check if empty coupon was sent
             if ($couponCode === '') {
@@ -399,7 +400,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 self::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
-                $immutableQuote
+                @$immutableQuote
             );
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -408,7 +409,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 self::ERR_SERVICE,
                 $errMsg,
                 422,
-                $immutableQuote
+                @$immutableQuote
             );
         }
     }
