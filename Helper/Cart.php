@@ -149,6 +149,7 @@ class Cart extends AbstractHelper
     ///////////////////////////////////////////////////////
     private $discountTypes = [
         'giftvoucheraftertax',
+        'giftcardaccount',
     ];
     ///////////////////////////////////////////////////////
 
