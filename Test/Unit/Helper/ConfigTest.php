@@ -486,6 +486,21 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($configValue, $result, 'getjavascriptSuccess() method: not working properly');
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function testGetAdditionalJS()
+    {
+        $configValue = "(function() { alert('Test: get additional js'); })";
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_ADDITIONAL_JS)
+            ->will($this->returnValue($configValue));
+
+        $result = $this->currentMock->getAdditionalJS();
+
+        $this->assertEquals($configValue, $result, 'getAdditionalJS() method: not working properly');
+    }
 
     /**
      * @inheritdoc

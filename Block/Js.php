@@ -120,6 +120,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional Javascript.
+     *
+     * @return string
+     */
+    public function getAdditionalJavascript()
+    {
+        return $this->configHelper->getAdditionalJS();
+    }
+    
+    /**
      * Get Javascript page settings.
      * @return string
      */

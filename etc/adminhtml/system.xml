@@ -91,6 +91,9 @@
                     <label>Debug</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="additional_js" translate="label" type="textarea" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Additional Javascript</label>
+                </field>
             </group>
         </section>
     </system>
