@@ -879,6 +879,8 @@ if (!$block->isEnabled()) return;
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
     });
+    
+    <?php echo $block->getAdditionalJavascript(); ?>
 </script>
 
 <style>
