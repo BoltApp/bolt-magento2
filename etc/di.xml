@@ -45,4 +45,10 @@
 
     <!-- For rest api discount code validation -->
     <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
+    
+    <type name="Bolt\Boltpay\Model\Api\DiscountCodeValidation">
+        <arguments>
+            <argument name="giftCardAccount" xsi:type="object">Magento\GiftCardAccount\Model\Giftcardaccount</argument>
+        </arguments>
+    </type>
 </config>
