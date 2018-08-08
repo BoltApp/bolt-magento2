@@ -22,7 +22,6 @@ use Magento\Checkout\Exception;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\SalesRule\Model\CouponFactory;
-use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\SalesRule\Model\RuleFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
@@ -34,6 +33,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 
 /**
  * Discount Code Validation class
@@ -68,9 +68,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     protected $couponFactory;
 
     /**
-     * @var Giftcardaccount
+     * @var ThirdPartyModuleFactory
      */
-    private $giftCardAccount;
+    private $moduleGiftCardAccount;
 
     /**
      * @var RuleFactory
@@ -126,7 +126,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param Request           $request
      * @param Response          $response
      * @param CouponFactory     $couponFactory
-     * @param Giftcardaccount   $giftCardAccount
+     * @param ThirdPartyModuleFactory   $moduleGiftCardAccount
      * @param RuleFactory       $ruleFactory
      * @param LogHelper         $logHelper
      * @param UsageFactory      $usageFactory
@@ -142,7 +142,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         Request $request,
         Response $response,
         CouponFactory $couponFactory,
-        AbstractExtensibleModel $giftCardAccount,
+        ThirdPartyModuleFactory $moduleGiftCardAccount,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
         UsageFactory $usageFactory,
@@ -157,7 +157,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->request = $request;
         $this->response = $response;
         $this->couponFactory = $couponFactory;
-        $this->giftCardAccount = ($giftCardAccount) ?: null;
+        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
         $this->usageFactory = $usageFactory;
@@ -464,7 +464,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
     /**
      * @param $code
-     * @param Giftcardaccount $giftCard
+     * @param Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -537,8 +537,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             ],
         ];
         if ($quote) $errResponse['cart'] = $this->getCartTotals($quote);
+
         $this->response->setHttpResponseCode($httpStatusCode);
-        $this->bugsnag->notifyError('Discount Validation Response', json_encode($errResponse));
         $this->response->setBody(json_encode($errResponse));
         $this->response->sendResponse();
 
@@ -554,7 +554,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function sendSuccessResponse($result, $quote)
     {
         $result['cart'] = $this->getCartTotals($quote);
-        $this->bugsnag->notifyError('Discount Validation Response', json_encode($result));
+
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
 
@@ -603,16 +603,19 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * Load the gift card data by code
      *
      * @param $code
-     * @return Giftcardaccount|null
+     * @return Magento\GiftCardAccount\Model\Giftcardaccount|null
      */
     private function loadGiftCardData($code)
     {
-        // TODO: check if module exist giftCardAccount.
-        /** @var Giftcardaccount $giftCardAccount */
-        $giftCardAccount = $this->giftCardAccount;
-        $giftCard = $giftCardAccount->loadByCode($code);
+        $result = null;
 
-        $result = ($giftCard->isValid()) ? $giftCard : null;
+        $giftCardAccount = $this->moduleGiftCardAccount->getInstance();
+        if ($giftCardAccount) {
+            /** @var Magento\GiftCardAccount\Model\Giftcardaccount $giftCardAccount */
+            $giftCard = $giftCardAccount->loadByCode($code);
+
+            $result = ($giftCard->isValid()) ? $giftCard : null;
+        }
 
         return $result;
     }
