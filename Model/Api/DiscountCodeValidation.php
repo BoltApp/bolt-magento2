@@ -216,11 +216,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             // load the coupon
             $coupon = $this->loadCouponCodeData($couponCode);
 
-            // TODO: Need to check type consistency!
             $giftCard = null;
             if (empty($coupon) || $coupon->isObjectNew()) {
                 // load the gift card by code
-                /** @var Giftcardaccount $giftCard */
                 $giftCard = $this->loadGiftCardData($couponCode);
             }
 
