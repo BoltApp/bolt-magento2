@@ -303,6 +303,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 throw new Exception(__('Something happened with current code.'));
             }
 
+            if (isset($result['status']) && $result['status'] === 'error') {
+                return $result;
+            }
+
             return $this->sendSuccessResponse($result, $immutableQuote);
 
         } catch (\Magento\Framework\Webapi\Exception $e) {
