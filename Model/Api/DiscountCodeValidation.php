@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
-use Magento\Checkout\Exception;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\SalesRule\Model\CouponFactory;
@@ -34,6 +34,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
+use \Magento\Framework\Webapi\Exception as WebApiException;
 
 /**
  * Discount Code Validation class
@@ -172,7 +173,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
     /**
      * @api
-     * @return array
+     * @return bool
      * @throws \Exception
      */
     public function validate()
@@ -204,35 +205,35 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
             $couponCode = trim($discount_code);
 
-            // check if empty coupon was sent
+            // Check if empty coupon was sent
             if ($couponCode === '') {
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_CODE_INVALID,
                     'No coupon code provided',
                     422
                 );
+
+                return false;
             }
 
-            // load the coupon
+            // Load the coupon
             $coupon = $this->loadCouponCodeData($couponCode);
 
             $giftCard = null;
             if (empty($coupon) || $coupon->isObjectNew()) {
-                // load the gift card by code
+                // Load the gift card by code
                 $giftCard = $this->loadGiftCardData($couponCode);
             }
 
-            $this->logHelper->addInfoLog(__METHOD__);
-            $this->logHelper->addInfoLog('Coupon is empty: '. (empty($coupon) || $coupon->isObjectNew()) ? 'yes - Coupon' : 'no - Coupon');
-            $this->logHelper->addInfoLog('GiftCArd is empty: '. ((empty($giftCard)) ? 'yes - Giftcard' : 'no - Giftcard'));
-            $this->logHelper->addInfoLog((bool)((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)));
-            // check if the coupon exists
+            // Check if the coupon and gift card does not exist.
             if ((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)) {
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_CODE_INVALID,
                     sprintf('The coupon code %s is not found', $couponCode),
                     404
                 );
+
+                return false;
             }
 
             // get parent quote id, order increment id and child quote id
@@ -246,20 +247,24 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             // check if cart identification data is sent
             if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     'The order reference is invalid.',
                     422
                 );
+
+                return false;
             }
 
             // check if the order has already been created
             if ($this->cartHelper->getOrderByIncrementId($incrementId)) {
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The order #%s has already been created.', $incrementId),
                     422
                 );
+
+                return false;
             }
 
             // check if the cart / quote exists and it is active
@@ -268,11 +273,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The cart reference [%s] is not found.', $parentQuoteId),
                     404
                 );
+                return false;
             }
 
             // check the existence of child quote
@@ -281,60 +287,62 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
                     404
                 );
+
+                return false;
             }
 
             // check if cart is empty
             if (!$immutableQuote->getItemsCount()) {
-                return $this->sendErrorResponse(
+                $this->sendErrorResponse(
                     self::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
                     422
                 );
-            }
 
-            $this->logHelper->addInfoLog('# Coupon: '.($coupon && $coupon->getCouponId() ? 'yes' : 'no'));
-            $this->logHelper->addInfoLog('# GiftCard: '.($giftCard && $giftCard->getId() ? 'yes' : 'no'));
+                return false;
+            }
 
             if ($coupon && $coupon->getCouponId()) {
                 $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
             } else if ($giftCard && $giftCard->getId()) {
                 $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
             } else {
-                throw new Exception(__('Something happened with current code.'));
+                throw new WebApiException(__('Something happened with current code.'));
             }
 
             if (isset($result['status']) && $result['status'] === 'error') {
-                return $result;
+                // Already sent a response with error, so just return.
+                return false;
             }
 
-            $this->logHelper->addInfoLog(json_encode($result));
-            $this->logHelper->addInfoLog('=== END ===');
+            $this->sendSuccessResponse($result, $immutableQuote);
 
-            return $this->sendSuccessResponse($result, $immutableQuote);
-
-        } catch (\Magento\Framework\Webapi\Exception $e) {
+        } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 self::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
                 @$immutableQuote
             );
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
-            $errMsg = 'Unprocessable Entity: ' . $e->getMessage();
-            return $this->sendErrorResponse(
+
+            return false;
+        } catch (LocalizedException $e) {
+            $this->sendErrorResponse(
                 self::ERR_SERVICE,
-                $errMsg,
-                422,
-                @$immutableQuote
+                $e->getMessage(),
+                500
             );
+
+            return false;
         }
+
+        return true;
     }
 
     /**
@@ -439,7 +447,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $this->setCouponCode($immutableQuote, $couponCode);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->sendErrorResponse(
+            return $this->sendErrorResponse(
                 self::ERR_SERVICE,
                 $e->getMessage(),
                 422,
@@ -476,7 +484,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
     /**
      * @param $code
-     * @param Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
+     * @param \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -550,6 +558,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         ];
         if ($quote) $errResponse['cart'] = $this->getCartTotals($quote);
 
+        $this->logHelper->addInfoLog('### sendErrorResponse');
+        $this->logHelper->addInfoLog($message);
+
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody(json_encode($errResponse));
         $this->response->sendResponse();
@@ -570,6 +581,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
 
+        $this->logHelper->addInfoLog('### sendSuccessResponse');
+        $this->logHelper->addInfoLog(json_encode($result));
+        $this->logHelper->addInfoLog('=== END ===');
+
         return $result;
     }
 
@@ -577,7 +592,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param string $type
      * @return string
      */
-    private function convertToBoltDiscountType($type) {
+    private function convertToBoltDiscountType($type)
+    {
         switch ($type) {
             case "by_fixed":
             case "cart_fixed":
@@ -595,7 +611,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param Quote $quote
      * @param string $couponCode
      */
-    private function setCouponCode($quote, $couponCode) {
+    private function setCouponCode($quote, $couponCode)
+    {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setCouponCode($couponCode);
         $this->cartHelper->saveQuote($quote->collectTotals());
@@ -616,20 +633,32 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * Load the gift card data by code
      *
      * @param $code
-     * @return Magento\GiftCardAccount\Model\Giftcardaccount|null
+     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
      */
     private function loadGiftCardData($code)
     {
         $result = null;
 
-        $giftCardAccount = $this->moduleGiftCardAccount->getInstance();
-        if ($giftCardAccount) {
-            /** @var Magento\GiftCardAccount\Model\Giftcardaccount $giftCardAccount */
-            $giftCard = $giftCardAccount->loadByCode($code);
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccount */
+        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
 
-            $result = ($giftCard->isValid()) ? $giftCard : null;
+        if ($giftCardAccountResource) {
+
+            /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
+            $giftCardsCollection = $giftCardAccountResource
+                ->addFieldToFilter('code', array('eq' => $code))
+            ;
+
+            /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
+            $giftCard = $giftCardsCollection->getFirstItem();
+
+            $this->logHelper->addInfoLog('# Code: ' . $code);
+            $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: no');
+
+            $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         }
-        $this->logHelper->addInfoLog('# loadGiftCardData Result is empty: '. (empty($result) ? "yes" : 'no'));
+
+        $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: yes');
 
         return $result;
     }
