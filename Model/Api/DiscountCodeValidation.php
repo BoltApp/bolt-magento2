@@ -34,7 +34,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
-use \Magento\Framework\Webapi\Exception as WebApiException;
+use Magento\Framework\Webapi\Exception as WebApiException;
 
 /**
  * Discount Code Validation class
@@ -195,11 +195,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
             ]);
 
-            $this->logHelper->addInfoLog($this->request->getContent());
-
             $this->hookHelper->verifyWebhook();
 
-            $request = json_decode($this->request->getContent());
+            $request = $this->getRequestContent();
 
             // get the coupon code
             $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
@@ -343,6 +341,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
 
         return true;
+    }
+
+    /**
+     * @return string
+     */
+    private function getRequestContent()
+    {
+        $this->logHelper->addInfoLog($this->request->getContent());
+
+        return json_decode($this->request->getContent());
     }
 
     /**

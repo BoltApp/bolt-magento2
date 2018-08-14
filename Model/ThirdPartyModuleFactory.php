@@ -20,8 +20,6 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 class ThirdPartyModuleFactory
 {
-    private $moduleName;
-
     /**
      * @var \Magento\Framework\Module\Manager
      */
@@ -36,16 +34,19 @@ class ThirdPartyModuleFactory
      */
     private $logHelper;
 
+    private $moduleName;
+
+    private $className;
+
     /**
      * ThirdPartyModuleFactory constructor.
      *
      * @param \Magento\Framework\Module\Manager         $moduleManager
      * @param \Magento\Framework\ObjectManagerInterface $objectManager
      * @param LogHelper                                 $logHelper
-     * @param null                                      $instanceName
+     * @param null                                      $moduleName
+     * @param null                                      $className
      */
-    private $className;
-
     public function __construct(
         \Magento\Framework\Module\Manager $moduleManager,
         \Magento\Framework\ObjectManagerInterface $objectManager,

@@ -43,7 +43,7 @@
     <preference for="Bolt\Boltpay\Api\Data\ShippingOptionInterface"  type="Bolt\Boltpay\Model\Api\Data\ShippingOption" />
     <preference for="Bolt\Boltpay\Api\Data\ShippingTaxInterface"     type="Bolt\Boltpay\Model\Api\Data\ShippingTax" />
 
-    <!-- For rest api discount code validation -->
+    <!-- For rest api discount code validation for gift card module -->
     <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
 
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
