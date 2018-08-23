@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -33,18 +34,25 @@ class Js extends Template
      */
     private $configHelper;
 
+    /** @var CheckoutSession */
+    private $checkoutSession;
+
+
     /**
      * @param Context $context
      * @param Config $configHelper
+     * @param CheckoutSession $checkoutSession
      * @param array $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
+        CheckoutSession $checkoutSession,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -92,6 +100,16 @@ class Js extends Template
     }
 
     /**
+     * Get Totals Change Selectors.
+     *
+     * @return string
+     */
+    public function getTotalsChangeSelectors()
+    {
+        return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getTotalsChangeSelectors()))));
+    }
+
+    /**
      * Get Replace Button Selectors.
      *
      * @return string
@@ -112,22 +130,34 @@ class Js extends Template
     }
 
     /**
+     * Get Additional Javascript.
+     *
+     * @return string
+     */
+    public function getAdditionalJavascript()
+    {
+        return $this->configHelper->getAdditionalJS();
+    }
+
+    /**
      * Get Javascript page settings.
      * @return string
      */
     public function getSettings()
     {
-
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
             'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
             'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
+            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'quote_is_virtual'         => $this->getQuoteIsVirtual(),
+            'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
         ]);
     }
 
@@ -138,5 +168,14 @@ class Js extends Template
     public function isEnabled()
     {
         return $this->configHelper->isActive();
+    }
+
+    /**
+     * Get quote is virtual flag, false if no existing quote
+     * @return bool
+     */
+    private function getQuoteIsVirtual() {
+        $quote = $this->checkoutSession->getQuote();
+        return $quote ? $quote->isVirtual() : false;
     }
 }

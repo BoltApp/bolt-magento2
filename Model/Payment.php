@@ -57,6 +57,11 @@ class Payment extends AbstractMethod
     protected $_code = 'boltpay';
 
     /**
+     * @var string
+     */
+    protected $_formBlockType = \Bolt\Boltpay\Block\Form::class;
+
+    /**
      * Payment Method feature
      *
      * @var bool
@@ -292,7 +297,7 @@ class Payment extends AbstractMethod
             $order = $payment->getOrder();
 
             if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for refund.'));
+                throw new LocalizedException(__('Invalid amount for capture.'));
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -426,10 +431,10 @@ class Payment extends AbstractMethod
 
                 $order->addStatusHistoryComment(
                     __(
-                        'BOLTPAY INFO :: Reference: %1 Status: %2 Amount: %3 Transaction ID: "%4"',
-                        $response->reference,
+                        'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3 Transaction ID: "%4"',
                         'REFUNDED',
                         $formattedPrice,
+                        $this->orderHelper->formatReferenceUrl($response->reference),
                         $realTransactionId.'-capture-refund'
                     )
                 )->save();
