@@ -71,6 +71,11 @@ class Config extends AbstractHelper
     const XML_PATH_REPLACE_SELECTORS = 'payment/boltpay/replace_selectors';
 
     /**
+     * Path for Totals Change Selectors
+     */
+    const XML_PATH_TOTALS_CHANGE_SELECTORS = 'payment/boltpay/totals_change_selectors';
+
+    /**
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
@@ -174,7 +179,7 @@ class Config extends AbstractHelper
      * Path for API Key
      */
     const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
-    
+
     /**
      * Path for Additional Javascript
      */
@@ -370,6 +375,19 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Totals Change Selectors from config
+     *
+     * @return  string
+     */
+    public function getTotalsChangeSelectors()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TOTALS_CHANGE_SELECTORS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
      * Get Replace Selectors from config
      *
      * @return  string
@@ -536,7 +554,7 @@ class Config extends AbstractHelper
     {
         return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY);
     }
-    
+
     /**
      * Get Additional Javascript from config
      *

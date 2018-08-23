@@ -38,6 +38,9 @@
                 <sort_order>0</sort_order>
                 <replace_selectors>button#top-cart-btn-checkout,
 button[data-role=proceed-to-checkout]|prepend</replace_selectors>
+                <totals_change_selectors>tr.grand.totals td.amount span.price,
+tr.shipping.totals td.amount span.price,
+.minicart-wrapper .counter.qty span.counter-number</totals_change_selectors>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>
                 <reset_shipping_calculation>0</reset_shipping_calculation>
