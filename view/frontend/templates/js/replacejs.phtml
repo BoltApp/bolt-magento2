@@ -573,17 +573,16 @@ if (!$block->isEnabled()) return;
                 // send create order request
                 $.post(settings.create_order_url, params)
                     .done(function (data) {
-
-                        resolve(data.cart);
-
                         // set cart and hints data
                         cart = data.cart;
 
                         var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+
                         hints = deepMergeObjects(hints, data.hints);
                         hints.prefill = prefill;
-
                         hints.publishableKey = getCheckoutKey();
+
+                        resolve(data.cart);
 
                         // prefetch Shipping and Tax for multi-step checkout
                         if (getCheckoutType() === 'checkout') prefetchShipping();
