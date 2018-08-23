@@ -566,7 +566,7 @@ if (!$block->isEnabled()) return;
             params = params.join('&');
             if (params === '') params = null;
 
-            if (window.BoltCheckout) BoltCheckout.configure(new Promise(function (resolve) {
+            if (window.BoltCheckout) BoltCheckout.configure(new Promise(function (resolve, reject) {
 
                 createRequest = true;
 
@@ -582,10 +582,13 @@ if (!$block->isEnabled()) return;
                         hints.prefill = prefill;
                         hints.publishableKey = getCheckoutKey();
 
-                        resolve(data.cart);
+                        resolve(cart);
 
                         // prefetch Shipping and Tax for multi-step checkout
                         if (getCheckoutType() === 'checkout') prefetchShipping();
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown) {
+                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
                     })
                     .always(function() {
                         createRequest = false;
