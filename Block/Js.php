@@ -100,6 +100,16 @@ class Js extends Template
     }
 
     /**
+     * Get Totals Change Selectors.
+     *
+     * @return string
+     */
+    public function getTotalsChangeSelectors()
+    {
+        return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getTotalsChangeSelectors()))));
+    }
+
+    /**
      * Get Replace Button Selectors.
      *
      * @return string
@@ -120,6 +130,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional Javascript.
+     *
+     * @return string
+     */
+    public function getAdditionalJavascript()
+    {
+        return $this->configHelper->getAdditionalJS();
+    }
+
+    /**
      * Get Javascript page settings.
      * @return string
      */
@@ -137,6 +157,7 @@ class Js extends Template
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
+            'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
         ]);
     }
 

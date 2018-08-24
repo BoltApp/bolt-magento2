@@ -71,6 +71,11 @@ class Config extends AbstractHelper
     const XML_PATH_REPLACE_SELECTORS = 'payment/boltpay/replace_selectors';
 
     /**
+     * Path for Totals Change Selectors
+     */
+    const XML_PATH_TOTALS_CHANGE_SELECTORS = 'payment/boltpay/totals_change_selectors';
+
+    /**
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
@@ -94,6 +99,11 @@ class Config extends AbstractHelper
      * Prefetch shipping
      */
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
+
+    /**
+     * Reset Shipping Calculation
+     */
+    const XML_PATH_RESET_SHIPPING_CALCULATION = 'payment/boltpay/reset_shipping_calculation';
 
     /**
      * Enabled
@@ -156,6 +166,27 @@ class Config extends AbstractHelper
     const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
 
     /**
+     * Bolt merchant sandbox url
+     */
+    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.bolt.com';
+
+    /**
+     * Bolt merchant production url
+     */
+    const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
+
+    /**
+     * Path for API Key
+     */
+    const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
+
+    /**
+     * Path for Additional Javascript
+     */
+    const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
+
+
+    /**
      * @var ResourceInterface
      */
     private $moduleResource;
@@ -198,6 +229,21 @@ class Config extends AbstractHelper
             return self::API_URL_SANDBOX;
         } else {
             return self::API_URL_PRODUCTION;
+        }
+    }
+
+    /**
+     * Get Bolt Merchant Dashboard URL
+     *
+     * @return  string
+     */
+    public function getMerchantDashboardUrl()
+    {
+        //Check for sandbox mode
+        if ($this->isSandboxModeSet()) {
+            return self::MERCHANT_DASH_SANDBOX;
+        } else {
+            return self::MERCHANT_DASH_PRODUCTION;
         }
     }
 
@@ -329,6 +375,19 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Totals Change Selectors from config
+     *
+     * @return  string
+     */
+    public function getTotalsChangeSelectors()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TOTALS_CHANGE_SELECTORS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
      * Get Replace Selectors from config
      *
      * @return  string
@@ -389,7 +448,6 @@ class Config extends AbstractHelper
      */
     public function getAutomaticCaptureMode($store = null)
     {
-        //Automatic capture mode
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
             ScopeInterface::SCOPE_STORE,
@@ -406,9 +464,24 @@ class Config extends AbstractHelper
      */
     public function getPrefetchShipping($store = null)
     {
-        //Automatic capture mode
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PREFETCH_SHIPPING,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Reset Shipping Calculation config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getResetShippingCalculation($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_RESET_SHIPPING_CALCULATION,
             ScopeInterface::SCOPE_STORE,
             $store
         );
@@ -470,5 +543,28 @@ class Config extends AbstractHelper
     public function getScopeConfig()
     {
         return $this->scopeConfig;
+    }
+
+    /**
+     * Get Geolocation API Key from config
+     *
+     * @return  string
+     */
+    public function getGeolocationApiKey()
+    {
+        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY);
+    }
+
+    /**
+     * Get Additional Javascript from config
+     *
+     * @return  string
+     */
+    public function getAdditionalJS()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ADDITIONAL_JS,
+            ScopeInterface::SCOPE_STORE
+        );
     }
 }
