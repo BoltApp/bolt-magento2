@@ -61,7 +61,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
-            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping'
+            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
+            'getTotalsChangeSelectors'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -202,6 +203,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
+        $this->assertCount(12, $array, 'The number of keys in the settings is not correct');
+
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
         $this->assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
@@ -212,6 +215,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
+        $this->assertArrayHasKey('save_email_url', $array, $message . 'save_email_url');
+        $this->assertArrayHasKey('quote_is_virtual', $array, $message . 'quote_is_virtual');
+        $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
     }
 
     /**
