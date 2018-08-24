@@ -218,6 +218,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
+        $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
     }
 
     /**
@@ -247,7 +248,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
     }
-    
+
     /**
      * Call protected/private method of a class.
      *
