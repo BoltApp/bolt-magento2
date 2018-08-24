@@ -50,6 +50,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
     protected $block;
 
     /**
+     * @var \Magento\Quote\Model\Quote
+     */
+    protected $quoteMock;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -57,6 +62,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
         $this->checkoutSessionMock = $this->createMock(\Magento\Checkout\Model\Session::class);
+        $this->quoteMock = $this->createMock(\Magento\Quote\Model\Quote::class);
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
@@ -77,7 +83,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl'])
+            ->setMethods(['getUrl'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
@@ -212,6 +218,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
+        $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
     }
 
     /**
@@ -240,5 +247,40 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->expects($this->any())
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
+    }
+
+    /**
+     * Call protected/private method of a class.
+     *
+     * @param $object
+     * @param $methodName
+     * @param array $parameters
+     * @return mixed
+     */
+    public function invokeMethod(&$object, $methodName, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass(get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($object, $parameters);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetQuoteIsVirtual()
+    {
+        $this->checkoutSessionMock
+            ->expects($this->any())
+            ->method('getQuote')
+            ->will($this->returnValue($this->quoteMock));
+
+        $this->quoteMock->expects($this->any())->method('isVirtual')->will($this->returnValue(true));
+
+        $value = $this->quoteMock->isVirtual();
+        $result = $this->invokeMethod($this->block, 'getQuoteIsVirtual');
+
+        $this->assertEquals($value, $result, 'getQuoteIsVirtual() method: not working properly');
     }
 }
