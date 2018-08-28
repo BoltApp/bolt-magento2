@@ -566,11 +566,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         ];
         if ($quote) $errResponse['cart'] = $this->getCartTotals($quote);
 
+        $encodeErrorResult = json_encode($errResponse, JSON_FORCE_OBJECT);
+
         $this->logHelper->addInfoLog('### sendErrorResponse');
-        $this->logHelper->addInfoLog($message);
+        $this->logHelper->addInfoLog($encodeErrorResult);
 
         $this->response->setHttpResponseCode($httpStatusCode);
-        $this->response->setBody(json_encode($errResponse));
+        $this->response->setBody($encodeErrorResult);
         $this->response->sendResponse();
 
         return $errResponse;
