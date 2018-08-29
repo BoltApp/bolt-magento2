@@ -96,7 +96,7 @@ class Save extends Action
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
             // call order save and update
-            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, false);
+            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
 
             $orderId = $order->getId();
             // clear the session data
