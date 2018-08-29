@@ -520,7 +520,7 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference     Bolt transaction reference
-     * @param bool $frontend        true if called from front end page, bolt checkout
+     * @param bool $frontend        false if called from api
      *
      * @return mixed
      * @throws Exception
