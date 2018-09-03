@@ -27,6 +27,14 @@ if (!$block->isEnabled()) return;
 
 <script type="text/javascript">
 
+    function showBoltErrorMessage() {
+        var boltModal = jQuery('#bolt-modal'),
+            errorMsg = "<?php echo $block->getBoltPopupErrorMessage() ?>";
+
+        boltModal.find('.bolt-modal-content').html(errorMsg);
+        boltModal.modal("openModal");
+    }
+
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -408,6 +416,15 @@ if (!$block->isEnabled()) return;
                 if (callbacks.success_url) location.href = callbacks.success_url;
             },
 
+            onCheckoutStart: function() {
+                var boltModal = jQuery('#bolt-modal');
+
+                boltModal.find('.bolt-modal-content').html('Error: ' + data.message);
+                boltModal.modal("openModal");
+
+                return false;
+            },
+
             success: function (transaction, callback) {
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
@@ -420,12 +437,9 @@ if (!$block->isEnabled()) return;
                     // show alert message on error
                     if (data.status !== 'success') {
                         if (data.message) {
-                            console.log(data.message);
-                            var boltModal = jQuery('#bolt-modal');
-
-                            boltModal.find('.bolt-modal-content').html('Error: ' + data.message);
-                            boltModal.modal("openModal");
+                            showBoltErrorMessage();
                         }
+
                         return false;
                     }
 

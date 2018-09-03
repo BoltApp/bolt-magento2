@@ -178,4 +178,14 @@ class Js extends Template
         $quote = $this->checkoutSession->getQuote();
         return $quote ? $quote->isVirtual() : false;
     }
+
+    /**
+     * @return string
+     */
+    public function getBoltPopupErrorMessage()
+    {
+        return __('Error') . ': ' . __('Your payment was successful and we\'re now processing your order. 
+        If you don\'t receive order confirmation email in next 30 minutes, 
+        please contact us at support@bolt.com)?>');
+    }
 }
