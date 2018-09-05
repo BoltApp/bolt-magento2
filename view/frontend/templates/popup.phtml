@@ -1,0 +1,48 @@
+<div id="bolt-modal" style="display:none;">
+    <div class="bolt-modal-content" data-role="content"></div>
+</div>
+<style>
+.bolt-error-modal {
+    z-index: 99999;
+}
+.bolt-error-modal .bolt-modal-title {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+.bolt-error-modal .bolt-modal-title span {
+    font-weight: bold;
+}
+.bolt-error-modal .modal-footer {
+    border-top: none;
+}
+.bolt-error-modal .modal-inner-wrap {
+    border-radius: 10px;
+}
+</style>
+<script>
+var boltErrorPopup;
+require(
+    [
+        'jquery',
+        'Magento_Ui/js/modal/modal'
+    ],
+    function($, modal) {
+        var options = {
+            type: 'popup',
+            responsive: true,
+            innerScroll: true,
+            modalClass: 'bolt-error-modal',
+            title: '',
+            buttons: [{
+                text: $.mage.__('Close'),
+                class: 'bolt-error-close-button',
+                click: function () {
+                    this.closeModal();
+                }
+            }]
+        };
+
+        boltErrorPopup = modal(options, $('#bolt-modal'));
+    }
+);
+</script>
