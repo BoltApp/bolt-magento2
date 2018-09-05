@@ -110,6 +110,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional button class.
+     *
+     * @return string
+     */
+    public function getAdditionalCheckoutButtonClass()
+    {
+        return trim($this->configHelper->getAdditionalCheckoutButtonClass());
+    }
+
+    /**
      * Get Replace Button Selectors.
      *
      * @return string
@@ -158,6 +168,7 @@ class Js extends Template
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
+            'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
         ]);
     }
 

@@ -388,14 +388,19 @@ if (!$block->isEnabled()) return;
 
         // The configuration parameters passed from the php block
         var settings = window.boltConfig;
-        // TODO: make `with-cards` option backend configurable
-        var bolt_button_css_class    = 'bolt-checkout-button with-cards';
+        var bolt_button_css_class    = 'bolt-checkout-button';
+        var additional_button_class  = settings.additional_checkout_button_class;
         var bolt_button_selector     = '.bolt-checkout-button';
         var multi_step_css_class     = 'bolt-multi-step-checkout';
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var bolt_clickable_selector  = '.bolt-checkout-button-button';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+
+        console.log('### ', additional_button_class);
+        if (additional_button_class.length) {
+            bolt_button_css_class += ' ' + additional_button_class;
+        }
 
         // On multiple checkout open/close actions the success event remains registered
         // resulting in making the success call multiple times. This variable stores
@@ -414,15 +419,6 @@ if (!$block->isEnabled()) return;
             close: function () {
                 // redirect on succes order save
                 if (callbacks.success_url) location.href = callbacks.success_url;
-            },
-
-            onCheckoutStart: function() {
-                var boltModal = jQuery('#bolt-modal');
-
-                boltModal.find('.bolt-modal-content').html('Error: ' + data.message);
-                boltModal.modal("openModal");
-
-                return false;
             },
 
             success: function (transaction, callback) {
@@ -534,7 +530,7 @@ if (!$block->isEnabled()) return;
         var createRequest = false;
         var createOrder = function () {
             if (createRequest) return;
-            // define the params sent with the request variable
+            // define the params sent with-cards the request variable
             var params = [];
 
             // check and set payment_only flag

@@ -33,6 +33,9 @@ use Magento\Store\Model\Store;
  */
 class Config extends AbstractHelper
 {
+    /**
+     *
+     */
     const BOLT_TRACE_ID_HEADER = 'X-bolt-trace-id';
 
     /**
@@ -79,6 +82,11 @@ class Config extends AbstractHelper
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
+
+    /**
+     * Path for Additional Checkout Button Class
+     */
+    const XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS = 'payment/boltpay/additional_checkout_button_class';
 
     /**
      * Path for Custom Prefetch Address Fields
@@ -396,6 +404,19 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * Get additional checkout button class
+     *
+     * @return string
+     */
+    public function getAdditionalCheckoutButtonClass()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
             ScopeInterface::SCOPE_STORE
         );
     }
