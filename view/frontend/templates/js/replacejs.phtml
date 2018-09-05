@@ -397,7 +397,6 @@ if (!$block->isEnabled()) return;
         var bolt_clickable_selector  = '.bolt-checkout-button-button';
         var customer_email_selector  = '#checkoutSteps #customer-email';
 
-        console.log('### ', additional_button_class);
         if (additional_button_class.length) {
             bolt_button_css_class += ' ' + additional_button_class;
         }
@@ -530,7 +529,7 @@ if (!$block->isEnabled()) return;
         var createRequest = false;
         var createOrder = function () {
             if (createRequest) return;
-            // define the params sent with-cards the request variable
+            // define the params sent with the request variable
             var params = [];
 
             // check and set payment_only flag

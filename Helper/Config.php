@@ -33,9 +33,6 @@ use Magento\Store\Model\Store;
  */
 class Config extends AbstractHelper
 {
-    /**
-     *
-     */
     const BOLT_TRACE_ID_HEADER = 'X-bolt-trace-id';
 
     /**
