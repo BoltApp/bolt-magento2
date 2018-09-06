@@ -353,7 +353,7 @@ class Order extends AbstractHelper
      *
      * @return void
      */
-    private function addCutomerDetails($quote, $guestEmail)
+    private function addCustomerDetails($quote, $guestEmail)
     {
         if (!$quote->getCustomerId()) {
             $quote->setCustomerId(null);
@@ -402,7 +402,7 @@ class Order extends AbstractHelper
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
 
-        $this->addCutomerDetails($quote, $email);
+        $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
         $quote->collectTotals();
@@ -576,6 +576,14 @@ class Order extends AbstractHelper
             }
 
             $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
+
+            // Add the user_note to the order comments and make it visible for customer.
+            if ($userNoteComment = $transaction->order->user_note) {
+                $order
+                    ->addStatusHistoryComment($userNoteComment)
+                    ->setIsVisibleOnFront(true)
+                    ->setIsCustomerNotified(false);
+            }
         }
 
         if ($quote) {
