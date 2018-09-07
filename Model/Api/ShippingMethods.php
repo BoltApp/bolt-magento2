@@ -40,6 +40,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 
 /**
  * Class ShippingMethods
@@ -103,6 +104,11 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var LogHelper
      */
     private $logHelper;
+
+    /**
+     * @var BoltErrorResponse
+     */
+    private $errorResponse;
 
     /**
      * @var Response
@@ -180,6 +186,7 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
+        BoltErrorResponse $errorResponse,
         Response $response,
         ConfigHelper $configHelper,
         Session $checkoutSession,
@@ -199,6 +206,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
+        $this->errorResponse = $errorResponse;
         $this->response = $response;
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
@@ -336,22 +344,13 @@ class ShippingMethods implements ShippingMethodsInterface
 
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode($e->getHttpCode());
-            $this->response->setBody(json_encode([
-                'status' => 'error',
-                'code' => $e->getCode(),
-                'message' => $e->getMessage()
-            ]));
-            $this->response->sendResponse();
+
+            $this->sendErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode(422);
-            $this->response->setBody(json_encode([
-                'status' => 'error',
-                'code' => '6009',
-                'message' => 'Unprocessable Entity: ' . $e->getMessage()
-            ]));
-            $this->response->sendResponse();
+
+            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
+            $this->errorResponse->prepareErrorMessage(6009, $msg);
         }
     }
 
@@ -629,5 +628,21 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         return $shippingMethods;
+    }
+
+
+    /**
+     * @param      $errCode
+     * @param      $message
+     * @param      $httpStatusCode
+     * @param null $quote
+     */
+    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    {
+        $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message);
+
+        $this->response->setHttpResponseCode($httpStatusCode);
+        $this->response->setBody($encodeErrorResult);
+        $this->response->sendResponse();
     }
 }

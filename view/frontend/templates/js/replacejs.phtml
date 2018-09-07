@@ -27,6 +27,14 @@ if (!$block->isEnabled()) return;
 
 <script type="text/javascript">
 
+    function showBoltErrorMessage() {
+        var boltModal = jQuery('#bolt-modal'),
+            errorMsg = "<?php echo $block->getBoltPopupErrorMessage() ?>";
+
+        boltModal.find('.bolt-modal-content').html(errorMsg);
+        boltModal.modal("openModal");
+    }
+
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -380,14 +388,18 @@ if (!$block->isEnabled()) return;
 
         // The configuration parameters passed from the php block
         var settings = window.boltConfig;
-        // TODO: make `with-cards` option backend configurable
-        var bolt_button_css_class    = 'bolt-checkout-button with-cards';
+        var bolt_button_css_class    = 'bolt-checkout-button';
+        var additional_button_class  = settings.additional_checkout_button_class;
         var bolt_button_selector     = '.bolt-checkout-button';
         var multi_step_css_class     = 'bolt-multi-step-checkout';
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var bolt_clickable_selector  = '.bolt-checkout-button-button';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+
+        if (additional_button_class.length) {
+            bolt_button_css_class += ' ' + additional_button_class;
+        }
 
         // On multiple checkout open/close actions the success event remains registered
         // resulting in making the success call multiple times. This variable stores
@@ -417,13 +429,12 @@ if (!$block->isEnabled()) return;
                 // sets the success order page redirect url from received data
                 // and calls the final Bolt defined callback
                 var onSuccess = function(data){
-
                     // show alert message on error
                     if (data.status !== 'success') {
                         if (data.message) {
-                            console.log(data.message);
-                            alert(data.message);
+                            showBoltErrorMessage();
                         }
+
                         return false;
                     }
 

@@ -60,6 +60,17 @@ define(
 
             getBillingAddress: function () {
                 return JSON.stringify(quote.billingAddress());
+            },
+
+            getButtonClass: function () {
+                var btnClass = 'bolt-checkout-button',
+                additionalClass = window.boltConfig.additional_checkout_button_class;
+
+                if (additionalClass.length) {
+                    btnClass += ' ' + additionalClass;
+                }
+
+                return btnClass;
             }
         });
     }
