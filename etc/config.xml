@@ -36,11 +36,12 @@
                 <can_void>1</can_void>
                 <can_use_checkout>1</can_use_checkout>
                 <sort_order>0</sort_order>
-                <replace_selectors>button#top-cart-btn-checkout,
-button[data-role=proceed-to-checkout]|prepend</replace_selectors>
+                <replace_selectors>#top-cart-btn-checkout,
+button[data-role=proceed-to-checkout]</replace_selectors>
                 <totals_change_selectors>tr.grand.totals td.amount span.price,
 tr.shipping.totals td.amount span.price,
-.minicart-wrapper .counter.qty span.counter-number</totals_change_selectors>
+.block-minicart .subtitle,
+.block-minicart .subtotal .amount.price-container .price-wrapper:first-child .price</totals_change_selectors>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>
