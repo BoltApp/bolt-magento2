@@ -40,6 +40,18 @@ if (!$block->isEnabled()) return;
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
     window.boltConfig = <?php echo $block->getSettings(); ?>;
 
+    var gBoltTrack = {
+        gClose: function() {
+            // insert google track code.
+        },
+        gOnCheckoutStart: function() {
+            // insert google track code.
+        },
+        gSuccess: function() {
+            // insert google track code.
+        }
+    };
+
     ///////////////////////
     // String.trim Polyfill
     ///////////////////////
@@ -416,11 +428,19 @@ if (!$block->isEnabled()) return;
         var callbacks = {
 
             close: function () {
-                // redirect on succes order save
+                gBoltTrack.gClose();
+
+                // redirect on success order save
                 if (callbacks.success_url) location.href = callbacks.success_url;
             },
 
+            onCheckoutStart: function() {
+              gBoltTrack.gOnCheckoutStart();
+            },
+
             success: function (transaction, callback) {
+                gBoltTrack.gSuccess();
+
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -448,7 +468,6 @@ if (!$block->isEnabled()) return;
             },
 
             check: function () {
-
                 /**
                  * On Bolt button click check if guest checkout is allowed.
                  * Display login popup to guest customers if it is not. The
