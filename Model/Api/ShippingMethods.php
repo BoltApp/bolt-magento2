@@ -34,13 +34,11 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Checkout\Model\Session;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\CacheInterface;
-use Magento\Customer\Model\Session as CustomerSession;
-use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class ShippingMethods
@@ -121,11 +119,6 @@ class ShippingMethods implements ShippingMethodsInterface
     private $configHelper;
 
     /**
-     * @var Session
-     */
-    private $checkoutSession;
-
-    /**
      * @var Request
      */
     private $request;
@@ -135,18 +128,13 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $cache;
 
-    /** @var CustomerSession */
-    private $customerSession;
-
-    /**
-     * @var CustomerFactory
-     */
-    private $customerFactory;
-
     /**
      * @var PriceHelper
      */
     private $priceHelper;
+
+    /** @var SessionHelper */
+    private $sessionHelper;
 
     // Totals adjustment threshold
     private $threshold = 1;
@@ -168,12 +156,10 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param LogHelper $logHelper
      * @param Response $response
      * @param ConfigHelper $configHelper
-     * @param Session $checkoutSession
      * @param Request $request
      * @param CacheInterface $cache
-     * @param CustomerSession $customerSession
-     * @param CustomerFactory $customerFactory
      * @param PriceHelper $priceHelper
+     * @param SessionHelper $sessionHelper
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -189,12 +175,10 @@ class ShippingMethods implements ShippingMethodsInterface
         BoltErrorResponse $errorResponse,
         Response $response,
         ConfigHelper $configHelper,
-        Session $checkoutSession,
         Request $request,
         CacheInterface $cache,
-        CustomerSession $customerSession,
-        CustomerFactory $customerFactory,
-        PriceHelper $priceHelper
+        PriceHelper $priceHelper,
+        SessionHelper $sessionHelper
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -209,12 +193,10 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->errorResponse = $errorResponse;
         $this->response = $response;
         $this->configHelper = $configHelper;
-        $this->checkoutSession = $checkoutSession;
         $this->request = $request;
         $this->cache = $cache;
-        $this->customerSession = $customerSession;
-        $this->customerFactory = $customerFactory;
         $this->priceHelper = $priceHelper;
+        $this->sessionHelper = $sessionHelper;
     }
 
     /**
@@ -284,11 +266,7 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
         try {
-
-            // kepping variable names camelCased.
-            // shipping_address is expected REST parameter name, must stay in snake_case.
-            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-            //$this->logHelper->addInfoLog($this->request->getContent());
+            // $this->logHelper->addInfoLog($this->request->getContent());
 
             if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
                 $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
@@ -305,7 +283,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
             ]);
 
-            $this->hookHelper->verifyWebhook();
+//            $this->hookHelper->verifyWebhook();
 
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -321,14 +299,11 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->checkCartItems($cart, $quote);
 
-            if ($customerId = $quote->getCustomerId()) {
-                $this->customerSession->setCustomer(
-                    $this->customerFactory->create()->load($customerId)
-                );
-            }
+            // Load logged in customer checkout and customer sessions from cached session id.
+            // Replace parent quote with immutable quote in checkout session.
+            $this->sessionHelper->loadSession($quote);
 
-            $this->checkoutSession->replaceQuote($quote);
-
+            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
             if ($this->taxAdjusted) {
@@ -344,11 +319,9 @@ class ShippingMethods implements ShippingMethodsInterface
 
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-
             $this->sendErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->errorResponse->prepareErrorMessage(6009, $msg);
         }
