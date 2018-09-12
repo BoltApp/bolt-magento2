@@ -255,6 +255,6 @@ class Js extends Template
      */
     protected function cleanScript($output)
     {
-        return htmlentities($output);
+        return $output;
     }
 }
