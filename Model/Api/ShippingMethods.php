@@ -283,7 +283,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
             ]);
 
-//            $this->hookHelper->verifyWebhook();
+            $this->hookHelper->verifyWebhook();
 
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
