@@ -578,9 +578,9 @@ class Order extends AbstractHelper
             $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
 
             // Add the user_note to the order comments and make it visible for customer.
-            if ($userNoteComment = $transaction->order->user_note) {
+            if (isset($transaction->order->user_note)) {
                 $order
-                    ->addStatusHistoryComment($userNoteComment)
+                    ->addStatusHistoryComment($transaction->order->user_note)
                     ->setIsVisibleOnFront(true)
                     ->setIsCustomerNotified(false);
             }
