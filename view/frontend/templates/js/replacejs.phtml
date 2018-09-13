@@ -26,7 +26,7 @@ if (!$block->isEnabled()) return;
 ?>
 
 <script type="text/javascript">
-    <?php if ($block->isEnabledGoogleTrack()) : ?>
+<?php if ($block->isEnabledGoogleTrack()) : ?>
     <?php $gTrack = $block->getGoogleTrackCallbacks(); ?>
     var gBoltTrack = {
         gClose: function() {
@@ -39,7 +39,7 @@ if (!$block->isEnabled()) return;
             <?php echo $gTrack['success']; ?>
         }
     };
-    <?php endif; ?>
+<?php endif; ?>
 
     function showBoltErrorMessage() {
         var boltModal = jQuery('#bolt-modal'),

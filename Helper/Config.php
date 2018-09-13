@@ -190,8 +190,6 @@ class Config extends AbstractHelper
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
 
-    const XML_PATH_GTRACK_ENABLE = 'payment/boltpay/enable_google_track';
-
     const XML_PATH_GTRACK_SUCCESS = 'payment/boltpay/g_track_on_success';
 
     const XML_PATH_GTRACK_CHECKOUT_START = 'payment/boltpay/g_track_on_checkout_start';
@@ -589,17 +587,6 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_JS,
-            ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
-     * @return bool
-     */
-    public function isEnableGoogleTrack()
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_GTRACK_SUCCESS,
             ScopeInterface::SCOPE_STORE
         );
     }
