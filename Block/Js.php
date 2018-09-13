@@ -216,7 +216,7 @@ class Js extends Template
      */
     public function isEnabledGoogleTrack()
     {
-        return $this->configHelper->isEnableGoogleTrack();
+        return !(!$this->getGTrackSuccess() && !$this->getGTrackClose() && !$this->getGTrackCheckoutStart());
     }
 
     /**
@@ -224,7 +224,7 @@ class Js extends Template
      */
     protected function getGTrackSuccess()
     {
-        $callback = $this->cleanScript($this->configHelper->getGoogleTrackOnSuccess());
+        $callback = $this->configHelper->getGoogleTrackOnSuccess();
 
         return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
     }
@@ -234,7 +234,7 @@ class Js extends Template
      */
     protected function getGTrackClose()
     {
-        $callback = $this->cleanScript($this->configHelper->getGoogleTrackOnClose());
+        $callback = $this->configHelper->getGoogleTrackOnClose();
 
         return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
     }
@@ -244,17 +244,8 @@ class Js extends Template
      */
     protected function getGTrackCheckoutStart()
     {
-        $callback = $this->cleanScript($this->configHelper->getGoogleTrackOnCheckoutStart());
+        $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
 
         return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
-    }
-
-    /**
-     * @param $output
-     * @return string
-     */
-    protected function cleanScript($output)
-    {
-        return htmlentities($output);
     }
 }
