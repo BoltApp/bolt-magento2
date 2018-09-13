@@ -100,27 +100,14 @@
                 <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Javascript</label>
                 </field>
-                <field id="enable_google_track" translate="label" type="select" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enabled Google Track</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
                 <field id="g_track_on_success" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Google Track: Success</label>
-                    <depends>
-                        <field id="enable_google_track">1</field>
-                    </depends>
                 </field>
                 <field id="g_track_on_checkout_start" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Google Track: Checkout Start</label>
-                    <depends>
-                        <field id="enable_google_track">1</field>
-                    </depends>
                 </field>
                 <field id="g_track_on_close" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Google Track: Close</label>
-                    <depends>
-                        <field id="enable_google_track">1</field>
-                    </depends>
                 </field>
             </group>
         </section>

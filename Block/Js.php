@@ -226,7 +226,7 @@ class Js extends Template
     {
         $callback = $this->configHelper->getGoogleTrackOnSuccess();
 
-        return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
+        return (empty($callback)) ? '' : $callback;
     }
 
     /**
@@ -236,7 +236,7 @@ class Js extends Template
     {
         $callback = $this->configHelper->getGoogleTrackOnClose();
 
-        return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
+        return (empty($callback)) ? '' : $callback;
     }
 
     /**
@@ -246,6 +246,6 @@ class Js extends Template
     {
         $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
 
-        return (empty($callback) || !$this->isEnabledGoogleTrack()) ? '' : $callback;
+        return (empty($callback)) ? '' : $callback;
     }
 }
