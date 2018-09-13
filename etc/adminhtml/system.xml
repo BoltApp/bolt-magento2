@@ -101,13 +101,13 @@
                     <label>Additional Javascript</label>
                 </field>
                 <field id="g_track_on_success" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Google Track: Success</label>
+                    <label>Tracking: Success</label>
                 </field>
                 <field id="g_track_on_checkout_start" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Google Track: Checkout Start</label>
+                    <label>Tracking: Checkout Start</label>
                 </field>
                 <field id="g_track_on_close" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Google Track: Close</label>
+                    <label>Tracking: Close</label>
                 </field>
             </group>
         </section>
