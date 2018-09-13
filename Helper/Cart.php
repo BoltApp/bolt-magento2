@@ -40,6 +40,7 @@ use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Boltpay Cart helper
@@ -128,6 +129,9 @@ class Cart extends AbstractHelper
      */
     private $quoteResource;
 
+    /** @var SessionHelper */
+    private $sessionHelper;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -151,8 +155,8 @@ class Cart extends AbstractHelper
         'giftvoucheraftertax',
         'giftcardaccount',
     ];
-    ///////////////////////////////////////////////////////
 
+    ///////////////////////////////////////////////////////
     // Totals adjustment treshold
     private $treshold = 0.01;
 
@@ -174,6 +178,7 @@ class Cart extends AbstractHelper
      * @param OrderRepository   $orderRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param QuoteResource     $quoteResource
+     * @param SessionHelper $sessionHelper
      *
      * @codeCoverageIgnore
      */
@@ -194,7 +199,8 @@ class Cart extends AbstractHelper
         QuoteRepository $quoteRepository,
         OrderRepository $orderRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        QuoteResource $quoteResource
+        QuoteResource $quoteResource,
+        SessionHelper $sessionHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -213,6 +219,7 @@ class Cart extends AbstractHelper
         $this->orderRepository = $orderRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->quoteResource = $quoteResource;
+        $this->sessionHelper = $sessionHelper;
     }
 
     /**
@@ -274,6 +281,9 @@ class Cart extends AbstractHelper
         if (!$cart) {
             return;
         }
+
+        // cache the session id
+        $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
         $apiKey = $this->configHelper->getApiKey();
 
