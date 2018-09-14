@@ -198,4 +198,54 @@ class Js extends Template
         return __('Your payment was successful and we\'re now processing your order.' .
         'If you don\'t receive order confirmation email in next 30 minutes, please contact us at support@bolt.com)');
     }
+
+    /**
+     * @return array
+     */
+    public function getGoogleTrackCallbacks()
+    {
+        return [
+          'success' => $this->getGTrackSuccess(),
+          'close'   => $this->getGTrackClose(),
+          'checkout_start' => $this->getGTrackCheckoutStart(),
+        ];
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEnabledGoogleTrack()
+    {
+        return !(!$this->getGTrackSuccess() && !$this->getGTrackClose() && !$this->getGTrackCheckoutStart());
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackSuccess()
+    {
+        $callback = $this->configHelper->getGoogleTrackOnSuccess();
+
+        return (empty($callback)) ? '' : $callback;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackClose()
+    {
+        $callback = $this->configHelper->getGoogleTrackOnClose();
+
+        return (empty($callback)) ? '' : $callback;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackCheckoutStart()
+    {
+        $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
+
+        return (empty($callback)) ? '' : $callback;
+    }
 }

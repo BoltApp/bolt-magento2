@@ -190,6 +190,11 @@ class Config extends AbstractHelper
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
 
+    const XML_PATH_GTRACK_SUCCESS = 'payment/boltpay/g_track_on_success';
+
+    const XML_PATH_GTRACK_CHECKOUT_START = 'payment/boltpay/g_track_on_checkout_start';
+
+    const XML_PATH_GTRACK_CLOSE = 'payment/boltpay/g_track_on_close';
 
     /**
      * @var ResourceInterface
@@ -582,6 +587,39 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_JS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnSuccess()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_SUCCESS,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnClose()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_CLOSE,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnCheckoutStart()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE
         );
     }

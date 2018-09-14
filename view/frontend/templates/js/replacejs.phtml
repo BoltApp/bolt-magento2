@@ -26,6 +26,20 @@ if (!$block->isEnabled()) return;
 ?>
 
 <script type="text/javascript">
+<?php if ($block->isEnabledGoogleTrack()) : ?>
+    <?php $gTrack = $block->getGoogleTrackCallbacks(); ?>
+    var gBoltTrack = {
+        gClose: function() {
+            <?php echo $gTrack['close']; ?>
+        },
+        gOnCheckoutStart: function() {
+            <?php echo $gTrack['checkout_start']; ?>
+        },
+        gSuccess: function() {
+            <?php echo $gTrack['success']; ?>
+        }
+    };
+<?php endif; ?>
 
     function showBoltErrorMessage() {
         var boltModal = jQuery('#bolt-modal'),
@@ -416,11 +430,19 @@ if (!$block->isEnabled()) return;
         var callbacks = {
 
             close: function () {
-                // redirect on succes order save
+                gBoltTrack.gClose();
+
+                // redirect on success order save
                 if (callbacks.success_url) location.href = callbacks.success_url;
             },
 
+            onCheckoutStart: function() {
+              gBoltTrack.gOnCheckoutStart();
+            },
+
             success: function (transaction, callback) {
+                gBoltTrack.gSuccess();
+
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -448,7 +470,6 @@ if (!$block->isEnabled()) return;
             },
 
             check: function () {
-
                 /**
                  * On Bolt button click check if guest checkout is allowed.
                  * Display login popup to guest customers if it is not. The
@@ -775,7 +796,7 @@ if (!$block->isEnabled()) return;
         // totals updated or items added via ajax call.
         // TODO: add this option to plugin configuration admin page
         ///////////////////////////////////////////////////////////////
-        monitorDataChange(settings.totals_change_selectors, createOrder, true, true);
+        monitorDataChange(settings.totals_change_selectors, createOrder, true, false);
         ///////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////

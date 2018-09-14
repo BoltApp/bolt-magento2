@@ -100,6 +100,15 @@
                 <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Javascript</label>
                 </field>
+                <field id="g_track_on_success" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: Success</label>
+                </field>
+                <field id="g_track_on_checkout_start" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: Checkout Start</label>
+                </field>
+                <field id="g_track_on_close" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: Close</label>
+                </field>
             </group>
         </section>
     </system>

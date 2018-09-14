@@ -45,12 +45,12 @@ use Zend_Http_Client_Exception;
 use Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
-use Magento\Checkout\Model\Session;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class Order
@@ -130,11 +130,6 @@ class Order extends AbstractHelper
     private $dataObjectFactory;
 
     /**
-     * @var Session
-     */
-    private $checkoutSession;
-
-    /**
      * @var LogHelper
      */
     private $logHelper;
@@ -159,6 +154,9 @@ class Order extends AbstractHelper
      */
     private $resourceConnection;
 
+    /** @var SessionHelper */
+    private $sessionHelper;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -173,12 +171,12 @@ class Order extends AbstractHelper
      * @param TransactionBuilder $transactionBuilder
      * @param TimezoneInterface $timezone
      * @param DataObjectFactory $dataObjectFactory
-     * @param Session $checkoutSession
      * @param State $appState
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
+     * @param SessionHelper $sessionHelper
      *
      * @codeCoverageIgnore
      */
@@ -196,12 +194,12 @@ class Order extends AbstractHelper
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
-        Session $checkoutSession,
         State $appState,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        SessionHelper $sessionHelper
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -216,12 +214,12 @@ class Order extends AbstractHelper
         $this->transactionBuilder = $transactionBuilder;
         $this->timezone = $timezone;
         $this->dataObjectFactory = $dataObjectFactory;
-        $this->checkoutSession = $checkoutSession;
         $this->appState = $appState;
         $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
+        $this->sessionHelper = $sessionHelper;
     }
 
     /**
@@ -393,7 +391,9 @@ class Order extends AbstractHelper
      */
     private function createOrder($quote, $transaction, $frontend, $bolt_trace_id = null)
     {
-        $this->checkoutSession->replaceQuote($quote);
+        // Load logged in customer checkout and customer sessions from cached session id.
+        // Replace parent quote with immutable quote in checkout session.
+        $this->sessionHelper->loadSession($quote);
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
@@ -578,9 +578,9 @@ class Order extends AbstractHelper
             $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
 
             // Add the user_note to the order comments and make it visible for customer.
-            if ($userNoteComment = $transaction->order->user_note) {
+            if (isset($transaction->order->user_note)) {
                 $order
-                    ->addStatusHistoryComment($userNoteComment)
+                    ->addStatusHistoryComment($transaction->order->user_note)
                     ->setIsVisibleOnFront(true)
                     ->setIsCustomerNotified(false);
             }
