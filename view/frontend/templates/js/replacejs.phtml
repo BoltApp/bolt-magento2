@@ -26,7 +26,7 @@ if (!$block->isEnabled()) return;
 ?>
 
 <script type="text/javascript">
-<?php if ($block->isEnabledGoogleTrack()) : ?>
+
     <?php $gTrack = $block->getGoogleTrackCallbacks(); ?>
     var gBoltTrack = {
         gClose: function() {
@@ -39,7 +39,6 @@ if (!$block->isEnabled()) return;
             <?php echo $gTrack['success']; ?>
         }
     };
-<?php endif; ?>
 
     function showBoltErrorMessage() {
         var boltModal = jQuery('#bolt-modal'),
@@ -451,10 +450,12 @@ if (!$block->isEnabled()) return;
                 // sets the success order page redirect url from received data
                 // and calls the final Bolt defined callback
                 var onSuccess = function(data){
-                    // show alert message on error
                     if (data.status !== 'success') {
                         if (data.message) {
                             showBoltErrorMessage();
+                            // pretend order creation was success...
+                            // we need to call this; otherwise bolt modal show infinte spinner.
+                            callback();
                         }
 
                         return false;
