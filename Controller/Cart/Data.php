@@ -116,6 +116,7 @@ class Data extends Action
                 'status' => 'success',
                 'cart'   => $cart,
                 'hints'  => $hints,
+                'backUrl' => '',
             ]);
 
         } catch (Exception $e) {
