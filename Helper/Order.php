@@ -605,10 +605,9 @@ class Order extends AbstractHelper
      * Add user note as status history comment
      *
      * @param OrderModel $order
-     * @param \stdClass $transaction
+     * @param string     $userNote
      *
      * @return OrderModel
-     * 
      */
     public function setOrderUserNote($order, $userNote){
 
