@@ -579,10 +579,9 @@ class Order extends AbstractHelper
 
             // Add the user_note to the order comments and make it visible for customer.
             if (isset($transaction->order->user_note)) {
-                $order
-                    ->addStatusHistoryComment($transaction->order->user_note)
-                    ->setIsVisibleOnFront(true)
-                    ->setIsCustomerNotified(false);
+
+                $this->setOrderUserNote($order, $transaction->order->user_note);
+
             }
         }
 
@@ -600,6 +599,24 @@ class Order extends AbstractHelper
         if ($frontend) {
             return [$quote, $order];
         }
+    }
+
+    /**
+     * Add user note as status history comment
+     *
+     * @param OrderModel $order
+     * @param string     $userNote
+     *
+     * @return OrderModel
+     */
+    public function setOrderUserNote($order, $userNote){
+
+        $order
+            ->addStatusHistoryComment($userNote)
+            ->setIsVisibleOnFront(true)
+            ->setIsCustomerNotified(false);
+
+        return $order;
     }
 
     public function formatReferenceUrl($reference) {
