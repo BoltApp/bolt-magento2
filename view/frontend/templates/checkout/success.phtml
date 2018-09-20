@@ -1,0 +1,11 @@
+<?php /* @var $block Bolt\Boltpay\Block\Checkout\Success */ ?>
+<?php if ($block->isAllowInvalidateQuote()): ?>
+<script>
+    require([
+        'Magento_Customer/js/customer-data'
+    ], function (customerData) {
+        var sections = ['cart'];
+        customerData.invalidate(sections);
+    });
+</script>
+<?php endif; ?>

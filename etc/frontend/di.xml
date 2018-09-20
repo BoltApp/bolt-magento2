@@ -32,4 +32,7 @@
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session</argument>
         </arguments>
     </type>
+    <type name="Magento\Checkout\Model\Session">
+        <plugin name="BoltClearQuoteAfterOrderCompletion" type="Bolt\Boltpay\Plugin\ClearQuote" />
+    </type>
 </config>
