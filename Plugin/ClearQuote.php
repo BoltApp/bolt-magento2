@@ -32,6 +32,7 @@ class ClearQuote
      */
     public function afterClearQuote(CheckoutSession $subject)
     {
+         // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
         $subject->setLoadInactive(false);
         $subject->replaceQuote($subject->getQuote()->save());
 
