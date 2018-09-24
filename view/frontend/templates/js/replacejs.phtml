@@ -549,6 +549,8 @@ if (!$block->isEnabled()) return;
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
+        // flag that repesents should the checkout auto-open
+        var initiateCheckout = settings.initiate_checkout;
         var createOrder = function () {
             if (createRequest) return;
             // define the params sent with the request variable
@@ -599,40 +601,45 @@ if (!$block->isEnabled()) return;
             params = params.join('&');
             if (params === '') params = null;
 
-            if (window.BoltCheckout) var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
+            if (window.BoltCheckout) {
 
-                createRequest = true;
+                var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 
-                // send create order request
-                $.post(settings.create_order_url, params)
-                    .done(function (data) {
-                        // set cart and hints data
-                        cart = data.cart;
+                    createRequest = true;
 
-                        var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                    // send create order request
+                    $.post(settings.create_order_url, params)
+                        .done(function (data) {
+                            // set cart and hints data
+                            cart = data.cart;
 
-                        hints = deepMergeObjects(hints, data.hints);
-                        hints.prefill = prefill;
-                        hints.publishableKey = getCheckoutKey();
+                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
-                        resolve(cart);
+                            hints = deepMergeObjects(hints, data.hints);
+                            hints.prefill = prefill;
+                            hints.publishableKey = getCheckoutKey();
 
-                        if (settings.initiate_checkout) {
-                            settings.initiate_checkout = false;
-                            BC.open();
-                        }
+                            resolve(cart);
 
-                        // prefetch Shipping and Tax for multi-step checkout
-                        if (getCheckoutType() === 'checkout') prefetchShipping();
-                    })
-                    .fail(function(jqXHR, textStatus, errorThrown) {
-                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
-                    })
-                    .always(function() {
-                        createRequest = false;
-                    })
+                            // open the checkout if auto-open flag is set
+                            // one time only on page load
+                            if (initiateCheckout) {
+                                initiateCheckout = false;
+                                BC.open();
+                            }
 
-            }), hints, callbacks);
+                            // prefetch Shipping and Tax for multi-step checkout
+                            if (getCheckoutType() === 'checkout') prefetchShipping();
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
+                        })
+                        .always(function() {
+                            createRequest = false;
+                        })
+
+                }), hints, callbacks);
+            }
         };
         /////////////////////////////////////////////////////
 
