@@ -599,7 +599,7 @@ if (!$block->isEnabled()) return;
             params = params.join('&');
             if (params === '') params = null;
 
-            if (window.BoltCheckout) BoltCheckout.configure(new Promise(function (resolve, reject) {
+            if (window.BoltCheckout) var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 
                 createRequest = true;
 
@@ -617,6 +617,11 @@ if (!$block->isEnabled()) return;
 
                         resolve(cart);
 
+                        if (settings.initiate_checkout) {
+                            settings.initiate_checkout = false;
+                            BC.open();
+                        }
+
                         // prefetch Shipping and Tax for multi-step checkout
                         if (getCheckoutType() === 'checkout') prefetchShipping();
                     })
@@ -628,8 +633,6 @@ if (!$block->isEnabled()) return;
                     })
 
             }), hints, callbacks);
-
-
         };
         /////////////////////////////////////////////////////
 
@@ -649,7 +652,6 @@ if (!$block->isEnabled()) return;
                 billing_address_value = address;
                 createOrder();
             }
-
         });
         /////////////////////////////////////////////////////
 
