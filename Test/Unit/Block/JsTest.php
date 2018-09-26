@@ -59,7 +59,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->checkoutSessionMock = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getQuote', 'getBoltOpenCheckoutFlag','unsBoltOpenCheckoutFlag'])
+            ->setMethods(['getQuote', 'getBoltInitiateCheckout','unsBoltInitiateCheckout'])
             ->getMock();
 
         $methods = [
@@ -255,10 +255,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function setBoltOpenCheckoutFlag($value = true) {
+    public function setBoltInitiateCheckout($value = true) {
         $this->checkoutSessionMock
             ->expects($this->once())
-            ->method('getBoltOpenCheckoutFlag')
+            ->method('getBoltInitiateCheckout')
             ->willReturn($value);
     }
 
@@ -267,7 +267,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     public function testGetInitiateCheckoutTrue() {
-        $this->setBoltOpenCheckoutFlag();
+        $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 }

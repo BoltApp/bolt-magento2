@@ -150,13 +150,13 @@ class Js extends Template
     }
 
     /**
-     * Geet once and unset the auto-open Bolt checkout session flag.
+     * Gets the auto-open Bolt checkout session flag, and then unsets it so that it is only used once.
      *
      * @return bool
      */
     public function getInitiateCheckout() {
-        $flag = $this->checkoutSession->getBoltOpenCheckoutFlag();
-        $this->checkoutSession->unsBoltOpenCheckoutFlag();
+        $flag = $this->checkoutSession->getBoltInitiateCheckout();
+        $this->checkoutSession->unsBoltInitiateCheckout();
         return (bool)$flag;
     }
 

@@ -17,65 +17,32 @@
 
 namespace Bolt\Boltpay\Plugin;
 
-use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Customer\Model\Session as CustomerSession;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\ResultFactory;
 
 /**
  * Class LoginPlugin
- * Redirect to shopping cart page after cusromer has logged in from Ajax controller.
+ * Redirect to shopping cart page after customer has logged in from Ajax controller.
  *
  * @package Bolt\Boltpay\Plugin
  */
-class LoginPlugin
+class LoginPlugin extends AbstractLoginPlugin
 {
-    use LoginPluginTrait;
-
-    /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
-
-    /**
-     * @var CustomerSession
-     */
-    protected $customerSession;
-
-    /**
-     * @var CheckoutSession
-     */
-    protected $checkoutSession;
-
-    /**
-     * LoginPlugin constructor.
-     * @param JsonFactory $resultJsonFactory
-     * @param CustomerSession $customerSession
-     * @param CheckoutSession $checkoutSession
-     */
-    public function __construct(
-        JsonFactory $resultJsonFactory,
-        CustomerSession $customerSession,
-        CheckoutSession $checkoutSession
-    ) {
-        $this->resultJsonFactory = $resultJsonFactory;
-        $this->customerSession = $customerSession;
-        $this->checkoutSession = $checkoutSession;
-    }
-
     /**
      * Redirect to shopping cart page upon successful login if the cart exists.
      *
-     * @param \Magento\Customer\Controller\Ajax\Login $subject
-     * @param \Magento\Framework\Controller\ResultInterface $result
+     * @param Action $subject
+     * @param ResultInterface $result
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function afterExecute($subject, $result) {
 
-        // Pass through the original result if the customer is not logged in or the cart is empty
-        if (!$this->allowRedirect()) return $result;
-
         try {
+            // Pass through the original result if the customer is not logged in or the cart is empty
+            if (!$this->shouldRedirectToCartPage()) return $result;
+
             // Get and decode result object protected json property value
             $propGetter = \Closure::bind(function($prop){return $this->$prop;}, $result, $result);
             $json = $propGetter('json');
@@ -86,16 +53,18 @@ class LoginPlugin
 
             // No errors, user was successfully logged in
             // Generate new result by adding redirect url to the original data
-            $response['redirectUrl'] = self::$shoppingCartPath;
+            $response['redirectUrl'] = '/' . self::SHOPPING_CART_PATH;
 
             // Set the flag in session to auto-open Bolt checkout on redirected (shopping cart) page
-            $this->setBoltOpenCheckoutFlag();
+            $this->setBoltInitiateCheckout();
 
-            $resultJson = $this->resultJsonFactory->create();
-            return $resultJson->setData($response);
+            return $this->resultFactory
+                ->create(ResultFactory::TYPE_JSON)
+                ->setData($response);
 
         } catch (\Exception $e) {
             // On any exception pass the original result through
+            $this->notifyException($e);
             return $result;
         }
     }

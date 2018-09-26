@@ -17,69 +17,44 @@
 
 namespace Bolt\Boltpay\Plugin;
 
-use Magento\Framework\Controller\Result\RedirectFactory;
-use Magento\Customer\Model\Session as CustomerSession;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\Controller\ResultInterface;
+use Magento\Framework\Controller\ResultFactory;
 
 /**
  * Class LoginPostPlugin
- * Redirect to shopping cart page after cusromer has logged in from Account controller.
+ * Redirect to shopping cart page after customer has logged in from Account controller.
  *
  * @package Bolt\Boltpay\Plugin
  */
-class LoginPostPlugin
+class LoginPostPlugin extends AbstractLoginPlugin
 {
-    use LoginPluginTrait;
-
-    /**
-     * @var RedirectFactory
-     */
-    protected $resultRedirectFactory;
-
-    /**
-     * @var CustomerSession
-     */
-    protected $customerSession;
-
-    /**
-     * @var CheckoutSession
-     */
-    protected $checkoutSession;
-
-    /**
-     * LoginPostPlugin constructor.
-     * @param RedirectFactory $resultRedirectFactory
-     * @param CustomerSession $customerSession
-     * @param CheckoutSession $checkoutSession
-     */
-    public function __construct(
-        RedirectFactory $resultRedirectFactory,
-        CustomerSession $customerSession,
-        CheckoutSession $checkoutSession
-    ) {
-        $this->resultRedirectFactory = $resultRedirectFactory;
-        $this->customerSession = $customerSession;
-        $this->checkoutSession = $checkoutSession;
-    }
-
     /**
      * Redirect to shopping cart page upon successful login if the cart exists.
      *
-     * @param \Magento\Customer\Controller\Account\LoginPost $subject
-     * @param \Magento\Framework\Controller\ResultInterface $result
+     * @param Action $subject
+     * @param ResultInterface $result
      *
-     * @return \Magento\Framework\Controller\ResultInterface
+     * @return ResultInterface
      */
     public function afterExecute($subject, $result) {
 
-        // Pass through the original result if the customer is not logged in or the cart is empty
-        if (!$this->allowRedirect()) return $result;
+        try {
+            // Pass through the original result if the customer is not logged in or the cart is empty
+            if (!$this->shouldRedirectToCartPage()) return $result;
 
-        // Set the flag in session to auto-open Bolt checkout on redirected (shopping cart) page
-        $this->setBoltOpenCheckoutFlag();
+            // Set the flag in session to auto-open Bolt checkout on redirected (shopping cart) page
+            $this->setBoltInitiateCheckout();
 
-        // Redirect to shopping cart
-        return $this->resultRedirectFactory->create()
-            ->setPath(self::$shoppingCartPath);
+            // Redirect to shopping cart
+            return $this->resultFactory
+                ->create(ResultFactory::TYPE_REDIRECT)
+                ->setPath(self::SHOPPING_CART_PATH);
+
+        } catch (\Exception $e) {
+            // On any exception pass the original result through
+            $this->notifyException($e);
+            return $result;
+        }
     }
 }

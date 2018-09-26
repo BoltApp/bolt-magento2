@@ -218,7 +218,8 @@ if (!$block->isEnabled()) return;
         'jquery',
         'Magento_Customer/js/model/authentication-popup',
         'Magento_Customer/js/customer-data',
-        'mage/validation/validation'
+        'mage/validation/validation',
+        'mage/cookies'
     ], function ($, authenticationPopup, customerData) {
     ////////////////////////////////////////////////////
 
@@ -419,6 +420,20 @@ if (!$block->isEnabled()) return;
         // the last request to be aborted before new one is sent.
         var save_request;
 
+        //////////////////////////////////////////////
+        // Checkout auto-open flag setters and getter
+        //////////////////////////////////////////////
+        var setInitiateCheckoutCookie = function () {
+            $.cookie('bolt_initiate_checkout', true, {path: '/', domain: window.location.hostname});
+        };
+        var unsetInitiateCheckoutCookie = function () {
+            $.cookie('bolt_initiate_checkout', null, {path: '/', domain: window.location.hostname});
+        };
+        var getInitiateCheckoutCookie = function () {
+            return $.cookie('bolt_initiate_checkout');
+        };
+        //////////////////////////////////////////////
+
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
@@ -480,6 +495,9 @@ if (!$block->isEnabled()) return;
                 var customer = customerData.get('customer');
                 var shoppingCart = customerData.get('cart');
                 if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+                    // if authentication is required for checkout set a cookie
+                    // for auto opening Bolt checkout after login
+                    setInitiateCheckoutCookie();
                     authenticationPopup.showModal();
                     return false;
                 }
@@ -550,7 +568,8 @@ if (!$block->isEnabled()) return;
         /////////////////////////////////////////////////////
         var createRequest = false;
         // flag that repesents should the checkout auto-open
-        var initiateCheckout = settings.initiate_checkout;
+        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
+        unsetInitiateCheckoutCookie();
         var createOrder = function () {
             if (createRequest) return;
             // define the params sent with the request variable
