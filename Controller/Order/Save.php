@@ -103,9 +103,6 @@ class Save extends Action
     public function execute()
     {
         try {
-
-            throw new Exception('test message');
-
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
             // call order save and update
