@@ -40,14 +40,6 @@ if (!$block->isEnabled()) return;
         }
     };
 
-    function showBoltErrorMessage(messsage) {
-        var boltModal = jQuery('#bolt-modal'),
-            errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
-
-        boltModal.find('.bolt-modal-content').html(errorMsg);
-        boltModal.modal("openModal");
-    }
-
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -222,6 +214,14 @@ if (!$block->isEnabled()) return;
         'mage/cookies'
     ], function ($, authenticationPopup, customerData) {
     ////////////////////////////////////////////////////
+
+        var showBoltErrorMessage = function(messsage) {
+            var boltModal = $('#bolt-modal'),
+                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
+
+            boltModal.find('.bolt-modal-content').html(errorMsg);
+            boltModal.modal("openModal");
+        };
 
         ////////////////////////////////
         // Merge objects
