@@ -112,7 +112,7 @@ class Data extends Action
 
             $hints = $this->cartHelper->getHints($place_order_payload, $cartReference);
 
-            return $result->setData([
+            $result->setData([
                 'status' => 'success',
                 'cart'   => $cart,
                 'hints'  => $hints,
@@ -120,13 +120,17 @@ class Data extends Action
             ]);
 
         } catch (Exception $e) {
+
             $this->bugsnag->notifyException($e);
-//            throw $e;
-            return $result->setData([
+
+            $result->setData([
                 'status' => 'failure',
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
+
+        } finally {
+            return $result;
         }
     }
 }
