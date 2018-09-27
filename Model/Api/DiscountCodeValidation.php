@@ -64,6 +64,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $moduleGiftCardAccount;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    private $moduleUnirgyGiftCert;
+
+    /**
      * @var RuleFactory
      */
     protected $ruleFactory;
@@ -140,6 +145,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         Response $response,
         CouponFactory $couponFactory,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
+        ThirdPartyModuleFactory $moduleUnirgyGiftCert,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -156,6 +162,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->response = $response;
         $this->couponFactory = $couponFactory;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
+        $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
         $this->usageFactory = $usageFactory;
@@ -219,6 +226,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if (empty($coupon) || $coupon->isObjectNew()) {
                 // Load the gift card by code
                 $giftCard = $this->loadGiftCardData($couponCode);
+            }
+
+            // Apply Unirgy_GiftCert
+            if (empty($giftCard)) {
+                // Load the gift cert by code
+                $giftCard = $this->loadGiftCertData($couponCode);
             }
 
             // Check if the coupon and gift card does not exist.
@@ -658,6 +671,39 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
 
         $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: yes');
+
+        return $result;
+    }
+
+    /**
+     * @param $code
+     * @return null|\Unirgy\Giftcert\Model\Cert
+     */
+    public function loadGiftCertData($code)
+    {
+        $result = null;
+
+        /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection $giftCardAccount */
+        $giftCertResource = $this->moduleUnirgyGiftCert->getInstance();
+
+        if ($giftCertResource) {
+            $this->logHelper->addInfoLog('### GiftCert Code: ' . $code);
+
+            /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection  $giftCertCollection */
+            $giftCertCollection = $giftCertResource
+                ->addFieldToFilter('cert_number', array('eq' => $code))
+            ;
+
+            /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+            $giftCert = $giftCertCollection->getFirstItem();
+
+            $this->logHelper->addInfoLog('# Code: ' . $code);
+            $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: no');
+
+            $result = (!$giftCert->getBalance() && ($giftCert->getData('status') !== 'I')) ? $giftCert : null;
+        }
+
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: yes');
 
         return $result;
     }
