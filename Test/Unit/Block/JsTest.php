@@ -56,7 +56,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
     {
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
-        $this->checkoutSessionMock = $this->createMock(\Magento\Checkout\Model\Session::class);
+
+        $this->checkoutSessionMock = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getQuote', 'getBoltInitiateCheckout','unsBoltInitiateCheckout'])
+            ->getMock();
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
@@ -203,7 +207,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(13, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(14, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -219,6 +223,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('quote_is_virtual', $array, $message . 'quote_is_virtual');
         $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
+        $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
     }
 
     /**
@@ -247,5 +252,22 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->expects($this->any())
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
+    }
+
+
+    public function setBoltInitiateCheckout($value = true) {
+        $this->checkoutSessionMock
+            ->expects($this->once())
+            ->method('getBoltInitiateCheckout')
+            ->willReturn($value);
+    }
+
+    public function testGetInitiateCheckoutFalse() {
+        $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
+    }
+
+    public function testGetInitiateCheckoutTrue() {
+        $this->setBoltInitiateCheckout();
+        $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 }

@@ -218,7 +218,8 @@ if (!$block->isEnabled()) return;
         'jquery',
         'Magento_Customer/js/model/authentication-popup',
         'Magento_Customer/js/customer-data',
-        'mage/validation/validation'
+        'mage/validation/validation',
+        'mage/cookies'
     ], function ($, authenticationPopup, customerData) {
     ////////////////////////////////////////////////////
 
@@ -419,6 +420,20 @@ if (!$block->isEnabled()) return;
         // the last request to be aborted before new one is sent.
         var save_request;
 
+        //////////////////////////////////////////////
+        // Checkout auto-open flag setters and getter
+        //////////////////////////////////////////////
+        var setInitiateCheckoutCookie = function () {
+            $.cookie('bolt_initiate_checkout', true, {path: '/', domain: window.location.hostname});
+        };
+        var unsetInitiateCheckoutCookie = function () {
+            $.cookie('bolt_initiate_checkout', null, {path: '/', domain: window.location.hostname});
+        };
+        var getInitiateCheckoutCookie = function () {
+            return $.cookie('bolt_initiate_checkout');
+        };
+        //////////////////////////////////////////////
+
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
@@ -480,6 +495,9 @@ if (!$block->isEnabled()) return;
                 var customer = customerData.get('customer');
                 var shoppingCart = customerData.get('cart');
                 if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+                    // if authentication is required for checkout set a cookie
+                    // for auto opening Bolt checkout after login
+                    setInitiateCheckoutCookie();
                     authenticationPopup.showModal();
                     return false;
                 }
@@ -549,6 +567,9 @@ if (!$block->isEnabled()) return;
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
+        // flag that repesents should the checkout auto-open
+        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
+        unsetInitiateCheckoutCookie();
         var createOrder = function () {
             if (createRequest) return;
             // define the params sent with the request variable
@@ -599,37 +620,45 @@ if (!$block->isEnabled()) return;
             params = params.join('&');
             if (params === '') params = null;
 
-            if (window.BoltCheckout) BoltCheckout.configure(new Promise(function (resolve, reject) {
+            if (window.BoltCheckout) {
 
-                createRequest = true;
+                var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 
-                // send create order request
-                $.post(settings.create_order_url, params)
-                    .done(function (data) {
-                        // set cart and hints data
-                        cart = data.cart;
+                    createRequest = true;
 
-                        var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                    // send create order request
+                    $.post(settings.create_order_url, params)
+                        .done(function (data) {
+                            // set cart and hints data
+                            cart = data.cart;
 
-                        hints = deepMergeObjects(hints, data.hints);
-                        hints.prefill = prefill;
-                        hints.publishableKey = getCheckoutKey();
+                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
-                        resolve(cart);
+                            hints = deepMergeObjects(hints, data.hints);
+                            hints.prefill = prefill;
+                            hints.publishableKey = getCheckoutKey();
 
-                        // prefetch Shipping and Tax for multi-step checkout
-                        if (getCheckoutType() === 'checkout') prefetchShipping();
-                    })
-                    .fail(function(jqXHR, textStatus, errorThrown) {
-                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
-                    })
-                    .always(function() {
-                        createRequest = false;
-                    })
+                            resolve(cart);
 
-            }), hints, callbacks);
+                            // open the checkout if auto-open flag is set
+                            // one time only on page load
+                            if (initiateCheckout) {
+                                initiateCheckout = false;
+                                BC.open();
+                            }
 
+                            // prefetch Shipping and Tax for multi-step checkout
+                            if (getCheckoutType() === 'checkout') prefetchShipping();
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
+                        })
+                        .always(function() {
+                            createRequest = false;
+                        })
 
+                }), hints, callbacks);
+            }
         };
         /////////////////////////////////////////////////////
 
@@ -649,7 +678,6 @@ if (!$block->isEnabled()) return;
                 billing_address_value = address;
                 createOrder();
             }
-
         });
         /////////////////////////////////////////////////////
 
