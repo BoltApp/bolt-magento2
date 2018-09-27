@@ -647,7 +647,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param $code
      * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
      */
-    private function loadGiftCardData($code)
+    public function loadGiftCardData($code)
     {
         $result = null;
 
@@ -655,6 +655,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
 
         if ($giftCardAccountResource) {
+            $this->logHelper->addInfoLog('### GiftCard ###');
+            $this->logHelper->addInfoLog('# Code: ' . $code);
 
             /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
             $giftCardsCollection = $giftCardAccountResource
@@ -664,13 +666,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
             $giftCard = $giftCardsCollection->getFirstItem();
 
-            $this->logHelper->addInfoLog('# Code: ' . $code);
-            $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: no');
-
             $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: yes');
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
@@ -687,7 +686,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $giftCertResource = $this->moduleUnirgyGiftCert->getInstance();
 
         if ($giftCertResource) {
-            $this->logHelper->addInfoLog('### GiftCert Code: ' . $code);
+            $this->logHelper->addInfoLog('### GiftCert ###');
+            $this->logHelper->addInfoLog('# Code: ' . $code);
 
             /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection  $giftCertCollection */
             $giftCertCollection = $giftCertResource
@@ -697,13 +697,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
             $giftCert = $giftCertCollection->getFirstItem();
 
-            $this->logHelper->addInfoLog('# Code: ' . $code);
-            $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: no');
-
             $result = (!$giftCert->getBalance() && ($giftCert->getData('status') !== 'I')) ? $giftCert : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: yes');
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
