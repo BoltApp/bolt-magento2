@@ -87,6 +87,8 @@ class Data extends Action
      */
     public function execute()
     {
+        $result = $this->resultJsonFactory->create();
+
         try {
             // flag to determinate the type of checkout / data sent to Bolt
             $payment_only        = $this->getRequest()->getParam('payment_only');
@@ -110,8 +112,6 @@ class Data extends Action
 
             $hints = $this->cartHelper->getHints($place_order_payload, $cartReference);
 
-            $result = $this->resultJsonFactory->create();
-
             return $result->setData([
                 'status' => 'success',
                 'cart'   => $cart,
@@ -121,7 +121,12 @@ class Data extends Action
 
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+//            throw $e;
+            return $result->setData([
+                'status' => 'failure',
+                'message' => $e->getMessage(),
+                'backUrl' => '',
+            ]);
         }
     }
 }

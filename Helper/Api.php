@@ -288,7 +288,7 @@ class Api extends AbstractHelper
             }
 
             if ($this->isResponseError($resultFromJSON)) {
-                $message = __("Bolt API Error Response");
+                $message = isset ($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) :  __("Bolt API Error Response");
                 throw new LocalizedException($message);
             }
 

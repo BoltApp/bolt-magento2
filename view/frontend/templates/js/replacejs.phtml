@@ -40,9 +40,9 @@ if (!$block->isEnabled()) return;
         }
     };
 
-    function showBoltErrorMessage() {
+    function showBoltErrorMessage(messsage) {
         var boltModal = jQuery('#bolt-modal'),
-            errorMsg = "<?php echo $block->getBoltPopupErrorMessage() ?>";
+            errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
 
         boltModal.find('.bolt-modal-content').html(errorMsg);
         boltModal.modal("openModal");
@@ -629,6 +629,13 @@ if (!$block->isEnabled()) return;
                     // send create order request
                     $.post(settings.create_order_url, params)
                         .done(function (data) {
+
+                            if (data.status !== 'success') {
+                                reject(new Error(data.message || 'Network request failed'));
+                                if (data.message) showBoltErrorMessage(data.message);
+                                return;
+                            }
+
                             // set cart and hints data
                             cart = data.cart;
 
