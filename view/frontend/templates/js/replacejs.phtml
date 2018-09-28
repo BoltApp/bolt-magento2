@@ -632,7 +632,6 @@ if (!$block->isEnabled()) return;
 
                             if (data.status !== 'success') {
                                 reject(new Error(data.message || 'Network request failed'));
-                                if (data.message) showBoltErrorMessage(data.message);
                                 return;
                             }
 
