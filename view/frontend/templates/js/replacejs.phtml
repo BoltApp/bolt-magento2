@@ -732,6 +732,9 @@ if (!$block->isEnabled()) return;
                         if (getCheckoutKey() === '') return;
                         var bolt_button = document.createElement('div');
                         bolt_button.setAttribute('class', bolt_button_css_class);
+                        if (getCheckoutType() === 'checkout') {
+                            bolt_button.classList.add(multi_step_css_class);
+                        }
                         // place the button before or after selector element
                         if (position && position.trim().toLowerCase() === 'append') {
                             element.parentNode.insertBefore(bolt_button, element.nextSibling);
