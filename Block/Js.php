@@ -150,6 +150,17 @@ class Js extends Template
     }
 
     /**
+     * Gets the auto-open Bolt checkout session flag, and then unsets it so that it is only used once.
+     *
+     * @return bool
+     */
+    public function getInitiateCheckout() {
+        $flag = $this->checkoutSession->getBoltInitiateCheckout();
+        $this->checkoutSession->unsBoltInitiateCheckout();
+        return (bool)$flag;
+    }
+
+    /**
      * Get Javascript page settings.
      * @return string
      */
@@ -169,6 +180,7 @@ class Js extends Template
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
+            'initiate_checkout'        => $this->getInitiateCheckout(),
         ]);
     }
 
