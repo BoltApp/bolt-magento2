@@ -430,8 +430,10 @@ class Order extends AbstractHelper
         $order = $this->quoteManagement->submit($quote);
 
         if ($frontend) {
-            // Send order confirmation email to customer.
-            $this->emailSender->send($order);
+            if (!$order->getEmailSent() && !$order->getCustomerNoteNotify()) {
+                // Send order confirmation email to customer.
+                $this->emailSender->send($order);
+            }
         } else {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
