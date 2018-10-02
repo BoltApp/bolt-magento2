@@ -405,7 +405,7 @@ class Order extends AbstractHelper
         $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
-        $quote->collectTotals();
+//        $quote->collectTotals();
 
         $this->cartHelper->saveQuote($quote);
 
@@ -501,7 +501,7 @@ class Order extends AbstractHelper
         try {
             $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
             $parentQuote->setIsActive(false);
-            $this->cartHelper->saveQuote($parentQuote);
+//            $this->cartHelper->saveQuote($parentQuote);
         } catch (NoSuchEntityException $e) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([
