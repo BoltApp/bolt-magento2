@@ -37,7 +37,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
-use Magento\Sales\Model\Order\Payment as PaymentModel;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Magento\Sales\Model\Service\InvoiceService;
@@ -51,6 +50,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
 
 /**
  * Class Order
@@ -63,6 +63,51 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
  */
 class Order extends AbstractHelper
 {
+    // Bolt transaction states
+    const TS_PENDING               = 'cc_payment:pending';
+    const TS_AUTHORIZED            = 'cc_payment:authorized';
+    const TS_COMPLETED             = 'cc_payment:completed';
+    const TS_CANCELED              = 'cc_payment:cancelled';
+    const TS_REJECTED_REVERSIBLE   = 'cc_payment:rejected_reversible';
+    const TS_REJECTED_IRREVERSIBLE = 'cc_payment:rejected_irreversible';
+    const TS_ZERO_AMOUNT           = 'zero_amount:completed';
+    const TS_CREDIT_COMPLETED      = 'cc_credit:completed';
+
+    // Posible transation state transitions
+    private $validStateTransitions = [
+        null => [
+            self::TS_ZERO_AMOUNT,
+            self::TS_PENDING,
+            self::TS_AUTHORIZED,
+            self::TS_COMPLETED,
+            self::TS_CANCELED,
+            self::TS_REJECTED_REVERSIBLE,
+            self::TS_REJECTED_IRREVERSIBLE
+        ],
+        self::TS_PENDING => [
+            self::TS_AUTHORIZED,
+            self::TS_COMPLETED,
+            self::TS_CANCELED,
+            self::TS_REJECTED_REVERSIBLE,
+            self::TS_REJECTED_IRREVERSIBLE,
+            // TODO: check if this transition exists
+            self::TS_ZERO_AMOUNT
+        ],
+        self::TS_AUTHORIZED => [
+            self::TS_CANCELED,
+            self::TS_COMPLETED
+        ],
+        self::TS_CANCELED => [],
+        self::TS_COMPLETED => [self::TS_CREDIT_COMPLETED],
+        self::TS_ZERO_AMOUNT => [],
+        self::TS_REJECTED_REVERSIBLE => [
+            self::TS_AUTHORIZED,
+            self::TS_COMPLETED,
+            self::TS_REJECTED_IRREVERSIBLE
+        ],
+        self::TS_REJECTED_IRREVERSIBLE => [],
+        self::TS_CREDIT_COMPLETED => [self::TS_CREDIT_COMPLETED]
+    ];
 
     /** @var State */
     private $appState;
@@ -247,10 +292,10 @@ class Order extends AbstractHelper
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 
-//		$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
-//		$logger = new \Zend\Log\Logger();
-//		$logger->addWriter($writer);
-//		$logger->info(json_encode($response, JSON_PRETTY_PRINT));
+//      $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
+//      $logger = new \Zend\Log\Logger();
+//      $logger->addWriter($writer);
+//      $logger->info(json_encode($response, JSON_PRETTY_PRINT));
 
         return $response;
     }
@@ -609,7 +654,7 @@ class Order extends AbstractHelper
      *
      * @return OrderModel
      */
-    public function setOrderUserNote($order, $userNote){
+    public function setOrderUserNote($order, $userNote) {
 
         $order
             ->addStatusHistoryComment($userNote)
@@ -619,329 +664,319 @@ class Order extends AbstractHelper
         return $order;
     }
 
+    /**
+     * @param string $reference
+     * @return string
+     */
     public function formatReferenceUrl($reference) {
         $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
         return '<a target="_blank" href="'.$url.'">'.$reference.'</a>';
     }
 
     /**
+     * @param mixed $transaction
+     * @return string
+     */
+    public function getTransactionState($transaction) {
+        return $transaction->type.":".$transaction->status;
+    }
+
+    /**
+     * @param string|null $prevTransactionState
+     * @param string $newTransactionState
+     * @return bool
+     */
+    private function validateTransition($prevTransactionState, $newTransactionState) {
+        return in_array($newTransactionState, $this->validStateTransitions[$prevTransactionState]);
+    }
+
+    /**
+     * Record total amount mismatch between magento and bolt order.
+     * Log the error in order comments and report via bugsnag.
+     *
+     * @param OrderModel $order
+     * @param mixed $transaction
+     * @return void
+     */
+    private function checkTotalsMismatch($order, $transaction) {
+
+        // Get transaction state
+        $transactionState = $this->getTransactionState($transaction);
+
+        // Get the transaction amount
+        // Run for zero amount and capture / payment completed transactions only.
+        switch ($transactionState) {
+            case self::TS_ZERO_AMOUNT:
+                $boltTotal = 0;
+                break;
+            case self::TS_COMPLETED:
+                $boltTotal = $transaction->capture->amount->amount;
+                break;
+            default:
+                // Exit on other transaction types
+                return;
+        }
+
+        // Get the order total
+        $storeTotal = round($order->getGrandTotal() * 100);
+
+        // Stop if no mismatch
+        if ($boltTotal == $storeTotal) return;
+
+        // Put the order on hold
+        $order->setStatus(OrderModel::STATE_HOLDED);
+        $order->setState(OrderModel::STATE_HOLDED);
+
+        // Add order status history comment
+        $comment = __(
+            'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
+             Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
+            $bolt_total / 100,
+            $order->getGrandTotal(),
+            $this->formatReferenceUrl($transaction->reference)
+        );
+        $order->addStatusHistoryComment($comment);
+
+        // Get the quote id
+        list(, $quoteId) = array_pad(
+            explode(' / ', $transaction->order->cart->display_id),
+            2,
+            null
+        );
+        if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
+
+        // If the quote exists collect cart data for bugsnag
+        try {
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $cart = $this->cartHelper->getCartData(true, false, $quote);
+        } catch (NoSuchEntityException $e) {
+            // Quote was cleaned by cron job
+            $cart = ['The quote does not exist.'];
+        }
+
+        // Log the debug info
+        $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
+            $report->setMetaData([
+                'TOTALS_MISMATCH' => [
+                    'Bolt' => $transaction->order->cart,
+                    'Store' => $cart,
+                ]
+            ]);
+        });
+        $this->bugsnag->notifyError('Order Totals Mismatch', $comment);
+
+        // Save the order status and comment
+        $order->save();
+    }
+
+    /**
      * Update order payment / transaction data
      *
      * @param OrderModel $order
-     * @param \stdClass $transaction
-     * @param null $reference
+     * @param null|mixed $transaction
+     * @param null|string $reference
+     * @param bool $hookRestriction
      *
      * @throws Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null)
-    {
-        // fetch transaction info if transaction is not passed as a parameter
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookRestriction = true) {
+
+        // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
             $transaction = $this->fetchTransactionInfo($reference);
+        } else {
+            $reference = $transaction->reference;
         }
 
-        ////////////////////////////////////////////////////////////////////////////
-        /// Record total amount mismatch between magento and bolt order.
-        /// Log the error in order comments and report via bugsnag.
-        ////////////////////////////////////////////////////////////////////////////
-        $record_order_mismatch = function ($bolt_total) use ($order, $transaction) {
-
-            $order->setStatus(OrderModel::STATE_HOLDED);
-            $order->setState(OrderModel::STATE_HOLDED);
-
-            $comment = __(
-                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
-                Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-                $bolt_total / 100,
-                $order->getGrandTotal(),
-                $this->formatReferenceUrl($transaction->reference)
-            );
-
-            $order->addStatusHistoryComment($comment);
-
-            list(, $quoteId) = array_pad(
-                explode(' / ', $transaction->order->cart->display_id),
-                2,
-                null
-            );
-            if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
-
-            try {
-                $quote = $this->cartHelper->getQuoteById($quoteId);
-                $cart = $this->cartHelper->getCartData(true, false, $quote);
-            } catch (NoSuchEntityException $e) {
-                // Old quote cleaned by cron
-                $cart = ['The quote does not exist.'];
-            }
-
-            $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
-                $report->setMetaData([
-                    'ORDER_MISMATCH' => [
-                        'Bolt' => $transaction->order->cart,
-                        'Store' => $cart,
-                    ]
-                ]);
-            });
-            $this->bugsnag->notifyError('Order Data Mismatch', $comment);
-        };
-        ////////////////////////////////////////////////////////////////////////////
-
-        /** @var PaymentModel $payment */
+        /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // Process zero-amount transactions
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        if ($transaction->type == 'zero_amount') {
+        // Get transaction state
+        $transactionState = $this->getTransactionState($transaction);
 
-            $last_transaction_timestamp = (int)$payment->getAdditionalInformation('last_transaction_timestamp');
-            $date = $transaction->date;
+        // Get the last stored transaction parameters
+        $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
+        $prevTransactionReference = $payment->getAdditionalInformation('transaction_reference');
 
-            if ($date <= $last_transaction_timestamp) {
-                return;
-            }
+        // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
+        // Reference check added to support multiple refunds, the only valid same state transition
+        if ($transactionState == $prevTransactionState && $reference == $prevTransactionReference) return;
 
-            $comment = __(
-                'BOLTPAY INFO :: ZERO AMOUNT TRANSACTION :: ID: %1 Status: %2 Amount: 0<br>Bolt transaction: %3',
-                $transaction->id,
-                strtoupper($transaction->status),
-                $this->formatReferenceUrl($transaction->reference)
-            );
-
-            $order->setStatus(OrderModel::STATE_PROCESSING);
-            $order->setState(OrderModel::STATE_PROCESSING);
-
-            $order->addStatusHistoryComment($comment);
-
-            $paymentData = [
-                'last_transaction_timestamp' => $date,
-                'real_transaction_id'        => $transaction->id,
-                'transaction_reference'      => $transaction->reference,
-            ];
-
-            $payment->setAdditionalInformation($paymentData);
-
-            // Check for total amount mismatch between magento and bolt order.
-            if (round($order->getGrandTotal() * 100) > 0) {
-                $record_order_mismatch(0);
-            }
-
-            $payment->save();
-            $order->save();
-
-            return;
+        if (!$this->validateTransition($prevTransactionState, $transactionState)) {
+            throw new LocalizedException(__(
+                'Invalid transaction state transition: %1 -> %2',
+                $prevTransactionState,
+                $transactionState
+            ));
         }
-        ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // sort transaction timeline data ascendingly, it comes in descending order
-        $timeline = array_reverse($transaction->timeline);
+        // preset default payment / transaction values
+        // before more specific changes below
+        $amount = $transaction->amount->amount;
+        $transactionId = $transaction->id;
+        $realTransactionId = $payment->getAdditionalInformation('real_transaction_id') ?: $transaction->id;
+        $parentTransactionId = $payment->getAdditionalInformation('base_transaction_id');
 
-        // walk through the timeline records
-        foreach ($timeline as $record) {
-            // get last transaction timestamp stored with the order
-            $last_transaction_timestamp = (int)$payment->getAdditionalInformation('last_transaction_timestamp');
+        switch ($transactionState) {
+            case self::TS_ZERO_AMOUNT:
 
-            // get the transaction timestamp.
-            // if the transaction is of type credit use the internal transactions date field
-            $date = $record->type == 'credited' ? $record->transaction->date : $record->date;
+                $status = 'ZERO AMOUNT COMPLETED';
+                $orderState = OrderModel::STATE_PROCESSING;
+                $transactionType = Transaction::TYPE_ORDER;
 
-            // check and skip if transaction is already saved
-            if ($date <= $last_transaction_timestamp) {
-                continue;
-            }
+                break;
+            case self::TS_PENDING:
 
-            // preset default payment / transaction values
-            // before more specific, record type related, changes below
-            $amount                = $transaction->amount;
-            $transaction_reference = $transaction->reference;
-            $close_transaction     = true;
-            $parent_transaction_id = $transaction->id;
-            $transaction_type      = null;
-            $transaction_id        = null;
-            $invoice_transaction   = null;
+                $status = 'UNDER REVIEW';
+                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
+                $transactionType = Transaction::TYPE_ORDER;
 
-            // flag represents if the transaction was previously authorized
-            $payment_authorized = (bool)$payment->getAdditionalInformation('authorized');
+                break;
+            case self::TS_AUTHORIZED:
 
-            // order status history comment, set for the non transactions info records, review, failed...
-            // when new transaction is saved, comment is added with the transaction, no separate comment is needed
-            $comment = null;
+                $status = 'AUTHORIZED';
+                $orderState = OrderModel::STATE_PROCESSING;
+                $transactionType = Transaction::TYPE_AUTH;
+                $transactionId = $transaction->id.'-auth';
 
-            // determine the type of the timeline record and accordingly
-            // set the order state, message data, status, transaction type,
-            // transaction and parent transaction ids, close transaction flag,
-            // amount, invoice transaction id, transaction reference
-            switch ($record->type) {
-                case 'review':
-                    // REVIEW, IRREVERSIBLE_REJECT, REVERSIBLE_REJECT
-                    $status = strtoupper($record->review->decision);
-                    switch ($status) {
-                        case 'IRREVERSIBLE_REJECT':
-                            $order_state = OrderModel::STATE_CANCELED;
-                            break;
-                        case 'REVERSIBLE_REJECT':
-                            $order_state = OrderModel::STATE_HOLDED;
-                            break;
-                        default:
-                            $order_state = OrderModel::STATE_PAYMENT_REVIEW;
-                    }
-                    $comment = __(
-                        'BOLTPAY INFO :: PAYMENT Status: %1<br>Bolt transaction: %2',
-                        $status,
-                        $this->formatReferenceUrl($transaction_reference)
-                    );
-                    break;
-                case 'failed':
-                    $order_state = OrderModel::STATE_CANCELED;
-                    $status = 'FAILED';
-                    $comment = __(
-                        'BOLTPAY INFO :: THE TRANSACTION HAS FAILED.<br>Bolt transaction: %1',
-                        $this->formatReferenceUrl($transaction_reference)
-                    );
-                    break;
-                case 'authorized':
-                    $order_state = OrderModel::STATE_PROCESSING;
-                    $transaction_type = Transaction::TYPE_AUTH;
-                    $transaction_id = $transaction->id;
-                    $parent_transaction_id = null;
-                    $status = 'AUTHORIZED';
-                    $close_transaction = false;
-                    // Bolt payment amount to check against Magento order total
-                    $payment_amount = $amount->amount;
-                    break;
-                case 'voided':
-                    $order_state = OrderModel::STATE_CANCELED;
-                    $transaction_type = Transaction::TYPE_VOID;
-                    $transaction_id = $transaction->id.'-void';
-                    $status = 'CANCELED';
-                    break;
-                case 'completed':
-                    $order_state = OrderModel::STATE_PROCESSING;
-                    $transaction_type = Transaction::TYPE_CAPTURE;
-                    $transaction_id = $transaction->id.'-capture';
-                    $status = 'COMPLETED';
-                    $amount = $transaction->capture->amount;
-                    // Bolt payment amount to check against Magento order total
-                    $payment_amount = $amount->amount;
-                    if (!$payment_authorized) {
-                        $parent_transaction_id = null;
-                        $invoice_transaction = $transaction_id;
-                    } else {
-                        $invoice_transaction = $parent_transaction_id;
-                    }
-                    break;
-                case 'credited':
-                    $order_state = OrderModel::STATE_HOLDED;
-                    $transaction_type = Transaction::TYPE_REFUND;
-                    $transaction_id = $transaction->id.'-capture-refund';
-                    $parent_transaction_id = $transaction->id.'-capture';
-                    $amount = $record->transaction->amount;
-                    $transaction_reference = $record->transaction->reference;
-                    $status = 'REFUNDED';
-                    $comment =__(
-                        'BOLTPAY INFO :: PAYMENT WAS REFUNDED FROM THE MERCHANT DASHBOARD.
-                         IT DOES NOT REFLECT IN THE ORDER TOTALS. TO SYNC THE DATA DO THE OFFLINE REFUND.
-                         <br>AMOUNT REFUNDED: %1<br>Bolt transaction: %2',
-                        $amount->amount / 100,
-                        $this->formatReferenceUrl($transaction_reference)
-                    );
-                    break;
-                // if type is "credit_completed" fetch the parent transaction info,
-                // the matching record type being "credited", simplifies the logic
-                case 'credit_completed':
-                    $this->updateOrderPayment($order, null, $record->transaction->reference);
-                    continue 2;
-                default:
-                    continue 2;
-            }
+                break;
+            case self::TS_COMPLETED:
 
-            // set order status
-            $order->setStatus($order_state);
-            $order->setState($order_state);
+                $status = 'COMPLETED';
+                $orderState = OrderModel::STATE_PROCESSING;
+                $transactionId = $transaction->id.'-capture';
+                $amount = $transaction->capture->amount->amount;
 
-            // add order history comment if any
-            if ($comment) {
-                $order->addStatusHistoryComment($comment)->save();
-            }
+                if ($prevTransactionState == self::TS_AUTHORIZED) {
+                    $transactionType = Transaction::TYPE_CAPTURE;
+                    $transactionId = $transaction->id.'-capture';
+                    $parentTransactionId = $transaction->id.'-auth';
 
-            // format the last transaction data for storing within the order payment record instance
-            $paymentData = [
-                'last_transaction_timestamp' => $date,
-                'real_transaction_id'        => $transaction->id,
-                'transaction_reference'      => $transaction_reference,
-                'authorized'                 => $payment_authorized || $status == 'AUTHORIZED',
-            ];
-
-            // there is a new transaction to be recorded
-            if ($transaction_type) {
-                // create the invoice for payment / capture transaction
-                if ($invoice_transaction) {
-                    $this->createOrderInvoice($order, $invoice_transaction, $amount->amount / 100);
+                } else {
+                    $transactionType = Transaction::TYPE_PAYMENT;
+                    $transactionId = $transaction->id.'-payment';
                 }
 
-                // format the price with currency symbol
-                $formattedPrice = $order->getBaseCurrency()->formatTxt($amount->amount / 100);
+                break;
+            case self::TS_CANCELED:
 
-                // format the additional transaction data
-                $transactionData = [
-                    'Time'      => $result = $this->timezone->formatDateTime(
-                        date('Y-m-d H:i:s', $date / 1000),
-                        2,
-                        2
-                    ),
-                    'Reference' => $transaction_reference,
-                    'Amount'    => $formattedPrice,
-                    'Real ID'   => $transaction->id,
-                ];
+                $status = 'CANCELED';
+                $orderState = OrderModel::STATE_CANCELED;
+                $transactionType = Transaction::TYPE_VOID;
+                $transactionId = $transaction->id.'-void';
+                $parentTransactionId = $prevTransactionState == self::TS_AUTHORIZED ? $transaction->id.'-auth' : $transaction->id;
 
-                // update order payment instance
-                $payment->setParentTransactionId($parent_transaction_id);
-                $payment->setShouldCloseParentTransaction($parent_transaction_id ? true : false);
-                $payment->setTransactionId($transaction_id);
-                $payment->setLastTransId($transaction_id);
-                $payment->setAdditionalInformation($paymentData);
-                $payment->setIsTransactionClosed($close_transaction);
+                break;
+            case self::TS_REJECTED_REVERSIBLE:
 
-                // build a new transaction record and assign it to the order and payment
-                /** @var Transaction $payment_transaction */
-                $payment_transaction = $this->transactionBuilder->setPayment($payment)
-                    ->setOrder($order)
-                    ->setTransactionId($transaction_id)
-                    ->setAdditionalInformation([ Transaction::RAW_DETAILS => $transactionData ])
-                    ->setFailSafe(true)
-                    ->build($transaction_type);
+                $status = 'REVERSIBLE REJECTED';
+                $orderState = OrderModel::STATE_HOLDED;
+                $transactionType = Transaction::TYPE_ORDER;
+                $transactionId = $transaction->id.'-rejected_reversible';
 
-                // format transaction info message and add it to the order comments
-                $message = __(
-                    'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
-                    $status,
-                    $formattedPrice,
-                    $this->formatReferenceUrl($transaction_reference)
-                );
+                break;
+            case self::TS_REJECTED_IRREVERSIBLE:
 
-                $payment->addTransactionCommentsToOrder(
-                    $payment_transaction,
-                    $message
-                );
-                $payment_transaction->save();
-            } else {
-                // just store the last transaction data.
-                // the last_transaction_timestamp field is mandatory for avoiding duplicates
-                // so this data is stored regardless of creating the new transaction record
-                $payment->setAdditionalInformation($paymentData);
-            }
+                $status = 'IRREVERSIBLE REJECTED';
+                $orderState = OrderModel::STATE_CANCELED;
+                $transactionType = Transaction::TYPE_ORDER;
+                $transactionId = $transaction->id.'-rejected_irreversible';
 
-            // Check for total amount mismatch between magento and bolt order.
-            if (isset($payment_amount) && $payment_amount != round($order->getGrandTotal() * 100)) {
-                $record_order_mismatch($payment_amount);
-            }
+                break;
+            case self::TS_CREDIT_COMPLETED:
 
-            // save payment and order
-            $payment->save();
-            $order->save();
+                $status = 'REFUNDED';
+                $transactionType = Transaction::TYPE_REFUND;
+                $transactionId = $transaction->id.'-refund';
+
+                if ($hookRestriction) {
+                    $status .= " UNSYNCHRONISED";
+                    $orderState = OrderModel::STATE_HOLDED;
+                } else {
+
+                    $orderState = OrderModel::STATE_PROCESSING;
+                }
+
+                break;
+            default:
+
+                throw new LocalizedException(__(
+                    'Unhandled transaction state : %1',
+                    $transactionState
+                ));
+                break;
         }
+
+        // set order status
+        $order->setStatus($orderState);
+        $order->setState($orderState);
+
+        // format the last transaction data for storing within the order payment record instance
+        $paymentData = [
+            'real_transaction_id'        => $realTransactionId,
+            'transaction_reference'      => $transaction->reference,
+            'transaction_state'          => $transactionState,
+            'base_transaction_id'        => $payment->getAdditionalInformation('base_transaction_id') ?: $transactionId
+        ];
+
+        // there is a new transaction to be recorded
+        // create the invoice for payment / capture transaction
+        if ($transactionState == self::TS_COMPLETED) {
+            $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+        }
+
+        // format the price with currency symbol
+        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount/ 100);
+        // format the additional transaction data
+        $transactionData = [
+            'Time'      => $result = $this->timezone->formatDateTime(
+                date('Y-m-d H:i:s', $transaction->date / 1000),
+                2,
+                2
+            ),
+            'Reference' => $transaction->reference,
+            'Amount'    => $formattedPrice,
+            'Real ID'   => $transaction->id,
+        ];
+
+        // update order payment instance
+        $payment->setParentTransactionId($parentTransactionId);
+        $payment->setShouldCloseParentTransaction($parentTransactionId == $transaction->id.'-auth' ? true : false);
+        $payment->setTransactionId($transactionId);
+        $payment->setLastTransId($transactionId);
+        $payment->setAdditionalInformation($paymentData);
+        $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
+
+        // build a new transaction record and assign it to the order and payment
+        /** @var Transaction $payment_transaction */
+        $payment_transaction = $this->transactionBuilder->setPayment($payment)
+            ->setOrder($order)
+            ->setTransactionId($transactionId)
+            ->setAdditionalInformation([ Transaction::RAW_DETAILS => $transactionData ])
+            ->setFailSafe(true)
+            ->build($transactionType);
+
+        // format transaction info message and add it to the order comments
+        $message = __(
+            'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
+            $status,
+            $formattedPrice,
+            $this->formatReferenceUrl($transaction->reference)
+        );
+        $payment->addTransactionCommentsToOrder(
+            $payment_transaction,
+            $message
+        );
+        $payment_transaction->save();
+
+        // save payment and order
+        $payment->save();
+        $order->save();
+
+        // Check for total amount mismatch between magento and bolt order.
+        $this->checkTotalsMismatch($order, $transaction);
     }
 
     /**
