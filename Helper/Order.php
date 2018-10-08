@@ -292,10 +292,10 @@ class Order extends AbstractHelper
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 
-//		$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
-//		$logger = new \Zend\Log\Logger();
-//		$logger->addWriter($writer);
-//		$logger->info(json_encode($response, JSON_PRETTY_PRINT));
+//      $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
+//      $logger = new \Zend\Log\Logger();
+//      $logger->addWriter($writer);
+//      $logger->info(json_encode($response, JSON_PRETTY_PRINT));
 
         return $response;
     }
