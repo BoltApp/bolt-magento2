@@ -90,7 +90,6 @@ class Order extends AbstractHelper
             self::TS_CANCELED,
             self::TS_REJECTED_REVERSIBLE,
             self::TS_REJECTED_IRREVERSIBLE,
-            // TODO: check if this transition exists
             self::TS_ZERO_AMOUNT
         ],
         self::TS_AUTHORIZED => [
@@ -770,18 +769,37 @@ class Order extends AbstractHelper
     }
 
     /**
+     * @param string $transactionState
+     * @param bool $fromHook
+     * @return string
+     */
+    private function getBoltTransactionStatus($transactionState, $fromHook) {
+
+        return [
+            self::TS_ZERO_AMOUNT => 'ZERO AMOUNT COMPLETED',
+            self::TS_PENDING => 'UNDER REVIEW',
+            self::TS_AUTHORIZED => 'AUTHORIZED',
+            self::TS_COMPLETED => 'COMPLETED',
+            self::TS_CANCELED => 'CANCELED',
+            self::TS_REJECTED_REVERSIBLE => 'REVERSIBLE REJECTED',
+            self::TS_REJECTED_IRREVERSIBLE => 'IRREVERSIBLE REJECTED',
+            self::TS_CREDIT_COMPLETED => $fromHook ? 'REFUNDED UNSYNCHRONISED' : 'REFUNDED'
+        ][$transactionState];
+    }
+
+    /**
      * Update order payment / transaction data
      *
      * @param OrderModel $order
      * @param null|mixed $transaction
      * @param null|string $reference
-     * @param bool $hookRestriction
+     * @param bool $fromHook
      *
      * @throws Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookRestriction = true) {
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $fromHook = true) {
 
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
@@ -816,27 +834,25 @@ class Order extends AbstractHelper
         // before more specific changes below
         $amount = $transaction->amount->amount;
         $transactionId = $transaction->id;
+
         $realTransactionId = $payment->getAdditionalInformation('real_transaction_id') ?: $transaction->id;
         $parentTransactionId = $payment->getAdditionalInformation('base_transaction_id');
 
         switch ($transactionState) {
             case self::TS_ZERO_AMOUNT:
 
-                $status = 'ZERO AMOUNT COMPLETED';
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_ORDER;
 
                 break;
             case self::TS_PENDING:
 
-                $status = 'UNDER REVIEW';
                 $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
 
                 break;
             case self::TS_AUTHORIZED:
 
-                $status = 'AUTHORIZED';
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
                 $transactionId = $transaction->id.'-auth';
@@ -844,7 +860,6 @@ class Order extends AbstractHelper
                 break;
             case self::TS_COMPLETED:
 
-                $status = 'COMPLETED';
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionId = $transaction->id.'-capture';
                 $amount = $transaction->capture->amount->amount;
@@ -862,7 +877,6 @@ class Order extends AbstractHelper
                 break;
             case self::TS_CANCELED:
 
-                $status = 'CANCELED';
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_VOID;
                 $transactionId = $transaction->id.'-void';
@@ -871,7 +885,6 @@ class Order extends AbstractHelper
                 break;
             case self::TS_REJECTED_REVERSIBLE:
 
-                $status = 'REVERSIBLE REJECTED';
                 $orderState = OrderModel::STATE_HOLDED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
@@ -879,7 +892,6 @@ class Order extends AbstractHelper
                 break;
             case self::TS_REJECTED_IRREVERSIBLE:
 
-                $status = 'IRREVERSIBLE REJECTED';
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_irreversible';
@@ -887,15 +899,14 @@ class Order extends AbstractHelper
                 break;
             case self::TS_CREDIT_COMPLETED:
 
-                $status = 'REFUNDED';
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
 
-                if ($hookRestriction) {
-                    $status .= " UNSYNCHRONISED";
+                if ($fromHook) {
+                    // Refunds need to be initiated from ste store admin (Invoice -> Credit Memo)
+                    // If called from Bolt merchant dashboard there is no enough info to sync the totals
                     $orderState = OrderModel::STATE_HOLDED;
                 } else {
-
                     $orderState = OrderModel::STATE_PROCESSING;
                 }
 
@@ -954,14 +965,14 @@ class Order extends AbstractHelper
         $payment_transaction = $this->transactionBuilder->setPayment($payment)
             ->setOrder($order)
             ->setTransactionId($transactionId)
-            ->setAdditionalInformation([ Transaction::RAW_DETAILS => $transactionData ])
+            ->setAdditionalInformation([Transaction::RAW_DETAILS => $transactionData])
             ->setFailSafe(true)
             ->build($transactionType);
 
         // format transaction info message and add it to the order comments
         $message = __(
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
-            $status,
+            $this->getBoltTransactionStatus($transactionState, $fromHook),
             $formattedPrice,
             $this->formatReferenceUrl($transaction->reference)
         );
