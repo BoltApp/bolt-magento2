@@ -143,7 +143,7 @@ class OrderManagement implements OrderManagementInterface
             }
 
             $this->response->getHeaders()->addHeaders([
-                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
                 'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
             ]);
 
