@@ -405,7 +405,6 @@ class Order extends AbstractHelper
         $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
-        $quote->collectTotals();
 
         $this->cartHelper->saveQuote($quote);
 
@@ -431,8 +430,10 @@ class Order extends AbstractHelper
         $order = $this->quoteManagement->submit($quote);
 
         if ($frontend) {
-            // Send order confirmation email to customer.
-            $this->emailSender->send($order);
+            if (!$order->getEmailSent() && !$order->getCustomerNoteNotify()) {
+                // Send order confirmation email to customer.
+                $this->emailSender->send($order);
+            }
         } else {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
@@ -501,7 +502,6 @@ class Order extends AbstractHelper
         try {
             $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
             $parentQuote->setIsActive(false);
-            $this->cartHelper->saveQuote($parentQuote);
         } catch (NoSuchEntityException $e) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([
