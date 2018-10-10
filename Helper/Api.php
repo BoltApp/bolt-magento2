@@ -230,7 +230,7 @@ class Api extends AbstractHelper
         $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
         $headers =  [
-            'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion(),
+            'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
             'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
             'Content-Type'          => 'application/json',
             'Content-Length'        => $requestData ? strlen($requestData) : null,
