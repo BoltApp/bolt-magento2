@@ -903,7 +903,7 @@ class Order extends AbstractHelper
                 $transactionId = $transaction->id.'-refund';
 
                 if ($fromHook) {
-                    // Refunds need to be initiated from ste store admin (Invoice -> Credit Memo)
+                    // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
                     // If called from Bolt merchant dashboard there is no enough info to sync the totals
                     $orderState = OrderModel::STATE_HOLDED;
                 } else {
