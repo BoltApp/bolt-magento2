@@ -213,16 +213,16 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
-            $hookTransactionId = $payment->getAdditionalInformation('real_transaction_id');
+            $transactionId = $payment->getAdditionalInformation('real_transaction_id');
 
-            if (empty($hookTransactionId)) {
+            if (empty($transactionId)) {
                 throw new LocalizedException(
-                    __('Please wait while transaction get updated from Bolt.')
+                    __('Please wait while transaction gets updated from Bolt.')
                 );
             }
 
             //Get transaction data
-            $transactionData = ['transaction_id' => $hookTransactionId];
+            $transactionData = ['transaction_id' => $transactionId];
             $apiKey = $this->configHelper->getApiKey();
 
             //Request Data
@@ -241,14 +241,14 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (isset($response->status)) {
-                if ($response->status != 'cancelled') {
-                    throw new LocalizedException(__('Payment void error.'));
-                }
-                $payment->setAdditionalInformation('transaction_status', $response->status);
-                $payment->setIsTransactionClosed(true);
+            if (@$response->status != 'cancelled') {
+                throw new LocalizedException(__('Payment void error.'));
             }
-            $this->fetchTransactionInfo($payment, $hookTransactionId);
+
+            $order = $payment->getOrder();
+
+            $this->orderHelper->updateOrderPayment($order, null, $response->reference);
+
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -277,6 +277,7 @@ class Payment extends AbstractMethod
                 $order = $payment->getOrder();
                 $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
             }
+
             return [];
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -285,6 +286,8 @@ class Payment extends AbstractMethod
     }
 
     /**
+     * Capture the authorized transaction through the gateway
+     *
      * @param InfoInterface $payment
      * @param float $amount
      *
@@ -336,13 +339,12 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (isset($response->status)) {
-                if ($response->status != 'completed') {
-                    throw new LocalizedException(__('Payment capture error.'));
-                }
-                $payment->setIsTransactionClosed(true);
+            if (@$response->status != 'completed') {
+                throw new LocalizedException(__('Payment capture error.'));
             }
-            $this->fetchTransactionInfo($payment, $realTransactionId);
+
+            $this->orderHelper->updateOrderPayment($order, null, $response->reference);
+
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -404,42 +406,12 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (isset($response->status)) {
-                if ($response->status != 'completed') {
-                    throw new LocalizedException(__('Payment refund error.'));
-                }
-                $paymentData = [
-                    'last_transaction_timestamp' => $response->date,
-                    'real_transaction_id'        => $payment->getAdditionalInformation('real_transaction_id'),
-                    'transaction_reference'      => $payment->getAdditionalInformation('transaction_reference'),
-                ];
-                $formattedPrice = $order->getBaseCurrency()->formatTxt($response->amount->amount / 100);
-                $transactionData = [
-                    'Time'      => $result = $this->localeDate->formatDateTime(
-                        date('Y-m-d H:i:s', $response->date/1000),
-                        2,
-                        2
-                    ),
-                    'Reference' => $response->reference,
-                    'Amount'    => $formattedPrice,
-                    'Real ID'   => $response->id,
-                ];
-                $payment->setIsTransactionClosed(true);
-                $payment->setTransactionAdditionalInfo(Transaction::RAW_DETAILS, $transactionData);
-                $payment->setAdditionalInformation($paymentData);
-                $payment->save();
-
-                $order->addStatusHistoryComment(
-                    __(
-                        'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3 Transaction ID: "%4"',
-                        'REFUNDED',
-                        $formattedPrice,
-                        $this->orderHelper->formatReferenceUrl($response->reference),
-                        $realTransactionId.'-capture-refund'
-                    )
-                )->save();
+            if (@$response->status != 'completed') {
+                throw new LocalizedException(__('Payment refund error.'));
             }
-            $this->fetchTransactionInfo($payment, $realTransactionId);
+
+            $this->orderHelper->updateOrderPayment($order, null, $response->reference, false);
+
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
