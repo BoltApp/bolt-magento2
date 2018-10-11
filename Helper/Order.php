@@ -425,7 +425,7 @@ class Order extends AbstractHelper
      * Transform Quote to Order and send email to the customer.
      *
      * @param Quote $quote
-     * @param mixed $transaction
+     * @param \stdClass $transaction
      * @param bool $frontend
      *
      * @param string|null $bolt_trace_id
@@ -497,6 +497,8 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Assign data to the quote payment info instance
+     *
      * @param Quote $quote
      * @param array $data
      * @return void
@@ -508,6 +510,8 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Returns quote payment info object
+     *
      * @param Quote $quote
      * @return \Magento\Payment\Model\Info
      */
@@ -664,6 +668,9 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Creates a link to the transaction page on the Bolt merchant dasboard
+     * to be saved with the order payment info message.
+     *
      * @param string $reference
      * @return string
      */
@@ -673,7 +680,9 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param mixed $transaction
+     * Format the (class internal) unambiguous transaction state out of the type and status
+     *
+     * @param \stdClass $transaction
      * @return string
      */
     public function getTransactionState($transaction) {
@@ -681,6 +690,8 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check if the transition from one transaction state to another is valid.
+     *
      * @param string|null $prevTransactionState
      * @param string $newTransactionState
      * @return bool
@@ -694,7 +705,7 @@ class Order extends AbstractHelper
      * Log the error in order comments and report via bugsnag.
      *
      * @param OrderModel $order
-     * @param mixed $transaction
+     * @param \stdClass $transaction
      * @return void
      */
     private function checkTotalsMismatch($order, $transaction) {
@@ -769,6 +780,8 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Get (informal) transaction status to be stored with status history comment
+     *
      * @param string $transactionState
      * @param bool $fromHook
      * @return string
@@ -791,7 +804,7 @@ class Order extends AbstractHelper
      * Update order payment / transaction data
      *
      * @param OrderModel $order
-     * @param null|mixed $transaction
+     * @param null|\stdClass $transaction
      * @param null|string $reference
      * @param bool $fromHook
      *

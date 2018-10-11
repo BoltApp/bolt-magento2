@@ -217,7 +217,7 @@ class Payment extends AbstractMethod
 
             if (empty($transactionId)) {
                 throw new LocalizedException(
-                    __('Please wait while transaction get updated from Bolt.')
+                    __('Please wait while transaction gets updated from Bolt.')
                 );
             }
 
@@ -286,6 +286,8 @@ class Payment extends AbstractMethod
     }
 
     /**
+     * Capture the authorized transaction through the gateway
+     *
      * @param InfoInterface $payment
      * @param float $amount
      *
