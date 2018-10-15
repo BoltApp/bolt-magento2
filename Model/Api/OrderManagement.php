@@ -132,7 +132,7 @@ class OrderManagement implements OrderManagementInterface
 
             $this->logHelper->addInfoLog($this->request->getContent());
 
-            $this->hookHelper->setMetadata();
+            $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
 
             $this->hookHelper->verifyWebhook();

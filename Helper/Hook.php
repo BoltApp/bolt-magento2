@@ -172,7 +172,7 @@ class Hook extends AbstractHelper
     /**
      * Set bugsnag metadata bolt_trace_id
      */
-    public function setMetadata()
+    public function setCommonMetaData()
     {
         if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
             $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {

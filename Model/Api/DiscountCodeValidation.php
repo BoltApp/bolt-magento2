@@ -185,7 +185,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         try {
 
-            $this->hookHelper->setMetadata();
+            $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
 
             $this->hookHelper->verifyWebhook();

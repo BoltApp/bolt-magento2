@@ -89,7 +89,7 @@ class Bugsnag extends AbstractHelper
         $this->bugsnag->getConfig()->setReleaseStage($release_stage);
         $this->bugsnag->getConfig()->setAppVersion($this->configHelper->getModuleVersion());
 
-        $this->addMetadata();
+        $this->addCommonMetadata();
 
         ////////////////////////////////////////////////////////////////////////
         // Reporting unhandled exceptions. This option is turned off by default.
@@ -141,7 +141,7 @@ class Bugsnag extends AbstractHelper
     /**
      * Add metadata to every bugsnag log
      */
-    private function addMetadata()
+    private function addCommonMetadata()
     {
         $this->bugsnag->registerCallback(function ($report) {
             $report->addMetaData([
