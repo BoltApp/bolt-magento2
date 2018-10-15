@@ -266,7 +266,7 @@ class Api extends AbstractHelper
             $this->bugsnag->registerCallback(function ($report) use ($response) {
                 $headers = $response->getHeaders();
                 $report->setMetaData([
-                    'BREADCRUMBS_' => [
+                    'META DATA' => [
                         'bolt_trace_id' => @$headers[ConfigHelper::BOLT_TRACE_ID_HEADER],
                     ]
                 ]);
