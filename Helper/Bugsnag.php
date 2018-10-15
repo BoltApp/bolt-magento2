@@ -141,7 +141,8 @@ class Bugsnag extends AbstractHelper
     /**
      * Add metadata to every bugsnag log
      */
-    private function addMetadata() {
+    private function addMetadata()
+    {
         $this->bugsnag->registerCallback(function ($report) {
             $report->addMetaData([
                 'META DATA' => [

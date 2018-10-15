@@ -172,7 +172,8 @@ class Hook extends AbstractHelper
     /**
      * Set bugsnag metadata bolt_trace_id
      */
-    public function setMetadata() {
+    public function setMetadata()
+    {
         if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
             $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
                 $report->setMetaData([
@@ -187,7 +188,8 @@ class Hook extends AbstractHelper
     /**
      * Set additional response headers
      */
-    public function setHeaders() {
+    public function setHeaders()
+    {
         $this->response->getHeaders()->addHeaders([
             'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
             'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
