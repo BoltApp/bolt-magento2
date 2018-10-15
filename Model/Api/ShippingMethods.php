@@ -273,8 +273,6 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->hookHelper->verifyWebhook();
 
-            throw new \Exception("test E");
-
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
