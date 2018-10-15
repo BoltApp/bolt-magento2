@@ -181,6 +181,7 @@ class Js extends Template
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
+            'toggle_checkout_buttons'  => $this->getToggleCheckoutButtons(),
         ]);
     }
 
@@ -259,5 +260,19 @@ class Js extends Template
         $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
 
         return (empty($callback)) ? '' : $callback;
+    }
+
+    /**
+     * Get Magento checkout buttons (links) to be swapped with Bolt buttons and vice versa
+     * according to Bolt checkout restriction state. Bolt checkout may be restricted if there are
+     * restricted items in cart, e.g. subscription products
+     *
+     * @return array
+     */
+    private function getToggleCheckoutButtons() {
+        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        if (!$toggleCheckout || !$toggleCheckout->active) return [];
+
+        return $toggleCheckout->magentoButtons;
     }
 }

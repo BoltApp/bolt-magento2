@@ -408,8 +408,20 @@ if (!$block->isEnabled()) return;
         var multi_step_css_class     = 'bolt-multi-step-checkout';
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
-        var bolt_clickable_selector  = '.bolt-checkout-button-button';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+
+        ////////////////////////////////////////////////////////
+        // Togle between Bolt button and magento checkout button
+        // if toggling is enabled.
+        ////////////////////////////////////////////////////////
+        var toggleCheckout = function(boltRestricted) {
+            if (settings.toggle_checkout_buttons.length == 0) return;
+            $(bolt_button_selector).toggle(!boltRestricted);
+            $.each(settings.toggle_checkout_buttons, function( index, value ) {
+                $(value).toggle(boltRestricted);
+            });
+        };
+        ////////////////////////////////////////////////////////
 
         if (additional_button_class.length) {
             bolt_button_css_class += ' ' + additional_button_class;
@@ -635,6 +647,13 @@ if (!$block->isEnabled()) return;
                                 return;
                             }
 
+                            toggleCheckout(!!data.restrict);
+
+                            if (data.restrict) {
+                                //reject(new Error(data.message));
+                                return;
+                            }
+
                             // set cart and hints data
                             cart = data.cart;
 
@@ -749,7 +768,8 @@ if (!$block->isEnabled()) return;
                         }
                         // if no position is specified remove the selector element
                         if (!position) {
-                            element.parentNode.removeChild(element);
+                            //element.parentNode.removeChild(element);
+                            $(element).hide();
                         }
                     });
                     /////////////////////////////////////////////////////

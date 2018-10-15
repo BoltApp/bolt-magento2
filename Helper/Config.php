@@ -660,4 +660,23 @@ class Config extends AbstractHelper
         $config = $this->getAdditionalConfigObject();
         return @$config->$name;
     }
+
+    /**
+     * Get Toggle Checkout configuration, stored in the following format:
+     * {
+     * ...
+     *   "toggleCheckout": {
+     *     "active": true,
+     *     "magentoButtons": "#top-cart-btn-checkout, button[data-role=proceed-to-checkout]",
+     *     "productRestrictionMethods": ["getSubscriptionActive"],
+     *     "itemRestrictionMethods": ["getIsSubscription"]
+     *   }
+     * ...
+     * }
+     *
+     * @return mixed
+     */
+    public function getToggleCheckout() {
+        return $this->getAdditionalConfigProperty('toggleCheckout');
+    }
 }

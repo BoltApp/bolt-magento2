@@ -207,7 +207,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(14, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(15, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -224,6 +224,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
+        $this->assertArrayHasKey('toggle_checkout_buttons', $array, $message . 'toggle_checkout_buttons');
     }
 
     /**
