@@ -634,7 +634,8 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    private function getAdditionalConfigString() {
+    private function getAdditionalConfigString()
+    {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CONFIG,
             ScopeInterface::SCOPE_STORE
@@ -646,7 +647,8 @@ class Config extends AbstractHelper
      *
      * @return  \stdClass
      */
-    private function getAdditionalConfigObject() {
+    private function getAdditionalConfigObject()
+    {
         return json_decode($this->getAdditionalConfigString());
     }
 
@@ -656,7 +658,8 @@ class Config extends AbstractHelper
      * @param $name
      * @return mixed
      */
-    private function getAdditionalConfigProperty($name) {
+    private function getAdditionalConfigProperty($name)
+    {
         $config = $this->getAdditionalConfigObject();
         return @$config->$name;
     }
