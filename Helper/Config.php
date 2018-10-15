@@ -670,9 +670,16 @@ class Config extends AbstractHelper
      * ...
      *   "toggleCheckout": {
      *     "active": true,
-     *     "magentoButtons": "#top-cart-btn-checkout, button[data-role=proceed-to-checkout]",
-     *     "productRestrictionMethods": ["getSubscriptionActive"],
-     *     "itemRestrictionMethods": ["getIsSubscription"]
+     *     "magentoButtons": [
+     *       "#top-cart-btn-checkout",
+     *       "button[data-role=proceed-to-checkout]"
+     *     ],
+     *     "productRestrictionMethods": [
+     *       "getSubscriptionActive"
+     *     ],
+     *     "itemRestrictionMethods": [
+     *       "getIsSubscription"
+     *     ]
      *   }
      * ...
      * }
