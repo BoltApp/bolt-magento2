@@ -110,6 +110,9 @@
                 <field id="g_track_on_close" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tracking: Close</label>
                 </field>
+                <field id="additional_config" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Additional Configuration</label>
+                </field>
             </group>
         </section>
     </system>
