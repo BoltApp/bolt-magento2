@@ -956,22 +956,21 @@ class Cart extends AbstractHelper
         if (!$toggleCheckout || !$toggleCheckout->active) return false;
 
         // get configured Product model getters that can restrict Bolt checkout usage
-        $productRestrictionMethods = $toggleCheckout->productRestrictionMethods;
+        $productRestrictionMethods = $toggleCheckout->productRestrictionMethods ?: [];
 
         // get configured Quote Item getters that can restrict Bolt checkout usage
-        $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods;
+        $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods ?: [];
 
         if (!$productRestrictionMethods && !$itemRestrictionMethods) return false;
 
         /** @var Quote $quote */
         $quote = $quote ?: $this->checkoutSession->getQuote();
         foreach ($quote->getAllVisibleItems() as $item) {
-            if ($itemRestrictionMethods) {
-                // call every method on item, if returns true, do restrict
-                foreach ($itemRestrictionMethods as $method) {
-                    if ($item->$method()) return true;
-                }
+            // call every method on item, if returns true, do restrict
+            foreach ($itemRestrictionMethods as $method) {
+                if ($item->$method()) return true;
             }
+            // Non empty check to avoid unnecessary model load
             if ($productRestrictionMethods) {
                 // get item product
                 $product = $this->productFactory->create()->load($item->getProductId());
