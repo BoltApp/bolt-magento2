@@ -411,14 +411,24 @@ if (!$block->isEnabled()) return;
         var customer_email_selector  = '#checkoutSteps #customer-email';
 
         ////////////////////////////////////////////////////////
-        // Togle between Bolt button and magento checkout button
+        // Toggle between Bolt button and magento checkout button
         // if toggling is enabled.
         ////////////////////////////////////////////////////////
-        var toggleCheckout = function(boltRestricted) {
-            if (settings.toggle_checkout_buttons.length == 0) return;
+        var toggleCheckoutConfig = settings.toggle_checkout;
+        var toggleCheckoutIfNeeded = function(boltRestricted) {
+            if (!toggleCheckoutConfig) return;
+
+            // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
+            $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
+                $(element).show();
+            });
+
+            // Show Bolt buttons if bolt checkout is allowed, otherwise hide it
             $(bolt_button_selector).toggle(!boltRestricted);
-            $.each(settings.toggle_checkout_buttons, function( index, value ) {
-                $(value).toggle(boltRestricted);
+
+            // Show magento buttons if bolt checkout is restricted, otherwise hide it
+            $.each(toggleCheckoutConfig.magentoButtons, function( index, button ) {
+                $(button).toggle(boltRestricted);
             });
         };
         ////////////////////////////////////////////////////////
@@ -446,6 +456,9 @@ if (!$block->isEnabled()) return;
         };
         //////////////////////////////////////////////
 
+        // the open status of checkout modal
+        var popUpOpen = false;
+
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
@@ -456,6 +469,7 @@ if (!$block->isEnabled()) return;
         var callbacks = {
 
             close: function () {
+                popUpOpen = false;
                 gBoltTrack.gClose();
 
                 // redirect on success order save
@@ -536,6 +550,7 @@ if (!$block->isEnabled()) return;
                     }
                 }
 
+                popUpOpen = true;
                 return true;
             },
 
@@ -642,16 +657,20 @@ if (!$block->isEnabled()) return;
                     $.post(settings.create_order_url, params)
                         .done(function (data) {
 
-                            if (data.status !== 'success') {
-                                reject(new Error(data.message || 'Network request failed'));
+                            var boltRestricted = !!data.restrict;
+
+                            toggleCheckoutIfNeeded(boltRestricted);
+
+                            // Stop if Bolt checkout is restricted
+                            if (boltRestricted) {
+                                if (popUpOpen) reject(new Error(data.message));
                                 return;
                             }
 
-                            toggleCheckout(!!data.restrict);
-
-                            if (data.restrict) {
-                                //reject(new Error(data.message));
+                            if (data.status !== 'success') {
+                                reject(new Error(data.message || 'Network request failed'));
                                 return;
+
                             }
 
                             // set cart and hints data
@@ -975,7 +994,3 @@ if (!$block->isEnabled()) return;
 
     <?php echo $block->getAdditionalJavascript(); ?>
 </script>
-
-<style>
-    <?php echo $block->getGlobalCSS(); ?>
-</style>

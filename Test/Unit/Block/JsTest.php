@@ -224,7 +224,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
-        $this->assertArrayHasKey('toggle_checkout_buttons', $array, $message . 'toggle_checkout_buttons');
+        $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
     }
 
     /**
