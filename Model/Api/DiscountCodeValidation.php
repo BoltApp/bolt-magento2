@@ -185,20 +185,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         try {
 
-            if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
-                $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
-                    $report->setMetaData([
-                        'BREADCRUMBS_' => [
-                            'bolt_trace_id' => $bolt_trace_id,
-                        ]
-                    ]);
-                });
-            }
-
-            $this->response->getHeaders()->addHeaders([
-                'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
-                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion()
-            ]);
+            $this->hookHelper->setCommonMetaData();
+            $this->hookHelper->setHeaders();
 
             $this->hookHelper->verifyWebhook();
 
