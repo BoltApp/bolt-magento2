@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Magento\Framework\Webapi\Rest\Response;
 
 /**
  * Boltpay web hook helper
@@ -61,6 +62,13 @@ class Hook extends AbstractHelper
      */
     private $dataObjectFactory;
 
+    /** @var Bugsnag */
+    private $bugsnag;
+
+    /** @var Response */
+    private $response;
+
+
     /**
      * @param Context $context
      * @param Request $request
@@ -68,6 +76,8 @@ class Hook extends AbstractHelper
      * @param LogHelper $logHelper
      * @param Api     $apiHelper
      * @param DataObjectFactory $dataObjectFactory
+     * @param Bugsnag $bugsnag
+     * @param Response $response
      *
      * @codeCoverageIgnore
      */
@@ -77,7 +87,9 @@ class Hook extends AbstractHelper
         ConfigHelper $configHelper,
         LogHelper $logHelper,
         ApiHelper $apiHelper,
-        DataObjectFactory $dataObjectFactory
+        DataObjectFactory $dataObjectFactory,
+        Bugsnag $bugsnag,
+        Response $response
     ) {
         parent::__construct($context);
         $this->request      = $request;
@@ -85,6 +97,8 @@ class Hook extends AbstractHelper
         $this->logHelper    = $logHelper;
         $this->apiHelper    = $apiHelper;
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->bugsnag = $bugsnag;
+        $this->response = $response;
     }
 
     /**
@@ -153,5 +167,32 @@ class Hook extends AbstractHelper
         if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
             throw new WebapiException(__('Precondition Failed'), 6001, 412);
         }
+    }
+
+    /**
+     * Set bugsnag metadata bolt_trace_id
+     */
+    public function setCommonMetaData()
+    {
+        if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+            $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
+                $report->setMetaData([
+                    'META DATA' => [
+                        'bolt_trace_id' => $bolt_trace_id,
+                    ]
+                ]);
+            });
+        }
+    }
+
+    /**
+     * Set additional response headers
+     */
+    public function setHeaders()
+    {
+        $this->response->getHeaders()->addHeaders([
+            'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
+            'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
+        ]);
     }
 }
