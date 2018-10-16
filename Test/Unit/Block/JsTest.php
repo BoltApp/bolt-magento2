@@ -66,7 +66,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass'
+            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)

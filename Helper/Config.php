@@ -634,7 +634,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    private function getAdditionalConfigString()
+    protected function getAdditionalConfigString()
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CONFIG,
