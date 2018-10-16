@@ -142,7 +142,11 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
-            $this->orderHelper->saveUpdateOrder($reference, false, $bolt_trace_id);
+            $this->orderHelper->saveUpdateOrder(
+                $reference,
+                false,
+                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
+            );
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
                 'status' => 'success',
