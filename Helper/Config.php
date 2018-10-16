@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Helper;
 
@@ -195,6 +195,11 @@ class Config extends AbstractHelper
     const XML_PATH_GTRACK_CHECKOUT_START = 'payment/boltpay/g_track_on_checkout_start';
 
     const XML_PATH_GTRACK_CLOSE = 'payment/boltpay/g_track_on_close';
+
+    /**
+     * Additional configuration path
+     */
+    const XML_PATH_ADDITIONAL_CONFIG = 'payment/boltpay/additional_config';
 
     /**
      * @var ResourceInterface
@@ -449,7 +454,7 @@ class Config extends AbstractHelper
         );
     }
 
-     /**
+    /**
      * Get Custom javascript function call on success
      *
      * @return  string
@@ -622,5 +627,40 @@ class Config extends AbstractHelper
             self::XML_PATH_GTRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * Get Additional Config string
+     *
+     * @return  string
+     */
+    private function getAdditionalConfigString()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ADDITIONAL_CONFIG,
+            ScopeInterface::SCOPE_STORE
+        ) ?: '{}';
+    }
+
+    /**
+     * Get Additional Config object
+     *
+     * @return  \stdClass
+     */
+    private function getAdditionalConfigObject()
+    {
+        return json_decode($this->getAdditionalConfigString());
+    }
+
+    /**
+     * Get Additional Config property
+     *
+     * @param $name
+     * @return mixed
+     */
+    private function getAdditionalConfigProperty($name)
+    {
+        $config = $this->getAdditionalConfigObject();
+        return @$config->$name;
     }
 }
