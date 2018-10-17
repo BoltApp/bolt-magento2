@@ -500,12 +500,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
-            if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
-                $giftCard->addToCart(true, $immutableQuote);
-            }
+            if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
+                $giftCard->addToQuote($immutableQuote);
+            } else {
+                if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
+                    $giftCard->addToCart(true, $immutableQuote);
+                }
 
-            if ($parentQuote->getGiftCardsAmountUsed() == 0) {
-                $giftCard->addToCart(true, $parentQuote);
+                if ($parentQuote->getGiftCardsAmountUsed() == 0) {
+                    $giftCard->addToCart(true, $parentQuote);
+                }
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -665,30 +669,26 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @param $code
      * @return null|\Unirgy\Giftcert\Model\Cert
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function loadGiftCertData($code)
     {
         $result = null;
 
-        /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection $giftCardAccount */
-        $giftCertResource = $this->moduleUnirgyGiftCert->getInstance();
+        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
+        $giftCertRepository = $this->moduleUnirgyGiftCert->getInstance();
 
-        if ($giftCertResource) {
+        if ($giftCertRepository) {
             $this->logHelper->addInfoLog('### GiftCert ###');
             $this->logHelper->addInfoLog('# Code: ' . $code);
 
-            /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection  $giftCertCollection */
-            $giftCertCollection = $giftCertResource
-                ->addFieldToFilter('cert_number', array('eq' => $code))
-            ;
-
             /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-            $giftCert = $giftCertCollection->getFirstItem();
+            $giftCert = $giftCertRepository->get($code);
 
-            $result = (!$giftCert->getBalance() && ($giftCert->getData('status') !== 'I')) ? $giftCert : null;
+            $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result: ' . ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
