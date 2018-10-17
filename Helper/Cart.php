@@ -228,7 +228,8 @@ class Cart extends AbstractHelper
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws NoSuchEntityException
      */
-    public function getQuoteById($quoteId) {
+    public function getQuoteById($quoteId)
+    {
         return $this->quoteRepository->get($quoteId);
     }
 
@@ -238,7 +239,8 @@ class Cart extends AbstractHelper
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws NoSuchEntityException
      */
-    public function getActiveQuoteById($quoteId) {
+    public function getActiveQuoteById($quoteId)
+    {
         return $this->quoteRepository->getActive($quoteId);
     }
 
@@ -258,7 +260,8 @@ class Cart extends AbstractHelper
     /**
      * @param \Magento\Quote\Api\Data\CartInterface $quote
      */
-    public function saveQuote($quote) {
+    public function saveQuote($quote)
+    {
         $this->quoteRepository->save($quote);
     }
 
@@ -328,11 +331,12 @@ class Cart extends AbstractHelper
     /**
      * Get the hints data for checkout
      *
-     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param string $cartReference         (immutable) quote id
+     * @param string $cartReference            (immutable) quote id
      *
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getHints($placeOrderPayload, $cartReference)
     {
@@ -463,7 +467,6 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();
             $this->quoteResource->save($quote);
@@ -506,6 +509,8 @@ class Cart extends AbstractHelper
 
         $immutableQuote->collectTotals();
         $totals = $immutableQuote->getTotals();
+
+        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
 
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way

@@ -62,7 +62,7 @@
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
-            <argument name="className" xsi:type="string">Unirgy\Giftcert\Model\</argument>
+            <argument name="className" xsi:type="string">Unirgy\Giftcert\Model\GiftcertRepository</argument>
         </arguments>
     </virtualType>
 
