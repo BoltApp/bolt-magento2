@@ -331,11 +331,12 @@ class Cart extends AbstractHelper
     /**
      * Get the hints data for checkout
      *
-     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param string $cartReference         (immutable) quote id
+     * @param string $cartReference            (immutable) quote id
      *
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getHints($placeOrderPayload, $cartReference)
     {
@@ -512,6 +513,8 @@ class Cart extends AbstractHelper
 
         $immutableQuote->collectTotals();
         $totals = $immutableQuote->getTotals();
+
+        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
 
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way

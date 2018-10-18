@@ -184,6 +184,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     public function validate()
     {
         try {
+
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
 
@@ -305,7 +306,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             if ($coupon && $coupon->getCouponId()) {
                 $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
-            } elseif ($giftCard && $giftCard->getId()) {
+            } else if ($giftCard && $giftCard->getId()) {
                 $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
             } else {
                 throw new WebApiException(__('Something happened with current code.'));
@@ -317,6 +318,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             $this->sendSuccessResponse($result, $immutableQuote);
+
         } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -391,9 +393,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $date = $rule->getFromDate();
         if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
             $desc = 'Code available from ' . $this->timezone->formatDate(
-                new \DateTime($rule->getFromDate()),
-                \IntlDateFormatter::MEDIUM
-            );
+                    new \DateTime($rule->getFromDate()),
+                    \IntlDateFormatter::MEDIUM
+                );
             return $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
                 $desc,
@@ -498,12 +500,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
-            if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
-                $giftCard->addToCart(true, $immutableQuote);
-            }
+            if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
+                $giftCard->addToQuote($immutableQuote);
+            } else {
+                if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
+                    $giftCard->addToCart(true, $immutableQuote);
+                }
 
-            if ($parentQuote->getGiftCardsAmountUsed() == 0) {
-                $giftCard->addToCart(true, $parentQuote);
+                if ($parentQuote->getGiftCardsAmountUsed() == 0) {
+                    $giftCard->addToCart(true, $parentQuote);
+                }
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -534,8 +540,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return array
      * @throws \Exception
      */
-    private function getCartTotals($quote)
-    {
+    private function getCartTotals($quote) {
 
         $cart = $this->cartHelper->getCartData(false, null, $quote);
         return [
@@ -555,9 +560,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
         $additionalErrorResponseData = [];
-        if ($quote) {
-            $additionalErrorResponseData['cart'] = $this->getCartTotals($quote);
-        }
+        if ($quote) $additionalErrorResponseData['cart'] = $this->getCartTotals($quote);
 
         $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message, $additionalErrorResponseData);
 
@@ -649,7 +652,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
             $giftCardsCollection = $giftCardAccountResource
-                ->addFieldToFilter('code', ['eq' => $code]);
+                ->addFieldToFilter('code', array('eq' => $code))
+            ;
 
             /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
             $giftCard = $giftCardsCollection->getFirstItem();
@@ -657,7 +661,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         }
 
-        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
@@ -665,29 +669,26 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @param $code
      * @return null|\Unirgy\Giftcert\Model\Cert
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function loadGiftCertData($code)
     {
         $result = null;
 
-        /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection $giftCardAccount */
-        $giftCertResource = $this->moduleUnirgyGiftCert->getInstance();
+        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
+        $giftCertRepository = $this->moduleUnirgyGiftCert->getInstance();
 
-        if ($giftCertResource) {
+        if ($giftCertRepository) {
             $this->logHelper->addInfoLog('### GiftCert ###');
             $this->logHelper->addInfoLog('# Code: ' . $code);
 
-            /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection  $giftCertCollection */
-            $giftCertCollection = $giftCertResource
-                ->addFieldToFilter('cert_number', ['eq' => $code]);
-
             /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-            $giftCert = $giftCertCollection->getFirstItem();
+            $giftCert = $giftCertRepository->get($code);
 
-            $result = (!$giftCert->getBalance() && ($giftCert->getData('status') !== 'I')) ? $giftCert : null;
+            $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
         }
 
-        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result: ' . ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
