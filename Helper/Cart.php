@@ -92,12 +92,12 @@ class Cart extends AbstractHelper
     /**
      * @var BlockFactory
      */
-    private  $blockFactory;
+    private $blockFactory;
 
     /**
      * @var Emulation
      */
-    private  $appEmulation;
+    private $appEmulation;
 
     /**
      * @var QuoteFactory
@@ -228,7 +228,8 @@ class Cart extends AbstractHelper
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws NoSuchEntityException
      */
-    public function getQuoteById($quoteId) {
+    public function getQuoteById($quoteId)
+    {
         return $this->quoteRepository->get($quoteId);
     }
 
@@ -238,7 +239,8 @@ class Cart extends AbstractHelper
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws NoSuchEntityException
      */
-    public function getActiveQuoteById($quoteId) {
+    public function getActiveQuoteById($quoteId)
+    {
         return $this->quoteRepository->getActive($quoteId);
     }
 
@@ -258,7 +260,8 @@ class Cart extends AbstractHelper
     /**
      * @param \Magento\Quote\Api\Data\CartInterface $quote
      */
-    public function saveQuote($quote) {
+    public function saveQuote($quote)
+    {
         $this->quoteRepository->save($quote);
     }
 
@@ -353,9 +356,11 @@ class Cart extends AbstractHelper
          *
          * @param Address $address
          */
-        $prefillHints = function($address) use (&$hints, $quote) {
+        $prefillHints = function ($address) use (&$hints, $quote) {
 
-            if (!$address) return;
+            if (!$address) {
+                return;
+            }
 
             $prefill = [
                 'firstName'    => $address->getFirstname(),
@@ -382,7 +387,6 @@ class Cart extends AbstractHelper
         // Logged in customes.
         // Merchant scope and prefill.
         if ($this->customerSession->isLoggedIn()) {
-
             $customer = $this->customerSession->getCustomer();
 
             $signRequest = [
@@ -407,7 +411,6 @@ class Cart extends AbstractHelper
         // If assigned it takes precedence over logged in user default address.
         if ($quote->isVirtual()) {
             $prefillHints($quote->getBillingAddress());
-
         } else {
             $prefillHints($quote->getShippingAddress());
         }
@@ -463,7 +466,6 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();
             $this->quoteResource->save($quote);
@@ -481,12 +483,16 @@ class Cart extends AbstractHelper
             $this->quoteResource->save($immutableQuote);
 
             foreach ($quote->getBillingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') $immutableQuote->getBillingAddress()->setData($key, $value);
+                if ($key != 'address_id') {
+                    $immutableQuote->getBillingAddress()->setData($key, $value);
+                }
             }
             $immutableQuote->getBillingAddress()->save();
 
             foreach ($quote->getShippingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') $immutableQuote->getShippingAddress()->setData($key, $value);
+                if ($key != 'address_id') {
+                    $immutableQuote->getShippingAddress()->setData($key, $value);
+                }
             }
             $immutableQuote->getShippingAddress()->save();
         }
@@ -533,7 +539,6 @@ class Cart extends AbstractHelper
         $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
 
         foreach ($items as $item) {
-
             $product = [];
             $productId = $item->getProductId();
 
@@ -578,7 +583,9 @@ class Cart extends AbstractHelper
                     $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
                 }
             }
-            if (@$productImage) $product['image_url'] = $productImage->getImageUrl();
+            if (@$productImage) {
+                $product['image_url'] = $productImage->getImageUrl();
+            }
             ////////////////////////////////////
 
             //Add product to items array
@@ -636,14 +643,10 @@ class Cart extends AbstractHelper
 
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
-
             if ($immutableQuote->isVirtual()) {
-
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                 $address->save();
-
             } else {
-
                 $address->setCollectShippingRates(true);
 
                 // assign parent shipping method to clone
@@ -747,9 +750,7 @@ class Cart extends AbstractHelper
         // Process Store Credit
         /////////////////////////////////////////////////////////////////////////////////
         if ($immutableQuote->getUseCustomerBalance()) {
-
             if ($paymentOnly && $amount = abs($immutableQuote->getCustomerBalanceAmountUsed())) {
-
                 $roundedAmount = $this->getRoundAmount($amount);
 
                 $cart['discounts'][] = [
@@ -759,9 +760,7 @@ class Cart extends AbstractHelper
 
                 $diff -= $amount * 100 - $roundedAmount;
                 $totalAmount -= $roundedAmount;
-
             } else {
-
                 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
                 $balanceModel = $objectManager->create('Magento\CustomerBalance\Model\Balance');
 
@@ -773,7 +772,6 @@ class Cart extends AbstractHelper
                 $balanceModel->loadByCustomer();
 
                 if ($amount = abs($balanceModel->getAmount())) {
-
                     $roundedAmount = $this->getRoundAmount($amount);
 
                     $cart['discounts'][] = [
@@ -792,9 +790,7 @@ class Cart extends AbstractHelper
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($immutableQuote->getUseRewardPoints()) {
-
             if ($paymentOnly && $amount = abs($immutableQuote->getRewardCurrencyAmount())) {
-
                 $roundedAmount = $this->getRoundAmount($amount);
 
                 $cart['discounts'][] = [
@@ -804,9 +800,7 @@ class Cart extends AbstractHelper
 
                 $diff -= $amount * 100 - $roundedAmount;
                 $totalAmount -= $roundedAmount;
-
             } else {
-
                 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
                 $rewardModel = $objectManager->create('Magento\Reward\Model\Reward');
 
@@ -818,7 +812,6 @@ class Cart extends AbstractHelper
                 $rewardModel->loadByCustomer();
 
                 if ($amount = abs($rewardModel->getCurrencyAmount())) {
-
                     $roundedAmount = $this->getRoundAmount($amount);
 
                     $cart['discounts'][] = [
@@ -905,7 +898,8 @@ class Cart extends AbstractHelper
      * @return bool
      * @throws \Zend_Validate_Exception
      */
-    public function validateEmail($email) {
+    public function validateEmail($email)
+    {
 
         $emailClass = version_compare(
             $this->configHelper->getStoreVersion(),
@@ -922,7 +916,8 @@ class Cart extends AbstractHelper
      * @param array|object $addressData
      * @return array|object
      */
-    public function handleSpecialAddressCases($addressData) {
+    public function handleSpecialAddressCases($addressData)
+    {
         return $this->handlePuertoRico($addressData);
     }
 
@@ -932,7 +927,8 @@ class Cart extends AbstractHelper
      * @param array|object $addressData
      * @return array|object
      */
-    private function handlePuertoRico($addressData) {
+    private function handlePuertoRico($addressData)
+    {
         $address = (array)$addressData;
         if ($address['country_code'] === 'PR') {
             $address['country_code'] = 'US';
@@ -949,11 +945,14 @@ class Cart extends AbstractHelper
      * @param Quote|null $quote
      * @return bool
      */
-    public function hasProductRestrictions($quote = null) {
+    public function hasProductRestrictions($quote = null)
+    {
 
         $toggleCheckout = $this->configHelper->getToggleCheckout();
 
-        if (!$toggleCheckout || !$toggleCheckout->active) return false;
+        if (!$toggleCheckout || !$toggleCheckout->active) {
+            return false;
+        }
 
         // get configured Product model getters that can restrict Bolt checkout usage
         $productRestrictionMethods = $toggleCheckout->productRestrictionMethods ?: [];
@@ -961,14 +960,18 @@ class Cart extends AbstractHelper
         // get configured Quote Item getters that can restrict Bolt checkout usage
         $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods ?: [];
 
-        if (!$productRestrictionMethods && !$itemRestrictionMethods) return false;
+        if (!$productRestrictionMethods && !$itemRestrictionMethods) {
+            return false;
+        }
 
         /** @var Quote $quote */
         $quote = $quote ?: $this->checkoutSession->getQuote();
         foreach ($quote->getAllVisibleItems() as $item) {
             // call every method on item, if returns true, do restrict
             foreach ($itemRestrictionMethods as $method) {
-                if ($item->$method()) return true;
+                if ($item->$method()) {
+                    return true;
+                }
             }
             // Non empty check to avoid unnecessary model load
             if ($productRestrictionMethods) {
@@ -976,7 +979,9 @@ class Cart extends AbstractHelper
                 $product = $this->productFactory->create()->load($item->getProductId());
                 // call every method on product, if returns true, do restrict
                 foreach ($productRestrictionMethods as $method) {
-                    if ($product->$method()) return true;
+                    if ($product->$method()) {
+                        return true;
+                    }
                 }
             }
         }

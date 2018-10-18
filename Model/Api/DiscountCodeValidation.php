@@ -184,7 +184,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     public function validate()
     {
         try {
-
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
 
@@ -306,7 +305,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             if ($coupon && $coupon->getCouponId()) {
                 $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
-            } else if ($giftCard && $giftCard->getId()) {
+            } elseif ($giftCard && $giftCard->getId()) {
                 $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
             } else {
                 throw new WebApiException(__('Something happened with current code.'));
@@ -318,7 +317,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             $this->sendSuccessResponse($result, $immutableQuote);
-
         } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -393,9 +391,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $date = $rule->getFromDate();
         if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
             $desc = 'Code available from ' . $this->timezone->formatDate(
-                    new \DateTime($rule->getFromDate()),
-                    \IntlDateFormatter::MEDIUM
-                );
+                new \DateTime($rule->getFromDate()),
+                \IntlDateFormatter::MEDIUM
+            );
             return $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
                 $desc,
@@ -536,7 +534,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return array
      * @throws \Exception
      */
-    private function getCartTotals($quote) {
+    private function getCartTotals($quote)
+    {
 
         $cart = $this->cartHelper->getCartData(false, null, $quote);
         return [
@@ -556,7 +555,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
         $additionalErrorResponseData = [];
-        if ($quote) $additionalErrorResponseData['cart'] = $this->getCartTotals($quote);
+        if ($quote) {
+            $additionalErrorResponseData['cart'] = $this->getCartTotals($quote);
+        }
 
         $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message, $additionalErrorResponseData);
 
@@ -648,8 +649,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
             $giftCardsCollection = $giftCardAccountResource
-                ->addFieldToFilter('code', array('eq' => $code))
-            ;
+                ->addFieldToFilter('code', ['eq' => $code]);
 
             /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
             $giftCard = $giftCardsCollection->getFirstItem();
@@ -657,7 +657,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
@@ -679,8 +679,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             /** @var \Unirgy\Giftcert\Model\ResourceModel\Cert\Collection  $giftCertCollection */
             $giftCertCollection = $giftCertResource
-                ->addFieldToFilter('cert_number', array('eq' => $code))
-            ;
+                ->addFieldToFilter('cert_number', ['eq' => $code]);
 
             /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
             $giftCert = $giftCertCollection->getFirstItem();
@@ -688,7 +687,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $result = (!$giftCert->getBalance() && ($giftCert->getData('status') !== 'I')) ? $giftCert : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }

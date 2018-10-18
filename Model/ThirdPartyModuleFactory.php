@@ -67,7 +67,7 @@ class ThirdPartyModuleFactory
      * @param array $data
      * @return mixed|null
      */
-    public function getInstance(array $data = array())
+    public function getInstance(array $data = [])
     {
         if ($this->_moduleManager->isEnabled($this->moduleName)) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);

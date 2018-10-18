@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Model;
 
-
 /**
  * Class ErrorResponse
  *

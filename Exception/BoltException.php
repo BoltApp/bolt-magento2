@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Exception;
 
-
 class BoltException extends \Exception
 {
 

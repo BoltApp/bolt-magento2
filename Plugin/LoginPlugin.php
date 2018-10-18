@@ -37,19 +37,26 @@ class LoginPlugin extends AbstractLoginPlugin
      *
      * @return ResultInterface
      */
-    public function afterExecute($subject, $result) {
+    public function afterExecute($subject, $result)
+    {
 
         try {
             // Pass through the original result if the customer is not logged in or the cart is empty
-            if (!$this->shouldRedirectToCartPage()) return $result;
+            if (!$this->shouldRedirectToCartPage()) {
+                return $result;
+            }
 
             // Get and decode result object protected json property value
-            $propGetter = \Closure::bind(function($prop){return $this->$prop;}, $result, $result);
+            $propGetter = \Closure::bind(function ($prop) {
+                return $this->$prop;
+            }, $result, $result);
             $json = $propGetter('json');
             $response = \Zend_Json::decode($json);
 
             // Sanity check. If result has an error flag set, pass the original result through unchainged
-            if ($response['errors'] !== false) return $result;
+            if ($response['errors'] !== false) {
+                return $result;
+            }
 
             // No errors, user was successfully logged in
             // Generate new result by adding redirect url to the original data
@@ -61,7 +68,6 @@ class LoginPlugin extends AbstractLoginPlugin
             return $this->resultFactory
                 ->create(ResultFactory::TYPE_JSON)
                 ->setData($response);
-
         } catch (\Exception $e) {
             // On any exception pass the original result through
             $this->notifyException($e);

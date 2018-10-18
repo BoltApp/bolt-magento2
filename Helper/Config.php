@@ -693,7 +693,8 @@ class Config extends AbstractHelper
      *
      * @return mixed
      */
-    public function getToggleCheckout() {
+    public function getToggleCheckout()
+    {
         return $this->getAdditionalConfigProperty('toggleCheckout');
     }
 }

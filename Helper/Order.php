@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Helper;
 
@@ -309,7 +309,9 @@ class Order extends AbstractHelper
      */
     private function setShippingMethod($quote, $transaction)
     {
-        if ($quote->isVirtual()) return;
+        if ($quote->isVirtual()) {
+            return;
+        }
 
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setCollectShippingRates(true);
@@ -454,7 +456,8 @@ class Order extends AbstractHelper
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
-            $quote, [
+            $quote,
+            [
                 'cc_last_4' => @$transaction->from_credit_card->last4,
                 'cc_type' => @$transaction->from_credit_card->network
             ]
@@ -488,7 +491,7 @@ class Order extends AbstractHelper
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
             // even if run from the hook.
-            $this->appState->emulateAreaCode('frontend', function () use ($order){
+            $this->appState->emulateAreaCode('frontend', function () use ($order) {
                 $this->emailSender->send($order);
             });
         }
@@ -503,7 +506,8 @@ class Order extends AbstractHelper
      * @param array $data
      * @return void
      */
-    private function setQuotePaymentInfoData($quote, $data) {
+    private function setQuotePaymentInfoData($quote, $data)
+    {
         foreach ($data as $key => $value) {
             $this->getQuotePaymentInfoInstance($quote)->setData($key, $value);
         }
@@ -515,7 +519,8 @@ class Order extends AbstractHelper
      * @param Quote $quote
      * @return \Magento\Payment\Model\Info
      */
-    private function getQuotePaymentInfoInstance($quote) {
+    private function getQuotePaymentInfoInstance($quote)
+    {
         return $this->quotePaymentInfoInstance ?:
             $this->quotePaymentInfoInstance = $quote->getPayment()->getMethodInstance()->getInfoInstance();
     }
@@ -525,7 +530,8 @@ class Order extends AbstractHelper
      *
      * @param Quote $quote
      */
-    private function deleteRedundantQuotes($quote) {
+    private function deleteRedundantQuotes($quote)
+    {
 
         $connection = $this->resourceConnection->getConnection();
 
@@ -546,7 +552,8 @@ class Order extends AbstractHelper
      *
      * @param Quote $quote
      */
-    public function deactivateParentQuote($quote) {
+    public function deactivateParentQuote($quote)
+    {
         try {
             $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
             $parentQuote->setIsActive(false);
@@ -590,7 +597,9 @@ class Order extends AbstractHelper
             2,
             null
         );
-        if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
+        if (!$quoteId) {
+            $quoteId = $transaction->order->cart->order_reference;
+        }
         ///////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////////
@@ -618,7 +627,6 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
@@ -627,9 +635,7 @@ class Order extends AbstractHelper
 
             // Add the user_note to the order comments and make it visible for customer.
             if (isset($transaction->order->user_note)) {
-
                 $this->setOrderUserNote($order, $transaction->order->user_note);
-
             }
         }
 
@@ -657,7 +663,8 @@ class Order extends AbstractHelper
      *
      * @return OrderModel
      */
-    public function setOrderUserNote($order, $userNote) {
+    public function setOrderUserNote($order, $userNote)
+    {
 
         $order
             ->addStatusHistoryComment($userNote)
@@ -674,7 +681,8 @@ class Order extends AbstractHelper
      * @param string $reference
      * @return string
      */
-    public function formatReferenceUrl($reference) {
+    public function formatReferenceUrl($reference)
+    {
         $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
         return '<a target="_blank" href="'.$url.'">'.$reference.'</a>';
     }
@@ -685,7 +693,8 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @return string
      */
-    public function getTransactionState($transaction) {
+    public function getTransactionState($transaction)
+    {
         return $transaction->type.":".$transaction->status;
     }
 
@@ -696,7 +705,8 @@ class Order extends AbstractHelper
      * @param string $newTransactionState
      * @return bool
      */
-    private function validateTransition($prevTransactionState, $newTransactionState) {
+    private function validateTransition($prevTransactionState, $newTransactionState)
+    {
         return in_array($newTransactionState, $this->validStateTransitions[$prevTransactionState]);
     }
 
@@ -708,7 +718,8 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @return void
      */
-    private function checkTotalsMismatch($order, $transaction) {
+    private function checkTotalsMismatch($order, $transaction)
+    {
 
         // Get transaction state
         $transactionState = $this->getTransactionState($transaction);
@@ -731,7 +742,9 @@ class Order extends AbstractHelper
         $storeTotal = round($order->getGrandTotal() * 100);
 
         // Stop if no mismatch
-        if ($boltTotal == $storeTotal) return;
+        if ($boltTotal == $storeTotal) {
+            return;
+        }
 
         // Put the order on hold
         $order->setStatus(OrderModel::STATE_HOLDED);
@@ -753,7 +766,9 @@ class Order extends AbstractHelper
             2,
             null
         );
-        if (!$quoteId) $quoteId = $transaction->order->cart->order_reference;
+        if (!$quoteId) {
+            $quoteId = $transaction->order->cart->order_reference;
+        }
 
         // If the quote exists collect cart data for bugsnag
         try {
@@ -786,7 +801,8 @@ class Order extends AbstractHelper
      * @param bool $fromHook
      * @return string
      */
-    private function getBoltTransactionStatus($transactionState, $fromHook) {
+    private function getBoltTransactionStatus($transactionState, $fromHook)
+    {
 
         return [
             self::TS_ZERO_AMOUNT => 'ZERO AMOUNT COMPLETED',
@@ -812,7 +828,8 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null, $fromHook = true) {
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $fromHook = true)
+    {
 
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
@@ -833,7 +850,9 @@ class Order extends AbstractHelper
 
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
         // Reference check added to support multiple refunds, the only valid same state transition
-        if ($transactionState == $prevTransactionState && $reference == $prevTransactionReference) return;
+        if ($transactionState == $prevTransactionState && $reference == $prevTransactionReference) {
+            return;
+        }
 
         if (!$this->validateTransition($prevTransactionState, $transactionState)) {
             throw new LocalizedException(__(
@@ -853,26 +872,22 @@ class Order extends AbstractHelper
 
         switch ($transactionState) {
             case self::TS_ZERO_AMOUNT:
-
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_ORDER;
 
                 break;
             case self::TS_PENDING:
-
                 $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
 
                 break;
             case self::TS_AUTHORIZED:
-
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
                 $transactionId = $transaction->id.'-auth';
 
                 break;
             case self::TS_COMPLETED:
-
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionId = $transaction->id.'-capture';
                 $amount = $transaction->capture->amount->amount;
@@ -881,7 +896,6 @@ class Order extends AbstractHelper
                     $transactionType = Transaction::TYPE_CAPTURE;
                     $transactionId = $transaction->id.'-capture';
                     $parentTransactionId = $transaction->id.'-auth';
-
                 } else {
                     $transactionType = Transaction::TYPE_PAYMENT;
                     $transactionId = $transaction->id.'-payment';
@@ -889,7 +903,6 @@ class Order extends AbstractHelper
 
                 break;
             case self::TS_CANCELED:
-
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_VOID;
                 $transactionId = $transaction->id.'-void';
@@ -897,21 +910,18 @@ class Order extends AbstractHelper
 
                 break;
             case self::TS_REJECTED_REVERSIBLE:
-
                 $orderState = OrderModel::STATE_HOLDED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
 
                 break;
             case self::TS_REJECTED_IRREVERSIBLE:
-
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_irreversible';
 
                 break;
             case self::TS_CREDIT_COMPLETED:
-
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
 
@@ -925,7 +935,6 @@ class Order extends AbstractHelper
 
                 break;
             default:
-
                 throw new LocalizedException(__(
                     'Unhandled transaction state : %1',
                     $transactionState
