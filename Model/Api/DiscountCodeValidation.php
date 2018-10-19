@@ -514,7 +514,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             return $this->sendErrorResponse(
-                self::ERR_SERVICE,
+                BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 422,
                 $immutableQuote
