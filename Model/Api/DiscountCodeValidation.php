@@ -517,19 +517,17 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         try {
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
-                $this->logHelper->addInfoLog('# Debug GiftCert before add to Quote.');
-                $this->logHelper->addInfoLog(json_encode($giftCard->getData()));
-                $this->logHelper->addInfoLog('Is not code in $immutableQuote' . (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) ? 'yes': 'no');
-                $this->logHelper->addInfoLog('Is not code in $parentQuote' . (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) ? 'yes': 'no');
+                /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
+                $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->moduleUnirgyGiftCertHelper->addCertificate(
+                    $unirgyHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $immutableQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
                 }
                 if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->moduleUnirgyGiftCertHelper->addCertificate(
+                    $unirgyHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $parentQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
