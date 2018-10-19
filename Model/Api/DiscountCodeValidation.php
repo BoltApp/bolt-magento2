@@ -127,8 +127,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
      */
-    private $boltUnirgyGiftCertHelper;
-
+    private $moduleUnirgyGiftCertHelper;
     /**
      * @var QuoteRepository
      */
@@ -140,7 +139,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param CouponFactory           $couponFactory
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
-     * @param ThirdPartyModuleFactory $boltUnirgyGiftCertHelper
+     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
      * @param RuleFactory             $ruleFactory
      * @param LogHelper               $logHelper
@@ -160,7 +159,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         CouponFactory $couponFactory,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleUnirgyGiftCert,
-        ThirdPartyModuleFactory $boltUnirgyGiftCertHelper,
+        ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
@@ -190,7 +189,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->configHelper = $configHelper;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
-        $this->boltUnirgyGiftCertHelper = $boltUnirgyGiftCertHelper;
+        $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
         $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
     }
 
@@ -520,14 +519,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         try {
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->boltUnirgyGiftCertHelper->addCertificate(
+                    $this->moduleUnirgyGiftCertHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $immutableQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
                 }
                 if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->boltUnirgyGiftCertHelper->addCertificate(
+                    $this->moduleUnirgyGiftCertHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $parentQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
