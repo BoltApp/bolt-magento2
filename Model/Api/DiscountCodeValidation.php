@@ -178,6 +178,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->couponFactory = $couponFactory;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
         $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
+        $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
+        $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
         $this->usageFactory = $usageFactory;
@@ -189,8 +191,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->configHelper = $configHelper;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
-        $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
-        $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
     }
 
     /**
@@ -335,7 +335,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             $this->sendSuccessResponse($result, $immutableQuote);
-
         } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -508,7 +507,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
     /**
      * @param $code
-     * @param \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
+     * @param \Magento\GiftCardAccount\Model\Giftcardaccount|\Unirgy\Giftcert\Model\Cert $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -518,6 +517,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         try {
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
+                $this->logHelper->addInfoLog('# Debug GiftCert before add to Quote.');
+                $this->logHelper->addInfoLog(json_encode($giftCard->getData()));
+                $this->logHelper->addInfoLog('Is not code in $immutableQuote' . (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) ? 'yes': 'no');
+                $this->logHelper->addInfoLog('Is not code in $parentQuote' . (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) ? 'yes': 'no');
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $this->moduleUnirgyGiftCertHelper->addCertificate(
                         $giftCard->getCertNumber(),
