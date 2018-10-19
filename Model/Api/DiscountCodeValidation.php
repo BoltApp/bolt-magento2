@@ -38,6 +38,7 @@ use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 /**
  * Discount Code Validation class
@@ -135,6 +136,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $quoteRepositoryForUnirgyGiftCert;
 
     /**
+     * @var CheckoutSession
+     */
+    private $checkoutSessionForUnirgyGiftCert;
+
+    /**
+     * DiscountCodeValidation constructor.
+     *
      * @param Request                 $request
      * @param Response                $response
      * @param CouponFactory           $couponFactory
@@ -142,6 +150,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
+     * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
      * @param RuleFactory             $ruleFactory
      * @param LogHelper               $logHelper
      * @param BoltErrorResponse       $errorResponse
@@ -162,6 +171,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         ThirdPartyModuleFactory $moduleUnirgyGiftCert,
         ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
+        CheckoutSession $checkoutSessionForUnirgyGiftCert,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -181,6 +191,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
         $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
         $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
+        $this->checkoutSessionForUnirgyGiftCert = $checkoutSessionForUnirgyGiftCert;
         $this->ruleFactory = $ruleFactory;
         $this->logHelper = $logHelper;
         $this->usageFactory = $usageFactory;
@@ -520,22 +531,17 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
                 $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
-                // # for debug
-                $objManager = ObjectManager::getInstance();
-                $checkoutSession = $objManager->get(\Magento\Checkout\Model\Session::class);
+                /** @var CheckoutSession $checkoutSession */
+                $checkoutSession = $this->checkoutSessionForUnirgyGiftCert;
+
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $unirgyHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $immutableQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
-
-//                    $unirgyHelper->addCertificate(
-//                        $giftCard->getCertNumber(),
-//                        $checkoutSession->getQuote(),
-//                        $this->quoteRepositoryForUnirgyGiftCert
-//                    );
                 }
+
                 if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $unirgyHelper->addCertificate(
                         $giftCard->getCertNumber(),
@@ -543,6 +549,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
                 }
+
+                // The Unirgy_GiftCert require double call the function addCertificate().
+                // Look on Unirgy/Giftcert/Controller/Checkout/Add::execute()
                 $unirgyHelper->addCertificate(
                     $giftCard->getCertNumber(),
                     $checkoutSession->getQuote(),
@@ -612,7 +621,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $additionalErrorResponseData = [];
         if ($quote) $additionalErrorResponseData['cart'] = $this->getCartTotals($quote);
 
-        $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message, $additionalErrorResponseData);
+        $encodeErrorResult = $this->errorResponse
+            ->prepareErrorMessage($errCode, $message, $additionalErrorResponseData);
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);
