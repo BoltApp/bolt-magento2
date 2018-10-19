@@ -66,9 +66,17 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="boltUnirgyGiftCertHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
+            <argument name="className" xsi:type="string">Unirgy\Giftcert\Helper\Data</argument>
+        </arguments>
+    </virtualType>
+
     <type name="Bolt\Boltpay\Model\Api\DiscountCodeValidation">
         <arguments>
             <argument name="moduleUnirgyGiftCert" xsi:type="object">boltUnirgyGiftCert</argument>
+            <argument name="moduleUnirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
     </type>
 </config>

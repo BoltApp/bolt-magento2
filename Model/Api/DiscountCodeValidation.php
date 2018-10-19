@@ -36,6 +36,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 
 /**
  * Discount Code Validation class
@@ -124,10 +125,23 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $errorResponse;
 
     /**
+     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
+     */
+    private $boltUnirgyGiftCertHelper;
+
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepositoryForUnirgyGiftCert;
+
+    /**
      * @param Request                 $request
      * @param Response                $response
      * @param CouponFactory           $couponFactory
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
+     * @param ThirdPartyModuleFactory $boltUnirgyGiftCertHelper
+     * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
      * @param RuleFactory             $ruleFactory
      * @param LogHelper               $logHelper
      * @param BoltErrorResponse       $errorResponse
@@ -146,6 +160,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         CouponFactory $couponFactory,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleUnirgyGiftCert,
+        ThirdPartyModuleFactory $boltUnirgyGiftCertHelper,
+        QuoteRepository $quoteRepositoryForUnirgyGiftCert,
         RuleFactory $ruleFactory,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -174,6 +190,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->configHelper = $configHelper;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
+        $this->boltUnirgyGiftCertHelper = $boltUnirgyGiftCertHelper;
+        $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
     }
 
     /**
@@ -306,7 +324,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             if ($coupon && $coupon->getCouponId()) {
                 $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
-            } else if ($giftCard && $giftCard->getId()) {
+            } elseif ($giftCard && $giftCard->getId()) {
                 $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
             } else {
                 throw new WebApiException(__('Something happened with current code.'));
@@ -501,7 +519,22 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         try {
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
-                $giftCard->addToQuote($immutableQuote);
+                if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
+                    $this->boltUnirgyGiftCertHelper->addCertificate(
+                        $giftCard->getCertNumber(),
+                        $immutableQuote,
+                        $this->quoteRepositoryForUnirgyGiftCert
+                    );
+                }
+                if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
+                    $this->boltUnirgyGiftCertHelper->addCertificate(
+                        $giftCard->getCertNumber(),
+                        $parentQuote,
+                        $this->quoteRepositoryForUnirgyGiftCert
+                    );
+                }
+
+                $giftAmount = $giftCard->getBalance();
             } else {
                 if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
                     $giftCard->addToCart(true, $immutableQuote);
@@ -510,6 +543,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 if ($parentQuote->getGiftCardsAmountUsed() == 0) {
                     $giftCard->addToCart(true, $parentQuote);
                 }
+
+                $giftAmount = $parentQuote->getGiftCardsAmountUsed();
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -524,7 +559,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $result = [
             'status'          => 'success',
             'discount_code'   => $code,
-            'discount_amount' => abs($this->cartHelper->getRoundAmount($parentQuote->getGiftCardsAmountUsed())),
+            'discount_amount' => abs($this->cartHelper->getRoundAmount($giftAmount)),
             'description'     =>  __('Discount Gift Card'),
             'discount_type'   => $this->convertToBoltDiscountType('by_fixed'),
         ];
@@ -661,7 +696,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog( '# loadGiftCardData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
@@ -688,7 +723,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
         }
 
-        $this->logHelper->addInfoLog( '# loadGiftCertData Result: ' . ((!$result) ? 'yes' : 'no'));
+        $this->logHelper->addInfoLog( '# loadGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
