@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
@@ -519,12 +520,21 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
                 $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
+                // # for debug
+                $objManager = ObjectManager::getInstance();
+                $checkoutSession = $objManager->get(\Magento\Checkout\Model\Session::class);
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $unirgyHelper->addCertificate(
                         $giftCard->getCertNumber(),
                         $immutableQuote,
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
+
+//                    $unirgyHelper->addCertificate(
+//                        $giftCard->getCertNumber(),
+//                        $checkoutSession->getQuote(),
+//                        $this->quoteRepositoryForUnirgyGiftCert
+//                    );
                 }
                 if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $unirgyHelper->addCertificate(
@@ -533,6 +543,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         $this->quoteRepositoryForUnirgyGiftCert
                     );
                 }
+                $unirgyHelper->addCertificate(
+                    $giftCard->getCertNumber(),
+                    $checkoutSession->getQuote(),
+                    $this->quoteRepositoryForUnirgyGiftCert
+                );
 
                 $giftAmount = $giftCard->getBalance();
             } else {
