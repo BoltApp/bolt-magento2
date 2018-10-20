@@ -71,6 +71,7 @@ class ThirdPartyModuleFactory
     {
         if ($this->_moduleManager->isEnabled($this->moduleName)) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);
+            $this->logHelper->addInfoLog('# Class: ' . $this->className);
             return $this->_objectManager->create($this->className, $data);
         }
         $this->logHelper->addInfoLog('# Module is Disabled or not Found: ' . $this->moduleName);
