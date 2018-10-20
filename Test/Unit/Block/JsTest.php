@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit\Block;
 
@@ -66,7 +66,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass'
+            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -207,7 +207,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(14, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(15, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -224,6 +224,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('totals_change_selectors', $array, $message . 'totals_change_selectors');
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
+        $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
     }
 
     /**
@@ -255,18 +256,21 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
 
-    public function setBoltInitiateCheckout($value = true) {
+    public function setBoltInitiateCheckout($value = true)
+    {
         $this->checkoutSessionMock
             ->expects($this->once())
             ->method('getBoltInitiateCheckout')
             ->willReturn($value);
     }
 
-    public function testGetInitiateCheckoutFalse() {
+    public function testGetInitiateCheckoutFalse()
+    {
         $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testGetInitiateCheckoutTrue() {
+    public function testGetInitiateCheckoutTrue()
+    {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }

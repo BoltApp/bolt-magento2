@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Model\Api;
 
@@ -208,7 +208,8 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Quote $quote
      * @throws LocalizedException
      */
-    private function checkCartItems($cart, $quote) {
+    private function checkCartItems($cart, $quote)
+    {
 
         $cartItems = [];
         foreach ($cart['items'] as $item) {
@@ -223,7 +224,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if (!$quoteItems || $cartItems != $quoteItems) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
-                $quoteItems = array_map(function($item){
+                $quoteItems = array_map(function ($item) {
                     $product = [];
                     $productId = $item->getProductId();
                     $unitPrice   = $item->getCalculationPrice();
@@ -304,7 +305,6 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             return $shippingOptionsModel;
-
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
@@ -331,7 +331,6 @@ class ShippingMethods implements ShippingMethodsInterface
         // applied rules (discounts), region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
-
             // use parent quote id for caching.
             // if everything else matches the cache is used more efficiently this way
             $parentQuoteId =$quote->getBoltParentQuoteId();
@@ -340,13 +339,15 @@ class ShippingMethods implements ShippingMethodsInterface
                 $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code'];
 
             // include products in cache key
-            foreach($quote->getAllVisibleItems() as $item) {
+            foreach ($quote->getAllVisibleItems() as $item) {
                 $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key
             $ruleIds = str_replace(',', '_', $quote->getAppliedRuleIds());
-            if ($ruleIds) $cacheIdentifier .= '_'.$ruleIds;
+            if ($ruleIds) {
+                $cacheIdentifier .= '_'.$ruleIds;
+            }
 
             // get custom address fields to be included in cache key
             $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
@@ -366,7 +367,9 @@ class ShippingMethods implements ShippingMethodsInterface
             foreach ($prefetchAddressFields as $key) {
                 $getter = 'get'.$key;
                 $value = $address->$getter();
-                if ($value) $cacheIdentifier .= '_'.$value;
+                if ($value) {
+                    $cacheIdentifier .= '_'.$value;
+                }
             }
 
             $cacheIdentifier = md5($cacheIdentifier);
@@ -433,7 +436,8 @@ class ShippingMethods implements ShippingMethodsInterface
      *
      * @param \Magento\Quote\Model\Quote\Address $shippingAddress
      */
-    private function resetShippingCalculationIfNeeded ($shippingAddress) {
+    private function resetShippingCalculationIfNeeded($shippingAddress)
+    {
         if ($this->configHelper->getResetShippingCalculation()) {
             $shippingAddress->removeAllShippingRates();
             $shippingAddress->setCollectShippingRates(true);
@@ -451,7 +455,6 @@ class ShippingMethods implements ShippingMethodsInterface
     private function getShippingOptions($quote, $addressData)
     {
         if ($quote->isVirtual()) {
-
             $billingAddress = $quote->getBillingAddress();
             $billingAddress->addData($addressData);
 

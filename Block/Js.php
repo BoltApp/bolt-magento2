@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Block;
 
@@ -154,7 +154,8 @@ class Js extends Template
      *
      * @return bool
      */
-    public function getInitiateCheckout() {
+    public function getInitiateCheckout()
+    {
         $flag = $this->checkoutSession->getBoltInitiateCheckout();
         $this->checkoutSession->unsBoltInitiateCheckout();
         return (bool)$flag;
@@ -181,6 +182,7 @@ class Js extends Template
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
+            'toggle_checkout'          => $this->getToggleCheckout(),
         ]);
     }
 
@@ -197,7 +199,8 @@ class Js extends Template
      * Get quote is virtual flag, false if no existing quote
      * @return bool
      */
-    private function getQuoteIsVirtual() {
+    private function getQuoteIsVirtual()
+    {
         $quote = $this->checkoutSession->getQuote();
         return $quote ? $quote->isVirtual() : false;
     }
@@ -259,5 +262,16 @@ class Js extends Template
         $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
 
         return (empty($callback)) ? '' : $callback;
+    }
+
+    /**
+     * Get Toggle Checkout configuration
+     *
+     * @return mixed
+     */
+    private function getToggleCheckout()
+    {
+        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
     }
 }

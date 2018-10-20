@@ -91,7 +91,8 @@ class Session extends AbstractHelper
      * @param int|string $parentQuoteId
      * @param mixed $checkoutSession
      */
-    public function saveSession($parentQuoteId, $checkoutSession) {
+    public function saveSession($parentQuoteId, $checkoutSession)
+    {
         // cache the session id by parent quote id
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $parentQuoteId;
         $sessionData = [
@@ -107,7 +108,8 @@ class Session extends AbstractHelper
      * @param mixed $session
      * @param string $sessionID
      */
-    private function setSession($session, $sessionID) {
+    private function setSession($session, $sessionID)
+    {
         // close current session
         $session->writeClose();
         // set session id (to value loaded from cache)
@@ -120,7 +122,8 @@ class Session extends AbstractHelper
      * @param Quote $quote
      * @return void
      */
-    private function replaceQuote($quote) {
+    private function replaceQuote($quote)
+    {
         $this->checkoutSession->replaceQuote($quote);
     }
 
@@ -131,7 +134,8 @@ class Session extends AbstractHelper
      * @param Quote $immutableQuote
      * @throws \Magento\Framework\Exception\SessionException
      */
-    public function loadSession($immutableQuote) {
+    public function loadSession($immutableQuote)
+    {
 
         // not an API call, no need to emulate session
         if ($this->appState->getAreaCode() != \Magento\Framework\App\Area::AREA_WEBAPI_REST) {
@@ -143,7 +147,6 @@ class Session extends AbstractHelper
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $immutableQuote->getBoltParentQuoteId();
 
         if ($serialized = $this->cache->load($cacheIdentifier)) {
-
             $sessionData = unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
 

@@ -634,7 +634,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    private function getAdditionalConfigString()
+    protected function getAdditionalConfigString()
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CONFIG,
@@ -662,5 +662,39 @@ class Config extends AbstractHelper
     {
         $config = $this->getAdditionalConfigObject();
         return @$config->$name;
+    }
+
+    /**
+     * Get Toggle Checkout configuration, stored in the following format:
+     *
+     * {
+     *   "toggleCheckout": {
+     *     "active": true,
+     *     "magentoButtons": [                          // Store "Proceed to Checkout" buttons
+     *       "#top-cart-btn-checkout",
+     *       "button[data-role=proceed-to-checkout]"
+     *     ],
+     *     "showElementsOnLoad": [                      // Dom nodes hidden with Global CSS until it is resolved
+     *       ".checkout-methods-items",                 // which checkout to show
+     *       ".block-minicart .block-content > .actions > .primary"
+     *     ],
+     *     "productRestrictionMethods": [               // Product model getters that can restrict Bolt checkout usage
+     *       "getSubscriptionActive"                    // ParadoxLabs_Subscriptions
+     *     ],
+     *     "itemRestrictionMethods": [                  // Quote Item getters that can restrict Bolt checkout usage
+     *       "getIsSubscription"                        // Magedelight_Subscribenow
+     *     ]
+     *   }
+     * }
+     *
+     * Magento checkout buttons (links) are swapped with Bolt buttons and vice versa
+     * according to Bolt checkout restriction state. Bolt checkout may be restricted if there are
+     * restricted items in cart, e.g. subscription products.
+     *
+     * @return mixed
+     */
+    public function getToggleCheckout()
+    {
+        return $this->getAdditionalConfigProperty('toggleCheckout');
     }
 }

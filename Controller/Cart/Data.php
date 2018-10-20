@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Controller\Cart;
 
@@ -25,6 +25,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class Data.
@@ -90,8 +91,12 @@ class Data extends Action
         $result = $this->resultJsonFactory->create();
 
         try {
+            if ($this->cartHelper->hasProductRestrictions()) {
+                throw new BoltException('The cart has products not allowed for Bolt checkout');
+            }
+
             // flag to determinate the type of checkout / data sent to Bolt
-            $payment_only        = $this->getRequest()->getParam('payment_only');
+            $payment_only = $this->getRequest()->getParam('payment_only');
             // additional data collected from the (one page checkout) page,
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
@@ -105,7 +110,7 @@ class Data extends Action
             list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
             $cart = [
-                'orderToken'  => $response ? $response->token : '',
+                'orderToken' => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
                 'cartReference' => $cartReference,
             ];
@@ -114,13 +119,18 @@ class Data extends Action
 
             $result->setData([
                 'status' => 'success',
-                'cart'   => $cart,
-                'hints'  => $hints,
+                'cart' => $cart,
+                'hints' => $hints,
                 'backUrl' => '',
             ]);
-
+        } catch (BoltException $e) {
+            $result->setData([
+                'status' => 'success',
+                'restrict' => true,
+                'message' => $e->getMessage(),
+                'backUrl' => '',
+            ]);
         } catch (Exception $e) {
-
             $this->bugsnag->notifyException($e);
 
             $result->setData([
@@ -128,7 +138,6 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-
         } finally {
             return $result;
         }
