@@ -24,5 +24,20 @@
 if (!$block->isEnabled()) return;
 ?>
 <style>
+    /**************************************************************
+     * Standard checkout Bolt payment radio and button
+     * Can be overridden from Global CSS
+     **************************************************************/
+    .payment-method-boltpay .payment-method-title img.payment-icon {
+        padding: 8px;
+        border: 1px solid #cccccc;
+        width:200px;
+    }
+    .bolt-checkout-button.disabled {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+    }
+    /***************************************************************/
     <?php echo $block->getGlobalCSS(); ?>
 </style>
