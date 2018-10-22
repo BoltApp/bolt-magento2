@@ -320,7 +320,9 @@ if (!$block->isEnabled()) return;
          * return string
          */
         var getCheckoutKey = function () {
-            var key = 'publishable_key_' + getCheckoutType();
+            var checkoutType = getCheckoutType();
+            hints.paymentonly = checkoutType === 'payment';
+            var key = 'publishable_key_' + checkoutType;
             return settings[key];
         };
 

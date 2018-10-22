@@ -20,14 +20,14 @@
 
 <!-- ko if: isPaymentAvailable() -->
 <div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
-    <div class="field choice">
+    <div class="payment-method-title field choice">
         <input type="radio"
                name="payment[method]"
                class="radio"
                data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()" />
         <label data-bind="attr: {'for': getCode()}" class="label">
+            <img style="padding: 8px; border: 1px solid #cccccc; width:200px;" src="https://s3-us-west-1.amazonaws.com/bolt-public/magento-integration-release/powered_by_bolt_cards.png" alt="Acceptance Mark" class="payment-icon" />
             <span data-bind="text: getTitle()"></span>
-            <div><img style="width:175px;" src="https://s3-us-west-1.amazonaws.com/bolt-public/magento-integration-release/powered_by_bolt_cards.png" alt="Mark" class="v-middle" /></div>
         </label>
     </div>
     <div class="payment-method-content">
@@ -43,17 +43,10 @@
             <div class="primary">
                 <input type="hidden" id="bolt-billing-address" data-bind="value: getBillingAddress()" />
                 <input type="hidden" id="bolt-place-order-payload" data-bind="value: getPlaceOrderPayload()" />
-                <div data-bind="css: {disabled: !isPlaceOrderActionAllowed()}, attr: { class: getButtonClass() }"></div>
+                <div data-bind="attr: { class: getButtonClass() }, css: {disabled: !isPlaceOrderActionAllowed()}"></div>
             </div>
         </div>
     </div>
 </div>
 <!-- /ko -->
 
-<style>
-.bolt-checkout-button.disabled {
-    opacity: 0.5;
-    cursor: default;
-    pointer-events: none;
-}
-</style>

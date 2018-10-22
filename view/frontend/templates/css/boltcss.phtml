@@ -24,5 +24,10 @@
 if (!$block->isEnabled()) return;
 ?>
 <style>
+    .bolt-checkout-button.disabled {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+    }
     <?php echo $block->getGlobalCSS(); ?>
 </style>
