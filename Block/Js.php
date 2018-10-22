@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -37,22 +38,38 @@ class Js extends Template
     /** @var CheckoutSession */
     private $checkoutSession;
 
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
     /**
      * @param Context $context
      * @param Config $configHelper
      * @param CheckoutSession $checkoutSession
+     * @param CartHelper $cartHelper
      * @param array $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
         CheckoutSession $checkoutSession,
+        CartHelper $cartHelper,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
+        $this->cartHelper = $cartHelper;
+    }
+
+    /**
+     * Check if guest checkout is allowed
+     *
+     * @return bool
+     */
+    public function isAllowedGuestCheckout(){
+        return $this->cartHelper->isAllowedGuestCheckout();
     }
 
     /**

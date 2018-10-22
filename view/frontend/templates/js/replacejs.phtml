@@ -522,7 +522,13 @@ if (!$block->isEnabled()) return;
                  */
                 var customer = customerData.get('customer');
                 var shoppingCart = customerData.get('cart');
-                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+
+                // check if / wait until the observable objects are set
+                if (!customer().data_id || !shoppingCart().data_id) {
+                    return false;
+                }
+
+                if (!customer().firstname && !shoppingCart().isGuestCheckoutAllowed) {
                     // if authentication is required for checkout set a cookie
                     // for auto opening Bolt checkout after login
                     setInitiateCheckoutCookie();

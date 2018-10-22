@@ -95,6 +95,10 @@ class Data extends Action
                 throw new BoltException('The cart has products not allowed for Bolt checkout');
             }
 
+            if (!$this->cartHelper->isAllowedGuestCheckout()) {
+                throw new BoltException('Guest checkout is not allowed.');
+            }
+
             // flag to determinate the type of checkout / data sent to Bolt
             $payment_only = $this->getRequest()->getParam('payment_only');
             // additional data collected from the (one page checkout) page,

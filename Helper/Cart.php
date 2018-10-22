@@ -41,6 +41,7 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Checkout\Helper\Data as CheckoutHelper;
 
 /**
  * Boltpay Cart helper
@@ -132,6 +133,11 @@ class Cart extends AbstractHelper
     /** @var SessionHelper */
     private $sessionHelper;
 
+    /**
+     * @var CheckoutHelper
+     */
+    private $checkoutHelper;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -180,6 +186,7 @@ class Cart extends AbstractHelper
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
+     * @param CheckoutHelper $checkoutHelper
      *
      * @codeCoverageIgnore
      */
@@ -201,7 +208,8 @@ class Cart extends AbstractHelper
         OrderRepository $orderRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        CheckoutHelper $checkoutHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -221,6 +229,16 @@ class Cart extends AbstractHelper
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
+        $this->checkoutHelper = $checkoutHelper;
+    }
+
+    /**
+     * Check if guest checkout is allowed
+     *
+     * @return bool
+     */
+    public function isAllowedGuestCheckout(){
+        return $this->checkoutHelper->isAllowedGuestCheckout($this->checkoutSession->getQuote());
     }
 
     /**
