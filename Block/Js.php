@@ -68,8 +68,8 @@ class Js extends Template
      *
      * @return bool
      */
-    public function isAllowedGuestCheckout(){
-        return $this->cartHelper->isAllowedGuestCheckout();
+    public function isCheckoutAllowed(){
+        return $this->cartHelper->isCheckoutAllowed();
     }
 
     /**

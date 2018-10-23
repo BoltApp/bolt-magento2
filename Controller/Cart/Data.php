@@ -95,7 +95,7 @@ class Data extends Action
                 throw new BoltException('The cart has products not allowed for Bolt checkout');
             }
 
-            if (!$this->cartHelper->isAllowedGuestCheckout()) {
+            if (!$this->cartHelper->isCheckoutAllowed()) {
                 throw new BoltException('Guest checkout is not allowed.');
             }
 

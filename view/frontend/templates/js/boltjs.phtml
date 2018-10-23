@@ -26,7 +26,7 @@ if (!$block->isEnabled()) return;
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey  = $block->getCheckoutKey();
-$allowGuestCheckout = $block->isAllowedGuestCheckout();
+$allowGuestCheckout = $block->isCheckoutAllowed();
 ?>
 <script
     id="bolt-track"

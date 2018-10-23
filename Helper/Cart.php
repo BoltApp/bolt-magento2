@@ -237,8 +237,9 @@ class Cart extends AbstractHelper
      *
      * @return bool
      */
-    public function isAllowedGuestCheckout(){
-        return $this->checkoutHelper->isAllowedGuestCheckout($this->checkoutSession->getQuote());
+    public function isCheckoutAllowed()
+    {
+        return $this->customerSession->isLoggedIn() || $this->checkoutHelper->isAllowedGuestCheckout($this->checkoutSession->getQuote());
     }
 
     /**
