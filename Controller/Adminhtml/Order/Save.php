@@ -109,16 +109,14 @@ class Save extends Action
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
 
-            $result->setData(array('success_url' => $this->_url->getUrl('sales/order/view/', ['order_id' => $orderId])));
+            $result->setData(['success_url' => $this->_url->getUrl('sales/order/view/', ['order_id' => $orderId])]);
 
             return $result;
-
         } catch (Exception $e) {
-            
             $this->bugsnag->notifyException($e);
             $result = $this->resultJsonFactory->create();
             $result->setHttpResponseCode(422);
-            $result->setData(array('status' => 'error', 'code' => '1000','message' => $e->getMessage()));
+            $result->setData(['status' => 'error', 'code' => '1000','message' => $e->getMessage()]);
             return $result;
         }
     }

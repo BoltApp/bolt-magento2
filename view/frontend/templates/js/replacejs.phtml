@@ -320,7 +320,9 @@ if (!$block->isEnabled()) return;
          * return string
          */
         var getCheckoutKey = function () {
-            var key = 'publishable_key_' + getCheckoutType();
+            var checkoutType = getCheckoutType();
+            hints.paymentonly = checkoutType === 'payment';
+            var key = 'publishable_key_' + checkoutType;
             return settings[key];
         };
 
@@ -408,8 +410,30 @@ if (!$block->isEnabled()) return;
         var multi_step_css_class     = 'bolt-multi-step-checkout';
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
-        var bolt_clickable_selector  = '.bolt-checkout-button-button';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+
+        ////////////////////////////////////////////////////////
+        // Toggle between Bolt button and magento checkout button
+        // if toggling is enabled.
+        ////////////////////////////////////////////////////////
+        var toggleCheckoutConfig = settings.toggle_checkout;
+        var toggleCheckoutIfNeeded = function(boltRestricted) {
+            if (!toggleCheckoutConfig) return;
+
+            // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
+            $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
+                $(element).show();
+            });
+
+            // Show Bolt buttons if bolt checkout is allowed, otherwise hide it
+            $(bolt_button_selector).toggle(!boltRestricted);
+
+            // Show magento buttons if bolt checkout is restricted, otherwise hide it
+            $.each(toggleCheckoutConfig.magentoButtons, function( index, button ) {
+                $(button).toggle(boltRestricted);
+            });
+        };
+        ////////////////////////////////////////////////////////
 
         if (additional_button_class.length) {
             bolt_button_css_class += ' ' + additional_button_class;
@@ -434,6 +458,13 @@ if (!$block->isEnabled()) return;
         };
         //////////////////////////////////////////////
 
+        // flag that repesents should the checkout auto-open
+        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
+        unsetInitiateCheckoutCookie();
+
+        // the open status of checkout modal
+        var popUpOpen = false;
+
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
@@ -444,6 +475,7 @@ if (!$block->isEnabled()) return;
         var callbacks = {
 
             close: function () {
+                popUpOpen = false;
                 gBoltTrack.gClose();
 
                 // redirect on success order save
@@ -494,7 +526,16 @@ if (!$block->isEnabled()) return;
                  */
                 var customer = customerData.get('customer');
                 var shoppingCart = customerData.get('cart');
-                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+
+                // check if / wait until the observable objects are set
+                // proceed, allow checkout if initial checkout flag is set
+                if (!initiateCheckout && (!customer().data_id || !shoppingCart().data_id)) {
+                    return false;
+                }
+
+                // check if login is required
+                // skip the check if initial checkout flag is set
+                if (!initiateCheckout && !customer().firstname && !shoppingCart().isGuestCheckoutAllowed) {
                     // if authentication is required for checkout set a cookie
                     // for auto opening Bolt checkout after login
                     setInitiateCheckoutCookie();
@@ -524,6 +565,7 @@ if (!$block->isEnabled()) return;
                     }
                 }
 
+                popUpOpen = true;
                 return true;
             },
 
@@ -567,9 +609,6 @@ if (!$block->isEnabled()) return;
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
-        // flag that repesents should the checkout auto-open
-        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
-        unsetInitiateCheckoutCookie();
         var createOrder = function () {
             if (createRequest) return;
             // define the params sent with the request variable
@@ -630,9 +669,20 @@ if (!$block->isEnabled()) return;
                     $.post(settings.create_order_url, params)
                         .done(function (data) {
 
+                            var boltRestricted = !!data.restrict;
+
+                            toggleCheckoutIfNeeded(boltRestricted);
+
+                            // Stop if Bolt checkout is restricted
+                            if (boltRestricted) {
+                                if (popUpOpen) reject(new Error(data.message));
+                                return;
+                            }
+
                             if (data.status !== 'success') {
                                 reject(new Error(data.message || 'Network request failed'));
                                 return;
+
                             }
 
                             // set cart and hints data
@@ -649,8 +699,8 @@ if (!$block->isEnabled()) return;
                             // open the checkout if auto-open flag is set
                             // one time only on page load
                             if (initiateCheckout) {
-                                initiateCheckout = false;
                                 BC.open();
+                                initiateCheckout = false;
                             }
 
                             // prefetch Shipping and Tax for multi-step checkout
@@ -749,7 +799,7 @@ if (!$block->isEnabled()) return;
                         }
                         // if no position is specified remove the selector element
                         if (!position) {
-                            element.parentNode.removeChild(element);
+                            $(element).hide();
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -955,7 +1005,3 @@ if (!$block->isEnabled()) return;
 
     <?php echo $block->getAdditionalJavascript(); ?>
 </script>
-
-<style>
-    <?php echo $block->getGlobalCSS(); ?>
-</style>

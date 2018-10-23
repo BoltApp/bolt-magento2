@@ -37,11 +37,14 @@ class LoginPostPlugin extends AbstractLoginPlugin
      *
      * @return ResultInterface
      */
-    public function afterExecute($subject, $result) {
+    public function afterExecute($subject, $result)
+    {
 
         try {
             // Pass through the original result if the customer is not logged in or the cart is empty
-            if (!$this->shouldRedirectToCartPage()) return $result;
+            if (!$this->shouldRedirectToCartPage()) {
+                return $result;
+            }
 
             // Set the flag in session to auto-open Bolt checkout on redirected (shopping cart) page
             $this->setBoltInitiateCheckout();
@@ -50,7 +53,6 @@ class LoginPostPlugin extends AbstractLoginPlugin
             return $this->resultFactory
                 ->create(ResultFactory::TYPE_REDIRECT)
                 ->setPath(self::SHOPPING_CART_PATH);
-
         } catch (\Exception $e) {
             // On any exception pass the original result through
             $this->notifyException($e);

@@ -14,6 +14,7 @@
  * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -66,10 +67,11 @@ class ThirdPartyModuleFactory
      * @param array $data
      * @return mixed|null
      */
-    public function getInstance(array $data = array())
+    public function getInstance(array $data = [])
     {
         if ($this->_moduleManager->isEnabled($this->moduleName)) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);
+            $this->logHelper->addInfoLog('# Class: ' . $this->className);
             return $this->_objectManager->create($this->className, $data);
         }
         $this->logHelper->addInfoLog('# Module is Disabled or not Found: ' . $this->moduleName);

@@ -43,7 +43,7 @@ class Success extends Template
         ProductMetadataInterface $productMetadata,
         Context $context,
         array $data = []
-    ){
+    ) {
         parent::__construct($context, $data);
 
         $this->productMetadata = $productMetadata;
