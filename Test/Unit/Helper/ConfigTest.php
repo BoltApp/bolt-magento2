@@ -486,7 +486,7 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($configValue, $result, 'getjavascriptSuccess() method: not working properly');
     }
-    
+
     /**
      * @inheritdoc
      */

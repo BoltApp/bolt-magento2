@@ -215,7 +215,6 @@ class Config extends AbstractHelper
      * @param Context $context
      * @param EncryptorInterface $encryptor
      * @param ResourceInterface $moduleResource
-     *
      * @param ProductMetadataInterface $productMetadata
      *
      * @codeCoverageIgnore
@@ -227,8 +226,8 @@ class Config extends AbstractHelper
         ProductMetadataInterface $productMetadata
     ) {
         parent::__construct($context);
-        $this->encryptor      = $encryptor;
-        $this->moduleResource  = $moduleResource;
+        $this->encryptor = $encryptor;
+        $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
     }
 

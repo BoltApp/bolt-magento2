@@ -458,6 +458,10 @@ if (!$block->isEnabled()) return;
         };
         //////////////////////////////////////////////
 
+        // flag that repesents should the checkout auto-open
+        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
+        unsetInitiateCheckoutCookie();
+
         // the open status of checkout modal
         var popUpOpen = false;
 
@@ -522,7 +526,16 @@ if (!$block->isEnabled()) return;
                  */
                 var customer = customerData.get('customer');
                 var shoppingCart = customerData.get('cart');
-                if (!customer().firstname && shoppingCart().isGuestCheckoutAllowed === false) {
+
+                // check if / wait until the observable objects are set
+                // proceed, allow checkout if initial checkout flag is set
+                if (!initiateCheckout && (!customer().data_id || !shoppingCart().data_id)) {
+                    return false;
+                }
+
+                // check if login is required
+                // skip the check if initial checkout flag is set
+                if (!initiateCheckout && !customer().firstname && !shoppingCart().isGuestCheckoutAllowed) {
                     // if authentication is required for checkout set a cookie
                     // for auto opening Bolt checkout after login
                     setInitiateCheckoutCookie();
@@ -596,9 +609,6 @@ if (!$block->isEnabled()) return;
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
-        // flag that repesents should the checkout auto-open
-        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
-        unsetInitiateCheckoutCookie();
         var createOrder = function () {
             if (createRequest) return;
             // define the params sent with the request variable
@@ -689,8 +699,8 @@ if (!$block->isEnabled()) return;
                             // open the checkout if auto-open flag is set
                             // one time only on page load
                             if (initiateCheckout) {
-                                initiateCheckout = false;
                                 BC.open();
+                                initiateCheckout = false;
                             }
 
                             // prefetch Shipping and Tax for multi-step checkout
