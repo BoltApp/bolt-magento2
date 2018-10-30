@@ -607,7 +607,7 @@ class Cart extends AbstractHelper
                 }
             }
             if (@$productImage) {
-                $product['image_url'] = $productImage->getImageUrl();
+                $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
             }
             ////////////////////////////////////
 
