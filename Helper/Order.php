@@ -477,7 +477,7 @@ class Order extends AbstractHelper
         $order = $this->quoteManagement->submit($quote);
 
         if ($frontend) {
-            if (!$order->getEmailSent() && !$order->getCustomerNoteNotify()) {
+            if (!$order->getEmailSent()) {
                 // Send order confirmation email to customer.
                 $this->emailSender->send($order);
             }
