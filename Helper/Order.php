@@ -82,7 +82,9 @@ class Order extends AbstractHelper
             self::TS_COMPLETED,
             self::TS_CANCELED,
             self::TS_REJECTED_REVERSIBLE,
-            self::TS_REJECTED_IRREVERSIBLE
+            self::TS_REJECTED_IRREVERSIBLE,
+            // for historic data (order placed before plugin update) does not have "previous state"
+            self::TS_CREDIT_COMPLETED
         ],
         self::TS_PENDING => [
             self::TS_AUTHORIZED,
