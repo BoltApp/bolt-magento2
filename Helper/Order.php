@@ -756,7 +756,7 @@ class Order extends AbstractHelper
         $comment = __(
             'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-            $bolt_total / 100,
+            $boltTotal / 100,
             $order->getGrandTotal(),
             $this->formatReferenceUrl($transaction->reference)
         );
