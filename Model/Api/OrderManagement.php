@@ -129,6 +129,8 @@ class OrderManagement implements OrderManagementInterface
         $source_transaction_reference = null
     ) {
         try {
+            HookHelper::$fromBolt = true;
+
             $this->logHelper->addInfoLog($this->request->getContent());
 
             $this->hookHelper->setCommonMetaData();

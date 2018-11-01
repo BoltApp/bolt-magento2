@@ -39,7 +39,9 @@ use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
-use Magento\Sales\Model\Service\InvoiceService;
+use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
+use Magento\Sales\Api\Data\InvoiceInterface;
 use Zend_Http_Client_Exception;
 use Exception;
 use Magento\Sales\Model\Order\Invoice;
@@ -95,6 +97,7 @@ class Order extends AbstractHelper
             self::TS_ZERO_AMOUNT
         ],
         self::TS_AUTHORIZED => [
+            self::TS_AUTHORIZED,
             self::TS_CANCELED,
             self::TS_COMPLETED
         ],
@@ -204,6 +207,11 @@ class Order extends AbstractHelper
     private $sessionHelper;
 
     /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    private $eventManager;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -223,6 +231,7 @@ class Order extends AbstractHelper
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -245,7 +254,8 @@ class Order extends AbstractHelper
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        EventManagerInterface $eventManager
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -266,6 +276,7 @@ class Order extends AbstractHelper
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -732,9 +743,6 @@ class Order extends AbstractHelper
             case self::TS_ZERO_AMOUNT:
                 $boltTotal = 0;
                 break;
-            case self::TS_COMPLETED:
-                $boltTotal = $transaction->capture->amount->amount;
-                break;
             default:
                 // Exit on other transaction types
                 return;
@@ -852,7 +860,11 @@ class Order extends AbstractHelper
 
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
         // Reference check added to support multiple refunds, the only valid same state transition
-        if ($transactionState == $prevTransactionState && $reference == $prevTransactionReference) {
+        if (
+            $transactionState == $prevTransactionState &&
+            $transactionState != self::TS_AUTHORIZED &&
+            $reference        == $prevTransactionReference
+        ) {
             return;
         }
 
@@ -886,17 +898,21 @@ class Order extends AbstractHelper
             case self::TS_AUTHORIZED:
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
-                $transactionId = $transaction->id.'-auth';
+                if ($prevTransactionState == self::TS_AUTHORIZED) {
+                    $transactionId = $transaction->id.'-capture-'.time();
+                    $parentTransactionId = $transaction->id.'-auth';
+                }else{
+                    $transactionId = $transaction->id.'-auth';
+                }
 
                 break;
             case self::TS_COMPLETED:
                 $orderState = OrderModel::STATE_PROCESSING;
-                $transactionId = $transaction->id.'-capture';
                 $amount = $transaction->capture->amount->amount;
 
                 if ($prevTransactionState == self::TS_AUTHORIZED) {
                     $transactionType = Transaction::TYPE_CAPTURE;
-                    $transactionId = $transaction->id.'-capture';
+                    $transactionId = $transaction->id.'-capture-'.time();
                     $parentTransactionId = $transaction->id.'-auth';
                 } else {
                     $transactionType = Transaction::TYPE_PAYMENT;
@@ -956,12 +972,6 @@ class Order extends AbstractHelper
             'base_transaction_id'        => $payment->getAdditionalInformation('base_transaction_id') ?: $transactionId
         ];
 
-        // there is a new transaction to be recorded
-        // create the invoice for payment / capture transaction
-        if ($transactionState == self::TS_COMPLETED) {
-            $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
-        }
-
         // format the price with currency symbol
         $formattedPrice = $order->getBaseCurrency()->formatTxt($amount/ 100);
         // format the additional transaction data
@@ -978,11 +988,14 @@ class Order extends AbstractHelper
 
         // update order payment instance
         $payment->setParentTransactionId($parentTransactionId);
-        $payment->setShouldCloseParentTransaction($parentTransactionId == $transaction->id.'-auth' ? true : false);
         $payment->setTransactionId($transactionId);
         $payment->setLastTransId($transactionId);
         $payment->setAdditionalInformation($paymentData);
-        $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
+        $payment->setIsTransactionClosed(!in_array($transactionType, [Transaction::TYPE_AUTH, Transaction::TYPE_CAPTURE ]));
+
+        if ($this->isPaymentHookRequest($prevTransactionState, $transactionState)) {
+            return $this->createInvoiceForHookRequest($order, $transaction);
+        }
 
         // build a new transaction record and assign it to the order and payment
         /** @var Transaction $payment_transaction */
@@ -993,17 +1006,21 @@ class Order extends AbstractHelper
             ->setFailSafe(true)
             ->build($transactionType);
 
-        // format transaction info message and add it to the order comments
-        $message = __(
-            'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
-            $this->getBoltTransactionStatus($transactionState, $fromHook),
-            $formattedPrice,
-            $this->formatReferenceUrl($transaction->reference)
-        );
-        $payment->addTransactionCommentsToOrder(
-            $payment_transaction,
-            $message
-        );
+        if ($transactionState != $prevTransactionState || $reference != $prevTransactionReference) {
+
+            // format transaction info message and add it to the order comments
+            $message = __(
+                'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
+                $this->getBoltTransactionStatus($transactionState, $fromHook),
+                $formattedPrice,
+                $this->formatReferenceUrl($transaction->reference)
+            );
+            $payment->addTransactionCommentsToOrder(
+                $payment_transaction,
+                $message
+            );
+        }
+
         $payment_transaction->save();
 
         // save payment and order
@@ -1015,46 +1032,161 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Create an invoice for the order.
-     *
-     * @param OrderModel $order
-     * @param string $transaction_id
-     * @param float $amount
+     * @param $prevTransactionState
+     * @param $transactionState
      *
      * @return bool
-     * @throws Exception
-     * @throws LocalizedException
      */
-    private function createOrderInvoice($order, $transaction_id, $amount)
+    protected function isPaymentHookRequest($prevTransactionState, $transactionState)
     {
-        //Check order invoices availability
-        if ($order->hasInvoices()) {
-            return false;
-        }
+        return  Hook::$fromBolt &&
+            $prevTransactionState == self::TS_AUTHORIZED &&
+            in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]);
+    }
 
-        if ($order->canInvoice()) {
-            $invoice = $this->invoiceService->prepareInvoice($order);
+    /**
+     * @param $order
+     * @param $transaction
+     *
+     * @throws \Exception
+     */
+    protected function createInvoiceForHookRequest($order, $transaction)
+    {
+        /** @var OrderPaymentInterface $payment */
+        $payment = $order->getPayment();
+        $reference = $transaction->reference;
+
+        $boltCaptures = $this->getNewBoltCaptures($payment, $transaction);
+        // Create invoices for items from $boltCaptures that are not exists on Magento
+        $identifier = count($boltCaptures) > 1 ? 0 : null;
+        foreach ($boltCaptures as $captureAmount) {
+            $invoice = $this->createInvoice($order, $captureAmount / 100);
+            $invoice->setTransactionId($reference);
             $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
-            $invoice->setTransactionId($transaction_id);
-            $invoice->setBaseGrandTotal($amount);
-            $invoice->setGrandTotal($amount);
             $invoice->register();
-
-            $transactionSave = $this->dbTransaction->addObject(
-                $invoice
-            )->addObject(
-                $invoice->getOrder()
-            );
-            $transactionSave->save();
-
-            // Send invoice mail to customer.
-            $this->invoiceSender->send($invoice);
-
-            //Add notification comment to order
-            $order->addStatusHistoryComment(
-                __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
-            )->setIsCustomerNotified(true)->save();
+            $this->updatePayment($payment, $invoice, $identifier);
+            $order->addRelatedObject($invoice);
+            $identifier++;
         }
-        return true;
+
+        if ($boltCaptures) { $order->save(); }
+    }
+
+    /**
+     *
+     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
+     * @param                                               $transaction
+     *
+     * @return array
+     */
+    protected function getNewBoltCaptures(OrderPaymentInterface $payment, $transaction)
+    {
+        $boltCaptures = $this->getBoltCaptures($transaction);
+        return $this->removeInvoicedCaptures($payment, $boltCaptures);
+    }
+
+    /**
+     * Generates either a partial or full invoice for the order.
+     *
+     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param                                        $captureAmount
+     *
+     * @return \Magento\Sales\Model\Order\Invoice
+     * @throws \Exception
+     */
+    protected function createInvoice(OrderInterface $order, $captureAmount = null) {
+        if (isset($captureAmount)) {
+            $this->validateCaptureAmount($order, $captureAmount);
+
+            if($order->getGrandTotal() > $captureAmount) {
+                return $this->invoiceService->prepareInvoiceWithoutItems($order, $captureAmount);
+            }
+        }
+
+        return $order->prepareInvoice();
+    }
+
+    /**
+     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
+     * @param \Magento\Sales\Api\Data\InvoiceInterface      $invoice
+     * @param null                                          $identifier
+     */
+    protected function updatePayment(OrderPaymentInterface $payment, InvoiceInterface $invoice, $identifier = null)
+    {
+        $order = $payment->getOrder();
+        $reference = $payment->getAdditionalInformation('real_transaction_id');
+        $amount = $invoice->getGrandTotal();
+        $transactionId = sprintf("%s-capture-%s", $reference, time());
+        $transactionId .= $identifier !== null ? "-$identifier" : '';
+
+        $payment->setParentTransactionId("$reference-auth");
+        $payment->setTransactionId($transactionId);
+        $payment->setIsTransactionClosed(0);
+        if (!$order->getTotalDue()){
+            $payment->setShouldCloseParentTransaction(true);
+        }
+
+        $this->eventManager->dispatch(
+            'sales_order_payment_capture',
+            ['payment' => $payment, 'invoice' => $invoice]
+        );
+
+        $transaction = $payment->addTransaction(Transaction::TYPE_CAPTURE, $invoice, true);
+
+        $message = sprintf(
+            __(' Captured amount of %s online.'),
+            $order->getBaseCurrency()->formatTxt($amount)
+        );
+        $payment->addTransactionCommentsToOrder($transaction, $message);
+    }
+
+    /**
+     * @param $transaction
+     *
+     * @return array
+     */
+    protected function getBoltCaptures($transaction)
+    {
+        $boltCaptures = array();
+        foreach (@$transaction->captures as $capture) {
+            if (@$capture->status == 'succeeded') {
+                $boltCaptures[] = @$capture->amount->amount;
+            }
+        }
+        return $boltCaptures;
+    }
+
+    /**
+     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
+     * @param array                                         $boltCaptures
+     *
+     * @return array
+     */
+    protected function removeInvoicedCaptures(OrderPaymentInterface $payment, $boltCaptures = [])
+    {
+        $order = $payment->getOrder();
+        foreach ($order->getInvoiceCollection() as $invoice) {
+            $amount = round($invoice->getGrandTotal() * 100);
+            $index = array_search($amount, $boltCaptures);
+            if ($index !== false) {
+                unset($boltCaptures[$index]);
+            }
+        }
+        return $boltCaptures;
+    }
+
+    /**
+     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param                                        $captureAmount
+     *
+     * @throws \Exception
+     */
+    protected function validateCaptureAmount(OrderInterface $order, $captureAmount) {
+        $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
+        $isInvalidAmountRange = $order->getTotalInvoiced() + $captureAmount > $order->getGrandTotal();
+
+        if($isInvalidAmount || $isInvalidAmountRange) {
+            throw new Exception( __('Capture amount is invalid'));
+        }
     }
 }
