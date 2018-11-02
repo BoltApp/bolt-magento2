@@ -304,10 +304,10 @@ class Order extends AbstractHelper
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 
-//      $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
-//      $logger = new \Zend\Log\Logger();
-//      $logger->addWriter($writer);
-//      $logger->info(json_encode($response, JSON_PRETTY_PRINT));
+        //      $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
+        //      $logger = new \Zend\Log\Logger();
+        //      $logger->addWriter($writer);
+        //      $logger->info(json_encode($response, JSON_PRETTY_PRINT));
 
         return $response;
     }
@@ -1064,7 +1064,7 @@ class Order extends AbstractHelper
             $invoice->setTransactionId($reference);
             $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
             $invoice->register();
-            $this->updatePayment($payment, $invoice, $identifier);
+            $this->preparePaymentAndAddTransaction($payment, $invoice, $identifier);
             $order->addRelatedObject($invoice);
             $identifier++;
         }
@@ -1111,33 +1111,16 @@ class Order extends AbstractHelper
      * @param \Magento\Sales\Api\Data\InvoiceInterface      $invoice
      * @param null                                          $identifier
      */
-    protected function updatePayment(OrderPaymentInterface $payment, InvoiceInterface $invoice, $identifier = null)
+    protected function preparePaymentAndAddTransaction(OrderPaymentInterface $payment, InvoiceInterface $invoice, $identifier = null)
     {
-        $order = $payment->getOrder();
-        $reference = $payment->getAdditionalInformation('real_transaction_id');
-        $amount = $invoice->getGrandTotal();
-        $transactionId = sprintf("%s-capture-%s", $reference, time());
-        $transactionId .= $identifier !== null ? "-$identifier" : '';
-
-        $payment->setParentTransactionId("$reference-auth");
-        $payment->setTransactionId($transactionId);
-        $payment->setIsTransactionClosed(0);
-        if (!$order->getTotalDue()){
-            $payment->setShouldCloseParentTransaction(true);
-        }
+        $this->preparePaymentForTransaction($payment, $identifier);
 
         $this->eventManager->dispatch(
             'sales_order_payment_capture',
             ['payment' => $payment, 'invoice' => $invoice]
         );
 
-        $transaction = $payment->addTransaction(Transaction::TYPE_CAPTURE, $invoice, true);
-
-        $message = sprintf(
-            __(' Captured amount of %s online.'),
-            $order->getBaseCurrency()->formatTxt($amount)
-        );
-        $payment->addTransactionCommentsToOrder($transaction, $message);
+        $this->addPaymentTransaction($payment, $invoice);
     }
 
     /**
@@ -1188,5 +1171,42 @@ class Order extends AbstractHelper
         if($isInvalidAmount || $isInvalidAmountRange) {
             throw new Exception( __('Capture amount is invalid'));
         }
+    }
+
+    /**
+     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
+     * @param                                               $identifier
+     *
+     * @return mixed
+     */
+    protected function preparePaymentForTransaction(OrderPaymentInterface $payment, $identifier)
+    {
+        $order = $payment->getOrder();
+        $reference = $payment->getAdditionalInformation('real_transaction_id');
+        $transactionId = sprintf("%s-capture-%s", $reference, time());
+        $transactionId .= $identifier !== null ? "-$identifier" : '';
+
+        $payment->setParentTransactionId("$reference-auth");
+        $payment->setTransactionId($transactionId);
+        $payment->setIsTransactionClosed(0);
+        if (!$order->getTotalDue()) {
+            $payment->setShouldCloseParentTransaction(true);
+        }
+    }
+
+    /**
+     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
+     * @param \Magento\Sales\Api\Data\InvoiceInterface      $invoice
+     */
+    protected function addPaymentTransaction(OrderPaymentInterface $payment, InvoiceInterface $invoice)
+    {
+        $transaction = $payment->addTransaction(Transaction::TYPE_CAPTURE, $invoice, true);
+
+        $order = $payment->getOrder();
+        $message = sprintf(
+            __(' Captured amount of %s online.'),
+            $order->getBaseCurrency()->formatTxt($invoice->getGrandTotal())
+        );
+        $payment->addTransactionCommentsToOrder($transaction, $message);
     }
 }
