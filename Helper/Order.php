@@ -743,6 +743,9 @@ class Order extends AbstractHelper
             case self::TS_ZERO_AMOUNT:
                 $boltTotal = 0;
                 break;
+            case self::TS_COMPLETED:
+                $boltTotal = array_sum($this->getBoltCaptures($transaction));
+                break;
             default:
                 // Exit on other transaction types
                 return;
@@ -1054,14 +1057,12 @@ class Order extends AbstractHelper
     {
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
-        $reference = $transaction->reference;
 
         $boltCaptures = $this->getNewBoltCaptures($payment, $transaction);
         // Create invoices for items from $boltCaptures that are not exists on Magento
         $identifier = count($boltCaptures) > 1 ? 0 : null;
         foreach ($boltCaptures as $captureAmount) {
             $invoice = $this->createInvoice($order, $captureAmount / 100);
-            $invoice->setTransactionId($reference);
             $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
             $invoice->register();
             $this->preparePaymentAndAddTransaction($payment, $invoice, $identifier);
