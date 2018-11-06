@@ -47,6 +47,8 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
  */
 class Payment extends AbstractMethod
 {
+    const TRANSACTION_AUTHORIZED = 'authorized';
+    const TRANSACTION_COMPLETED = 'completed';
 
     const METHOD_CODE = 'boltpay';
 
@@ -103,6 +105,13 @@ class Payment extends AbstractMethod
      * @var bool
      */
     protected $_canFetchTransactionInfo = true;
+
+    /**
+     * Payment Method feature
+     *
+     * @var bool
+     */
+    protected $_canCapturePartial = true;
 
     /**
      * @var ConfigHelper
@@ -322,11 +331,12 @@ class Payment extends AbstractMethod
 
             $captureAmount = $amount * 100;
 
-            //Get refund data
+            //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
                 'amount'         => $captureAmount,
-                'currency'       => $order->getOrderCurrencyCode()
+                'currency'       => $order->getOrderCurrencyCode(),
+                'skip_hook_notification' => true
             ];
 
             $apiKey = $this->configHelper->getApiKey();
@@ -348,7 +358,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (@$response->status != 'completed') {
+            if (!in_array(@$response->status, [self::TRANSACTION_AUTHORIZED, self::TRANSACTION_COMPLETED])) {
                 throw new LocalizedException(__('Payment capture error.'));
             }
 
@@ -415,7 +425,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (@$response->status != 'completed') {
+            if (@$response->status != self::TRANSACTION_COMPLETED) {
                 throw new LocalizedException(__('Payment refund error.'));
             }
 
