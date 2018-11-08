@@ -293,6 +293,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->sessionHelper->loadSession($quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
+            $this->applyDiscountIfNotUsaShipping($quote, $addressData);
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
             if ($this->taxAdjusted) {
@@ -313,6 +314,36 @@ class ShippingMethods implements ShippingMethodsInterface
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->errorResponse->prepareErrorMessage(6009, $msg);
         }
+    }
+
+    /**
+     * @param Quote $quote
+     */
+    public function applyDiscountIfNotUsaShipping($quote, $addressData)
+    {
+        /* @var quote Magento\Sales\Model\Quote */
+        $couponCode = 'bolt_not_usa_shipping';
+        $countryCode = $addressData['country_code'];
+//        $rulesIDs = $quote->getAppliedRuleIds();
+
+        $this->logHelper->addInfoLog(__METHOD__);
+        $this->logHelper->addInfoLog('# QuoteId: ' . $quote->getId());
+        $this->logHelper->addInfoLog('# CountryCode: ' . $countryCode);
+        if ($countryCode !== 'US') {
+            $this->setCouponCode($quote, $couponCode);
+        }
+    }
+
+    /**
+     * @param Quote $quote
+     * @param string $couponCode
+     */
+    private function setCouponCode($quote, $couponCode)
+    {
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->setCouponCode($couponCode);
+        $quote->collectTotals();
+        $this->cartHelper->saveQuote($quote);
     }
 
     /**
@@ -478,6 +509,10 @@ class ShippingMethods implements ShippingMethodsInterface
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->addData($addressData);
 
+//        if ($addressData['country_code'] !== 'US') {
+//            $shippingAddress->setShippingDiscountAmount('-20');
+//        }
+
         $shippingAddress->setCollectShippingRates(true);
         $shippingAddress->setShippingMethod(null);
 
@@ -521,6 +556,10 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
+            $this->logHelper->addInfoLog(__METHOD__);
+            $this->logHelper->addInfoLog('# DiscountAmount: ' . $discountAmount);
+            $this->logHelper->addInfoLog('# $cost: ' . $cost);
+            $this->logHelper->addInfoLog('# $service: ' . $service);
             if ($discountAmount) {
                 if ($cost == 0) {
                     $service .= ' [free&nbsp;shipping&nbsp;discount]';
