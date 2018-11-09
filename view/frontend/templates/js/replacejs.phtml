@@ -692,6 +692,7 @@ if (!$block->isEnabled()) return;
 
                             hints = deepMergeObjects(hints, data.hints);
                             hints.prefill = prefill;
+                            hints.virtual_terminal_mode = true;
                             hints.publishableKey = getCheckoutKey();
 
                             resolve(cart);
