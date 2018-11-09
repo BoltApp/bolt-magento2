@@ -51,6 +51,8 @@ class ShippingMethods implements ShippingMethodsInterface
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
 
+    const INTERNATIONAL_CODE = 'international20';
+
     /**
      * @var HookHelper
      */
@@ -318,32 +320,37 @@ class ShippingMethods implements ShippingMethodsInterface
 
     /**
      * @param Quote $quote
+     * @param array $addressData
+     * @throws \Exception
      */
-    public function applyDiscountIfNotUsaShipping($quote, $addressData)
+    public function applyDiscountIfNotUsaShipping(Quote $quote, array $addressData)
     {
-        /* @var quote Magento\Sales\Model\Quote */
-        $couponCode = 'bolt_not_usa_shipping';
-        $countryCode = $addressData['country_code'];
-//        $rulesIDs = $quote->getAppliedRuleIds();
+        if (!isset($addressData['country_code'])) {
+            $this->logHelper->addInfoLog('# applyDiscountIfNotUsaShipping: there is not country_code');
+            return;
+        }
 
-        $this->logHelper->addInfoLog(__METHOD__);
-        $this->logHelper->addInfoLog('# QuoteId: ' . $quote->getId());
-        $this->logHelper->addInfoLog('# CountryCode: ' . $countryCode);
-        if ($countryCode !== 'US') {
-            $this->setCouponCode($quote, $couponCode);
+        $countryCode = $addressData['country_code'];
+        $rulesIDs = $quote->getAppliedRuleIds();
+
+        if ($countryCode !== 'US' && empty($rulesIDs)) {
+            $this->setCouponCode($quote, self::INTERNATIONAL_CODE);
         }
     }
 
     /**
-     * @param Quote $quote
+     * @param Quote  $quote
      * @param string $couponCode
+     * @throws \Exception
      */
     private function setCouponCode($quote, $couponCode)
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setCouponCode($couponCode);
-        $quote->collectTotals();
-        $this->cartHelper->saveQuote($quote);
+        $quote->collectTotals()->save();
+
+        $this->logHelper->addInfoLog('# CouponDiscount: '. $quote->getCouponCode());
+        $this->logHelper->addInfoLog('# QuoteID: ' . $quote->getId());
     }
 
     /**
@@ -509,10 +516,6 @@ class ShippingMethods implements ShippingMethodsInterface
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->addData($addressData);
 
-//        if ($addressData['country_code'] !== 'US') {
-//            $shippingAddress->setShippingDiscountAmount('-20');
-//        }
-
         $shippingAddress->setCollectShippingRates(true);
         $shippingAddress->setShippingMethod(null);
 
@@ -548,6 +551,11 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
+            if ($shippingAddress->getCountryId() !== 'US' && $discountAmount == 0
+                && $quote->getCouponCode() === self::INTERNATIONAL_CODE
+            ) {
+                $discountAmount = abs($shippingAddress->getDiscountAmount());
+            }
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
@@ -556,16 +564,18 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
-            $this->logHelper->addInfoLog(__METHOD__);
-            $this->logHelper->addInfoLog('# DiscountAmount: ' . $discountAmount);
-            $this->logHelper->addInfoLog('# $cost: ' . $cost);
-            $this->logHelper->addInfoLog('# $service: ' . $service);
             if ($discountAmount) {
                 if ($cost == 0) {
                     $service .= ' [free&nbsp;shipping&nbsp;discount]';
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
-                    $service .= " [$discount" . "&nbsp;discount]";
+                    if ($shippingAddress->getCountryId() !== 'US'
+                        && $quote->getCouponCode() === self::INTERNATIONAL_CODE
+                    ) {
+                        $service .= " [$discount" . "&nbsp;OFF international]";
+                    } else {
+                        $service .= " [$discount" . "&nbsp;discount]";
+                    }
                 }
                 $service = html_entity_decode($service);
             }
