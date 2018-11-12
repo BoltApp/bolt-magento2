@@ -102,15 +102,15 @@
                     <label>Additional Javascript</label>
                 </field>
                 <field id="g_track_on_checkout_start" translate="label" type="textarea" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Checkout Start</label>
-                    <comment>The javascript code executed after the checkout form is presented to the user.</comment>
+                    <label>Tracking: Shipping</label>
+                    <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
                 </field>
                 <field id="g_track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Shipping Details Complete</label>
+                    <label>Tracking: Delivery</label>
                     <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
                 </field>
                 <field id="g_track_on_shipping_options_complete" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Shipping Options Complete</label>
+                    <label>Tracking: Payment</label>
                     <comment>The javascript code executed when the user proceeds to the payment details page.</comment>
                 </field>
                 <field id="g_track_on_payment_submit" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
@@ -123,6 +123,7 @@
                 </field>
                 <field id="g_track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tracking: Close</label>
+                    <comment>The javascript code executed when the Bolt checkout popup is closed.</comment>
                 </field>
                 <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Configuration</label>

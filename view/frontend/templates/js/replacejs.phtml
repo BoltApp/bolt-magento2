@@ -509,8 +509,6 @@ $gTrack = $block->getGoogleTrackCallbacks();
             },
 
             success: function (transaction, callback) {
-                gBoltTrack.gSuccess();
-
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -532,6 +530,9 @@ $gTrack = $block->getGoogleTrackCallbacks();
 
                     <?php echo $block->getjavascriptSuccess(); ?>
                     callbacks.success_url = data.success_url;
+
+                    gBoltTrack.gSuccess();
+
                     callback();
                 };
                 // ajax call to the update order transaction data endpoint.
