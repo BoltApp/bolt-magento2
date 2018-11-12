@@ -190,17 +190,17 @@ class Config extends AbstractHelper
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
 
-    const XML_PATH_GTRACK_CHECKOUT_START = 'payment/boltpay/g_track_on_checkout_start';
+    const XML_PATH_TRACK_CHECKOUT_START = 'payment/boltpay/track_on_checkout_start';
 
-    const XML_PATH_GTRACK_SHIPPING_DETAILS_COMPLETE = 'payment/boltpay/g_track_on_shipping_details_complete';
+    const XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE = 'payment/boltpay/track_on_shipping_details_complete';
 
-    const XML_PATH_GTRACK_SHIPPING_OPTIONS_COMPLETE = 'payment/boltpay/g_track_on_shipping_options_complete';
+    const XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE = 'payment/boltpay/track_on_shipping_options_complete';
 
-    const XML_PATH_GTRACK_PAYMENT_SUBMIT = 'payment/boltpay/g_track_on_payment_submit';
+    const XML_PATH_TRACK_PAYMENT_SUBMIT = 'payment/boltpay/track_on_payment_submit';
 
-    const XML_PATH_GTRACK_SUCCESS = 'payment/boltpay/g_track_on_success';
+    const XML_PATH_TRACK_SUCCESS = 'payment/boltpay/track_on_success';
 
-    const XML_PATH_GTRACK_CLOSE = 'payment/boltpay/g_track_on_close';
+    const XML_PATH_TRACK_CLOSE = 'payment/boltpay/track_on_close';
 
     /**
      * Additional configuration path
@@ -604,10 +604,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnCheckoutStart()
+    public function getOnCheckoutStart()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_CHECKOUT_START,
+            self::XML_PATH_TRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -615,10 +615,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnShippingDetailsComplete()
+    public function getOnShippingDetailsComplete()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_SHIPPING_DETAILS_COMPLETE,
+            self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -626,10 +626,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnShippingOptionsComplete()
+    public function getOnShippingOptionsComplete()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_SHIPPING_OPTIONS_COMPLETE,
+            self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -637,10 +637,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnPaymentSubmit()
+    public function getOnPaymentSubmit()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_PAYMENT_SUBMIT,
+            self::XML_PATH_TRACK_PAYMENT_SUBMIT,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -648,10 +648,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnSuccess()
+    public function getOnSuccess()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_SUCCESS,
+            self::XML_PATH_TRACK_SUCCESS,
             ScopeInterface::SCOPE_STORE
         );
     }
@@ -659,10 +659,10 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
-    public function getGoogleTrackOnClose()
+    public function getOnClose()
     {
         return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_CLOSE,
+            self::XML_PATH_TRACK_CLOSE,
             ScopeInterface::SCOPE_STORE
         );
     }

@@ -24,7 +24,7 @@
  */
 if (!$block->isEnabled()) return;
 
-$gTrack = $block->getGoogleTrackCallbacks();
+$trackCallbacks = $block->getTrackCallbacks();
 ?>
 
 <script type="text/javascript">
@@ -204,24 +204,24 @@ $gTrack = $block->getGoogleTrackCallbacks();
     ], function ($, authenticationPopup, customerData) {
     ////////////////////////////////////////////////////
 
-        var gBoltTrack = {
-            gOnCheckoutStart: function() {
-                <?php echo $gTrack['checkout_start']; ?>
+        var trackCallbacks = {
+            onCheckoutStart: function() {
+                <?php echo $trackCallbacks['checkout_start']; ?>
             },
-            gOnShippingDetailsComplete: function() {
-                <?php echo $gTrack['shipping_details_complete']; ?>
+            onShippingDetailsComplete: function() {
+                <?php echo $trackCallbacks['shipping_details_complete']; ?>
             },
-            gOnShippingOptionsComplete: function() {
-                <?php echo $gTrack['shipping_options_complete']; ?>
+            onShippingOptionsComplete: function() {
+                <?php echo $trackCallbacks['shipping_options_complete']; ?>
             },
-            gOnPaymentSubmit: function() {
-                <?php echo $gTrack['payment_submit']; ?>
+            onPaymentSubmit: function() {
+                <?php echo $trackCallbacks['payment_submit']; ?>
             },
-            gSuccess: function() {
-                <?php echo $gTrack['success']; ?>
+            onSuccess: function() {
+                <?php echo $trackCallbacks['success']; ?>
             },
-            gClose: function() {
-                <?php echo $gTrack['close']; ?>
+            onClose: function() {
+                <?php echo $trackCallbacks['close']; ?>
             }
         };
 
@@ -486,26 +486,26 @@ $gTrack = $block->getGoogleTrackCallbacks();
 
             close: function () {
                 popUpOpen = false;
-                gBoltTrack.gClose();
+                trackCallbacks.onClose();
 
                 // redirect on success order save
                 if (callbacks.success_url) location.href = callbacks.success_url;
             },
 
             onCheckoutStart: function() {
-              gBoltTrack.gOnCheckoutStart();
+              trackCallbacks.onCheckoutStart();
             },
 
             onShippingDetailsComplete: function() {
-                gBoltTrack.gOnShippingDetailsComplete();
+                trackCallbacks.onShippingDetailsComplete();
             },
 
             onShippingOptionsComplete: function() {
-                gBoltTrack.gOnShippingOptionsComplete();
+                trackCallbacks.onShippingOptionsComplete();
             },
 
             onPaymentSubmit: function() {
-                gBoltTrack.gOnPaymentSubmit();
+                trackCallbacks.onPaymentSubmit();
             },
 
             success: function (transaction, callback) {
@@ -527,13 +527,14 @@ $gTrack = $block->getGoogleTrackCallbacks();
 
                         return false;
                     }
+                    try {
+                        <?php echo $block->getjavascriptSuccess(); ?>
+                        callbacks.success_url = data.success_url;
 
-                    <?php echo $block->getjavascriptSuccess(); ?>
-                    callbacks.success_url = data.success_url;
-
-                    gBoltTrack.gSuccess();
-
-                    callback();
+                        trackCallbacks.onSuccess();
+                    } finally {
+                        callback();
+                    }
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
