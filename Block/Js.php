@@ -237,38 +237,13 @@ class Js extends Template
     public function getGoogleTrackCallbacks()
     {
         return [
-          'success' => $this->getGTrackSuccess(),
-          'close'   => $this->getGTrackClose(),
-          'checkout_start' => $this->getGTrackCheckoutStart(),
+            'checkout_start' => $this->getGTrackCheckoutStart(),
+            'shipping_details_complete'=> $this->getGTrackShippingDetailsComplete(),
+            'shipping_options_complete'=> $this->getGTrackShippingOptionsComplete(),
+            'payment_submit'=> $this->getGTrackPaymentSubmit(),
+            'success' => $this->getGTrackSuccess(),
+            'close' => $this->getGTrackClose(),
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    public function isEnabledGoogleTrack()
-    {
-        return !(!$this->getGTrackSuccess() && !$this->getGTrackClose() && !$this->getGTrackCheckoutStart());
-    }
-
-    /**
-     * @return string
-     */
-    protected function getGTrackSuccess()
-    {
-        $callback = $this->configHelper->getGoogleTrackOnSuccess();
-
-        return (empty($callback)) ? '' : $callback;
-    }
-
-    /**
-     * @return string
-     */
-    protected function getGTrackClose()
-    {
-        $callback = $this->configHelper->getGoogleTrackOnClose();
-
-        return (empty($callback)) ? '' : $callback;
     }
 
     /**
@@ -276,9 +251,47 @@ class Js extends Template
      */
     protected function getGTrackCheckoutStart()
     {
-        $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
+        return $this->configHelper->getGoogleTrackOnCheckoutStart();
+    }
 
-        return (empty($callback)) ? '' : $callback;
+    /**
+     * @return string
+     */
+    protected function getGTrackShippingDetailsComplete()
+    {
+        return $this->configHelper->getGoogleTrackOnShippingDetailsComplete();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackShippingOptionsComplete()
+    {
+        return $this->configHelper->getGoogleTrackOnShippingOptionsComplete();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackPaymentSubmit()
+    {
+        return $this->configHelper->getGoogleTrackOnPaymentSubmit();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackSuccess()
+    {
+        return $this->configHelper->getGoogleTrackOnSuccess();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getGTrackClose()
+    {
+        return $this->configHelper->getGoogleTrackOnClose();
     }
 
     /**

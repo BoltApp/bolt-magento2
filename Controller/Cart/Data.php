@@ -113,7 +113,7 @@ class Data extends Action
             // get immutable quote id stored with cart data
             list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
-            $cart = [
+            $cart = (array)@$response->cart + [
                 'orderToken' => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
                 'cartReference' => $cartReference,

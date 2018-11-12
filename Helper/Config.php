@@ -190,9 +190,15 @@ class Config extends AbstractHelper
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
 
-    const XML_PATH_GTRACK_SUCCESS = 'payment/boltpay/g_track_on_success';
-
     const XML_PATH_GTRACK_CHECKOUT_START = 'payment/boltpay/g_track_on_checkout_start';
+
+    const XML_PATH_GTRACK_SHIPPING_DETAILS_COMPLETE = 'payment/boltpay/g_track_on_shipping_details_complete';
+
+    const XML_PATH_GTRACK_SHIPPING_OPTIONS_COMPLETE = 'payment/boltpay/g_track_on_shipping_options_complete';
+
+    const XML_PATH_GTRACK_PAYMENT_SUBMIT = 'payment/boltpay/g_track_on_payment_submit';
+
+    const XML_PATH_GTRACK_SUCCESS = 'payment/boltpay/g_track_on_success';
 
     const XML_PATH_GTRACK_CLOSE = 'payment/boltpay/g_track_on_close';
 
@@ -598,6 +604,50 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
+    public function getGoogleTrackOnCheckoutStart()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_CHECKOUT_START,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnShippingDetailsComplete()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_SHIPPING_DETAILS_COMPLETE,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnShippingOptionsComplete()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_SHIPPING_OPTIONS_COMPLETE,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getGoogleTrackOnPaymentSubmit()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GTRACK_PAYMENT_SUBMIT,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
     public function getGoogleTrackOnSuccess()
     {
         return $this->getScopeConfig()->getValue(
@@ -613,17 +663,6 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GTRACK_CLOSE,
-            ScopeInterface::SCOPE_STORE
-        );
-    }
-
-    /**
-     * @return string
-     */
-    public function getGoogleTrackOnCheckoutStart()
-    {
-        return $this->getScopeConfig()->getValue(
-            self::XML_PATH_GTRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE
         );
     }
