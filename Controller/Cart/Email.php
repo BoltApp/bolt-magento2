@@ -93,13 +93,12 @@ class Email extends Action
             }
 
             if (!$this->cartHelper->validateEmail($email)) {
-                $this->bugsnag->notifyError('Invalid email address', "quote_id: {$quote->getId()} email: $email");
+                throw new LocalizedException(__('Invalid email: %1', $email));
             }
 
             $quote->setCustomerEmail($email)->save();
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
         }
     }
 }

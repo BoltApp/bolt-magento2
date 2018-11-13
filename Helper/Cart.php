@@ -440,6 +440,33 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Set immutable quote and addresses data from the parent quote
+     *
+     * @param $parent mixed
+     * @param $child mixed
+     * @param $save bool
+     * @param array $emailFields
+     * @param array $idFields
+     * @throws \Zend_Validate_Exception
+     */
+    private function transferData(
+        $parent,
+        $child,
+        $save = true,
+        $emailFields = ['customer_email', 'email'],
+        $idFields = ['entity_id', 'address_id']
+    ) {
+        foreach ($parent->getData() as $key => $value) {
+
+            if (in_array($key, $idFields)) continue;
+            if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
+
+            $child->setData($key, $value);
+        }
+        if ($save) $child->save();
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -491,31 +518,23 @@ class Cart extends AbstractHelper
             $quote->reserveOrderId();
             $this->quoteResource->save($quote);
 
+            /** @var Quote $immutableQuote */
             $immutableQuote = $this->quoteFactory->create();
 
             $immutableQuote->merge($quote);
 
-            foreach ($quote->getData() as $key => $value) {
-                $immutableQuote->setData($key, $value);
-            }
+            $immutableQuote->getBillingAddress()->setShouldIgnoreValidation(true);
+            $this->transferData($quote->getBillingAddress(), $immutableQuote->getBillingAddress());
+
+            $immutableQuote->getShippingAddress()->setShouldIgnoreValidation(true);
+            $this->transferData($quote->getShippingAddress(), $immutableQuote->getShippingAddress());
+
+            $this->transferData($quote, $immutableQuote, false);
 
             $immutableQuote->setId(null);
             $immutableQuote->setIsActive(false);
+
             $this->quoteResource->save($immutableQuote);
-
-            foreach ($quote->getBillingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') {
-                    $immutableQuote->getBillingAddress()->setData($key, $value);
-                }
-            }
-            $immutableQuote->getBillingAddress()->save();
-
-            foreach ($quote->getShippingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') {
-                    $immutableQuote->getShippingAddress()->setData($key, $value);
-                }
-            }
-            $immutableQuote->getShippingAddress()->save();
         }
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
@@ -923,7 +942,6 @@ class Cart extends AbstractHelper
      */
     public function validateEmail($email)
     {
-
         $emailClass = version_compare(
             $this->configHelper->getStoreVersion(),
             '2.2.0',
