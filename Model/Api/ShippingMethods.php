@@ -347,7 +347,7 @@ class ShippingMethods implements ShippingMethodsInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-            $this->errorResponse->prepareErrorMessage(6009, $msg);
+            $this->sendErrorResponse(6009, $msg, 422);
         }
     }
 
