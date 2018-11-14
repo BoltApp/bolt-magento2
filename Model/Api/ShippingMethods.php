@@ -39,6 +39,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class ShippingMethods
@@ -254,6 +255,36 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * Validate request address
+     *
+     * @param $addressData
+     * @throws BoltException
+     * @throws \Zend_Validate_Exception
+     */
+    private function validateAddressData($addressData)
+    {
+        $this->validateEmail(@$addressData['email']);
+    }
+
+    /**
+     * Validate request email
+     *
+     * @param $email
+     * @throws BoltException
+     * @throws \Zend_Validate_Exception
+     */
+    private function validateEmail($email)
+    {
+        if (!$this->cartHelper->validateEmail($email)) {
+            throw new BoltException(
+                __('Invalid email: %1', $email),
+                null,
+                BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
+            );
+        }
+    }
+
+    /**
      * Get all available shipping methods and tax data.
      *
      * @api
@@ -293,6 +324,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->sessionHelper->loadSession($quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
+            $this->validateAddressData($addressData);
+
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
             if ($this->taxAdjusted) {
@@ -308,10 +341,13 @@ class ShippingMethods implements ShippingMethodsInterface
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->sendErrorResponse($e->getCode(), $e->getMessage(), 422);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-            $this->errorResponse->prepareErrorMessage(6009, $msg);
+            $this->sendErrorResponse(6009, $msg, 422);
         }
     }
 
@@ -384,8 +420,10 @@ class ShippingMethods implements ShippingMethodsInterface
         // Get region id
         $region = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
 
-        // Check the email address
-        $email = $this->cartHelper->validateEmail(@$addressData['email']) ? $addressData['email'] : null;
+        // Accept valid email or an empty variable (when run from prefetch controller)
+        if ($email = @$addressData['email']) {
+            $this->validateEmail($email);
+        }
 
         // Reformat address data
         $addressData = [
