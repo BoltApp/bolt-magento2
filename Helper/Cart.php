@@ -42,6 +42,7 @@ use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
+use Magento\Quote\Model\Quote\Address as QuoteAddress;
 
 /**
  * Boltpay Cart helper
@@ -442,11 +443,11 @@ class Cart extends AbstractHelper
     /**
      * Set immutable quote and addresses data from the parent quote
      *
-     * @param $parent mixed
-     * @param $child mixed
-     * @param $save bool
-     * @param array $emailFields
-     * @param array $idFields
+     * @param Quote|QuoteAddress $parent parent object
+     * @param Quote|QuoteAddress $child  child object
+     * @param bool $save                 if set to true save the $child instance upon the transfer
+     * @param array $emailFields         fields that need to pass email validation to be transfered, skipped otherwise
+     * @param array $excludeFields       fields to be excluded from the transfer (e.g. unique identifiers)
      * @throws \Zend_Validate_Exception
      */
     private function transferData(
@@ -454,11 +455,11 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $idFields = ['entity_id', 'address_id']
+        $excludeFields = ['entity_id', 'address_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
 
-            if (in_array($key, $idFields)) continue;
+            if (in_array($key, $excludeFields)) continue;
             if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
 
             $child->setData($key, $value);
