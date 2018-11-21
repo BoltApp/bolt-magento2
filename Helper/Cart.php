@@ -43,6 +43,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Magento\Framework\Event\ManagerInterface as EventManager;
 
 /**
  * Boltpay Cart helper
@@ -139,6 +140,11 @@ class Cart extends AbstractHelper
      */
     private $checkoutHelper;
 
+    /**
+     * @var EventManager
+     */
+    protected $eventManager;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -188,6 +194,7 @@ class Cart extends AbstractHelper
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
+     * @param EventManager $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -210,7 +217,8 @@ class Cart extends AbstractHelper
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
-        CheckoutHelper $checkoutHelper
+        CheckoutHelper $checkoutHelper,
+        EventManager $eventManager
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -231,6 +239,7 @@ class Cart extends AbstractHelper
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -279,11 +288,38 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Save quote via repository
+     *
      * @param \Magento\Quote\Api\Data\CartInterface $quote
      */
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
+
+        $this->eventManager->dispatch(
+            'sales_quote_save_after',
+            [
+                'quote' => $quote
+            ]
+        );
+    }
+
+    /**
+     * Save quote via resource model
+     *
+     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    public function quoteResourceSave($quote)
+    {
+        $this->quoteResource->save($quote);
+
+        $this->eventManager->dispatch(
+            'sales_quote_save_after',
+            [
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -517,7 +553,7 @@ class Cart extends AbstractHelper
         if (!$immutableQuote) {
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();
-            $this->quoteResource->save($quote);
+            $this->quoteResourceSave($quote);
 
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->quoteFactory->create();
@@ -535,7 +571,7 @@ class Cart extends AbstractHelper
             $immutableQuote->setId(null);
             $immutableQuote->setIsActive(false);
 
-            $this->quoteResource->save($immutableQuote);
+            $this->quoteResourceSave($immutableQuote);
         }
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
