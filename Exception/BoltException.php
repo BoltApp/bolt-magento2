@@ -17,7 +17,9 @@
 
 namespace Bolt\Boltpay\Exception;
 
-class BoltException extends \Exception
+use Magento\Framework\Exception\LocalizedException;
+
+class BoltException extends LocalizedException
 {
 
 }

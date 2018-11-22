@@ -35,6 +35,8 @@ use Magento\Framework\Webapi\Rest\Response;
  */
 class Hook extends AbstractHelper
 {
+    public static $fromBolt = false;
+
     const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
     /**

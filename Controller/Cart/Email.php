@@ -24,6 +24,7 @@ use \Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class Email.
@@ -93,13 +94,14 @@ class Email extends Action
             }
 
             if (!$this->cartHelper->validateEmail($email)) {
-                $this->bugsnag->notifyError('Invalid email address', "quote_id: {$quote->getId()} email: $email");
+                throw new LocalizedException(__('Invalid email: %1', $email));
             }
 
-            $quote->setCustomerEmail($email)->save();
+            $quote->setCustomerEmail($email);
+            $this->cartHelper->quoteResourceSave($quote);
+
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
         }
     }
 }

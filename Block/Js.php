@@ -234,51 +234,64 @@ class Js extends Template
     /**
      * @return array
      */
-    public function getGoogleTrackCallbacks()
+    public function getTrackCallbacks()
     {
         return [
-          'success' => $this->getGTrackSuccess(),
-          'close'   => $this->getGTrackClose(),
-          'checkout_start' => $this->getGTrackCheckoutStart(),
+            'checkout_start' => $this->getOnCheckoutStart(),
+            'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
+            'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
+            'payment_submit'=> $this->getOnPaymentSubmit(),
+            'success' => $this->getOnSuccess(),
+            'close' => $this->getOnClose(),
         ];
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function isEnabledGoogleTrack()
+    protected function getOnCheckoutStart()
     {
-        return !(!$this->getGTrackSuccess() && !$this->getGTrackClose() && !$this->getGTrackCheckoutStart());
+        return $this->configHelper->getOnCheckoutStart();
     }
 
     /**
      * @return string
      */
-    protected function getGTrackSuccess()
+    protected function getOnShippingDetailsComplete()
     {
-        $callback = $this->configHelper->getGoogleTrackOnSuccess();
-
-        return (empty($callback)) ? '' : $callback;
+        return $this->configHelper->getOnShippingDetailsComplete();
     }
 
     /**
      * @return string
      */
-    protected function getGTrackClose()
+    protected function getOnShippingOptionsComplete()
     {
-        $callback = $this->configHelper->getGoogleTrackOnClose();
-
-        return (empty($callback)) ? '' : $callback;
+        return $this->configHelper->getOnShippingOptionsComplete();
     }
 
     /**
      * @return string
      */
-    protected function getGTrackCheckoutStart()
+    protected function getOnPaymentSubmit()
     {
-        $callback = $this->configHelper->getGoogleTrackOnCheckoutStart();
+        return $this->configHelper->getOnPaymentSubmit();
+    }
 
-        return (empty($callback)) ? '' : $callback;
+    /**
+     * @return string
+     */
+    protected function getOnSuccess()
+    {
+        return $this->configHelper->getOnSuccess();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getOnClose()
+    {
+        return $this->configHelper->getOnClose();
     }
 
     /**
