@@ -92,11 +92,11 @@ class Data extends Action
 
         try {
             if ($this->cartHelper->hasProductRestrictions()) {
-                throw new BoltException('The cart has products not allowed for Bolt checkout');
+                throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
             }
 
             if (!$this->cartHelper->isCheckoutAllowed()) {
-                throw new BoltException('Guest checkout is not allowed.');
+                throw new BoltException(__('Guest checkout is not allowed.'));
             }
 
             // flag to determinate the type of checkout / data sent to Bolt
@@ -113,7 +113,7 @@ class Data extends Action
             // get immutable quote id stored with cart data
             list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
-            $cart = [
+            $cart = (array)@$response->cart + [
                 'orderToken' => $response ? $response->token : '',
                 'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
                 'cartReference' => $cartReference,

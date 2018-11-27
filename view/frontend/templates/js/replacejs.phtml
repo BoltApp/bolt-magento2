@@ -23,22 +23,11 @@
  * @var $block \Bolt\Boltpay\Block\Js
  */
 if (!$block->isEnabled()) return;
+
+$trackCallbacks = $block->getTrackCallbacks();
 ?>
 
 <script type="text/javascript">
-
-    <?php $gTrack = $block->getGoogleTrackCallbacks(); ?>
-    var gBoltTrack = {
-        gClose: function() {
-            <?php echo $gTrack['close']; ?>
-        },
-        gOnCheckoutStart: function() {
-            <?php echo $gTrack['checkout_start']; ?>
-        },
-        gSuccess: function() {
-            <?php echo $gTrack['success']; ?>
-        }
-    };
 
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
@@ -214,6 +203,51 @@ if (!$block->isEnabled()) return;
         'mage/cookies'
     ], function ($, authenticationPopup, customerData) {
     ////////////////////////////////////////////////////
+
+        var trackCallbacks = {
+            onCheckoutStart: function() {
+                try {
+                    <?php echo $trackCallbacks['checkout_start']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onShippingDetailsComplete: function() {
+                try {
+                    <?php echo $trackCallbacks['shipping_details_complete']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onShippingOptionsComplete: function() {
+                try {
+                    <?php echo $trackCallbacks['shipping_options_complete']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onPaymentSubmit: function() {
+                try {
+                    <?php echo $trackCallbacks['payment_submit']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onSuccess: function() {
+                try {
+                    <?php echo $trackCallbacks['success']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
+            onClose: function() {
+                try {
+                    <?php echo $trackCallbacks['close']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        };
 
         var showBoltErrorMessage = function(messsage) {
             var boltModal = $('#bolt-modal'),
@@ -476,19 +510,29 @@ if (!$block->isEnabled()) return;
 
             close: function () {
                 popUpOpen = false;
-                gBoltTrack.gClose();
+                trackCallbacks.onClose();
 
                 // redirect on success order save
                 if (callbacks.success_url) location.href = callbacks.success_url;
             },
 
             onCheckoutStart: function() {
-              gBoltTrack.gOnCheckoutStart();
+              trackCallbacks.onCheckoutStart();
+            },
+
+            onShippingDetailsComplete: function() {
+                trackCallbacks.onShippingDetailsComplete();
+            },
+
+            onShippingOptionsComplete: function() {
+                trackCallbacks.onShippingOptionsComplete();
+            },
+
+            onPaymentSubmit: function() {
+                trackCallbacks.onPaymentSubmit();
             },
 
             success: function (transaction, callback) {
-                gBoltTrack.gSuccess();
-
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -507,10 +551,14 @@ if (!$block->isEnabled()) return;
 
                         return false;
                     }
+                    try {
+                        <?php echo $block->getjavascriptSuccess(); ?>
+                        callbacks.success_url = data.success_url;
 
-                    <?php echo $block->getjavascriptSuccess(); ?>
-                    callbacks.success_url = data.success_url;
-                    callback();
+                        trackCallbacks.onSuccess();
+                    } finally {
+                        callback();
+                    }
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
@@ -611,6 +659,7 @@ if (!$block->isEnabled()) return;
         var createRequest = false;
         var createOrder = function () {
             if (createRequest) return;
+
             // define the params sent with the request variable
             var params = [];
 

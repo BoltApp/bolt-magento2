@@ -38,6 +38,7 @@ use Magento\Payment\Model\Method\Logger;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
 
 /**
  * Class Payment.
@@ -47,6 +48,8 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
  */
 class Payment extends AbstractMethod
 {
+    const TRANSACTION_AUTHORIZED = 'authorized';
+    const TRANSACTION_COMPLETED = 'completed';
 
     const METHOD_CODE = 'boltpay';
 
@@ -105,6 +108,13 @@ class Payment extends AbstractMethod
     protected $_canFetchTransactionInfo = true;
 
     /**
+     * Payment Method feature
+     *
+     * @var bool
+     */
+    protected $_canCapturePartial = true;
+
+    /**
      * @var ConfigHelper
      */
     private $configHelper;
@@ -140,6 +150,11 @@ class Payment extends AbstractMethod
     private $cartHelper;
 
     /**
+     * @var TransactionRepository
+     */
+    protected $transactionRepository;
+
+    /**
      * @param Context $context
      * @param Registry $registry
      * @param ExtensionAttributesFactory $extensionFactory
@@ -154,6 +169,7 @@ class Payment extends AbstractMethod
      * @param Bugsnag $bugsnag
      * @param DataObjectFactory $dataObjectFactory
      * @param CartHelper $cartHelper
+     * @param TransactionRepository $transactionRepository
      * @param AbstractResource $resource
      * @param AbstractDb $resourceCollection
      * @param array $data
@@ -173,6 +189,7 @@ class Payment extends AbstractMethod
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory,
         CartHelper $cartHelper,
+        TransactionRepository $transactionRepository,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
@@ -196,6 +213,7 @@ class Payment extends AbstractMethod
         $this->bugsnag = $bugsnag;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->cartHelper = $cartHelper;
+        $this->transactionRepository = $transactionRepository;
     }
 
     /**
@@ -278,19 +296,26 @@ class Payment extends AbstractMethod
      */
     public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
     {
-
         try {
-            $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+
+            $transaction = $this->transactionRepository->getByTransactionId(
+                $transactionId,
+                $payment->getId(),
+                $payment->getOrder()->getId()
+            );
+
+            $transactionDetails = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
+            $transactionReference = $transactionDetails['Reference'];
 
             if (!empty($transactionReference)) {
                 $order = $payment->getOrder();
                 $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
             }
 
-            return [];
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+        } finally {
+            return [];
         }
     }
 
@@ -322,7 +347,7 @@ class Payment extends AbstractMethod
 
             $captureAmount = $amount * 100;
 
-            //Get refund data
+            //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
                 'amount'         => $captureAmount,
@@ -348,7 +373,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (@$response->status != 'completed') {
+            if (!in_array(@$response->status, [self::TRANSACTION_AUTHORIZED, self::TRANSACTION_COMPLETED])) {
                 throw new LocalizedException(__('Payment capture error.'));
             }
 
@@ -415,11 +440,11 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (@$response->status != 'completed') {
+            if (@$response->status != self::TRANSACTION_COMPLETED) {
                 throw new LocalizedException(__('Payment refund error.'));
             }
 
-            $this->orderHelper->updateOrderPayment($order, null, $response->reference, false);
+            $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
             return $this;
         } catch (\Exception $e) {

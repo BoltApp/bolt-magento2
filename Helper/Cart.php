@@ -42,6 +42,8 @@ use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
+use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Magento\Framework\Event\ManagerInterface as EventManager;
 
 /**
  * Boltpay Cart helper
@@ -138,6 +140,11 @@ class Cart extends AbstractHelper
      */
     private $checkoutHelper;
 
+    /**
+     * @var EventManager
+     */
+    protected $eventManager;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -187,6 +194,7 @@ class Cart extends AbstractHelper
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
+     * @param EventManager $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -209,7 +217,8 @@ class Cart extends AbstractHelper
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
-        CheckoutHelper $checkoutHelper
+        CheckoutHelper $checkoutHelper,
+        EventManager $eventManager
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -230,6 +239,7 @@ class Cart extends AbstractHelper
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
+        $this->eventManager = $eventManager;
     }
 
     /**
@@ -278,11 +288,38 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Save quote via repository
+     *
      * @param \Magento\Quote\Api\Data\CartInterface $quote
      */
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
+
+        $this->eventManager->dispatch(
+            'sales_quote_save_after',
+            [
+                'quote' => $quote
+            ]
+        );
+    }
+
+    /**
+     * Save quote via resource model
+     *
+     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    public function quoteResourceSave($quote)
+    {
+        $this->quoteResource->save($quote);
+
+        $this->eventManager->dispatch(
+            'sales_quote_save_after',
+            [
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -440,6 +477,33 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Set immutable quote and addresses data from the parent quote
+     *
+     * @param Quote|QuoteAddress $parent parent object
+     * @param Quote|QuoteAddress $child  child object
+     * @param bool $save                 if set to true save the $child instance upon the transfer
+     * @param array $emailFields         fields that need to pass email validation to be transfered, skipped otherwise
+     * @param array $excludeFields       fields to be excluded from the transfer (e.g. unique identifiers)
+     * @throws \Zend_Validate_Exception
+     */
+    private function transferData(
+        $parent,
+        $child,
+        $save = true,
+        $emailFields = ['customer_email', 'email'],
+        $excludeFields = ['entity_id', 'address_id']
+    ) {
+        foreach ($parent->getData() as $key => $value) {
+
+            if (in_array($key, $excludeFields)) continue;
+            if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
+
+            $child->setData($key, $value);
+        }
+        if ($save) $child->save();
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -489,33 +553,25 @@ class Cart extends AbstractHelper
         if (!$immutableQuote) {
             $quote->setBoltParentQuoteId($quote->getId());
             $quote->reserveOrderId();
-            $this->quoteResource->save($quote);
+            $this->quoteResourceSave($quote);
 
+            /** @var Quote $immutableQuote */
             $immutableQuote = $this->quoteFactory->create();
 
             $immutableQuote->merge($quote);
 
-            foreach ($quote->getData() as $key => $value) {
-                $immutableQuote->setData($key, $value);
-            }
+            $immutableQuote->getBillingAddress()->setShouldIgnoreValidation(true);
+            $this->transferData($quote->getBillingAddress(), $immutableQuote->getBillingAddress());
+
+            $immutableQuote->getShippingAddress()->setShouldIgnoreValidation(true);
+            $this->transferData($quote->getShippingAddress(), $immutableQuote->getShippingAddress());
+
+            $this->transferData($quote, $immutableQuote, false);
 
             $immutableQuote->setId(null);
             $immutableQuote->setIsActive(false);
-            $this->quoteResource->save($immutableQuote);
 
-            foreach ($quote->getBillingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') {
-                    $immutableQuote->getBillingAddress()->setData($key, $value);
-                }
-            }
-            $immutableQuote->getBillingAddress()->save();
-
-            foreach ($quote->getShippingAddress()->getData() as $key => $value) {
-                if ($key != 'address_id') {
-                    $immutableQuote->getShippingAddress()->setData($key, $value);
-                }
-            }
-            $immutableQuote->getShippingAddress()->save();
+            $this->quoteResourceSave($immutableQuote);
         }
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
@@ -923,7 +979,6 @@ class Cart extends AbstractHelper
      */
     public function validateEmail($email)
     {
-
         $emailClass = version_compare(
             $this->configHelper->getStoreVersion(),
             '2.2.0',

@@ -35,6 +35,8 @@ use Magento\Framework\Webapi\Rest\Response;
  */
 class Hook extends AbstractHelper
 {
+    public static $fromBolt = false;
+
     const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
     /**
@@ -174,11 +176,11 @@ class Hook extends AbstractHelper
      */
     public function setCommonMetaData()
     {
-        if ($bolt_trace_id = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
-            $this->bugsnag->registerCallback(function ($report) use ($bolt_trace_id) {
+        if ($boltTraceId = $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)) {
+            $this->bugsnag->registerCallback(function ($report) use ($boltTraceId) {
                 $report->setMetaData([
                     'META DATA' => [
-                        'bolt_trace_id' => $bolt_trace_id,
+                        'bolt_trace_id' => $boltTraceId,
                     ]
                 ]);
             });
