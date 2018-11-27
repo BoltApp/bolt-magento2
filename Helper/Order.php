@@ -733,7 +733,7 @@ class Order extends AbstractHelper
             return self::TS_AUTHORIZED;
         }
 
-        // The treansaction was in TS_AUTHORIZED state, now it's TS_COMPLETED but not all partial captures are
+        // The transaction was in TS_AUTHORIZED state, now it's TS_COMPLETED but not all partial captures are
         // processed. Mark it TS_CAPTURED.
         if ($prevTransactionState == self::TS_AUTHORIZED &&
             $transactionState == self::TS_COMPLETED &&
@@ -742,7 +742,7 @@ class Order extends AbstractHelper
             return self::TS_CAPTURED;
         }
 
-        // The treansaction was TS_AUTHORIZED, now it has captures, put it in TS_CAPTURED state.
+        // The transaction was TS_AUTHORIZED, now it has captures, put it in TS_CAPTURED state.
         if ($transactionState == self::TS_AUTHORIZED &&
             $transaction->captures
         ) {
