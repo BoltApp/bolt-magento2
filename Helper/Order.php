@@ -110,7 +110,6 @@ class Order extends AbstractHelper
             self::TS_AUTHORIZED,
             self::TS_COMPLETED,
             self::TS_REJECTED_IRREVERSIBLE,
-            self::TS_CANCELED,
             self::TS_CANCELED
         ],
         self::TS_REJECTED_IRREVERSIBLE => [],
@@ -688,7 +687,7 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Format the (class internal) unambiguous transaction state out of the type and status.
+     * Format the (class internal) unambiguous transaction state out of the type, status and previously recordered status.
      * Infer eventually missing states. Represent Bolt partial capture AUTHORIZED state as CAPTURED.
      *
      * @param \stdClass $transaction
@@ -701,6 +700,12 @@ class Order extends AbstractHelper
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $prevCaptures = $payment->getAdditionalInformation('captures') ?: [];
 
+        // No previous state recorded.
+        // Unless the state is TS_ZERO_AMOUNT (valid start transaction state, as well as TS_PENDING)
+        // or TS_CREDIT_COMPLETED (for historical reasons, old orders refund,
+        // legacy code when order was created, no state recorded) put it in TS_PENDING state.
+        // It can corelate with the $transactionState or not in case the hook is late due connection problems and
+        // the status has changed in the meanwhile.
         if (!$prevTransactionState) {
             if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
@@ -708,6 +713,9 @@ class Order extends AbstractHelper
             return self::TS_PENDING;
         }
 
+        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE. Authorization occured but also
+        // some of the funds were captured before the TS_AUTHORIZED state is recorded in Magento. Mark the transaction
+        // as TS_AUTHORIZED and wait for the next hook to record the CAPTURE.
         if (in_array($prevTransactionState, [self::TS_PENDING, self::TS_REJECTED_REVERSIBLE]) &&
             $transactionState == self::TS_AUTHORIZED &&
             $transaction->captures
@@ -715,6 +723,9 @@ class Order extends AbstractHelper
             return self::TS_AUTHORIZED;
         }
 
+        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE and the transaction state is
+        // TS_COMPLETED. If there is more than one capture in $transaction->captures array then the TS_AUTHORIZED state
+        // is missing. Set the state to TS_AUTHORIZED and process captures on next hook requests.
         if (in_array($prevTransactionState, [self::TS_PENDING, self::TS_REJECTED_REVERSIBLE]) &&
             $transactionState == self::TS_COMPLETED &&
             count($transaction->captures) > 1
@@ -722,6 +733,8 @@ class Order extends AbstractHelper
             return self::TS_AUTHORIZED;
         }
 
+        // The treansaction was in TS_AUTHORIZED state, now it's TS_COMPLETED but not all partial captures are
+        // processed. Mark it TS_CAPTURED.
         if ($prevTransactionState == self::TS_AUTHORIZED &&
             $transactionState == self::TS_COMPLETED &&
             count($transaction->captures) - count($prevCaptures) > 1
@@ -729,18 +742,22 @@ class Order extends AbstractHelper
             return self::TS_CAPTURED;
         }
 
+        // The treansaction was TS_AUTHORIZED, now it has captures, put it in TS_CAPTURED state.
         if ($transactionState == self::TS_AUTHORIZED &&
             $transaction->captures
         ) {
             return self::TS_CAPTURED;
         }
 
+        // Previous partial capture was partially or fully refunded. Transaction is still TS_AUTHORIZED on Bolt side.
+        // Set it to TS_CAPTURED.
         if ($prevTransactionState == self::TS_CREDIT_COMPLETED &&
             $transactionState == self::TS_AUTHORIZED
         ) {
             return self::TS_CAPTURED;
         }
 
+        // return transaction state as it is in fetched transaction info. No need to change it.
         return $transactionState;
     }
 
@@ -763,9 +780,9 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param \stdClass $transaction
-     * @return void
+     * @return bool true if the order was placed on hold, otherwise false
      */
-    private function isTotalsMismatch($order, $transaction)
+    private function holdOnTotalsMismatch($order, $transaction)
     {
         $boltTotal = $transaction->order->cart->total_amount->amount;
         $storeTotal = round($order->getGrandTotal() * 100);
@@ -790,7 +807,7 @@ class Order extends AbstractHelper
         $order->addStatusHistoryComment($comment);
 
         // Get the quote id
-        list(, $quoteId) = array_pad(
+        list($incrementId, $quoteId) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
             null
@@ -809,9 +826,17 @@ class Order extends AbstractHelper
         }
 
         // Log the debug info
-        $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
+        $this->bugsnag->registerCallback(function ($report) use (
+            $transaction,
+            $cart,
+            $incrementId,
+            $boltTotal,
+            $storeTotal
+        ) {
             $report->setMetaData([
                 'TOTALS_MISMATCH' => [
+                    'Reference' => $transaction->reference,
+                    'Order ID' => $incrementId,
                     'Bolt Total' => $boltTotal,
                     'Store Total' => $storeTotal,
                     'Bolt Cart' => $transaction->order->cart,
@@ -862,8 +887,8 @@ class Order extends AbstractHelper
                 2
             ),
             'Reference' => $transaction->reference,
-            'Amount'    => $order->getBaseCurrency()->formatTxt($amount / 100),
-            'Real ID'   => $transaction->id,
+            'Amount' => $order->getBaseCurrency()->formatTxt($amount / 100),
+            'Transaction ID' => $transaction->id
         ];
     }
 
@@ -874,7 +899,7 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @return mixed
      */
-    private function getNewCapture($payment, $transaction)
+    private function getUnprocessedCapture($payment, $transaction)
     {
         $prevCaptureIds = $payment->getAdditionalInformation('captures') ?: [];
         return @end(array_filter(
@@ -912,7 +937,7 @@ class Order extends AbstractHelper
         }
 
         // Check for total amount mismatch between magento and bolt order.
-        if ($this->isTotalsMismatch($order, $transaction)) {
+        if ($this->holdOnTotalsMismatch($order, $transaction)) {
             throw new LocalizedException(__(
                 'Order Totals Mismatch'
             ));
@@ -929,7 +954,7 @@ class Order extends AbstractHelper
         // Get the transaction state
         $transactionState = $this->getTransactionState($transaction, $payment);
 
-        $newCapture = $this->getNewCapture($payment, $transaction);
+        $newCapture = $this->getUnprocessedCapture($payment, $transaction);
 
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
         // Reference check and $newCapture were added to support multiple refunds and captures,
@@ -952,7 +977,11 @@ class Order extends AbstractHelper
 
         // preset default payment / transaction values
         // before more specific changes below
-        $amount = @$newCapture->amount->amount ?: $transaction->amount->amount;
+        if ($newCapture) {
+            $amount = $newCapture->amount->amount;
+        } else {
+            $amount = $transaction->amount->amount;
+        }
         $transactionId = $transaction->id;
 
         $realTransactionId = $parentTransactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -1148,7 +1177,10 @@ class Order extends AbstractHelper
 
         $order->addRelatedObject($invoice);
 
-        $this->invoiceSender->send($invoice);
+        if (!$invoice->getEmailSent()) {
+            $this->invoiceSender->send($invoice);
+        }
+
         //Add notification comment to order
         $order->addStatusHistoryComment(
             __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
