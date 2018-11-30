@@ -43,7 +43,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
-use Magento\Framework\Event\ManagerInterface as EventManager;
 
 /**
  * Boltpay Cart helper
@@ -140,11 +139,6 @@ class Cart extends AbstractHelper
      */
     private $checkoutHelper;
 
-    /**
-     * @var EventManager
-     */
-    protected $eventManager;
-
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -194,7 +188,6 @@ class Cart extends AbstractHelper
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
-     * @param EventManager $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -217,8 +210,7 @@ class Cart extends AbstractHelper
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
-        CheckoutHelper $checkoutHelper,
-        EventManager $eventManager
+        CheckoutHelper $checkoutHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -239,7 +231,6 @@ class Cart extends AbstractHelper
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
-        $this->eventManager = $eventManager;
     }
 
     /**
@@ -296,7 +287,7 @@ class Cart extends AbstractHelper
     {
         $this->quoteRepository->save($quote);
 
-        $this->eventManager->dispatch(
+        $this->_eventManager->dispatch(
             'sales_quote_save_after',
             [
                 'quote' => $quote
@@ -314,7 +305,7 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        $this->eventManager->dispatch(
+        $this->_eventManager->dispatch(
             'sales_quote_save_after',
             [
                 'quote' => $quote
