@@ -1,4 +1,4 @@
-## Bolt Payment Integration for Magento 2
+## Bolt Checkout Plugin for Magento 2 [![Build Status](https://travis-ci.org/BoltApp/bolt-magento2.svg?branch=develop)](https://travis-ci.org/BoltApp/bolt-magento2)
 
 ### 1. Requirements
 
