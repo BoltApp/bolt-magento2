@@ -38,7 +38,6 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
-use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
@@ -203,11 +202,6 @@ class Order extends AbstractHelper
     private $sessionHelper;
 
     /**
-     * @var EventManagerInterface
-     */
-    private $eventManager;
-
-    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -225,7 +219,6 @@ class Order extends AbstractHelper
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
-     * @param EventManagerInterface $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -246,8 +239,7 @@ class Order extends AbstractHelper
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
-        SessionHelper $sessionHelper,
-        EventManagerInterface $eventManager
+        SessionHelper $sessionHelper
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -266,7 +258,6 @@ class Order extends AbstractHelper
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
-        $this->eventManager = $eventManager;
     }
 
     /**
@@ -1120,7 +1111,7 @@ class Order extends AbstractHelper
         }
 
         if ($newCapture && @$invoice) {
-            $this->eventManager->dispatch(
+            $this->_eventManager->dispatch(
                 'sales_order_payment_capture',
                 ['payment' => $payment, 'invoice' => $invoice]
             );
