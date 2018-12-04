@@ -1,4 +1,6 @@
-## Bolt Payment Integration for Magento 2
+## Bolt Checkout Plugin for Magento 2 
+[![Latest Stable Version](https://poser.pugx.org/boltpay/bolt-magento2/v/stable.png)](https://packagist.org/packages/boltpay/bolt-magento2)
+[![Build Status](https://travis-ci.org/BoltApp/bolt-magento2.svg?branch=develop)](https://travis-ci.org/BoltApp/bolt-magento2)
 
 ### 1. Requirements
 
@@ -16,6 +18,7 @@ $ php bin/magento setup:upgrade
 $ php bin/magento setup:di:compile
 $ php bin/magento setup:static-content:deploy
 $ php bin/magento cache:clean
+$ php bin/magento cache:flush
 ```
 
 ### 3. Plugin configuration
