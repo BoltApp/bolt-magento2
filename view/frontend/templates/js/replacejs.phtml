@@ -206,22 +206,46 @@ $trackCallbacks = $block->getTrackCallbacks();
 
         var trackCallbacks = {
             onCheckoutStart: function() {
-                <?php echo $trackCallbacks['checkout_start']; ?>
+                try {
+                    <?php echo $trackCallbacks['checkout_start']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             },
             onShippingDetailsComplete: function() {
-                <?php echo $trackCallbacks['shipping_details_complete']; ?>
+                try {
+                    <?php echo $trackCallbacks['shipping_details_complete']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             },
             onShippingOptionsComplete: function() {
-                <?php echo $trackCallbacks['shipping_options_complete']; ?>
+                try {
+                    <?php echo $trackCallbacks['shipping_options_complete']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             },
             onPaymentSubmit: function() {
-                <?php echo $trackCallbacks['payment_submit']; ?>
+                try {
+                    <?php echo $trackCallbacks['payment_submit']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             },
             onSuccess: function() {
-                <?php echo $trackCallbacks['success']; ?>
+                try {
+                    <?php echo $trackCallbacks['success']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             },
             onClose: function() {
-                <?php echo $trackCallbacks['close']; ?>
+                try {
+                    <?php echo $trackCallbacks['close']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
             }
         };
 

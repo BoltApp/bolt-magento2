@@ -25,11 +25,9 @@ use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\DB\Transaction as DbTransaction;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractExtensibleModel;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteManagement;
@@ -40,10 +38,8 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
-use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Magento\Sales\Api\Data\InvoiceInterface;
 use Zend_Http_Client_Exception;
-use Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\App\State;
@@ -68,6 +64,7 @@ class Order extends AbstractHelper
     // Bolt transaction states
     const TS_PENDING               = 'cc_payment:pending';
     const TS_AUTHORIZED            = 'cc_payment:authorized';
+    const TS_CAPTURED              = 'cc_payment:captured';
     const TS_COMPLETED             = 'cc_payment:completed';
     const TS_CANCELED              = 'cc_payment:cancelled';
     const TS_REJECTED_REVERSIBLE   = 'cc_payment:rejected_reversible';
@@ -80,11 +77,6 @@ class Order extends AbstractHelper
         null => [
             self::TS_ZERO_AMOUNT,
             self::TS_PENDING,
-            self::TS_AUTHORIZED,
-            self::TS_COMPLETED,
-            self::TS_CANCELED,
-            self::TS_REJECTED_REVERSIBLE,
-            self::TS_REJECTED_IRREVERSIBLE,
             // for historic data (order placed before plugin update) does not have "previous state"
             self::TS_CREDIT_COMPLETED
         ],
@@ -97,20 +89,35 @@ class Order extends AbstractHelper
             self::TS_ZERO_AMOUNT
         ],
         self::TS_AUTHORIZED => [
-            self::TS_AUTHORIZED,
+            self::TS_CAPTURED,
             self::TS_CANCELED,
             self::TS_COMPLETED
         ],
+        self::TS_CAPTURED => [
+            self::TS_CAPTURED,
+            self::TS_CANCELED,
+            self::TS_COMPLETED,
+            self::TS_CREDIT_COMPLETED
+        ],
         self::TS_CANCELED => [],
-        self::TS_COMPLETED => [self::TS_CREDIT_COMPLETED],
+        self::TS_COMPLETED => [
+            self::TS_COMPLETED,
+            self::TS_CREDIT_COMPLETED
+        ],
         self::TS_ZERO_AMOUNT => [],
         self::TS_REJECTED_REVERSIBLE => [
             self::TS_AUTHORIZED,
             self::TS_COMPLETED,
-            self::TS_REJECTED_IRREVERSIBLE
+            self::TS_REJECTED_IRREVERSIBLE,
+            self::TS_CANCELED
         ],
         self::TS_REJECTED_IRREVERSIBLE => [],
-        self::TS_CREDIT_COMPLETED => [self::TS_CREDIT_COMPLETED]
+        self::TS_CREDIT_COMPLETED => [
+            self::TS_CREDIT_COMPLETED,
+            self::TS_COMPLETED,
+            self::TS_CAPTURED,
+            self::TS_CANCELED
+        ]
     ];
 
     /** @var State */
@@ -125,13 +132,6 @@ class Order extends AbstractHelper
      * @var ConfigHelper
      */
     private $configHelper;
-
-    /**
-     * Shipping method converter
-     *
-     * @var ShippingMethodConverter
-     */
-    private $converter;
 
     /**
      * @var RegionModel
@@ -152,11 +152,6 @@ class Order extends AbstractHelper
      * @var InvoiceService
      */
     private $invoiceService;
-
-    /**
-     * @var DbTransaction
-     */
-    private $dbTransaction;
 
     /**
      * @var InvoiceSender
@@ -207,20 +202,13 @@ class Order extends AbstractHelper
     private $sessionHelper;
 
     /**
-     * @var \Magento\Framework\Event\ManagerInterface
-     */
-    private $eventManager;
-
-    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
-     * @param ShippingMethodConverter $converter
      * @param RegionModel $regionModel
      * @param QuoteManagement $quoteManagement
      * @param OrderSender $emailSender
      * @param InvoiceService $invoiceService
-     * @param DbTransaction $dbTransaction
      * @param InvoiceSender $invoiceSender
      * @param TransactionBuilder $transactionBuilder
      * @param TimezoneInterface $timezone
@@ -231,7 +219,6 @@ class Order extends AbstractHelper
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      *
      * @codeCoverageIgnore
      */
@@ -239,12 +226,10 @@ class Order extends AbstractHelper
         Context $context,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
-        ShippingMethodConverter $converter,
         RegionModel $regionModel,
         QuoteManagement $quoteManagement,
         OrderSender $emailSender,
         InvoiceService $invoiceService,
-        DbTransaction $dbTransaction,
         InvoiceSender $invoiceSender,
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
@@ -254,18 +239,15 @@ class Order extends AbstractHelper
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
-        SessionHelper $sessionHelper,
-        EventManagerInterface $eventManager
+        SessionHelper $sessionHelper
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
-        $this->converter = $converter;
         $this->regionModel = $regionModel;
         $this->quoteManagement = $quoteManagement;
         $this->emailSender = $emailSender;
         $this->invoiceService = $invoiceService;
-        $this->dbTransaction = $dbTransaction;
         $this->invoiceSender = $invoiceSender;
         $this->transactionBuilder = $transactionBuilder;
         $this->timezone = $timezone;
@@ -276,7 +258,6 @@ class Order extends AbstractHelper
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
-        $this->eventManager = $eventManager;
     }
 
     /**
@@ -304,11 +285,6 @@ class Order extends AbstractHelper
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 
-        //      $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/transaction.log');
-        //      $logger = new \Zend\Log\Logger();
-        //      $logger->addWriter($writer);
-        //      $logger->info(json_encode($response, JSON_PRETTY_PRINT));
-
         return $response;
     }
 
@@ -318,7 +294,7 @@ class Order extends AbstractHelper
      * @param Quote $quote
      * @param $transaction
      *
-     * @throws Exception
+     * @throws \Exception
      */
     private function setShippingMethod($quote, $transaction)
     {
@@ -340,7 +316,7 @@ class Order extends AbstractHelper
      * @param Address $quoteAddress
      * @param $address
      *
-     * @throws Exception
+     * @throws \Exception
      */
     private function setAddress($quoteAddress, $address)
     {
@@ -376,7 +352,7 @@ class Order extends AbstractHelper
      * @param $transaction
      *
      * @return void
-     * @throws Exception
+     * @throws \Exception
      */
     private function setShippingAddress($quote, $transaction)
     {
@@ -392,7 +368,7 @@ class Order extends AbstractHelper
      * @param Quote $quote
      * @param $transaction
      *
-     * @throws Exception
+     * @throws \Exception
      */
     private function setBillingAddress($quote, $transaction)
     {
@@ -427,7 +403,7 @@ class Order extends AbstractHelper
      * @param Quote $quote
      *
      * @throws LocalizedException
-     * @throws Exception
+     * @throws \Exception
      */
     private function setPaymentMethod($quote)
     {
@@ -441,14 +417,13 @@ class Order extends AbstractHelper
      *
      * @param Quote $quote
      * @param \stdClass $transaction
-     * @param bool $frontend
      *
-     * @param string|null $bolt_trace_id
+     * @param string|null $boltTraceId
      * @return AbstractExtensibleModel|OrderInterface|null|object
      * @throws LocalizedException
-     * @throws Exception
+     * @throws \Exception
      */
-    private function createOrder($quote, $transaction, $frontend, $bolt_trace_id = null)
+    private function createOrder($quote, $transaction, $boltTraceId = null)
     {
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
@@ -489,24 +464,25 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
-        if ($frontend) {
-            if (!$order->getEmailSent()) {
-                // Send order confirmation email to customer.
-                $this->emailSender->send($order);
-            }
-        } else {
+        if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
-                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $bolt_trace_id"
+                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $boltTraceId"
             );
             $order->save();
-
             // Send order confirmation email to customer.
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
             // even if run from the hook.
-            $this->appState->emulateAreaCode('frontend', function () use ($order) {
+            if (!$order->getEmailSent()) {
+                $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                    $this->emailSender->send($order);
+                });
+            }
+        } else {
+            if (!$order->getEmailSent()) {
+                // Send order confirmation email to customer.
                 $this->emailSender->send($order);
-            });
+            }
         }
 
         return $order;
@@ -588,14 +564,13 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference     Bolt transaction reference
-     * @param bool $frontend        false if called from api
      *
      * @return mixed
-     * @throws Exception
+     * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $frontend = true, $bolt_trace_id = null)
+    public function saveUpdateOrder($reference, $boltTraceId = null)
     {
         $transaction = $this->fetchTransactionInfo($reference);
 
@@ -644,7 +619,7 @@ class Order extends AbstractHelper
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
 
-            $order = $this->createOrder($quote, $transaction, $frontend, $bolt_trace_id);
+            $order = $this->createOrder($quote, $transaction, $boltTraceId);
 
             // Add the user_note to the order comments and make it visible for customer.
             if (isset($transaction->order->user_note)) {
@@ -660,10 +635,12 @@ class Order extends AbstractHelper
             $this->deleteRedundantQuotes($quote);
         }
 
-        // update order payment transactions
-        $this->updateOrderPayment($order, $transaction);
-
-        if ($frontend) {
+        if (Hook::$fromBolt) {
+            // if called from hook update order payment transactions
+            $this->updateOrderPayment($order, $transaction);
+        } else {
+            // if called from the store controller return quote and order
+            // wait for the hook call to update the payment
             return [$quote, $order];
         }
     }
@@ -701,14 +678,78 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Format the (class internal) unambiguous transaction state out of the type and status
+     * Format the (class internal) unambiguous transaction state out of the type, status and previously recordered status.
+     * Infer eventually missing states. Represent Bolt partial capture AUTHORIZED state as CAPTURED.
      *
      * @param \stdClass $transaction
+     * @param OrderPaymentInterface $payment
      * @return string
      */
-    public function getTransactionState($transaction)
+    public function getTransactionState($transaction, $payment)
     {
-        return $transaction->type.":".$transaction->status;
+        $transactionState = $transaction->type.":".$transaction->status;
+        $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
+        $prevCaptures = $payment->getAdditionalInformation('captures') ?: [];
+
+        // No previous state recorded.
+        // Unless the state is TS_ZERO_AMOUNT (valid start transaction state, as well as TS_PENDING)
+        // or TS_CREDIT_COMPLETED (for historical reasons, old orders refund,
+        // legacy code when order was created, no state recorded) put it in TS_PENDING state.
+        // It can corelate with the $transactionState or not in case the hook is late due connection problems and
+        // the status has changed in the meanwhile.
+        if (!$prevTransactionState) {
+            if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
+                return $transactionState;
+            }
+            return self::TS_PENDING;
+        }
+
+        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE. Authorization occured but also
+        // some of the funds were captured before the TS_AUTHORIZED state is recorded in Magento. Mark the transaction
+        // as TS_AUTHORIZED and wait for the next hook to record the CAPTURE.
+        if (in_array($prevTransactionState, [self::TS_PENDING, self::TS_REJECTED_REVERSIBLE]) &&
+            $transactionState == self::TS_AUTHORIZED &&
+            $transaction->captures
+        ) {
+            return self::TS_AUTHORIZED;
+        }
+
+        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE and the transaction state is
+        // TS_COMPLETED. If there is more than one capture in $transaction->captures array then the TS_AUTHORIZED state
+        // is missing. Set the state to TS_AUTHORIZED and process captures on next hook requests.
+        if (in_array($prevTransactionState, [self::TS_PENDING, self::TS_REJECTED_REVERSIBLE]) &&
+            $transactionState == self::TS_COMPLETED &&
+            count($transaction->captures) > 1
+        ) {
+            return self::TS_AUTHORIZED;
+        }
+
+        // The transaction was in TS_AUTHORIZED state, now it's TS_COMPLETED but not all partial captures are
+        // processed. Mark it TS_CAPTURED.
+        if ($prevTransactionState == self::TS_AUTHORIZED &&
+            $transactionState == self::TS_COMPLETED &&
+            count($transaction->captures) - count($prevCaptures) > 1
+        ) {
+            return self::TS_CAPTURED;
+        }
+
+        // The transaction was TS_AUTHORIZED, now it has captures, put it in TS_CAPTURED state.
+        if ($transactionState == self::TS_AUTHORIZED &&
+            $transaction->captures
+        ) {
+            return self::TS_CAPTURED;
+        }
+
+        // Previous partial capture was partially or fully refunded. Transaction is still TS_AUTHORIZED on Bolt side.
+        // Set it to TS_CAPTURED.
+        if ($prevTransactionState == self::TS_CREDIT_COMPLETED &&
+            $transactionState == self::TS_AUTHORIZED
+        ) {
+            return self::TS_CAPTURED;
+        }
+
+        // return transaction state as it is in fetched transaction info. No need to change it.
+        return $transactionState;
     }
 
     /**
@@ -726,37 +767,20 @@ class Order extends AbstractHelper
     /**
      * Record total amount mismatch between magento and bolt order.
      * Log the error in order comments and report via bugsnag.
+     * Put the order ON HOLD if it's a mismatch.
      *
      * @param OrderModel $order
      * @param \stdClass $transaction
-     * @return void
+     * @return bool true if the order was placed on hold, otherwise false
      */
-    private function checkTotalsMismatch($order, $transaction)
+    private function holdOnTotalsMismatch($order, $transaction)
     {
-
-        // Get transaction state
-        $transactionState = $this->getTransactionState($transaction);
-
-        // Get the transaction amount
-        // Run for zero amount and capture / payment completed transactions only.
-        switch ($transactionState) {
-            case self::TS_ZERO_AMOUNT:
-                $boltTotal = 0;
-                break;
-            case self::TS_COMPLETED:
-                $boltTotal = array_sum($this->getBoltCaptures($transaction));
-                break;
-            default:
-                // Exit on other transaction types
-                return;
-        }
-
-        // Get the order total
+        $boltTotal = $transaction->order->cart->total_amount->amount;
         $storeTotal = round($order->getGrandTotal() * 100);
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
-            return;
+            return false;
         }
 
         // Put the order on hold
@@ -774,7 +798,7 @@ class Order extends AbstractHelper
         $order->addStatusHistoryComment($comment);
 
         // Get the quote id
-        list(, $quoteId) = array_pad(
+        list($incrementId, $quoteId) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
             null
@@ -793,40 +817,88 @@ class Order extends AbstractHelper
         }
 
         // Log the debug info
-        $this->bugsnag->registerCallback(function ($report) use ($transaction, $cart) {
+        $this->bugsnag->registerCallback(function ($report) use (
+            $transaction,
+            $cart,
+            $incrementId,
+            $boltTotal,
+            $storeTotal
+        ) {
             $report->setMetaData([
                 'TOTALS_MISMATCH' => [
-                    'Bolt' => $transaction->order->cart,
-                    'Store' => $cart,
+                    'Reference' => $transaction->reference,
+                    'Order ID' => $incrementId,
+                    'Bolt Total' => $boltTotal,
+                    'Store Total' => $storeTotal,
+                    'Bolt Cart' => $transaction->order->cart,
+                    'Store Cart' => $cart
                 ]
             ]);
         });
-        $this->bugsnag->notifyError('Order Totals Mismatch', $comment);
 
-        // Save the order status and comment
         $order->save();
+
+        return true;
     }
 
     /**
      * Get (informal) transaction status to be stored with status history comment
      *
      * @param string $transactionState
-     * @param bool $fromHook
      * @return string
      */
-    private function getBoltTransactionStatus($transactionState, $fromHook)
+    private function getBoltTransactionStatus($transactionState)
     {
-
         return [
             self::TS_ZERO_AMOUNT => 'ZERO AMOUNT COMPLETED',
             self::TS_PENDING => 'UNDER REVIEW',
             self::TS_AUTHORIZED => 'AUTHORIZED',
+            self::TS_CAPTURED => 'CAPTURED',
             self::TS_COMPLETED => 'COMPLETED',
             self::TS_CANCELED => 'CANCELED',
             self::TS_REJECTED_REVERSIBLE => 'REVERSIBLE REJECTED',
             self::TS_REJECTED_IRREVERSIBLE => 'IRREVERSIBLE REJECTED',
-            self::TS_CREDIT_COMPLETED => $fromHook ? 'REFUNDED UNSYNCHRONISED' : 'REFUNDED'
+            self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? 'REFUNDED UNSYNCHRONISED' : 'REFUNDED'
         ][$transactionState];
+    }
+
+    /**
+     * Generate data to be stored with the transaction
+     *
+     * @param OrderModel $order
+     * @param \stdClass $transaction
+     * @param null|int $amount
+     */
+    private function formatTransactionData($order, $transaction, $amount)
+    {
+        return [
+            'Time' => $this->timezone->formatDateTime(
+                date('Y-m-d H:i:s', $transaction->date / 1000),
+                2,
+                2
+            ),
+            'Reference' => $transaction->reference,
+            'Amount' => $order->getBaseCurrency()->formatTxt($amount / 100),
+            'Transaction ID' => $transaction->id
+        ];
+    }
+
+    /**
+     * Return the first unprocessed capture from the captures array (or null)
+     *
+     * @param OrderPaymentInterface $payment
+     * @param \stdClass $transaction
+     * @return mixed
+     */
+    private function getUnprocessedCapture($payment, $transaction)
+    {
+        $prevCaptureIds = $payment->getAdditionalInformation('captures') ?: [];
+        return @end(array_filter(
+            $transaction->captures,
+            function($capture) use ($prevCaptureIds) {
+                return !in_array($capture->id, $prevCaptureIds) && $capture->status == 'succeeded';
+            })
+        );
     }
 
     /**
@@ -835,15 +907,13 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param null|\stdClass $transaction
      * @param null|string $reference
-     * @param bool $fromHook
      *
-     * @throws Exception
+     * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null, $fromHook = true)
+    public function updateOrderPayment($order, $transaction = null, $reference = null)
     {
-
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
             $transaction = $this->fetchTransactionInfo($reference);
@@ -851,22 +921,39 @@ class Order extends AbstractHelper
             $reference = $transaction->reference;
         }
 
+        if ($order->getState() == OrderModel::STATE_HOLDED) {
+            throw new LocalizedException(__(
+                'Order is in ON HOLD state.'
+            ));
+        }
+
+        // Check for total amount mismatch between magento and bolt order.
+        if ($this->holdOnTotalsMismatch($order, $transaction)) {
+            throw new LocalizedException(__(
+                'Order Totals Mismatch'
+            ));
+        }
+
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
-
-        // Get transaction state
-        $transactionState = $this->getTransactionState($transaction);
 
         // Get the last stored transaction parameters
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $prevTransactionReference = $payment->getAdditionalInformation('transaction_reference');
 
+
+        // Get the transaction state
+        $transactionState = $this->getTransactionState($transaction, $payment);
+
+        $newCapture = $this->getUnprocessedCapture($payment, $transaction);
+
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
-        // Reference check added to support multiple refunds, the only valid same state transition
+        // Reference check and $newCapture were added to support multiple refunds and captures,
+        // valid same state transitions
         if (
             $transactionState == $prevTransactionState &&
-            $transactionState != self::TS_AUTHORIZED &&
-            $reference        == $prevTransactionReference
+            $reference == $prevTransactionReference &&
+            !$newCapture
         ) {
             return;
         }
@@ -881,80 +968,87 @@ class Order extends AbstractHelper
 
         // preset default payment / transaction values
         // before more specific changes below
-        $amount = $transaction->amount->amount;
+        if ($newCapture) {
+            $amount = $newCapture->amount->amount;
+        } else {
+            $amount = $transaction->amount->amount;
+        }
         $transactionId = $transaction->id;
 
-        $realTransactionId = $payment->getAdditionalInformation('real_transaction_id') ?: $transaction->id;
-        $parentTransactionId = $payment->getAdditionalInformation('base_transaction_id');
+        $realTransactionId = $parentTransactionId = $payment->getAdditionalInformation('real_transaction_id');
+        $realTransactionId = $realTransactionId ?: $transaction->id;
+        $paymentAuthorized = (bool)$payment->getAdditionalInformation('authorized');
 
         switch ($transactionState) {
+
             case self::TS_ZERO_AMOUNT:
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_ORDER;
-
                 break;
+
             case self::TS_PENDING:
                 $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
-
                 break;
+
             case self::TS_AUTHORIZED:
                 $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
-                if ($prevTransactionState == self::TS_AUTHORIZED) {
-                    $transactionId = $transaction->id.'-capture-'.time();
-                    $parentTransactionId = $transaction->id.'-auth';
-                }else{
-                    $transactionId = $transaction->id.'-auth';
-                }
-
+                $transactionId = $transaction->id.'-auth';
                 break;
-            case self::TS_COMPLETED:
-                $orderState = OrderModel::STATE_PROCESSING;
-                $amount = $transaction->capture->amount->amount;
 
-                if ($prevTransactionState == self::TS_AUTHORIZED) {
-                    $transactionType = Transaction::TYPE_CAPTURE;
-                    $transactionId = $transaction->id.'-capture-'.time();
+            case self::TS_CAPTURED:
+                 if (!$newCapture) return;
+                 $orderState = OrderModel::STATE_PROCESSING;
+                 $transactionType = Transaction::TYPE_CAPTURE;
+                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
+                 $parentTransactionId = $transaction->id.'-auth';
+                break;
+
+            case self::TS_COMPLETED:
+                if (!$newCapture) return;
+                $orderState = OrderModel::STATE_PROCESSING;
+                $transactionType = Transaction::TYPE_CAPTURE;
+                if ($paymentAuthorized) {
+                    $transactionId = $transaction->id.'-capture-'.$newCapture->id;
                     $parentTransactionId = $transaction->id.'-auth';
                 } else {
-                    $transactionType = Transaction::TYPE_PAYMENT;
                     $transactionId = $transaction->id.'-payment';
                 }
-
                 break;
+
             case self::TS_CANCELED:
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_VOID;
                 $transactionId = $transaction->id.'-void';
-                $parentTransactionId = $prevTransactionState == self::TS_AUTHORIZED ? $transaction->id.'-auth' : $transaction->id;
-
+                $parentTransactionId = $paymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
                 break;
+
             case self::TS_REJECTED_REVERSIBLE:
                 $orderState = OrderModel::STATE_HOLDED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
-
                 break;
+
             case self::TS_REJECTED_IRREVERSIBLE:
                 $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_irreversible';
-
                 break;
+
             case self::TS_CREDIT_COMPLETED:
+                if (in_array($transaction->id, (array)$payment->getAdditionalInformation('refunds'))) return;
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
-
-                if ($fromHook) {
+                if (Hook::$fromBolt) {
                     // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
                     // If called from Bolt merchant dashboard there is no enough info to sync the totals
                     $orderState = OrderModel::STATE_HOLDED;
                 } else {
                     $orderState = OrderModel::STATE_PROCESSING;
                 }
-
                 break;
+
             default:
                 throw new LocalizedException(__(
                     'Unhandled transaction state : %1',
@@ -968,36 +1062,59 @@ class Order extends AbstractHelper
         $order->setState($orderState);
 
         // format the last transaction data for storing within the order payment record instance
+        $captures = $payment->getAdditionalInformation('captures') ?: [];
+
+        if ($newCapture) {
+            array_push($captures, $newCapture->id);
+        }
+
+        $refunds = $payment->getAdditionalInformation('refunds') ?: [];
+        if ($transactionState == self::TS_CREDIT_COMPLETED) {
+            array_push($refunds, $transaction->id);
+        }
+
         $paymentData = [
-            'real_transaction_id'        => $realTransactionId,
-            'transaction_reference'      => $transaction->reference,
-            'transaction_state'          => $transactionState,
-            'base_transaction_id'        => $payment->getAdditionalInformation('base_transaction_id') ?: $transactionId
+            'real_transaction_id' => $realTransactionId,
+            'transaction_reference' => $transaction->reference,
+            'transaction_state' => $transactionState,
+            'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
+            'captures' => $captures,
+            'refunds' => $refunds
         ];
 
         // format the price with currency symbol
-        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount/ 100);
-        // format the additional transaction data
-        $transactionData = [
-            'Time'      => $result = $this->timezone->formatDateTime(
-                date('Y-m-d H:i:s', $transaction->date / 1000),
-                2,
-                2
-            ),
-            'Reference' => $transaction->reference,
-            'Amount'    => $formattedPrice,
-            'Real ID'   => $transaction->id,
-        ];
+        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount / 100);
+
+        $message = __(
+            'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
+            $this->getBoltTransactionStatus($transactionState),
+            $formattedPrice,
+            $this->formatReferenceUrl($transaction->reference)
+        );
+
+        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
 
         // update order payment instance
         $payment->setParentTransactionId($parentTransactionId);
         $payment->setTransactionId($transactionId);
         $payment->setLastTransId($transactionId);
         $payment->setAdditionalInformation($paymentData);
-        $payment->setIsTransactionClosed(!in_array($transactionType, [Transaction::TYPE_AUTH, Transaction::TYPE_CAPTURE ]));
+        $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
-        if ($this->isPaymentHookRequest($prevTransactionState, $transactionState)) {
-            return $this->createInvoiceForHookRequest($order, $transaction);
+        if ($this->isCaptureHookRequest($newCapture)) {
+            $this->validateCaptureAmount($order, $amount / 100);
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+        }
+
+        if (!$order->getTotalDue()) {
+            $payment->setShouldCloseParentTransaction(true);
+        }
+
+        if ($newCapture && @$invoice) {
+            $this->_eventManager->dispatch(
+                'sales_order_payment_capture',
+                ['payment' => $payment, 'invoice' => $invoice]
+            );
         }
 
         // build a new transaction record and assign it to the order and payment
@@ -1005,162 +1122,78 @@ class Order extends AbstractHelper
         $payment_transaction = $this->transactionBuilder->setPayment($payment)
             ->setOrder($order)
             ->setTransactionId($transactionId)
-            ->setAdditionalInformation([Transaction::RAW_DETAILS => $transactionData])
+            ->setAdditionalInformation([
+                Transaction::RAW_DETAILS => $transactionData
+            ])
             ->setFailSafe(true)
             ->build($transactionType);
 
-        if ($transactionState != $prevTransactionState || $reference != $prevTransactionReference) {
-
-            // format transaction info message and add it to the order comments
-            $message = __(
-                'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
-                $this->getBoltTransactionStatus($transactionState, $fromHook),
-                $formattedPrice,
-                $this->formatReferenceUrl($transaction->reference)
-            );
             $payment->addTransactionCommentsToOrder(
                 $payment_transaction,
                 $message
             );
-        }
 
         $payment_transaction->save();
 
         // save payment and order
         $payment->save();
         $order->save();
-
-        // Check for total amount mismatch between magento and bolt order.
-        $this->checkTotalsMismatch($order, $transaction);
     }
 
     /**
-     * @param $prevTransactionState
-     * @param $transactionState
+     * Create an invoice for the order.
+     *
+     * @param OrderModel $order
+     * @param string $transactionId
+     * @param float $amount
+     *
+     * @return bool
+     * @throws \Exception
+     * @throws LocalizedException
+     */
+    private function createOrderInvoice($order, $transactionId, $amount)
+    {
+        if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+            $invoice = $this->invoiceService->prepareInvoice($order);
+        } else {
+            $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+        }
+
+        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
+        $invoice->setTransactionId($transactionId);
+        $invoice->setBaseGrandTotal($amount);
+        $invoice->setGrandTotal($amount);
+        $invoice->register();
+        $invoice->save();
+
+        $order->addRelatedObject($invoice);
+
+        if (!$invoice->getEmailSent()) {
+            $this->invoiceSender->send($invoice);
+        }
+
+        //Add notification comment to order
+        $order->addStatusHistoryComment(
+            __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
+        )->setIsCustomerNotified(true)->save();
+
+        return $invoice;
+    }
+
+    /**
+     * Check if the hook is a capture request
+     *
+     * @param \stdClass $newCapture first unprocessed capture from the captures array
      *
      * @return bool
      */
-    protected function isPaymentHookRequest($prevTransactionState, $transactionState)
+    protected function isCaptureHookRequest($newCapture)
     {
-        return  Hook::$fromBolt &&
-            $prevTransactionState == self::TS_AUTHORIZED &&
-            in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]);
+        return  Hook::$fromBolt && $newCapture;
     }
 
     /**
-     * @param $order
-     * @param $transaction
-     *
-     * @throws \Exception
-     */
-    protected function createInvoiceForHookRequest($order, $transaction)
-    {
-        /** @var OrderPaymentInterface $payment */
-        $payment = $order->getPayment();
-
-        $boltCaptures = $this->getNewBoltCaptures($payment, $transaction);
-        // Create invoices for items from $boltCaptures that are not exists on Magento
-        $identifier = count($boltCaptures) > 1 ? 0 : null;
-        foreach ($boltCaptures as $captureAmount) {
-            $invoice = $this->createInvoice($order, $captureAmount / 100);
-            $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
-            $invoice->register();
-            $this->preparePaymentAndAddTransaction($payment, $invoice, $identifier);
-            $order->addRelatedObject($invoice);
-            $identifier++;
-        }
-
-        if ($boltCaptures) { $order->save(); }
-    }
-
-    /**
-     *
-     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
-     * @param                                               $transaction
-     *
-     * @return array
-     */
-    protected function getNewBoltCaptures(OrderPaymentInterface $payment, $transaction)
-    {
-        $boltCaptures = $this->getBoltCaptures($transaction);
-        return $this->removeInvoicedCaptures($payment, $boltCaptures);
-    }
-
-    /**
-     * Generates either a partial or full invoice for the order.
-     *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
-     * @param                                        $captureAmount
-     *
-     * @return \Magento\Sales\Model\Order\Invoice
-     * @throws \Exception
-     */
-    protected function createInvoice(OrderInterface $order, $captureAmount = null) {
-        if (isset($captureAmount)) {
-            $this->validateCaptureAmount($order, $captureAmount);
-
-            if($order->getGrandTotal() > $captureAmount) {
-                return $this->invoiceService->prepareInvoiceWithoutItems($order, $captureAmount);
-            }
-        }
-
-        return $order->prepareInvoice();
-    }
-
-    /**
-     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
-     * @param \Magento\Sales\Api\Data\InvoiceInterface      $invoice
-     * @param null                                          $identifier
-     */
-    protected function preparePaymentAndAddTransaction(OrderPaymentInterface $payment, InvoiceInterface $invoice, $identifier = null)
-    {
-        $this->preparePaymentForTransaction($payment, $identifier);
-
-        $this->eventManager->dispatch(
-            'sales_order_payment_capture',
-            ['payment' => $payment, 'invoice' => $invoice]
-        );
-
-        $this->addPaymentTransaction($payment, $invoice);
-    }
-
-    /**
-     * @param $transaction
-     *
-     * @return array
-     */
-    protected function getBoltCaptures($transaction)
-    {
-        $boltCaptures = array();
-        foreach (@$transaction->captures as $capture) {
-            if (@$capture->status == 'succeeded') {
-                $boltCaptures[] = @$capture->amount->amount;
-            }
-        }
-        return $boltCaptures;
-    }
-
-    /**
-     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
-     * @param array                                         $boltCaptures
-     *
-     * @return array
-     */
-    protected function removeInvoicedCaptures(OrderPaymentInterface $payment, $boltCaptures = [])
-    {
-        $order = $payment->getOrder();
-        foreach ($order->getInvoiceCollection() as $invoice) {
-            $amount = round($invoice->getGrandTotal() * 100);
-            $index = array_search($amount, $boltCaptures);
-            if ($index !== false) {
-                unset($boltCaptures[$index]);
-            }
-        }
-        return $boltCaptures;
-    }
-
-    /**
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param OrderInterface $order
      * @param                                        $captureAmount
      *
      * @throws \Exception
@@ -1170,44 +1203,7 @@ class Order extends AbstractHelper
         $isInvalidAmountRange = $order->getTotalInvoiced() + $captureAmount > $order->getGrandTotal();
 
         if($isInvalidAmount || $isInvalidAmountRange) {
-            throw new Exception( __('Capture amount is invalid'));
+            throw new \Exception( __('Capture amount is invalid'));
         }
-    }
-
-    /**
-     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
-     * @param                                               $identifier
-     *
-     * @return mixed
-     */
-    protected function preparePaymentForTransaction(OrderPaymentInterface $payment, $identifier)
-    {
-        $order = $payment->getOrder();
-        $reference = $payment->getAdditionalInformation('real_transaction_id');
-        $transactionId = sprintf("%s-capture-%s", $reference, time());
-        $transactionId .= $identifier !== null ? "-$identifier" : '';
-
-        $payment->setParentTransactionId("$reference-auth");
-        $payment->setTransactionId($transactionId);
-        $payment->setIsTransactionClosed(0);
-        if (!$order->getTotalDue()) {
-            $payment->setShouldCloseParentTransaction(true);
-        }
-    }
-
-    /**
-     * @param \Magento\Sales\Api\Data\OrderPaymentInterface $payment
-     * @param \Magento\Sales\Api\Data\InvoiceInterface      $invoice
-     */
-    protected function addPaymentTransaction(OrderPaymentInterface $payment, InvoiceInterface $invoice)
-    {
-        $transaction = $payment->addTransaction(Transaction::TYPE_CAPTURE, $invoice, true);
-
-        $order = $payment->getOrder();
-        $message = sprintf(
-            __(' Captured amount of %s online.'),
-            $order->getBaseCurrency()->formatTxt($invoice->getGrandTotal())
-        );
-        $payment->addTransactionCommentsToOrder($transaction, $message);
     }
 }
