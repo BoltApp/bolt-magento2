@@ -38,7 +38,7 @@ before_script:
   - composer show -i
   - echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_USERNAME}\",\"password\":\"${MAGENTO_PASSWORD}\"}}}" > $HOME/.composer/auth.json
   - cd /home/travis/build/
-  - composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition magento/
+  - composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.2.6 magento/
   - cd magento/
   - composer install
 
