@@ -1,6 +1,6 @@
 ## Bolt Checkout Plugin for Magento 2 
 [![Latest Stable Version](https://poser.pugx.org/boltpay/bolt-magento2/v/stable.png)](https://packagist.org/packages/boltpay/bolt-magento2)
-[![Build Status](https://travis-ci.org/BoltApp/bolt-magento2.svg?branch=develop)](https://travis-ci.org/BoltApp/bolt-magento2)
+[![Build Status](https://circleci.com/gh/BoltApp/bolt-magento2.svg?style=shield)](https://circleci.com/gh/BoltApp/bolt-magento2)
 
 ### 1. Requirements
 
