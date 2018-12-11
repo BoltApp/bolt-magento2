@@ -678,6 +678,40 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Get processed items (captures or refunds) as an array
+     *
+     * @param OrderPaymentInterface $payment
+     * @param string $itemType 'captures' | 'refunds'
+     * @return array
+     */
+    private function getProcessedItems($payment, $itemType)
+    {
+        return array_filter(explode(',', $payment->getAdditionalInformation($itemType)));
+    }
+
+    /**
+     * Get processed capture ids array
+     *
+     * @param OrderPaymentInterface $payment
+     * @return array
+     */
+    private function getProcessedCaptures($payment)
+    {
+        return $this->getProcessedItems($payment, 'captures');
+    }
+
+    /**
+     * Get processed refund ids array
+     *
+     * @param OrderPaymentInterface $payment
+     * @return array
+     */
+    private function getProcessedRefunds($payment)
+    {
+        return $this->getProcessedItems($payment, 'refunds');
+    }
+
+    /**
      * Format the (class internal) unambiguous transaction state out of the type, status and previously recordered status.
      * Infer eventually missing states. Represent Bolt partial capture AUTHORIZED state as CAPTURED.
      *
@@ -689,7 +723,7 @@ class Order extends AbstractHelper
     {
         $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
-        $prevCaptures = $payment->getAdditionalInformation('captures') ?: [];
+        $processedCaptures = $this->getProcessedCaptures($payment);
 
         // No previous state recorded.
         // Unless the state is TS_ZERO_AMOUNT (valid start transaction state, as well as TS_PENDING)
@@ -728,7 +762,7 @@ class Order extends AbstractHelper
         // processed. Mark it TS_CAPTURED.
         if ($prevTransactionState == self::TS_AUTHORIZED &&
             $transactionState == self::TS_COMPLETED &&
-            count($transaction->captures) - count($prevCaptures) > 1
+            count($transaction->captures) - count($processedCaptures) > 1
         ) {
             return self::TS_CAPTURED;
         }
@@ -892,12 +926,12 @@ class Order extends AbstractHelper
      */
     private function getUnprocessedCapture($payment, $transaction)
     {
-        $prevCaptureIds = $payment->getAdditionalInformation('captures') ?: [];
+        $processedCaptures = $this->getProcessedCaptures($payment);
         return @end(array_filter(
-            $transaction->captures,
-            function($capture) use ($prevCaptureIds) {
-                return !in_array($capture->id, $prevCaptureIds) && $capture->status == 'succeeded';
-            })
+                $transaction->captures,
+                function($capture) use ($processedCaptures) {
+                    return !in_array($capture->id, $processedCaptures) && $capture->status == 'succeeded';
+                })
         );
     }
 
@@ -941,11 +975,12 @@ class Order extends AbstractHelper
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $prevTransactionReference = $payment->getAdditionalInformation('transaction_reference');
 
-
         // Get the transaction state
         $transactionState = $this->getTransactionState($transaction, $payment);
 
-        $newCapture = $this->getUnprocessedCapture($payment, $transaction);
+        $newCapture = in_array($transactionState, [self::TS_CAPTURED, self::TS_COMPLETED])
+            ? $this->getUnprocessedCapture($payment, $transaction)
+            : null;
 
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
         // Reference check and $newCapture were added to support multiple refunds and captures,
@@ -979,6 +1014,9 @@ class Order extends AbstractHelper
         $realTransactionId = $realTransactionId ?: $transaction->id;
         $paymentAuthorized = (bool)$payment->getAdditionalInformation('authorized');
 
+        $processedCaptures = $this->getProcessedCaptures($payment);
+        $processedRefunds = $this->getProcessedRefunds($payment);
+
         switch ($transactionState) {
 
             case self::TS_ZERO_AMOUNT:
@@ -998,11 +1036,11 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CAPTURED:
-                 if (!$newCapture) return;
-                 $orderState = OrderModel::STATE_PROCESSING;
-                 $transactionType = Transaction::TYPE_CAPTURE;
-                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
-                 $parentTransactionId = $transaction->id.'-auth';
+                if (!$newCapture) return;
+                $orderState = OrderModel::STATE_PROCESSING;
+                $transactionType = Transaction::TYPE_CAPTURE;
+                $transactionId = $transaction->id.'-capture-'.$newCapture->id;
+                $parentTransactionId = $transaction->id.'-auth';
                 break;
 
             case self::TS_COMPLETED:
@@ -1037,7 +1075,7 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CREDIT_COMPLETED:
-                if (in_array($transaction->id, (array)$payment->getAdditionalInformation('refunds'))) return;
+                if (in_array($transaction->id, $processedRefunds)) return;
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
                 if (Hook::$fromBolt) {
@@ -1062,15 +1100,13 @@ class Order extends AbstractHelper
         $order->setState($orderState);
 
         // format the last transaction data for storing within the order payment record instance
-        $captures = $payment->getAdditionalInformation('captures') ?: [];
 
         if ($newCapture) {
-            array_push($captures, $newCapture->id);
+            array_push($processedCaptures, $newCapture->id);
         }
 
-        $refunds = $payment->getAdditionalInformation('refunds') ?: [];
         if ($transactionState == self::TS_CREDIT_COMPLETED) {
-            array_push($refunds, $transaction->id);
+            array_push($processedRefunds, $transaction->id);
         }
 
         $paymentData = [
@@ -1078,8 +1114,8 @@ class Order extends AbstractHelper
             'transaction_reference' => $transaction->reference,
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
-            'captures' => $captures,
-            'refunds' => $refunds
+            'captures' => implode(',', $processedCaptures),
+            'refunds' => implode(',', $processedRefunds)
         ];
 
         // format the price with currency symbol
@@ -1128,10 +1164,10 @@ class Order extends AbstractHelper
             ->setFailSafe(true)
             ->build($transactionType);
 
-            $payment->addTransactionCommentsToOrder(
-                $payment_transaction,
-                $message
-            );
+        $payment->addTransactionCommentsToOrder(
+            $payment_transaction,
+            $message
+        );
 
         $payment_transaction->save();
 
