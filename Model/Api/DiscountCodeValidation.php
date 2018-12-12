@@ -566,7 +566,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $giftCard->addToCart(true, $parentQuote);
                 }
 
-                $giftAmount = $parentQuote->getGiftCardsAmountUsed();
+                // Send the whole GiftCard Amount.
+                $giftAmount = $parentQuote->getGiftCardsAmount();
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
