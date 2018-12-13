@@ -814,24 +814,31 @@ class Order extends AbstractHelper
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
-            return false;
+            return;
         }
 
-        // Put the order on hold
-        $order->setStatus(OrderModel::STATE_HOLDED);
-        $order->setState(OrderModel::STATE_HOLDED);
+        // Put the order ON HOLD and add the status message.
+        // Do it once only, skip on subsequent hooks
+        if ($order->getState() != OrderModel::STATE_HOLDED) {
 
-        // Add order status history comment
-        $comment = __(
-            'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
+            // Put the order on hold
+            $order->setStatus(OrderModel::STATE_HOLDED);
+            $order->setState(OrderModel::STATE_HOLDED);
+
+            // Add order status history comment
+            $comment = __(
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-            $boltTotal / 100,
-            $order->getGrandTotal(),
-            $this->formatReferenceUrl($transaction->reference)
-        );
-        $order->addStatusHistoryComment($comment);
+                $boltTotal / 100,
+                $order->getGrandTotal(),
+                $this->formatReferenceUrl($transaction->reference)
+            );
+            $order->addStatusHistoryComment($comment);
 
-        // Get the quote id
+            $order->save();
+        }
+
+        // Get the order and quote id
         list($incrementId, $quoteId) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
@@ -870,9 +877,10 @@ class Order extends AbstractHelper
             ]);
         });
 
-        $order->save();
-
-        return true;
+        throw new LocalizedException(__(
+            'Order Totals Mismatch Reference: %1 Order: %2 Bolt Total: %3 Store Total: %4',
+            $transaction->reference, $incrementId, $boltTotal, $storeTotal
+        ));
     }
 
     /**
@@ -955,18 +963,8 @@ class Order extends AbstractHelper
             $reference = $transaction->reference;
         }
 
-        if ($order->getState() == OrderModel::STATE_HOLDED) {
-            throw new LocalizedException(__(
-                'Order is in ON HOLD state.'
-            ));
-        }
-
         // Check for total amount mismatch between magento and bolt order.
-        if ($this->holdOnTotalsMismatch($order, $transaction)) {
-            throw new LocalizedException(__(
-                'Order Totals Mismatch'
-            ));
-        }
+        $this->holdOnTotalsMismatch($order, $transaction);
 
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
