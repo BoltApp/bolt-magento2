@@ -18,3 +18,5 @@
  - Prevent order ceation API call with an empty cart
  - Complete order stays in payment review state on a long hook delay fix
  - Invalid capture amount failed hook fix
+## [v1.1.6](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.6) 2018-12-13
+ - Force approve/reject failed hook fix
