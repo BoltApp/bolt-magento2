@@ -814,7 +814,7 @@ class Order extends AbstractHelper
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
-            return false;
+            return;
         }
 
         // Put the order ON HOLD and add the status message.
@@ -838,16 +838,29 @@ class Order extends AbstractHelper
             $order->save();
         }
 
-        // Get the order id
-        list($incrementId,) = array_pad(
+        // Get the order and quote id
+        list($incrementId, $quoteId) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
             null
         );
+        if (!$quoteId) {
+            $quoteId = $transaction->order->cart->order_reference;
+        }
+
+        // If the quote exists collect cart data for bugsnag
+        try {
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $cart = $this->cartHelper->getCartData(true, false, $quote);
+        } catch (NoSuchEntityException $e) {
+            // Quote was cleaned by cron job
+            $cart = ['The quote does not exist.'];
+        }
 
         // Log the debug info
         $this->bugsnag->registerCallback(function ($report) use (
             $transaction,
+            $cart,
             $incrementId,
             $boltTotal,
             $storeTotal
@@ -857,12 +870,17 @@ class Order extends AbstractHelper
                     'Reference' => $transaction->reference,
                     'Order ID' => $incrementId,
                     'Bolt Total' => $boltTotal,
-                    'Store Total' => $storeTotal
+                    'Store Total' => $storeTotal,
+                    'Bolt Cart' => $transaction->order->cart,
+                    'Store Cart' => $cart
                 ]
             ]);
         });
 
-        return true;
+        throw new LocalizedException(__(
+            'Order Totals Mismatch Reference: %1 Order: %2 Bolt Total: %3 Store Total: %4',
+            $transaction->reference, $incrementId, $boltTotal, $storeTotal
+        ));
     }
 
     /**
@@ -946,11 +964,7 @@ class Order extends AbstractHelper
         }
 
         // Check for total amount mismatch between magento and bolt order.
-        if ($this->holdOnTotalsMismatch($order, $transaction)) {
-            throw new LocalizedException(__(
-                'Order Totals Mismatch'
-            ));
-        }
+        $this->holdOnTotalsMismatch($order, $transaction);
 
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
