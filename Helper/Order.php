@@ -817,51 +817,37 @@ class Order extends AbstractHelper
             return false;
         }
 
-        // Order is already put ON HOLD, this is a subsequent hook call
-        // No need to add mismatch comment again
-        if ($order->getState() == OrderModel::STATE_HOLDED) {
-            throw new LocalizedException(__(
-                'Order is in ON HOLD state.'
-            ));
+        // Put the order ON HOLD and add the status message.
+        // Do it once only, skip on subsequent hooks
+        if ($order->getState() != OrderModel::STATE_HOLDED) {
+
+            // Put the order on hold
+            $order->setStatus(OrderModel::STATE_HOLDED);
+            $order->setState(OrderModel::STATE_HOLDED);
+
+            // Add order status history comment
+            $comment = __(
+                'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
+             Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
+                $boltTotal / 100,
+                $order->getGrandTotal(),
+                $this->formatReferenceUrl($transaction->reference)
+            );
+            $order->addStatusHistoryComment($comment);
+
+            $order->save();
         }
 
-        // Put the order on hold
-        $order->setStatus(OrderModel::STATE_HOLDED);
-        $order->setState(OrderModel::STATE_HOLDED);
-
-        // Add order status history comment
-        $comment = __(
-            'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
-             Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-            $boltTotal / 100,
-            $order->getGrandTotal(),
-            $this->formatReferenceUrl($transaction->reference)
-        );
-        $order->addStatusHistoryComment($comment);
-
         // Get the quote id
-        list($incrementId, $quoteId) = array_pad(
+        list($incrementId,) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
             null
         );
-        if (!$quoteId) {
-            $quoteId = $transaction->order->cart->order_reference;
-        }
-
-        // If the quote exists collect cart data for bugsnag
-        try {
-            $quote = $this->cartHelper->getQuoteById($quoteId);
-            $cart = $this->cartHelper->getCartData(true, false, $quote);
-        } catch (NoSuchEntityException $e) {
-            // Quote was cleaned by cron job
-            $cart = ['The quote does not exist.'];
-        }
 
         // Log the debug info
         $this->bugsnag->registerCallback(function ($report) use (
             $transaction,
-            $cart,
             $incrementId,
             $boltTotal,
             $storeTotal
@@ -871,14 +857,10 @@ class Order extends AbstractHelper
                     'Reference' => $transaction->reference,
                     'Order ID' => $incrementId,
                     'Bolt Total' => $boltTotal,
-                    'Store Total' => $storeTotal,
-                    'Bolt Cart' => $transaction->order->cart,
-                    'Store Cart' => $cart
+                    'Store Total' => $storeTotal
                 ]
             ]);
         });
-
-        $order->save();
 
         return true;
     }
