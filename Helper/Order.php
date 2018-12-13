@@ -838,7 +838,7 @@ class Order extends AbstractHelper
             $order->save();
         }
 
-        // Get the quote id
+        // Get the order id
         list($incrementId,) = array_pad(
             explode(' / ', $transaction->order->cart->display_id),
             2,
