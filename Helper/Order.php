@@ -817,6 +817,14 @@ class Order extends AbstractHelper
             return false;
         }
 
+        // Order is already put ON HOLD, this is a subsequent hook call
+        // No need to add mismatch comment again
+        if ($order->getState() == OrderModel::STATE_HOLDED) {
+            throw new LocalizedException(__(
+                'Order is in ON HOLD state.'
+            ));
+        }
+
         // Put the order on hold
         $order->setStatus(OrderModel::STATE_HOLDED);
         $order->setState(OrderModel::STATE_HOLDED);
@@ -953,12 +961,6 @@ class Order extends AbstractHelper
             $transaction = $this->fetchTransactionInfo($reference);
         } else {
             $reference = $transaction->reference;
-        }
-
-        if ($order->getState() == OrderModel::STATE_HOLDED) {
-            throw new LocalizedException(__(
-                'Order is in ON HOLD state.'
-            ));
         }
 
         // Check for total amount mismatch between magento and bolt order.
