@@ -1,3 +1,4 @@
+<?php
 /**
  * Bolt magento2 plugin
  *
@@ -14,26 +15,11 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/**
- * Bolt payment method register renderer
- */
-define(
-    [
-        'uiComponent',
-        'Magento_Checkout/js/model/payment/renderer-list'
-    ],
-    function (
-        Component,
-        rendererList
-    ) {
-        'use strict';
-        rendererList.push(
-            {
-                type: 'boltpay',
-                component: 'Bolt_Boltpay/js/view/payment/method-renderer/boltpay'
-            }
-        );
-        /** Add view logic here if needed */
-        return Component.extend({});
-    }
-);
+namespace Bolt\Boltpay\Exception;
+
+use Magento\Framework\Exception\LocalizedException;
+
+class BoltException extends LocalizedException
+{
+
+}

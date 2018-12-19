@@ -1,19 +1,19 @@
 <?php
 /**
-* Bolt magento2 plugin
-*
-* NOTICE OF LICENSE
-*
-* This source file is subject to the Open Software License (OSL 3.0)
-* that is bundled with this package in the file LICENSE.txt.
-* It is also available through the world-wide-web at this URL:
-* http://opensource.org/licenses/osl-3.0.php
-*
-* @category   Bolt
-* @package    Bolt_Boltpay
-* @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
-* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-*/
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Helper;
 
@@ -97,7 +97,8 @@ class Geolocation extends AbstractHelper
      *
      * @return string  The IP address of the customer
      */
-    private function getIpAddress() {
+    private function getIpAddress()
+    {
 
         foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
                      'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
@@ -105,10 +106,10 @@ class Geolocation extends AbstractHelper
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
                     if (filter_var(
-                            $ip,
-                            FILTER_VALIDATE_IP,
-                            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-                        ) !== false) {
+                        $ip,
+                        FILTER_VALIDATE_IP,
+                        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                    ) !== false) {
                         return $ip;
                     }
                 }
@@ -119,7 +120,8 @@ class Geolocation extends AbstractHelper
     /**
      * @return string
      */
-    private function getApiKey() {
+    private function getApiKey()
+    {
         return $this->configHelper->getGeolocationApiKey();
     }
 
@@ -130,7 +132,8 @@ class Geolocation extends AbstractHelper
      * @throws \Zend_Http_Client_Exception
      */
 
-    private function getLocationJson($ip, $apiKey) {
+    private function getLocationJson($ip, $apiKey)
+    {
 
         $endpoint = sprintf($this->endpointFormat, $ip, $apiKey);
 
@@ -152,9 +155,12 @@ class Geolocation extends AbstractHelper
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
-    public function getLocation() {
+    public function getLocation()
+    {
 
-        if (! $apiKey = $this->getApiKey()) return null;
+        if (! $apiKey = $this->getApiKey()) {
+            return null;
+        }
 
         $ip = $this->getIpAddress();
 

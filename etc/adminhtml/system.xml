@@ -101,16 +101,31 @@
                 <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Javascript</label>
                 </field>
-                <field id="g_track_on_success" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Success</label>
+                <field id="track_on_checkout_start" translate="label" type="textarea" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onCheckoutStart</label>
+                    <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
                 </field>
-                <field id="g_track_on_checkout_start" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Checkout Start</label>
+                <field id="track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onShippingDetailsComplete</label>
+                    <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
                 </field>
-                <field id="g_track_on_close" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: Close</label>
+                <field id="track_on_shipping_options_complete" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onShippingOptionsComplete</label>
+                    <comment>The javascript code executed when the user proceeds to the payment details page.</comment>
                 </field>
-                <field id="additional_config" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                <field id="track_on_payment_submit" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onPaymentSubmit</label>
+                    <comment>The javascript code executed when the user clicks the pay button.</comment>
+                </field>
+                <field id="track_on_success" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onSuccess</label>
+                    <comment>The javascript code executed when the Bolt checkout transaction is successful.</comment>
+                </field>
+                <field id="track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onClose</label>
+                    <comment>The javascript code executed when the Bolt checkout modal is closed.</comment>
+                </field>
+                <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Configuration</label>
                 </field>
             </group>

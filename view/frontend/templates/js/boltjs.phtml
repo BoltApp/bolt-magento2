@@ -26,6 +26,7 @@ if (!$block->isEnabled()) return;
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey  = $block->getCheckoutKey();
+$allowGuestCheckout = $block->isCheckoutAllowed();
 ?>
 <script
     id="bolt-track"
@@ -38,6 +39,13 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-connect"
     type="text/javascript"
     src="<?php echo $connectJsUrl; ?>"
-    async
+    <?php if ($allowGuestCheckout) echo 'async'; ?>
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>
+<?php if (!$allowGuestCheckout): ?>
+<script>
+    // If guest checkout is not allowed prevent checkout to pop up until reconfigured
+    BoltCheckout.configure({},{},{check:function(){return false}});
+</script>
+<?php endif; ?>
+
