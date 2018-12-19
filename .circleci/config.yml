@@ -2,7 +2,7 @@ version: 2
 jobs:
   unit-php72-magento23:
     docker:
-      - image: circleci/php:7-apache-node-browsers-legacy
+      - image: circleci/php:7.2-apache-node-browsers-legacy
       - image: circleci/mysql:5.7
     steps:
       - checkout
