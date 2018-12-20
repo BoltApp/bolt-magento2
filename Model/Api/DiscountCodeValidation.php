@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\SalesRule\Model\CouponFactory;
@@ -730,7 +731,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @param $code
      * @return null|\Unirgy\Giftcert\Model\Cert
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws NoSuchEntityException
      */
     public function loadGiftCertData($code)
     {
@@ -743,10 +744,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $this->logHelper->addInfoLog('### GiftCert ###');
             $this->logHelper->addInfoLog('# Code: ' . $code);
 
-            /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-            $giftCert = $giftCertRepository->get($code);
+            try {
+                /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+                $giftCert = $giftCertRepository->get($code);
 
-            $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
+                $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
+            } catch (NoSuchEntityException $e) {
+                //We must ignore the exception, because it is thrown when data does not exist.
+                $result = null;
+            }
         }
 
         $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
