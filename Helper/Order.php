@@ -101,7 +101,7 @@ class Order extends AbstractHelper
             self::TS_COMPLETED,
             self::TS_CREDIT_COMPLETED
         ],
-        self::TS_CANCELED => [],
+        self::TS_CANCELED => [self::TS_CANCELED],
         self::TS_COMPLETED => [
             self::TS_COMPLETED,
             self::TS_CREDIT_COMPLETED
@@ -472,11 +472,15 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
+        // Save reference to the Bolt transaction with the order
+        $order->addStatusHistoryComment(
+            __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+        );
+
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $boltTraceId"
             );
-            $order->save();
             // Send order confirmation email to customer.
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
@@ -492,6 +496,7 @@ class Order extends AbstractHelper
                 $this->emailSender->send($order);
             }
         }
+        $order->save();
 
         return $order;
     }
@@ -670,7 +675,6 @@ class Order extends AbstractHelper
      */
     public function setOrderUserNote($order, $userNote)
     {
-
         $order
             ->addStatusHistoryComment($userNote)
             ->setIsVisibleOnFront(true)
@@ -738,6 +742,8 @@ class Order extends AbstractHelper
     {
         $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
+        $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+        $transactionId = $payment->getAdditionalInformation('real_transaction_id');
         $processedCaptures = $this->getProcessedCaptures($payment);
 
         // No previous state recorded.
@@ -746,7 +752,7 @@ class Order extends AbstractHelper
         // legacy code when order was created, no state recorded) put it in TS_PENDING state.
         // It can corelate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
-        if (!$prevTransactionState) {
+        if (!$prevTransactionState && !$transactionReference && !$transactionId) {
             if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
             }
@@ -837,8 +843,7 @@ class Order extends AbstractHelper
         if ($order->getState() != OrderModel::STATE_HOLDED) {
 
             // Put the order on hold
-            $order->setStatus(OrderModel::STATE_HOLDED);
-            $order->setState(OrderModel::STATE_HOLDED);
+            $this->setOrderState($order, OrderModel::STATE_HOLDED);
 
             // Add order status history comment
             $comment = __(
@@ -956,6 +961,45 @@ class Order extends AbstractHelper
                     return !in_array($capture->id, $processedCaptures) && $capture->status == 'succeeded';
                 })
         );
+    }
+
+    /**
+     * Change order state taking transition constraints into account.
+     *
+     * @param OrderModel $order
+     * @param string $state
+     */
+    private function setOrderState($order, $state)
+    {
+        $prevState = $order->getState();
+        if ($state == OrderModel::STATE_HOLDED) {
+            // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
+            // to avoid no state on admin order unhold
+            if ($prevState != OrderModel::STATE_NEW) {
+                $order->setState(OrderModel::STATE_PROCESSING);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
+            }
+            try {
+                $order->hold();
+            } catch (\Exception $e) {
+                // Put the order in "on hold" state even if the previous call fails
+                $order->setState(OrderModel::STATE_HOLDED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
+            }
+        } elseif ($state == OrderModel::STATE_CANCELED) {
+            try {
+                $order->cancel();
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            } catch (\Exception $e) {
+                // Put the order in "canceled" state even if the previous call fails
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            }
+        } else {
+            $order->setState($state);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
+        }
     }
 
     /**
@@ -1108,9 +1152,8 @@ class Order extends AbstractHelper
                 break;
         }
 
-        // set order status
-        $order->setStatus($orderState);
-        $order->setState($orderState);
+        // set order state and status
+        $this->setOrderState($order, $orderState);
 
         // format the last transaction data for storing within the order payment record instance
 
