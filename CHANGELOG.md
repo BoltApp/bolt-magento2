@@ -20,3 +20,6 @@
  - Invalid capture amount failed hook fix
 ## [v1.1.6](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.6) 2018-12-13
  - Force approve/reject failed hook fix
+## [v1.1.7](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.7) 2018-12-21
+ - Amasty Gift Card support
+ - No status after unhold fix
