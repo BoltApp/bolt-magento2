@@ -735,4 +735,20 @@ class Config extends AbstractHelper
     {
         return $this->getAdditionalConfigProperty('toggleCheckout');
     }
+
+    /**
+     * Get Bolt additional configuration for Amasty Gift Card support, stored in the following format:
+     *
+     * {
+     *   "amastyGiftCard": {
+     *     "payForEverything": true|false   // true, the default,
+     *   }                                  // if the gift cards can also be used to pay for the shipping and tax,
+     * }                                    // false otherwise, only cart items can be payed with gift cards
+     *
+     * @return mixed
+     */
+    public function getAmastyGiftCardConfig()
+    {
+        return $this->getAdditionalConfigProperty('amastyGiftCard');
+    }
 }
