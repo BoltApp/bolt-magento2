@@ -49,6 +49,8 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+
 
 /**
  * Class Order
@@ -201,6 +203,9 @@ class Order extends AbstractHelper
     /** @var SessionHelper */
     private $sessionHelper;
 
+    /** @var DiscountHelper */
+    private $discountHelper;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -219,6 +224,7 @@ class Order extends AbstractHelper
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
+     * @param DiscountHelper $discountHelper
      *
      * @codeCoverageIgnore
      */
@@ -239,7 +245,8 @@ class Order extends AbstractHelper
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        DiscountHelper $discountHelper
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -258,6 +265,7 @@ class Order extends AbstractHelper
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -574,6 +582,8 @@ class Order extends AbstractHelper
     {
         $transaction = $this->fetchTransactionInfo($reference);
 
+        $parentQuoteId = $transaction->order->cart->order_reference;
+
         ///////////////////////////////////////////////////////////////
         // Get order id and immutable quote id stored with transaction.
         // Take into account orders created with data in old format
@@ -586,7 +596,7 @@ class Order extends AbstractHelper
             null
         );
         if (!$quoteId) {
-            $quoteId = $transaction->order->cart->order_reference;
+            $quoteId = $parentQuoteId;
         }
         ///////////////////////////////////////////////////////////////
 
@@ -628,6 +638,11 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
+
+            // If Amasty Gif Cart Extension is present delete gift carts
+            // applied to parent quote and unused immutable quotes
+            $this->discountHelper->deleteRedundantAmastyGiftCards($quoteId, $parentQuoteId);
+
             // Set parent quote as inactive
             $this->deactivateParentQuote($quote);
 

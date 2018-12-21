@@ -38,6 +38,7 @@ use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Discount Code Validation class
@@ -140,6 +141,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $checkoutSessionForUnirgyGiftCert;
 
     /**
+     * @var DiscountHelper
+     */
+    private $discountHelper;
+
+    /**
      * DiscountCodeValidation constructor.
      *
      * @param Request                 $request
@@ -161,6 +167,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param CartHelper              $cartHelper
      * @param ConfigHelper            $configHelper
      * @param HookHelper              $hookHelper
+     * @param DiscountHelper          $discountHelper
      */
     public function __construct(
         Request $request,
@@ -181,7 +188,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
-        HookHelper $hookHelper
+        HookHelper $hookHelper,
+        DiscountHelper $discountHelper
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -202,6 +210,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->configHelper = $configHelper;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -247,6 +256,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if (empty($giftCard)) {
                 // Load the gift cert by code
                 $giftCard = $this->loadGiftCertData($couponCode);
+            }
+
+            // Load Amasty Gift Card account object
+            if (empty($giftCard)) {
+                $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode);
             }
 
             // Check if the coupon and gift card does not exist.
@@ -526,7 +540,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
-            if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account) {
+                // Remove Amasty Gift Card if already applied
+                // to avoid errors on multiple calls to discount validation API
+                // from the Bolt checkout (changing the address, going back and forth)
+                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $parentQuote);
+                // Apply Amasty Gift Card to the parent quote
+                $giftAmount = $this->discountHelper->applyAmastyGiftCard($code, $giftCard, $parentQuote);
+                // Reset and apply Amasty Gift Cards to the immutable quote
+                $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
+            } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
                 $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
                 /** @var CheckoutSession $checkoutSession */
@@ -583,7 +606,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'status'          => 'success',
             'discount_code'   => $code,
             'discount_amount' => abs($this->cartHelper->getRoundAmount($giftAmount)),
-            'description'     =>  __('Discount Gift Card'),
+            'description'     =>  __('Gift Card'),
             'discount_type'   => $this->convertToBoltDiscountType('by_fixed'),
         ];
 

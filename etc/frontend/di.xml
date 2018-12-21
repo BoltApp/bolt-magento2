@@ -41,4 +41,8 @@
     <type name="Magento\Customer\Controller\Account\LoginPost">
         <plugin name="Bolt_Boltpay_LoginPost_Plugin" type="Bolt\Boltpay\Plugin\LoginPostPlugin" sortOrder="1" />
     </type>
+    <type name="Amasty\GiftCard\Controller\Cart\Remove">
+        <plugin name="Bolt_Boltpay_Amasty_GiftCard_Remove_Plugin" type="Bolt\Boltpay\Plugin\AmastyGiftCardRemovePlugin" sortOrder="1" />
+    </type>
+
 </config>
