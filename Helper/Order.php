@@ -1003,6 +1003,24 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check if order payment method was set to 'boltpay'
+     *
+     * @param OrderPaymentInterface $payment
+     * @throws LocalizedException
+     */
+    private function checkPaymentMethod($payment)
+    {
+        $paymentMethod = $payment->getMethod();
+
+        if ($paymentMethod != Payment::METHOD_CODE) {
+            throw new LocalizedException(__(
+                'Payment method assigned to order is: %1',
+                $paymentMethod
+            ));
+        }
+    }
+
+    /**
      * Update order payment / transaction data
      *
      * @param OrderModel $order
@@ -1022,11 +1040,13 @@ class Order extends AbstractHelper
             $reference = $transaction->reference;
         }
 
-        // Check for total amount mismatch between magento and bolt order.
-        $this->holdOnTotalsMismatch($order, $transaction);
-
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
+
+        $this->checkPaymentMethod($payment);
+
+        // Check for total amount mismatch between magento and bolt order.
+        $this->holdOnTotalsMismatch($order, $transaction);
 
         // Get the last stored transaction parameters
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
