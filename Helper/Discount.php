@@ -173,6 +173,10 @@ class Discount extends AbstractHelper
     public function loadAmastyGiftCard($code)
     {
         try {
+            if (!$this->isAmastyGiftCardAvailable()) {
+                return null;
+            }
+
             $accountModel = $this->amastyAccountFactory->getInstance()
                 ->create()
                 ->loadByCode($code);
