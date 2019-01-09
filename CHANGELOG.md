@@ -23,3 +23,8 @@
 ## [v1.1.7](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.7) 2018-12-21
  - Amasty Gift Card support
  - No status after unhold fix
+## [v1.1.8](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.8) 2019-01-09
+ - Check if order payment method is 'boltpay'
+ - Add currency_code field to cart currency data
+ - Dispatch sales_quote_save_after event for active (parent) quotes only
+ - Fixed consistency for Amasty Gift Card module
