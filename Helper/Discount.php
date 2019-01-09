@@ -153,6 +153,16 @@ class Discount extends AbstractHelper
         $quote->collectTotals();
         $quote->setDataChanges(true);
         $this->quoteRepository->save($quote);
+
+        if ($quote->getIsActive()) {
+
+            $this->_eventManager->dispatch(
+                'sales_quote_save_after',
+                [
+                    'quote' => $quote
+                ]
+            );
+        }
     }
 
     /**
@@ -163,6 +173,10 @@ class Discount extends AbstractHelper
     public function loadAmastyGiftCard($code)
     {
         try {
+            if (!$this->isAmastyGiftCardAvailable()) {
+                return null;
+            }
+
             $accountModel = $this->amastyAccountFactory->getInstance()
                 ->create()
                 ->loadByCode($code);
