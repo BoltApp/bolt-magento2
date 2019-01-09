@@ -298,7 +298,7 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
         try {
-            // $this->logHelper->addInfoLog($this->request->getContent());
+             $this->logHelper->addInfoLog($this->request->getContent());
 
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
