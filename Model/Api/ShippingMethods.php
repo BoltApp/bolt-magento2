@@ -298,7 +298,7 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
         try {
-             $this->logHelper->addInfoLog($this->request->getContent());
+            $this->logHelper->addInfoLog($this->request->getContent());
 
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
@@ -322,6 +322,9 @@ class ShippingMethods implements ShippingMethodsInterface
             // Load logged in customer checkout and customer sessions from cached session id.
             // Replace parent quote with immutable quote in checkout session.
             $this->sessionHelper->loadSession($quote);
+
+            $this->logHelper->addInfoLog('--- DEBUG ---');
+            $this->logHelper->addInfoLog(json_encode($shipping_address));
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
             $this->validateAddressData($addressData);
