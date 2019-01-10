@@ -323,11 +323,14 @@ class ShippingMethods implements ShippingMethodsInterface
             // Replace parent quote with immutable quote in checkout session.
             $this->sessionHelper->loadSession($quote);
 
+            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
+
             $this->logHelper->addInfoLog('--- DEBUG ---');
             $this->logHelper->addInfoLog(json_encode($shipping_address));
 
-            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-            $this->validateAddressData($addressData);
+            if (isset($addressData['email']) && $addressData['email'] !== null) {
+                $this->validateAddressData($addressData);
+            }
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
