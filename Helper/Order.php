@@ -387,19 +387,19 @@ class Order extends AbstractHelper
     }
 
     /**
-     * For guest checkout set customer email in quote
+     * Set quote customer email and guest checkout parameters
      *
      * @param Quote $quote
-     * @param string $guestEmail
+     * @param string $email
      *
      * @return void
      */
-    private function addCustomerDetails($quote, $guestEmail)
+    private function addCustomerDetails($quote, $email)
     {
+        $quote->setCustomerEmail($email);
         if (!$quote->getCustomerId()) {
             $quote->setCustomerId(null);
             $quote->setCheckoutMethod('guest');
-            $quote->setCustomerEmail($guestEmail);
             $quote->setCustomerIsGuest(true);
             $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
         }
