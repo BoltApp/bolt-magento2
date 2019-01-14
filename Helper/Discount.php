@@ -260,14 +260,17 @@ class Discount extends AbstractHelper
         $connection->beginTransaction();
         try {
             $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+
             // Clear previously applied gift cart codes from the immutable quote
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
             $connection->query($sql, ['destination_quote_id' => $destinationQuoteId]);
+
             // Copy all gift cart codes applied to the parent quote to the immutable quote
             $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code) 
                     SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
                     FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
             $connection->query($sql, ['destination_quote_id' => $destinationQuoteId, 'source_quote_id' => $sourceQuoteId]);
+
             $connection->commit();
         } catch (\Zend_Db_Statement_Exception $e) {
             $connection->rollBack();
@@ -289,9 +292,11 @@ class Discount extends AbstractHelper
         try {
             $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
             $quoteTable = $this->resource->getTableName('quote');
+
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+
             $connection->query($sql, ['entity_id' => $quote->getId(), 'bolt_parent_quote_id' => $quote->getId()]);
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
