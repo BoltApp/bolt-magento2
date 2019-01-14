@@ -523,16 +523,24 @@ class Cart extends AbstractHelper
     {
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
+
         $destination->removeAllItems();
+
         $destination->merge($source);
+
         $destination->getBillingAddress()->setShouldIgnoreValidation(true);
         $this->transferData($source->getBillingAddress(), $destination->getBillingAddress());
+
         $destination->getShippingAddress()->setShouldIgnoreValidation(true);
         $this->transferData($source->getShippingAddress(), $destination->getShippingAddress());
+
         $this->transferData($source, $destination, false);
+
         $destination->setId($destinationId);
         $destination->setIsActive($destinationActive);
+
         $this->quoteResourceSave($destination);
+
         // If Amasty Gif Cart Extension is present clone applied gift cards
         $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
     }
