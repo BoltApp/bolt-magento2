@@ -495,17 +495,30 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingMethods = $this->getShippingOptions($quote, $addressData);
 
-        $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
-        $shippingOptionsModel->setShippingOptions($shippingMethods);
-
-        $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
-        $shippingTaxModel->setAmount(0);
-        $shippingOptionsModel->setTaxResult($shippingTaxModel);
+        $shippingOptionsModel = $this->getShippingOptionsData($shippingMethods);
 
         // Cache the calculated result
         if ($prefetchShipping) {
             $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
         }
+
+        return $shippingOptionsModel;
+    }
+
+    /**
+     * Set shipping methods to the ShippingOptions object
+     *
+     * @param $shippingMethods
+     */
+    protected function getShippingOptionsData($shippingMethods)
+    {
+        $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
+
+        $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
+        $shippingTaxModel->setAmount(0);
+
+        $shippingOptionsModel->setShippingOptions($shippingMethods);
+        $shippingOptionsModel->setTaxResult($shippingTaxModel);
 
         return $shippingOptionsModel;
     }
@@ -540,7 +553,7 @@ class ShippingMethods implements ShippingMethodsInterface
      *
      * @return ShippingOptionInterface[]
      */
-    private function getShippingOptions($quote, $addressData)
+    public function getShippingOptions($quote, $addressData)
     {
         if ($quote->isVirtual()) {
             $billingAddress = $quote->getBillingAddress();

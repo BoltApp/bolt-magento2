@@ -173,7 +173,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturnSelf();
     }
 
-    public function testGetShippingMethodsIfQuoteEmpty()
+    public function testGetShippingMethodsIfQuoteEmptyReturnException()
     {
         $quoteId = 1001;
         $cart = [
@@ -243,7 +243,131 @@ class ShippingMethodsTest extends TestCase
         }
     }
 
-    public function testGetShippingMethods()
+    public function testGetShippingMethodsWithoutSomeAddressDataForApplePay()
+    {
+        $quoteId = 1001;
+        $parentQuoteId = 1000;
+
+        $cart = [
+            'display_id' => '100050001 / '.$quoteId
+        ];
+        $shippingAddress = [
+            'company' => null,
+            'country' => "United States",
+            'country_code' => "US",
+            'email' => null,
+            'first_name' => "n/a",
+            'last_name' => "n/a",
+            'locality' => "New York",
+            'region'   => "New York",
+            'phone' => null,
+            'postal_code' => "10001",
+            'street_address1' => "",
+            'street_address2' => null,
+            'street_address3' => null,
+            'street_address4' => null,
+        ];
+
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods(['getSku', 'getQty'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('getSku')
+            ->willReturn('TestProduct');
+        $quoteItem->method('getQty')
+            ->willReturn(1);
+
+        $quoteMethods = [
+            'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
+            'getAppliedRuleIds', 'isVirtual', 'getShippingAddress'
+        ];
+        $quote = $this->getMockBuilder(Quote::class)
+            ->setMethods($quoteMethods)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $quote->method('getId')
+            ->willReturn($quoteId);
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn($parentQuoteId);
+        $quote->method('getSubtotal')
+            ->willReturn(100);
+        $quote->method('getAllVisibleItems')
+            ->willReturn([$quoteItem]);
+        $quote->method('getAppliedRuleIds')
+            ->willReturn('2,3');
+        $quote->method('isVirtual')
+            ->willReturn(false);
+        $quote->method('getShippingAddress')
+            ->willReturn($shippingAddress);
+
+        $cartHelper = $this->getMockBuilder(CartHelper::class)
+            ->setMethods(['getQuoteById'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $cartHelper->method('getQuoteById')
+            ->with($quoteId)
+            ->willReturn($quote);
+
+        $configHelper = $this->getMockBuilder(ConfigHelper::class)
+            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $configHelper->method('getPrefetchShipping')
+            ->willReturn(true);
+        $configHelper->method('getPrefetchAddressFields')
+            ->willReturn('');
+
+        $methods = ['sendErrorResponse', 'proceedWithHook', 'checkCartItems', 'getQuoteById',
+            'notifyException', 'validateQuote', 'loadSessionByQuote', 'throwQuoteIdException',
+            'validateAddressData', 'shippingEstimation'
+        ];
+        $this->currentMock = $this->getMockBuilder(BoltShippingMethods::class)
+            ->setMethods($methods)
+            ->setConstructorArgs([
+                $this->hookHelper,
+                $this->regionModel,
+                $this->factoryShippingOptionsMock,
+                $this->shippingTaxInterfaceFactory,
+                $cartHelper,
+                $this->totalsCollector,
+                $this->converter,
+                $this->shippingOptionInterfaceFactory,
+                $this->bugsnag,
+                $this->logHelper,
+                $this->errorResponse,
+                $this->response,
+                $configHelper,
+                $this->request,
+                $this->cache,
+                $this->priceHelper,
+                $this->sessionHelper
+            ])
+            ->getMock();
+
+        $this->currentMock->method('validateAddressData')
+            ->willReturnSelf();
+
+        $option = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $option
+            ->setService('Flat Rate - Fixed')
+            ->setCost(5600)
+            ->setReference('flatrate_flatrate')
+            ->setTaxAmount(0)
+        ;
+
+        $shippingOptionData = [$option];
+
+        $this->currentMock->method('shippingEstimation')
+            ->willReturn($shippingOptionData);
+
+        $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
+
+        $this->assertEquals($result, $shippingOptionData);
+    }
+
+    public function testGetShippingMethodsWithFullAddressData()
     {
         $quoteId = 1001;
         $parentQuoteId = 1000;
