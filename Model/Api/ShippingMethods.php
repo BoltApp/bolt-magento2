@@ -341,7 +341,8 @@ class ShippingMethods implements ShippingMethodsInterface
         } catch (BoltException $e) {
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $this->catchExceptionAndSendError($e, '', 6009, 422);
+            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
+            $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
     }
 
@@ -354,9 +355,6 @@ class ShippingMethods implements ShippingMethodsInterface
     protected function catchExceptionAndSendError($e, $msg = '', $code = 6009, $httpStatusCode = 422)
     {
         $this->bugsnag->notifyException($e);
-        if (!$msg) {
-            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-        }
 
         $this->sendErrorResponse($code, $msg, $httpStatusCode);
     }
