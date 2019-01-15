@@ -168,7 +168,8 @@ class Cart extends AbstractHelper
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
-        Discount::AMASTY_GIFTCARD => 'Gift Card '
+        Discount::AMASTY_GIFTCARD => 'Gift Card ',
+        Discount::GIFT_VOUCHER => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
@@ -943,8 +944,14 @@ class Cart extends AbstractHelper
                     'amount'      => $roundedAmount,
                 ];
 
-                $diff -= $amount * 100 - $roundedAmount;
-                $totalAmount -= $roundedAmount;
+                if ($discount == Discount::GIFT_VOUCHER) {
+                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
+                    // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
+                    $cart['discounts'][0]['amount'] -= $roundedAmount;
+                } else {
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
