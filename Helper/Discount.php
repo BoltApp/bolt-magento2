@@ -247,12 +247,12 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Try to copy Amasty Gift Cart data from parent to immutable quote
+     * Copy Amasty Gift Cart data from source to destination quote
      *
-     * @param int|string $parentQuoteId
-     * @param int|string $immutableQuoteId
+     * @param int|string $sourceQuoteId
+     * @param int|string $destinationQuoteId
      */
-    public function cloneAmastyGiftCards($parentQuoteId, $immutableQuoteId)
+    public function cloneAmastyGiftCards($sourceQuoteId, $destinationQuoteId)
     {
         if (! $this->isAmastyGiftCardAvailable()) {
             return;
@@ -263,14 +263,14 @@ class Discount extends AbstractHelper
             $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
 
             // Clear previously applied gift cart codes from the immutable quote
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
-            $connection->query($sql, ['quote_id' => $immutableQuoteId]);
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
+            $connection->query($sql, ['destination_quote_id' => $destinationQuoteId]);
 
             // Copy all gift cart codes applied to the parent quote to the immutable quote
             $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code) 
-                    SELECT :immutable_quote_id, code_id, account_id, base_gift_amount, code 
-                    FROM {$giftCardTable} WHERE quote_id = :quote_id";
-            $connection->query($sql, ['immutable_quote_id' => $immutableQuoteId, 'quote_id' => $parentQuoteId]);
+                    SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
+                    FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+            $connection->query($sql, ['destination_quote_id' => $destinationQuoteId, 'source_quote_id' => $sourceQuoteId]);
 
             $connection->commit();
         } catch (\Zend_Db_Statement_Exception $e) {
@@ -280,12 +280,11 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Try to clear Amasty Gift Cart data for the unused immutable quotes and the parent quote
+     * Try to clear Amasty Gift Cart data for the unused immutable quotes
      *
-     * @param int|string $immutableQuoteId
-     * @param int|string $parentQuoteId
+     * @param Quote $quote parent quote
      */
-    public function deleteRedundantAmastyGiftCards($immutableQuoteId, $parentQuoteId)
+    public function deleteRedundantAmastyGiftCards($quote)
     {
         if (! $this->isAmastyGiftCardAvailable()) {
             return;
@@ -299,7 +298,7 @@ class Discount extends AbstractHelper
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
 
-            $connection->query($sql, ['entity_id' => $immutableQuoteId, 'bolt_parent_quote_id' => $parentQuoteId]);
+            $connection->query($sql, ['entity_id' => $quote->getId(), 'bolt_parent_quote_id' => $quote->getId()]);
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
