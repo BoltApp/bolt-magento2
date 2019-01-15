@@ -300,7 +300,7 @@ class ShippingMethods implements ShippingMethodsInterface
         try {
 //            $this->logHelper->addInfoLog($this->request->getContent());
 
-            $this->proceedWithHook();
+            $this->preprocessHook();
 
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -395,7 +395,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    protected function proceedWithHook()
+    protected function preprocessHook()
     {
         $this->hookHelper->setCommonMetaData();
         $this->hookHelper->setHeaders();

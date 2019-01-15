@@ -52,36 +52,84 @@ class ShippingMethodsTest extends TestCase
      */
     private $currentMock;
 
+    /**
+     * @var HookHelper
+     */
     private $hookHelper;
 
+    /**
+     * @var RegionModel
+     */
     private $regionModel;
 
+    /**
+     * @var ShippingOptionsInterfaceFactory
+     */
     private $factoryShippingOptionsMock;
 
+    /**
+     * @var ShippingTaxInterfaceFactory
+     */
     private $shippingTaxInterfaceFactory;
 
+    /**
+     * @var ShippingOptionInterfaceFactory
+     */
     private $shippingOptionInterfaceFactory;
 
+    /**
+     * @var TotalsCollector
+     */
     private $totalsCollector;
 
+    /**
+     * @var ShippingMethodConverter
+     */
     private $converter;
 
+    /**
+     * @var logHelper
+     */
     private $logHelper;
 
+    /**
+     * @var BoltErrorResponse
+     */
     private $errorResponse;
 
+    /**
+     * @var Response
+     */
     private $response;
 
+    /**
+     * @var ConfigHelper
+     */
     private $configHelper;
 
+    /**
+     * @var Request
+     */
     private $request;
 
+    /**
+     * @var CacheInterface
+     */
     private $cache;
 
+    /**
+     * @var PriceHelper
+     */
     private $priceHelper;
 
+    /**
+     * @var SessionHelper
+     */
     private $sessionHelper;
 
+    /**
+     * @var Bugsnag
+     */
     private $bugsnag;
 
     /**
