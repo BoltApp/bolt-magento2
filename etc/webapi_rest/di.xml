@@ -22,7 +22,7 @@
             <argument name="userContexts" xsi:type="array">
                 <item name="hookContext" xsi:type="array">
                     <item name="type" xsi:type="object">Bolt\Boltpay\Model\Authorization\HookContext</item>
-                    <item name="sortOrder" xsi:type="string">40</item>
+                    <item name="sortOrder" xsi:type="string">90</item>
                 </item>
             </argument>
         </arguments>

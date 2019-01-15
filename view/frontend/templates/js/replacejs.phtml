@@ -202,7 +202,11 @@ $trackCallbacks = $block->getTrackCallbacks();
         'mage/validation/validation',
         'mage/cookies'
     ], function ($, authenticationPopup, customerData) {
-    ////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////
+
+        // initialize customer and cart observables
+        var customer = customerData.get('customer');
+        var shoppingCart = customerData.get('cart');
 
         var trackCallbacks = {
             onCheckoutStart: function() {
@@ -512,12 +516,19 @@ $trackCallbacks = $block->getTrackCallbacks();
                 popUpOpen = false;
                 trackCallbacks.onClose();
 
-                // redirect on success order save
-                if (callbacks.success_url) location.href = callbacks.success_url;
+                if (callbacks.success_url) {
+                    // redirect on success order save
+                    location.href = callbacks.success_url;
+                } else {
+                    // re-create order in case checkout was closed
+                    // after order was changed from inside the checkout,
+                    // i.e. the discount was applied
+                    createOrder();
+                }
             },
 
             onCheckoutStart: function() {
-              trackCallbacks.onCheckoutStart();
+                trackCallbacks.onCheckoutStart();
             },
 
             onShippingDetailsComplete: function() {
@@ -572,14 +583,12 @@ $trackCallbacks = $block->getTrackCallbacks();
                  * Magento customerData and authenticationPopup objects are
                  * used.
                  */
-                var customer = customerData.get('customer');
-                var shoppingCart = customerData.get('cart');
-
-                // check if / wait until the observable objects are set
+                // check if / wait until the observable objects are set.
                 // proceed, allow checkout if initial checkout flag is set
-                if (!initiateCheckout && (!customer().data_id || !shoppingCart().data_id)) {
-                    return false;
-                }
+                if (!initiateCheckout && !shoppingCart().data_id) return false;
+
+                // do not open checkout if the cart is empty
+                if (shoppingCart().summary_count === 0) return false;
 
                 // check if login is required
                 // skip the check if initial checkout flag is set
@@ -658,6 +667,11 @@ $trackCallbacks = $block->getTrackCallbacks();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var createOrder = function () {
+
+            // do not call Bolt API if the cart is empty
+            if (shoppingCart().summary_count === 0) return;
+
+            // skip if there is already an ongoing request
             if (createRequest) return;
 
             // define the params sent with the request variable
@@ -672,7 +686,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 if (typeof customer_email.val() !== 'undefined'
                     && (customer_email.val().trim() === ''
                         || (form.validation() && form.validation('isValid') === false)
-                )) return;
+                    )) return;
 
                 if (settings && !!settings.publishable_key_payment) {
                     params.push('payment_only=true');
@@ -731,11 +745,15 @@ $trackCallbacks = $block->getTrackCallbacks();
                             if (data.status !== 'success') {
                                 reject(new Error(data.message || 'Network request failed'));
                                 return;
-
                             }
 
                             // set cart and hints data
                             cart = data.cart;
+
+                            if (!cart || !cart.orderToken) {
+                                reject(new Error('Cart info is missing or the cart is empty'));
+                                return;
+                            }
 
                             var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 

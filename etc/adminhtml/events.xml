@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="adminhtml_sales_order_create_process_data">
+        <observer name="bolt_legacy_admin_order_create_fix" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\OrderCreateProcessDataObserver" />
+    </event>
+</config>

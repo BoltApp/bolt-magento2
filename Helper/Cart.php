@@ -43,6 +43,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Boltpay Cart helper
@@ -139,6 +140,11 @@ class Cart extends AbstractHelper
      */
     private $checkoutHelper;
 
+    /**
+     * @var DiscountHelper
+     */
+    private $discountHelper;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -154,17 +160,18 @@ class Cart extends AbstractHelper
         'email',
     ];
 
-    ///////////////////////////////////////////////////////
-    // Store discount types, internal and 3rd party.
+    /////////////////////////////////////////////////////////////////////////////
+    // Store discount type keys and description prefixes, internal and 3rd party.
     // Can appear as keys in Quote::getTotals result array.
-    ///////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
     private $discountTypes = [
-        'giftvoucheraftertax',
-        'giftcardaccount',
-        'ugiftcert',
+        Discount::GIFT_VOUCHER_AFTER_TAX => '',
+        Discount::GIFT_CARD_ACCOUNT => '',
+        Discount::UNIRGY_GIFT_CERT => '',
+        Discount::AMASTY_GIFTCARD => 'Gift Card '
     ];
+    /////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////
     // Totals adjustment treshold
     private $treshold = 0.01;
 
@@ -188,6 +195,7 @@ class Cart extends AbstractHelper
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
+     * @param DiscountHelper $discountHelper
      *
      * @codeCoverageIgnore
      */
@@ -210,7 +218,8 @@ class Cart extends AbstractHelper
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
-        CheckoutHelper $checkoutHelper
+        CheckoutHelper $checkoutHelper,
+        DiscountHelper $discountHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -231,6 +240,7 @@ class Cart extends AbstractHelper
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -287,12 +297,16 @@ class Cart extends AbstractHelper
     {
         $this->quoteRepository->save($quote);
 
-        $this->_eventManager->dispatch(
-            'sales_quote_save_after',
-            [
-                'quote' => $quote
-            ]
-        );
+        if ($quote->getIsActive()) {
+
+            $this->_eventManager->dispatch(
+                'sales_quote_save_after',
+                [
+                    'quote' => $quote
+                ]
+            );
+        }
+
     }
 
     /**
@@ -305,12 +319,15 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        $this->_eventManager->dispatch(
-            'sales_quote_save_after',
-            [
-                'quote' => $quote
-            ]
-        );
+        if ($quote->getIsActive()) {
+
+            $this->_eventManager->dispatch(
+                'sales_quote_save_after',
+                [
+                    'quote' => $quote
+                ]
+            );
+        }
     }
 
     /**
@@ -563,12 +580,15 @@ class Cart extends AbstractHelper
             $immutableQuote->setIsActive(false);
 
             $this->quoteResourceSave($immutableQuote);
+
+            // If Amasty Gif Cart Extension is present clone applied gift cards to the immutable quote
+            $this->discountHelper->cloneAmastyGiftCards($quote->getId(), $immutableQuote->getId());
         }
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
 
-        // Get array of all items what can be display directly
+        // Get array of all items that can be display directly
         $items = $immutableQuote->getAllVisibleItems();
 
         if (!$items) {
@@ -899,13 +919,27 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
-        foreach ($this->discountTypes as $discount) {
+        foreach ($this->discountTypes as $discount => $description) {
+
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                ///////////////////////////////////////////////////////////////////////////
+                // If Amasty gift cards can be used for shipping and tax (PayForEverything)
+                // accumulate all the applied gift cards balance as discount amount. If the
+                // final discounts sum is greater than the cart total amount ($totalAmount < 0)
+                // the "fixed_amount" type is added below.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount ==  Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
+
+                    $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
+                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
+                }
+                ///////////////////////////////////////////////////////////////////////////
+
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);
 
                 $cart['discounts'][] = [
-                    'description' => @$totals[$discount]->getTitle(),
+                    'description' => $description . @$totals[$discount]->getTitle(),
                     'amount'      => $roundedAmount,
                 ];
 

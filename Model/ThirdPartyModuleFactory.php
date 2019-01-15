@@ -59,8 +59,16 @@ class ThirdPartyModuleFactory
         $this->_objectManager = $objectManager;
         $this->moduleName = $moduleName;
         $this->className = $className;
-        ;
         $this->logHelper = $logHelper;
+    }
+
+    /**
+     * Check whether the module is available (installed end enabled)
+     * @return bool
+     */
+    public function isAvailable()
+    {
+        return $this->_moduleManager->isEnabled($this->moduleName);
     }
 
     /**
@@ -69,7 +77,7 @@ class ThirdPartyModuleFactory
      */
     public function getInstance(array $data = [])
     {
-        if ($this->_moduleManager->isEnabled($this->moduleName)) {
+        if ($this->isAvailable()) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);
             $this->logHelper->addInfoLog('# Class: ' . $this->className);
             return $this->_objectManager->create($this->className, $data);
