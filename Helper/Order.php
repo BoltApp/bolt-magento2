@@ -423,7 +423,7 @@ class Order extends AbstractHelper
     /**
      * Transform Quote to Order and send email to the customer.
      *
-     * @param Quote $quote
+     * @param Quote $immutableQuote
      * @param \stdClass $transaction
      *
      * @param string|null $boltTraceId
@@ -431,24 +431,32 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws \Exception
      */
-    private function createOrder($quote, $transaction, $boltTraceId = null)
+    private function createOrder($immutableQuote, $transaction, $boltTraceId = null)
     {
+        // Load and prepare parent quote
+        /** @var Quote $parentQuote */
+        $quote = $this->cartHelper->getActiveQuoteById($immutableQuote->getBoltParentQuoteId());
+        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+
+        $this->cartHelper->quoteResourceSave($quote);
+
         // Load logged in customer checkout and customer sessions from cached session id.
-        // Replace parent quote with immutable quote in checkout session.
+        // Replace quote in checkout session.
         $this->sessionHelper->loadSession($quote);
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
+
         $this->setShippingMethod($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
-
         $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
-
-        $this->cartHelper->saveQuote($quote);
+        $this->cartHelper->quoteResourceSave($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -511,7 +519,7 @@ class Order extends AbstractHelper
     private function setQuotePaymentInfoData($quote, $data)
     {
         foreach ($data as $key => $value) {
-            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value);
+            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value)->save();
         }
     }
 
@@ -528,13 +536,12 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Delete redundant clones and parent quote.
+     * Delete redundant immutable quotes.
      *
      * @param Quote $quote
      */
     private function deleteRedundantQuotes($quote)
     {
-
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
@@ -542,34 +549,11 @@ class Order extends AbstractHelper
 
         $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'bolt_parent_quote_id' => $quote->getId(),
             'entity_id' => $quote->getId()
         ];
 
         $connection->query($sql, $bind);
-    }
-
-    /**
-     * Set parent quote as inactive.
-     *
-     * @param Quote $quote
-     */
-    public function deactivateParentQuote($quote)
-    {
-        try {
-            $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
-            $parentQuote->setIsActive(false);
-        } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote) {
-                $report->setMetaData([
-                    'QUOTE' => [
-                        'quoteId' => $quote->getId(),
-                        'parentId' => $quote->getBoltParentQuoteId(),
-                        'orderId' => $quote->getReservedOrderId()
-                    ]
-                ]);
-            });
-        }
     }
 
     /**
@@ -646,12 +630,9 @@ class Order extends AbstractHelper
 
             // If Amasty Gif Cart Extension is present delete gift carts
             // applied to parent quote and unused immutable quotes
-            $this->discountHelper->deleteRedundantAmastyGiftCards($quoteId, $parentQuoteId);
+            $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
 
-            // Set parent quote as inactive
-            $this->deactivateParentQuote($quote);
-
-            // Delete redundant clones and parent quote
+            // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($quote);
         }
 
