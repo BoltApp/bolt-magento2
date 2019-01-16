@@ -208,6 +208,25 @@ class Config extends AbstractHelper
     const XML_PATH_ADDITIONAL_CONFIG = 'payment/boltpay/additional_config';
 
     /**
+     * MiniCart Support configuration path
+     */
+    const XML_PATH_MINICART_SUPPORT = 'payment/boltpay/minicart_support';
+
+    /**
+     * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
+     * Pages allowed to load Bolt javascript / show checkout button
+     */
+    const SHOPPING_CART_PAGE_ACTION = 'checkout_cart_index';
+    const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
+    const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
+
+    public static $defaultPageWhitelist = [
+        self::SHOPPING_CART_PAGE_ACTION,
+        self::CHECKOUT_PAGE_ACTION,
+        self::SUCCESS_PAGE_ACTION
+    ];
+
+    /**
      * @var ResourceInterface
      */
     private $moduleResource;
@@ -750,5 +769,75 @@ class Config extends AbstractHelper
     public function getAmastyGiftCardConfig()
     {
         return $this->getAdditionalConfigProperty('amastyGiftCard');
+    }
+
+    /**
+     * Get MiniCart Support config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getMinicartSupport($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_MINICART_SUPPORT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get "pageFilters" additional configuration property, stored is the following format:
+     *
+     * {
+     *   "pageFilters": {
+     *     "whitelist": ['checkout_cart_index', 'checkout_index_index', 'checkout_onepage_success'],
+     *     "blacklist": ['cms_index_index']
+     *   }
+     * }
+     *
+     * @return mixed
+     */
+    private function getPageFilters()
+    {
+        return $this->getAdditionalConfigProperty('pageFilters');
+    }
+
+    /**
+     * Get filter specified by name from "pageFilters" additional configuration
+     *
+     * @param string $filterName   'whitelist'|'blacklist'
+     * @return array
+     */
+    private function getPageFilter($filterName)
+    {
+        $pageFilters = $this->getPageFilters();
+        if ($pageFilters && @$pageFilters->$filterName) {
+            return (array)$pageFilters->$filterName;
+        }
+        return [];
+    }
+
+    /**
+     * Get whitelisted pages, stored in "pageFilters.whitelist" additional configuration
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    public function getPageWhitelist()
+    {
+        return $this->getPageFilter('whitelist');
+    }
+
+    /**
+     * Get blacklisted pages, stored in "pageFilters.blacklist" additional configuration
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    public function getPageBlacklist()
+    {
+        return $this->getPageFilter('blacklist');
     }
 }

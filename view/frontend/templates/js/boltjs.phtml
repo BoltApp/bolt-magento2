@@ -20,9 +20,8 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
+if ($block->shouldDisableBoltCheckout()) return;
 
-//Get track js url
-if (!$block->isEnabled()) return;
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey  = $block->getCheckoutKey();
@@ -48,4 +47,3 @@ $allowGuestCheckout = $block->isCheckoutAllowed();
     BoltCheckout.configure({},{},{check:function(){return false}});
 </script>
 <?php endif; ?>
-

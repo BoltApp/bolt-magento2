@@ -16,12 +16,10 @@
  */
 
 /**
- * Replace js template
- * Puts / replaces the checkout buttons according to defined selectors.
- * Maintains Bolt checkout functionality.
+ * Shopping Cart page Bolt Checkout button
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if (!$block->isEnabled()) return;
+if ($block->shouldDisableBoltCheckout()) return;
 ?>
 <div class="bolt-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass(); ?>"></div>
