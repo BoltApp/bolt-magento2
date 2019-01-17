@@ -516,8 +516,15 @@ $trackCallbacks = $block->getTrackCallbacks();
                 popUpOpen = false;
                 trackCallbacks.onClose();
 
-                // redirect on success order save
-                if (callbacks.success_url) location.href = callbacks.success_url;
+                if (callbacks.success_url) {
+                    // redirect on success order save
+                    location.href = callbacks.success_url;
+                } else {
+                    // re-create order in case checkout was closed
+                    // after order was changed from inside the checkout,
+                    // i.e. the discount was applied
+                    createOrder();
+                }
             },
 
             onCheckoutStart: function() {

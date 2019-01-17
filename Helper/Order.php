@@ -49,6 +49,8 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+
 
 /**
  * Class Order
@@ -99,7 +101,7 @@ class Order extends AbstractHelper
             self::TS_COMPLETED,
             self::TS_CREDIT_COMPLETED
         ],
-        self::TS_CANCELED => [],
+        self::TS_CANCELED => [self::TS_CANCELED],
         self::TS_COMPLETED => [
             self::TS_COMPLETED,
             self::TS_CREDIT_COMPLETED
@@ -201,6 +203,9 @@ class Order extends AbstractHelper
     /** @var SessionHelper */
     private $sessionHelper;
 
+    /** @var DiscountHelper */
+    private $discountHelper;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -219,6 +224,7 @@ class Order extends AbstractHelper
      * @param CartHelper $cartHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
+     * @param DiscountHelper $discountHelper
      *
      * @codeCoverageIgnore
      */
@@ -239,7 +245,8 @@ class Order extends AbstractHelper
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        DiscountHelper $discountHelper
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -258,6 +265,7 @@ class Order extends AbstractHelper
         $this->cartHelper = $cartHelper;
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -379,19 +387,19 @@ class Order extends AbstractHelper
     }
 
     /**
-     * For guest checkout set customer email in quote
+     * Set quote customer email and guest checkout parameters
      *
      * @param Quote $quote
-     * @param string $guestEmail
+     * @param string $email
      *
      * @return void
      */
-    private function addCustomerDetails($quote, $guestEmail)
+    private function addCustomerDetails($quote, $email)
     {
+        $quote->setCustomerEmail($email);
         if (!$quote->getCustomerId()) {
             $quote->setCustomerId(null);
             $quote->setCheckoutMethod('guest');
-            $quote->setCustomerEmail($guestEmail);
             $quote->setCustomerIsGuest(true);
             $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
         }
@@ -415,7 +423,7 @@ class Order extends AbstractHelper
     /**
      * Transform Quote to Order and send email to the customer.
      *
-     * @param Quote $quote
+     * @param Quote $immutableQuote
      * @param \stdClass $transaction
      *
      * @param string|null $boltTraceId
@@ -423,24 +431,32 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws \Exception
      */
-    private function createOrder($quote, $transaction, $boltTraceId = null)
+    private function createOrder($immutableQuote, $transaction, $boltTraceId = null)
     {
+        // Load and prepare parent quote
+        /** @var Quote $parentQuote */
+        $quote = $this->cartHelper->getActiveQuoteById($immutableQuote->getBoltParentQuoteId());
+        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+
+        $this->cartHelper->quoteResourceSave($quote);
+
         // Load logged in customer checkout and customer sessions from cached session id.
-        // Replace parent quote with immutable quote in checkout session.
+        // Replace quote in checkout session.
         $this->sessionHelper->loadSession($quote);
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
+
         $this->setShippingMethod($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
-
         $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
-
-        $this->cartHelper->saveQuote($quote);
+        $this->cartHelper->quoteResourceSave($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -464,11 +480,15 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
+        // Save reference to the Bolt transaction with the order
+        $order->addStatusHistoryComment(
+            __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+        );
+
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $boltTraceId"
             );
-            $order->save();
             // Send order confirmation email to customer.
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
@@ -484,6 +504,7 @@ class Order extends AbstractHelper
                 $this->emailSender->send($order);
             }
         }
+        $order->save();
 
         return $order;
     }
@@ -498,7 +519,7 @@ class Order extends AbstractHelper
     private function setQuotePaymentInfoData($quote, $data)
     {
         foreach ($data as $key => $value) {
-            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value);
+            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value)->save();
         }
     }
 
@@ -515,13 +536,12 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Delete redundant clones and parent quote.
+     * Delete redundant immutable quotes.
      *
      * @param Quote $quote
      */
     private function deleteRedundantQuotes($quote)
     {
-
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
@@ -529,34 +549,11 @@ class Order extends AbstractHelper
 
         $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'bolt_parent_quote_id' => $quote->getId(),
             'entity_id' => $quote->getId()
         ];
 
         $connection->query($sql, $bind);
-    }
-
-    /**
-     * Set parent quote as inactive.
-     *
-     * @param Quote $quote
-     */
-    public function deactivateParentQuote($quote)
-    {
-        try {
-            $parentQuote = $this->cartHelper->getQuoteById($quote->getBoltParentQuoteId());
-            $parentQuote->setIsActive(false);
-        } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote) {
-                $report->setMetaData([
-                    'QUOTE' => [
-                        'quoteId' => $quote->getId(),
-                        'parentId' => $quote->getBoltParentQuoteId(),
-                        'orderId' => $quote->getReservedOrderId()
-                    ]
-                ]);
-            });
-        }
     }
 
     /**
@@ -574,6 +571,8 @@ class Order extends AbstractHelper
     {
         $transaction = $this->fetchTransactionInfo($reference);
 
+        $parentQuoteId = $transaction->order->cart->order_reference;
+
         ///////////////////////////////////////////////////////////////
         // Get order id and immutable quote id stored with transaction.
         // Take into account orders created with data in old format
@@ -586,7 +585,7 @@ class Order extends AbstractHelper
             null
         );
         if (!$quoteId) {
-            $quoteId = $transaction->order->cart->order_reference;
+            $quoteId = $parentQuoteId;
         }
         ///////////////////////////////////////////////////////////////
 
@@ -628,10 +627,12 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
-            // Set parent quote as inactive
-            $this->deactivateParentQuote($quote);
 
-            // Delete redundant clones and parent quote
+            // If Amasty Gif Cart Extension is present delete gift carts
+            // applied to parent quote and unused immutable quotes
+            $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
+
+            // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($quote);
         }
 
@@ -655,7 +656,6 @@ class Order extends AbstractHelper
      */
     public function setOrderUserNote($order, $userNote)
     {
-
         $order
             ->addStatusHistoryComment($userNote)
             ->setIsVisibleOnFront(true)
@@ -723,6 +723,8 @@ class Order extends AbstractHelper
     {
         $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
+        $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+        $transactionId = $payment->getAdditionalInformation('real_transaction_id');
         $processedCaptures = $this->getProcessedCaptures($payment);
 
         // No previous state recorded.
@@ -731,7 +733,7 @@ class Order extends AbstractHelper
         // legacy code when order was created, no state recorded) put it in TS_PENDING state.
         // It can corelate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
-        if (!$prevTransactionState) {
+        if (!$prevTransactionState && !$transactionReference && !$transactionId) {
             if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
             }
@@ -822,8 +824,7 @@ class Order extends AbstractHelper
         if ($order->getState() != OrderModel::STATE_HOLDED) {
 
             // Put the order on hold
-            $order->setStatus(OrderModel::STATE_HOLDED);
-            $order->setState(OrderModel::STATE_HOLDED);
+            $this->setOrderState($order, OrderModel::STATE_HOLDED);
 
             // Add order status history comment
             $comment = __(
@@ -944,6 +945,63 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Change order state taking transition constraints into account.
+     *
+     * @param OrderModel $order
+     * @param string $state
+     */
+    private function setOrderState($order, $state)
+    {
+        $prevState = $order->getState();
+        if ($state == OrderModel::STATE_HOLDED) {
+            // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
+            // to avoid no state on admin order unhold
+            if ($prevState != OrderModel::STATE_NEW) {
+                $order->setState(OrderModel::STATE_PROCESSING);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
+            }
+            try {
+                $order->hold();
+            } catch (\Exception $e) {
+                // Put the order in "on hold" state even if the previous call fails
+                $order->setState(OrderModel::STATE_HOLDED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
+            }
+        } elseif ($state == OrderModel::STATE_CANCELED) {
+            try {
+                $order->cancel();
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            } catch (\Exception $e) {
+                // Put the order in "canceled" state even if the previous call fails
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            }
+        } else {
+            $order->setState($state);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
+        }
+    }
+
+    /**
+     * Check if order payment method was set to 'boltpay'
+     *
+     * @param OrderPaymentInterface $payment
+     * @throws LocalizedException
+     */
+    private function checkPaymentMethod($payment)
+    {
+        $paymentMethod = $payment->getMethod();
+
+        if ($paymentMethod != Payment::METHOD_CODE) {
+            throw new LocalizedException(__(
+                'Payment method assigned to order is: %1',
+                $paymentMethod
+            ));
+        }
+    }
+
+    /**
      * Update order payment / transaction data
      *
      * @param OrderModel $order
@@ -963,11 +1021,13 @@ class Order extends AbstractHelper
             $reference = $transaction->reference;
         }
 
-        // Check for total amount mismatch between magento and bolt order.
-        $this->holdOnTotalsMismatch($order, $transaction);
-
         /** @var OrderPaymentInterface $payment */
         $payment = $order->getPayment();
+
+        $this->checkPaymentMethod($payment);
+
+        // Check for total amount mismatch between magento and bolt order.
+        $this->holdOnTotalsMismatch($order, $transaction);
 
         // Get the last stored transaction parameters
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
@@ -1093,9 +1153,8 @@ class Order extends AbstractHelper
                 break;
         }
 
-        // set order status
-        $order->setStatus($orderState);
-        $order->setState($orderState);
+        // set order state and status
+        $this->setOrderState($order, $orderState);
 
         // format the last transaction data for storing within the order payment record instance
 

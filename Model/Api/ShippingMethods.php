@@ -298,7 +298,7 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
         try {
-            // $this->logHelper->addInfoLog($this->request->getContent());
+//            $this->logHelper->addInfoLog($this->request->getContent());
 
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
@@ -324,7 +324,10 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->sessionHelper->loadSession($quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-            $this->validateAddressData($addressData);
+
+            if (isset($addressData['email']) && $addressData['email'] !== null) {
+                $this->validateAddressData($addressData);
+            }
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
