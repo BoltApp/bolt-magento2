@@ -175,8 +175,6 @@ class ShippingMethodsTest extends TestCase
 
     /**
      * @test
-     * @expectedException
-     * @expectedExceptionMessage
      */
     public function getShippingMethodsIfQuoteEmptyReturnException()
     {
