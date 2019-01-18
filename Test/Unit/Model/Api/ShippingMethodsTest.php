@@ -173,7 +173,12 @@ class ShippingMethodsTest extends TestCase
             ->willReturnSelf();
     }
 
-    public function testGetShippingMethodsIfQuoteEmptyReturnException()
+    /**
+     * @test
+     * @expectedException
+     * @expectedExceptionMessage
+     */
+    public function getShippingMethodsIfQuoteEmptyReturnException()
     {
         $quoteId = 1001;
         $cart = [
@@ -230,20 +235,24 @@ class ShippingMethodsTest extends TestCase
 
         $message = new Phrase('Unprocessable Entity: Unknown quote id: ' . $quoteId);
         $this->currentMock->method('throwUnknownQuoteIdException')
-            ->willThrowException(new LocalizedException($message));
+            ->will($this->throwException(new LocalizedException($message)));
         $this->currentMock->method('catchExceptionAndSendError')
             ->withAnyParameters()
-            ->willThrowException(new LocalizedException($message));
+            ->will($this->throwException(new LocalizedException($message)));
 
-        try {
-            $this->currentMock->getShippingMethods($cart, $shippingAddress);
-        } catch (\Exception $e) {
-            $this->assertInstanceOf(\Exception::class, $e);
-            $this->assertEquals('Unprocessable Entity: Unknown quote id: '.$quoteId, $e->getMessage());
-        }
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unprocessable Entity: Unknown quote id: '.$quoteId);
+
+        $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
+
+        // If another exception happens, the test will fail.
+        $this->assertNull($result);
     }
 
-    public function testGetShippingMethodsWithoutSomeAddressDataForApplePay()
+    /**
+     * @test
+     */
+    public function getShippingMethodsWithoutSomeAddressDataForApplePay()
     {
         $quoteId = 1001;
         $parentQuoteId = 1000;
@@ -367,7 +376,10 @@ class ShippingMethodsTest extends TestCase
         $this->assertEquals($result, $shippingOptionData);
     }
 
-    public function testGetShippingMethodsWithFullAddressData()
+    /**
+     * @test
+     */
+    public function getShippingMethodsWithFullAddressData()
     {
         $quoteId = 1001;
         $parentQuoteId = 1000;
