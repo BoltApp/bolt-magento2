@@ -304,4 +304,65 @@ class Js extends Template
         $toggleCheckout = $this->configHelper->getToggleCheckout();
         return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
     }
+
+    /**
+     * Get blacklisted pages, stored in "pageFilters.blacklist" additional configuration
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    private function getPageBlacklist()
+    {
+        return $this->configHelper->getPageBlacklist();
+    }
+
+    /**
+     * Get whitelisted pages, the default shopping cart and checkout pages
+     * and pages stored in "pageFilters.whitelist" additional configuration,
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    private function getPageWhitelist()
+    {
+        return array_unique(array_merge(Config::$defaultPageWhitelist, $this->configHelper->getPageWhitelist()));
+    }
+
+    /**
+     * Check if Bolt checkout is restricted on the current loading page.
+     * Takes into account Minicart support and whitelisted / blacklisted pages configuration.
+     * "Full Action Name", <router_controller_action>, is used to identify the page.
+     *
+     * @return bool
+     */
+    private function isPageRestricted()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+
+        // check if the page is blacklisted
+        if (in_array($currentPage, $this->getPageBlacklist())) {
+            return true;
+        }
+
+        // if minicart is supported there are no additional restrictions
+        if ($this->configHelper->getMinicartSupport()) {
+            return false;
+        }
+
+        // check if the page is whitelisted if minicart is not supported
+        // (Bolt loads by default only on shopping cart and checkout pages)
+        return ! in_array($currentPage, $this->getPageWhitelist());
+    }
+
+    /**
+     * Determines if Bolt javascript should be loaded on the current page
+     * and Bolt checkout button displayed. Checks whether the module is active
+     * and the page is Bolt checkout restricted.
+     *
+     * @return bool
+     */
+    public function shouldDisableBoltCheckout()
+    {
+        return !$this->isEnabled() || $this->isPageRestricted();
+    }
 }
