@@ -480,6 +480,26 @@ class Order extends AbstractHelper
 
         $order = $this->quoteManagement->submit($quote);
 
+        if ($order === null) {
+
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
+                $report->setMetaData([
+                    'CREATE ORDER' => [
+                        'order increment ID' => $quote->getReservedOrderId(),
+                        'parent quote ID' => $quote->getId(),
+                        'immutable quote ID' => $immutableQuote->getId()
+                    ]
+                ]);
+            });
+
+            throw new LocalizedException(__(
+                'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
+                $quote->getReservedOrderId(),
+                $quote->getId(),
+                $immutableQuote->getId()
+            ));
+        }
+
         // Save reference to the Bolt transaction with the order
         $order->addStatusHistoryComment(
             __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
