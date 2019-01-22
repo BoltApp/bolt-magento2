@@ -142,78 +142,13 @@ class ShippingMethodsTest extends TestCase
      */
     public function setUp()
     {
-        $this->factoryShippingOptionsMock = $this->getMockBuilder(ShippingOptionsInterfaceFactory::class)
-            ->setMethods(['create', 'setShippingOptions', 'setTaxResult', 'getTaxResult', 'getShippingOptions'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->shippingTaxInterfaceFactory = $this->getMockBuilder(ShippingTaxInterfaceFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['create', 'setAmount'])
-            ->getMock();
-
-        $this->shippingOptionInterfaceFactory = $this->getMockBuilder(ShippingOptionInterfaceFactory::class)
-            ->setMethods(['create'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->createFactoryMocks();
 
         $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
             ->setMethods(['collectAddressTotals'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->totalsCollector->method('collectAddressTotals')
-            ->withAnyParameters()
-            ->willReturnSelf();
-
-        $this->shippingOptionInterfaceFactory = $this->getMockBuilder(ShippingOptionInterfaceFactory::class)
-            ->setMethods(['create', 'setService', 'setCost', 'setReference', 'setTaxAmount'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->shippingOptionInterfaceFactory->method('create')
-            ->willReturnSelf();
-        $this->shippingOptionInterfaceFactory->method('setService')
-            ->with('Flate Rate - Fixed')
-            ->willReturnSelf();
-        $this->shippingOptionInterfaceFactory->method('setCost')
-            ->with(500)
-            ->willReturnSelf();
-        $this->shippingOptionInterfaceFactory->method('setReference')
-            ->with('flatrate_flatrate')
-            ->willReturnSelf();
-        $this->shippingOptionInterfaceFactory->method('setTaxAmount')
-            ->with(0)
-            ->willReturnSelf();
-
-        $this->shippingTaxInterfaceFactory = $this->getMockBuilder(ShippingTaxInterfaceFactory::class)
-            ->setMethods(['create', 'setAmount'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->shippingTaxInterfaceFactory->method('create')
-            ->willReturnSelf();
-        $this->shippingTaxInterfaceFactory->method('setAmount')
-            ->with(0)
-            ->willReturnSelf();
-
-        $this->factoryShippingOptionsMock->method('create')
-            ->willReturnSelf();
-        $this->factoryShippingOptionsMock->method('setShippingOptions')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $this->factoryShippingOptionsMock->method('setTaxResult')
-            ->with($this->shippingTaxInterfaceFactory)
-            ->willReturnSelf();
-        $this->factoryShippingOptionsMock->method('getTaxResult')
-            ->willReturn($this->shippingTaxInterfaceFactory);
-        $this->factoryShippingOptionsMock->method('getShippingOptions')
-            ->willReturn($this->shippingOptionInterfaceFactory);
-
-
-        $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
-            ->setMethods(['collectAddressTotals'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->totalsCollector->expects($this->any())
-            ->method('collectAddressTotals')
             ->withAnyParameters()
             ->willReturnSelf();
 
@@ -268,20 +203,10 @@ class ShippingMethodsTest extends TestCase
         $this->errorResponse = $this->getMockBuilder(BoltErrorResponse::class)
             ->disableOriginalConstructor()
             ->getMock();
-
         $this->response = $this->getMockBuilder(Response::class)
             ->setMethods(['sendResponse'])
             ->disableOriginalConstructor()
             ->getMock();
-
-        $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields', 'getResetShippingCalculation'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->configHelper->method('getPrefetchShipping')
-            ->willReturn(true);
-        $this->configHelper->method('getPrefetchAddressFields')
-            ->willReturn('');
 
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->hookHelper = $this->createMock(HookHelper::class);
@@ -369,7 +294,6 @@ class ShippingMethodsTest extends TestCase
     public function getShippingMethodsWithFullAddressData()
     {
         $quoteId = 1001;
-        $parentQuoteId = 1000;
 
         $cart = [
             'display_id' => '100050001 / '.$quoteId
@@ -389,38 +313,7 @@ class ShippingMethodsTest extends TestCase
             'street_address2' => "",
         ];
 
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getSku', 'getQty'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quoteItem->method('getSku')
-            ->willReturn('TestProduct');
-        $quoteItem->method('getQty')
-            ->willReturn(1);
-
-        $quoteMethods = [
-            'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
-            'getAppliedRuleIds', 'isVirtual', 'getShippingAddress'
-        ];
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods($quoteMethods)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $quote->method('getId')
-            ->willReturn($quoteId);
-        $quote->method('getBoltParentQuoteId')
-            ->willReturn($parentQuoteId);
-        $quote->method('getSubtotal')
-            ->willReturn(100);
-        $quote->method('getAllVisibleItems')
-            ->willReturn([$quoteItem]);
-        $quote->method('getAppliedRuleIds')
-            ->willReturn('2,3');
-        $quote->method('isVirtual')
-            ->willReturn(false);
-        $quote->method('getShippingAddress')
-            ->willReturn($shippingAddress);
+        $quote = $this->getQuoteMock($shippingAddress);
 
         $this->cartHelper->method('validateEmail')
             ->withAnyParameters()
@@ -701,5 +594,65 @@ class ShippingMethodsTest extends TestCase
             ->willReturnSelf();
 
         return $quote;
+    }
+
+    private function createFactoryMocks()
+    {
+        $this->factoryShippingOptionsMock = $this->getMockBuilder(ShippingOptionsInterfaceFactory::class)
+            ->setMethods(['create', 'setShippingOptions', 'setTaxResult', 'getTaxResult', 'getShippingOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->shippingTaxInterfaceFactory = $this->getMockBuilder(ShippingTaxInterfaceFactory::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['create', 'setAmount'])
+            ->getMock();
+
+        $this->shippingOptionInterfaceFactory = $this->getMockBuilder(ShippingOptionInterfaceFactory::class)
+            ->setMethods(['create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->shippingOptionInterfaceFactory = $this->getMockBuilder(ShippingOptionInterfaceFactory::class)
+            ->setMethods(['create', 'setService', 'setCost', 'setReference', 'setTaxAmount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->shippingOptionInterfaceFactory->method('create')
+            ->willReturnSelf();
+        $this->shippingOptionInterfaceFactory->method('setService')
+            ->with('Flate Rate - Fixed')
+            ->willReturnSelf();
+        $this->shippingOptionInterfaceFactory->method('setCost')
+            ->with(500)
+            ->willReturnSelf();
+        $this->shippingOptionInterfaceFactory->method('setReference')
+            ->with('flatrate_flatrate')
+            ->willReturnSelf();
+        $this->shippingOptionInterfaceFactory->method('setTaxAmount')
+            ->with(0)
+            ->willReturnSelf();
+
+        $this->shippingTaxInterfaceFactory = $this->getMockBuilder(ShippingTaxInterfaceFactory::class)
+            ->setMethods(['create', 'setAmount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->shippingTaxInterfaceFactory->method('create')
+            ->willReturnSelf();
+        $this->shippingTaxInterfaceFactory->method('setAmount')
+            ->with(0)
+            ->willReturnSelf();
+
+        $this->factoryShippingOptionsMock->method('create')
+            ->willReturnSelf();
+        $this->factoryShippingOptionsMock->method('setShippingOptions')
+            ->withAnyParameters()
+            ->willReturnSelf();
+        $this->factoryShippingOptionsMock->method('setTaxResult')
+            ->with($this->shippingTaxInterfaceFactory)
+            ->willReturnSelf();
+        $this->factoryShippingOptionsMock->method('getTaxResult')
+            ->willReturn($this->shippingTaxInterfaceFactory);
+        $this->factoryShippingOptionsMock->method('getShippingOptions')
+            ->willReturn($this->shippingOptionInterfaceFactory);
     }
 }
