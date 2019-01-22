@@ -347,14 +347,14 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * @param        $e
+     * @param        $exception
      * @param string $msg
      * @param int    $code
      * @param int    $httpStatusCode
      */
-    protected function catchExceptionAndSendError($e, $msg = '', $code = 6009, $httpStatusCode = 422)
+    protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
     {
-        $this->bugsnag->notifyException($e);
+        $this->bugsnag->notifyException($exception);
 
         $this->sendErrorResponse($code, $msg, $httpStatusCode);
     }
@@ -699,9 +699,8 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param      $errCode
      * @param      $message
      * @param      $httpStatusCode
-     * @param null $quote
      */
-    protected function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    protected function sendErrorResponse($errCode, $message, $httpStatusCode)
     {
         $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message);
 
