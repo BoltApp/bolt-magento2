@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Framework\App\ObjectManager;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
@@ -555,6 +556,22 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
+            $this->logHelper->addInfoLog('GiftCertCode: '.$shippingAddress->getGiftcertCode());
+            $this->logHelper->addInfoLog('getGiftcertAmount: '.$shippingAddress->getGiftcertAmount());
+            if (!$discountAmount
+                && $shippingAddress->getGiftcertCode()
+                && (float)$shippingAddress->getGiftcertAmount() > 0
+            ) {
+                $om = ObjectManager::getInstance();
+                $giftCertRepo = $om->get(\Unirgy\Giftcert\Model\GiftcertRepository::class);
+                $giftCert = $giftCertRepo->get($shippingAddress->getGiftcertCode());
+                $this->logHelper->addInfoLog('GiftCertBalance: '.$giftCert->getBalance());
+                $this->logHelper->addInfoLog('getGrandTotal: '.$shippingAddress->getGrandTotal());
+                if ($giftCert->getBalance() >= $shippingAddress->getGrandTotal()) {
+                    $discountAmount = $shippingAddress->getShippingAmount();
+                }
+            }
+
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
@@ -567,7 +584,11 @@ class ShippingMethods implements ShippingMethodsInterface
                     $service .= ' [free&nbsp;shipping&nbsp;discount]';
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
-                    $service .= " [$discount" . "&nbsp;discount]";
+                    if ($shippingAddress->getGiftcertCode() && (float)$shippingAddress->getGiftcertAmount() > 0) {
+                        $service .= " [$discount" . "&nbsp;giftcert]";
+                    } else {
+                        $service .= " [$discount" . "&nbsp;discount]";
+                    }
                 }
                 $service = html_entity_decode($service);
             }
