@@ -556,6 +556,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
+            $this->logHelper->addInfoLog('--- --- --- --- ---');
             $this->logHelper->addInfoLog('| getShippingAmount '.$shippingAddress->getShippingAmount());
             $this->logHelper->addInfoLog('| getShippingMethod '.$shippingAddress->getShippingMethod());
             $this->logHelper->addInfoLog('| getShippingDiscountAmount: '.$shippingAddress->getShippingDiscountAmount());
@@ -570,7 +571,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $giftCert = $giftCertRepo->get($shippingAddress->getGiftcertCode());
                 $this->logHelper->addInfoLog('# GiftCertBalance: '.$giftCert->getBalance());
                 $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
-                if ($giftCert->getBalance() >= $shippingAddress->getGrandTotal()) {
+                if ($shippingAddress->getGrandTotal() === 0) {
                     $discountAmount = $shippingAddress->getShippingAmount();
                 }
             }
@@ -584,14 +585,14 @@ class ShippingMethods implements ShippingMethodsInterface
 
             if ($discountAmount) {
                 if ($cost == 0) {
-                    $service .= ' [free&nbsp;shipping&nbsp;discount]';
+                    if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() === 0) {
+                        $service .= " [$discountAmount" . "&nbsp;giftcert]";
+                    } else {
+                        $service .= ' [free&nbsp;shipping&nbsp;discount]';
+                    }
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
-                    if ($shippingAddress->getGiftcertCode() && (float)$shippingAddress->getGiftcertAmount() > 0) {
-                        $service .= " [$discount" . "&nbsp;giftcert]";
-                    } else {
-                        $service .= " [$discount" . "&nbsp;discount]";
-                    }
+                    $service .= " [$discount" . "&nbsp;discount]";
                 }
                 $service = html_entity_decode($service);
             }
