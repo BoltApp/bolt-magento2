@@ -574,6 +574,8 @@ class ShippingMethods implements ShippingMethodsInterface
                 if ($shippingAddress->getGrandTotal() == 0) {
                     $discountAmount = $shippingAddress->getShippingAmount();
                     $this->logHelper->addInfoLog('# discountAmount: '.$discountAmount);
+                } else {
+                    $discountAmount = $shippingAddress->getShippingAmount() - $shippingAddress->getGrandTotal();
                 }
             }
 
@@ -594,7 +596,14 @@ class ShippingMethods implements ShippingMethodsInterface
                     }
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
-                    $service .= " [$discount" . "&nbsp;discount]";
+
+                    if ($shippingAddress->getGiftcertCode()
+                        && (float)$shippingAddress->getGiftcertAmount() > 0
+                    ) {
+                        $service .= " [$discount" . "&nbsp;giftcert]";
+                    } else {
+                        $service .= " [$discount" . "&nbsp;discount]";
+                    }
                 }
                 $service = html_entity_decode($service);
             }
