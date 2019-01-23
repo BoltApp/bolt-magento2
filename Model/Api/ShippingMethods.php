@@ -571,8 +571,9 @@ class ShippingMethods implements ShippingMethodsInterface
                 $giftCert = $giftCertRepo->get($shippingAddress->getGiftcertCode());
                 $this->logHelper->addInfoLog('# GiftCertBalance: '.$giftCert->getBalance());
                 $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
-                if ($shippingAddress->getGrandTotal() === 0) {
+                if ($shippingAddress->getGrandTotal() == 0) {
                     $discountAmount = $shippingAddress->getShippingAmount();
+                    $this->logHelper->addInfoLog('# discountAmount: '.$discountAmount);
                 }
             }
 
@@ -584,8 +585,9 @@ class ShippingMethods implements ShippingMethodsInterface
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
             if ($discountAmount) {
+                $this->logHelper->addInfoLog('| cost: '.$cost);
                 if ($cost == 0) {
-                    if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() === 0) {
+                    if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() == 0) {
                         $service .= " [$discountAmount" . "&nbsp;giftcert]";
                     } else {
                         $service .= ' [free&nbsp;shipping&nbsp;discount]';
