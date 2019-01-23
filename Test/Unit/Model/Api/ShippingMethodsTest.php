@@ -540,8 +540,6 @@ class ShippingMethodsTest extends TestCase
         $result = $testClass->shippingEstimation($quote, $shippingAddressData);
 
         $this->assertEquals($this->factoryShippingOptionsMock, $result);
-        $this->assertEquals($this->shippingTaxInterfaceFactory, $result->getTaxResult());
-        $this->assertEquals($this->shippingOptionInterfaceFactory, $result->getShippingOptions());
     }
 
     /**
@@ -599,7 +597,7 @@ class ShippingMethodsTest extends TestCase
     private function createFactoryMocks()
     {
         $this->factoryShippingOptionsMock = $this->getMockBuilder(ShippingOptionsInterfaceFactory::class)
-            ->setMethods(['create', 'setShippingOptions', 'setTaxResult', 'getTaxResult', 'getShippingOptions'])
+            ->setMethods(['create', 'setShippingOptions', 'setTaxResult'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -650,9 +648,5 @@ class ShippingMethodsTest extends TestCase
         $this->factoryShippingOptionsMock->method('setTaxResult')
             ->with($this->shippingTaxInterfaceFactory)
             ->willReturnSelf();
-        $this->factoryShippingOptionsMock->method('getTaxResult')
-            ->willReturn($this->shippingTaxInterfaceFactory);
-        $this->factoryShippingOptionsMock->method('getShippingOptions')
-            ->willReturn($this->shippingOptionInterfaceFactory);
     }
 }
