@@ -128,6 +128,11 @@
                 <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Additional Configuration</label>
                 </field>
+                <field id="minicart_support" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>MiniCart Support</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Set to NO to load Bolt javascript only on Shopping Cart and Checkout pages.</comment>
+                </field>
             </group>
         </section>
     </system>

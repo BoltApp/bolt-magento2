@@ -632,6 +632,25 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->notifyError('Shipping Method Error', $error);
         }
 
+        if (!$shippingMethods) {
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $addressData) {
+                $report->setMetaData([
+                    'SHIPPING AND_TAX' => [
+                        'address' => $addressData,
+                        'immutable quote ID' => $quote->getId(),
+                        'parent quote ID' => $quote->getBoltParentQuoteId(),
+                        'order increment ID' => $quote->getReservedOrderId()
+                    ]
+                ]);
+            });
+
+            throw new BoltException(
+                __('No Shipping Methods retrieved'),
+                null,
+                BoltErrorResponse::ERR_SERVICE
+            );
+        }
+
         return $shippingMethods;
     }
 

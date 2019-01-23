@@ -22,7 +22,7 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if (!$block->isEnabled()) return;
+if ($block->shouldDisableBoltCheckout()) return;
 
 $trackCallbacks = $block->getTrackCallbacks();
 ?>
