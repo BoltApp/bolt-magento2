@@ -168,7 +168,8 @@ class Cart extends AbstractHelper
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
-        Discount::AMASTY_GIFTCARD => 'Gift Card '
+        Discount::AMASTY_GIFTCARD => 'Gift Card ',
+        Discount::GIFT_VOUCHER => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
@@ -512,6 +513,40 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Clone quote data from source to destination
+     *
+     * @param Quote $source
+     * @param Quote $destination
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    public function replicateQuoteData($source, $destination)
+    {
+        $destinationId = $destination->getId();
+        $destinationActive = (bool)$destination->getIsActive();
+
+        $destination->removeAllItems();
+
+        $destination->merge($source);
+
+        $destination->getBillingAddress()->setShouldIgnoreValidation(true);
+        $this->transferData($source->getBillingAddress(), $destination->getBillingAddress());
+
+        $destination->getShippingAddress()->setShouldIgnoreValidation(true);
+        $this->transferData($source->getShippingAddress(), $destination->getShippingAddress());
+
+        $this->transferData($source, $destination, false);
+
+        $destination->setId($destinationId);
+        $destination->setIsActive($destinationActive);
+
+        $this->quoteResourceSave($destination);
+
+        // If Amasty Gif Cart Extension is present clone applied gift cards
+        $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -566,23 +601,7 @@ class Cart extends AbstractHelper
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->quoteFactory->create();
 
-            $immutableQuote->merge($quote);
-
-            $immutableQuote->getBillingAddress()->setShouldIgnoreValidation(true);
-            $this->transferData($quote->getBillingAddress(), $immutableQuote->getBillingAddress());
-
-            $immutableQuote->getShippingAddress()->setShouldIgnoreValidation(true);
-            $this->transferData($quote->getShippingAddress(), $immutableQuote->getShippingAddress());
-
-            $this->transferData($quote, $immutableQuote, false);
-
-            $immutableQuote->setId(null);
-            $immutableQuote->setIsActive(false);
-
-            $this->quoteResourceSave($immutableQuote);
-
-            // If Amasty Gif Cart Extension is present clone applied gift cards to the immutable quote
-            $this->discountHelper->cloneAmastyGiftCards($quote->getId(), $immutableQuote->getId());
+            $this->replicateQuoteData($quote, $immutableQuote);
         }
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
@@ -943,8 +962,14 @@ class Cart extends AbstractHelper
                     'amount'      => $roundedAmount,
                 ];
 
-                $diff -= $amount * 100 - $roundedAmount;
-                $totalAmount -= $roundedAmount;
+                if ($discount == Discount::GIFT_VOUCHER) {
+                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
+                    // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
+                    $cart['discounts'][0]['amount'] -= $roundedAmount;
+                } else {
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
