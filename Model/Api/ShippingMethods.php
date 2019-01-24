@@ -659,9 +659,8 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param      $errCode
      * @param      $message
      * @param      $httpStatusCode
-     * @param null $quote
      */
-    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    private function sendErrorResponse($errCode, $message, $httpStatusCode)
     {
         $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message);
 
