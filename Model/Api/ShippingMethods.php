@@ -562,6 +562,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->logHelper->addInfoLog('| getShippingDiscountAmount: '.$shippingAddress->getShippingDiscountAmount());
             $this->logHelper->addInfoLog('# GiftcertCode: '.$shippingAddress->getGiftcertCode());
             $this->logHelper->addInfoLog('# GiftcertAmount: '.$shippingAddress->getGiftcertAmount());
+            $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
             if (!$discountAmount
                 && $shippingAddress->getGiftcertCode()
                 && (float)$shippingAddress->getGiftcertAmount() > 0
@@ -570,7 +571,6 @@ class ShippingMethods implements ShippingMethodsInterface
                 $giftCertRepo = $om->get(\Unirgy\Giftcert\Model\GiftcertRepository::class);
                 $giftCert = $giftCertRepo->get($shippingAddress->getGiftcertCode());
                 $this->logHelper->addInfoLog('# GiftCertBalance: '.$giftCert->getBalance());
-                $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
                 if ($shippingAddress->getGrandTotal() == 0) {
                     $discountAmount = $shippingAddress->getShippingAmount();
                     $this->logHelper->addInfoLog('# discountAmount: '.$discountAmount);
