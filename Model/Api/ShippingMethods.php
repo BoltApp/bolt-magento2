@@ -562,6 +562,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->logHelper->addInfoLog('| getShippingDiscountAmount: '.$shippingAddress->getShippingDiscountAmount());
             $this->logHelper->addInfoLog('# GiftcertCode: '.$shippingAddress->getGiftcertCode());
             $this->logHelper->addInfoLog('# GiftcertAmount: '.$shippingAddress->getGiftcertAmount());
+            $this->logHelper->addInfoLog('# Quote GiftcertCode: '.$quote->getGiftcertCode());
             $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
             if (!$discountAmount
                 && $shippingAddress->getGiftcertCode()
