@@ -28,3 +28,9 @@
  - Add currency_code field to cart currency data
  - Dispatch sales_quote_save_after event for active (parent) quotes only
  - Fixed consistency for Amasty Gift Card module
+## [v1.1.9](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.9) 2019-01-24
+ - Allow empty emails in shipping_and_tax API
+ - Add feature to optionally not inject JS on non-checkout pages
+ - Sent store order notifications to email collected from Bolt checkout
+ - Create order from parent quote
+ - Do not cache empty shipping options array

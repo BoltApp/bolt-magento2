@@ -85,9 +85,7 @@ class Email extends Action
                 throw new LocalizedException(__('Quote does not exist.'));
             }
 
-            $email = $this->customerSession->isLoggedIn() ?
-                $this->customerSession->getCustomer()->getEmail() :
-                $this->getRequest()->getParam('email');
+            $email = $this->getRequest()->getParam('email');
 
             if (!$email) {
                 throw new LocalizedException(__('No email received.'));
