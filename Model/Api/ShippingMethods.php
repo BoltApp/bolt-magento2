@@ -638,7 +638,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 if ($cost == 0) {
                     // Added Unirgy_Giftcert amount to the message.
                     if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() == 0) {
-                        $service .= " [$discountAmount" . "&nbsp;giftcert]";
+                        $service .= " [$discountAmount$" . "&nbsp;giftcert]";
                     } else {
                         $service .= ' [free&nbsp;shipping&nbsp;discount]';
                     }
