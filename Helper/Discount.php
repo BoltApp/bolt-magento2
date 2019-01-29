@@ -77,6 +77,11 @@ class Discount extends AbstractHelper
     protected $amastyAccountCollection;
 
     /**
+     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
+     */
+    protected $unirgyCertRepository;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -117,6 +122,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyQuoteResource,
         ThirdPartyModuleFactory $amastyQuoteRepository,
         ThirdPartyModuleFactory $amastyAccountCollection,
+        ThirdPartyModuleFactory $unirgyCertRepository,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag
@@ -129,6 +135,7 @@ class Discount extends AbstractHelper
         $this->amastyQuoteResource = $amastyQuoteResource;
         $this->amastyQuoteRepository = $amastyQuoteRepository;
         $this->amastyAccountCollection = $amastyAccountCollection;
+        $this->unirgyCertRepository = $unirgyCertRepository;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -373,5 +380,23 @@ class Discount extends AbstractHelper
             ->getData();
 
         return array_sum(array_column($data, 'current_value'));
+    }
+
+    /**
+     * @param $giftcertCode
+     * @return float
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getUnirgyGiftCertBalanceByCode($giftcertCode)
+    {
+        /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+        $giftCert = $this->unirgyCertRepository->get($giftcertCode);
+
+        $result = 0;
+        if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
+            $result = $giftCert->getBalance();
+        }
+
+        return (float) $result;
     }
 }

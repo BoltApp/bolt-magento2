@@ -581,12 +581,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $this->quoteRepositoryForUnirgyGiftCert
                 );
 
-//                $giftAmount = $checkoutSession->getQuote()->getGiftcertAmount();
-                $this->logHelper->addInfoLog('Immutable GiftCertAmount: '. $immutableQuote->getGiftcertAmount());
-                $this->logHelper->addInfoLog('Immutable GiftCertBalance: '. $immutableQuote->getGiftcertBalance());
-                $this->logHelper->addInfoLog('Parent GiftCertAmount: '. $parentQuote->getGiftcertAmount());
-                $this->logHelper->addInfoLog('Parent GiftCertBalance: '. $parentQuote->getGiftcertBalance());
-
                 $giftAmount = $giftCard->getBalance();
             } else {
                 if ($immutableQuote->getGiftCardsAmountUsed() == 0) {

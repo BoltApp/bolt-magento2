@@ -948,11 +948,18 @@ class Cart extends AbstractHelper
                 // the "fixed_amount" type is added below.
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount ==  Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
-
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
                     $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
                 }
                 ///////////////////////////////////////////////////////////////////////////
+
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
+                    $gcCode = $immutableQuote->getData('giftcert_code');
+                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
+                    if ($giftCertBalance > 0) {
+                        $amount = $giftCertBalance;
+                    }
+                }
 
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);
@@ -963,7 +970,7 @@ class Cart extends AbstractHelper
                 ];
 
                 if ($discount == Discount::GIFT_VOUCHER) {
-                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
+                    // the amount is added to address discount included above, $address->getDiscountAmount(),
                     // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
                     $cart['discounts'][0]['amount'] -= $roundedAmount;
                 } else {

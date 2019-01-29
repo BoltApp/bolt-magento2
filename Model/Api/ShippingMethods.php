@@ -616,15 +616,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
-            $this->logHelper->addInfoLog('--- --- --- --- ---');
-            $this->logHelper->addInfoLog('| getShippingAmount '.$shippingAddress->getShippingAmount());
-            $this->logHelper->addInfoLog('| getShippingMethod '.$shippingAddress->getShippingMethod());
-            $this->logHelper->addInfoLog('| getShippingDiscountAmount: '.$shippingAddress->getShippingDiscountAmount());
-            $this->logHelper->addInfoLog('# GiftcertCode: '.$shippingAddress->getGiftcertCode());
-            $this->logHelper->addInfoLog('# GiftcertAmount: '.$shippingAddress->getGiftcertAmount());
-            $this->logHelper->addInfoLog('# Quote GiftcertCode: '.$quote->getGiftcertCode());
-            $this->logHelper->addInfoLog('| getGrandTotal: '.$shippingAddress->getGrandTotal());
-            if (!$discountAmount
+            /*if (!$discountAmount
                 && $shippingAddress->getGiftcertCode()
                 && (float)$shippingAddress->getGiftcertAmount() > 0
             ) {
@@ -638,7 +630,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 } else {
                     $discountAmount = $shippingAddress->getShippingAmount() - $shippingAddress->getGrandTotal();
                 }
-            }
+            }*/
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
