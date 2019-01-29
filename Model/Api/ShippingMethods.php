@@ -21,7 +21,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Framework\App\ObjectManager;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
@@ -616,17 +615,13 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
+            // Checked if Unirgy_Giftcert code present in the quote and added discount amount.
             if (!$discountAmount
                 && $shippingAddress->getGiftcertCode()
                 && (float)$shippingAddress->getGiftcertAmount() > 0
             ) {
-                $om = ObjectManager::getInstance();
-                $giftCertRepo = $om->get(\Unirgy\Giftcert\Model\GiftcertRepository::class);
-                $giftCert = $giftCertRepo->get($shippingAddress->getGiftcertCode());
-                $this->logHelper->addInfoLog('# GiftCertBalance: '.$giftCert->getBalance());
                 if ($shippingAddress->getGrandTotal() == 0) {
                     $discountAmount = $shippingAddress->getShippingAmount();
-                    $this->logHelper->addInfoLog('# discountAmount: '.$discountAmount);
                 } else {
                     $discountAmount = $shippingAddress->getShippingAmount() - $shippingAddress->getGrandTotal();
                 }
@@ -640,8 +635,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 
             if ($discountAmount) {
-                $this->logHelper->addInfoLog('| cost: '.$cost);
                 if ($cost == 0) {
+                    // Added Unirgy_Giftcert amount to the message.
                     if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() == 0) {
                         $service .= " [$discountAmount" . "&nbsp;giftcert]";
                     } else {
@@ -650,10 +645,11 @@ class ShippingMethods implements ShippingMethodsInterface
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
 
+                    // Added Unirgy_Giftcert amount to the message.
                     if ($shippingAddress->getGiftcertCode()
                         && (float)$shippingAddress->getGiftcertAmount() > 0
                     ) {
-                        $service .= " [$discount" . "&nbsp;giftcert]";
+                        $service .= " [$discount$" . "&nbsp;giftcert]";
                     } else {
                         $service .= " [$discount" . "&nbsp;discount]";
                     }

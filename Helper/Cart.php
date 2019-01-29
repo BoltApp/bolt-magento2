@@ -953,6 +953,9 @@ class Cart extends AbstractHelper
                 }
                 ///////////////////////////////////////////////////////////////////////////
 
+                ///////////////////////////////////////////////////////////////////////////
+                /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
                     $gcCode = $immutableQuote->getData('giftcert_code');
                     $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
