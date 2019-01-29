@@ -107,6 +107,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyQuoteResource
      * @param ThirdPartyModuleFactory $amastyQuoteRepository
      * @param ThirdPartyModuleFactory $amastyAccountCollection
+     * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
@@ -390,7 +391,7 @@ class Discount extends AbstractHelper
     public function getUnirgyGiftCertBalanceByCode($giftcertCode)
     {
         /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-        $giftCert = $this->unirgyCertRepository->get($giftcertCode);
+        $giftCert = $this->unirgyCertRepository->getInstance()->get($giftcertCode);
 
         $result = 0;
         if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
