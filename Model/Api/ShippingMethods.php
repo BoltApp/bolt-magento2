@@ -616,7 +616,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
-            /*if (!$discountAmount
+            if (!$discountAmount
                 && $shippingAddress->getGiftcertCode()
                 && (float)$shippingAddress->getGiftcertAmount() > 0
             ) {
@@ -630,7 +630,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 } else {
                     $discountAmount = $shippingAddress->getShippingAmount() - $shippingAddress->getGrandTotal();
                 }
-            }*/
+            }
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
