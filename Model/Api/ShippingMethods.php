@@ -615,6 +615,18 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
+            // Checked if Unirgy_Giftcert code present in the quote and added discount amount.
+            if (!$discountAmount
+                && $shippingAddress->getGiftcertCode()
+                && (float)$shippingAddress->getGiftcertAmount() > 0
+            ) {
+                if ($shippingAddress->getGrandTotal() == 0) {
+                    $discountAmount = $shippingAddress->getShippingAmount();
+                } else {
+                    $discountAmount = $shippingAddress->getShippingAmount() - $shippingAddress->getGrandTotal();
+                }
+            }
+
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
@@ -624,10 +636,23 @@ class ShippingMethods implements ShippingMethodsInterface
 
             if ($discountAmount) {
                 if ($cost == 0) {
-                    $service .= ' [free&nbsp;shipping&nbsp;discount]';
+                    // Added Unirgy_Giftcert amount to the message.
+                    if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() == 0) {
+                        $service .= " [$discountAmount$" . "&nbsp;giftcert]";
+                    } else {
+                        $service .= ' [free&nbsp;shipping&nbsp;discount]';
+                    }
                 } else {
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
-                    $service .= " [$discount" . "&nbsp;discount]";
+
+                    // Added Unirgy_Giftcert amount to the message.
+                    if ($shippingAddress->getGiftcertCode()
+                        && (float)$shippingAddress->getGiftcertAmount() > 0
+                    ) {
+                        $service .= " [$discount$" . "&nbsp;giftcert]";
+                    } else {
+                        $service .= " [$discount" . "&nbsp;discount]";
+                    }
                 }
                 $service = html_entity_decode($service);
             }
