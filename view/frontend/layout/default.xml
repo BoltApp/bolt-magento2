@@ -20,9 +20,9 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="head.additional">
+            <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
-            <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
         </referenceBlock>
         <referenceBlock name="after.body.start">
             <block class="Bolt\Boltpay\Block\Js" name="bolt_popup" template="Bolt_Boltpay::popup.phtml" />
