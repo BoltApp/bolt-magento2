@@ -543,7 +543,9 @@ class Order extends AbstractHelper
         }
 
         // Check and fix tax mismatch
-        $this->adjustTaxMismatch($transaction, $order, $quote);
+        if ($this->configHelper->shouldAdjustTaxMismatch()) {
+            $this->adjustTaxMismatch($transaction, $order, $quote);
+        }
 
         // Save reference to the Bolt transaction with the order
         $order->addStatusHistoryComment(

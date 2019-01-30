@@ -840,4 +840,19 @@ class Config extends AbstractHelper
     {
         return $this->getPageFilter('blacklist');
     }
+
+    /**
+     * Get Bolt additional configuration for Tax Mismatch adjustment, stored in the following format:
+     *
+     * {
+     *   "adjustTaxMismatch": true|false
+     * }
+     * defaults to false if not set
+     *
+     * @return bool
+     */
+    public function shouldAdjustTaxMismatch()
+    {
+        return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch');
+    }
 }
