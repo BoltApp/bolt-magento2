@@ -636,7 +636,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             if ($discountAmount) {
                 if ($cost == 0) {
-                    // Added Unirgy_Giftcert amount to the message if gc balance is more than grand_total
+                    // Added Unirgy_Giftcert amount to the message if Giftcert balance is more than grand_total
                     if ($shippingAddress->getGiftcertCode() && $shippingAddress->getGiftcertAmount() > 0) {
                         $discount = $this->priceHelper->currency($discountAmount, true, false);
                         $service .= " [$discount" . "&nbsp;giftcert]";
