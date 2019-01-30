@@ -636,9 +636,10 @@ class ShippingMethods implements ShippingMethodsInterface
 
             if ($discountAmount) {
                 if ($cost == 0) {
-                    // Added Unirgy_Giftcert amount to the message.
-                    if ((float)$shippingAddress->getGiftcertAmount() > 0 && $shippingAddress->getGrandTotal() == 0) {
-                        $service .= " [$discountAmount$" . "&nbsp;giftcert]";
+                    // Added Unirgy_Giftcert amount to the message if gc balance is more than grand_total
+                    if ($shippingAddress->getGiftcertCode() && $shippingAddress->getGiftcertAmount() > 0) {
+                        $discount = $this->priceHelper->currency($discountAmount, true, false);
+                        $service .= " [$discount" . "&nbsp;giftcert]";
                     } else {
                         $service .= ' [free&nbsp;shipping&nbsp;discount]';
                     }
@@ -646,10 +647,8 @@ class ShippingMethods implements ShippingMethodsInterface
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
 
                     // Added Unirgy_Giftcert amount to the message.
-                    if ($shippingAddress->getGiftcertCode()
-                        && (float)$shippingAddress->getGiftcertAmount() > 0
-                    ) {
-                        $service .= " [$discount$" . "&nbsp;giftcert]";
+                    if ($shippingAddress->getGiftcertCode() && (float)$shippingAddress->getGiftcertAmount() > 0) {
+                        $service .= " [$discount" . "&nbsp;giftcert]";
                     } else {
                         $service .= " [$discount" . "&nbsp;discount]";
                     }
