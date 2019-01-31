@@ -297,17 +297,6 @@ class Cart extends AbstractHelper
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
-
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
-
     }
 
     /**
@@ -320,15 +309,6 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
     }
 
     /**
