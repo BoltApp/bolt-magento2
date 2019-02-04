@@ -219,6 +219,77 @@ class CartTest extends TestCase
     }
 
     /**
+     * @test
+     *
+     * ApplePay test. The address fields are: country, country_code, locality, region, phone, postal_code
+     */
+    public function getCartDataForApplePay()
+    {
+        $billingAddress = $this->getBillingAddress(true);
+        $shippingAddress = $this->getShippingAddress();
+        $quote = $this->getQuoteMock($billingAddress, $shippingAddress);
+
+        $this->checkoutSession = $this->getMockBuilder(\Magento\Framework\Session\SessionManager::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->checkoutSession->expects($this->any())
+            ->method('getQuote')
+            ->willReturn($quote);
+
+        $currentMock = new BoltHelperCart(
+            $this->contextHelper,
+            $this->checkoutSession,
+            $this->productFactory,
+            $this->apiHelper,
+            $this->configHelper,
+            $this->customerSession,
+            $this->logHelper,
+            $this->bugsnag,
+            $this->dataObjectFactory,
+            $this->blockFactory,
+            $this->appEmulation,
+            $this->quoteFactory,
+            $this->totalsCollector,
+            $this->quoteCartRepository,
+            $this->orderRepository,
+            $this->searchCriteriaBuilder,
+            $this->quoteResource,
+            $this->sessionHelper,
+            $this->checkoutHelper,
+            $this->discountHelper
+        );
+
+        $paymentOnly = false;
+        $placeOrderPayload = '';
+        $immutableQuote = $quote;
+
+        $result = $currentMock->getCartData($paymentOnly, $placeOrderPayload, $immutableQuote);
+
+        $expected = [
+            'order_reference' => self::PARENT_QUOTEI_D,
+            'display_id' => '100010001 / '.self::QUOTE_ID,
+            'currency' => '$',
+            'items' => [[
+                'reference' => self::PRODUCT_ID,
+                'name'  => 'Test Product',
+                'total_amount'  => 10000,
+                'unit_price'    => 10000,
+                'quantity'      => 1,
+                'sku'           => 'TestProduct',
+                'type'          => 'physical',
+                'description'   => 'Product Description',
+                'image_url'     => 'no-image'
+            ]],
+            'discounts' => [],
+            'total_amount' => 10000.0,
+            'tax_amount' => 0
+        ];
+
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
      * Get quote mock with quote items
      *
      * @param $billingAddress
@@ -292,9 +363,13 @@ class CartTest extends TestCase
         return $quote;
     }
 
-    private function getBillingAddress()
+    /**
+     * @param bool $shouldBeEmpty
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getBillingAddress($shouldBeEmpty = false)
     {
-        $addressData = $this->getAddressData();
+        $addressData = $this->getAddressData($shouldBeEmpty);
         $billingAddress = $this->getMockBuilder(Quote\Address::class)
             ->setMethods([
                 'getFirstname', 'getLastname', 'getCompany', 'getTelephone', 'getStreetLine',
@@ -333,29 +408,60 @@ class CartTest extends TestCase
         return $billingAddress;
     }
 
-    private function getShippingAddress()
+    /**
+     * @param bool $shouldBeEmpty
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getShippingAddress($shouldBeEmpty = false)
     {
-        return $this->getBillingAddress();
+        return $this->getBillingAddress($shouldBeEmpty);
     }
 
-    private function getAddressData()
+    /**
+     * @param bool $shouldBeEmpty
+     * @return array
+     */
+    private function getAddressData($shouldBeEmpty = false)
     {
-        return [
-            'company' => "",
-            'country' => "United States",
-            'country_code' => "US",
-            'email' => "integration@bolt.com",
-            'first_name' => "IntegrationBolt",
-            'last_name' => "BoltTest",
-            'locality' => "New York",
-            'phone' => "132 231 1234",
-            'postal_code' => "10011",
-            'region' => "New York",
-            'street_address1' => "228 7th Avenue",
-            'street_address2' => null,
-        ];
+        if ($shouldBeEmpty) {
+            $data = [
+                'company' => "",
+                'country' => "United States",
+                'country_code' => "US",
+                'email' => null,
+                'first_name' => "n/a",
+                'last_name' => "n/a",
+                'name' => "n/a",
+                'locality' => "New York",
+                'region' => "New York",
+                'phone' => "132 231 1234",
+                'postal_code' => "10011",
+                'street_address1' => "",
+                'street_address2' => null,
+            ];
+        } else {
+            $data = [
+                'company' => "",
+                'country' => "United States",
+                'country_code' => "US",
+                'email' => "integration@bolt.com",
+                'first_name' => "IntegrationBolt",
+                'last_name' => "BoltTest",
+                'locality' => "New York",
+                'phone' => "132 231 1234",
+                'postal_code' => "10011",
+                'region' => "New York",
+                'street_address1' => "228 7th Avenue",
+                'street_address2' => null,
+            ];
+        }
+
+        return $data;
     }
 
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
     private function getProductFactoryMock()
     {
         $product = $this->getProductMock();
@@ -370,6 +476,9 @@ class CartTest extends TestCase
         return $this->productFactory;
     }
 
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
     private function getProductMock()
     {
         $product = $this->getMockBuilder(Product::class)
