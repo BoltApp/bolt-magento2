@@ -533,7 +533,7 @@ class Cart extends AbstractHelper
      * Defer setting ReservedOrderId on the parent quote
      * until the quote to order submission.
      * Reason: Some 3rd party plugins read this value and if set
-     * consider the quote to bo a complete order.
+     * consider the quote to be a complete order.
      *
      * @param Quote $immutableQuote
      * @param Quote $quote
