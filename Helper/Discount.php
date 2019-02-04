@@ -384,11 +384,14 @@ class Discount extends AbstractHelper
     public function getUnirgyGiftCertBalanceByCode($giftcertCode)
     {
         /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-        $giftCert = $this->unirgyCertRepository->getInstance()->get($giftcertCode);
+        $unirgyInstance = $this->unirgyCertRepository->getInstance();
 
         $result = 0;
-        if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
-            $result = $giftCert->getBalance();
+        if ($unirgyInstance) {
+            $giftCert = $unirgyInstance->get($giftcertCode);
+            if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
+                $result = $giftCert->getBalance();
+            }
         }
 
         return (float) $result;
