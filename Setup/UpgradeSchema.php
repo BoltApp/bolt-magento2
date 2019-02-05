@@ -46,6 +46,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ]
         );
 
+        $setup->getConnection()->addColumn(
+            $setup->getTable('quote'),
+            'bolt_reserved_order_id',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 64,
+                'nullable' => true,
+                'comment' => 'Bolt Reserved Order Id'
+            ]
+        );
+
         $setup->getConnection()->addIndex(
             $setup->getTable('quote'),
             $setup->getIdxName('quote', ['bolt_parent_quote_id']),

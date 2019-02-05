@@ -480,7 +480,7 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
 
@@ -524,6 +524,56 @@ class Cart extends AbstractHelper
 
         // If Amasty Gif Cart Extension is present clone applied gift cards
         $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
+    }
+
+    /**
+     * Reserve Order Id for the first immutable quote created.
+     * Store it in BoltReservedOrderId field in the parent quote
+     * as well as in any subsequently created immutable quote.
+     * Defer setting ReservedOrderId on the parent quote
+     * until the quote to order submission.
+     * Reason: Some 3rd party plugins read this value and if set
+     * consider the quote to be a complete order.
+     *
+     * @param Quote $immutableQuote
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    protected function reserveOrderId($immutableQuote, $quote)
+    {
+        $reservedOrderId = $immutableQuote->getBoltReservedOrderId();
+        if (!$reservedOrderId) {
+            $reservedOrderId = $immutableQuote->reserveOrderId()->getReservedOrderId();
+            $immutableQuote->setBoltReservedOrderId($reservedOrderId);
+            $quote->setBoltReservedOrderId($reservedOrderId);
+            $this->quoteResourceSave($quote);
+        } else {
+            $immutableQuote->setReservedOrderId($reservedOrderId);
+        }
+        $this->quoteResourceSave($immutableQuote);
+    }
+
+    /**
+     * Create an immutable quote.
+     * Set the BoltParentQuoteId to the parent quote, if not set already,
+     * so it can be replicated to immutable quote in replicateQuoteData.
+     *
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    protected function createImmutableQuote($quote)
+    {
+        if (!$quote->getBoltParentQuoteId()) {
+            $quote->setBoltParentQuoteId($quote->getId());
+            $this->quoteResourceSave($quote);
+        }
+        /** @var Quote $immutableQuote */
+        $immutableQuote = $this->quoteFactory->create();
+
+        $this->replicateQuoteData($quote, $immutableQuote);
+
+        return $immutableQuote;
     }
 
     /**
@@ -574,15 +624,10 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-            $quote->setBoltParentQuoteId($quote->getId());
-            $quote->reserveOrderId();
-            $this->quoteResourceSave($quote);
-
-            /** @var Quote $immutableQuote */
-            $immutableQuote = $this->quoteFactory->create();
-
-            $this->replicateQuoteData($quote, $immutableQuote);
+            $immutableQuote = $this->createImmutableQuote($quote);
+            $this->reserveOrderId($immutableQuote, $quote);
         }
+
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
@@ -592,8 +637,6 @@ class Cart extends AbstractHelper
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            // Not an error. Commenting out bugsnag report for now.
-            // $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
             return $cart;
         }
 

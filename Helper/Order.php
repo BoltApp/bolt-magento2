@@ -508,6 +508,10 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
+        $this->cartHelper->quoteResourceSave($quote);
+
+        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
+        $this->cartHelper->quoteResourceSave($quote);
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
@@ -616,8 +620,8 @@ class Order extends AbstractHelper
 
         $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getId(),
-            'entity_id' => $quote->getId()
+            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'entity_id' => $quote->getBoltParentQuoteId()
         ];
 
         $connection->query($sql, $bind);
