@@ -977,6 +977,20 @@ class Cart extends AbstractHelper
                 }
                 ///////////////////////////////////////////////////////////////////////////
 
+                ///////////////////////////////////////////////////////////////////////////
+                /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                /// The GiftCert accumulate correct balance only after each collectTotals.
+                ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                ///  We should get the whole balance at first of the Giftcert.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
+                    $gcCode = $immutableQuote->getData('giftcert_code');
+                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
+                    if ($giftCertBalance > 0) {
+                        $amount = $giftCertBalance;
+                    }
+                }
+
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);
 
