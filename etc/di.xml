@@ -74,4 +74,76 @@
             <argument name="moduleUnirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
     </type>
+
+    <virtualType name="boltAmastyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Account</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyAccountFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\AccountFactory</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyGiftCardManagement" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\GiftCardManagement</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyQuoteFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\QuoteFactory</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyQuoteResource" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\ResourceModel\Quote</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyQuoteRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Repository\QuoteRepository</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyAccountCollection" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\ResourceModel\Account\Collection</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltUnirgyCertRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
+            <argument name="className" xsi:type="string">Unirgy\Giftcert\Model\GiftcertRepository</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Bolt\Boltpay\Helper\Discount">
+        <arguments>
+            <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
+            <argument name="amastyGiftCardManagement" xsi:type="object">boltAmastyGiftCardManagement</argument>
+            <argument name="amastyQuoteFactory" xsi:type="object">boltAmastyQuoteFactory</argument>
+            <argument name="amastyQuoteResource" xsi:type="object">boltAmastyQuoteResource</argument>
+            <argument name="amastyQuoteRepository" xsi:type="object">boltAmastyQuoteRepository</argument>
+            <argument name="amastyAccountCollection" xsi:type="object">boltAmastyAccountCollection</argument>
+            <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyCertRepository</argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="Bolt_Boltpay_Quote_Plugin" type="Bolt\Boltpay\Plugin\QuotePlugin" sortOrder="1" />
+    </type>
 </config>

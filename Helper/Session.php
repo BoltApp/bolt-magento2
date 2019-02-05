@@ -88,17 +88,17 @@ class Session extends AbstractHelper
     /**
      * Cache the session id for the quote
      *
-     * @param int|string $parentQuoteId
+     * @param int|string $qouoteId
      * @param mixed $checkoutSession
      */
-    public function saveSession($parentQuoteId, $checkoutSession)
+    public function saveSession($qouoteId, $checkoutSession)
     {
-        // cache the session id by parent quote id
-        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $parentQuoteId;
+        // cache the session id by (parent) quote id
+        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $qouoteId;
         $sessionData = [
             "sessionType" => $checkoutSession instanceof \Magento\Checkout\Model\Session ? "frontend" : "admin",
             "sessionID"   => $checkoutSession->getSessionId()
-         ];
+        ];
         $this->cache->save(serialize($sessionData), $cacheIdentifier, [], 86400);
     }
 
@@ -131,20 +131,19 @@ class Session extends AbstractHelper
      * Load logged in customer checkout and customer sessions from cached session id.
      * Replace parent quote with immutable quote in checkout session.
      *
-     * @param Quote $immutableQuote
+     * @param Quote $quote
      * @throws \Magento\Framework\Exception\SessionException
      */
-    public function loadSession($immutableQuote)
+    public function loadSession($quote)
     {
-
         // not an API call, no need to emulate session
         if ($this->appState->getAreaCode() != \Magento\Framework\App\Area::AREA_WEBAPI_REST) {
-            $this->replaceQuote($immutableQuote);
+            $this->replaceQuote($quote);
             return;
         }
 
-        $customerId = $immutableQuote->getCustomerId();
-        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $immutableQuote->getBoltParentQuoteId();
+        $customerId = $quote->getCustomerId();
+        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
         if ($serialized = $this->cache->load($cacheIdentifier)) {
             $sessionData = unserialize($serialized);
@@ -166,6 +165,6 @@ class Session extends AbstractHelper
         if ($customerId) {
             $this->customerSession->loginById($customerId);
         }
-        $this->replaceQuote($immutableQuote);
+        $this->replaceQuote($quote);
     }
 }

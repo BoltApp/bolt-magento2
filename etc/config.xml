@@ -46,6 +46,7 @@ tr.shipping.totals td.amount span.price,
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>
                 <reset_shipping_calculation>0</reset_shipping_calculation>
+                <minicart_support>1</minicart_support>
             </boltpay>
         </payment>
     </default>

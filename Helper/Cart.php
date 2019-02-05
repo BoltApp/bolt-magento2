@@ -43,6 +43,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Boltpay Cart helper
@@ -139,6 +140,11 @@ class Cart extends AbstractHelper
      */
     private $checkoutHelper;
 
+    /**
+     * @var DiscountHelper
+     */
+    private $discountHelper;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -154,17 +160,19 @@ class Cart extends AbstractHelper
         'email',
     ];
 
-    ///////////////////////////////////////////////////////
-    // Store discount types, internal and 3rd party.
+    /////////////////////////////////////////////////////////////////////////////
+    // Store discount type keys and description prefixes, internal and 3rd party.
     // Can appear as keys in Quote::getTotals result array.
-    ///////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////////
     private $discountTypes = [
-        'giftvoucheraftertax',
-        'giftcardaccount',
-        'ugiftcert',
+        Discount::GIFT_VOUCHER_AFTER_TAX => '',
+        Discount::GIFT_CARD_ACCOUNT => '',
+        Discount::UNIRGY_GIFT_CERT => '',
+        Discount::AMASTY_GIFTCARD => 'Gift Card ',
+        Discount::GIFT_VOUCHER => ''
     ];
+    /////////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////
     // Totals adjustment treshold
     private $treshold = 0.01;
 
@@ -188,6 +196,7 @@ class Cart extends AbstractHelper
      * @param QuoteResource     $quoteResource
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
+     * @param DiscountHelper $discountHelper
      *
      * @codeCoverageIgnore
      */
@@ -210,7 +219,8 @@ class Cart extends AbstractHelper
         SearchCriteriaBuilder $searchCriteriaBuilder,
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
-        CheckoutHelper $checkoutHelper
+        CheckoutHelper $checkoutHelper,
+        DiscountHelper $discountHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -231,6 +241,7 @@ class Cart extends AbstractHelper
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -286,13 +297,6 @@ class Cart extends AbstractHelper
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
-
-        $this->_eventManager->dispatch(
-            'sales_quote_save_after',
-            [
-                'quote' => $quote
-            ]
-        );
     }
 
     /**
@@ -305,12 +309,6 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        $this->_eventManager->dispatch(
-            'sales_quote_save_after',
-            [
-                'quote' => $quote
-            ]
-        );
     }
 
     /**
@@ -482,7 +480,7 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
 
@@ -492,6 +490,90 @@ class Cart extends AbstractHelper
             $child->setData($key, $value);
         }
         if ($save) $child->save();
+    }
+
+    /**
+     * Clone quote data from source to destination
+     *
+     * @param Quote $source
+     * @param Quote $destination
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    public function replicateQuoteData($source, $destination)
+    {
+        $destinationId = $destination->getId();
+        $destinationActive = (bool)$destination->getIsActive();
+
+        $destination->removeAllItems();
+
+        $destination->merge($source);
+
+        $destination->getBillingAddress()->setShouldIgnoreValidation(true);
+        $this->transferData($source->getBillingAddress(), $destination->getBillingAddress());
+
+        $destination->getShippingAddress()->setShouldIgnoreValidation(true);
+        $this->transferData($source->getShippingAddress(), $destination->getShippingAddress());
+
+        $this->transferData($source, $destination, false);
+
+        $destination->setId($destinationId);
+        $destination->setIsActive($destinationActive);
+
+        $this->quoteResourceSave($destination);
+
+        // If Amasty Gif Cart Extension is present clone applied gift cards
+        $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
+    }
+
+    /**
+     * Reserve Order Id for the first immutable quote created.
+     * Store it in BoltReservedOrderId field in the parent quote
+     * as well as in any subsequently created immutable quote.
+     * Defer setting ReservedOrderId on the parent quote
+     * until the quote to order submission.
+     * Reason: Some 3rd party plugins read this value and if set
+     * consider the quote to be a complete order.
+     *
+     * @param Quote $immutableQuote
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    protected function reserveOrderId($immutableQuote, $quote)
+    {
+        $reservedOrderId = $immutableQuote->getBoltReservedOrderId();
+        if (!$reservedOrderId) {
+            $reservedOrderId = $immutableQuote->reserveOrderId()->getReservedOrderId();
+            $immutableQuote->setBoltReservedOrderId($reservedOrderId);
+            $quote->setBoltReservedOrderId($reservedOrderId);
+            $this->quoteResourceSave($quote);
+        } else {
+            $immutableQuote->setReservedOrderId($reservedOrderId);
+        }
+        $this->quoteResourceSave($immutableQuote);
+    }
+
+    /**
+     * Create an immutable quote.
+     * Set the BoltParentQuoteId to the parent quote, if not set already,
+     * so it can be replicated to immutable quote in replicateQuoteData.
+     *
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    protected function createImmutableQuote($quote)
+    {
+        if (!$quote->getBoltParentQuoteId()) {
+            $quote->setBoltParentQuoteId($quote->getId());
+            $this->quoteResourceSave($quote);
+        }
+        /** @var Quote $immutableQuote */
+        $immutableQuote = $this->quoteFactory->create();
+
+        $this->replicateQuoteData($quote, $immutableQuote);
+
+        return $immutableQuote;
     }
 
     /**
@@ -542,39 +624,19 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-            $quote->setBoltParentQuoteId($quote->getId());
-            $quote->reserveOrderId();
-            $this->quoteResourceSave($quote);
-
-            /** @var Quote $immutableQuote */
-            $immutableQuote = $this->quoteFactory->create();
-
-            $immutableQuote->merge($quote);
-
-            $immutableQuote->getBillingAddress()->setShouldIgnoreValidation(true);
-            $this->transferData($quote->getBillingAddress(), $immutableQuote->getBillingAddress());
-
-            $immutableQuote->getShippingAddress()->setShouldIgnoreValidation(true);
-            $this->transferData($quote->getShippingAddress(), $immutableQuote->getShippingAddress());
-
-            $this->transferData($quote, $immutableQuote, false);
-
-            $immutableQuote->setId(null);
-            $immutableQuote->setIsActive(false);
-
-            $this->quoteResourceSave($immutableQuote);
+            $immutableQuote = $this->createImmutableQuote($quote);
+            $this->reserveOrderId($immutableQuote, $quote);
         }
+
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
 
-        // Get array of all items what can be display directly
+        // Get array of all items that can be display directly
         $items = $immutableQuote->getAllVisibleItems();
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            // Not an error. Commenting out bugsnag report for now.
-            // $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
             return $cart;
         }
 
@@ -899,18 +961,52 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
-        foreach ($this->discountTypes as $discount) {
+        foreach ($this->discountTypes as $discount => $description) {
+
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                ///////////////////////////////////////////////////////////////////////////
+                // If Amasty gift cards can be used for shipping and tax (PayForEverything)
+                // accumulate all the applied gift cards balance as discount amount. If the
+                // final discounts sum is greater than the cart total amount ($totalAmount < 0)
+                // the "fixed_amount" type is added below.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount ==  Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
+
+                    $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
+                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
+                }
+                ///////////////////////////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////////////////////////////
+                /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                /// The GiftCert accumulate correct balance only after each collectTotals.
+                ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                ///  We should get the whole balance at first of the Giftcert.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
+                    $gcCode = $immutableQuote->getData('giftcert_code');
+                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
+                    if ($giftCertBalance > 0) {
+                        $amount = $giftCertBalance;
+                    }
+                }
+
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);
 
                 $cart['discounts'][] = [
-                    'description' => @$totals[$discount]->getTitle(),
+                    'description' => $description . @$totals[$discount]->getTitle(),
                     'amount'      => $roundedAmount,
                 ];
 
-                $diff -= $amount * 100 - $roundedAmount;
-                $totalAmount -= $roundedAmount;
+                if ($discount == Discount::GIFT_VOUCHER) {
+                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
+                    // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
+                    $cart['discounts'][0]['amount'] -= $roundedAmount;
+                } else {
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
