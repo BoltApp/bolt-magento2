@@ -295,12 +295,11 @@ class CartTest extends TestCase
     }
 
     /**
-     * @param bool $shouldBeEmpty
      * @return \PHPUnit_Framework_MockObject_MockObject
      */
-    private function getBillingAddress($shouldBeEmpty = false)
+    private function getBillingAddress()
     {
-        $addressData = $this->getAddressData($shouldBeEmpty);
+        $addressData = $this->getAddressData();
         $billingAddress = $this->getMockBuilder(Quote\Address::class)
             ->setMethods([
                 'getFirstname', 'getLastname', 'getCompany', 'getTelephone', 'getStreetLine',
@@ -340,54 +339,32 @@ class CartTest extends TestCase
     }
 
     /**
-     * @param bool $shouldBeEmpty
      * @return \PHPUnit_Framework_MockObject_MockObject
      */
-    private function getShippingAddress($shouldBeEmpty = false)
+    private function getShippingAddress()
     {
-        return $this->getBillingAddress($shouldBeEmpty);
+        return $this->getBillingAddress();
     }
 
     /**
-     * @param bool $shouldBeEmpty
      * @return array
      */
-    private function getAddressData($shouldBeEmpty = false)
+    private function getAddressData()
     {
-        if ($shouldBeEmpty) {
-            $data = [
-                'company' => "",
-                'country' => "United States",
-                'country_code' => "US",
-                'email' => null,
-                'first_name' => "n/a",
-                'last_name' => "n/a",
-                'name' => "n/a",
-                'locality' => "New York",
-                'region' => "New York",
-                'phone' => "132 231 1234",
-                'postal_code' => "10011",
-                'street_address1' => "",
-                'street_address2' => null,
-            ];
-        } else {
-            $data = [
-                'company' => "",
-                'country' => "United States",
-                'country_code' => "US",
-                'email' => "integration@bolt.com",
-                'first_name' => "IntegrationBolt",
-                'last_name' => "BoltTest",
-                'locality' => "New York",
-                'phone' => "132 231 1234",
-                'postal_code' => "10011",
-                'region' => "New York",
-                'street_address1' => "228 7th Avenue",
-                'street_address2' => null,
-            ];
-        }
-
-        return $data;
+        return [
+            'company' => "",
+            'country' => "United States",
+            'country_code' => "US",
+            'email' => "integration@bolt.com",
+            'first_name' => "IntegrationBolt",
+            'last_name' => "BoltTest",
+            'locality' => "New York",
+            'phone' => "132 231 1234",
+            'postal_code' => "10011",
+            'region' => "New York",
+            'street_address1' => "228 7th Avenue",
+            'street_address2' => null,
+        ];
     }
 
     /**
