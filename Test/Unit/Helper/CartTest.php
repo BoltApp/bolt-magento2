@@ -139,7 +139,7 @@ class CartTest extends TestCase
     /**
      * @test
      */
-    public function getCartData()
+    public function getCartData_multistepNoDiscount()
     {
         $billingAddress = $this->getBillingAddress();
         $shippingAddress = $this->getShippingAddress();
