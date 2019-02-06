@@ -211,7 +211,7 @@ class CartTest extends TestCase
                 'email'=> "integration@bolt.com"
             ],
             'discounts' => [],
-            'total_amount' => 10000.0,
+            'total_amount' => 10000,
             'tax_amount' => 0
         ];
 
