@@ -230,7 +230,7 @@ class CartTest extends TestCase
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods([
                 'getSku', 'getQty', 'getCalculationPrice', 'getName', 'getIsVirtual',
-                'getProductId'
+                'getProductId', 'getProduct'
             ])
             ->disableOriginalConstructor()
             ->getMock();
@@ -246,6 +246,8 @@ class CartTest extends TestCase
             ->willReturn(false);
         $quoteItem->method('getProductId')
             ->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')
+            ->willReturn($this->getProductMock());
 
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
@@ -411,7 +413,7 @@ class CartTest extends TestCase
     private function getProductMock()
     {
         $product = $this->getMockBuilder(Product::class)
-            ->setMethods(['getId', 'getDescription'])
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getOrderOptions'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -419,7 +421,12 @@ class CartTest extends TestCase
             ->willReturn(self::PRODUCT_ID);
         $product->method('getDescription')
             ->willReturn('Product Description');
-
+        $product->method('getTypeInstance')
+            ->with(true)
+            ->willReturnSelf();
+        $product->method('getOrderOptions')
+            ->withAnyParameters()
+            ->willReturn([]);
 
         return $product;
     }
