@@ -477,7 +477,7 @@ class Order extends AbstractHelper
     {
         // Load and prepare parent quote
         /** @var Quote $quote */
-        $quote = $this->cartHelper->getActiveQuoteById($immutableQuote->getBoltParentQuoteId());
+        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
 
         $this->cartHelper->quoteResourceSave($quote);
