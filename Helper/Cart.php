@@ -598,7 +598,7 @@ class Cart extends AbstractHelper
         try {
             /** @var Quote $quote */
             $quote = $immutableQuote ?
-                $this->getActiveQuoteById($immutableQuote->getBoltParentQuoteId()) :
+                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
                 $this->checkoutSession->getQuote();
         } catch (NoSuchEntityException $e) {
             // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
