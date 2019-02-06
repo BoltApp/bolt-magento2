@@ -598,7 +598,7 @@ class Cart extends AbstractHelper
         try {
             /** @var Quote $quote */
             $quote = $immutableQuote ?
-                $this->getActiveQuoteById($immutableQuote->getBoltParentQuoteId()) :
+                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
                 $this->checkoutSession->getQuote();
         } catch (NoSuchEntityException $e) {
             // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
@@ -700,6 +700,14 @@ class Cart extends AbstractHelper
              * @var \Magento\Catalog\Model\Product
              */
             $_product = $this->productFactory->create()->load($productId);
+            $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+            if(isset($item_options['attributes_info'])){
+                $properties = array();
+                foreach($item_options['attributes_info'] as $attribute_info){
+                    $properties[] = (object) array( "name" => $attribute_info['label'], "value" => $attribute_info['value'] );
+                }
+                $product['properties'] = $properties;
+            }
             $product['description'] = strip_tags($_product->getDescription());
             try {
                 $productImage = $imageBlock->getImage($_product, 'product_small_image');
