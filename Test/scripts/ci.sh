@@ -13,4 +13,4 @@ mkdir -p magento/app/code/Bolt/Boltpay
 cp -r project/. magento/app/code/Bolt/Boltpay/
 cp magento/app/code/Bolt/Boltpay/Test/Unit/phpunit.xml magento/dev/tests/unit/bolt_phpunit.xml
 echo "Starting Bolt Unit Tests"
-php magento/vendor/phpunit/phpunit/phpunit  --testdox --verbose -c magento/dev/tests/unit/bolt_phpunit.xml
+php magento/vendor/phpunit/phpunit/phpunit --verbose -c magento/dev/tests/unit/bolt_phpunit.xml
