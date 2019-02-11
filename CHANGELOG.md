@@ -34,3 +34,10 @@
  - Sent store order notifications to email collected from Bolt checkout
  - Create order from parent quote
  - Do not cache empty shipping options array
+ ## [v1.1.10](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.9) 2019-02-11
+ - Add support for item properties
+ - Tax mismatch adjustment
+ - Unirgy_Giftcert plugin support
+ - Remove active quote restriction on order creation (backend order fix)
+ - Reserve Order ID for the child quote, defer setting parent quote order ID until just before quote to order submission
+ 
