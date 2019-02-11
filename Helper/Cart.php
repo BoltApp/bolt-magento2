@@ -297,17 +297,6 @@ class Cart extends AbstractHelper
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
-
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
-
     }
 
     /**
@@ -320,15 +309,6 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
     }
 
     /**
@@ -500,7 +480,7 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
 
@@ -547,6 +527,56 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Reserve Order Id for the first immutable quote created.
+     * Store it in BoltReservedOrderId field in the parent quote
+     * as well as in any subsequently created immutable quote.
+     * Defer setting ReservedOrderId on the parent quote
+     * until the quote to order submission.
+     * Reason: Some 3rd party plugins read this value and if set
+     * consider the quote to be a complete order.
+     *
+     * @param Quote $immutableQuote
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    protected function reserveOrderId($immutableQuote, $quote)
+    {
+        $reservedOrderId = $immutableQuote->getBoltReservedOrderId();
+        if (!$reservedOrderId) {
+            $reservedOrderId = $immutableQuote->reserveOrderId()->getReservedOrderId();
+            $immutableQuote->setBoltReservedOrderId($reservedOrderId);
+            $quote->setBoltReservedOrderId($reservedOrderId);
+            $this->quoteResourceSave($quote);
+        } else {
+            $immutableQuote->setReservedOrderId($reservedOrderId);
+        }
+        $this->quoteResourceSave($immutableQuote);
+    }
+
+    /**
+     * Create an immutable quote.
+     * Set the BoltParentQuoteId to the parent quote, if not set already,
+     * so it can be replicated to immutable quote in replicateQuoteData.
+     *
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    protected function createImmutableQuote($quote)
+    {
+        if (!$quote->getBoltParentQuoteId()) {
+            $quote->setBoltParentQuoteId($quote->getId());
+            $this->quoteResourceSave($quote);
+        }
+        /** @var Quote $immutableQuote */
+        $immutableQuote = $this->quoteFactory->create();
+
+        $this->replicateQuoteData($quote, $immutableQuote);
+
+        return $immutableQuote;
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -568,7 +598,7 @@ class Cart extends AbstractHelper
         try {
             /** @var Quote $quote */
             $quote = $immutableQuote ?
-                $this->getActiveQuoteById($immutableQuote->getBoltParentQuoteId()) :
+                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
                 $this->checkoutSession->getQuote();
         } catch (NoSuchEntityException $e) {
             // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
@@ -594,15 +624,10 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-            $quote->setBoltParentQuoteId($quote->getId());
-            $quote->reserveOrderId();
-            $this->quoteResourceSave($quote);
-
-            /** @var Quote $immutableQuote */
-            $immutableQuote = $this->quoteFactory->create();
-
-            $this->replicateQuoteData($quote, $immutableQuote);
+            $immutableQuote = $this->createImmutableQuote($quote);
+            $this->reserveOrderId($immutableQuote, $quote);
         }
+
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
@@ -612,8 +637,6 @@ class Cart extends AbstractHelper
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            // Not an error. Commenting out bugsnag report for now.
-            // $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
             return $cart;
         }
 
@@ -677,6 +700,14 @@ class Cart extends AbstractHelper
              * @var \Magento\Catalog\Model\Product
              */
             $_product = $this->productFactory->create()->load($productId);
+            $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+            if(isset($item_options['attributes_info'])){
+                $properties = array();
+                foreach($item_options['attributes_info'] as $attribute_info){
+                    $properties[] = (object) array( "name" => $attribute_info['label'], "value" => $attribute_info['value'] );
+                }
+                $product['properties'] = $properties;
+            }
             $product['description'] = strip_tags($_product->getDescription());
             try {
                 $productImage = $imageBlock->getImage($_product, 'product_small_image');
@@ -953,6 +984,20 @@ class Cart extends AbstractHelper
                     $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
                 }
                 ///////////////////////////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////////////////////////////
+                /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                /// The GiftCert accumulate correct balance only after each collectTotals.
+                ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                ///  We should get the whole balance at first of the Giftcert.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
+                    $gcCode = $immutableQuote->getData('giftcert_code');
+                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
+                    if ($giftCertBalance > 0) {
+                        $amount = $giftCertBalance;
+                    }
+                }
 
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);

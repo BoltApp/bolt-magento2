@@ -421,6 +421,48 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check for Tax mismatch between Bolt and Magento.
+     * Override store value with the Bolt one if a mismatch was found.
+     *
+     * @param \stdClass $transaction
+     * @param OrderModel $order
+     * @param Quote $quote
+     */
+    private function adjustTaxMismatch($transaction, $order, $quote)
+    {
+        $boltTaxAmount = round($transaction->order->cart->tax_amount->amount / 100, 2);
+        $boltTotalAmount = round($transaction->order->cart->total_amount->amount / 100, 2);
+
+        $orderTaxAmount = round($order->getTaxAmount(), 2);
+
+        if ($boltTaxAmount != $orderTaxAmount) {
+
+            $order->setTaxAmount($boltTaxAmount);
+            $order->setBaseGrandTotal($boltTotalAmount);
+            $order->setGrandTotal($boltTotalAmount);
+
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTaxAmount, $orderTaxAmount) {
+
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+
+                $report->setMetaData([
+                    'TAX MISMATCH' => [
+                        'Store Applied Taxes' => $address->getAppliedTaxes(),
+                        'Bolt Tax Amount' => $boltTaxAmount,
+                        'Store Tax Amount' => $orderTaxAmount,
+                        'Order #' => $quote->getReservedOrderId(),
+                        'Quote ID' => $quote->getId(),
+
+                    ]
+                ]);
+            });
+
+            $diff = round($boltTaxAmount - $orderTaxAmount, 2);
+            $this->bugsnag->notifyError('Tax Mismatch', "Totals adjusted by $diff");
+        }
+    }
+
+    /**
      * Transform Quote to Order and send email to the customer.
      *
      * @param Quote $immutableQuote
@@ -434,8 +476,8 @@ class Order extends AbstractHelper
     private function createOrder($immutableQuote, $transaction, $boltTraceId = null)
     {
         // Load and prepare parent quote
-        /** @var Quote $parentQuote */
-        $quote = $this->cartHelper->getActiveQuoteById($immutableQuote->getBoltParentQuoteId());
+        /** @var Quote $quote */
+        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
 
         $this->cartHelper->quoteResourceSave($quote);
@@ -466,6 +508,10 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
+        $this->cartHelper->quoteResourceSave($quote);
+
+        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
+        $this->cartHelper->quoteResourceSave($quote);
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
@@ -498,6 +544,11 @@ class Order extends AbstractHelper
                 $quote->getId(),
                 $immutableQuote->getId()
             ));
+        }
+
+        // Check and fix tax mismatch
+        if ($this->configHelper->shouldAdjustTaxMismatch()) {
+            $this->adjustTaxMismatch($transaction, $order, $quote);
         }
 
         // Save reference to the Bolt transaction with the order
@@ -569,8 +620,8 @@ class Order extends AbstractHelper
 
         $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getId(),
-            'entity_id' => $quote->getId()
+            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'entity_id' => $quote->getBoltParentQuoteId()
         ];
 
         $connection->query($sql, $bind);
