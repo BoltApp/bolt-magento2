@@ -79,6 +79,7 @@ class Order extends AbstractHelper
         null => [
             self::TS_ZERO_AMOUNT,
             self::TS_PENDING,
+            self::TS_COMPLETED, // back office
             // for historic data (order placed before plugin update) does not have "previous state"
             self::TS_CREDIT_COMPLETED
         ],
@@ -753,7 +754,7 @@ class Order extends AbstractHelper
         // It can corelate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
         if (!$prevTransactionState && !$transactionReference && !$transactionId) {
-            if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
+            if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_COMPLETED, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
             }
             return self::TS_PENDING;
