@@ -1067,13 +1067,12 @@ $trackCallbacks = $block->getTrackCallbacks();
         ///////////////////////////////////////////////////////////
 
         ////////////////////////////////////////////////////
-        // Configure BoltCheckout. Sets up callbacks,
-        // cart and hints are still empty at this point.
+        // Initially configures BoltCheckout.
         // Required for setting check callback which either
         // enables Bolt checkout or opens authentication
         // popup when button is clicked.
         ////////////////////////////////////////////////////
-        BoltCheckout.configure(cart, hints, callbacks);
+        createOrder();
         ////////////////////////////////////////////////////
     });
 
