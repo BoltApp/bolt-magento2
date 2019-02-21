@@ -24,6 +24,7 @@ use Magento\Framework\Module\ModuleResource;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\Context as ContextHelper;
+use Magento\Framework\App\Request\Http as Request;
 
 /**
  * Class ConfigTest
@@ -63,6 +64,11 @@ class ConfigTest extends TestCase
     private $contextHelper;
 
     /**
+     * @var Request
+     */
+    private $request;
+
+    /**
      * @inheritdoc
      */
     public function setUp()
@@ -76,6 +82,7 @@ class ConfigTest extends TestCase
             ->getMock();
 
         $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
+        $this->request = $this->createMock(Request::class);
 
         $methods = ['getGlobalCSS', 'isDebugModeOn', 'getScopeConfig'];
         $this->currentMock = $this->getMockBuilder(BoltConfig::class)
@@ -86,7 +93,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -172,7 +180,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -201,7 +210,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -230,7 +240,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -257,7 +268,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -413,7 +425,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();
@@ -440,7 +453,8 @@ class ConfigTest extends TestCase
                     $this->contextHelper,
                     $this->encryptor,
                     $this->moduleResource,
-                    $this->productMetadata
+                    $this->productMetadata,
+                    $this->request
                 ]
             )
             ->getMock();

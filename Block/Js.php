@@ -317,8 +317,8 @@ class Js extends Template
     }
 
     /**
-     * Get whitelisted pages, the default shopping cart and checkout pages
-     * and pages stored in "pageFilters.whitelist" additional configuration,
+     * Get whitelisted pages, the default, non cached, shopping cart and checkout pages,
+     * and the pages stored in "pageFilters.whitelist" additional configuration,
      * as an array of "Full Action Name" identifiers, [<router_controller_action>]
      *
      * @return array
@@ -330,7 +330,8 @@ class Js extends Template
 
     /**
      * Check if Bolt checkout is restricted on the current loading page.
-     * Takes into account Minicart support and whitelisted / blacklisted pages configuration.
+     * Takes into account Minicart support and whitelisted / blacklisted pages configuration
+     * as well as the IP restriction.
      * "Full Action Name", <router_controller_action>, is used to identify the page.
      *
      * @return bool
@@ -339,30 +340,47 @@ class Js extends Template
     {
         $currentPage = $this->getRequest()->getFullActionName();
 
-        // check if the page is blacklisted
+        // Check if the page is blacklisted
         if (in_array($currentPage, $this->getPageBlacklist())) {
             return true;
         }
 
-        // if minicart is supported there are no additional restrictions
-        if ($this->configHelper->getMinicartSupport()) {
+        // If minicart is supported (allowing Bolt on every page)
+        // and no IP whitelist is defined there are no additional restrictions.
+        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
             return false;
         }
 
-        // check if the page is whitelisted if minicart is not supported
-        // (Bolt loads by default only on shopping cart and checkout pages)
+        // However, if IP whitelist is defined, the Bolt checkout functionality
+        // must be limited to the non cached pages, shopping cart and checkout.
+        if ($this->configHelper->getIPWhitelistArray()) {
+            return ! in_array($currentPage, Config::$defaultPageWhitelist);
+        }
+
+        // No minicart support. Check if the page is whitelisted.
         return ! in_array($currentPage, $this->getPageWhitelist());
     }
 
     /**
+     * Check if the client IP is restricted -
+     * there is an IP whitelist and the client IP is not on the list.
+     *
+     * @return bool
+     */
+    protected function isIPRestricted()
+    {
+        return $this->configHelper->isIPRestricted();
+    }
+
+    /**
      * Determines if Bolt javascript should be loaded on the current page
-     * and Bolt checkout button displayed. Checks whether the module is active
-     * and the page is Bolt checkout restricted.
+     * and Bolt checkout button displayed. Checks whether the module is active,
+     * the page is Bolt checkout restricted and if there is an IP restriction.
      *
      * @return bool
      */
     public function shouldDisableBoltCheckout()
     {
-        return !$this->isEnabled() || $this->isPageRestricted();
+        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
     }
 }
