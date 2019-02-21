@@ -24,6 +24,7 @@ use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\Store;
+use Magento\Framework\App\Request\Http as Request;
 
 /**
  * Boltpay Configuration helper
@@ -213,6 +214,11 @@ class Config extends AbstractHelper
     const XML_PATH_MINICART_SUPPORT = 'payment/boltpay/minicart_support';
 
     /**
+     * Client IP Whitelist configuration path
+     */
+    const XML_PATH_IP_WHITELIST = 'payment/boltpay/ip_whitelist';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -237,10 +243,16 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
+     * @var Request
+     */
+    private $request;
+
+    /**
      * @param Context $context
      * @param EncryptorInterface $encryptor
      * @param ResourceInterface $moduleResource
      * @param ProductMetadataInterface $productMetadata
+     * @param Request $request
      *
      * @codeCoverageIgnore
      */
@@ -248,12 +260,14 @@ class Config extends AbstractHelper
         Context $context,
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
-        ProductMetadataInterface $productMetadata
+        ProductMetadataInterface $productMetadata,
+        Request $request
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
         $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
+        $this->request = $request;
     }
 
     /**
@@ -854,5 +868,66 @@ class Config extends AbstractHelper
     public function shouldAdjustTaxMismatch()
     {
         return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch');
+    }
+
+    /**
+     * Get Client IP Whitelist from config
+     *
+     * @return  string
+     */
+    private function getIPWhitelistConfig()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_IP_WHITELIST,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * Get an array of wtitelisted IPs
+     *
+     * @return array
+     */
+    public function getIPWhitelistArray()
+    {
+        return array_filter(array_map('trim', explode(',', $this->getIPWhitelistConfig())));
+    }
+
+    /**
+     * Gets the IP address of the requesting customer.
+     * This is used instead of simply $_SERVER['REMOTE_ADDR'] to give more accurate IPs if a proxy is being used.
+     *
+     * @return string  The IP address of the customer
+     */
+    public function getClientIp()
+    {
+        foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
+                     'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
+            if ($ips = $this->request->getServer($key, false)) {
+                foreach (explode(',', $ips) as $ip) {
+                    $ip = trim($ip); // just to be safe
+                    if (filter_var(
+                            $ip,
+                            FILTER_VALIDATE_IP,
+                            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+                        ) !== false) {
+                        return $ip;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if the client IP is restricted -
+     * there is an IP whitelist and the client IP is not on the list.
+     *
+     * @return bool
+     */
+    public function isIPRestricted()
+    {
+        $clientIP = $this->getClientIp();
+        $whitelist = $this->getIPWhitelistArray();
+        return $whitelist && ! in_array($clientIP, $whitelist);
     }
 }
