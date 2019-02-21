@@ -26,6 +26,8 @@ use Magento\Framework\Setup\SchemaSetupInterface;
  */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
+    const MERCHANT_DIVISION_URLS = 'bolt_merchant_division_urls';
+
     /**
      * {@inheritdoc}
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
@@ -62,6 +64,43 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getIdxName('quote', ['bolt_parent_quote_id']),
             ['bolt_parent_quote_id']
         );
+
+        if (version_compare($context->getVersion(), '1.1.10', '>=')) {
+            if (!$setup->tableExists(self::MERCHANT_DIVISION_URLS)) {
+                $table = $setup->getConnection()
+                    ->newTable(self::MERCHANT_DIVISION_URLS)
+                    ->addColumn(
+                        'id',
+                        \Magento\Framework\Db\Ddl\Table::TYPE_INTEGER,
+                        8,
+                        ['identity' => true, 'nullable' => false, 'primary' => true, 'unsigned' => true],
+                        'Id'
+                    )
+                    ->addColumn(
+                        'division_id',
+                        \Magento\Framework\Db\Ddl\Table::TYPE_INTEGER,
+                        8,
+                        ['nullable' => false, 'unsigned' => true],
+                        'Division Id'
+                    )
+                    ->addColumn(
+                        'type',
+                        \Magento\Framework\Db\Ddl\Table::TYPE_TEXT,
+                        20,
+                        ['nullable' => false],
+                        'Type'
+                    )
+                    ->addColumn(
+                        'url',
+                        \Magento\Framework\Db\Ddl\Table::TYPE_TEXT,
+                        4096,
+                        ['nullable' => false],
+                        'Url'
+                    );
+
+                $setup->getConnection()->createTable($table);
+            }
+        }
 
         $setup->endSetup();
     }
