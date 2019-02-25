@@ -154,10 +154,7 @@ class Cart extends AbstractHelper
         'region',
         'postal_code',
         'country_code',
-    ];
-
-    private $requiredBillingAddressFields  = [
-        'email',
+        'email'
     ];
 
     /////////////////////////////////////////////////////////////////////////////
@@ -577,6 +574,35 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Check if all the required address fields are populated.
+     *
+     * @param array $address
+     * @return bool
+     */
+    private function isAddressComplete($address)
+    {
+        foreach ($this->requiredAddressFields as $field) {
+            if (empty($address[$field])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Bugsnag address data
+     *
+     * @param array $addressData
+     */
+    private function logAddressData($addressData) {
+        $this->bugsnag->registerCallback(function ($report) use ($addressData) {
+            $report->setMetaData([
+                'ADDRESS_DATA' => $addressData
+            ]);
+        });
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -735,8 +761,16 @@ class Cart extends AbstractHelper
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // Email field is mandatory for saving the address.
+        // For back-office orders (payment only) we need to get it from the store.
+        // Trying several possible places.
+        $email = $billingAddress->getEmail()
+            ?: $shippingAddress->getEmail()
+            ?: $this->customerSession->getCustomer()->getEmail()
+            ?: $immutableQuote->getCustomerEmail();
+
         // Billing address
-        $cart['billing_address'] = [
+        $cartBillingAddress = [
             'first_name'      => $billingAddress->getFirstname(),
             'last_name'       => $billingAddress->getLastname(),
             'company'         => $billingAddress->getCompany(),
@@ -747,20 +781,18 @@ class Cart extends AbstractHelper
             'region'          => $billingAddress->getRegion(),
             'postal_code'     => $billingAddress->getPostcode(),
             'country_code'    => $billingAddress->getCountryId(),
+            'email'           => $email
         ];
-
-        $email = $billingAddress->getEmail() ?: $shippingAddress->getEmail() ?: $this->customerSession->getCustomer()->getEmail();
 
         // additional data sent, i.e. billing address from checkout page
         if ($placeOrderPayload) {
             $placeOrderPayload = json_decode($placeOrderPayload);
 
-            $email                = @$placeOrderPayload->email ?: $email;
             $billAddress          = @$placeOrderPayload->billingAddress;
             $billingStreetAddress = (array)@$billAddress->street;
 
             if ($billAddress) {
-                $cart['billing_address'] = [
+                $cartBillingAddress = [
                     'first_name'      => @$billAddress->firstname,
                     'last_name'       => @$billAddress->lastname,
                     'company'         => @$billAddress->company,
@@ -771,12 +803,14 @@ class Cart extends AbstractHelper
                     'region'          => @$billAddress->region,
                     'postal_code'     => @$billAddress->postcode,
                     'country_code'    => @$billAddress->countryId,
+                    'email'           => @$placeOrderPayload->email ?: $email
                 ];
             }
         }
 
-        if ($email) {
-            $cart['billing_address']['email'] = $email;
+        // Billing address is not mandatory set it only if it is complete
+        if ($this->isAddressComplete($cartBillingAddress)) {
+            $cart['billing_address'] = $cartBillingAddress;
         }
 
         $address = $immutableQuote->isVirtual() ? $billingAddress : $shippingAddress;
@@ -784,8 +818,13 @@ class Cart extends AbstractHelper
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
-                $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
-                $address->save();
+                if (@$cart['billing_address']){
+                    $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                    $address->save();
+                } else {
+                    $this->logAddressData($cartBillingAddress);
+                    throw new LocalizedException(__('Billing address data insufficient.'));
+                }
             } else {
                 $address->setCollectShippingRates(true);
 
@@ -809,21 +848,10 @@ class Cart extends AbstractHelper
                     'region' => $address->getRegion(),
                     'postal_code' => $address->getPostcode(),
                     'country_code' => $address->getCountryId(),
+                    'email' => $address->getEmail() ?: $email
                 ];
 
-                $email = $address->getEmail() ?: $email;
-                if ($email) {
-                    $shipAddress['email'] = $email;
-                }
-
-                foreach ($this->requiredAddressFields as $field) {
-                    if (empty($shipAddress[$field])) {
-                        unset($shipAddress);
-                        break;
-                    }
-                }
-
-                if (@$shipAddress) {
+                if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
                     $rounded_cost = $this->getRoundAmount($cost);
 
@@ -837,6 +865,9 @@ class Cart extends AbstractHelper
                         'service' => $shippingAddress->getShippingDescription(),
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
+                } else {
+                    $this->logAddressData($shipAddress);
+                    throw new LocalizedException(__('Shipping address data insufficient.'));
                 }
             }
 
@@ -856,15 +887,6 @@ class Cart extends AbstractHelper
         $cart['items'][0]['total_amount'] += round($diff);
         $totalAmount += round($diff);
         $diff = 0;
-
-        // unset billing if not all required fields are present
-        $requiredBillingFields = array_merge($this->requiredAddressFields, $this->requiredBillingAddressFields);
-        foreach ($requiredBillingFields as $field) {
-            if (empty($cart['billing_address'][$field])) {
-                unset($cart['billing_address']);
-                break;
-            }
-        }
 
         // add discount data
         $cart['discounts'] = [];
