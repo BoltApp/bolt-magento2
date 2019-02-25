@@ -28,3 +28,9 @@
  - Add currency_code field to cart currency data
  - Dispatch sales_quote_save_after event for active (parent) quotes only
  - Fixed consistency for Amasty Gift Card module
+## [v1.1.8.1](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.8.1) 2019-02-12
+ - Back-office hook no pending fix
+## [v1.1.8.2](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.8.2) 2019-02-25
+ - Checkout initialization fix
+ - Shipping and tax cart validation update
+ - Email field required for back-office orders
