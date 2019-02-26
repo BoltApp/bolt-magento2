@@ -729,6 +729,122 @@ class Order extends AbstractHelper
         }
     }
 
+    public function preAuthCreateOrder($immutableQuote, $transaction)
+    {
+        try {
+            $quote = $this->prepareQuote($immutableQuote, $transaction);
+
+            // check if the order has been created in the meanwhile
+            /** @var OrderModel $order */
+            $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+
+            if ($order && $order->getId()) {
+                throw new LocalizedException(__(
+                    'Duplicate Order Creation Attempt. Order #: %1',
+                    $quote->getReservedOrderId()
+                ));
+            }
+
+            $order = $this->quoteManagement->submit($quote);
+
+            if ($order === null) {
+                $this->bugsnag->registerCallback(function ($report) use ($quote) {
+                    $report->setMetaData([
+                        'CREATE ORDER' => [
+                            'pre-auth order.create' => true,
+                            'order increment ID' => $quote->getReservedOrderId(),
+                            'parent quote ID' => $quote->getId(),
+                        ]
+                    ]);
+                });
+
+                throw new LocalizedException(__(
+                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
+                    $quote->getReservedOrderId(),
+                    $quote->getId()
+                ));
+            }
+
+            // Check and fix tax mismatch
+            if ($this->configHelper->shouldAdjustTaxMismatch()) {
+                $this->adjustTaxMismatch($transaction, $order, $quote);
+            }
+
+            if (isset($transaction->reference)) {
+                // Save reference to the Bolt transaction with the order
+                $order->addStatusHistoryComment(
+                    __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+                );
+            }
+
+            if (Hook::$fromBolt) {
+                $order->addStatusHistoryComment(
+                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE_AUTH WEBHOOK"
+                );
+                // Send order confirmation email to customer.
+                // Emulate frontend area in order for email
+                // template to be loaded from the correct path
+                // even if run from the hook.
+                if (!$order->getEmailSent()) {
+                    $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                        $this->emailSender->send($order);
+                    });
+                }
+            } else {
+                if (!$order->getEmailSent()) {
+                    // Send order confirmation email to customer.
+                    $this->emailSender->send($order);
+                }
+            }
+
+            $order->save();
+        } catch (Zend_Http_Client_Exception $e) {
+            var_dump('Zend_Http_Client_Exception');
+            var_dump($e->getMessage());
+            die;
+        } catch (LocalizedException $e) {
+            var_dump('LocalizedException');
+            var_dump($e->getMessage());
+            die;
+        } catch (\Exception $e) {
+            var_dump('Exception');
+            var_dump($e->getMessage());
+            die;
+        }
+
+        return $order;
+    }
+
+    private function prepareQuote($immutableQuote, $transaction)
+    {
+        // Load and prepare parent quote
+        /** @var Quote $quote */
+        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
+        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+
+        $this->cartHelper->quoteResourceSave($quote);
+
+        // Load logged in customer checkout and customer sessions from cached session id.
+        // Replace quote in checkout session.
+        $this->sessionHelper->loadSession($quote);
+
+        $this->setShippingAddress($quote, $transaction);
+        $this->setBillingAddress($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
+
+        $this->setShippingMethod($quote, $transaction);
+        $this->cartHelper->quoteResourceSave($quote);
+
+        $email = @$transaction->order->cart->billing_address->email_address ?:
+            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
+        $this->addCustomerDetails($quote, $email);
+
+        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
+        $this->cartHelper->quoteResourceSave($quote);
+
+        return $quote;
+    }
+
     /**
      * Add user note as status history comment
      *
