@@ -779,7 +779,7 @@ class Order extends AbstractHelper
 
             if (Hook::$fromBolt) {
                 $order->addStatusHistoryComment(
-                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE_AUTH WEBHOOK"
+                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
                 );
                 // Send order confirmation email to customer.
                 // Emulate frontend area in order for email

@@ -148,8 +148,9 @@ class Create extends Action
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
             return $result->setData([
-                'status' => 'success',
-                'order_id' => $order->getId(),
+                'status'    => 'success',
+                'message'   => 'order.create was successful',
+                'order_id'  => $order->getId(),
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
