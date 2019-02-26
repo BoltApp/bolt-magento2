@@ -134,9 +134,12 @@ class CreateOrder implements CreateOrderInterface
         $sourceTransactionReference = null
     ) {
         try {
-            HookHelper::$fromBolt = true;
+            $payload = $this->request->getContent();
+            $this->logHelper->addInfoLog('PRE-AUTH');
+            $this->logHelper->addInfoLog($payload);
+            $this->logHelper->addInfoLog($payload->type);
 
-            $this->logHelper->addInfoLog($this->request->getContent());
+            HookHelper::$fromBolt = true;
 
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
@@ -148,10 +151,10 @@ class CreateOrder implements CreateOrderInterface
                     __('Missing required parameters.')
                 );
             }
-            $this->orderHelper->saveUpdateOrder(
-                $reference,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
-            );
+//            $this->orderHelper->saveUpdateOrder(
+//                $reference,
+//                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
+//            );
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
                 'status' => 'success',
