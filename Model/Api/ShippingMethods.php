@@ -203,8 +203,10 @@ class ShippingMethods implements ShippingMethodsInterface
 
     /**
      * Check if cart items data has changed by comparing
-     * product IDs and quantities in quote and received cart data.
-     * Also checks an empty cart case.
+     * SKUs, quantities and totals in quote and received cart data.
+     * Also checks an empty cart / quote case.
+     * A cart can hold multiple items with the same SKU, therefore
+     * the quantities and totals are matches separately.
      *
      * @param array $cart cart details
      * @param Quote $quote
@@ -214,15 +216,26 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         $cartItems = [];
         foreach ($cart['items'] as $item) {
-            $cartItems[$item['sku']] = $item['quantity'];
+            $sku = $item['sku'];
+            @$cartItems['quantity'][$sku] += $item['quantity'];
+            @$cartItems['total'][$sku] += $item['total_amount'];
         }
-
         $quoteItems = [];
         foreach ($quote->getAllVisibleItems() as $item) {
-            $quoteItems[trim($item->getSku())] = round($item->getQty());
+            $sku = trim($item->getSku());
+            $quantity = round($item->getQty());
+            $unitPrice = $item->getCalculationPrice();
+            @$quoteItems['quantity'][$sku] += $quantity;
+            @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
         }
 
-        if (!$quoteItems || $cartItems != $quoteItems) {
+        if (!$quoteItems) {
+            throw new LocalizedException(
+                __('The Cart is empty.')
+            );
+        }
+
+        if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
                 $quoteItems = array_map(function ($item) {

@@ -554,7 +554,7 @@ class ShippingMethodsTest extends TestCase
         $parentQuoteId = 1000;
 
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getSku', 'getQty'])
+            ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getSku')

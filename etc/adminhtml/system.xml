@@ -133,6 +133,10 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Set to NO to load Bolt javascript only on Shopping Cart and Checkout pages.</comment>
                 </field>
+                <field id="ip_whitelist" translate="label" type="text" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client IP Restriction</label>
+                    <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
+                </field>
             </group>
         </section>
     </system>

@@ -82,7 +82,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->helperContextMock,
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
-                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class)
+                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
+                    $this->createMock(\Magento\Framework\App\Request\Http::class)
                 ]
             )
             ->getMock();
