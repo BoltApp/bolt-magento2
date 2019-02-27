@@ -1068,6 +1068,15 @@ $trackCallbacks = $block->getTrackCallbacks();
         ///////////////////////////////////////////////////////////
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////
+        // Initially configures BoltCheckout.
+        // Required for setting check callback which either
+        // enables Bolt checkout or opens authentication
+        // popup when button is clicked.
+        ////////////////////////////////////////////////////
+        createOrder();
+        ////////////////////////////////////////////////////
     });
 
     <?php echo $block->getAdditionalJavascript(); ?>

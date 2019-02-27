@@ -145,22 +145,23 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      * Assigns local references to global resources
      *
-     * @param HookHelper $hookHelper
-     * @param RegionModel $regionModel
+     * @param HookHelper                      $hookHelper
+     * @param RegionModel                     $regionModel
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
-     * @param ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory
-     * @param CartHelper $cartHelper
-     * @param TotalsCollector $totalsCollector
-     * @param ShippingMethodConverter $converter
-     * @param ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
-     * @param Bugsnag $bugsnag
-     * @param LogHelper $logHelper
-     * @param Response $response
-     * @param ConfigHelper $configHelper
-     * @param Request $request
-     * @param CacheInterface $cache
-     * @param PriceHelper $priceHelper
-     * @param SessionHelper $sessionHelper
+     * @param ShippingTaxInterfaceFactory     $shippingTaxInterfaceFactory
+     * @param CartHelper                      $cartHelper
+     * @param TotalsCollector                 $totalsCollector
+     * @param ShippingMethodConverter         $converter
+     * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
+     * @param Bugsnag                         $bugsnag
+     * @param LogHelper                       $logHelper
+     * @param BoltErrorResponse               $errorResponse
+     * @param Response                        $response
+     * @param ConfigHelper                    $configHelper
+     * @param Request                         $request
+     * @param CacheInterface                  $cache
+     * @param PriceHelper                     $priceHelper
+     * @param SessionHelper                   $sessionHelper
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -202,27 +203,39 @@ class ShippingMethods implements ShippingMethodsInterface
 
     /**
      * Check if cart items data has changed by comparing
-     * product IDs and quantities in quote and received cart data.
-     * Also checks an empty cart case.
+     * SKUs, quantities and totals in quote and received cart data.
+     * Also checks an empty cart / quote case.
+     * A cart can hold multiple items with the same SKU, therefore
+     * the quantities and totals are matches separately.
      *
      * @param array $cart cart details
      * @param Quote $quote
      * @throws LocalizedException
      */
-    private function checkCartItems($cart, $quote)
+    protected function checkCartItems($cart, $quote)
     {
-
         $cartItems = [];
         foreach ($cart['items'] as $item) {
-            $cartItems[$item['sku']] = $item['quantity'];
+            $sku = $item['sku'];
+            @$cartItems['quantity'][$sku] += $item['quantity'];
+            @$cartItems['total'][$sku] += $item['total_amount'];
         }
-
         $quoteItems = [];
         foreach ($quote->getAllVisibleItems() as $item) {
-            $quoteItems[trim($item->getSku())] = round($item->getQty());
+            $sku = trim($item->getSku());
+            $quantity = round($item->getQty());
+            $unitPrice = $item->getCalculationPrice();
+            @$quoteItems['quantity'][$sku] += $quantity;
+            @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
         }
 
-        if (!$quoteItems || $cartItems != $quoteItems) {
+        if (!$quoteItems) {
+            throw new LocalizedException(
+                __('The Cart is empty.')
+            );
+        }
+
+        if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
                 $quoteItems = array_map(function ($item) {
@@ -298,12 +311,9 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingMethods($cart, $shipping_address)
     {
         try {
-            // $this->logHelper->addInfoLog($this->request->getContent());
+//            $this->logHelper->addInfoLog($this->request->getContent());
 
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
-
-            $this->hookHelper->verifyWebhook();
+            $this->preprocessHook();
 
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -312,9 +322,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
             if (!$quote || !$quote->getId()) {
-                throw new LocalizedException(
-                    __('Unknown quote id: %1.', $quoteId)
-                );
+                $this->throwUnknownQuoteIdException($quoteId);
             }
 
             $this->checkCartItems($cart, $quote);
@@ -324,7 +332,10 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->sessionHelper->loadSession($quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-            $this->validateAddressData($addressData);
+
+            if (isset($addressData['email']) && $addressData['email'] !== null) {
+                $this->validateAddressData($addressData);
+            }
 
             $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
 
@@ -339,16 +350,68 @@ class ShippingMethods implements ShippingMethodsInterface
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
-            $this->bugsnag->notifyException($e);
-            $this->sendErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
+            $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
-            $this->bugsnag->notifyException($e);
-            $this->sendErrorResponse($e->getCode(), $e->getMessage(), 422);
+            $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-            $this->sendErrorResponse(6009, $msg, 422);
+            $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
+    }
+
+    /**
+     * @param        $exception
+     * @param string $msg
+     * @param int    $code
+     * @param int    $httpStatusCode
+     */
+    protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
+    {
+        $this->bugsnag->notifyException($exception);
+
+        $this->sendErrorResponse($code, $msg, $httpStatusCode);
+    }
+
+    /**
+     * @param $quoteId
+     * @throws LocalizedException
+     */
+    protected function throwUnknownQuoteIdException($quoteId)
+    {
+        throw new LocalizedException(
+            __('Unknown quote id: %1.', $quoteId)
+        );
+    }
+
+    /**
+     * @param $quote
+     * @throws \Magento\Framework\Exception\SessionException
+     */
+    protected function loadSessionByQuote($quote)
+    {
+        return $this->sessionHelper->loadSession($quote);
+    }
+
+    /**
+     * @param $quoteId
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function getQuoteById($quoteId)
+    {
+        return $this->cartHelper->getQuoteById($quoteId);
+    }
+
+    /**
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Webapi\Exception
+     */
+    protected function preprocessHook()
+    {
+        $this->hookHelper->setCommonMetaData();
+        $this->hookHelper->setHeaders();
+
+        $this->hookHelper->verifyWebhook();
     }
 
     /**
@@ -369,7 +432,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
             // use parent quote id for caching.
             // if everything else matches the cache is used more efficiently this way
-            $parentQuoteId =$quote->getBoltParentQuoteId();
+            $parentQuoteId = $quote->getBoltParentQuoteId();
 
             $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
                 $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code'];
@@ -445,17 +508,30 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $shippingMethods = $this->getShippingOptions($quote, $addressData);
 
-        $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
-        $shippingOptionsModel->setShippingOptions($shippingMethods);
-
-        $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
-        $shippingTaxModel->setAmount(0);
-        $shippingOptionsModel->setTaxResult($shippingTaxModel);
+        $shippingOptionsModel = $this->getShippingOptionsData($shippingMethods);
 
         // Cache the calculated result
         if ($prefetchShipping) {
             $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
         }
+
+        return $shippingOptionsModel;
+    }
+
+    /**
+     * Set shipping methods to the ShippingOptions object
+     *
+     * @param $shippingMethods
+     */
+    protected function getShippingOptionsData($shippingMethods)
+    {
+        $shippingOptionsModel = $this->shippingOptionsInterfaceFactory->create();
+
+        $shippingTaxModel = $this->shippingTaxInterfaceFactory->create();
+        $shippingTaxModel->setAmount(0);
+
+        $shippingOptionsModel->setShippingOptions($shippingMethods);
+        $shippingOptionsModel->setTaxResult($shippingTaxModel);
 
         return $shippingOptionsModel;
     }
@@ -490,7 +566,7 @@ class ShippingMethods implements ShippingMethodsInterface
      *
      * @return ShippingOptionInterface[]
      */
-    private function getShippingOptions($quote, $addressData)
+    public function getShippingOptions($quote, $addressData)
     {
         if ($quote->isVirtual()) {
             $billingAddress = $quote->getBillingAddress();
@@ -620,8 +696,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
                 $report->setMetaData([
                     'SHIPPING METHOD' => [
-                      'address' => $addressData,
-                      'errors'  => $errors
+                        'address' => $addressData,
+                        'errors'  => $errors
                     ]
                 ]);
             });
@@ -629,17 +705,34 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->notifyError('Shipping Method Error', $error);
         }
 
+        if (!$shippingMethods) {
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $addressData) {
+                $report->setMetaData([
+                    'SHIPPING AND_TAX' => [
+                        'address' => $addressData,
+                        'immutable quote ID' => $quote->getId(),
+                        'parent quote ID' => $quote->getBoltParentQuoteId(),
+                        'order increment ID' => $quote->getReservedOrderId()
+                    ]
+                ]);
+            });
+
+            throw new BoltException(
+                __('No Shipping Methods retrieved'),
+                null,
+                BoltErrorResponse::ERR_SERVICE
+            );
+        }
+
         return $shippingMethods;
     }
-
 
     /**
      * @param      $errCode
      * @param      $message
      * @param      $httpStatusCode
-     * @param null $quote
      */
-    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    protected function sendErrorResponse($errCode, $message, $httpStatusCode)
     {
         $encodeErrorResult = $this->errorResponse->prepareErrorMessage($errCode, $message);
 
