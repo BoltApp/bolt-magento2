@@ -727,93 +727,115 @@ class Order extends AbstractHelper
         }
     }
 
-    public function preAuthCreateOrder($immutableQuote, $transaction)
+    /**
+     * @param \Magento\Quote\Model\Quote $immutableQuote
+     * @param string $transaction
+     * @return OrderModel
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Magento\Framework\Exception\SessionException
+     * @throws \Zend_Validate_Exception
+     */
+    public function preAuthCreateOrder($immutableQuote, $payload)
     {
-        try {
-            $quote = $this->prepareQuote($immutableQuote, $transaction);
+        // Convert to stdClass
+        $transaction = json_decode($payload);
 
-            // check if the order has been created in the meanwhile
-            /** @var OrderModel $order */
-            $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+        $quote = $this->prepareQuote($immutableQuote, $transaction);
 
-            if ($order && $order->getId()) {
-                throw new LocalizedException(__(
-                    'Duplicate Order Creation Attempt. Order #: %1',
-                    $quote->getReservedOrderId()
-                ));
-            }
+        // check if the order has been created in the meanwhile
+        $this->isOrderExist($quote);
 
-            $order = $this->quoteManagement->submit($quote);
+        /** @var \Magento\Sales\Model\Order $order */
+        $order = $this->quoteManagement->submit($quote);
 
-            if ($order === null) {
-                $this->bugsnag->registerCallback(function ($report) use ($quote) {
-                    $report->setMetaData([
-                        'CREATE ORDER' => [
-                            'pre-auth order.create' => true,
-                            'order increment ID' => $quote->getReservedOrderId(),
-                            'parent quote ID' => $quote->getId(),
-                        ]
-                    ]);
-                });
+        if ($order === null) {
+            $this->bugsnag->registerCallback(function ($report) use ($quote) {
+                $report->setMetaData([
+                    'CREATE ORDER' => [
+                        'pre-auth order.create' => true,
+                        'order increment ID' => $quote->getReservedOrderId(),
+                        'parent quote ID' => $quote->getId(),
+                    ]
+                ]);
+            });
 
-                throw new LocalizedException(__(
-                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                    $quote->getReservedOrderId(),
-                    $quote->getId()
-                ));
-            }
-
-            // Check and fix tax mismatch
-            if ($this->configHelper->shouldAdjustTaxMismatch()) {
-                $this->adjustTaxMismatch($transaction, $order, $quote);
-            }
-
-            if (isset($transaction->reference)) {
-                // Save reference to the Bolt transaction with the order
-                $order->addStatusHistoryComment(
-                    __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
-                );
-            }
-
-            if (Hook::$fromBolt) {
-                $order->addStatusHistoryComment(
-                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
-                );
-                // Send order confirmation email to customer.
-                // Emulate frontend area in order for email
-                // template to be loaded from the correct path
-                // even if run from the hook.
-                if (!$order->getEmailSent()) {
-                    $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                        $this->emailSender->send($order);
-                    });
-                }
-            } else {
-                if (!$order->getEmailSent()) {
-                    // Send order confirmation email to customer.
-                    $this->emailSender->send($order);
-                }
-            }
-
-            $order->save();
-        } catch (Zend_Http_Client_Exception $e) {
-            var_dump('Zend_Http_Client_Exception');
-            var_dump($e->getMessage());
-            die;
-        } catch (LocalizedException $e) {
-            var_dump('LocalizedException');
-            var_dump($e->getMessage());
-            die;
-        } catch (\Exception $e) {
-            var_dump('Exception');
-            var_dump($e->getMessage());
-            die;
+            throw new LocalizedException(__(
+                'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
+                $quote->getReservedOrderId(),
+                $quote->getId()
+            ));
         }
+
+        // Check and fix tax mismatch
+        if ($this->configHelper->shouldAdjustTaxMismatch()) {
+            $this->adjustTaxMismatch($transaction, $order, $quote);
+        }
+
+        if (isset($transaction->reference)) {
+            // Save reference to the Bolt transaction with the order
+            $order->addStatusHistoryComment(
+                __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+            );
+        }
+
+        if (Hook::$fromBolt) {
+            $order->addStatusHistoryComment(
+                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
+            );
+            // Send order confirmation email to customer.
+            // Emulate frontend area in order for email
+            // template to be loaded from the correct path
+            // even if run from the hook.
+            if (!$order->getEmailSent()) {
+                $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                    $this->emailSender->send($order);
+                });
+            }
+        } else {
+            if (!$order->getEmailSent()) {
+                // Send order confirmation email to customer.
+                $this->emailSender->send($order);
+            }
+        }
+
+        $order->save();
+
 
         return $order;
     }
 
-    private function prepareQuote($immutableQuote, $transaction)
+    /**
+     * @param $quote
+     * @return bool
+     * @throws LocalizedException
+     */
+    private function isOrderExist($quote)
+    {
+        /** @var OrderModel $order */
+        $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+
+        if ($order && $order->getId()) {
+            throw new LocalizedException(__(
+                'Duplicate Order Creation Attempt. Order #: %1',
+                $quote->getReservedOrderId()
+            ));
+        }
+
+        return false;
+    }
+
+    /**
+     * @param $immutableQuote
+     * @param $transaction
+     * @return Quote
+     * @throws NoSuchEntityException
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Magento\Framework\Exception\SessionException
+     * @throws \Zend_Validate_Exception
+     */
+    public function prepareQuote($immutableQuote, $transaction)
     {
         // Load and prepare parent quote
         /** @var Quote $quote */
