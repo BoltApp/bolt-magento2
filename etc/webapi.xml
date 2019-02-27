@@ -47,4 +47,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!-- Create Order hook -->
+    <route url="V1/bolt/boltpay/order/update" method="POST">
+        <service class="Bolt\Boltpay\Api\UpdateOrderInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>

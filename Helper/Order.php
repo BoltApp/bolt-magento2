@@ -779,20 +779,19 @@ class Order extends AbstractHelper
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
             // even if run from the hook.
-            if (!$order->getEmailSent()) {
-                $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                    $this->emailSender->send($order);
-                });
-            }
+//            if (!$order->getEmailSent()) {
+//                $this->appState->emulateAreaCode('frontend', function () use ($order) {
+//                    $this->emailSender->send($order);
+//                });
+//            }
         } else {
-            if (!$order->getEmailSent()) {
-                // Send order confirmation email to customer.
-                $this->emailSender->send($order);
-            }
+//            if (!$order->getEmailSent()) {
+//                // Send order confirmation email to customer.
+//                $this->emailSender->send($order);
+//            }
         }
 
         $order->save();
-
 
         return $order;
     }
@@ -844,11 +843,25 @@ class Order extends AbstractHelper
         $this->cartHelper->quoteResourceSave($quote);
 
         $this->setShippingMethod($quote, $transaction);
+    $quote->getShippingAddress()->collectShippingRates();
         $this->cartHelper->quoteResourceSave($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
+
+        $this->setPaymentMethod($quote);
+        $this->cartHelper->quoteResourceSave($quote);
+
+        // assign credit card info to the payment info instance
+        $this->setQuotePaymentInfoData(
+            $quote,
+            [
+                'cc_last_4' => @$transaction->from_credit_card->last4,
+                'cc_type' => @$transaction->from_credit_card->network
+            ]
+        );
+        $this->cartHelper->quoteResourceSave($quote);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
