@@ -18,9 +18,12 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\CreateOrderInterface;
+use Bolt\Boltpay\Helper\Cart;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -76,8 +79,14 @@ class CreateOrder implements CreateOrderInterface
     private $configHelper;
 
     /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @param HookHelper   $hookHelper
      * @param OrderHelper  $orderHelper
+     * @param CartHelper   $cartHelper
      * @param LogHelper    $logHelper
      * @param Request      $request
      * @param Bugsnag      $bugsnag
@@ -87,6 +96,7 @@ class CreateOrder implements CreateOrderInterface
     public function __construct(
         HookHelper $hookHelper,
         OrderHelper $orderHelper,
+        CartHelper $cartHelper,
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
@@ -100,6 +110,7 @@ class CreateOrder implements CreateOrderInterface
         $this->bugsnag = $bugsnag;
         $this->response = $response;
         $this->configHelper = $configHelper;
+        $this->cartHelper = $cartHelper;
     }
 
     /**
@@ -107,77 +118,164 @@ class CreateOrder implements CreateOrderInterface
      *
      * @api
      *
-     * @param mixed $id
-     * @param mixed $reference
-     * @param mixed $order
-     * @param mixed $type
-     * @param mixed $amount
-     * @param mixed $currency
-     * @param mixed $status
-     * @param mixed $displayId
-     * @param mixed $sourceTransactionId
-     * @param mixed $sourceTransactionReference
+     * @param string $type - "order.create"
+     * @param array $order
+     * @param string $currency
      *
      * @return void
      * @throws \Exception
      */
     public function execute(
-        $id = null,
-        $reference = null,
-        $order = null,
         $type = null,
-        $amount = null,
-        $currency = null,
-        $status = null,
-        $displayId = null,
-        $sourceTransactionId = null,
-        $sourceTransactionReference = null
+        $order = null,
+        $currency = null
     ) {
         try {
+            if ($type !== 'order.create') {
+                throw new LocalizedException(__('Invalid hook type!'));
+            }
+
             $payload = $this->request->getContent();
-            $this->logHelper->addInfoLog('PRE-AUTH');
-            $this->logHelper->addInfoLog($payload);
-            $this->logHelper->addInfoLog($payload->type);
 
-            HookHelper::$fromBolt = true;
+            $this->validateHook();
 
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
-
-            $this->hookHelper->verifyWebhook();
-
-            if (empty($reference)) {
+            if (empty($order)) {
                 throw new LocalizedException(
-                    __('Missing required parameters.')
+                    __('Missing order data.')
                 );
             }
-//            $this->orderHelper->saveUpdateOrder(
-//                $reference,
-//                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
-//            );
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
+
+            $quoteId = $this->getQuoteIdFromPayloadOrder($order);
+            /** @var \Magento\Quote\Model\Quote $quote */
+            $quote = $this->loadQuoteData($quoteId);
+
+            /** @var \Magento\Sales\Model\Order $createOrderData */
+            $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $payload);
+
+            $this->sendResponse(200, [
                 'status' => 'success',
                 'message' => 'Order create was successful',
-            ]));
+                'order_id' => $createOrderData->getId(),
+            ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode($e->getHttpCode());
-            $this->response->setBody(json_encode([
+            $this->sendResponse($e->getHttpCode(), [
                 'status' => 'error',
                 'code' => $e->getCode(),
                 'message' => $e->getMessage(),
-            ]));
-        } catch (\Exception $e) {
+            ]);
+        } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
-            $this->response->setHttpResponseCode(422);
-            $this->response->setBody(json_encode([
+            $this->sendResponse(422, [
                 'status' => 'error',
                 'code' => '6009',
                 'message' => 'Unprocessable Entity: ' . $e->getMessage(),
-            ]));
+            ]);
         } finally {
             $this->response->sendResponse();
         }
+    }
+
+    /**
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Webapi\Exception
+     */
+    public function validateHook()
+    {
+        HookHelper::$fromBolt = true;
+
+        $this->hookHelper->setCommonMetaData();
+        $this->hookHelper->setHeaders();
+
+        $this->hookHelper->verifyWebhook();
+    }
+
+    /**
+     * @param $order
+     * @return int
+     * @throws LocalizedException
+     */
+    public function getQuoteIdFromPayloadOrder($order)
+    {
+        $parentQuoteId = $this->getOrderReference($order);
+        $displayId = $this->getDisplayId($order);
+        list($incrementId, $quoteId) = array_pad(
+            explode(' / ', $displayId),
+            2,
+            null
+        );
+
+        if (!$quoteId) {
+            $quoteId = $parentQuoteId;
+        }
+
+        return (int)$quoteId;
+    }
+
+    /**
+     * @param $order
+     * @return string
+     * @throws LocalizedException
+     */
+    public function getOrderReference($order)
+    {
+        if (isset($order['cart']) && isset($order['cart']['order_reference'])) {
+            return $order['cart']['order_reference'];
+        }
+
+        $error = __('cart->order_reference does not exist');
+        throw new LocalizedException($error);
+    }
+
+    /**
+     * @param $order
+     * @return string
+     * @throws LocalizedException
+     */
+    public function getDisplayId($order)
+    {
+        if (isset($order['cart']) && isset($order['cart']['display_id'])) {
+            return $order['cart']['display_id'];
+        }
+
+        $error = __('cart->display_id does not exist');
+        throw new LocalizedException($error);
+    }
+
+    /**
+     * @param $quoteId
+     * @return \Magento\Quote\Model\Quote|null
+     * @throws LocalizedException
+     */
+    public function loadQuoteData($quoteId)
+    {
+        try {
+            /** @var \Magento\Quote\Model\Quote $quote */
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+        } catch (NoSuchEntityException $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($quoteId) {
+                $report->setMetaData([
+                    'ORDER' => [
+                        'pre-auth' => true,
+                        'quoteId' => $quoteId,
+                    ]
+                ]);
+            });
+            $quote = null;
+
+            throw new LocalizedException(__('There is no quote with ID: %1', $quoteId));
+        }
+
+        return $quote;
+    }
+
+    /**
+     * @param int   $code
+     * @param array $body
+     */
+    public function sendResponse($code, array $body)
+    {
+        $this->response->setHttpResponseCode($code);
+        $this->response->setBody(json_encode($body));
     }
 }

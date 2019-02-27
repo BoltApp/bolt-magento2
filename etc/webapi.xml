@@ -41,7 +41,7 @@
         </resources>
     </route>
     <!-- Create Order hook -->
-    <route url="V1/bolt/boltpay/create_order" method="POST">
+    <route url="V1/bolt/boltpay/order/create" method="POST">
         <service class="Bolt\Boltpay\Api\CreateOrderInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
