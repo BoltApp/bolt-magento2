@@ -31,12 +31,12 @@ use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
- * Class CreateOrder
- * Web hook endpoint. Create the order.
+ * Class UPdateOrder
+ * Web hook endpoint. Update the order.
  *
  * @package Bolt\Boltpay\Model\Api
  */
-class CreateOrder implements CreateOrderInterface
+class UpdateOrder implements CreateOrderInterface
 {
     const E_BOLT_GENERAL_ERROR = 2001001;
     const E_BOLT_ORDER_ALREADY_EXISTS = 2001002;
@@ -114,24 +114,25 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * Pre-Auth hook: Create order.
+     * Pre-Auth hook: Update order.
      *
      * @api
      *
-     * @param string $type - "order.create"
-     * @param array $order
-     * @param string $currency
+     * @param null $type
+     * @param null $transaction
+     * @param null $order_reference
+     * @param null $display_id
      *
-     * @return void
-     * @throws \Exception
+     * return void
      */
     public function execute(
         $type = null,
-        $order = null,
-        $currency = null
+        $transaction = null,
+        $order_reference = null,
+        $display_id = null
     ) {
         try {
-            if ($type !== 'order.create') {
+            if ($type !== 'order.update') {
                 throw new LocalizedException(__('Invalid hook type!'));
             }
 
@@ -139,24 +140,11 @@ class CreateOrder implements CreateOrderInterface
 
             $this->validateHook();
 
-            if (empty($order)) {
-                throw new LocalizedException(
-                    __('Missing order data.')
-                );
-            }
-
-            $quoteId = $this->getQuoteIdFromPayloadOrder($order);
-            /** @var \Magento\Quote\Model\Quote $quote */
-            $quote = $this->loadQuoteData($quoteId);
-
-            /** @var \Magento\Sales\Model\Order $createOrderData */
-            $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $payload);
-
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createOrderData->getId(),
-                'total'      => $createOrderData->getGrandTotal() * 100,
+                'display_id' => '',
+                'total'      => '',
                 'order_received_url' => '',
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
@@ -190,85 +178,6 @@ class CreateOrder implements CreateOrderInterface
         $this->hookHelper->setHeaders();
 
         $this->hookHelper->verifyWebhook();
-    }
-
-    /**
-     * @param $order
-     * @return int
-     * @throws LocalizedException
-     */
-    public function getQuoteIdFromPayloadOrder($order)
-    {
-        $parentQuoteId = $this->getOrderReference($order);
-        $displayId = $this->getDisplayId($order);
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
-
-        if (!$quoteId) {
-            $quoteId = $parentQuoteId;
-        }
-
-        return (int)$quoteId;
-    }
-
-    /**
-     * @param $order
-     * @return string
-     * @throws LocalizedException
-     */
-    public function getOrderReference($order)
-    {
-        if (isset($order['cart']) && isset($order['cart']['order_reference'])) {
-            return $order['cart']['order_reference'];
-        }
-
-        $error = __('cart->order_reference does not exist');
-        throw new LocalizedException($error);
-    }
-
-    /**
-     * @param $order
-     * @return string
-     * @throws LocalizedException
-     */
-    public function getDisplayId($order)
-    {
-        if (isset($order['cart']) && isset($order['cart']['display_id'])) {
-            return $order['cart']['display_id'];
-        }
-
-        $error = __('cart->display_id does not exist');
-        throw new LocalizedException($error);
-    }
-
-    /**
-     * @param $quoteId
-     * @return \Magento\Quote\Model\Quote|null
-     * @throws LocalizedException
-     */
-    public function loadQuoteData($quoteId)
-    {
-        try {
-            /** @var \Magento\Quote\Model\Quote $quote */
-            $quote = $this->cartHelper->getQuoteById($quoteId);
-        } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($quoteId) {
-                $report->setMetaData([
-                    'ORDER' => [
-                        'pre-auth' => true,
-                        'quoteId' => $quoteId,
-                    ]
-                ]);
-            });
-            $quote = null;
-
-            throw new LocalizedException(__('There is no quote with ID: %1', $quoteId));
-        }
-
-        return $quote;
     }
 
     /**
