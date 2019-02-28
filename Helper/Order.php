@@ -849,18 +849,14 @@ class Order extends AbstractHelper
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
-        $this->cartHelper->quoteResourceSave($quote);
 
         $this->setShippingMethod($quote, $transaction);
-    $quote->getShippingAddress()->collectShippingRates();
-        $this->cartHelper->quoteResourceSave($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
 
         $this->setPaymentMethod($quote);
-        $this->cartHelper->quoteResourceSave($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -870,7 +866,6 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
-        $this->cartHelper->quoteResourceSave($quote);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
