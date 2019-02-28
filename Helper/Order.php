@@ -790,16 +790,11 @@ class Order extends AbstractHelper
             // Emulate frontend area in order for email
             // template to be loaded from the correct path
             // even if run from the hook.
-//            if (!$order->getEmailSent()) {
-//                $this->appState->emulateAreaCode('frontend', function () use ($order) {
-//                    $this->emailSender->send($order);
-//                });
-//            }
-        } else {
-//            if (!$order->getEmailSent()) {
-//                // Send order confirmation email to customer.
-//                $this->emailSender->send($order);
-//            }
+            if (!$order->getEmailSent()) {
+                $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                    $this->emailSender->send($order);
+                });
+            }
         }
 
         $order->save();
@@ -831,6 +826,7 @@ class Order extends AbstractHelper
      * @param $immutableQuote
      * @param $transaction
      * @return Quote
+     * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      * @throws \Magento\Framework\Exception\SessionException
