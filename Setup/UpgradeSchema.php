@@ -20,14 +20,13 @@ namespace Bolt\Boltpay\Setup;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Bolt\Boltpay\Model\ResourceModel\MerchantDivisionUrls as ResourceModelMerchantDivisionUrls;
 
 /**
  * @codeCoverageIgnore
  */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
-    const MERCHANT_DIVISION_URLS = 'bolt_merchant_division_urls';
-
     /**
      * {@inheritdoc}
      * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
@@ -66,9 +65,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
 
         if (version_compare($context->getVersion(), '1.1.10', '>=')) {
-            if (!$setup->tableExists(self::MERCHANT_DIVISION_URLS)) {
+            if (!$setup->tableExists(ResourceModelMerchantDivisionUrls::TABLE_NAME)) {
                 $table = $setup->getConnection()
-                    ->newTable(self::MERCHANT_DIVISION_URLS)
+                    ->newTable(ResourceModelMerchantDivisionUrls::TABLE_NAME)
                     ->addColumn(
                         'id',
                         \Magento\Framework\Db\Ddl\Table::TYPE_INTEGER,
