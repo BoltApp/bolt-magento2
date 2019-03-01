@@ -119,7 +119,7 @@ class Data extends Action
                 'cartReference' => $cartReference,
             ];
 
-            if (@$cart['currency']->currency) {
+            if (isset($cart['currency']) && $cart['currency']->currency) {
                 // cart data validation requirement
                 $cart['currency']->currency_code = @$cart['currency']->currency;
             }
