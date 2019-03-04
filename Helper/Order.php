@@ -802,11 +802,6 @@ class Order extends AbstractHelper
         return $order;
     }
 
-    public function preAuthUpdateOrder($orderData, $transaction)
-    {
-        return true;
-    }
-
     /**
      * @param $quote
      * @return bool
