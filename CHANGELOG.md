@@ -34,3 +34,7 @@
  - Checkout initialization fix
  - Shipping and tax cart validation update
  - Email field required for back-office orders
+## [v1.1.8.3](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.8.3) 2019-03-04
+ - Prevent setting empty hint
+ - Cart currency_code update fix
+ - Back office order creation fix
