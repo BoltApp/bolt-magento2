@@ -823,7 +823,11 @@ class Cart extends AbstractHelper
                     $address->save();
                 } else {
                     $this->logAddressData($cartBillingAddress);
-                    throw new LocalizedException(__('Billing address data insufficient.'));
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Billing address data insufficient.'
+                    );
+                    return [];
                 }
             } else {
                 $address->setCollectShippingRates(true);
@@ -866,8 +870,12 @@ class Cart extends AbstractHelper
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
                 } else {
-                    $this->logAddressData($shipAddress);
-                    throw new LocalizedException(__('Shipping address data insufficient.'));
+                    $this->logAddressData($cartBillingAddress);
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Shipping address data insufficient.'
+                    );
+                    return [];
                 }
             }
 
