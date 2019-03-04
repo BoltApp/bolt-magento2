@@ -64,43 +64,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['bolt_parent_quote_id']
         );
 
-        if (version_compare($context->getVersion(), '1.1.10', '>=')) {
-            if (!$setup->tableExists(ResourceModelMerchantDivisionUrls::TABLE_NAME)) {
-                $table = $setup->getConnection()
-                    ->newTable(ResourceModelMerchantDivisionUrls::TABLE_NAME)
-                    ->addColumn(
-                        'id',
-                        \Magento\Framework\Db\Ddl\Table::TYPE_INTEGER,
-                        8,
-                        ['identity' => true, 'nullable' => false, 'primary' => true, 'unsigned' => true],
-                        'Id'
-                    )
-                    ->addColumn(
-                        'division_id',
-                        \Magento\Framework\Db\Ddl\Table::TYPE_INTEGER,
-                        8,
-                        ['nullable' => false, 'unsigned' => true],
-                        'Division Id'
-                    )
-                    ->addColumn(
-                        'type',
-                        \Magento\Framework\Db\Ddl\Table::TYPE_TEXT,
-                        20,
-                        ['nullable' => false],
-                        'Type'
-                    )
-                    ->addColumn(
-                        'url',
-                        \Magento\Framework\Db\Ddl\Table::TYPE_TEXT,
-                        4096,
-                        ['nullable' => false],
-                        'Url'
-                    );
-
-                $setup->getConnection()->createTable($table);
-            }
-        }
-
         $setup->endSetup();
     }
 }
