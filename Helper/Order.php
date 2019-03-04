@@ -1266,7 +1266,8 @@ class Order extends AbstractHelper
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
-        if ($this->isCaptureHookRequest($newCapture)) {
+        // We will create an invoice if we have zero amount or new capture.
+        if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
             $this->validateCaptureAmount($order, $amount / 100);
             $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
         }
@@ -1343,6 +1344,15 @@ class Order extends AbstractHelper
         )->setIsCustomerNotified(true)->save();
 
         return $invoice;
+    }
+
+    /**
+     * @param $transactionState
+     * @return bool
+     */
+    public function isZeroAmountHook($transactionState)
+    {
+        return Hook::$fromBolt && ($transactionState === self::TS_ZERO_AMOUNT);
     }
 
     /**
