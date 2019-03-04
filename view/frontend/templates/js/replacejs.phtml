@@ -1017,8 +1017,13 @@ $trackCallbacks = $block->getTrackCallbacks();
                             var input_selectors = [prefix + ' input[name="' + input_name + '"]'];
 
                             monitorAttributesChange(input_selectors, function(element) {
-                                hints.prefill[prefill_key] = element.value;
-
+                                if (element.value) {
+                                    // set the hints prefill if the correlated input field value is not an empty string
+                                    hints.prefill[prefill_key] = element.value;
+                                } else {
+                                    // delete hints prefill key if the value is empty
+                                    delete hints.prefill[prefill_key];
+                                }
                                 configureHints();
                             });
 
