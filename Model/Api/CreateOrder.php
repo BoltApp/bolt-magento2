@@ -217,6 +217,13 @@ class CreateOrder implements CreateOrderInterface
                     ]]
                 ]]
             ]);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->sendResponse(422, [
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
