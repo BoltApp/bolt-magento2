@@ -38,3 +38,6 @@
  - Prevent setting empty hint
  - Cart currency_code update fix
  - Back office order creation fix
+ - Create invoice for zero amount transactions
+ - Exclude empty address fields from saving
+ 
