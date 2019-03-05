@@ -845,8 +845,6 @@ class Order extends AbstractHelper
         $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
 
-        $this->cartHelper->quoteResourceSave($quote);
-
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace quote in checkout session.
         $this->sessionHelper->loadSession($quote);

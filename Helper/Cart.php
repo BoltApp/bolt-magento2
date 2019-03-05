@@ -305,7 +305,6 @@ class Cart extends AbstractHelper
     public function quoteResourceSave($quote)
     {
         $this->quoteResource->save($quote);
-
     }
 
     /**
