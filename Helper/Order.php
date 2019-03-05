@@ -333,7 +333,7 @@ class Order extends AbstractHelper
 
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
-        $address_data = [
+        $addressData = [
             'firstname'    => @$address->first_name,
             'lastname'     => @$address->last_name,
             'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
@@ -347,11 +347,18 @@ class Order extends AbstractHelper
         ];
 
         if ($this->cartHelper->validateEmail(@$address->email_address)) {
-            $address_data['email'] = $address->email_address;
+            $addressData['email'] = $address->email_address;
+        }
+
+        // discard empty address fields
+        foreach ($addressData as $key => $value) {
+            if (empty($value)) {
+                unset($addressData[$key]);
+            }
         }
 
         $quoteAddress->setShouldIgnoreValidation(true);
-        $quoteAddress->addData($address_data)->save();
+        $quoteAddress->addData($addressData)->save();
     }
 
     /**
@@ -1214,7 +1221,8 @@ class Order extends AbstractHelper
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
-        if ($this->isCaptureHookRequest($newCapture)) {
+        // We will create an invoice if we have zero amount or new capture.
+        if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
             $this->validateCaptureAmount($order, $amount / 100);
             $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
         }
@@ -1291,6 +1299,15 @@ class Order extends AbstractHelper
         )->setIsCustomerNotified(true)->save();
 
         return $invoice;
+    }
+
+    /**
+     * @param $transactionState
+     * @return bool
+     */
+    public function isZeroAmountHook($transactionState)
+    {
+        return Hook::$fromBolt && ($transactionState === self::TS_ZERO_AMOUNT);
     }
 
     /**
