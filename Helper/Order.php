@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\Payment;
@@ -803,7 +804,7 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param $quote
+     * @param Quote $quote
      * @return bool
      * @throws LocalizedException
      */
@@ -813,10 +814,20 @@ class Order extends AbstractHelper
         $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
 
         if ($order && $order->getId()) {
-            throw new LocalizedException(__(
-                'Duplicate Order Creation Attempt. Order #: %1',
-                $quote->getReservedOrderId()
-            ));
+            $this->bugsnag->registerCallback(function ($report) use ($quote) {
+                $report->setMetaData([
+                    'Is Order Exist' => [
+                        'pre-auth order.create' => true,
+                        'parent quote ID' => $quote->getId(),
+                        'order reserved ID' => $quote->getReservedOrderId(),
+                    ]
+                ]);
+            });
+            throw new BoltException(
+                __('Duplicate Order Creation Attempt. Order #: %1', $quote->getReservedOrderId()),
+                null,
+                \Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_ORDER_ALREADY_EXISTS
+            );
         }
 
         return false;

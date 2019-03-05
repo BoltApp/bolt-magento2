@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\CreateOrderInterface;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Cart;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
@@ -162,6 +163,13 @@ class CreateOrder implements CreateOrderInterface
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse($e->getHttpCode(), [
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->sendResponse(422, [
                 'status' => 'error',
                 'code' => $e->getCode(),
                 'message' => $e->getMessage(),
