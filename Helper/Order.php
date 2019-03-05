@@ -447,7 +447,6 @@ class Order extends AbstractHelper
         $orderTaxAmount = round($order->getTaxAmount(), 2);
 
         if ($boltTaxAmount != $orderTaxAmount) {
-
             $order->setTaxAmount($boltTaxAmount);
             $order->setBaseGrandTotal($boltTotalAmount);
             $order->setGrandTotal($boltTotalAmount);
