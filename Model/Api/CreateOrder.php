@@ -133,7 +133,11 @@ class CreateOrder implements CreateOrderInterface
     ) {
         try {
             if ($type !== 'order.create') {
-                throw new LocalizedException(__('Invalid hook type!'));
+                throw new BoltException(
+                    __('Invalid hook type!'),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
+                );
             }
 
             $payload = $this->request->getContent();
@@ -141,8 +145,10 @@ class CreateOrder implements CreateOrderInterface
             $this->validateHook();
 
             if (empty($order)) {
-                throw new LocalizedException(
-                    __('Missing order data.')
+                throw new BoltException(
+                    __('Missing order data.'),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
                 );
             }
 
@@ -165,9 +171,9 @@ class CreateOrder implements CreateOrderInterface
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
                 'error'  => [
-                    'code' => $e->getCode(),
+                    'code' => self::E_BOLT_GENERAL_ERROR,
                     'data' => [
-                        'reason' => $e->getMessage(),
+                        'reason' => $e->getCode() . ': ' . $e->getMessage(),
                     ]
                 ]
             ]);
@@ -285,7 +291,12 @@ class CreateOrder implements CreateOrderInterface
             });
             $quote = null;
 
-            throw new LocalizedException(__('There is no quote with ID: %1', $quoteId));
+//            throw new LocalizedException(__('There is no quote with ID: %1', $quoteId));
+            throw new BoltException(
+                __('There is no quote with ID: %1', $quoteId),
+                null,
+                self::E_BOLT_GENERAL_ERROR
+            );
         }
 
         return $quote;
