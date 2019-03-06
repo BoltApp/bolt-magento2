@@ -163,23 +163,35 @@ class CreateOrder implements CreateOrderInterface
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse($e->getHttpCode(), [
-                'status' => 'error',
-                'code' => $e->getCode(),
-                'message' => $e->getMessage(),
+                'status' => 'failure',
+                'error'  => [
+                    'code' => $e->getCode(),
+                    'data' => [
+                        'reason' => $e->getMessage(),
+                    ]
+                ]
             ]);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
-                'status' => 'error',
-                'code' => $e->getCode(),
-                'message' => $e->getMessage(),
+                'status' => 'failure',
+                'error'  => [
+                    'code' => $e->getCode(),
+                    'data' => [
+                        'reason' => $e->getMessage(),
+                    ]
+                ]
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
-                'status' => 'error',
-                'code' => '6009',
-                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
+                'status' => 'failure',
+                'error'  => [
+                    'code' => 6009,
+                    'data' => [
+                        'reason' => 'Unprocessable Entity: ' . $e->getMessage(),
+                    ]
+                ]
             ]);
         } finally {
             $this->response->sendResponse();
