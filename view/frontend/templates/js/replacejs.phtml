@@ -668,8 +668,8 @@ $trackCallbacks = $block->getTrackCallbacks();
         var createRequest = false;
         var createOrder = function () {
 
-            // do not call Bolt API if the cart is empty
-            if (shoppingCart().summary_count === 0) return;
+            // do not call Bolt API if there is no cart
+            if (!shoppingCart().data_id) return;
 
             // skip if there is already an ongoing request
             if (createRequest) return;
@@ -722,66 +722,71 @@ $trackCallbacks = $block->getTrackCallbacks();
             params = params.join('&');
             if (params === '') params = null;
 
-            if (window.BoltCheckout) {
+            var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 
-                var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
+                createRequest = true;
 
-                    createRequest = true;
+                // send create order request
+                $.post(settings.create_order_url, params)
+                    .done(function (data) {
 
-                    // send create order request
-                    $.post(settings.create_order_url, params)
-                        .done(function (data) {
+                        var boltRestricted = !!data.restrict;
 
-                            var boltRestricted = !!data.restrict;
+                        toggleCheckoutIfNeeded(boltRestricted);
 
-                            toggleCheckoutIfNeeded(boltRestricted);
+                        // Stop if Bolt checkout is restricted
+                        if (boltRestricted) {
+                            if (popUpOpen) reject(new Error(data.message));
+                            return;
+                        }
 
-                            // Stop if Bolt checkout is restricted
-                            if (boltRestricted) {
-                                if (popUpOpen) reject(new Error(data.message));
-                                return;
-                            }
+                        if (data.status !== 'success') {
+                            reject(new Error(data.message || 'Network request failed'));
+                            return;
+                        }
 
-                            if (data.status !== 'success') {
-                                reject(new Error(data.message || 'Network request failed'));
-                                return;
-                            }
+                        //////////////////////////
+                        // set cart and hints data
+                        //////////////////////////
+                        cart = data.cart;
 
-                            // set cart and hints data
-                            cart = data.cart;
+                        if (!cart) {
+                            reject(new Error('The cart info is missing.'));
+                            return;
+                        }
 
-                            if (!cart || !cart.orderToken) {
-                                reject(new Error('Cart info is missing or the cart is empty'));
-                                return;
-                            }
+                        // the cart is empty, exit gracefully without an error
+                        if (!cart.orderToken) {
+                            return;
+                        }
 
-                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                        var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
-                            hints = deepMergeObjects(hints, data.hints);
-                            hints.prefill = prefill;
-                            hints.publishableKey = getCheckoutKey();
+                        hints = deepMergeObjects(hints, data.hints);
+                        hints.prefill = prefill;
+                        hints.publishableKey = getCheckoutKey();
+                        //////////////////////////
 
-                            resolve(cart);
+                        resolve(cart);
 
-                            // open the checkout if auto-open flag is set
-                            // one time only on page load
-                            if (initiateCheckout) {
-                                BC.open();
-                                initiateCheckout = false;
-                            }
+                        // open the checkout if auto-open flag is set
+                        // one time only on page load
+                        if (initiateCheckout) {
+                            BC.open();
+                            initiateCheckout = false;
+                        }
 
-                            // prefetch Shipping and Tax for multi-step checkout
-                            if (getCheckoutType() === 'checkout') prefetchShipping();
-                        })
-                        .fail(function(jqXHR, textStatus, errorThrown) {
-                            reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
-                        })
-                        .always(function() {
-                            createRequest = false;
-                        })
+                        // prefetch Shipping and Tax for multi-step checkout
+                        if (getCheckoutType() === 'checkout') prefetchShipping();
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown) {
+                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
+                    })
+                    .always(function() {
+                        createRequest = false;
+                    })
 
-                }), hints, callbacks);
-            }
+            }), hints, callbacks);
         };
         /////////////////////////////////////////////////////
 
@@ -968,7 +973,7 @@ $trackCallbacks = $block->getTrackCallbacks();
 
                     var new_hints = JSON.stringify(hints);
 
-                    if (old_hints !== new_hints && window.BoltCheckout) {
+                    if (old_hints !== new_hints) {
 
                         BoltCheckout.configure(cart, hints, callbacks);
                         old_hints = new_hints;
