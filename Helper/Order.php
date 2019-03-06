@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
 use Magento\Customer\Api\Data\GroupInterface;
@@ -759,10 +760,12 @@ class Order extends AbstractHelper
                 ]);
             });
 
-            throw new LocalizedException(__(
+            throw new BoltException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
                 $quote->getReservedOrderId(),
-                $quote->getId()
+                $quote->getId(),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
             ));
         }
 
