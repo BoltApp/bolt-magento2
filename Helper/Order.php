@@ -761,10 +761,12 @@ class Order extends AbstractHelper
                 ]);
             });
 
-            throw new LocalizedException(__(
+            throw new BoltException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
                 $quote->getReservedOrderId(),
-                $quote->getId()
+                $quote->getId(),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
             ));
         }
 
