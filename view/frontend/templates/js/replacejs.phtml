@@ -767,6 +767,9 @@ $trackCallbacks = $block->getTrackCallbacks();
                         hints.publishableKey = getCheckoutKey();
                         //////////////////////////
 
+                        // Ensure bolt checkout is configured with the hints updated from the response
+                        // TODO: Pass hints as a promise and load separately from cart
+                        BoltCheckout.configure(cart, hints, callbacks);
                         resolve(cart);
 
                         // open the checkout if auto-open flag is set
