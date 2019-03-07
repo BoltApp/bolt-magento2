@@ -668,9 +668,6 @@ $trackCallbacks = $block->getTrackCallbacks();
         var createRequest = false;
         var createOrder = function () {
 
-            // do not call Bolt API if there is no cart
-            if (!shoppingCart().data_id) return;
-
             // skip if there is already an ongoing request
             if (createRequest) return;
 
@@ -767,6 +764,9 @@ $trackCallbacks = $block->getTrackCallbacks();
                         hints.publishableKey = getCheckoutKey();
                         //////////////////////////
 
+                        // Ensure bolt checkout is configured with the hints updated from the response
+                        // TODO: Pass hints as a promise and load separately from cart
+                        BoltCheckout.configure(cart, hints, callbacks);
                         resolve(cart);
 
                         // open the checkout if auto-open flag is set
