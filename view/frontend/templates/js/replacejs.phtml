@@ -668,9 +668,6 @@ $trackCallbacks = $block->getTrackCallbacks();
         var createRequest = false;
         var createOrder = function () {
 
-            // do not call Bolt API if there is no cart
-            if (!shoppingCart().data_id) return;
-
             // skip if there is already an ongoing request
             if (createRequest) return;
 
