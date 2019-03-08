@@ -1127,6 +1127,9 @@ class Order extends AbstractHelper
             $reference == $prevTransactionReference &&
             !$newCapture
         ) {
+            if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)){
+                $payment->setIsTransactionApproved(true);
+            }
             return;
         }
 
@@ -1387,5 +1390,17 @@ class Order extends AbstractHelper
         if($isInvalidAmount || $isInvalidAmountRange) {
             throw new \Exception( __('Capture amount is invalid'));
         }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param $transactionState
+     * @return bool
+     */
+    protected function isAnAllowedUpdateFromAdminPanel(OrderInterface $order, $transactionState)
+    {
+        return !Hook::$fromBolt &&
+               in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
+               $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
     }
 }
