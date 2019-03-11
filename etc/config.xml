@@ -41,12 +41,17 @@
 tr.shipping.totals td.amount span.price,
 .block-minicart .subtitle,
 .block-minicart .subtotal .amount.price-container .price-wrapper:first-child .price</totals_change_selectors>
-                <global_css>button[data-role=proceed-to-checkout]{display:none!important;}</global_css>
+                <global_css>button[data-role=proceed-to-checkout]{display:none!important;}
+/* Store Credit */
+.cart-container #customerbalance-placer {width: 210px;}
+.cart-container #customerbalance-placer .payment-option-title {display: none;}
+.cart-container #customerbalance-placer #use-customer-balance {width: 284px;}</global_css>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>
                 <reset_shipping_calculation>0</reset_shipping_calculation>
                 <minicart_support>1</minicart_support>
+                <store_credit>0</store_credit>
             </boltpay>
         </payment>
     </default>

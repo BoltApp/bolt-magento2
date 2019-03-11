@@ -373,24 +373,17 @@ class Cart extends AbstractHelper
     /**
      * Get the hints data for checkout
      *
-     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
-     *                                         i.e. billing address to be saved with the order
      * @param string $cartReference            (immutable) quote id
      *
      * @return array
      * @throws NoSuchEntityException
      */
-    public function getHints($placeOrderPayload, $cartReference)
+    public function getHints($cartReference = null)
     {
         /** @var Quote */
         $quote = $cartReference ?
             $this->getQuoteById($cartReference) :
             $this->checkoutSession->getQuote();
-
-        if ($placeOrderPayload) {
-            $placeOrderPayload = @json_decode($placeOrderPayload);
-            $email = @$placeOrderPayload->email;
-        }
 
         $hints = ['prefill' => []];
 
@@ -408,7 +401,7 @@ class Cart extends AbstractHelper
             $prefill = [
                 'firstName'    => $address->getFirstname(),
                 'lastName'     => $address->getLastname(),
-                'email'        => @$email ?: $address->getEmail() ?: $quote->getCustomerEmail(),
+                'email'        => $address->getEmail() ?: $quote->getCustomerEmail(),
                 'phone'        => $address->getTelephone(),
                 'addressLine1' => $address->getStreetLine(1),
                 'addressLine2' => $address->getStreetLine(2),
@@ -438,16 +431,18 @@ class Cart extends AbstractHelper
             $signResponse = $this->getSignResponse($signRequest)->getResponse();
 
             if ($signResponse) {
-                $hints['signed_merchant_user_id'] = [
-                    "merchant_user_id" => $signResponse->merchant_user_id,
-                    "signature"        => $signResponse->signature,
-                    "nonce"            => $signResponse->nonce,
-                ];
+                $hints['merchant_user_id'] = $signResponse->merchant_user_id;
+                $hints['signature'] = $signResponse->signature;
+                $hints['nonce'] = $signResponse->nonce;
             }
 
-            $prefillHints($customer->getDefaultShippingAddress());
+            if ($quote->isVirtual()) {
+                $prefillHints($customer->getDefaultBillingAddress());
+            } else {
+                $prefillHints($customer->getDefaultShippingAddress());
+            }
 
-            $hints['prefill']['email'] = @$hints['prefill']['email'] ?: $customer->getEmail();
+            $hints['prefill']['email'] = $customer->getEmail();
         }
 
         // Quote shipping / billing address.

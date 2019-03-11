@@ -8,8 +8,23 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="checkout.cart.methods">
-            <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.button" before="-" template="Bolt_Boltpay::button.phtml">
-            </block>
+            <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.button" before="-" template="Bolt_Boltpay::button.phtml" />
         </referenceContainer>
+
+        <referenceBlock name="checkout.cart.totals">
+            <arguments>
+                <argument name="jsLayout" xsi:type="array">
+                    <item name="components" xsi:type="array">
+                        <item name="block-totals" xsi:type="array">
+                            <item name="children" xsi:type="array">
+                                <item name="storeCredit" xsi:type="array">
+                                    <item name="component" xsi:type="string">Magento_CustomerBalance/js/view/payment/customer-balance</item>
+                                </item>
+                            </item>
+                        </item>
+                    </item>
+                </argument>
+            </arguments>
+        </referenceBlock>
     </body>
 </page>

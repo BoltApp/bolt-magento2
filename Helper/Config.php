@@ -219,6 +219,11 @@ class Config extends AbstractHelper
     const XML_PATH_IP_WHITELIST = 'payment/boltpay/ip_whitelist';
 
     /**
+     * Use Store Credit on Shopping Cart configuration path
+     */
+    const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -929,5 +934,20 @@ class Config extends AbstractHelper
         $clientIP = $this->getClientIp();
         $whitelist = $this->getIPWhitelistArray();
         return $whitelist && ! in_array($clientIP, $whitelist);
+    }
+
+    /**
+     * Get Use Store Credit on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function getStoreCreditConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_STORE_CREDIT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
     }
 }

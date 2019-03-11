@@ -668,9 +668,6 @@ $trackCallbacks = $block->getTrackCallbacks();
         var createRequest = false;
         var createOrder = function () {
 
-            // do not call Bolt API if the cart is empty
-            if (shoppingCart().summary_count === 0) return;
-
             // skip if there is already an ongoing request
             if (createRequest) return;
 
@@ -745,11 +742,18 @@ $trackCallbacks = $block->getTrackCallbacks();
                             return;
                         }
 
+                        //////////////////////////
                         // set cart and hints data
+                        //////////////////////////
                         cart = data.cart;
 
-                        if (!cart || !cart.orderToken) {
-                            reject(new Error('Cart info is missing or the cart is empty'));
+                        if (!cart) {
+                            reject(new Error('The cart info is missing.'));
+                            return;
+                        }
+
+                        // the cart is empty, exit gracefully without an error
+                        if (!cart.orderToken) {
                             return;
                         }
 
@@ -758,7 +762,11 @@ $trackCallbacks = $block->getTrackCallbacks();
                         hints = deepMergeObjects(hints, data.hints);
                         hints.prefill = prefill;
                         hints.publishableKey = getCheckoutKey();
+                        //////////////////////////
 
+                        // Ensure bolt checkout is configured with the hints updated from the response
+                        // TODO: Pass hints as a promise and load separately from cart
+                        BoltCheckout.configure(cart, hints, callbacks);
                         resolve(cart);
 
                         // open the checkout if auto-open flag is set
