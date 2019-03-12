@@ -538,7 +538,6 @@ class Order extends AbstractHelper
         $order = $this->quoteManagement->submit($quote);
 
         if ($order === null) {
-
             $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
                 $report->setMetaData([
                     'CREATE ORDER' => [
