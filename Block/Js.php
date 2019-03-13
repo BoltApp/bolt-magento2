@@ -351,13 +351,9 @@ class Js extends Template
             return false;
         }
 
-        // However, if IP whitelist is defined, the Bolt checkout functionality
-        // must be limited to the non cached pages, shopping cart and checkout.
-        if ($this->configHelper->getIPWhitelistArray()) {
-            return ! in_array($currentPage, Config::$defaultPageWhitelist);
-        }
-
-        // No minicart support. Check if the page is whitelisted.
+        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
+        // If IP whitelist is defined, the Bolt checkout functionality
+        // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
         return ! in_array($currentPage, $this->getPageWhitelist());
     }
 

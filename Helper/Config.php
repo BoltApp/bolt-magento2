@@ -224,6 +224,11 @@ class Config extends AbstractHelper
     const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
 
     /**
+     * Payment Only Checkout Enabled configuration path
+     */
+    const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -946,6 +951,21 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_STORE_CREDIT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Payment Only Checkout Enabled configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function isPaymentOnlyCheckoutEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PAYMENT_ONLY_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
             $store
         );
