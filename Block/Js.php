@@ -444,6 +444,7 @@ class Js extends Template
      */
     public function getMagentoStoreId()
     {
-        return (int) $this->magentoQuote->getStoreId();
+        return (int) ($this->magentoQuote && $this->magentoQuote->getStoreId()) ?
+            $this->magentoQuote->getStoreId() : 0;
     }
 }

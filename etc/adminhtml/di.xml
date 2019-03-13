@@ -9,12 +9,12 @@
 
     <type name="Bolt\Boltpay\Block\Js">
         <arguments>
-            <argument name="MagentoQuote" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
+            <argument name="magentoQuote" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
         </arguments>
     </type>
     <type name="Bolt\Boltpay\Block\Form">
         <arguments>
-            <argument name="MagentoQuote" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
+            <argument name="magentoQuote" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
         </arguments>
     </type>
 </config>
