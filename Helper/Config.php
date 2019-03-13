@@ -319,12 +319,14 @@ class Config extends AbstractHelper
     /**
      * Get Bolt JavaScript base URL
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getCdnUrl()
+    public function getCdnUrl($storeId = null)
     {
         //Check for sandbox mode
-        if ($this->isSandboxModeSet()) {
+        if ($this->isSandboxModeSet($storeId)) {
             return self::CDN_URL_SANDBOX;
         } else {
             return self::CDN_URL_PRODUCTION;
@@ -441,7 +443,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyBackOffice($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
     }
 
     /**
@@ -547,7 +549,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    public function getJavascriptSuccess($storeId = 0)
+    public function getJavascriptSuccess($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_JAVASCRIPT_SUCCESS,
@@ -669,7 +671,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    public function getGeolocationApiKey($storeId)
+    public function getGeolocationApiKey($storeId = null)
     {
         return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId);
     }
@@ -681,7 +683,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    public function getAdditionalJS($storeId)
+    public function getAdditionalJS($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_JS,
@@ -709,7 +711,7 @@ class Config extends AbstractHelper
      *
      * @return string
      */
-    public function getOnShippingDetailsComplete($storeId)
+    public function getOnShippingDetailsComplete($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
@@ -945,7 +947,7 @@ class Config extends AbstractHelper
      */
     public function getPageBlacklist($storeId = null)
     {
-        return $this->getPageFilter('blacklist');
+        return $this->getPageFilter('blacklist', $storeId);
     }
 
     /**
