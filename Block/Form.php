@@ -174,4 +174,12 @@ class Form extends PaymentForm
     {
         return $this->configHelper->isActive();
     }
+
+    /**
+     * @return int
+     */
+    public function getMagnetoStoreId()
+    {
+        return (int) $this->getQuoteData()->getStoreId();
+    }
 }

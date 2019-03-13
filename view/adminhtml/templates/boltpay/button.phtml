@@ -15,6 +15,7 @@ $helper = $this->helper(Bolt\Boltpay\Helper\Config::class);
 
     <input type="hidden" id="bolt-billing-address" value='<?php echo $block->getBillingAddress() ?>' />
     <input type="hidden" id="bolt-place-order-payload" value='<?php echo $block->getPlaceOrderPayload() ?>' />
+    <input type="hidden" id="magento-store-id" value='<?php echo $block->getMagnetoStoreId() ?>' />
 
     <div class="bolt-checkout-button with-cards"></div>
 </fieldset>

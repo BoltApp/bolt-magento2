@@ -351,6 +351,7 @@ require([
         bolt_button_css_class    = 'bolt-checkout-button with-cards',
         bolt_button_selector     = '.bolt-checkout-button',
         multi_step_css_class     = 'bolt-multi-step-checkout',
+        magento_store_id   = '#magento-store-id',
         billing_address_selector = '#bolt-billing-address',
         place_order_payload_id   = 'bolt-place-order-payload';
 
@@ -439,6 +440,8 @@ require([
     // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
     var create_request;
+    var storeId = $(magento_store_id).val();
+
     var createOrder = function () {
         if (create_request) return;
         // preset success condition to false
@@ -446,6 +449,7 @@ require([
         // define the params sent with the request variable
         var params = [];
 
+        params.push('store_id=' + parseInt(storeId));
         params.push('payment_only=true');
         params = params.join('&');
 

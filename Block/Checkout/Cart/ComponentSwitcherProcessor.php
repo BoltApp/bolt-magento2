@@ -45,7 +45,7 @@ class ComponentSwitcherProcessor implements LayoutProcessorInterface
     public function process($jsLayout) {
         // Store Credit
         $jsLayout['components']['block-totals']['children']['storeCredit']['componentDisabled'] =
-            ! $this->configHelper->getStoreCreditConfig();
+            ! $this->configHelper->useStoreCreditConfig();
 
         return $jsLayout;
     }

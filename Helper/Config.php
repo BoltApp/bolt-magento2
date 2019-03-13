@@ -25,6 +25,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\Store;
 use Magento\Framework\App\Request\Http as Request;
+use Magento\Framework\Session\SessionManagerInterface as quoteSession;
 
 /**
  * Boltpay Configuration helper
@@ -251,13 +252,20 @@ class Config extends AbstractHelper
      * @var Request
      */
     private $request;
+    private $contextHelper;
 
     /**
-     * @param Context $context
-     * @param EncryptorInterface $encryptor
-     * @param ResourceInterface $moduleResource
+     * @var \Magento\Backend\Model\Session\Quote
+     */
+    private $quoteSession;
+
+    /**
+     * @param Context                  $context
+     * @param EncryptorInterface       $encryptor
+     * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
-     * @param Request $request
+     * @param quoteSession              $quoteSession
+     * @param Request                  $request
      *
      * @codeCoverageIgnore
      */
@@ -266,6 +274,7 @@ class Config extends AbstractHelper
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
         ProductMetadataInterface $productMetadata,
+        quoteSession $quoteSession,
         Request $request
     ) {
         parent::__construct($context);
@@ -273,6 +282,8 @@ class Config extends AbstractHelper
         $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
         $this->request = $request;
+        $this->contextHelper = $context;
+        $this->quoteSession = $quoteSession;
     }
 
     /**
@@ -343,15 +354,17 @@ class Config extends AbstractHelper
      * Return decrypted.
      *
      * @param string $path
+     * @param int|string $storeId
      *
      * @return  string
      */
-    private function getEncryptedKey($path)
+    private function getEncryptedKey($path, $storeId = null)
     {
         //Get management key
         $key =  $this->getScopeConfig()->getValue(
             $path,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
 
         //Decrypt management key
@@ -362,59 +375,71 @@ class Config extends AbstractHelper
     /**
      * Get one Publishable Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getAnyPublishableKey()
+    public function getAnyPublishableKey($storeId = null)
     {
-        return $this->getPublishableKeyCheckout() ?: $this->getPublishableKeyPayment();
+        return $this->getPublishableKeyCheckout($storeId) ?: $this->getPublishableKeyPayment($storeId);
     }
 
     /**
      * Get API Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getApiKey()
+    public function getApiKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_API_KEY);
+        return $this->getEncryptedKey(self::XML_PATH_API_KEY, $storeId);
     }
 
     /**
      * Get Signing Secret Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getSigningSecret()
+    public function getSigningSecret($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET);
+        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET, $storeId);
     }
 
     /**
      * Get Multi-step Publishable Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getPublishableKeyCheckout()
+    public function getPublishableKeyCheckout($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $storeId);
     }
 
     /**
      * Get Payment Only Publishable Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getPublishableKeyPayment()
+    public function getPublishableKeyPayment($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId);
     }
 
     /**
      * Get Payment Only Publishable Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getPublishableKeyBackOffice()
+    public function getPublishableKeyBackOffice($storeId = null)
     {
         return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE);
     }
@@ -422,91 +447,112 @@ class Config extends AbstractHelper
     /**
      * Get Replace Selectors from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getReplaceSelectors()
+    public function getReplaceSelectors($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_REPLACE_SELECTORS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Totals Change Selectors from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getTotalsChangeSelectors()
+    public function getTotalsChangeSelectors($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TOTALS_CHANGE_SELECTORS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Replace Selectors from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getGlobalCSS()
+    public function getGlobalCSS($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get additional checkout button class
      *
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getAdditionalCheckoutButtonClass()
+    public function getAdditionalCheckoutButtonClass($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Custom Prefetch Address Fields
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getPrefetchAddressFields()
+    public function getPrefetchAddressFields($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Success Page Redirect from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getSuccessPageRedirect()
+    public function getSuccessPageRedirect($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_SUCCESS_PAGE_REDIRECT,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Custom javascript function call on success
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getjavascriptSuccess()
+    public function getJavascriptSuccess($storeId = 0)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_JAVASCRIPT_SUCCESS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
@@ -619,125 +665,156 @@ class Config extends AbstractHelper
     /**
      * Get Geolocation API Key from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getGeolocationApiKey()
+    public function getGeolocationApiKey($storeId)
     {
-        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY);
+        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId);
     }
 
     /**
      * Get Additional Javascript from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    public function getAdditionalJS()
+    public function getAdditionalJS($storeId)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_JS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnCheckoutStart()
+    public function getOnCheckoutStart($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_CHECKOUT_START,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnShippingDetailsComplete()
+    public function getOnShippingDetailsComplete($storeId)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnShippingOptionsComplete()
+    public function getOnShippingOptionsComplete($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnPaymentSubmit()
+    public function getOnPaymentSubmit($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_PAYMENT_SUBMIT,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnSuccess()
+    public function getOnSuccess($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_SUCCESS,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnClose()
+    public function getOnClose($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_CLOSE,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
      * Get Additional Config string
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    protected function getAdditionalConfigString()
+    protected function getAdditionalConfigString($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CONFIG,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         ) ?: '{}';
     }
 
     /**
      * Get Additional Config object
      *
+     * @param int|string $storeId
+     *
      * @return  \stdClass
      */
-    private function getAdditionalConfigObject()
+    private function getAdditionalConfigObject($storeId = null)
     {
-        return json_decode($this->getAdditionalConfigString());
+        return json_decode($this->getAdditionalConfigString($storeId));
     }
 
     /**
      * Get Additional Config property
      *
      * @param $name
-     * @return mixed
+     * @param int|string $storeId
+     *
+     * @return string
      */
-    private function getAdditionalConfigProperty($name)
+    private function getAdditionalConfigProperty($name, $storeId = null)
     {
-        $config = $this->getAdditionalConfigObject();
+        $config = $this->getAdditionalConfigObject($storeId);
         return @$config->$name;
+//        return ($config && property_exists($config, $name)) ? $config->$name: '';
     }
 
     /**
@@ -767,11 +844,13 @@ class Config extends AbstractHelper
      * according to Bolt checkout restriction state. Bolt checkout may be restricted if there are
      * restricted items in cart, e.g. subscription products.
      *
+     * @param int|string $storeId
+     *
      * @return mixed
      */
-    public function getToggleCheckout()
+    public function getToggleCheckout($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('toggleCheckout');
+        return $this->getAdditionalConfigProperty('toggleCheckout', $storeId);
     }
 
     /**
@@ -783,11 +862,13 @@ class Config extends AbstractHelper
      *   }                                  // if the gift cards can also be used to pay for the shipping and tax,
      * }                                    // false otherwise, only cart items can be payed with gift cards
      *
+     * @param int|string $storeId
+     *
      * @return mixed
      */
-    public function getAmastyGiftCardConfig()
+    public function getAmastyGiftCardConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('amastyGiftCard');
+        return $this->getAdditionalConfigProperty('amastyGiftCard', $storeId);
     }
 
     /**
@@ -816,22 +897,25 @@ class Config extends AbstractHelper
      *   }
      * }
      *
+     * @param int|string $storeId
+     *
      * @return mixed
      */
-    private function getPageFilters()
+    private function getPageFilters($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('pageFilters');
+        return $this->getAdditionalConfigProperty('pageFilters', $storeId);
     }
 
     /**
      * Get filter specified by name from "pageFilters" additional configuration
      *
      * @param string $filterName   'whitelist'|'blacklist'
+     * @param int|string $storeId
      * @return array
      */
-    private function getPageFilter($filterName)
+    private function getPageFilter($filterName, $storeId = null)
     {
-        $pageFilters = $this->getPageFilters();
+        $pageFilters = $this->getPageFilters($storeId);
         if ($pageFilters && @$pageFilters->$filterName) {
             return (array)$pageFilters->$filterName;
         }
@@ -842,20 +926,24 @@ class Config extends AbstractHelper
      * Get whitelisted pages, stored in "pageFilters.whitelist" additional configuration
      * as an array of "Full Action Name" identifiers, [<router_controller_action>]
      *
+     * @param int|string $storeId
+     *
      * @return array
      */
-    public function getPageWhitelist()
+    public function getPageWhitelist($storeId = null)
     {
-        return $this->getPageFilter('whitelist');
+        return $this->getPageFilter('whitelist', $storeId);
     }
 
     /**
      * Get blacklisted pages, stored in "pageFilters.blacklist" additional configuration
      * as an array of "Full Action Name" identifiers, [<router_controller_action>]
      *
+     * @param int|string $storeId
+     *
      * @return array
      */
-    public function getPageBlacklist()
+    public function getPageBlacklist($storeId = null)
     {
         return $this->getPageFilter('blacklist');
     }
@@ -868,34 +956,41 @@ class Config extends AbstractHelper
      * }
      * defaults to false if not set
      *
+     * @param int|string $storeId
+     *
      * @return bool
      */
-    public function shouldAdjustTaxMismatch()
+    public function shouldAdjustTaxMismatch($storeId = null)
     {
-        return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch');
+        return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch', $storeId);
     }
 
     /**
      * Get Client IP Whitelist from config
      *
+     * @param int|string $storeId
+     *
      * @return  string
      */
-    private function getIPWhitelistConfig()
+    private function getIPWhitelistConfig($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_IP_WHITELIST,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
     /**
-     * Get an array of wtitelisted IPs
+     * Get an array of whitelisted IPs
+     *
+     * @param int|string $storeId
      *
      * @return array
      */
-    public function getIPWhitelistArray()
+    public function getIPWhitelistArray($storeId = null)
     {
-        return array_filter(array_map('trim', explode(',', $this->getIPWhitelistConfig())));
+        return array_filter(array_map('trim', explode(',', $this->getIPWhitelistConfig($storeId))));
     }
 
     /**
@@ -929,10 +1024,10 @@ class Config extends AbstractHelper
      *
      * @return bool
      */
-    public function isIPRestricted()
+    public function isIPRestricted($storeId = null)
     {
         $clientIP = $this->getClientIp();
-        $whitelist = $this->getIPWhitelistArray();
+        $whitelist = $this->getIPWhitelistArray($storeId);
         return $whitelist && ! in_array($clientIP, $whitelist);
     }
 
@@ -942,7 +1037,7 @@ class Config extends AbstractHelper
      * @param int|string|Store $store
      * @return bool
      */
-    public function getStoreCreditConfig($store = null)
+    public function useStoreCreditConfig($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_STORE_CREDIT,

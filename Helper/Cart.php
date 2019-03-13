@@ -320,7 +320,7 @@ class Cart extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload)
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = 0)
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
@@ -331,7 +331,7 @@ class Cart extends AbstractHelper
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
