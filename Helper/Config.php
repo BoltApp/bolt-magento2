@@ -25,7 +25,6 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\Store;
 use Magento\Framework\App\Request\Http as Request;
-use Magento\Framework\Session\SessionManagerInterface as quoteSession;
 
 /**
  * Boltpay Configuration helper
@@ -255,16 +254,10 @@ class Config extends AbstractHelper
     private $contextHelper;
 
     /**
-     * @var \Magento\Backend\Model\Session\Quote
-     */
-    private $quoteSession;
-
-    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
-     * @param quoteSession              $quoteSession
      * @param Request                  $request
      *
      * @codeCoverageIgnore
@@ -274,7 +267,6 @@ class Config extends AbstractHelper
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
         ProductMetadataInterface $productMetadata,
-        quoteSession $quoteSession,
         Request $request
     ) {
         parent::__construct($context);
@@ -283,7 +275,6 @@ class Config extends AbstractHelper
         $this->productMetadata = $productMetadata;
         $this->request = $request;
         $this->contextHelper = $context;
-        $this->quoteSession = $quoteSession;
     }
 
     /**
