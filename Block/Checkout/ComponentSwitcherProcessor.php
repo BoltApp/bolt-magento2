@@ -14,13 +14,13 @@
  * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-namespace Bolt\Boltpay\Block\Checkout\Cart;
+namespace Bolt\Boltpay\Block\Checkout;
 
 use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
 
 /**
  * Class ComponentSwitcherProcessor
- * Enable / disable components in the shopping cart page layout depending on the configuration.
+ * Enable / disable components in the checkout page layout depending on the configuration.
  *
  * @package Bolt\Boltpay\Block\Checkout\Cart
  */
@@ -33,9 +33,11 @@ class ComponentSwitcherProcessor extends LayoutProcessor
      * @return array
      */
     public function process($jsLayout) {
-        // Store Credit
-        $jsLayout['components']['block-totals']['children']['storeCredit']['componentDisabled'] =
-            ! $this->configHelper->getStoreCreditConfig();
+        // Payment only checkout based on Magento default one-page checkpout
+        // (one-page checkout, Mageplaza one-step checkout etc.)
+        $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']
+        ['children']['renders']['children']['boltpay-payments']['config']['componentDisabled'] =
+            ! $this->configHelper->isPaymentOnlyCheckoutEnabled();
 
         return $jsLayout;
     }

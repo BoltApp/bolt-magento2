@@ -52,5 +52,12 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Checkout\Block\Onepage">
+        <arguments>
+            <argument name="layoutProcessors" xsi:type="array">
+                <item name="componentSwitcher" xsi:type="object">Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor</item>
+            </argument>
+        </arguments>
+    </type>
 
 </config>
