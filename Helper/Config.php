@@ -193,6 +193,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_TRACK_CHECKOUT_START = 'payment/boltpay/track_on_checkout_start';
 
+    const XML_PATH_TRACK_EMAIL_ENTER = 'payment/boltpay/track_on_email_enter';
+
     const XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE = 'payment/boltpay/track_on_shipping_details_complete';
 
     const XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE = 'payment/boltpay/track_on_shipping_options_complete';
@@ -646,6 +648,17 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_CHECKOUT_START,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
+    public function getOnEmailEnter()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TRACK_EMAIL_ENTER,
             ScopeInterface::SCOPE_STORE
         );
     }

@@ -238,6 +238,7 @@ class Js extends Template
     {
         return [
             'checkout_start' => $this->getOnCheckoutStart(),
+            'email_enter' => $this->getOnEmailEnter(),
             'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
             'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
             'payment_submit'=> $this->getOnPaymentSubmit(),
@@ -252,6 +253,14 @@ class Js extends Template
     protected function getOnCheckoutStart()
     {
         return $this->configHelper->getOnCheckoutStart();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getOnEmailEnter()
+    {
+        return $this->configHelper->getOnEmailEnter();
     }
 
     /**
