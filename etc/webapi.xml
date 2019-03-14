@@ -47,9 +47,9 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-    <!-- Create Order hook -->
-    <route url="V1/bolt/boltpay/order/update" method="POST">
-        <service class="Bolt\Boltpay\Api\UpdateOrderInterface" method="execute"/>
+    <!-- Pre-Auth: order_received_url -->
+    <route url="V1/bolt/boltpay/order/received_url" method="GET">
+        <service class="Bolt\Boltpay\Api\OrderReceivedUrlInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
