@@ -832,6 +832,14 @@ class Cart extends AbstractHelper
                     $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
                 }
 
+                if (!$address->getShippingMethod()) {
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Shipping method not set.'
+                    );
+                    return [];
+                }
+
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
@@ -865,7 +873,7 @@ class Cart extends AbstractHelper
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
                 } else {
-                    $this->logAddressData($cartBillingAddress);
+                    $this->logAddressData($shipAddress);
                     $this->bugsnag->notifyError(
                         'Order create error',
                         'Shipping address data insufficient.'
