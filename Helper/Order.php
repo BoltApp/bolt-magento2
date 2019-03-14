@@ -746,7 +746,7 @@ class Order extends AbstractHelper
         $quote = $this->prepareQuote($immutableQuote, $transaction);
 
         // check if the order has been created in the meanwhile
-        $this->isOrderExist($quote);
+        $this->verifyOrderIsNew($quote);
 
         /** @var \Magento\Sales\Model\Order $order */
         $order = $this->quoteManagement->submit($quote);
@@ -796,10 +796,10 @@ class Order extends AbstractHelper
 
     /**
      * @param Quote $quote
-     * @return bool
+     *
      * @throws LocalizedException
      */
-    private function isOrderExist($quote)
+    private function verifyOrderIsNew($quote)
     {
         /** @var OrderModel $order */
         $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
@@ -820,8 +820,6 @@ class Order extends AbstractHelper
                 \Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_ORDER_ALREADY_EXISTS
             );
         }
-
-        return false;
     }
 
     /**
