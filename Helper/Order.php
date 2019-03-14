@@ -786,15 +786,6 @@ class Order extends AbstractHelper
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
             );
-            // Send order confirmation email to customer.
-            // Emulate frontend area in order for email
-            // template to be loaded from the correct path
-            // even if run from the hook.
-            if (!$order->getEmailSent()) {
-                $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                    $this->emailSender->send($order);
-                });
-            }
         }
 
         $order->save();
