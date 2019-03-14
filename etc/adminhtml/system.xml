@@ -105,6 +105,10 @@
                     <label>Tracking: onCheckoutStart</label>
                     <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
                 </field>
+                <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="151" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onEmailEnter</label>
+                    <comment>The javascript code executed when user enters or changes email. Email can be accessed as a variable named email.</comment>
+                </field>
                 <field id="track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tracking: onShippingDetailsComplete</label>
                     <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
