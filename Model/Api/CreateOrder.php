@@ -291,7 +291,6 @@ class CreateOrder implements CreateOrderInterface
             });
             $quote = null;
 
-//            throw new LocalizedException(__('There is no quote with ID: %1', $quoteId));
             throw new BoltException(
                 __('There is no quote with ID: %1', $quoteId),
                 null,
