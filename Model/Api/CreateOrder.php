@@ -162,7 +162,7 @@ class CreateOrder implements CreateOrderInterface
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createOrderData->getId(),
+                'display_id' => $createOrderData->getIncrementId() . ' / ' . $createOrderData->getId(),
                 'total'      => $createOrderData->getGrandTotal() * 100,
                 'order_received_url' => '',
             ]);
