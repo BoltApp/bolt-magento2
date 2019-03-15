@@ -260,9 +260,9 @@ $trackCallbacks = $block->getTrackCallbacks();
             }
         };
 
-        var showBoltErrorMessage = function(messsage) {
+        var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
+                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>" + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -561,7 +561,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showBoltErrorMessage();
+                            showBoltErrorMessage('', data.reference);
                             // pretend order creation was success...
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
