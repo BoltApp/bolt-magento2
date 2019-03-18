@@ -26,7 +26,7 @@ interface OrderReceivedUrlInterface
     /**
      * Create order.
      * Hook formats:
-     * blt_payload=<HASH>&blt_signature=<SIGN>
+     * bolt_payload=<HASH>&bolt_signature=<SIGN>
      *
      * @api
      *
@@ -36,7 +36,7 @@ interface OrderReceivedUrlInterface
      * @return void
      */
     public function execute(
-        $blt_signature = null,
-        $blt_payload = null
+        $bolt_signature = null,
+        $bolt_payload = null
     );
 }
