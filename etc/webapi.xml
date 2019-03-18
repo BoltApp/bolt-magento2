@@ -47,11 +47,4 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-    <!-- Pre-Auth: order_received_url -->
-    <route url="V1/bolt/boltpay/order/received_url" method="GET">
-        <service class="Bolt\Boltpay\Api\OrderReceivedUrlInterface" method="execute"/>
-        <resources>
-            <resource ref="anonymous" />
-        </resources>
-    </route>
 </routes>
