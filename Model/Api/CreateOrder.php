@@ -29,6 +29,7 @@ use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
@@ -83,6 +84,7 @@ class CreateOrder implements CreateOrderInterface
      * @var CartHelper
      */
     private $cartHelper;
+    private $url;
 
     /**
      * @param HookHelper   $hookHelper
@@ -102,6 +104,7 @@ class CreateOrder implements CreateOrderInterface
         Request $request,
         Bugsnag $bugsnag,
         Response $response,
+        UrlInterface $url,
         ConfigHelper $configHelper
     ) {
         $this->hookHelper = $hookHelper;
@@ -112,6 +115,7 @@ class CreateOrder implements CreateOrderInterface
         $this->response = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
+        $this->url = $url;
     }
 
     /**
@@ -141,6 +145,8 @@ class CreateOrder implements CreateOrderInterface
             }
 
             $payload = $this->request->getContent();
+            $this->logHelper->addInfoLog('[ --- DEBUG --- ]');
+//            $this->logHelper->addInfoLog($payload);
 
             $this->validateHook();
 
@@ -158,13 +164,14 @@ class CreateOrder implements CreateOrderInterface
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
             $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $payload);
+            $orderReference = $this->getOrderReference($order);
 
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createOrderData->getIncrementId() . ' / ' . $createOrderData->getId(),
+                'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
                 'total'      => $createOrderData->getGrandTotal() * 100,
-                'order_received_url' => '',
+                'order_received_url' => $this->getReceivedUrl($orderReference),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -268,6 +275,24 @@ class CreateOrder implements CreateOrderInterface
 
         $error = __('cart->display_id does not exist');
         throw new LocalizedException($error);
+    }
+
+    /**
+     * @return string
+     */
+    public function getReceivedUrl($orderReference)
+    {
+        $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
+        if (empty($orderReference)) {
+            $this->logHelper->addInfoLog('---> empty');
+            return '';
+        }
+
+//        $url = $this->url->getUrl('/rest/V1/bolt/boltpay/order/received_url');
+        $url = $this->url->getUrl('boltpay/order/receivedurl');
+        $this->logHelper->addInfoLog('---> ' . $url);
+
+        return $url;
     }
 
     /**
