@@ -370,6 +370,18 @@ class ConfigTest extends TestCase
     /**
      * @inheritdoc
      */
+    public function testGetProductPageCheckoutFlag()
+    {
+        $this->scopeConfig->method('isSetFlag')
+                          ->with(BoltConfig::XML_PATH_PRODUCT_PAGE_CHECKOUT)
+                          ->will($this->returnValue(false));
+
+        $this->assertFalse($this->currentMock->getProductPageCheckoutFlag(), 'getProductPageCheckoutFlag() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function testGetPrefetchShipping()
     {
         $this->scopeConfig->method('isSetFlag')

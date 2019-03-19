@@ -28,6 +28,7 @@
                 <sandbox_mode>1</sandbox_mode>
                 <debug>0</debug>
                 <automatic_capture_mode>0</automatic_capture_mode>
+                <product_page_checkout>0</product_page_checkout>
                 <allowspecific>0</allowspecific>
                 <order_status>new</order_status>
                 <currency>USD</currency>

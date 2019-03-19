@@ -58,6 +58,10 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>If enabled, payment will be captured as soon as order is approved by Bolt. Otherwise, payment is captured when invoice is created in magento.</comment>
                 </field>
+                <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Enable product page checkout (beta)</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="geolocation_api_key" translate="label" type="obscure" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Geolocation API Key</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>

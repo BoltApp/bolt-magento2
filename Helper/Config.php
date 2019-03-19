@@ -102,6 +102,12 @@ class Config extends AbstractHelper
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
 
     /**
+     * Enable product page checkout
+     */
+    const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
+
+
+    /**
      * Prefetch shipping
      */
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
@@ -528,6 +534,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Product page checkout flag from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
             $store
         );
