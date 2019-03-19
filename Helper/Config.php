@@ -193,6 +193,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_TRACK_CHECKOUT_START = 'payment/boltpay/track_on_checkout_start';
 
+    const XML_PATH_TRACK_EMAIL_ENTER = 'payment/boltpay/track_on_email_enter';
+
     const XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE = 'payment/boltpay/track_on_shipping_details_complete';
 
     const XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE = 'payment/boltpay/track_on_shipping_options_complete';
@@ -222,6 +224,11 @@ class Config extends AbstractHelper
      * Use Store Credit on Shopping Cart configuration path
      */
     const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
+
+    /**
+     * Payment Only Checkout Enabled configuration path
+     */
+    const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -653,6 +660,17 @@ class Config extends AbstractHelper
     /**
      * @return string
      */
+    public function getOnEmailEnter()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TRACK_EMAIL_ENTER,
+            ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * @return string
+     */
     public function getOnShippingDetailsComplete()
     {
         return $this->getScopeConfig()->getValue(
@@ -946,6 +964,21 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_STORE_CREDIT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Payment Only Checkout Enabled configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function isPaymentOnlyCheckoutEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PAYMENT_ONLY_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
             $store
         );

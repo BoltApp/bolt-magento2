@@ -238,6 +238,7 @@ class Js extends Template
     {
         return [
             'checkout_start' => $this->getOnCheckoutStart(),
+            'email_enter' => $this->getOnEmailEnter(),
             'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
             'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
             'payment_submit'=> $this->getOnPaymentSubmit(),
@@ -252,6 +253,14 @@ class Js extends Template
     protected function getOnCheckoutStart()
     {
         return $this->configHelper->getOnCheckoutStart();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getOnEmailEnter()
+    {
+        return $this->configHelper->getOnEmailEnter();
     }
 
     /**
@@ -351,13 +360,9 @@ class Js extends Template
             return false;
         }
 
-        // However, if IP whitelist is defined, the Bolt checkout functionality
-        // must be limited to the non cached pages, shopping cart and checkout.
-        if ($this->configHelper->getIPWhitelistArray()) {
-            return ! in_array($currentPage, Config::$defaultPageWhitelist);
-        }
-
-        // No minicart support. Check if the page is whitelisted.
+        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
+        // If IP whitelist is defined, the Bolt checkout functionality
+        // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
         return ! in_array($currentPage, $this->getPageWhitelist());
     }
 
