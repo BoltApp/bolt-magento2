@@ -56,7 +56,7 @@ class ReceivedUrl extends Action
 
         if ($signature === $hash) {
             // it is BOLT!
-            $this->messageManager->addErrorMessage(__('Something went wrong. Please contact the seller.'));
+            $this->messageManager->addSuccessMessage(__('Authorized.'));
             $this->_redirect('/checkout/onepage/success/');
         } else {
             // Potentially it is attack.
