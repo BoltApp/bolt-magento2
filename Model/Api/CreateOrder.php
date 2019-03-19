@@ -145,8 +145,6 @@ class CreateOrder implements CreateOrderInterface
             }
 
             $payload = $this->request->getContent();
-            $this->logHelper->addInfoLog('[ --- DEBUG --- ]');
-//            $this->logHelper->addInfoLog($payload);
 
             $this->validateHook();
 
