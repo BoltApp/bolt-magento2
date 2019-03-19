@@ -54,6 +54,17 @@ class ReceivedUrl extends Action
 
         $this->logHelper->addInfoLog('# Is Equal: ' . (($signature === $hash) ? " yes" : "no"));
 
+        // Debug
+        $logMessage = 'bolt_signature and Magento signature is not equal';
+        $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
+            $report->setMetaData([
+                'bolt_signature' => $boltSignature,
+                'bolt_payload'   => $boltPayload
+            ]);
+        });
+        $this->bugsnag->notifyError('OrderReceivedUrlError', $logMessage);
+//        $this->bugsnag->notifyException('LocalizedException', $logMessage);
+
         if ($signature === $hash) {
             // it is BOLT!
             $this->messageManager->addSuccessMessage(__('Authorized.'));
