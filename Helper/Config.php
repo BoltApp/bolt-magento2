@@ -101,6 +101,12 @@ class Config extends AbstractHelper
     const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
 
     /**
+     * Enable product page checkout
+     */
+    const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
+
+
+    /**
      * Prefetch shipping
      */
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
@@ -585,6 +591,22 @@ class Config extends AbstractHelper
             self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
+        );
+    }
+
+    /**
+     * Get Product page checkout flag from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
         );
     }
 
