@@ -60,8 +60,20 @@ class ReceivedUrl extends Action
             $this->_redirect('/checkout/onepage/success/');
         } else {
             // Potentially it is attack.
-            $this->messageManager->addErrorMessage(__('Something went wrong. Please contact the seller.'));
-            $this->logHelper->addInfoLog('bolt_signature and Magento signature is not equal');
+            $errorMessage = __('Something went wrong. Please contact the seller.');
+            $this->messageManager->addErrorMessage($errorMessage);
+
+            $logMessage = 'bolt_signature and Magento signature is not equal';
+            $this->logHelper->addInfoLog($logMessage);
+
+            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
+                $report->setMetaData([
+                    'bolt_signature' => $boltSignature,
+                    'bolt_payload'   => $boltPayload
+                ]);
+            });
+            $this->bugsnag->notifyError('OrderReceivedUrl Error', $logMessage);
+
             $this->_redirect('/');
         }
     }
