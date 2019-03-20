@@ -216,6 +216,13 @@ $trackCallbacks = $block->getTrackCallbacks();
                     console.error(error);
                 }
             },
+            onEmailEnter: function(email) {
+                try {
+                    <?php echo $trackCallbacks['email_enter']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
             onShippingDetailsComplete: function() {
                 try {
                     <?php echo $trackCallbacks['shipping_details_complete']; ?>
@@ -627,6 +634,7 @@ $trackCallbacks = $block->getTrackCallbacks();
             },
 
             onEmailEnter: function(email) {
+                trackCallbacks.onEmailEnter(email);
                 if (callbacks.email !== email) {
                     ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email));
                     callbacks.email = email;
