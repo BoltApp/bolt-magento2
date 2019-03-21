@@ -496,7 +496,7 @@ class ConfigTest extends TestCase
             ->with(BoltConfig::XML_PATH_JAVASCRIPT_SUCCESS)
             ->will($this->returnValue($configValue));
 
-        $result = $this->currentMock->getjavascriptSuccess();
+        $result = $this->currentMock->getJavascriptSuccess();
 
         $this->assertEquals($configValue, $result, 'getjavascriptSuccess() method: not working properly');
     }

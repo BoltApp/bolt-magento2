@@ -3,14 +3,12 @@
  * @var \Bolt\Boltpay\Block\Form $block
  */
 $code = $block->escapeHtml($block->getMethodCode());
-/** @var Bolt\Boltpay\Helper\Config $helper */
-$helper = $this->helper(Bolt\Boltpay\Helper\Config::class);
 ?>
 <fieldset class="admin__fieldset payment-method" id="payment_form_<?php /* @noEscape */ echo $code; ?>" style="display:none">
     <script
         id="bolt-connect" type="text/javascript"
         src="<?php echo $block->getConnectJsUrl(); ?>"
-        data-publishable-key="<?php echo $helper->getPublishableKeyBackOffice() ?>">
+        data-publishable-key="<?php echo $block->getBackOfficeKey(); ?>">
     </script>
 
     <input type="hidden" id="bolt-billing-address" value='<?php echo $block->getBillingAddress() ?>' />
