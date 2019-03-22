@@ -39,7 +39,6 @@ use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Unirgy\SimpleLicense\Exception;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
