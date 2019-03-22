@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\App\Request\Http as Request;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\HTTP\ZendClientFactory;
 use Magento\Framework\App\CacheInterface;
@@ -40,11 +39,6 @@ class Geolocation extends AbstractHelper
      * @var ConfigHelper
      */
     private $configHelper;
-
-    /**
-     * @var Request
-     */
-    private $request;
 
     /**
      * @var Bugsnag
@@ -68,7 +62,6 @@ class Geolocation extends AbstractHelper
     /**
      * @param Context $context
      * @param Config $configHelper
-     * @param Request $request
      * @param Bugsnag $bugsnag
      * @param ZendClientFactory $httpClientFactory
      * @param CacheInterface $cache
@@ -78,43 +71,15 @@ class Geolocation extends AbstractHelper
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
-        Request $request,
         Bugsnag $bugsnag,
         ZendClientFactory $httpClientFactory,
         CacheInterface $cache
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
-        $this->request = $request;
         $this->bugsnag = $bugsnag;
         $this->httpClientFactory = $httpClientFactory;
         $this->cache = $cache;
-    }
-
-    /**
-     * Gets the IP address of the requesting customer.
-     * This is used instead of simply $_SERVER['REMOTE_ADDR'] to give more accurate IPs if a proxy is being used.
-     *
-     * @return string  The IP address of the customer
-     */
-    private function getIpAddress()
-    {
-
-        foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
-                     'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
-            if ($ips = $this->request->getServer($key, false)) {
-                foreach (explode(',', $ips) as $ip) {
-                    $ip = trim($ip); // just to be safe
-                    if (filter_var(
-                        $ip,
-                        FILTER_VALIDATE_IP,
-                        FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-                    ) !== false) {
-                        return $ip;
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -126,12 +91,13 @@ class Geolocation extends AbstractHelper
     }
 
     /**
+     * Make a Geolocation API call
+     *
      * @param string $ip        The IP address
      * @param $apiKey           ipstack.com API key
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
-
     private function getLocationJson($ip, $apiKey)
     {
 
@@ -152,6 +118,8 @@ class Geolocation extends AbstractHelper
     }
 
     /**
+     * Fetch / cache Geolocation data.
+     *
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
@@ -162,7 +130,7 @@ class Geolocation extends AbstractHelper
             return null;
         }
 
-        $ip = $this->getIpAddress();
+        $ip = $this->configHelper->getClientIp();
 
         // try getting location from cache
         $cacheIdentifier = md5(self::CACHE_PREFIX.$ip);

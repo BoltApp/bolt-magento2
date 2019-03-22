@@ -45,4 +45,19 @@
         <plugin name="Bolt_Boltpay_Amasty_GiftCard_Remove_Plugin" type="Bolt\Boltpay\Plugin\AmastyGiftCardRemovePlugin" sortOrder="1" />
     </type>
 
+    <type name="Magento\Checkout\Block\Cart\Totals">
+        <arguments>
+            <argument name="layoutProcessors" xsi:type="array">
+                <item name="componentSwitcher" xsi:type="object">Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\Checkout\Block\Onepage">
+        <arguments>
+            <argument name="layoutProcessors" xsi:type="array">
+                <item name="componentSwitcher" xsi:type="object">Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor</item>
+            </argument>
+        </arguments>
+    </type>
+
 </config>

@@ -154,10 +154,7 @@ class Cart extends AbstractHelper
         'region',
         'postal_code',
         'country_code',
-    ];
-
-    private $requiredBillingAddressFields  = [
-        'email',
+        'email'
     ];
 
     /////////////////////////////////////////////////////////////////////////////
@@ -297,17 +294,6 @@ class Cart extends AbstractHelper
     public function saveQuote($quote)
     {
         $this->quoteRepository->save($quote);
-
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
-
     }
 
     /**
@@ -320,15 +306,6 @@ class Cart extends AbstractHelper
     {
         $this->quoteResource->save($quote);
 
-        if ($quote->getIsActive()) {
-
-            $this->_eventManager->dispatch(
-                'sales_quote_save_after',
-                [
-                    'quote' => $quote
-                ]
-            );
-        }
     }
 
     /**
@@ -343,7 +320,7 @@ class Cart extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload)
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = 0)
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
@@ -354,7 +331,7 @@ class Cart extends AbstractHelper
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -397,24 +374,17 @@ class Cart extends AbstractHelper
     /**
      * Get the hints data for checkout
      *
-     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
-     *                                         i.e. billing address to be saved with the order
      * @param string $cartReference            (immutable) quote id
      *
      * @return array
      * @throws NoSuchEntityException
      */
-    public function getHints($placeOrderPayload, $cartReference)
+    public function getHints($cartReference = null)
     {
         /** @var Quote */
         $quote = $cartReference ?
             $this->getQuoteById($cartReference) :
             $this->checkoutSession->getQuote();
-
-        if ($placeOrderPayload) {
-            $placeOrderPayload = @json_decode($placeOrderPayload);
-            $email = @$placeOrderPayload->email;
-        }
 
         $hints = ['prefill' => []];
 
@@ -432,7 +402,7 @@ class Cart extends AbstractHelper
             $prefill = [
                 'firstName'    => $address->getFirstname(),
                 'lastName'     => $address->getLastname(),
-                'email'        => @$email ?: $address->getEmail() ?: $quote->getCustomerEmail(),
+                'email'        => $address->getEmail() ?: $quote->getCustomerEmail(),
                 'phone'        => $address->getTelephone(),
                 'addressLine1' => $address->getStreetLine(1),
                 'addressLine2' => $address->getStreetLine(2),
@@ -462,16 +432,18 @@ class Cart extends AbstractHelper
             $signResponse = $this->getSignResponse($signRequest)->getResponse();
 
             if ($signResponse) {
-                $hints['signed_merchant_user_id'] = [
-                    "merchant_user_id" => $signResponse->merchant_user_id,
-                    "signature"        => $signResponse->signature,
-                    "nonce"            => $signResponse->nonce,
-                ];
+                $hints['merchant_user_id'] = $signResponse->merchant_user_id;
+                $hints['signature'] = $signResponse->signature;
+                $hints['nonce'] = $signResponse->nonce;
             }
 
-            $prefillHints($customer->getDefaultShippingAddress());
+            if ($quote->isVirtual()) {
+                $prefillHints($customer->getDefaultBillingAddress());
+            } else {
+                $prefillHints($customer->getDefaultShippingAddress());
+            }
 
-            $hints['prefill']['email'] = @$hints['prefill']['email'] ?: $customer->getEmail();
+            $hints['prefill']['email'] = $customer->getEmail();
         }
 
         // Quote shipping / billing address.
@@ -500,7 +472,7 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
 
@@ -547,6 +519,85 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Reserve Order Id for the first immutable quote created.
+     * Store it in BoltReservedOrderId field in the parent quote
+     * as well as in any subsequently created immutable quote.
+     * Defer setting ReservedOrderId on the parent quote
+     * until the quote to order submission.
+     * Reason: Some 3rd party plugins read this value and if set
+     * consider the quote to be a complete order.
+     *
+     * @param Quote $immutableQuote
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    protected function reserveOrderId($immutableQuote, $quote)
+    {
+        $reservedOrderId = $immutableQuote->getBoltReservedOrderId();
+        if (!$reservedOrderId) {
+            $reservedOrderId = $immutableQuote->reserveOrderId()->getReservedOrderId();
+            $immutableQuote->setBoltReservedOrderId($reservedOrderId);
+            $quote->setBoltReservedOrderId($reservedOrderId);
+            $this->quoteResourceSave($quote);
+        } else {
+            $immutableQuote->setReservedOrderId($reservedOrderId);
+        }
+        $this->quoteResourceSave($immutableQuote);
+    }
+
+    /**
+     * Create an immutable quote.
+     * Set the BoltParentQuoteId to the parent quote, if not set already,
+     * so it can be replicated to immutable quote in replicateQuoteData.
+     *
+     * @param Quote $quote
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     * @throws \Zend_Validate_Exception
+     */
+    protected function createImmutableQuote($quote)
+    {
+        if (!$quote->getBoltParentQuoteId()) {
+            $quote->setBoltParentQuoteId($quote->getId());
+            $this->quoteResourceSave($quote);
+        }
+        /** @var Quote $immutableQuote */
+        $immutableQuote = $this->quoteFactory->create();
+
+        $this->replicateQuoteData($quote, $immutableQuote);
+
+        return $immutableQuote;
+    }
+
+    /**
+     * Check if all the required address fields are populated.
+     *
+     * @param array $address
+     * @return bool
+     */
+    private function isAddressComplete($address)
+    {
+        foreach ($this->requiredAddressFields as $field) {
+            if (empty($address[$field])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Bugsnag address data
+     *
+     * @param array $addressData
+     */
+    private function logAddressData($addressData) {
+        $this->bugsnag->registerCallback(function ($report) use ($addressData) {
+            $report->setMetaData([
+                'ADDRESS_DATA' => $addressData
+            ]);
+        });
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -568,7 +619,7 @@ class Cart extends AbstractHelper
         try {
             /** @var Quote $quote */
             $quote = $immutableQuote ?
-                $this->getActiveQuoteById($immutableQuote->getBoltParentQuoteId()) :
+                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
                 $this->checkoutSession->getQuote();
         } catch (NoSuchEntityException $e) {
             // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
@@ -594,15 +645,10 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
-            $quote->setBoltParentQuoteId($quote->getId());
-            $quote->reserveOrderId();
-            $this->quoteResourceSave($quote);
-
-            /** @var Quote $immutableQuote */
-            $immutableQuote = $this->quoteFactory->create();
-
-            $this->replicateQuoteData($quote, $immutableQuote);
+            $immutableQuote = $this->createImmutableQuote($quote);
+            $this->reserveOrderId($immutableQuote, $quote);
         }
+
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
@@ -612,8 +658,6 @@ class Cart extends AbstractHelper
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            // Not an error. Commenting out bugsnag report for now.
-            // $this->bugsnag->notifyError('Get Cart Data Error', 'The cart is empty');
             return $cart;
         }
 
@@ -677,6 +721,14 @@ class Cart extends AbstractHelper
              * @var \Magento\Catalog\Model\Product
              */
             $_product = $this->productFactory->create()->load($productId);
+            $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+            if(isset($item_options['attributes_info'])){
+                $properties = array();
+                foreach($item_options['attributes_info'] as $attribute_info){
+                    $properties[] = (object) array( "name" => $attribute_info['label'], "value" => $attribute_info['value'] );
+                }
+                $product['properties'] = $properties;
+            }
             $product['description'] = strip_tags($_product->getDescription());
             try {
                 $productImage = $imageBlock->getImage($_product, 'product_small_image');
@@ -704,8 +756,16 @@ class Cart extends AbstractHelper
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // Email field is mandatory for saving the address.
+        // For back-office orders (payment only) we need to get it from the store.
+        // Trying several possible places.
+        $email = $billingAddress->getEmail()
+            ?: $shippingAddress->getEmail()
+            ?: $this->customerSession->getCustomer()->getEmail()
+            ?: $immutableQuote->getCustomerEmail();
+
         // Billing address
-        $cart['billing_address'] = [
+        $cartBillingAddress = [
             'first_name'      => $billingAddress->getFirstname(),
             'last_name'       => $billingAddress->getLastname(),
             'company'         => $billingAddress->getCompany(),
@@ -716,20 +776,18 @@ class Cart extends AbstractHelper
             'region'          => $billingAddress->getRegion(),
             'postal_code'     => $billingAddress->getPostcode(),
             'country_code'    => $billingAddress->getCountryId(),
+            'email'           => $email
         ];
-
-        $email = $billingAddress->getEmail() ?: $shippingAddress->getEmail() ?: $this->customerSession->getCustomer()->getEmail();
 
         // additional data sent, i.e. billing address from checkout page
         if ($placeOrderPayload) {
             $placeOrderPayload = json_decode($placeOrderPayload);
 
-            $email                = @$placeOrderPayload->email ?: $email;
             $billAddress          = @$placeOrderPayload->billingAddress;
             $billingStreetAddress = (array)@$billAddress->street;
 
             if ($billAddress) {
-                $cart['billing_address'] = [
+                $cartBillingAddress = [
                     'first_name'      => @$billAddress->firstname,
                     'last_name'       => @$billAddress->lastname,
                     'company'         => @$billAddress->company,
@@ -740,12 +798,14 @@ class Cart extends AbstractHelper
                     'region'          => @$billAddress->region,
                     'postal_code'     => @$billAddress->postcode,
                     'country_code'    => @$billAddress->countryId,
+                    'email'           => @$placeOrderPayload->email ?: $email
                 ];
             }
         }
 
-        if ($email) {
-            $cart['billing_address']['email'] = $email;
+        // Billing address is not mandatory set it only if it is complete
+        if ($this->isAddressComplete($cartBillingAddress)) {
+            $cart['billing_address'] = $cartBillingAddress;
         }
 
         $address = $immutableQuote->isVirtual() ? $billingAddress : $shippingAddress;
@@ -753,14 +813,31 @@ class Cart extends AbstractHelper
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
-                $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
-                $address->save();
+                if (@$cart['billing_address']){
+                    $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                    $address->save();
+                } else {
+                    $this->logAddressData($cartBillingAddress);
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Billing address data insufficient.'
+                    );
+                    return [];
+                }
             } else {
                 $address->setCollectShippingRates(true);
 
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $quote) {
                     $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
+                }
+
+                if (!$address->getShippingMethod()) {
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Shipping method not set.'
+                    );
+                    return [];
                 }
 
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
@@ -778,21 +855,10 @@ class Cart extends AbstractHelper
                     'region' => $address->getRegion(),
                     'postal_code' => $address->getPostcode(),
                     'country_code' => $address->getCountryId(),
+                    'email' => $address->getEmail() ?: $email
                 ];
 
-                $email = $address->getEmail() ?: $email;
-                if ($email) {
-                    $shipAddress['email'] = $email;
-                }
-
-                foreach ($this->requiredAddressFields as $field) {
-                    if (empty($shipAddress[$field])) {
-                        unset($shipAddress);
-                        break;
-                    }
-                }
-
-                if (@$shipAddress) {
+                if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
                     $rounded_cost = $this->getRoundAmount($cost);
 
@@ -806,6 +872,13 @@ class Cart extends AbstractHelper
                         'service' => $shippingAddress->getShippingDescription(),
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
+                } else {
+                    $this->logAddressData($shipAddress);
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Shipping address data insufficient.'
+                    );
+                    return [];
                 }
             }
 
@@ -825,15 +898,6 @@ class Cart extends AbstractHelper
         $cart['items'][0]['total_amount'] += round($diff);
         $totalAmount += round($diff);
         $diff = 0;
-
-        // unset billing if not all required fields are present
-        $requiredBillingFields = array_merge($this->requiredAddressFields, $this->requiredBillingAddressFields);
-        foreach ($requiredBillingFields as $field) {
-            if (empty($cart['billing_address'][$field])) {
-                unset($cart['billing_address']);
-                break;
-            }
-        }
 
         // add discount data
         $cart['discounts'] = [];

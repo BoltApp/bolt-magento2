@@ -305,8 +305,12 @@ class Discount extends AbstractHelper
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+            $bind = [
+                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+                'entity_id' => $quote->getBoltParentQuoteId()
+            ];
 
-            $connection->query($sql, ['entity_id' => $quote->getId(), 'bolt_parent_quote_id' => $quote->getId()]);
+            $connection->query($sql, $bind);
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
@@ -384,6 +388,8 @@ class Discount extends AbstractHelper
     }
 
     /**
+     * Get Unirgy_Giftcert balance.
+     *
      * @param $giftcertCode
      * @return float
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -391,11 +397,14 @@ class Discount extends AbstractHelper
     public function getUnirgyGiftCertBalanceByCode($giftcertCode)
     {
         /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-        $giftCert = $this->unirgyCertRepository->getInstance()->get($giftcertCode);
+        $unirgyInstance = $this->unirgyCertRepository->getInstance();
 
         $result = 0;
-        if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
-            $result = $giftCert->getBalance();
+        if ($unirgyInstance) {
+            $giftCert = $unirgyInstance->get($giftcertCode);
+            if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
+                $result = $giftCert->getBalance();
+            }
         }
 
         return (float) $result;

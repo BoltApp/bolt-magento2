@@ -105,6 +105,10 @@
                     <label>Tracking: onCheckoutStart</label>
                     <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
                 </field>
+                <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="151" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Tracking: onEmailEnter</label>
+                    <comment>The javascript code executed when user enters or changes email. Email can be accessed as a variable named email.</comment>
+                </field>
                 <field id="track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Tracking: onShippingDetailsComplete</label>
                     <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
@@ -132,6 +136,18 @@
                     <label>MiniCart Support</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment>Set to NO to load Bolt javascript only on Shopping Cart and Checkout pages.</comment>
+                </field>
+                <field id="ip_whitelist" translate="label" type="text" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Client IP Restriction</label>
+                    <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
+                </field>
+                <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Store Credit on Shopping Cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="enable_payment_only_checkout" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Payment Only Checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
         </section>

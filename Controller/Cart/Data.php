@@ -119,10 +119,12 @@ class Data extends Action
                 'cartReference' => $cartReference,
             ];
 
-            // cart data validation requirement
-            $cart['currency']->currency_code = @$cart['currency']->currency;
+            if (isset($cart['currency']) && $cart['currency']->currency) {
+                // cart data validation requirement
+                $cart['currency']->currency_code = $cart['currency']->currency;
+            }
 
-            $hints = $this->cartHelper->getHints($place_order_payload, $cartReference);
+            $hints = $this->cartHelper->getHints($cartReference);
 
             $result->setData([
                 'status' => 'success',

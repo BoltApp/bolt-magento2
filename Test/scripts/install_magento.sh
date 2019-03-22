@@ -35,7 +35,7 @@ sudo docker-php-ext-install mcrypt && sudo docker-php-ext-enable mcrypt
 sudo docker-php-ext-install bcmath && sudo docker-php-ext-enable bcmath
 sudo docker-php-ext-install pdo_mysql && sudo docker-php-ext-enable pdo_mysql
 
-composer self-update -q
+sudo composer self-update -q
 composer show -i
 echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > $HOME/.composer/auth.json
 cd ..

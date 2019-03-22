@@ -79,6 +79,7 @@ class Order extends AbstractHelper
         null => [
             self::TS_ZERO_AMOUNT,
             self::TS_PENDING,
+            self::TS_COMPLETED, // back office
             // for historic data (order placed before plugin update) does not have "previous state"
             self::TS_CREDIT_COMPLETED
         ],
@@ -332,7 +333,7 @@ class Order extends AbstractHelper
 
         $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
 
-        $address_data = [
+        $addressData = [
             'firstname'    => @$address->first_name,
             'lastname'     => @$address->last_name,
             'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
@@ -346,11 +347,18 @@ class Order extends AbstractHelper
         ];
 
         if ($this->cartHelper->validateEmail(@$address->email_address)) {
-            $address_data['email'] = $address->email_address;
+            $addressData['email'] = $address->email_address;
+        }
+
+        // discard empty address fields
+        foreach ($addressData as $key => $value) {
+            if (empty($value)) {
+                unset($addressData[$key]);
+            }
         }
 
         $quoteAddress->setShouldIgnoreValidation(true);
-        $quoteAddress->addData($address_data)->save();
+        $quoteAddress->addData($addressData)->save();
     }
 
     /**
@@ -477,7 +485,7 @@ class Order extends AbstractHelper
     {
         // Load and prepare parent quote
         /** @var Quote $quote */
-        $quote = $this->cartHelper->getActiveQuoteById($immutableQuote->getBoltParentQuoteId());
+        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
 
         $this->cartHelper->quoteResourceSave($quote);
@@ -508,6 +516,10 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
+        $this->cartHelper->quoteResourceSave($quote);
+
+        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
+        $this->cartHelper->quoteResourceSave($quote);
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
@@ -543,7 +555,9 @@ class Order extends AbstractHelper
         }
 
         // Check and fix tax mismatch
-        $this->adjustTaxMismatch($transaction, $order, $quote);
+        if ($this->configHelper->shouldAdjustTaxMismatch()) {
+            $this->adjustTaxMismatch($transaction, $order, $quote);
+        }
 
         // Save reference to the Bolt transaction with the order
         $order->addStatusHistoryComment(
@@ -614,8 +628,8 @@ class Order extends AbstractHelper
 
         $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getId(),
-            'entity_id' => $quote->getId()
+            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+            'entity_id' => $quote->getBoltParentQuoteId()
         ];
 
         $connection->query($sql, $bind);
@@ -793,13 +807,13 @@ class Order extends AbstractHelper
         $processedCaptures = $this->getProcessedCaptures($payment);
 
         // No previous state recorded.
-        // Unless the state is TS_ZERO_AMOUNT (valid start transaction state, as well as TS_PENDING)
+        // Unless the state is TS_ZERO_AMOUNT, TS_COMPLETED (valid start transaction states, as well as TS_PENDING)
         // or TS_CREDIT_COMPLETED (for historical reasons, old orders refund,
         // legacy code when order was created, no state recorded) put it in TS_PENDING state.
         // It can corelate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
         if (!$prevTransactionState && !$transactionReference && !$transactionId) {
-            if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_CREDIT_COMPLETED])) {
+            if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_COMPLETED, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
             }
             return self::TS_PENDING;
@@ -1113,6 +1127,9 @@ class Order extends AbstractHelper
             $reference == $prevTransactionReference &&
             !$newCapture
         ) {
+            if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)){
+                $payment->setIsTransactionApproved(true);
+            }
             return;
         }
 
@@ -1259,7 +1276,8 @@ class Order extends AbstractHelper
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
-        if ($this->isCaptureHookRequest($newCapture)) {
+        // We will create an invoice if we have zero amount or new capture.
+        if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
             $this->validateCaptureAmount($order, $amount / 100);
             $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
         }
@@ -1339,6 +1357,15 @@ class Order extends AbstractHelper
     }
 
     /**
+     * @param $transactionState
+     * @return bool
+     */
+    public function isZeroAmountHook($transactionState)
+    {
+        return Hook::$fromBolt && ($transactionState === self::TS_ZERO_AMOUNT);
+    }
+
+    /**
      * Check if the hook is a capture request
      *
      * @param \stdClass $newCapture first unprocessed capture from the captures array
@@ -1363,5 +1390,17 @@ class Order extends AbstractHelper
         if($isInvalidAmount || $isInvalidAmountRange) {
             throw new \Exception( __('Capture amount is invalid'));
         }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param $transactionState
+     * @return bool
+     */
+    protected function isAnAllowedUpdateFromAdminPanel(OrderInterface $order, $transactionState)
+    {
+        return !Hook::$fromBolt &&
+               in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
+               $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
     }
 }

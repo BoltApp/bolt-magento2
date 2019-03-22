@@ -55,6 +55,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     private $cartHelperMock;
 
+    private $magentoQuote;
+
     /**
      * @inheritdoc
      */
@@ -66,6 +68,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->checkoutSessionMock = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
             ->disableOriginalConstructor()
             ->setMethods(['getQuote', 'getBoltInitiateCheckout','unsBoltInitiateCheckout'])
+            ->getMock();
+
+        $this->magentoQuote = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getQuote'])
             ->getMock();
 
         $methods = [
@@ -82,7 +89,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->helperContextMock,
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
-                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class)
+                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
+                    $this->createMock(\Magento\Framework\App\Request\Http::class)
                 ]
             )
             ->getMock();
@@ -96,7 +104,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->contextMock,
                     $this->configHelper,
                     $this->checkoutSessionMock,
-                    $this->cartHelperMock
+                    $this->cartHelperMock,
+                    $this->magentoQuote,
                 ]
             )
             ->getMock();

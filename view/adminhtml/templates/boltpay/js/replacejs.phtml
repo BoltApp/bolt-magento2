@@ -1,8 +1,21 @@
 <?php
 /**
- * Copyright © 2013-2017 Bolt, Inc. All rights reserved.
- * See COPYING.txt for license details.
+ * Bolt magento2 plugin
  *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
+/**
  * Replace js template
  * Puts / replaces the checkout buttons according to defined selectors.
  * Maintains Bolt checkout functionality.
@@ -11,147 +24,150 @@
  */
 if (!$block->isEnabled()) return;
 ?>
-<?php $success = $block->getJavascriptSuccess(); ?>
 
 <script type="text/javascript">
 
+// If we have multi-website, we need current quote store_id
+magentoStoreId = parseInt(<?php echo $block->getMagentoStoreId(); ?>);
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
 window.boltConfig = <?php echo $block->getSettings(); ?>;
 
-! function() {
+///////////////////////
+// String.trim Polyfill
+///////////////////////
+if (!String.prototype.trim) {
+    String.prototype.trim = function () {
+        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+    };
+}
+///////////////////////
 
-    ///////////////////////
-    // String.trim Polyfill
-    ///////////////////////
-    if (!String.prototype.trim) {
-        String.prototype.trim = function () {
-            return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-        };
+/////////////////////////////////////////////////////////////////////////
+// Using Mutation Observers to Watch for Element Availability and change.
+/////////////////////////////////////////////////////////////////////////
+! function(win) {
+
+    var listeners = [],
+        doc = win.document,
+        MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
+        observer,
+        attribute_listeners = [],
+        attribute_observer,
+        data_listeners = [],
+        data_observer;
+
+    function ready(selector, fn) {
+        // Store the selector and callback to be monitored
+        listeners.push({
+            selector: selector,
+            fn: fn
+        });
+        if (!observer) {
+            // Watch for changes in the document
+            observer = new MutationObserver(check);
+            observer.observe(doc.documentElement, {
+                childList: true,
+                subtree: true
+            });
+        }
+        // Check if the element is currently in the DOM
+        check();
     }
-    ///////////////////////
 
-    /////////////////////////////////////////////////////////////////////////
-    // Using Mutation Observers to Watch for Element Availability and change.
-    /////////////////////////////////////////////////////////////////////////
-    ! function(win) {
-
-        let listeners = [],
-            doc = win.document,
-            MutationObserver = win.MutationObserver || win.WebKitMutationObserver,
-            observer,
-            attribute_listeners = [],
-            attribute_observer,
-            data_listeners = [],
-            data_observer;
-
-        function ready(selector, fn) {
-            // Store the selector and callback to be monitored
-            listeners.push({
-                selector: selector,
-                fn: fn
-            });
-            if (!observer) {
-                // Watch for changes in the document
-                observer = new MutationObserver(check);
-                observer.observe(doc.documentElement, {
-                    childList: true,
-                    subtree: true
-                });
-            }
-            // Check if the element is currently in the DOM
-            check();
-        }
-
-        function check() {
-            // Check the DOM for elements matching a stored selector
-            for (let i = 0, len = listeners.length, listener, elements; i < len; i++) {
-                listener = listeners[i];
-                // Query for elements matching the specified selector
-                elements = doc.querySelectorAll(listener.selector);
-                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
-                    element = elements[j];
-                    // Make sure the callback isn't invoked with the
-                    // same element more than once
-                    if (!element.ready) {
-                        element.ready = true;
-                        // Invoke the callback with the element
-                        listener.fn.call(element, element);
-                    }
-                }
-            }
-        }
-
-        function attributes_change(selector, fn) {
-            // Store the selector and callback to be monitored
-            attribute_listeners.push({
-                selector: selector,
-                fn: fn
-            });
-            if (!attribute_observer) {
-                // Watch for attribut changes in the document
-                attribute_observer = new MutationObserver(check_attributes);
-                let config = {
-                    attributes: true,
-                    subtree: true
-                };
-                attribute_observer.observe(doc.documentElement, config);
-            }
-        }
-
-        function check_attributes() {
-            // Check the DOM for elements matching a stored selector
-            for (let i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
-                listener = attribute_listeners[i];
-                // Query for elements matching the specified selector
-                elements = doc.querySelectorAll(listener.selector);
-                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
-                    element = elements[j];
+    function check() {
+        // Check the DOM for elements matching a stored selector
+        for (var i = 0, len = listeners.length, listener, elements; i < len; i++) {
+            listener = listeners[i];
+            // Query for elements matching the specified selector
+            elements = doc.querySelectorAll(listener.selector);
+            for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                element = elements[j];
+                // Make sure the callback isn't invoked with the
+                // same element more than once
+                if (!element.ready) {
+                    element.ready = true;
                     // Invoke the callback with the element
                     listener.fn.call(element, element);
                 }
             }
         }
+    }
 
-        function data_change(selector, fn) {
-            // Store the selector and callback to be monitored
-            data_listeners.push({
-                selector: selector,
-                fn: fn
-            });
-            if (!data_observer) {
-                // Watch for data changes in the document
-                data_observer = new MutationObserver(check_data);
-                let config = {
-                    characterData: true,
-                    subtree: true
-                };
-                data_observer.observe(doc.documentElement, config);
+    function attributes_change(selector, fn) {
+        // Store the selector and callback to be monitored
+        attribute_listeners.push({
+            selector: selector,
+            fn: fn
+        });
+        if (!attribute_observer) {
+            // Watch for attribut changes in the document
+            attribute_observer = new MutationObserver(check_attributes);
+            var config = {
+                attributes: true,
+                subtree: true
+            };
+            attribute_observer.observe(doc.documentElement, config);
+        }
+    }
+
+    function check_attributes() {
+        // Check the DOM for elements matching a stored selector
+        for (var i = 0, len = attribute_listeners.length, listener, elements; i < len; i++) {
+            listener = attribute_listeners[i];
+            // Query for elements matching the specified selector
+            elements = doc.querySelectorAll(listener.selector);
+            for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                element = elements[j];
+                // Invoke the callback with the element
+                listener.fn.call(element, element);
             }
         }
+    }
 
-        function check_data() {
-            // Check the DOM for elements matching a stored selector
-            for (let i = 0, len = data_listeners.length, listener, elements; i < len; i++) {
-                listener = data_listeners[i];
-                // Query for elements matching the specified selector
-                elements = doc.querySelectorAll(listener.selector);
-                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
-                    element = elements[j];
-                    // Invoke the callback with the element
-                    listener.fn.call(element, element);
-                }
+    function data_change(selector, fn) {
+        // Store the selector and callback to be monitored
+        data_listeners.push({
+            selector: selector,
+            fn: fn
+        });
+        if (!data_observer) {
+            // Watch for data changes in the document
+            data_observer = new MutationObserver(check_data);
+            var config = {
+                characterData: true,
+                subtree: true
+            };
+            data_observer.observe(doc.documentElement, config);
+        }
+    }
+
+    function check_data() {
+        // Check the DOM for elements matching a stored selector
+        for (var i = 0, len = data_listeners.length, listener, elements; i < len; i++) {
+            listener = data_listeners[i];
+            // Query for elements matching the specified selector
+            elements = doc.querySelectorAll(listener.selector);
+            for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
+                element = elements[j];
+                // Invoke the callback with the element
+                listener.fn.call(element, element);
             }
         }
+    }
 
-        // Expose methods
-        win.onElementReady     = ready;
-        win.onAttributesChange = attributes_change;
-        win.onDataChange       = data_change;
+    // Expose methods
+    win.onElementReady     = ready;
+    win.onAttributesChange = attributes_change;
+    win.onDataChange       = data_change;
 
-    }(window);
-    ////////////////////////////////////////////////////////////////////////
+}(window);
+////////////////////////////////////////////////////////////////////////
+
+require([
+    'jquery'
+], function ($) {
 
     ////////////////////////////////
     // Merge objects
@@ -163,12 +179,12 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     var deepMergeObjects = function () {
 
         // Variables
-        let extended = {},
+        var extended = {},
             i = 0;
 
         // Merge the object into the extended object
         var merge = function (obj) {
-            for (let prop in obj) {
+            for (var prop in obj) {
 
                 if (obj.hasOwnProperty(prop)) {
                     if (isObject(obj[prop])) {
@@ -201,14 +217,14 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
      */
     var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
-        let xhr;
+        var xhr;
         if (typeof async === 'undefined') async = true;
         if (typeof headers === 'undefined') {
             headers = {'Content-Type': 'application/x-www-form-urlencoded'};
         }
         xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
         xhr.onload = function () {
-            let result;
+            var result;
 
             if (xhr.responseType === 'json') {
                 result = xhr.response;
@@ -222,7 +238,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         }
         xhr.open('POST', url, async);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        for (let header in headers) {
+        for (var header in headers) {
             if (headers.hasOwnProperty(header)) {
                 xhr.setRequestHeader(header, headers[header]);
             }
@@ -247,7 +263,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return string
      */
     var getCheckoutKey = function () {
-        let key = 'publishable_key_back_office';
+        var key = 'publishable_key_back_office';
 
         return settings[key];
     };
@@ -261,9 +277,9 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var selectorApply = function(selector, fn){
-        let elements = document.querySelectorAll(selector);
-        for (let i = 0, length = elements.length; i < length; i++) {
-            let element = elements[i];
+        var elements = document.querySelectorAll(selector);
+        for (var i = 0, length = elements.length; i < length; i++) {
+            var element = elements[i];
             fn.call(element, element)
         }
     };
@@ -276,7 +292,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var checkoutButtonApply = function(fn) {
-        let elm = document.getElementById('payment_form_boltpay');
+        var elm = document.getElementById('payment_form_boltpay');
         if (elm.style.visibility = 'visible') {
             selectorApply(bolt_button_selector, fn);
         }
@@ -288,7 +304,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var setCheckoutTypeStyle = function() {
-        let checkout_type = getCheckoutType();
+        var checkout_type = getCheckoutType();
         checkoutButtonApply(function(button) {
             if (checkout_type === 'payment') {
                 button.classList.remove(multi_step_css_class);
@@ -303,7 +319,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * return void
      */
     var insertConnectScript = function() {
-        let scriptTag = document.getElementById('bolt-connect'),
+        var scriptTag = document.getElementById('bolt-connect'),
             publishableKey = getCheckoutKey();
         if (scriptTag) {
             scriptTag.setAttribute('data-publishable-key', publishableKey);
@@ -324,7 +340,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
      * Set checkout button CSS and load connect.js
      * return void
      */
-    let processButtons = function () {
+    var processButtons = function () {
         if (getCheckoutKey() !== '') {
             setCheckoutTypeStyle();
             insertConnectScript();
@@ -332,7 +348,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     };
 
     // The configuration parameters passed from the php block
-    let settings = window.boltConfig,
+    var settings = window.boltConfig,
     // TODO: make `with-cards` option backend configurable
         bolt_button_css_class    = 'bolt-checkout-button with-cards',
         bolt_button_selector     = '.bolt-checkout-button',
@@ -343,16 +359,16 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // On multiple checkout open/close actions the success event remains registered
     // resulting in making the success call multiple times. This variable stores
     // the last request to be aborted before new one is sent.
-    let save_request;
+    var save_request;
 
     ////////////////////////////////////
     // BoltCheckout.configure parameters
     ////////////////////////////////////
-    let cart = {};
+    var cart = {};
 
-    let hints = {prefill:{}};
+    var hints = {prefill:{}};
 
-    let callbacks = {
+    var callbacks = {
 
         close: function () {
             // redirect on success order save
@@ -363,13 +379,13 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             // abort previously sent save order request.
             if (save_request) save_request.abort();
             // get thr transaction reference
-            let parameters = 'reference='+transaction.reference;
+            var parameters = 'reference='+transaction.reference;
             // update order ajax request callback
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
-            let onSuccess = function(data){
+            var onSuccess = function(data){
 
-                <?php echo $success; ?>
+                <?php echo $block->getJavascriptSuccess(); ?>
 
                 callbacks.success_url = data.success_url;
                 callback();
@@ -382,21 +398,31 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         // the Bolt order is created right after the checkout button is clicked
         // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
-            let errors = [],
-                shippingMethodContainer = jQuery('#order-shipping_method'),
-                infoShipmentMethod = shippingMethodContainer.find('.order-shipping-method-info dl.admin__order-shipment-methods dt')
-            ;
+            var errors = [],
+                shippingMethodContainer = $('#order-shipping_method'),
+                infoShipmentMethod = shippingMethodContainer.find(
+                    '.order-shipping-method-info dl.admin__order-shipment-methods dt'
+                ),
+                // shipping address mask overlay
+                addressShippingOverlay = $('#address-shipping-overlay')[0],
+                // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
+                shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
+                email = $('input[name="order[account][email]"]').val();
 
             if (!cart.orderToken) {
                 errors.push('Invalid Order Token');
             }
 
-            if (!infoShipmentMethod.length) {
+            if (!email || !email.trim()) {
+                errors.push('Please specify the "Email"!');
+            }
+
+            if (!infoShipmentMethod.length && shippingRequired) {
                 errors.push('Please specify the "Shipping Method"!');
             }
 
             if (errors.length) {
-                let errorMsg = errors.join(', ');
+                var errorMsg = errors.join(', ');
 
                 console.error('BoltPay Check: ', errorMsg);
                 alert(errorMsg);
@@ -415,23 +441,25 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
     var create_request;
-    let createOrder = function () {
+
+    var createOrder = function () {
         if (create_request) return;
         // preset success condition to false
         cart.orderToken = '';
         // define the params sent with the request variable
-        let params = [];
+        var params = [];
 
+        params.push('store_id=' + magentoStoreId);
         params.push('payment_only=true');
         params = params.join('&');
 
         if (params === '') params = null;
         // set cart and hints data in a response callback
-        let onSuccess = function(data){
+        var onSuccess = function(data){
             cart = data.cart;
             create_request = null;
 
-            let prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
@@ -440,7 +468,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
         };
 
-        let onError = function(error) {
+        var onError = function(error) {
             create_request = null;
         };
         // send create order request
@@ -450,7 +478,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
 
     /////////////////////////////////////////////////////
     // Flag that is true if checkout buttons exists on the page
-    let checkout_buttons = false;
+    var checkout_buttons = false;
     ////////////////////////////////////////////////
     // process the button when available on the page
     ////////////////////////////////////////////////
@@ -463,10 +491,10 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     //////////////////////////////////////////////////////////
     // loop through selectors array and set up the replacement
     //////////////////////////////////////////////////////////
-    for (let i = 0, length = settings.selectors.length; i < length; i++) {
-        let selector = settings.selectors[i];
+    for (var i = 0, length = settings.selectors.length; i < length; i++) {
+        var selector = settings.selectors[i];
         ! function(selector) {
-            let parts = selector.split('|'),
+            var parts = selector.split('|'),
                 // the CSS selector
                 identifier = parts[0].trim(),
                 // button placement regarding the selector element, prepend, append
@@ -477,7 +505,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
             /////////////////////////////////////////////////////
             onElementReady(identifier, function(element) {
                 if (getCheckoutKey() === '') return;
-                let bolt_button = document.createElement("div");
+                var bolt_button = document.createElement("div");
 
                 bolt_button.setAttribute("class", bolt_button_css_class);
                 // place the button before or after selector element
@@ -499,15 +527,15 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Reconfigure BoltCheckout with page collected hints data
     ///////////////////////////////////////////////////////////
-    let old_hints;
-    let configureHints = function() {
+    var old_hints;
+    var configureHints = function() {
 
         // wait 3 seconds for the field(s) to be fully filled,
         // do not react on every keypress
         setTimeout(
 
             function() {
-                let new_hints = JSON.stringify(hints);
+                var new_hints = JSON.stringify(hints);
 
                 if (old_hints !== new_hints && window.BoltCheckout) {
 
@@ -523,16 +551,16 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Run function fn on element attributes change
     ///////////////////////////////////////////////////////////
-    let monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
-        for (let i = 0, length = selectors.length; i < length; i++) {
+    var monitorAttributesChange = function(selectors, fn, on_ready, visible_only) {
+        for (var i = 0, length = selectors.length; i < length; i++) {
 
-            let selector = selectors[i];
+            var selector = selectors[i];
 
             ! function(selector) {
 
                 onElementReady(selector, function(el) {
                     if (on_ready) fn(el);
-                    let value = el.value;
+                    var value = el.value;
                     onAttributesChange(selector, function(element) {
                         if (visible_only && element.offsetParent === null) return;
                         if (element.value !== value) {
@@ -548,41 +576,47 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
 
     // Map from address input field names to hints.prefill keys
-    let input_name_to_hints_prefill = {
+    var input_name_to_hints_prefill = {
         'order[billing_address][firstname]': 'firstname',
         'order[billing_address][lastname]': 'lastname',
-        'order[account][email]': 'username',
-        'order[billing_address][telephone]': 'telephone',
-        'order[billing_address][street][0]': 'street[0]',
-        'order[billing_address][street][1]': 'street[1]',
+        'order[account][email]': 'email',
+        'order[billing_address][telephone]': 'phone',
+        'order[billing_address][street][0]': 'addressLine1',
+        'order[billing_address][street][1]': 'addressLine2',
         'order[billing_address][city]': 'city',
-        'order[billing_address][postcode]': 'postcode'
+        'order[billing_address][postcode]': 'zip'
     };
 
     // CSS selectors of the hints prefill elements parents
     // used to distinct hints related fields from others with the same name
-    let input_name_to_hints_prefill_prefixes = [
+    var input_name_to_hints_prefill_prefixes = [
         '#order-billing_address_fields'
     ];
 
     /////////////////////////////////////////////////////////////////////
     // Monitor address text input fields and update hints on value change
     /////////////////////////////////////////////////////////////////////
-    for (let i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++)
+    for (var i = 0, length = input_name_to_hints_prefill_prefixes.length; i < length; i++)
     {
-        let prefix = input_name_to_hints_prefill_prefixes[i];
+        var prefix = input_name_to_hints_prefill_prefixes[i];
 
         ! function (prefix)
         {
-            for (let input_name in input_name_to_hints_prefill) {
+            for (var input_name in input_name_to_hints_prefill) {
                 if (input_name_to_hints_prefill.hasOwnProperty(input_name))
                 {
                     ! function (input_name) {
-                        let prefill_key = input_name_to_hints_prefill[input_name],
+                        var prefill_key = input_name_to_hints_prefill[input_name],
                             input_selectors = [prefix + ' input[name="' + input_name + '"]'];
 
                         monitorAttributesChange(input_selectors, function(element) {
-                            hints.prefill[prefill_key] = element.value;
+                            if (element.value) {
+                                // set the hints prefill if the correlated input field value is not an empty string
+                                hints.prefill[prefill_key] = element.value;
+                            } else {
+                                // delete hints prefill key if the value is empty
+                                delete hints.prefill[prefill_key];
+                            }
                             configureHints();
                         });
                     } (input_name);
@@ -596,7 +630,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Monitor Country DOM element change and update hints
     ///////////////////////////////////////////////////////////
-    let country_selectors = ['select[name="order[billing_address][country_id]"]'];
+    var country_selectors = ['select[name="order[billing_address][country_id]"]'];
     monitorAttributesChange(country_selectors, function(element) {
         if (!element.value) {
             delete hints.prefill.country;
@@ -613,7 +647,7 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
     ///////////////////////////////////////////////////////////
     // Monitor State DOM element change and update hints
     ///////////////////////////////////////////////////////////
-    let state_selectors = ['select[name="order[billing_address][region_id]"]'];
+    var state_selectors = ['select[name="order[billing_address][region_id]"]'];
     monitorAttributesChange(state_selectors, function(element) {
         if (!element.value) {
             delete hints.prefill.state;
@@ -625,7 +659,31 @@ window.boltConfig = <?php echo $block->getSettings(); ?>;
         configureHints();
     });
     ///////////////////////////////////////////////////////////
-}();
+
+    /////////////////////////////////////////////////////
+    // Call Bolt order creation Magento endpoint on
+    // customer email change, storing the live page data in Bolt cart.
+    // Email change triggers saving the email to quote in
+    // Magento ajax call. Add a delay (setTimeout) to ensure
+    // that Magento call runs first and the email is saved
+    // before it is read in Bolt order creation.
+    /////////////////////////////////////////////////////
+    var customer_email_selector  = 'input[name="order[account][email]"]';
+    var customer_email_value;
+    $(customer_email_selector).on("change", function() {
+        setTimeout(
+            function() {
+                var email = $(customer_email_selector).val().trim();
+                if (email === "") return;
+                if (email !== customer_email_value) {
+                    customer_email_value = email;
+                    createOrder();
+                }
+            },
+            1500
+        );
+    });
+});
 
 </script>
 
