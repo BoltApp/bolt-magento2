@@ -96,8 +96,9 @@ class Data extends Action
     {
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
+            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
 
             // format and send the response
             $cart = [

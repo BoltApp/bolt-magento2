@@ -27,6 +27,8 @@ if (!$block->isEnabled()) return;
 
 <script type="text/javascript">
 
+// If we have multi-website, we need current quote store_id
+magentoStoreId = parseInt(<?php echo $block->getMagentoStoreId(); ?>);
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -439,6 +441,7 @@ require([
     // Create Bolt order and configure BoltCheckout
     /////////////////////////////////////////////////////
     var create_request;
+
     var createOrder = function () {
         if (create_request) return;
         // preset success condition to false
@@ -446,6 +449,7 @@ require([
         // define the params sent with the request variable
         var params = [];
 
+        params.push('store_id=' + magentoStoreId);
         params.push('payment_only=true');
         params = params.join('&');
 

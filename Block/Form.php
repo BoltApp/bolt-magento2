@@ -3,7 +3,7 @@
 namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
-use Magento\Backend\Model\Session\Quote as BackendQuote;
+use Magento\Framework\Session\SessionManagerInterface as MagentoQuote;
 use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
 
@@ -12,6 +12,9 @@ use Magento\Framework\View\Element\Template\Context;
  */
 class Form extends PaymentForm
 {
+    /**
+     * @var \Magento\Backend\Model\Session\Quote
+     */
     private $_quote;
 
     /**
@@ -29,24 +32,37 @@ class Form extends PaymentForm
     /**
      * @param Context      $context
      * @param Config       $configHelper
-     * @param BackendQuote $backendQuote
+     * @param MagentoQuote $magentoQuote
      * @param array        $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
-        BackendQuote $backendQuote,
+        MagentoQuote $magentoQuote,
         array $data = []
     ) {
         parent::__construct($context, $data);
 
         $this->configHelper = $configHelper;
-        $this->_quote = $backendQuote->getQuote();
+        $this->_quote = $magentoQuote->getQuote();
     }
 
+    /**
+     * @return \Magento\Backend\Model\Session\Quote
+     */
     public function getQuoteData()
     {
         return $this->_quote;
+    }
+
+    /**
+     * If we have multi-website, we need current quote store_id
+     *
+     * @return int
+     */
+    public function getMagentoStoreId()
+    {
+        return (int) $this->getQuoteData()->getStoreId();
     }
 
     /**
@@ -94,6 +110,9 @@ class Form extends PaymentForm
         return ($needJsonEncode) ? json_encode($result) : $result;
     }
 
+    /**
+     * @return false|string
+     */
     public function getPlaceOrderPayload()
     {
         $quote = $this->getQuoteData();
@@ -117,7 +136,9 @@ class Form extends PaymentForm
      */
     public function getJavascriptSuccess()
     {
-        return $this->configHelper->getJavascriptSuccess();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getJavascriptSuccess($storeId);
     }
 
     /**
@@ -127,7 +148,9 @@ class Form extends PaymentForm
      */
     public function getGlobalCSS()
     {
-        return $this->configHelper->getGlobalCSS();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getGlobalCSS($storeId);
     }
 
     /**
@@ -150,8 +173,10 @@ class Form extends PaymentForm
      */
     public function getConnectJsUrl()
     {
+        $storeId = $this->getMagentoStoreId();
+
         // Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl();
+        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
 
         return $cdnUrl . '/connect.js';
     }
@@ -163,7 +188,9 @@ class Form extends PaymentForm
      */
     public function getBackOfficeKey()
     {
-        return $this->configHelper->getPublishableKeyBackOffice();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getPublishableKeyBackOffice($storeId);
     }
 
     /**
@@ -172,6 +199,8 @@ class Form extends PaymentForm
      */
     public function isBoltEnabled()
     {
-        return $this->configHelper->isActive();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->isActive($storeId);
     }
 }
