@@ -116,7 +116,7 @@ class ReceivedUrl extends Action
                 /** @var Order $order */
                 $order = $this->getOrderByIncrementId($incrementId);
 
-                if ($order->getState() !== 'new') {
+                if ($order->getState() !== Order::STATE_NEW) {
                     $message = __('An order have wrong state: %state', ['state' => $order->getState()]);
                     throw new LocalizedException($message);
                 }
