@@ -221,12 +221,12 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
                 'status' => 'failure',
-                'error'  => [
+                'error'  => [[
                     'code' => $e->getCode(),
                     'data' => [
                         'reason' => $e->getMessage(),
                     ]
-                ]
+                ]]
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
