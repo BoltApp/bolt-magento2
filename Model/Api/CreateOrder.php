@@ -177,9 +177,9 @@ class CreateOrder implements CreateOrderInterface
                 'status' => 'failure',
                 'error'  => [[
                     'code' => self::E_BOLT_GENERAL_ERROR,
-                    'data' => [
+                    'data' => [[
                         'reason' => $e->getCode() . ': ' . $e->getMessage(),
-                    ]
+                    ]]
                 ]]
             ]);
         } catch (BoltException $e) {
@@ -188,9 +188,9 @@ class CreateOrder implements CreateOrderInterface
                 'status' => 'failure',
                 'error'  => [[
                     'code' => $e->getCode(),
-                    'data' => [
+                    'data' => [[
                         'reason' => $e->getMessage(),
-                    ]
+                    ]]
                 ]]
             ]);
         } catch (LocalizedException $e) {
@@ -199,9 +199,9 @@ class CreateOrder implements CreateOrderInterface
                 'status' => 'failure',
                 'error'  => [[
                     'code' => 6009,
-                    'data' => [
+                    'data' => [[
                         'reason' => 'Unprocessable Entity: ' . $e->getMessage(),
-                    ]
+                    ]]
                 ]]
             ]);
         } finally {
