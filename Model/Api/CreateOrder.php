@@ -223,9 +223,9 @@ class CreateOrder implements CreateOrderInterface
                 'status' => 'failure',
                 'error'  => [[
                     'code' => $e->getCode(),
-                    'data' => [
+                    'data' => [[
                         'reason' => $e->getMessage(),
-                    ]
+                    ]]
                 ]]
             ]);
         } catch (LocalizedException $e) {
