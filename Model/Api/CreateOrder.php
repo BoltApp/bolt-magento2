@@ -175,34 +175,34 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
-                'error'  => [
+                'error'  => [[
                     'code' => self::E_BOLT_GENERAL_ERROR,
                     'data' => [
                         'reason' => $e->getCode() . ': ' . $e->getMessage(),
                     ]
-                ]
+                ]]
             ]);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
                 'status' => 'failure',
-                'error'  => [
+                'error'  => [[
                     'code' => $e->getCode(),
                     'data' => [
                         'reason' => $e->getMessage(),
                     ]
-                ]
+                ]]
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
                 'status' => 'failure',
-                'error'  => [
+                'error'  => [[
                     'code' => 6009,
                     'data' => [
                         'reason' => 'Unprocessable Entity: ' . $e->getMessage(),
                     ]
-                ]
+                ]]
             ]);
         } finally {
             $this->response->sendResponse();
