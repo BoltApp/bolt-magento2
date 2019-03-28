@@ -399,14 +399,11 @@ require([
         // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
             var errors = [],
-                shippingMethodContainer = $('#order-shipping_method'),
-                infoShipmentMethod = shippingMethodContainer.find(
-                    '.order-shipping-method-info dl.admin__order-shipment-methods dt'
-                ),
                 // shipping address mask overlay
                 addressShippingOverlay = $('#address-shipping-overlay')[0],
                 // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
                 shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
+                isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length,
                 email = $('input[name="order[account][email]"]').val();
 
             if (!cart.orderToken) {
@@ -417,7 +414,7 @@ require([
                 errors.push('Please specify the "Email"!');
             }
 
-            if (!infoShipmentMethod.length && shippingRequired) {
+            if (shippingRequired && ! isShippingMethodSelected) {
                 errors.push('Please specify the "Shipping Method"!');
             }
 
