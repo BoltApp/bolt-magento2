@@ -259,8 +259,9 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?: ( $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' );
         return __('Your payment was successful and we\'re now processing your order.' .
-        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at support@bolt.com');
+        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
 
     /**

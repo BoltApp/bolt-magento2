@@ -130,6 +130,7 @@ class Save extends Action
                 'status' => 'error',
                 'code' => 6009,
                 'message' => $e->getMessage(),
+                'reference' => $reference,
             ]);
         }
     }
