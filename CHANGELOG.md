@@ -34,13 +34,13 @@
  - Sent store order notifications to email collected from Bolt checkout
  - Create order from parent quote
  - Do not cache empty shipping options array
- ## [v1.1.10](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.10) 2019-02-11
+## [v1.1.10](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.10) 2019-02-11
  - Add support for item properties
  - Tax mismatch adjustment
  - Unirgy_Giftcert plugin support
  - Remove active quote restriction on order creation (backend order fix)
  - Reserve Order ID for the child quote, defer setting parent quote order ID until just before quote to order submission
- ## [v1.1.11](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.11) 2019-03-07
+## [v1.1.11](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.11) 2019-03-07
  - Backoffice hook no pending fix
  - Checkout initialization fix
  - Restrict plugin availability in regards to client IP address (white list)
@@ -53,4 +53,11 @@
  - Exclude empty address fields from save when creating the order
  - Store Credit on Shopping Cart support
  - Update populating the checkout address from hints prefill
+## [v1.1.12](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.12) 2019-04-01
+ - Allow Admin to update order manually
+ - Back-office create order check for shipping method
+ - Multi-store support
+ - One step checkout support / disable bolt on payment only checkout pages
+ - Add config for merchant to specify EmailEnter callback
+ - Update ajax order creation error message
  

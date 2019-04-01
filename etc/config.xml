@@ -52,6 +52,7 @@ tr.shipping.totals td.amount span.price,
                 <reset_shipping_calculation>0</reset_shipping_calculation>
                 <minicart_support>1</minicart_support>
                 <store_credit>0</store_credit>
+                <enable_payment_only_checkout>0</enable_payment_only_checkout>
             </boltpay>
         </payment>
     </default>

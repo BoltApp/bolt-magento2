@@ -22,6 +22,7 @@ use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Framework\Session\SessionManagerInterface as MagentoQuote;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -44,23 +45,31 @@ class Js extends Template
     private $cartHelper;
 
     /**
-     * @param Context $context
-     * @param Config $configHelper
+     * @var \Magento\Backend\Model\Session\Quote|\Magento\Quote\Model\Quote
+     */
+    private $magentoQuote;
+
+    /**
+     * @param Context         $context
+     * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
-     * @param CartHelper $cartHelper
-     * @param array $data
+     * @param CartHelper      $cartHelper
+     * @param MagentoQuote    $magentoQuote
+     * @param array           $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
+        MagentoQuote $magentoQuote,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
+        $this->magentoQuote = $magentoQuote->getQuote();
     }
 
     /**
@@ -68,7 +77,8 @@ class Js extends Template
      *
      * @return bool
      */
-    public function isCheckoutAllowed(){
+    public function isCheckoutAllowed()
+    {
         return $this->cartHelper->isCheckoutAllowed();
     }
 
@@ -79,8 +89,10 @@ class Js extends Template
      */
     public function getTrackJsUrl()
     {
+        $storeId = $this->getMagentoStoreId();
         //Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl();
+        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
+
         return $cdnUrl.'/track.js';
     }
 
@@ -91,8 +103,10 @@ class Js extends Template
      */
     public function getConnectJsUrl()
     {
+        $storeId = $this->getMagentoStoreId();
         //Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl();
+        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
+
         return $cdnUrl.'/connect.js';
     }
 
@@ -103,7 +117,9 @@ class Js extends Template
      */
     public function getCheckoutKey()
     {
-        return $this->configHelper->getAnyPublishableKey();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getAnyPublishableKey($storeId);
     }
 
     /**
@@ -113,7 +129,10 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getReplaceSelectors()))));
+        $storeId = $this->getMagentoStoreId();
+        $subject = trim($this->configHelper->getReplaceSelectors($storeId));
+
+        return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
 
     /**
@@ -123,7 +142,10 @@ class Js extends Template
      */
     public function getTotalsChangeSelectors()
     {
-        return array_filter(explode(',', preg_replace('/\s+/', ' ', trim($this->configHelper->getTotalsChangeSelectors()))));
+        $storeId = $this->getMagentoStoreId();
+        $subject = trim($this->configHelper->getTotalsChangeSelectors($storeId));
+
+        return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
 
     /**
@@ -133,7 +155,9 @@ class Js extends Template
      */
     public function getAdditionalCheckoutButtonClass()
     {
-        return trim($this->configHelper->getAdditionalCheckoutButtonClass());
+        $storeId = $this->getMagentoStoreId();
+
+        return trim($this->configHelper->getAdditionalCheckoutButtonClass($storeId));
     }
 
     /**
@@ -143,7 +167,9 @@ class Js extends Template
      */
     public function getGlobalCSS()
     {
-        return $this->configHelper->getGlobalCSS();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getGlobalCSS($storeId);
     }
 
     /**
@@ -153,7 +179,9 @@ class Js extends Template
      */
     public function getJavascriptSuccess()
     {
-        return $this->configHelper->getJavascriptSuccess();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getJavascriptSuccess($storeId);
     }
 
     /**
@@ -184,16 +212,18 @@ class Js extends Template
      */
     public function getSettings()
     {
+        $storeId = $this->getMagentoStoreId();
+
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
-            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
-            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
-            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
+            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment($storeId),
+            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout($storeId),
+            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice($storeId),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
+            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping($storeId),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
@@ -209,7 +239,9 @@ class Js extends Template
      */
     public function isEnabled()
     {
-        return $this->configHelper->isActive();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->isActive($storeId);
     }
 
     /**
@@ -227,8 +259,9 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?: ( $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' );
         return __('Your payment was successful and we\'re now processing your order.' .
-        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at support@bolt.com');
+        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
 
     /**
@@ -238,6 +271,7 @@ class Js extends Template
     {
         return [
             'checkout_start' => $this->getOnCheckoutStart(),
+            'email_enter' => $this->getOnEmailEnter(),
             'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
             'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
             'payment_submit'=> $this->getOnPaymentSubmit(),
@@ -251,7 +285,17 @@ class Js extends Template
      */
     protected function getOnCheckoutStart()
     {
-        return $this->configHelper->getOnCheckoutStart();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnCheckoutStart($storeId);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getOnEmailEnter()
+    {
+        return $this->configHelper->getOnEmailEnter();
     }
 
     /**
@@ -259,7 +303,9 @@ class Js extends Template
      */
     protected function getOnShippingDetailsComplete()
     {
-        return $this->configHelper->getOnShippingDetailsComplete();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnShippingDetailsComplete($storeId);
     }
 
     /**
@@ -267,7 +313,9 @@ class Js extends Template
      */
     protected function getOnShippingOptionsComplete()
     {
-        return $this->configHelper->getOnShippingOptionsComplete();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnShippingOptionsComplete($storeId);
     }
 
     /**
@@ -275,7 +323,9 @@ class Js extends Template
      */
     protected function getOnPaymentSubmit()
     {
-        return $this->configHelper->getOnPaymentSubmit();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnPaymentSubmit($storeId);
     }
 
     /**
@@ -283,7 +333,9 @@ class Js extends Template
      */
     protected function getOnSuccess()
     {
-        return $this->configHelper->getOnSuccess();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnSuccess($storeId);
     }
 
     /**
@@ -291,7 +343,9 @@ class Js extends Template
      */
     protected function getOnClose()
     {
-        return $this->configHelper->getOnClose();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getOnClose($storeId);
     }
 
     /**
@@ -301,7 +355,9 @@ class Js extends Template
      */
     private function getToggleCheckout()
     {
-        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        $storeId = $this->getMagentoStoreId();
+        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
+
         return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
     }
 
@@ -313,7 +369,9 @@ class Js extends Template
      */
     private function getPageBlacklist()
     {
-        return $this->configHelper->getPageBlacklist();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getPageBlacklist($storeId);
     }
 
     /**
@@ -325,7 +383,10 @@ class Js extends Template
      */
     private function getPageWhitelist()
     {
-        return array_unique(array_merge(Config::$defaultPageWhitelist, $this->configHelper->getPageWhitelist()));
+        $storeId = $this->getMagentoStoreId();
+        $values =  $this->configHelper->getPageWhitelist($storeId);
+
+        return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
     }
 
     /**
@@ -345,20 +406,18 @@ class Js extends Template
             return true;
         }
 
+        $storeId = $this->getMagentoStoreId();
+
         // If minicart is supported (allowing Bolt on every page)
         // and no IP whitelist is defined there are no additional restrictions.
-        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
+        if ($this->configHelper->getMinicartSupport($storeId) && !$this->configHelper->getIPWhitelistArray($storeId)) {
             return false;
         }
 
-        // However, if IP whitelist is defined, the Bolt checkout functionality
-        // must be limited to the non cached pages, shopping cart and checkout.
-        if ($this->configHelper->getIPWhitelistArray()) {
-            return ! in_array($currentPage, Config::$defaultPageWhitelist);
-        }
-
-        // No minicart support. Check if the page is whitelisted.
-        return ! in_array($currentPage, $this->getPageWhitelist());
+        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
+        // If IP whitelist is defined, the Bolt checkout functionality
+        // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
+        return ! in_array($currentPage, $this->getPageWhitelist($storeId));
     }
 
     /**
@@ -382,5 +441,16 @@ class Js extends Template
     public function shouldDisableBoltCheckout()
     {
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
+    }
+
+    /**
+     * If we have multi-website, we need current quote store_id
+     *
+     * @return int
+     */
+    public function getMagentoStoreId()
+    {
+        return (int) ($this->magentoQuote && $this->magentoQuote->getStoreId()) ?
+            $this->magentoQuote->getStoreId() : 0;
     }
 }

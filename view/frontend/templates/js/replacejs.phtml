@@ -216,6 +216,13 @@ $trackCallbacks = $block->getTrackCallbacks();
                     console.error(error);
                 }
             },
+            onEmailEnter: function(email) {
+                try {
+                    <?php echo $trackCallbacks['email_enter']; ?>
+                } catch (error) {
+                    console.error(error);
+                }
+            },
             onShippingDetailsComplete: function() {
                 try {
                     <?php echo $trackCallbacks['shipping_details_complete']; ?>
@@ -253,9 +260,9 @@ $trackCallbacks = $block->getTrackCallbacks();
             }
         };
 
-        var showBoltErrorMessage = function(messsage) {
+        var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
+                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>" + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -554,7 +561,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showBoltErrorMessage();
+                            showBoltErrorMessage('', data.reference);
                             // pretend order creation was success...
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
@@ -563,7 +570,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                         return false;
                     }
                     try {
-                        <?php echo $block->getjavascriptSuccess(); ?>
+                        <?php echo $block->getJavascriptSuccess(); ?>
                         callbacks.success_url = data.success_url;
 
                         trackCallbacks.onSuccess();
@@ -627,6 +634,7 @@ $trackCallbacks = $block->getTrackCallbacks();
             },
 
             onEmailEnter: function(email) {
+                trackCallbacks.onEmailEnter(email);
                 if (callbacks.email !== email) {
                     ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email));
                     callbacks.email = email;

@@ -320,7 +320,7 @@ class Cart extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload)
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = 0)
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
@@ -331,7 +331,7 @@ class Cart extends AbstractHelper
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -832,6 +832,14 @@ class Cart extends AbstractHelper
                     $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
                 }
 
+                if (!$address->getShippingMethod()) {
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Shipping method not set.'
+                    );
+                    return [];
+                }
+
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
@@ -865,7 +873,7 @@ class Cart extends AbstractHelper
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
                 } else {
-                    $this->logAddressData($cartBillingAddress);
+                    $this->logAddressData($shipAddress);
                     $this->bugsnag->notifyError(
                         'Order create error',
                         'Shipping address data insufficient.'
