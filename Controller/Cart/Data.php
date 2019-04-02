@@ -124,7 +124,7 @@ class Data extends Action
                 $cart['currency']->currency_code = $cart['currency']->currency;
             }
 
-            $hints = $this->cartHelper->getHints($cartReference);
+            $hints = $this->cartHelper->getHints($cartReference, 'cart');
 
             $result->setData([
                 'status' => 'success',
