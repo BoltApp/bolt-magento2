@@ -375,11 +375,12 @@ class Cart extends AbstractHelper
      * Get the hints data for checkout
      *
      * @param string $cartReference            (immutable) quote id
+     * @param string $checkoutType             'cart' | 'admin' Default to `admin`
      *
      * @return array
      * @throws NoSuchEntityException
      */
-    public function getHints($cartReference = null)
+    public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
         $quote = $cartReference ?
@@ -452,6 +453,10 @@ class Cart extends AbstractHelper
             $prefillHints($quote->getBillingAddress());
         } else {
             $prefillHints($quote->getShippingAddress());
+        }
+        
+        if ($checkoutType === 'admin') {
+            $hints['virtual_terminal_mode'] = true;
         }
 
         return $hints;
