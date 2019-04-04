@@ -331,6 +331,10 @@ class Cart extends AbstractHelper
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
+        if (!$storeId && $this->checkoutSession->getQuote()) {
+            $storeId = $this->checkoutSession->getQuote()->getStoreId();
+        }
+
         $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data

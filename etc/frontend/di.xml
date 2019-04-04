@@ -60,4 +60,9 @@
         </arguments>
     </type>
 
+    <type name="Bolt\Boltpay\Block\Js">
+        <arguments>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session</argument>
+        </arguments>
+    </type>
 </config>
