@@ -348,6 +348,15 @@ class ShippingMethods implements ShippingMethodsInterface
                 $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted.");
             }
 
+            /** @var \Magento\Quote\Model\Quote $parentQuote */
+            $parentQuote = $this->cartHelper->getQuoteById($cart['order_reference']);
+            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode(), $quote)){
+                $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
+                $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
+
+                $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
+            }
+
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
@@ -739,5 +748,26 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);
         $this->response->sendResponse();
+    }
+
+    /**
+     *
+     * If the coupon exists on the parent quote, and doesn't exist on the immutable quote, it means that the discount
+     * isn't allowed to be applied due to discount shipping address restrictions and should be removed. Since at this
+     * point Bolt has already applied the discount, the discount amount is added back to the shipping.
+     *
+     * @param $parentQuoteCoupon
+     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @return bool
+     */
+    protected function couponInvalidForShippingAddress(
+        $parentQuoteCoupon,
+        \Magento\Quote\Api\Data\CartInterface $quote
+    ) {
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+
+        return $parentQuoteCoupon &&
+               !$quote->getCouponCode() &&
+               in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons);
     }
 }

@@ -1071,4 +1071,18 @@ class Config extends AbstractHelper
             $store
         );
     }
+
+    /**
+     * Get ignored shipping address coupons, stored in the following format:
+     *
+     * {
+     *   "ignoredShippingAddressCoupons": ["coupon_code", "coupon_code_1", "coupon_code_2"]
+     * }
+     *
+     * return array
+     */
+    public function getIgnoredShippingAddressCoupons()
+    {
+        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons');
+    }
 }

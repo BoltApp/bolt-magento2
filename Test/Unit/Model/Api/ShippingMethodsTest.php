@@ -158,11 +158,13 @@ class ShippingMethodsTest extends TestCase
             ->getMock();
 
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields', 'getResetShippingCalculation'])
+            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
             ->willReturn(true);
+        $this->configHelper->method('getIgnoredShippingAddressCoupons')
+            ->willReturn([]);
         $this->configHelper->method('getPrefetchAddressFields')
             ->willReturn('');
         $this->configHelper->expects($this->any())
@@ -294,9 +296,11 @@ class ShippingMethodsTest extends TestCase
     public function getShippingMethodsWithFullAddressData()
     {
         $quoteId = 1001;
+        $parentQuoteId = 1000;
 
         $cart = [
-            'display_id' => '100050001 / '.$quoteId
+            'display_id' => '100050001 / '.$quoteId,
+            'order_reference' => $parentQuoteId
         ];
         $shippingAddress = [
             'company' => "",
@@ -313,14 +317,19 @@ class ShippingMethodsTest extends TestCase
             'street_address2' => "",
         ];
 
-        $quote = $this->getQuoteMock($shippingAddress);
-
         $this->cartHelper->method('validateEmail')
             ->withAnyParameters()
             ->willReturn(true);
         $this->cartHelper->method('getQuoteById')
-            ->with($quoteId)
-            ->willReturn($quote);
+            ->will(
+                $this->returnCallback(function ($arg) use ($quoteId, $parentQuoteId, $shippingAddress){
+                    if ($arg == $quoteId) {
+                        return $this->getQuoteMock($shippingAddress, $quoteId, $parentQuoteId);
+                    }
+
+                    return $this->getQuoteMock($shippingAddress, $parentQuoteId, $quoteId);
+                })
+            );
 
         $this->configHelper->method('getResetShippingCalculation')
             ->withAnyParameters()
@@ -546,13 +555,13 @@ class ShippingMethodsTest extends TestCase
      * Get quote mock with quote items
      *
      * @param $shippingAddress
-     * @return \PHPUnit_Framework_MockObject_MockObject
+     * @param $quoteId
+     * @param $parentQuoteId
+     * @return \PHPUnit\Framework\MockObject\MockObject
+     * @throws \ReflectionException
      */
-    private function getQuoteMock($shippingAddress)
+    private function getQuoteMock($shippingAddress, $quoteId = 1001, $parentQuoteId = 1000)
     {
-        $quoteId = 1001;
-        $parentQuoteId = 1000;
-
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
