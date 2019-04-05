@@ -448,7 +448,7 @@ class Js extends Template
             $quote = $this->checkoutSession->getQuote();
         }
 
-        return (int) ($quote && $quote->getStoreId()) ?
-            $quote->getStoreId() : 0;
+        return (int) (($quote && $quote->getStoreId()) ?
+            $quote->getStoreId() : 0);
     }
 }
