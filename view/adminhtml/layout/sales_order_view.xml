@@ -18,8 +18,10 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-        <referenceBlock name="content">
-            <block class="Bolt\Boltpay\Block\Checkout\Success" name="bolt.success.page" template="Bolt_Boltpay::checkout/success.phtml" after="-" />
-        </referenceBlock>
+        <referenceContainer name="before.body.end">
+            <block class="Bolt\Boltpay\Block\Js"
+                   name="bolt.transaction.target"
+                   template="Bolt_Boltpay::boltpay/js/transaction.phtml"/>
+        </referenceContainer>
     </body>
 </page>
