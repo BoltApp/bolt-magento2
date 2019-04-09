@@ -347,7 +347,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             if ($coupon && $coupon->getCouponId()) {
-                $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
+                if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)){
+                    $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
+                }else{
+                    $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
+                }
             } elseif ($giftCard && $giftCard->getId()) {
                 $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
             } else {
@@ -781,5 +785,52 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
 
         return $result;
+    }
+
+    /**
+     * @param $couponCode
+     * @param Quote $immutableQuote
+     * @param Quote $parentQuote
+     * @return bool
+     */
+    protected function shouldUseParentQuoteShippingAddressDiscount($couponCode, Quote $immutableQuote, Quote $parentQuote)
+    {
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+
+        return $immutableQuote->getCouponCode() == $couponCode &&
+               $immutableQuote->getCouponCode() == $parentQuote->getCouponCode() &&
+               in_array($couponCode, $ignoredShippingAddressCoupons);
+    }
+
+    /**
+     * @param $parentQuote
+     * @param $coupon
+     * @param $couponCode
+     * @return array
+     * @throws \Exception
+     */
+    protected function getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote)
+    {
+        // Load the coupon discount rule
+        $rule = $this->ruleFactory->create()->load($coupon->getRuleId());
+
+        // Check if the rule exists
+        if (empty($rule) || $rule->isObjectNew()) {
+            return $this->sendErrorResponse(
+                BoltErrorResponse::ERR_CODE_INVALID,
+                sprintf('The coupon code %s is not found', $couponCode),
+                404
+            );
+        }
+
+        $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
+
+        return $result = [
+            'status'          => 'success',
+            'discount_code'   => $couponCode,
+            'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
+            'description'     =>  __('Discount ') . $address->getDiscountDescription(),
+            'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
+        ];
     }
 }
