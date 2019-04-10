@@ -310,12 +310,12 @@ class Cart extends AbstractHelper
     /**
      * Create order on bolt
      *
-     * @param bool $paymentOnly               flag that represents the type of checkout
-     * @param string $placeOrderPayload      additional data collected from the (one page checkout) page,
+     * @param bool   $paymentOnly              flag that represents the type of checkout
+     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
      *
+     * @param int    $storeId
      * @return Response|void
-     * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
@@ -329,6 +329,11 @@ class Cart extends AbstractHelper
 
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
+
+        // If storeId was missed through request, then try to get it from the session quote.
+        if (!$storeId && $this->checkoutSession->getQuote()) {
+            $storeId = $this->checkoutSession->getQuote()->getStoreId();
+        }
 
         $apiKey = $this->configHelper->getApiKey($storeId);
 
@@ -374,11 +379,12 @@ class Cart extends AbstractHelper
      * Get the hints data for checkout
      *
      * @param string $cartReference            (immutable) quote id
+     * @param string $checkoutType             'cart' | 'admin' Default to `admin`
      *
      * @return array
      * @throws NoSuchEntityException
      */
-    public function getHints($cartReference = null)
+    public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
         $quote = $cartReference ?
@@ -451,6 +457,10 @@ class Cart extends AbstractHelper
             $prefillHints($quote->getBillingAddress());
         } else {
             $prefillHints($quote->getShippingAddress());
+        }
+        
+        if ($checkoutType === 'admin') {
+            $hints['virtual_terminal_mode'] = true;
         }
 
         return $hints;

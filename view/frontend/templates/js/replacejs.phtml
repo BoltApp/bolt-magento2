@@ -29,6 +29,8 @@ $trackCallbacks = $block->getTrackCallbacks();
 
 <script type="text/javascript">
 
+    // If we have multi-website, we need current quote store_id
+    magentoStoreId = parseInt(<?php echo $block->getMagentoStoreId(); ?>);
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -260,9 +262,9 @@ $trackCallbacks = $block->getTrackCallbacks();
             }
         };
 
-        var showBoltErrorMessage = function(messsage) {
+        var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>";
+                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>" + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -561,7 +563,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showBoltErrorMessage();
+                            showBoltErrorMessage('', data.reference);
                             // pretend order creation was success...
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
@@ -681,6 +683,8 @@ $trackCallbacks = $block->getTrackCallbacks();
 
             // define the params sent with the request variable
             var params = [];
+
+            params.push('store_id=' + magentoStoreId);
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {

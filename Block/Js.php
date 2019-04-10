@@ -20,9 +20,9 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Framework\Session\SessionManagerInterface as MagentoQuote;
+use Magento\Backend\Model\Session\Quote as BackendSessionQuote;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -45,16 +45,10 @@ class Js extends Template
     private $cartHelper;
 
     /**
-     * @var \Magento\Backend\Model\Session\Quote|\Magento\Quote\Model\Quote
-     */
-    private $magentoQuote;
-
-    /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
-     * @param MagentoQuote    $magentoQuote
      * @param array           $data
      */
     public function __construct(
@@ -62,14 +56,12 @@ class Js extends Template
         Config $configHelper,
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
-        MagentoQuote $magentoQuote,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
-        $this->magentoQuote = $magentoQuote->getQuote();
     }
 
     /**
@@ -259,8 +251,9 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?: ( $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' );
         return __('Your payment was successful and we\'re now processing your order.' .
-        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at support@bolt.com');
+        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
 
     /**
@@ -449,7 +442,13 @@ class Js extends Template
      */
     public function getMagentoStoreId()
     {
-        return (int) ($this->magentoQuote && $this->magentoQuote->getStoreId()) ?
-            $this->magentoQuote->getStoreId() : 0;
+        if ($this->checkoutSession instanceof BackendSessionQuote) {
+            $quote = $this->checkoutSession;
+        } else {
+            $quote = $this->checkoutSession->getQuote();
+        }
+
+        return (int) (($quote && $quote->getStoreId()) ?
+            $quote->getStoreId() : 0);
     }
 }

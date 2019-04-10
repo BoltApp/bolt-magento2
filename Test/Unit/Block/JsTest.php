@@ -105,7 +105,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
-                    $this->magentoQuote,
                 ]
             )
             ->getMock();

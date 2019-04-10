@@ -58,4 +58,14 @@ interface ShippingOptionsInterface
      * @return $this
      */
     public function setTaxResult($taxResult);
+
+    /**
+     * Add amount to shipping options.
+     *
+     * @api
+     * @param int $amount
+     *
+     * @return $this
+     */
+    public function addAmountToShippingOptions($amount);
 }
