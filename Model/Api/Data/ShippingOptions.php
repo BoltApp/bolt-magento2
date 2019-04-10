@@ -86,4 +86,20 @@ class ShippingOptions implements ShippingOptionsInterface
         $this->taxResult = $taxResult;
         return $this;
     }
+
+    /**
+     * Add amount to shipping options.
+     *
+     * @api
+     * @param int $amount
+     *
+     * @return $this
+     */
+    public function addAmountToShippingOptions($amount){
+        foreach ($this->getShippingOptions() as $option) {
+            $option->setCost($option->getCost() + $amount);
+        }
+
+        return $this;
+    }
 }

@@ -60,4 +60,5 @@
  - One step checkout support / disable bolt on payment only checkout pages
  - Add config for merchant to specify EmailEnter callback
  - Update ajax order creation error message
- 
+## [v1.1.12.1](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.12.1) 2019-04-10
+ - Fix to support multi-stores with no default api key

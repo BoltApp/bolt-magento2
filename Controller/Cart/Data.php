@@ -104,8 +104,9 @@ class Data extends Action
             // additional data collected from the (one page checkout) page,
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
+            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload, $magentoStoreId);
 
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
@@ -124,7 +125,7 @@ class Data extends Action
                 $cart['currency']->currency_code = $cart['currency']->currency;
             }
 
-            $hints = $this->cartHelper->getHints($cartReference);
+            $hints = $this->cartHelper->getHints($cartReference, 'cart');
 
             $result->setData([
                 'status' => 'success',
