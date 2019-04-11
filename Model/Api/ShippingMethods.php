@@ -444,7 +444,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $parentQuoteId = $quote->getBoltParentQuoteId();
 
             $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
-                $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code'];
+                $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code']. '_'.
+                @$addressData['street_address1'].'_'.@$addressData['street_address2'];
 
             // include products in cache key
             foreach ($quote->getAllVisibleItems() as $item) {
