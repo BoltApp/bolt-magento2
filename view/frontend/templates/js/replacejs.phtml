@@ -654,7 +654,7 @@ $trackCallbacks = $block->getTrackCallbacks();
 
             if (!settings.prefetch_shipping || !cart.cartReference) return;
 
-            var params = 'cartReference='+cart.cartReference;
+            var params = 'cartReference='+cart.cartReference+'&total='+cart.total_amount.amount;
 
             // parse Estimate Shipping and Tax location fields
             var country  = $('select[name=country_id]').val(),
@@ -663,6 +663,8 @@ $trackCallbacks = $block->getTrackCallbacks();
 
             if (country && region && postcode) {
                 params += '&country='+country+'&region='+region+'&postcode='+postcode;
+            } else {
+                return;
             }
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {

@@ -44,6 +44,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Framework\App\CacheInterface;
+use Magento\Quote\Api\Data\CartInterface;
 
 /**
  * Boltpay Cart helper
@@ -55,6 +57,12 @@ class Cart extends AbstractHelper
 {
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
+
+    /** @var CacheInterface */
+    private $cache;
+
+    /** @var CartInterface */
+    private $lastImmutableQuote = null;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -194,6 +202,7 @@ class Cart extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
      * @param DiscountHelper $discountHelper
+     * @param CacheInterface $cache
      *
      * @codeCoverageIgnore
      */
@@ -217,7 +226,8 @@ class Cart extends AbstractHelper
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
         CheckoutHelper $checkoutHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        CacheInterface $cache
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -239,6 +249,7 @@ class Cart extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
         $this->discountHelper = $discountHelper;
+        $this->cache = $cache;
     }
 
     /**
@@ -254,7 +265,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      * @throws NoSuchEntityException
      */
     public function getQuoteById($quoteId)
@@ -265,7 +276,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id if active
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      * @throws NoSuchEntityException
      */
     public function getActiveQuoteById($quoteId)
@@ -289,7 +300,7 @@ class Cart extends AbstractHelper
     /**
      * Save quote via repository
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      */
     public function saveQuote($quote)
     {
@@ -297,9 +308,19 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Delete quote via repository
+     *
+     * @param CartInterface $quote
+     */
+    public function deleteQuote($quote)
+    {
+        $this->quoteRepository->delete($quote);
+    }
+
+    /**
      * Save quote via resource model
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     public function quoteResourceSave($quote)
@@ -328,6 +349,19 @@ class Cart extends AbstractHelper
             return;
         }
 
+        $cacheIdentifier = $cart;
+        // display_id is always different for every new cart / immutable quote
+        // unset it in the cache identifier so the rest of the data can be matched
+        unset ($cacheIdentifier['display_id']);
+        $cacheIdentifier = md5(json_encode($cacheIdentifier));
+
+        if ($cached = $this->cache->load($cacheIdentifier)) {
+            // found in cache, old immutable quote is present
+            // delete the last quote and return cached order
+            $this->deleteQuote($this->lastImmutableQuote);
+            return unserialize($cached);
+        }
+
         // cache the session id
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
@@ -347,6 +381,10 @@ class Cart extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
         $result  = $this->apiHelper->sendRequest($request);
+
+        // cache Bolt order
+        $this->cache->save(serialize($result), $cacheIdentifier, [], 3600);
+
         return $result;
     }
 
@@ -459,7 +497,7 @@ class Cart extends AbstractHelper
         } else {
             $prefillHints($quote->getShippingAddress());
         }
-        
+
         if ($checkoutType === 'admin') {
             $hints['virtual_terminal_mode'] = true;
         }
@@ -1094,6 +1132,8 @@ class Cart extends AbstractHelper
         }
 
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+
+        $this->lastImmutableQuote = $immutableQuote;
 
         return $cart;
     }
