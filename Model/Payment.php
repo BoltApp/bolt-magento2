@@ -250,7 +250,8 @@ class Payment extends AbstractMethod
 
             //Get transaction data
             $transactionData = ['transaction_id' => $transactionId];
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $payment->getOrder()->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -354,7 +355,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -421,7 +423,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
