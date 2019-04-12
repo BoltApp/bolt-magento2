@@ -893,7 +893,7 @@ class Order extends AbstractHelper
     public function formatReferenceUrl($reference)
     {
         $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
-        return '<a target="_blank" href="'.$url.'">'.$reference.'</a>';
+        return '<a href="'.$url.'">'.$reference.'</a>';
     }
 
     /**
