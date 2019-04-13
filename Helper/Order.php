@@ -40,7 +40,6 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
-use Magento\Sales\Api\Data\InvoiceInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
@@ -746,8 +745,41 @@ class Order extends AbstractHelper
         $quote = $this->prepareQuote($immutableQuote, $transaction);
 
         // check if the order has been created in the meanwhile
-        $this->verifyOrderIsNew($quote);
+        $existingOrder = $this->getExistingOrder($quote->getReservedOrderId());
+        $isStillNeedCreateNewOrder = true;
+        if ($existingOrder) {
+            $isStillNeedCreateNewOrder = $this->updateExistingOrder($existingOrder, $transaction);
+        }
 
+        if ($isStillNeedCreateNewOrder) {
+            $order = $this->processNewOrder($quote, $transaction);
+
+            if (Hook::$fromBolt) {
+                $order->addStatusHistoryComment(
+                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
+                );
+            }
+            if ($existingOrder) {
+                $order->addStatusHistoryComment(
+                    "BOLTPAY INFO :: The order was recreated."
+                );
+            }
+
+            $order->save();
+        }
+
+        return $order;
+    }
+
+    /**
+     * @param $quote
+     * @param $transaction
+     * @return OrderModel
+     * @throws BoltException
+     * @throws LocalizedException
+     */
+    public function processNewOrder($quote, $transaction)
+    {
         /** @var \Magento\Sales\Model\Order $order */
         $order = $this->quoteManagement->submit($quote);
 
@@ -783,43 +815,67 @@ class Order extends AbstractHelper
             );
         }
 
-        if (Hook::$fromBolt) {
-            $order->addStatusHistoryComment(
-                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
-            );
-        }
-
-        $order->save();
-
         return $order;
     }
 
     /**
-     * @param Quote $quote
-     *
-     * @throws LocalizedException
+     * @param $order
+     * @param $transaction
+     * @return bool
+     * @throws \Exception
      */
-    private function verifyOrderIsNew($quote)
+    public function updateExistingOrder($order, $transaction)
     {
         /** @var OrderModel $order */
-        $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+        $subtotal = $order->getSubtotal();
+        $taxAmount = $order->getTaxAmount();
+        $totalAmount = $order->getGrandTotal();
 
-        if ($order && $order->getId()) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote) {
-                $report->setMetaData([
-                    'Is Order Exist' => [
-                        'pre-auth order.create' => true,
-                        'parent quote ID' => $quote->getId(),
-                        'order reserved ID' => $quote->getReservedOrderId(),
-                    ]
-                ]);
-            });
-            throw new BoltException(
-                __('Duplicate Order Creation Attempt. Order #: %1', $quote->getReservedOrderId()),
-                null,
-                \Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_ORDER_ALREADY_EXISTS
-            );
+        $transactionSubtotalAmount = $transaction->order->cart->subtotal_amount->amount;
+        $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
+        $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
+
+        // If totals differs then delete order.
+        if ($subtotal === $transactionSubtotalAmount
+            && $taxAmount === $transactionTaxAmount
+            && $totalAmount === $transactionGrandTotalAmount
+        ) {
+            return false;
         }
+
+        $order->delete();
+
+        return true;
+    }
+
+    /**
+     * @param $displayId
+     * @throws \Exception
+     */
+    public function deleteOrderByIncrementId($displayId)
+    {
+        list($incrementId, $quoteId) = array_pad(
+            explode(' / ', $displayId),
+            2,
+            null
+        );
+
+        $order = $this->getExistingOrder($incrementId);
+        if ($order && $order->getState() === OrderModel::STATE_NEW) {
+            $order->delete();
+        }
+    }
+
+    /**
+     * @param $orderIncrementId
+     * @return OrderModel|null
+     */
+    private function getExistingOrder($orderIncrementId)
+    {
+        /** @var OrderModel $order */
+        $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId);
+
+        return ($order && $order->getId()) ? $order : null;
     }
 
     /**
