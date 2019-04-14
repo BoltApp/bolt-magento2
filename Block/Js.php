@@ -33,7 +33,7 @@ class Js extends Template
     /**
      * @var Config
      */
-    private $configHelper;
+    protected $configHelper;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -320,7 +320,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageBlacklist()
+    protected function getPageBlacklist()
     {
         return $this->configHelper->getPageBlacklist();
     }
@@ -332,7 +332,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageWhitelist()
+    protected function getPageWhitelist()
     {
         return array_unique(array_merge(Config::$defaultPageWhitelist, $this->configHelper->getPageWhitelist()));
     }
@@ -345,7 +345,7 @@ class Js extends Template
      *
      * @return bool
      */
-    private function isPageRestricted()
+    private function isPageRestricted($type)
     {
         $currentPage = $this->getRequest()->getFullActionName();
 
@@ -354,13 +354,19 @@ class Js extends Template
             return true;
         }
 
-        // If minicart is supported (allowing Bolt on every page)
+        // If minicart/product page checkout is supported (allowing Bolt on every page)
         // and no IP whitelist is defined there are no additional restrictions.
-        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
-            return false;
+        if (!$this->configHelper->getIPWhitelistArray()) {
+            if ($this->configHelper->getMinicartSupport()) {
+                return false;
+            }
+            if ($type=="withproductpage" && ($currentPage=="catalog_product_view") && $this->configHelper->getProductPageCheckoutFlag()) {
+                return false;
+            }
+
         }
 
-        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
+        // No minicart/product page checkout support or there is IP whitelist defined. Check if the page is whitelisted.
         // If IP whitelist is defined, the Bolt checkout functionality
         // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
         return ! in_array($currentPage, $this->getPageWhitelist());
@@ -384,8 +390,8 @@ class Js extends Template
      *
      * @return bool
      */
-    public function shouldDisableBoltCheckout()
+    public function shouldDisableBoltCheckout($type='')
     {
-        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
+        return !$this->isEnabled() || $this->isPageRestricted($type) || $this->isIPRestricted();
     }
 }
