@@ -349,17 +349,20 @@ class Cart extends AbstractHelper
             return;
         }
 
-        $cacheIdentifier = $cart;
-        // display_id is always different for every new cart / immutable quote
-        // unset it in the cache identifier so the rest of the data can be matched
-        unset ($cacheIdentifier['display_id']);
-        $cacheIdentifier = md5(json_encode($cacheIdentifier));
+        // Try fetching data from cache
+        if ($isBoltOrderCachingEnabled = $this->configHelper->isBoltOrderCachingEnabled()) {
+            $cacheIdentifier = $cart;
+            // display_id is always different for every new cart / immutable quote
+            // unset it in the cache identifier so the rest of the data can be matched
+            unset ($cacheIdentifier['display_id']);
+            $cacheIdentifier = md5(json_encode($cacheIdentifier));
 
-        if ($cached = $this->cache->load($cacheIdentifier)) {
-            // found in cache, old immutable quote is present
-            // delete the last quote and return cached order
-            $this->deleteQuote($this->lastImmutableQuote);
-            return unserialize($cached);
+            if ($cached = $this->cache->load($cacheIdentifier)) {
+                // found in cache, old immutable quote is present
+                // delete the last quote and return cached order
+                $this->deleteQuote($this->lastImmutableQuote);
+                return unserialize($cached);
+            }
         }
 
         // cache the session id
@@ -383,7 +386,9 @@ class Cart extends AbstractHelper
         $result  = $this->apiHelper->sendRequest($request);
 
         // cache Bolt order
-        $this->cache->save(serialize($result), $cacheIdentifier, [], 3600);
+        if ($isBoltOrderCachingEnabled) {
+            $this->cache->save(serialize($result), $cacheIdentifier, [], 3600);
+        }
 
         return $result;
     }
