@@ -547,6 +547,10 @@ class Cart extends AbstractHelper
      */
     public function replicateQuoteData($source, $destination)
     {
+        // Skip the replication if source and destination point to the same quote
+        // E.g. delayed Save Order - immutable quote is cleared by cron and we use the parent instead
+        if ($source->getId() == $destination->getId()) return;
+
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
 
