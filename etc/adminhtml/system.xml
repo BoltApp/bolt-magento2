@@ -150,7 +150,7 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Cache Bolt Orders</label>
+                    <label>Cache Bolt Order Token (Performance Optimization)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>
