@@ -411,7 +411,7 @@ class CreateOrder implements CreateOrderInterface
                 throw new BoltException(
                     __('Cart data has changed. SKU: ' . $sku),
                     null,
-                    self::E_BOLT_GENERAL_ERROR
+                    self::E_BOLT_ITEM_OUT_OF_INVENTORY
                 );
             }
 
