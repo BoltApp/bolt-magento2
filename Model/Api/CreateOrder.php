@@ -439,6 +439,14 @@ class CreateOrder implements CreateOrderInterface
             if ($transactionItemSku === $itemSku
                 && $itemPrice !== $transactionUnitPrice
             ) {
+                $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
+                    $report->setMetaData([
+                        'Pre Auth' => [
+                            'item.price' => $itemPrice,
+                            'transaction.unit_price' => $transactionUnitPrice,
+                        ]
+                    ]);
+                });
                 throw new BoltException(
                     __('Price do not matched. Item sku: ' . $itemSku),
                     null,
@@ -462,6 +470,14 @@ class CreateOrder implements CreateOrderInterface
         $tax = $shippingAddress->getTaxAmount();
 
         if ($transactionTax !== $tax) {
+            $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'shipping.tax_amount' => $tax,
+                        'transaction.tax_amount' => $transactionTax,
+                    ]
+                ]);
+            });
             throw new BoltException(
                 __('Cart Tax mismatched.'),
                 null,
@@ -482,6 +498,14 @@ class CreateOrder implements CreateOrderInterface
         $boltCost  = $this->getShippingAmountFromTransaction($transaction);
 
         if ($storeCost != $boltCost) {
+            $this->bugsnag->registerCallback(function ($report) use ($storeCost, $boltCost) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'shipping.shipping_amount' => $storeCost,
+                        'transaction.shipping_amount' => $boltCost,
+                    ]
+                ]);
+            });
             throw new BoltException(
                 __('Shipping costs do not match.'),
                 null,
