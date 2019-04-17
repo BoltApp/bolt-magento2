@@ -33,6 +33,7 @@ use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Quote\Model\Quote as MagentoQuote;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
 
 /**
  * Class CreateOrder
@@ -377,7 +378,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateInventory($quote)
     {
-        /** @var \Magento\Quote\Model\Quote\Item[] $quoteItems */
+        /** @var QuoteItem[] $quoteItems */
         $quoteItems = $quote->getAllVisibleItems();
 
         foreach ($quoteItems as $item) {
@@ -398,7 +399,7 @@ class CreateOrder implements CreateOrderInterface
     /**
      * @param MagentoQuote $quote
      * @param $transaction
-     * @return mixed
+     * @return void
      * @throws BoltException
      */
     public function validateItemPrice($quote, $transaction)
@@ -406,8 +407,13 @@ class CreateOrder implements CreateOrderInterface
         $quoteItems = $quote->getAllVisibleItems();
 
         $transactionItems = $transaction->order->cart->items;
+        $transactionItemsSku = [];
+        foreach ($transactionItems as $transactionItem) {
+            $transactionItemsSku[] = $transactionItem->sku;
+        }
+
         foreach ($quoteItems as $item) {
-            /** @var \Magento\Quote\Model\Quote\Item $item */
+            /** @var QuoteItem $item */
             $itemPrice = (int) ($item->getPrice() * 100);
             $sku = $item->getSku();
 
@@ -422,9 +428,15 @@ class CreateOrder implements CreateOrderInterface
                     }
                 }
             }
-        }
 
-        return $quote;
+            if (!in_array($sku, $transactionItemsSku)) {
+                throw new BoltException(
+                    __('Cart Items data has changed. SKU: ' . $sku),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
+                );
+            }
+        }
     }
 
     public function validateTax($quote)
