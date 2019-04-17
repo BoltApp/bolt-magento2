@@ -32,6 +32,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\Quote\Model\Quote as MagentoQuote;
 
 /**
  * Class CreateOrder
@@ -178,7 +179,7 @@ class CreateOrder implements CreateOrderInterface
 
             /** @var \Magento\Quote\Model\Quote $quote */
             $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
-            $this->validateQuoteData($quote);
+            $this->validateQuoteData($quote, $transaction);
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
             $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
@@ -217,10 +218,21 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
                 'status' => 'failure',
-                'error'  => [[
+                'error' => [[
                     'code' => 6009,
                     'data' => [[
                         'reason' => 'Unprocessable Entity: ' . $e->getMessage(),
+                    ]]
+                ]]
+            ]);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->sendResponse(422, [
+                'status' => 'failure',
+                'error' => [[
+                    'code' => self::E_BOLT_GENERAL_ERROR,
+                    'data' => [[
+                        'reason' => $e->getMessage(),
                     ]]
                 ]]
             ]);
@@ -344,27 +356,28 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param $quote
+     * @param MagentoQuote $quote
      * @return void
      * @throws NoSuchEntityException
      * @throws BoltException
      */
-    public function validateQuoteData($quote)
+    public function validateQuoteData($quote, $transaction)
     {
         $this->validateInventory($quote);
-        $this->validateItemPrice($quote);
+        $this->validateItemPrice($quote, $transaction);
         $this->validateTax($quote);
         $this->validateShippingCost($quote);
     }
 
     /**
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param MagentoQuote $quote
      * @return void
      * @throws NoSuchEntityException
      * @throws BoltException
      */
     public function validateInventory($quote)
     {
+        /** @var \Magento\Quote\Model\Quote\Item[] $quoteItems */
         $quoteItems = $quote->getAllVisibleItems();
 
         foreach ($quoteItems as $item) {
@@ -374,7 +387,7 @@ class CreateOrder implements CreateOrderInterface
 
             if (!$stock) {
                 throw new BoltException(
-                    __('Item is out of stock. Item sku: '.$sku),
+                    __('Item is out of stock. Item sku: ' . $sku),
                     null,
                     self::E_BOLT_ITEM_OUT_OF_INVENTORY
                 );
@@ -382,8 +395,35 @@ class CreateOrder implements CreateOrderInterface
         }
     }
 
-    public function validateItemPrice($quote)
+    /**
+     * @param MagentoQuote $quote
+     * @param $transaction
+     * @return mixed
+     * @throws BoltException
+     */
+    public function validateItemPrice($quote, $transaction)
     {
+        $quoteItems = $quote->getAllVisibleItems();
+
+        $transactionItems = $transaction->order->cart->items;
+        foreach ($quoteItems as $item) {
+            /** @var \Magento\Quote\Model\Quote\Item $item */
+            $itemPrice = (int) ($item->getPrice() * 100);
+            $sku = $item->getSku();
+
+            foreach ($transactionItems as $transactionItem) {
+                if ($transactionItem->sku === $sku) {
+                    if ($itemPrice !== $transactionItem->unit_price->amount) {
+                        throw new BoltException(
+                            __('Price do not matched. Item sku: ' . $sku),
+                            null,
+                            self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+                        );
+                    }
+                }
+            }
+        }
+
         return $quote;
     }
 
