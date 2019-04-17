@@ -157,11 +157,18 @@ class CreateOrder implements CreateOrderInterface
             }
 
             $quoteId = $this->getQuoteIdFromPayloadOrder($order);
+            /** @var \Magento\Quote\Model\Quote $immutableQuote */
+            $immutableQuote = $this->loadQuoteData($quoteId);
+
+            // Convert to stdClass
+            $transaction = json_decode($payload);
+
             /** @var \Magento\Quote\Model\Quote $quote */
-            $quote = $this->loadQuoteData($quoteId);
+            $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
+            $this->validateQuoteData($quote);
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
-            $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $payload);
+            $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
             $orderReference = $this->getOrderReference($order);
 
             $this->sendResponse(200, [
@@ -320,6 +327,38 @@ class CreateOrder implements CreateOrderInterface
             );
         }
 
+        return $quote;
+    }
+
+    /**
+     * @param $quote
+     * @return void
+     */
+    public function validateQuoteData($quote)
+    {
+        $this->validateInventory($quote);
+        $this->validateItemPrice($quote);
+        $this->validateTax($quote);
+        $this->validateShippingCost($quote);
+    }
+
+    public function validateInventory($quote)
+    {
+        return $quote;
+    }
+
+    public function validateItemPrice($quote)
+    {
+        return $quote;
+    }
+
+    public function validateTax($quote)
+    {
+        return $quote;
+    }
+
+    public function validateShippingCost($quote)
+    {
         return $quote;
     }
 
