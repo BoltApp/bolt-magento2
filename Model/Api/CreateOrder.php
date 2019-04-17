@@ -376,7 +376,7 @@ class CreateOrder implements CreateOrderInterface
                 throw new BoltException(
                     __('Item is out of stock. Item sku: '.$sku),
                     null,
-                    self::E_BOLT_GENERAL_ERROR
+                    self::E_BOLT_ITEM_OUT_OF_INVENTORY
                 );
             }
         }
