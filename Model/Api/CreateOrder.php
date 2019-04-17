@@ -31,6 +31,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 
 /**
  * Class CreateOrder
@@ -90,14 +91,21 @@ class CreateOrder implements CreateOrderInterface
     private $url;
 
     /**
-     * @param HookHelper   $hookHelper
-     * @param OrderHelper  $orderHelper
-     * @param CartHelper   $cartHelper
-     * @param LogHelper    $logHelper
-     * @param Request      $request
-     * @param Bugsnag      $bugsnag
-     * @param Response     $response
-     * @param ConfigHelper $configHelper
+     * @var StockRegistryInterface
+     */
+    private $stockRegistry;
+
+    /**
+     * @param HookHelper             $hookHelper
+     * @param OrderHelper            $orderHelper
+     * @param CartHelper             $cartHelper
+     * @param LogHelper              $logHelper
+     * @param Request                $request
+     * @param Bugsnag                $bugsnag
+     * @param Response               $response
+     * @param UrlInterface           $url
+     * @param ConfigHelper           $configHelper
+     * @param StockRegistryInterface $stockRegistry
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -108,7 +116,8 @@ class CreateOrder implements CreateOrderInterface
         Bugsnag $bugsnag,
         Response $response,
         UrlInterface $url,
-        ConfigHelper $configHelper
+        ConfigHelper $configHelper,
+        StockRegistryInterface $stockRegistry
     ) {
         $this->hookHelper = $hookHelper;
         $this->orderHelper = $orderHelper;
@@ -119,6 +128,7 @@ class CreateOrder implements CreateOrderInterface
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
         $this->url = $url;
+        $this->stockRegistry = $stockRegistry;
     }
 
     /**
@@ -336,6 +346,8 @@ class CreateOrder implements CreateOrderInterface
     /**
      * @param $quote
      * @return void
+     * @throws NoSuchEntityException
+     * @throws BoltException
      */
     public function validateQuoteData($quote)
     {
@@ -345,9 +357,29 @@ class CreateOrder implements CreateOrderInterface
         $this->validateShippingCost($quote);
     }
 
+    /**
+     * @param \Magento\Quote\Model\Quote $quote
+     * @return void
+     * @throws NoSuchEntityException
+     * @throws BoltException
+     */
     public function validateInventory($quote)
     {
-        return $quote;
+        $quoteItems = $quote->getAllVisibleItems();
+
+        foreach ($quoteItems as $item) {
+            $sku = $item->getSku();
+            $stock = $this->stockRegistry->getStockItemBySku($sku)
+                ->getIsInStock();
+
+            if (!$stock) {
+                throw new BoltException(
+                    __('Item is out of stock. Item sku: '.$sku),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
+                );
+            }
+        }
     }
 
     public function validateItemPrice($quote)
