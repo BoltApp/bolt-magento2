@@ -724,8 +724,8 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param \Magento\Quote\Model\Quote $immutableQuote
-     * @param string $transaction
+     * @param \Magento\Quote\Model\Quote $quote
+     * @param string                     $transaction
      * @return OrderModel
      * @throws LocalizedException
      * @throws NoSuchEntityException
@@ -733,13 +733,8 @@ class Order extends AbstractHelper
      * @throws \Magento\Framework\Exception\SessionException
      * @throws \Zend_Validate_Exception
      */
-    public function preAuthCreateOrder($immutableQuote, $payload)
+    public function preAuthCreateOrder($quote, $transaction)
     {
-        // Convert to stdClass
-        $transaction = json_decode($payload);
-
-        $quote = $this->prepareQuote($immutableQuote, $transaction);
-
         // check if the order has been created in the meanwhile
         $existingOrder = $this->getExistingOrder($quote->getReservedOrderId());
         $isStillNeedCreateNewOrder = true;
