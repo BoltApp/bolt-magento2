@@ -479,7 +479,7 @@ class CreateOrder implements CreateOrderInterface
     public function validateShippingCost($quote, $transaction)
     {
         $storeCost = $quote->getShippingAddress() ? (int)($quote->getShippingAddress()->getShippingAmount() * 100) : 0;
-        $boltCost  = $transaction->order->cart->shipping_amount->amount;
+        $boltCost  = $this->getShippingAmountFromTransaction($transaction);
 
         if ($storeCost != $boltCost) {
             throw new BoltException(
@@ -534,5 +534,14 @@ class CreateOrder implements CreateOrderInterface
     protected function getSkuFromTransaction($transactionItem)
     {
         return $transactionItem->sku;
+    }
+
+    /**
+     * @param \stdClass $transaction
+     * @return int
+     */
+    protected function getShippingAmountFromTransaction($transaction)
+    {
+        return $transaction->order->cart->shipping_amount->amount;
     }
 }
