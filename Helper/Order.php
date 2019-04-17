@@ -67,6 +67,7 @@ class Order extends AbstractHelper
     const TS_PENDING               = 'cc_payment:pending';
     const TS_AUTHORIZED            = 'cc_payment:authorized';
     const TS_CAPTURED              = 'cc_payment:captured';
+    const TS_PARTIAL_VOIDED        = 'cc_payment:partial_voided';
     const TS_COMPLETED             = 'cc_payment:completed';
     const TS_CANCELED              = 'cc_payment:cancelled';
     const TS_REJECTED_REVERSIBLE   = 'cc_payment:rejected_reversible';
@@ -100,7 +101,8 @@ class Order extends AbstractHelper
             self::TS_CAPTURED,
             self::TS_CANCELED,
             self::TS_COMPLETED,
-            self::TS_CREDIT_COMPLETED
+            self::TS_CREDIT_COMPLETED,
+            self::TS_PARTIAL_VOIDED
         ],
         self::TS_CANCELED => [self::TS_CANCELED],
         self::TS_COMPLETED => [
@@ -639,14 +641,16 @@ class Order extends AbstractHelper
      * Save/create the order (checkout, orphaned transaction),
      * Update order payment / transaction data (checkout, web hooks)
      *
-     * @param string $reference     Bolt transaction reference
+     * @param string $reference Bolt transaction reference
+     * @param null $boltTraceId
+     * @param null $hookType
      *
      * @return mixed
      * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $boltTraceId = null)
+    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null)
     {
         $transaction = $this->fetchTransactionInfo($reference);
 
@@ -717,7 +721,7 @@ class Order extends AbstractHelper
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
-            $this->updateOrderPayment($order, $transaction);
+            $this->updateOrderPayment($order, $transaction, null, $hookType);
         } else {
             // if called from the store controller return quote and order
             // wait for the hook call to update the payment
@@ -796,9 +800,10 @@ class Order extends AbstractHelper
      *
      * @param \stdClass $transaction
      * @param OrderPaymentInterface $payment
+     * @param null $hookType
      * @return string
      */
-    public function getTransactionState($transaction, $payment)
+    public function getTransactionState($transaction, $payment, $hookType = null)
     {
         $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
@@ -861,6 +866,15 @@ class Order extends AbstractHelper
             $transactionState == self::TS_AUTHORIZED
         ) {
             return self::TS_CAPTURED;
+        }
+
+        // The transaction was in TS_CAPTURED state, now it's TS_COMPLETED and hook type is TYPE_VOID
+        // Mark it TS_PARTIAL_VOIDED.
+        if ($prevTransactionState == self::TS_CAPTURED &&
+            $transactionState == self::TS_COMPLETED &&
+            $hookType == Transaction::TYPE_VOID
+        ) {
+            return self::TS_PARTIAL_VOIDED;
         }
 
         // return transaction state as it is in fetched transaction info. No need to change it.
@@ -1086,12 +1100,13 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param null|\stdClass $transaction
      * @param null|string $reference
+     * @param null $hookType
      *
      * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null)
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null)
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
@@ -1113,7 +1128,7 @@ class Order extends AbstractHelper
         $prevTransactionReference = $payment->getAdditionalInformation('transaction_reference');
 
         // Get the transaction state
-        $transactionState = $this->getTransactionState($transaction, $payment);
+        $transactionState = $this->getTransactionState($transaction, $payment, $hookType);
 
         $newCapture = in_array($transactionState, [self::TS_CAPTURED, self::TS_COMPLETED])
             ? $this->getUnprocessedCapture($payment, $transaction)
@@ -1182,6 +1197,13 @@ class Order extends AbstractHelper
                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
                 $parentTransactionId = $transaction->id.'-auth';
                 break;
+
+            case self::TS_PARTIAL_VOIDED:
+                $authorizationTransaction = $payment->getAuthorizationTransaction();
+                $authorizationTransaction->closeAuthorization();
+                $order->addCommentToStatusHistory($this->getVoidMessage($payment));
+                $order->save();
+                return;
 
             case self::TS_COMPLETED:
                 if (!$newCapture) return;
@@ -1402,5 +1424,24 @@ class Order extends AbstractHelper
         return !Hook::$fromBolt &&
                in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
                $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
+    }
+
+    /**
+     * @param OrderPaymentInterface $payment
+     *
+     * @return \Magento\Framework\Phrase|string
+     */
+    protected function getVoidMessage(OrderPaymentInterface $payment)
+    {
+        $authorizationTransaction = $payment->getAuthorizationTransaction();
+        /** @var OrderModel $order */
+        $order = $payment->getOrder();
+        $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
+
+        $message = __('BOLT notification: Transaction authorization has been voided.');
+        $message .= ' ' .__('Amount: %1.', $order->getBaseCurrency()->formatTxt($voidAmount, array()));
+        $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
+
+        return $message;
     }
 }
