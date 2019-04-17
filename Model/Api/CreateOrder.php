@@ -393,7 +393,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateCartItems($quote, $transaction)
     {
-        /** @var \Magento\Quote\Model\Quote\Item[] $quoteItems */
+        /** @var QuoteItem[] $quoteItems */
         $quoteItems = $quote->getAllVisibleItems();
         $transactionItems = $this->getCartItemsFromTransaction($transaction);
         $transactionItemsSkuQty = [];
