@@ -393,7 +393,6 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateCartItems($quote, $transaction)
     {
-        /** @var QuoteItem[] $quoteItems */
         $quoteItems = $quote->getAllVisibleItems();
         $transactionItems = $this->getCartItemsFromTransaction($transaction);
         $transactionItemsSkuQty = [];
@@ -412,7 +411,7 @@ class CreateOrder implements CreateOrderInterface
                 throw new BoltException(
                     __('Cart data has changed. SKU: ' . $sku),
                     null,
-                    self::E_BOLT_ITEM_OUT_OF_INVENTORY
+                    self::E_BOLT_GENERAL_ERROR
                 );
             }
 
