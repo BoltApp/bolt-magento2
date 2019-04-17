@@ -358,6 +358,7 @@ class CreateOrder implements CreateOrderInterface
 
     /**
      * @param MagentoQuote $quote
+     * @param \stdClass $transaction
      * @return void
      * @throws NoSuchEntityException
      * @throws BoltException
@@ -367,7 +368,7 @@ class CreateOrder implements CreateOrderInterface
         $this->validateCartItems($quote, $transaction);
 
         $this->validateTax($quote, $transaction);
-        $this->validateShippingCost($quote);
+        $this->validateShippingCost($quote, $transaction);
     }
 
     /**
@@ -469,9 +470,24 @@ class CreateOrder implements CreateOrderInterface
         }
     }
 
-    public function validateShippingCost($quote)
+    /**
+     * @param MagentoQuote $quote
+     * @param \stdClass $transaction
+     * @return void
+     * @throws BoltException
+     */
+    public function validateShippingCost($quote, $transaction)
     {
-        return $quote;
+        $storeCost = $quote->getShippingAddress() ? (int)($quote->getShippingAddress()->getShippingAmount() * 100) : 0;
+        $boltCost  = $transaction->order->cart->shipping_amount->amount;
+
+        if ($storeCost != $boltCost) {
+            throw new BoltException(
+                __('Shipping costs do not match.'),
+                null,
+                self::E_BOLT_GENERAL_ERROR
+            );
+        }
     }
 
     /**
