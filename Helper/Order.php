@@ -731,11 +731,8 @@ class Order extends AbstractHelper
      * @param \Magento\Quote\Model\Quote $quote
      * @param string                     $transaction
      * @return OrderModel
+     * @throws BoltException
      * @throws LocalizedException
-     * @throws NoSuchEntityException
-     * @throws \Magento\Framework\Exception\AlreadyExistsException
-     * @throws \Magento\Framework\Exception\SessionException
-     * @throws \Zend_Validate_Exception
      */
     public function preAuthCreateOrder($quote, $transaction)
     {
