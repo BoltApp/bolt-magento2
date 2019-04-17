@@ -364,33 +364,84 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateQuoteData($quote, $transaction)
     {
-        $this->validateInventory($quote);
-        $this->validateItemPrice($quote, $transaction);
-        $this->validateTax($quote);
+        $this->validateCartItems($quote, $transaction);
+
+        $this->validateTax($quote, $transaction);
         $this->validateShippingCost($quote);
     }
 
     /**
-     * @param MagentoQuote $quote
-     * @return void
-     * @throws NoSuchEntityException
+     * @param MagentoQuote  $quote
+     * @param               $transaction
      * @throws BoltException
+     * @throws NoSuchEntityException
      */
-    public function validateInventory($quote)
+    public function validateCartItems($quote, $transaction)
     {
-        /** @var QuoteItem[] $quoteItems */
         $quoteItems = $quote->getAllVisibleItems();
+        $transactionItems = $this->getCartItemsFromTransaction($transaction);
+        $transactionItemsSku = [];
+        foreach ($transactionItems as $transactionItem) {
+            $transactionItemsSku[] = $this->getSkuFromTransaction($transactionItem);
+        }
 
         foreach ($quoteItems as $item) {
+            /** @var QuoteItem $item */
             $sku = $item->getSku();
-            $stock = $this->stockRegistry->getStockItemBySku($sku)
-                ->getIsInStock();
+            $itemPrice = (int) ($item->getPrice() * 100);
 
-            if (!$stock) {
+            if (!in_array($sku, $transactionItemsSku)) {
                 throw new BoltException(
-                    __('Item is out of stock. Item sku: ' . $sku),
+                    __('Cart data has changed. SKU: ' . $sku),
                     null,
-                    self::E_BOLT_ITEM_OUT_OF_INVENTORY
+                    self::E_BOLT_GENERAL_ERROR
+                );
+            }
+
+            $this->validateItemInventory($sku);
+
+            $this->validateItemPrice($sku, $itemPrice, $transactionItems);
+        }
+    }
+
+    /**
+     * @param string $itemSku
+     * @throws BoltException
+     * @throws NoSuchEntityException
+     */
+    public function validateItemInventory($itemSku)
+    {
+        $stock = $this->stockRegistry->getStockItemBySku($itemSku)
+            ->getIsInStock();
+
+        if (!$stock) {
+            throw new BoltException(
+                __('Item is out of stock. Item sku: ' . $itemSku),
+                null,
+                self::E_BOLT_ITEM_OUT_OF_INVENTORY
+            );
+        }
+    }
+
+    /**
+     * @param string    $itemSku
+     * @param int       $itemPrice
+     * @param array     $transactionItems
+     * @throws BoltException
+     */
+    public function validateItemPrice($itemSku, $itemPrice, $transactionItems)
+    {
+        foreach ($transactionItems as $transactionItem) {
+            $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
+            $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
+
+            if ($transactionItemSku === $itemSku
+                && $itemPrice !== $transactionUnitPrice
+            ) {
+                throw new BoltException(
+                    __('Price do not matched. Item sku: ' . $itemSku),
+                    null,
+                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
                 );
             }
         }
@@ -398,50 +449,24 @@ class CreateOrder implements CreateOrderInterface
 
     /**
      * @param MagentoQuote $quote
-     * @param $transaction
+     * @param              $transaction
      * @return void
      * @throws BoltException
      */
-    public function validateItemPrice($quote, $transaction)
+    public function validateTax($quote, $transaction)
     {
-        $quoteItems = $quote->getAllVisibleItems();
+        $transactionTax = $this->getTaxAmountFromTransaction($transaction);
+        /** @var \Magento\Quote\Model\Quote\Address $shippingAddress */
+        $shippingAddress = $quote->getShippingAddress();
+        $tax = $shippingAddress->getTaxAmount();
 
-        $transactionItems = $transaction->order->cart->items;
-        $transactionItemsSku = [];
-        foreach ($transactionItems as $transactionItem) {
-            $transactionItemsSku[] = $transactionItem->sku;
+        if ($transactionTax !== $tax) {
+            throw new BoltException(
+                __('Cart Tax mismatched.'),
+                null,
+                self::E_BOLT_GENERAL_ERROR
+            );
         }
-
-        foreach ($quoteItems as $item) {
-            /** @var QuoteItem $item */
-            $itemPrice = (int) ($item->getPrice() * 100);
-            $sku = $item->getSku();
-
-            foreach ($transactionItems as $transactionItem) {
-                if ($transactionItem->sku === $sku) {
-                    if ($itemPrice !== $transactionItem->unit_price->amount) {
-                        throw new BoltException(
-                            __('Price do not matched. Item sku: ' . $sku),
-                            null,
-                            self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-                        );
-                    }
-                }
-            }
-
-            if (!in_array($sku, $transactionItemsSku)) {
-                throw new BoltException(
-                    __('Cart Items data has changed. SKU: ' . $sku),
-                    null,
-                    self::E_BOLT_GENERAL_ERROR
-                );
-            }
-        }
-    }
-
-    public function validateTax($quote)
-    {
-        return $quote;
     }
 
     public function validateShippingCost($quote)
@@ -457,5 +482,41 @@ class CreateOrder implements CreateOrderInterface
     {
         $this->response->setHttpResponseCode($code);
         $this->response->setBody(json_encode($body));
+    }
+
+    /**
+     * @param \stdClass $transaction
+     * @return array
+     */
+    protected function getCartItemsFromTransaction($transaction)
+    {
+        return $transaction->order->cart->items;
+    }
+
+    /**
+     * @param \stdClass $transaction
+     * @return int
+     */
+    protected function getTaxAmountFromTransaction($transaction)
+    {
+        return $transaction->order->cart->tax_amount->amount;
+    }
+
+    /**
+     * @param \stdClass $transactionItem
+     * @return int
+     */
+    protected function getUnitPriceFromTransaction($transactionItem)
+    {
+        return $transactionItem->unit_price->amount;
+    }
+
+    /**
+     * @param \stdClass $transactionItem
+     * @return string
+     */
+    protected function getSkuFromTransaction($transactionItem)
+    {
+        return $transactionItem->sku;
     }
 }
