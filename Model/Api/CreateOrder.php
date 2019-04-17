@@ -44,6 +44,9 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_ORDER_ALREADY_EXISTS = 2001002;
     const E_BOLT_CART_HAS_EXPIRED = 2001003;
     const E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED = 2001004;
+    const E_BOLT_ITEM_OUT_OF_INVENTORY = 2001005;
+    const E_BOLT_DISCOUNT_CANNOT_APPLY = 2001006;
+    const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
 
     /**
      * @var HookHelper
