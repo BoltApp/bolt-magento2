@@ -390,6 +390,7 @@ class CreateOrder implements CreateOrderInterface
             /** @var QuoteItem $item */
             $sku = $item->getSku();
             $itemPrice = (int) ($item->getPrice() * 100);
+            $itemQty = (int) $item->getQty();
 
             if (!in_array($sku, $transactionItemsSku)) {
                 throw new BoltException(
@@ -399,7 +400,7 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $this->validateItemInventory($sku);
+            $this->validateItemInventory($sku, $itemQty, $transactionItems);
 
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
@@ -407,10 +408,12 @@ class CreateOrder implements CreateOrderInterface
 
     /**
      * @param string $itemSku
+     * @param        $itemQty
+     * @param        $transactionItems
      * @throws BoltException
      * @throws NoSuchEntityException
      */
-    public function validateItemInventory($itemSku)
+    public function validateItemInventory($itemSku, $itemQty, $transactionItems)
     {
         $stock = $this->stockRegistry->getStockItemBySku($itemSku)
             ->getIsInStock();
@@ -421,6 +424,37 @@ class CreateOrder implements CreateOrderInterface
                 null,
                 self::E_BOLT_ITEM_OUT_OF_INVENTORY
             );
+        }
+
+        if (!$itemQty) {
+            throw new BoltException(
+                __('Item have 0 stock. Item sku: ' . $itemSku),
+                null,
+                self::E_BOLT_ITEM_OUT_OF_INVENTORY
+            );
+        }
+
+        foreach ($transactionItems as $transactionItem) {
+            $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
+            $transactionQty = $this->getQtyFromTransaction($transactionItem);
+
+            if ($transactionItemSku === $itemSku
+                && $itemQty !== $transactionQty
+            ) {
+                $this->bugsnag->registerCallback(function ($report) use ($itemQty, $transactionQty) {
+                    $report->setMetaData([
+                        'Pre Auth' => [
+                            'item.qty' => $itemQty,
+                            'transaction.qty' => $transactionQty,
+                        ]
+                    ]);
+                });
+                throw new BoltException(
+                    __('Quantity do not matched. Item sku: ' . $itemSku),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
+                );
+            }
         }
     }
 
@@ -558,6 +592,15 @@ class CreateOrder implements CreateOrderInterface
     protected function getSkuFromTransaction($transactionItem)
     {
         return $transactionItem->sku;
+    }
+
+    /**
+     * @param \stdClass $transactionItem
+     * @return string
+     */
+    protected function getQtyFromTransaction($transactionItem)
+    {
+        return $transactionItem->quantity;
     }
 
     /**
