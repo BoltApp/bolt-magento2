@@ -465,9 +465,9 @@ class CreateOrder implements CreateOrderInterface
     public function validateTax($quote, $transaction)
     {
         $transactionTax = $this->getTaxAmountFromTransaction($transaction);
-        /** @var \Magento\Quote\Model\Quote\Address $shippingAddress */
-        $shippingAddress = $quote->getShippingAddress();
-        $tax = $shippingAddress->getTaxAmount();
+        /** @var \Magento\Quote\Model\Quote\Address $address */
+        $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+        $tax = (int) ($address->getTaxAmount() * 100);
 
         if ($transactionTax !== $tax) {
             $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
