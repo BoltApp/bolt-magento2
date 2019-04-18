@@ -51,6 +51,8 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_DISCOUNT_CANNOT_APPLY = 2001006;
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
 
+    const MISMATCH_TOLERANCE = 1;
+
     /**
      * @var HookHelper
      */
@@ -369,6 +371,7 @@ class CreateOrder implements CreateOrderInterface
 
         $this->validateTax($quote, $transaction);
         $this->validateShippingCost($quote, $transaction);
+        $this->validateTotalAmount($quote, $transaction);
     }
 
     /**
@@ -381,9 +384,10 @@ class CreateOrder implements CreateOrderInterface
     {
         $quoteItems = $quote->getAllVisibleItems();
         $transactionItems = $this->getCartItemsFromTransaction($transaction);
-        $transactionItemsSku = [];
+        $transactionItemsSkuQty = [];
         foreach ($transactionItems as $transactionItem) {
-            $transactionItemsSku[] = $this->getSkuFromTransaction($transactionItem);
+            $transactionItemsSkuQty[$this->getSkuFromTransaction($transactionItem)] =
+                $this->getQtyFromTransaction($transactionItem);
         }
 
         foreach ($quoteItems as $item) {
@@ -391,7 +395,7 @@ class CreateOrder implements CreateOrderInterface
             $sku = $item->getSku();
             $itemPrice = (int) ($item->getPrice() * 100);
 
-            if (!in_array($sku, $transactionItemsSku)) {
+            if (!in_array($sku, array_keys($transactionItemsSkuQty))) {
                 throw new BoltException(
                     __('Cart data has changed. SKU: ' . $sku),
                     null,
@@ -399,7 +403,7 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $this->validateItemInventory($sku);
+            $this->validateItemInventory($sku, $transactionItemsSkuQty[$sku]);
 
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
@@ -407,17 +411,28 @@ class CreateOrder implements CreateOrderInterface
 
     /**
      * @param string $itemSku
+     * @param int $itemQty
      * @throws BoltException
      * @throws NoSuchEntityException
      */
-    public function validateItemInventory($itemSku)
+    public function validateItemInventory($itemSku, $itemQty)
     {
-        $stock = $this->stockRegistry->getStockItemBySku($itemSku)
+        $inStock = $this->stockRegistry->getStockItemBySku($itemSku)
             ->getIsInStock();
+        $stockQty = $this->stockRegistry->getStockItemBySku($itemSku)
+            ->getQty();
 
-        if (!$stock) {
+        if (!$inStock || $stockQty < $itemQty) {
+            $this->bugsnag->registerCallback(function ($report) use ($stockQty, $itemQty) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'stock.quantity' => $stockQty,
+                        'cart.quantity' => $itemQty,
+                    ]
+                ]);
+            });
             throw new BoltException(
-                __('Item is out of stock. Item sku: ' . $itemSku),
+                __('Item is out of stock. Item sku: ' . $itemSku . ' Stock qty: ' . $stockQty . ' Cart qty: ' . $itemQty),
                 null,
                 self::E_BOLT_ITEM_OUT_OF_INVENTORY
             );
@@ -437,7 +452,7 @@ class CreateOrder implements CreateOrderInterface
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
             if ($transactionItemSku === $itemSku
-                && $itemPrice !== $transactionUnitPrice
+                && abs($itemPrice - $transactionUnitPrice) > self::MISMATCH_TOLERANCE
             ) {
                 $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
                     $report->setMetaData([
@@ -469,7 +484,7 @@ class CreateOrder implements CreateOrderInterface
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         $tax = (int) ($address->getTaxAmount() * 100);
 
-        if ($transactionTax !== $tax) {
+        if (abs($transactionTax - $tax) > self::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -497,7 +512,7 @@ class CreateOrder implements CreateOrderInterface
         $storeCost = $quote->getShippingAddress() ? (int)($quote->getShippingAddress()->getShippingAmount() * 100) : 0;
         $boltCost  = $this->getShippingAmountFromTransaction($transaction);
 
-        if ($storeCost != $boltCost) {
+        if (abs($storeCost - $boltCost) > self::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($storeCost, $boltCost) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -508,6 +523,34 @@ class CreateOrder implements CreateOrderInterface
             });
             throw new BoltException(
                 __('Shipping costs do not match.'),
+                null,
+                self::E_BOLT_GENERAL_ERROR
+            );
+        }
+    }
+
+    /**
+     * @param MagentoQuote $quote
+     * @param \stdClass $transaction
+     * @return void
+     * @throws BoltException
+     */
+    public function validateTotalAmount($quote, $transaction)
+    {
+        $quoteTotal = (int)($quote->getGrandTotal() * 100);
+        $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
+
+        if (abs($quoteTotal - $transactionTotal) > self::MISMATCH_TOLERANCE) {
+            $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $transactionTotal) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'quote.total_amount' => $quoteTotal,
+                        'transaction.total_amount' => $transactionTotal,
+                    ]
+                ]);
+            });
+            throw new BoltException(
+                __('Total amount does not match.'),
                 null,
                 self::E_BOLT_GENERAL_ERROR
             );
@@ -561,11 +604,29 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
+     * @param \stdClass $transactionItem
+     * @return string
+     */
+    protected function getQtyFromTransaction($transactionItem)
+    {
+        return $transactionItem->quantity;
+    }
+
+    /**
      * @param \stdClass $transaction
      * @return int
      */
     protected function getShippingAmountFromTransaction($transaction)
     {
         return $transaction->order->cart->shipping_amount->amount;
+    }
+
+    /**
+     * @param \stdClass $transaction
+     * @return int
+     */
+    protected function getTotalAmountFromTransaction($transaction)
+    {
+        return $transaction->order->cart->total_amount->amount;
     }
 }
