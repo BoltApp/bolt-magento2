@@ -458,7 +458,7 @@ class Cart extends AbstractHelper
         } else {
             $prefillHints($quote->getShippingAddress());
         }
-        
+
         if ($checkoutType === 'admin') {
             $hints['virtual_terminal_mode'] = true;
         }
@@ -503,6 +503,8 @@ class Cart extends AbstractHelper
      */
     public function replicateQuoteData($source, $destination)
     {
+        if ($source->getId() == $destination->getId()) return;
+
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
 
