@@ -571,21 +571,8 @@ class Order extends AbstractHelper
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $boltTraceId"
             );
-            // Send order confirmation email to customer.
-            // Emulate frontend area in order for email
-            // template to be loaded from the correct path
-            // even if run from the hook.
-            if (!$order->getEmailSent()) {
-                $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                    $this->emailSender->send($order);
-                });
-            }
-        } else {
-            if (!$order->getEmailSent()) {
-                // Send order confirmation email to customer.
-                $this->emailSender->send($order);
-            }
         }
+
         $order->save();
 
         return $order;
@@ -739,7 +726,7 @@ class Order extends AbstractHelper
     public function preAuthCreateOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
-        $existingOrder = $this->getExistingOrder($quote->getReservedOrderId());
+        $order = $existingOrder = $this->getExistingOrder($quote->getReservedOrderId());
         $isStillNeedCreateNewOrder = true;
         if ($existingOrder) {
             $isStillNeedCreateNewOrder = $this->updateExistingOrder($existingOrder, $transaction);
@@ -1723,6 +1710,17 @@ class Order extends AbstractHelper
         // save payment and order
         $payment->save();
         $order->save();
+
+        // Send order confirmation email to customer.
+        // Emulate frontend area in order for email
+        // template to be loaded from the correct path
+        if ( ! $order->getEmailSent() &&
+             ! in_array($order->getState(), [OrderModel::STATE_NEW, OrderModel::STATE_CANCELED] )
+        ) {
+            $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                $this->emailSender->send($order);
+            });
+        }
     }
 
     /**
