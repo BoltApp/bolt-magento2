@@ -148,4 +148,8 @@
     <type name="Magento\Quote\Model\Quote">
         <plugin name="Bolt_Boltpay_Quote_Plugin" type="Bolt\Boltpay\Plugin\QuotePlugin" sortOrder="1" />
     </type>
+
+    <type name="Magento\Framework\RequireJs\Config\File\Collector\Aggregated">
+        <plugin name="Bolt_Boltpay_RequireJs_Plugin" type="Bolt\Boltpay\Plugin\RequireJs" sortOrder="1" />
+    </type>
 </config>

@@ -155,7 +155,8 @@ class OrderManagement implements OrderManagementInterface
             } else {
                 $this->orderHelper->saveUpdateOrder(
                     $reference,
-                    $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
+                    $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+                    $type
                 );
 
                 $this->response->setHttpResponseCode(200);
@@ -164,6 +165,7 @@ class OrderManagement implements OrderManagementInterface
                     'message' => 'Order creation / update was successful',
                 ]));
             }
+
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->response->setHttpResponseCode($e->getHttpCode());
