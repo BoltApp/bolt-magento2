@@ -76,6 +76,8 @@ class Order extends AbstractHelper
     const TS_ZERO_AMOUNT           = 'zero_amount:completed';
     const TS_CREDIT_COMPLETED      = 'cc_credit:completed';
 
+    const MISMATCH_TOLERANCE = 1;
+
     // Posible transation state transitions
     private $validStateTransitions = [
         null => [
@@ -819,23 +821,30 @@ class Order extends AbstractHelper
     public function updateExistingOrder($order, $transaction)
     {
         /** @var OrderModel $order */
-        $subtotal = $order->getSubtotal();
-        $taxAmount = $order->getTaxAmount();
-        $totalAmount = $order->getGrandTotal();
+        $subtotal = (int) ($order->getSubtotal() * 100);
+        $taxAmount = (int) ($order->getTaxAmount() * 100);
+        $shippingAmount = (int) ($order->getShippingAmount() * 100);
+        $totalAmount = (int) ($order->getGrandTotal() * 100);
 
         $transactionSubtotalAmount = $transaction->order->cart->subtotal_amount->amount;
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
+        $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
         $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
 
         // If totals differs then delete order.
-        if ($subtotal === $transactionSubtotalAmount
-            && $taxAmount === $transactionTaxAmount
-            && $totalAmount === $transactionGrandTotalAmount
+        if (abs($subtotal - $transactionSubtotalAmount) <= self::MISMATCH_TOLERANCE
+            && abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
+            && abs($shippingAmount - $transactionShippingAmount) <= self::MISMATCH_TOLERANCE
+            && abs($totalAmount - $transactionGrandTotalAmount) <= self::MISMATCH_TOLERANCE
         ) {
             return false;
         }
 
-        $order->delete();
+        try {
+            $order->cancel()->save()->delete();
+        } catch (\Exception $e) {
+            $order->delete();
+        }
 
         return true;
     }

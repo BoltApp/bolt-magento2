@@ -51,8 +51,6 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_DISCOUNT_CANNOT_APPLY = 2001006;
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
 
-    const MISMATCH_TOLERANCE = 1;
-
     /**
      * @var HookHelper
      */
@@ -451,7 +449,7 @@ class CreateOrder implements CreateOrderInterface
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
             if ($transactionItemSku === $itemSku
-                && abs($itemPrice - $transactionUnitPrice) > self::MISMATCH_TOLERANCE
+                && abs($itemPrice - $transactionUnitPrice) > OrderHelper::MISMATCH_TOLERANCE
             ) {
                 $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
                     $report->setMetaData([
@@ -483,7 +481,7 @@ class CreateOrder implements CreateOrderInterface
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         $tax = (int) ($address->getTaxAmount() * 100);
 
-        if (abs($transactionTax - $tax) > self::MISMATCH_TOLERANCE) {
+        if (abs($transactionTax - $tax) > OrderHelper::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -511,7 +509,7 @@ class CreateOrder implements CreateOrderInterface
         $storeCost = $quote->getShippingAddress() ? (int)($quote->getShippingAddress()->getShippingAmount() * 100) : 0;
         $boltCost  = $this->getShippingAmountFromTransaction($transaction);
 
-        if (abs($storeCost - $boltCost) > self::MISMATCH_TOLERANCE) {
+        if (abs($storeCost - $boltCost) > OrderHelper::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($storeCost, $boltCost) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -539,7 +537,7 @@ class CreateOrder implements CreateOrderInterface
         $quoteTotal = (int)($quote->getGrandTotal() * 100);
         $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
 
-        if (abs($quoteTotal - $transactionTotal) > self::MISMATCH_TOLERANCE) {
+        if (abs($quoteTotal - $transactionTotal) > OrderHelper::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $transactionTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [
