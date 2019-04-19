@@ -429,10 +429,9 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateItemInventory($itemSku, $itemQty)
     {
-        $inStock = $this->stockRegistry->getStockItemBySku($itemSku)
-            ->getIsInStock();
-        $stockQty = $this->stockRegistry->getStockItemBySku($itemSku)
-            ->getQty();
+        $stockItem = $this->stockRegistry->getStockItemBySku($itemSku);
+        $inStock = $stockItem->getIsInStock();
+        $stockQty = $stockItem->getQty();
 
         if (!$inStock || $stockQty < $itemQty) {
             $this->bugsnag->registerCallback(function ($report) use ($stockQty, $itemQty) {
