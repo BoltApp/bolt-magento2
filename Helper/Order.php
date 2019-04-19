@@ -854,7 +854,7 @@ class Order extends AbstractHelper
 
         $order = $this->getExistingOrder($incrementId);
         if ($order && $order->getState() === OrderModel::STATE_NEW) {
-            $order->delete();
+            $order->cancel()->save()->delete();
         }
     }
 
