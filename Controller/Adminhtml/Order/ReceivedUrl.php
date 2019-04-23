@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
-use Magento\Framework\App\Action\Action;
+use Magento\Backend\App\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -34,7 +34,7 @@ use Magento\Sales\Model\Order;
 /**
  * Class ReceivedUrl
  *
- * @package Bolt\Boltpay\Controller\Order
+ * @package Bolt\Boltpay\Controller\Adminhtml\Order
  */
 class ReceivedUrl extends Action
 {
