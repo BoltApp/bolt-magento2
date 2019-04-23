@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Controller\Order;
+namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -116,7 +116,7 @@ class ReceivedUrl extends Action
 
         if ($signature === $hash) {
             // Seems that hook from Bolt.
-            $redirectUrl = $this->configHelper->getSuccessPageRedirect();
+//            $redirectUrl = $this->configHelper->getSuccessPageRedirect();
 
             try {
                 $payload = base64_decode($boltPayload);
@@ -133,13 +133,15 @@ class ReceivedUrl extends Action
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
+                $redirectUrl = $this->_url->getUrl('sales/order/view/', ['order_id' => $order->getId()]);
+
                 // clear the session data
                 if ($order->getId()) {
                     // add quote information to the session
                     $this->clearQuoteSession($quote);
 
                     // add order information to the session
-                    $this->clearOrderSession($order, $redirectUrl);
+                    $this->clearOrderSession($order);
                 }
 
                 $this->_redirect($redirectUrl);
@@ -242,14 +244,13 @@ class ReceivedUrl extends Action
     /**
      * Clear quote session after successful order
      *
-     * @param Quote $quote
+     * @param Quote
      *
      * @return void
      */
     private function clearQuoteSession($quote)
     {
-        $this->checkoutSession
-            ->setLastQuoteId($quote->getId())
+        $this->checkoutSession->setLastQuoteId($quote->getId())
             ->setLastSuccessQuoteId($quote->getId())
             ->clearHelperData();
     }
@@ -257,16 +258,13 @@ class ReceivedUrl extends Action
     /**
      * Clear order session after successful order
      *
-     * @param Order $order
-     * @param       $redirectUrl
+     * @param Order
      *
      * @return void
      */
-    private function clearOrderSession($order, $redirectUrl)
+    private function clearOrderSession($order)
     {
-        $this->checkoutSession
-            ->setLastOrderId($order->getId())
-            ->setRedirectUrl($redirectUrl)
+        $this->checkoutSession->setLastOrderId($order->getId())
             ->setLastRealOrderId($order->getIncrementId())
             ->setLastOrderStatus($order->getStatus());
     }
