@@ -330,7 +330,7 @@ class CreateOrder implements CreateOrderInterface
             return '';
         }
 
-        $url = $this->url->getUrl('boltpay/order/receivedurl');
+        $url = $this->url->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
         $this->logHelper->addInfoLog('---> ' . $url);
 
         return $url;
