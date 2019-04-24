@@ -110,6 +110,7 @@ class Save extends Action
             $result = $this->resultJsonFactory->create();
 
 //            $result->setData(['success_url' => $this->_url->getUrl('sales/order/view/', ['order_id' => $orderId])]);
+            $result->setData(['success_url' => $this->_url->getUrl('sales/order')]);
 
             return $result;
         } catch (Exception $e) {
