@@ -18,8 +18,7 @@
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
 use Magento\Backend\App\Action;
-use Magento\Framework\App\Action\Context;
-use Magento\Framework\Controller\Result\JsonFactory;
+use Magento\Backend\App\Action\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -42,10 +41,7 @@ class ReceivedUrl extends Action
      * @var LogHelper
      */
     private $logHelper;
-    /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
+
     /**
      * @var ConfigHelper
      */
@@ -71,7 +67,6 @@ class ReceivedUrl extends Action
      * ReceivedUrl constructor.
      *
      * @param Context         $context
-     * @param JsonFactory     $resultJsonFactory
      * @param ConfigHelper    $configHelper
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag
@@ -81,7 +76,6 @@ class ReceivedUrl extends Action
      */
     public function __construct(
         Context $context,
-        JsonFactory $resultJsonFactory,
         configHelper $configHelper,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
@@ -90,13 +84,23 @@ class ReceivedUrl extends Action
         CheckoutSession $checkoutSession
     ) {
         parent::__construct($context);
-        $this->resultJsonFactory = $resultJsonFactory;
+
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->url = $url;
         $this->checkoutSession = $checkoutSession;
+    }
+
+    /**
+     * Check Permission.
+     *
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return true;
     }
 
     /**
@@ -116,7 +120,6 @@ class ReceivedUrl extends Action
 
         if ($signature === $hash) {
             // Seems that hook from Bolt.
-//            $redirectUrl = $this->configHelper->getSuccessPageRedirect();
 
             try {
                 $payload = base64_decode($boltPayload);
@@ -133,7 +136,8 @@ class ReceivedUrl extends Action
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
-                $redirectUrl = $this->_url->getUrl('sales/order/view/', ['order_id' => $order->getId()]);
+                $params = ['order_id' => $order->getId(), '_secure' => true];
+                $redirectUrl = $this->_url->getUrl('sales/order/view', $params);
 
                 // clear the session data
                 if ($order->getId()) {
@@ -159,7 +163,7 @@ class ReceivedUrl extends Action
                 $errorMessage = __('Something went wrong. Please contact the seller.');
                 $this->messageManager->addErrorMessage($errorMessage);
 
-                $this->_redirect('/');
+                $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
             } catch (LocalizedException $e) {
                 $logMessage = $e->getMessage();
                 $this->logHelper->addInfoLog('LocalizedException:' . $logMessage);
@@ -174,7 +178,7 @@ class ReceivedUrl extends Action
                     ]);
                 });
                 $this->bugsnag->notifyError('LocalizedException: ', $logMessage);
-                $this->_redirect('/');
+                $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
             }
         } else {
             // Potentially it is attack.
@@ -191,7 +195,7 @@ class ReceivedUrl extends Action
 
             $errorMessage = __('Something went wrong. Please contact the seller.');
             $this->messageManager->addErrorMessage($errorMessage);
-            $this->_redirect('/');
+            $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
         }
     }
 
