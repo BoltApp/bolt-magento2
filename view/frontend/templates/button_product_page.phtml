@@ -22,8 +22,9 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 
-$trackCallbacks = $block->getTrackCallbacks();
+if (!$block->IsSupportableType()) return;
 
+$trackCallbacks = $block->getTrackCallbacks();
 
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>

@@ -73,42 +73,9 @@ class JsProductPage extends Js {
      */
     public function IsSupportableType()
     {
-        if (in_array($this->_product->getTypeId(),array('simple','downloadable'))) {
+        if (in_array($this->_product->getTypeId(), Config::$supportableProductTypes)) {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Check if Bolt checkout is restricted on the current loading page.
-     * Takes into account whitelisted pages configuration
-     * as well as the IP restriction.
-     * "Full Action Name", <router_controller_action>, is used to identify the page.
-     *
-     * @return bool
-     */
-    protected function isPageRestricted($type)
-    {
-        $currentPage = $this->getRequest()->getFullActionName();
-
-        // Check if the page is blacklisted
-        if (in_array($currentPage, $this->getPageBlacklist())) {
-            return true;
-        }
-        return false;
-    }
-
-
-    /**
-     * Determines if Bolt javascript should be loaded on the current page
-     * and Bolt checkout button displayed. Checks whether the module is active,
-     * bolt button on product is enabled, we support this product type and
-     * the page is Bolt checkout restricted and if there is an IP restriction.
-     *
-     * @return bool
-     */
-    public function shouldDisableBoltCheckout($type='withproductpage')
-    {
-        return parent::shouldDisableBoltCheckout($type) || !$this->configHelper->getProductPageCheckoutFlag() || !$this->IsSupportableType();
     }
 }

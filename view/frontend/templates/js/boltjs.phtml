@@ -20,7 +20,10 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout("withproductpage")) return;
+if ($block->shouldDisableBoltCheckout()) return;
+//check if we need Bolt on this page
+if (!$block->IsCartOrCheckoutPage() && !$block->IsMinicartPage() && !$block->isProductPage()) return;
+
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey  = $block->getCheckoutKey();

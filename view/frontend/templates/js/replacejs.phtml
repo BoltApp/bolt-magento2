@@ -24,6 +24,10 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 
+//we need this script only for cart page, checkout page and if minicart is enables
+//product page checkout has its own JS script
+if (!$block->IsCartOrCheckoutPage() && !$block->IsMinicartPage()) return;
+
 $trackCallbacks = $block->getTrackCallbacks();
 ?>
 
