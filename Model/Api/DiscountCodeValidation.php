@@ -573,7 +573,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
-            'description'     =>  __('Discount ') . $address->getDiscountDescription(),
+            'description'     => trim( __('Discount ') . $rule->getDescription() ),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
 
