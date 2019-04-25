@@ -759,7 +759,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setCouponCode($couponCode)->collectTotals()->save();
-        $this->cartHelper->saveQuote($quote);
     }
 
     /**
