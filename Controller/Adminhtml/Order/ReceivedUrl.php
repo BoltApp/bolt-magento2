@@ -17,15 +17,14 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
-use Magento\Backend\App\Action;
-use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\Action\Action;
+use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\UrlInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
@@ -51,10 +50,6 @@ class ReceivedUrl extends Action
      */
     private $bugsnag;
     /**
-     * @var UrlInterface
-     */
-    private $url;
-    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -71,7 +66,6 @@ class ReceivedUrl extends Action
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag
      * @param LogHelper       $logHelper
-     * @param UrlInterface    $url
      * @param CheckoutSession $checkoutSession
      */
     public function __construct(
@@ -80,7 +74,6 @@ class ReceivedUrl extends Action
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
-        UrlInterface $url,
         CheckoutSession $checkoutSession
     ) {
         parent::__construct($context);
@@ -89,7 +82,6 @@ class ReceivedUrl extends Action
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
-        $this->url = $url;
         $this->checkoutSession = $checkoutSession;
     }
 
