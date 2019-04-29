@@ -917,7 +917,10 @@ class Cart extends AbstractHelper
         $cart['discounts'] = [];
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process store integral discounts and coupons
+        // Process store integral discounts and coupons.
+        // For some types of applied coupon, the discount amount could be zero before
+        // selecting specific shipping option, so the conditional statement should also
+        // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         $amount = @$address->getDiscountAmount();
         if ( $amount || @$address->getCouponCode() ) {

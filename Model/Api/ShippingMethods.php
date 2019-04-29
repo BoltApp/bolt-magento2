@@ -630,6 +630,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->resetShippingCalculationIfNeeded($shippingAddress);
 
             $shippingAddress->setShippingMethod($method);
+            // Since some types of coupon only work with specific shipping options,
+            // for each shipping option, it need to recalculate the shipping discount amount
             if( ! empty($appliedQuoteCouponCode) ){
                 $shippingAddress->setCollectShippingRates(true)
                                 ->collectShippingRates()->save();
