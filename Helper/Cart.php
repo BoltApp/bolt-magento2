@@ -919,13 +919,15 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process store integral discounts and coupons
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = @$address->getDiscountAmount()) {
+        $amount = @$address->getDiscountAmount();
+        if ( $amount || @$address->getCouponCode() ) {
             $amount         = abs($amount);
             $roundedAmount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
+                'reference'   => $address->getCouponCode()
             ];
 
             $diff -= $amount * 100 - $roundedAmount;
