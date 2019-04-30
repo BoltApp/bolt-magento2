@@ -1525,7 +1525,9 @@ class Order extends AbstractHelper
         // Emulate frontend area in order for email
         // template to be loaded from the correct path
         if ( ! $order->getEmailSent() &&
-             ! in_array($order->getState(), [OrderModel::STATE_NEW, OrderModel::STATE_CANCELED] )
+             ! in_array($order->getState(),
+                 [OrderModel::STATE_NEW, OrderModel::STATE_CANCELED, OrderModel::STATE_PAYMENT_REVIEW]
+             )
         ) {
             $this->appState->emulateAreaCode('frontend', function () use ($order) {
                 $this->emailSender->send($order);
