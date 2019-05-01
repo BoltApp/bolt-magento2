@@ -40,6 +40,7 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
+use Magestore\Storepickup\Helper\Data as StorepickupHelperData;
 
 /**
  * Class ShippingMethods
@@ -141,6 +142,11 @@ class ShippingMethods implements ShippingMethodsInterface
     private $threshold = 1;
 
     private $taxAdjusted = false;
+    
+    /**
+     * @var StorepickupHelperData
+     */    
+    private $storepickupHelperData;
 
     /**
      * Assigns local references to global resources
@@ -621,6 +627,10 @@ class ShippingMethods implements ShippingMethodsInterface
         $shippingMethods = [];
 
         $errors = [];
+        
+        // Since we would place the shipping option `YOGIBO SHIPPING TO YOUR ADDRESS` above the in-store pickup options,
+        // the we have a temp array to hold the in-store pickup options first.
+        $tempShipping = array();
 
         foreach ($output as $shippingMethod) {
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
@@ -692,14 +702,35 @@ class ShippingMethods implements ShippingMethodsInterface
                 continue;
             }
 
-            $shippingMethods[] = $this->shippingOptionInterfaceFactory
-                ->create()
-                ->setService($service)
-                ->setCost($roundedCost)
-                ->setReference($method)
-                ->setTaxAmount($taxAmount);
+            if($method == 'storepickup_storepickup'){
+                $liststore = $this->storepickupHelperData->getListStoreJson();
+                $liststore = \Zend_Json::decode( $liststore );
+                foreach($liststore as $key=>$store){
+                    $tempShipping[$store['store_name'].'-'.$store['address'].'-'.$store['city']] = $this->shippingOptionInterfaceFactory
+                            ->create()
+                            ->setService($service.' - '.$store['store_name'].' - '.$store['address'].', '.$store['city'])
+                            ->setCost($roundedCost)
+                            ->setReference($method.'+'.$store['storepickup_id'])
+                            ->setTaxAmount($taxAmount);
+                }
+            }
+            else{
+                $shippingMethods[] = $this->shippingOptionInterfaceFactory
+                            ->create()
+                            ->setService($service)
+                            ->setCost($roundedCost)
+                            ->setReference($method)
+                            ->setTaxAmount($taxAmount);
+            }
         }
 
+        if( ! empty( $tempShipping ) ){
+            ksort( $tempShipping );
+            foreach($tempShipping as $key=>$store){
+                $shippingMethods[] = $store;
+            }    
+        }
+        
         $shippingAddress->setShippingMethod(null)->save();
 
         if ($errors) {

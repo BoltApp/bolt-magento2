@@ -50,6 +50,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 
 /**
@@ -208,6 +209,9 @@ class Order extends AbstractHelper
 
     /** @var DiscountHelper */
     private $discountHelper;
+    
+    /** @var CheckoutSession */
+    private $checkoutSession;
 
     /**
      * @param Context $context
@@ -228,6 +232,7 @@ class Order extends AbstractHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
+     * @param CheckoutSession $checkoutSession
      *
      * @codeCoverageIgnore
      */
@@ -249,7 +254,8 @@ class Order extends AbstractHelper
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        CheckoutSession $checkoutSession
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -269,6 +275,7 @@ class Order extends AbstractHelper
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -318,6 +325,13 @@ class Order extends AbstractHelper
 
         $shippingMethod = $transaction->order->cart->shipments[0]->reference;
 
+        if(strpos($shippingMethod,'storepickup_storepickup') !== false){
+            $shippingMethod_array = explode("+",$shippingMethod);
+            $shippingMethod = $shippingMethod_array[0];
+            $storepickup_session = array('store_id' => $shippingMethod_array[1]);
+            $this->checkoutSession->setData('storepickup_session',$storepickup_session);
+        }
+        
         $shippingAddress->setShippingMethod($shippingMethod)->save();
     }
 

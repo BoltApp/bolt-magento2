@@ -9,3 +9,27 @@
     });
 </script>
 <?php endif; ?>
+<?php
+// Customization
+$order = $block->getOrder();
+$CarrierCode = $order->getShippingMethod(true)->getCarrierCode();
+if($CarrierCode === 'storepickup'){
+    $store = $block->getStorepickupDetails();
+    $store_html = '<div class="storepickup-information">
+    <div class="info-store-checkout">
+    <p class="info-store-checkout-alert" style="color: #ff0000;">Please allow 5 days for Store Pickup.</p>
+    <h3>'.$store['store_name'].'</h3><br>
+    <p class="store-address-info">'.$store['address'].', '.$store['city'].', '.$store['country_id'].'</p>
+    '.$store['description'].'</div></div>';
+    $store_html = json_encode($store_html);
+?>
+<script type="text/javascript">
+    require([
+        'jquery'
+    ], function () {
+        jQuery(".checkout-success").children("p").eq(1).append(<?php echo $store_html; ?>);
+    });
+</script>
+<?php
+}
+?>

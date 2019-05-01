@@ -19,6 +19,10 @@ namespace Bolt\Boltpay\Block\Checkout;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\App\ProductMetadataInterface;
+// Customization
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Sales\Model\OrderFactory as OrderFactory;
+use Magestore\Storepickup\Model\ResourceModel\Store\CollectionFactory as StorepickupStoreCollection;
 
 /**
  * Class Success
@@ -31,6 +35,23 @@ class Success extends Template
      * @var ProductMetadataInterface
      */
     private $productMetadata;
+    
+    // Customization
+    /**
+     * @var CheckoutSession
+     */
+    private $checkoutSession;
+    
+    /**
+     * @var OrderFactory
+     */
+    private $orderFactory;
+    
+    /**
+     * @var StorepickupStoreCollection
+     */
+    private $storepickupStoreCollection;
+    // Customization
 
     /**
      * Success constructor.
@@ -41,12 +62,18 @@ class Success extends Template
      */
     public function __construct(
         ProductMetadataInterface $productMetadata,
+        CheckoutSession $checkoutSession,
+        OrderFactory $orderFactory,
+        StorepickupStoreCollection $storepickupStoreCollection,
         Context $context,
         array $data = []
     ) {
         parent::__construct($context, $data);
 
         $this->productMetadata = $productMetadata;
+        $this->checkoutSession = $checkoutSession;
+        $this->orderFactory = $orderFactory;
+        $this->storepickupStoreCollection = $storepickupStoreCollection;
     }
 
     /**
@@ -56,6 +83,41 @@ class Success extends Template
     {
         // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
         return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'));
+    }
+    
+    // Customization
+    public function getOrder()
+    {
+        return  $this->orderFactory->create()->loadByIncrementId($this->checkoutSession->getLastRealOrderId());
+    }
+    
+    // Customization
+    public function getStorepickupSession()
+    {
+        return $this->checkoutSession->getData('storepickup_session');
+    }
+    
+    // Customization
+    public function getStorepickupDetails()
+    {
+        $order = $this->getOrder();
+        $pickupId = $order->getData('storepickup_id') ?: "";
+        $collection = $this->getStoreCollection();
+        $collection->addFieldToFilter('status','1')->addFieldToSelect(['storepickup_id', 'store_name','address','city','country_id','description','phone','latitude','longitude']);
+        $collection->setOrder('store_name', \Magento\Framework\Data\Collection\AbstractDb::SORT_ORDER_ASC);
+        $liststore = $collection->getData();
+        foreach($liststore as $key=>$store){
+            if($store['storepickup_id'] == $pickupId){
+                return $store;
+            }
+        }
+        return '';
+    }
+    
+    // Customization
+    public function getStoreCollection()
+    {
+        return $this->storepickupStoreCollection->create();
     }
 
     /**
