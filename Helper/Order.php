@@ -1524,11 +1524,7 @@ class Order extends AbstractHelper
         // Send order confirmation email to customer.
         // Emulate frontend area in order for email
         // template to be loaded from the correct path
-        if ( ! $order->getEmailSent() &&
-             ! in_array($order->getState(),
-                 [OrderModel::STATE_NEW, OrderModel::STATE_CANCELED, OrderModel::STATE_PAYMENT_REVIEW]
-             )
-        ) {
+        if ( ! $order->getEmailSent() ) {
             $this->appState->emulateAreaCode('frontend', function () use ($order) {
                 $this->emailSender->send($order);
             });
