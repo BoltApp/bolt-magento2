@@ -63,7 +63,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
                 'unsigned' => true,
                 'default' => '0',
-                'comment' => '0 - frontend order, 1 - backent order'
+                'comment' => '0 - frontend order, 1 - backend order'
             ]
         );
 

@@ -322,6 +322,9 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
+     * Format redirect url taking into account the type of session
+     * the order was created from, front-end vs. back-end
+     *
      * @param \Magento\Quote\Model\Quote $quote
      * @return string
      */
