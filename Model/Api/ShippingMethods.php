@@ -168,6 +168,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface                  $cache
      * @param PriceHelper                     $priceHelper
      * @param SessionHelper                   $sessionHelper
+     * @param StorepickupHelperData           $storepickupHelperData
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -186,7 +187,8 @@ class ShippingMethods implements ShippingMethodsInterface
         Request $request,
         CacheInterface $cache,
         PriceHelper $priceHelper,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        StorepickupHelperData $storepickupHelperData
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -205,6 +207,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->priceHelper = $priceHelper;
         $this->sessionHelper = $sessionHelper;
+        $this->storepickupHelperData = $storepickupHelperData;
     }
 
     /**
