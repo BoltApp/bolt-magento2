@@ -1750,7 +1750,9 @@ class Order extends AbstractHelper
         $order->addRelatedObject($invoice);
 
         if (!$invoice->getEmailSent()) {
-            $this->invoiceSender->send($invoice);
+            $this->appState->emulateAreaCode('frontend', function () use ($invoice) {
+                $this->invoiceSender->send($invoice);
+            });
         }
 
         //Add notification comment to order
