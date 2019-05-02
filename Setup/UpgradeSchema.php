@@ -56,6 +56,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ]
         );
 
+        $setup->getConnection()->addColumn(
+            $setup->getTable('quote'),
+            'bolt_is_backend_order',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
+                'unsigned' => true,
+                'default' => '0',
+                'comment' => '0 - frontend order, 1 - backent order'
+            ]
+        );
+
         $setup->getConnection()->addIndex(
             $setup->getTable('quote'),
             $setup->getIdxName('quote', ['bolt_parent_quote_id']),

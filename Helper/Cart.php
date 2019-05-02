@@ -569,6 +569,7 @@ class Cart extends AbstractHelper
      */
     protected function createImmutableQuote($quote)
     {
+        $quote->setBoltIsBackendOrder((int)$this->isBackendSession());
         if (!$quote->getBoltParentQuoteId()) {
             $quote->setBoltParentQuoteId($quote->getId());
             $this->quoteResourceSave($quote);
@@ -608,6 +609,14 @@ class Cart extends AbstractHelper
                 'ADDRESS_DATA' => $addressData
             ]);
         });
+    }
+
+    /**
+     * @return bool
+     */
+    private function isBackendSession()
+    {
+        return $this->checkoutSession instanceof \Magento\Backend\Model\Session\Quote;
     }
 
     /**
