@@ -152,4 +152,8 @@
     <type name="Magento\Framework\RequireJs\Config\File\Collector\Aggregated">
         <plugin name="Bolt_Boltpay_RequireJs_Plugin" type="Bolt\Boltpay\Plugin\RequireJs" sortOrder="1" />
     </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\OrderSender">
+        <plugin name="Bolt_Boltpay_OrderSender_Plugin" type="Bolt\Boltpay\Plugin\OrderSenderPlugin" sortOrder="1" />
+    </type>
 </config>
