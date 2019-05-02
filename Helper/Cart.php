@@ -569,11 +569,15 @@ class Cart extends AbstractHelper
      */
     protected function createImmutableQuote($quote)
     {
-        $quote->setBoltIsBackendOrder((int)$this->isBackendSession());
+        // assign origin session type flag to the parent quote
+        // to be replicated to the immutable quote with the other data
+        $quote->setBoltIsBackendOrder( (int) $this->isBackendSession() );
+
         if (!$quote->getBoltParentQuoteId()) {
             $quote->setBoltParentQuoteId($quote->getId());
             $this->quoteResourceSave($quote);
         }
+
         /** @var Quote $immutableQuote */
         $immutableQuote = $this->quoteFactory->create();
 
@@ -612,6 +616,8 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Check the session type.
+     *
      * @return bool
      */
     private function isBackendSession()
