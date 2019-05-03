@@ -722,6 +722,8 @@ class Order extends AbstractHelper
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
             $this->updateOrderPayment($order, $transaction, null, $hookType);
+            // Check for total amount mismatch between magento and bolt order.
+            $this->holdOnTotalsMismatch($order, $transaction);
         } else {
             // if called from the store controller return quote and order
             // wait for the hook call to update the payment
@@ -1119,9 +1121,6 @@ class Order extends AbstractHelper
         $payment = $order->getPayment();
 
         $this->checkPaymentMethod($payment);
-
-        // Check for total amount mismatch between magento and bolt order.
-        $this->holdOnTotalsMismatch($order, $transaction);
 
         // Get the last stored transaction parameters
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
