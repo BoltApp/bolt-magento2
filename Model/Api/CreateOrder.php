@@ -228,17 +228,6 @@ class CreateOrder implements CreateOrderInterface
                     ]]
                 ]]
             ]);
-        } catch (BoltException $e) {
-            $this->bugsnag->notifyException($e);
-            $this->sendResponse(422, [
-                'status' => 'failure',
-                'error'  => [[
-                    'code' => $e->getCode(),
-                    'data' => [[
-                        'reason' => $e->getMessage(),
-                    ]]
-                ]]
-            ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendResponse(422, [
@@ -416,7 +405,6 @@ class CreateOrder implements CreateOrderInterface
             /** @var QuoteItem $item */
             $sku = $item->getSku();
             $itemPrice = (int) ($item->getPrice() * 100);
-            $itemQty = (int) $item->getQty();
 
             if (!in_array($sku, array_keys($transactionItemsSkuQty))) {
                 throw new BoltException(
@@ -458,37 +446,6 @@ class CreateOrder implements CreateOrderInterface
                 null,
                 self::E_BOLT_ITEM_OUT_OF_INVENTORY
             );
-        }
-
-        if (!$itemQty) {
-            throw new BoltException(
-                __('Item have 0 stock. Item sku: ' . $itemSku),
-                null,
-                self::E_BOLT_ITEM_OUT_OF_INVENTORY
-            );
-        }
-
-        foreach ($transactionItems as $transactionItem) {
-            $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
-            $transactionQty = $this->getQtyFromTransaction($transactionItem);
-
-            if ($transactionItemSku === $itemSku
-                && $itemQty !== $transactionQty
-            ) {
-                $this->bugsnag->registerCallback(function ($report) use ($itemQty, $transactionQty) {
-                    $report->setMetaData([
-                        'Pre Auth' => [
-                            'item.qty' => $itemQty,
-                            'transaction.qty' => $transactionQty,
-                        ]
-                    ]);
-                });
-                throw new BoltException(
-                    __('Quantity do not matched. Item sku: ' . $itemSku),
-                    null,
-                    self::E_BOLT_GENERAL_ERROR
-                );
-            }
         }
     }
 

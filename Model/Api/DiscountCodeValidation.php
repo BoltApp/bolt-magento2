@@ -147,12 +147,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var DiscountHelper
      */
     private $discountHelper;
-    
+
     /**
      * @var RegionModel
      */
     private $regionModel;
-    
+
     /**
      * @var TotalsCollector
      */
@@ -363,8 +363,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 return false;
             }
-            
-            // Set the shipment if request payload has that info. 
+
+            // Set the shipment if request payload has that info.
             if(isset($request->cart->shipments[0]->reference)){
                 $shippingAddress = $immutableQuote->getShippingAddress();
                 $address = $request->cart->shipments[0]->shipping_address;
@@ -385,13 +385,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 if ($this->cartHelper->validateEmail(@$address->email_address)) {
                     $addressData['email'] = $address->email_address;
                 }
-                
+
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
-                        
+
                 $shippingAddress->setShippingMethod($request->cart->shipments[0]->reference)
                                 ->setCollectShippingRates(true)
-                                ->collectShippingRates()->save();               
+                                ->collectShippingRates()->save();
             }
 
             if ($coupon && $coupon->getCouponId()) {
@@ -567,7 +567,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $address = $immutableQuote->isVirtual() ?
             $immutableQuote->getBillingAddress() :
             $immutableQuote->getShippingAddress();
-        $this->totalsCollector->collectAddressTotals($immutableQuote, $address); 
+        $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
         $result = [
             'status'          => 'success',
@@ -678,7 +678,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function getCartTotals($quote)
     {
         $request = $this->getRequestContent();
-        $is_has_shipment = isset($request->cart->shipments[0]->reference) ? true : false;
+        $is_has_shipment = isset($request->cart->shipments[0]->reference);
         $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
         return [
             'total_amount' => $cart['total_amount'],
