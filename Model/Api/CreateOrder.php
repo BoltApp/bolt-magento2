@@ -203,7 +203,7 @@ class CreateOrder implements CreateOrderInterface
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
                 'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
-                'total'      => $createOrderData->getGrandTotal() * 100,
+                'total'      => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($quote),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
@@ -404,7 +404,7 @@ class CreateOrder implements CreateOrderInterface
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
             $sku = $item->getSku();
-            $itemPrice = (int) ($item->getPrice() * 100);
+            $itemPrice = $this->cartHelper->getRoundAmount($item->getPrice());
 
             if (!in_array($sku, array_keys($transactionItemsSkuQty))) {
                 throw new BoltException(
@@ -492,7 +492,7 @@ class CreateOrder implements CreateOrderInterface
         $transactionTax = $this->getTaxAmountFromTransaction($transaction);
         /** @var \Magento\Quote\Model\Quote\Address $address */
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
-        $tax = (int) ($address->getTaxAmount() * 100);
+        $tax = $this->cartHelper->getRoundAmount($address->getTaxAmount());
 
         if (abs($transactionTax - $tax) > OrderHelper::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
@@ -519,7 +519,14 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateShippingCost($quote, $transaction)
     {
-        $storeCost = $quote->getShippingAddress() ? (int)($quote->getShippingAddress()->getShippingAmount() * 100) : 0;
+        if ($quote->getShippingAddress()) {
+            $amount = $quote->getShippingAddress()->getShippingAmount() -
+                      $quote->getShippingAddress()->getShippingDiscountAmount();
+            $storeCost = $this->cartHelper->getRoundAmount($amount);
+        } else {
+            $storeCost = 0;
+        }
+
         $boltCost  = $this->getShippingAmountFromTransaction($transaction);
 
         if (abs($storeCost - $boltCost) > OrderHelper::MISMATCH_TOLERANCE) {
@@ -547,7 +554,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateTotalAmount($quote, $transaction)
     {
-        $quoteTotal = (int)($quote->getGrandTotal() * 100);
+        $quoteTotal = $this->cartHelper->getRoundAmount($quote->getGrandTotal());
         $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
 
         if (abs($quoteTotal - $transactionTotal) > OrderHelper::MISMATCH_TOLERANCE) {
