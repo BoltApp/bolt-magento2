@@ -746,6 +746,11 @@ class Order extends AbstractHelper
                 );
             }
 
+            // Add the user_note to the order comments and make it visible for customer.
+            if (isset($transaction->order->user_note)) {
+                $this->setOrderUserNote($order, $transaction->order->user_note);
+            }
+
             $order->save();
         }
 
