@@ -922,14 +922,14 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ( ( $amount = @$address->getDiscountAmount() ) || ( $coupon_code = @$address->getCouponCode() ) ) {
+        if ( ($amount = $address->getDiscountAmount()) || $address->getCouponCode() ) {
             $amount         = abs($amount);
             $roundedAmount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
-                'reference'   => $coupon_code
+                'reference'   => $address->getCouponCode()
             ];
 
             $diff -= $amount * 100 - $roundedAmount;
