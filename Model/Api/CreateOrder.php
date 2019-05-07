@@ -33,7 +33,7 @@ use Magento\Framework\UrlInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\Quote\Model\Quote as MagentoQuote;
+use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 
 /**
@@ -185,13 +185,13 @@ class CreateOrder implements CreateOrderInterface
             }
 
             $quoteId = $this->getQuoteIdFromPayloadOrder($order);
-            /** @var \Magento\Quote\Model\Quote $immutableQuote */
+            /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($quoteId);
 
             // Convert to stdClass
             $transaction = json_decode($payload);
 
-            /** @var \Magento\Quote\Model\Quote $quote */
+            /** @var Quote $quote */
             $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
             $this->validateQuoteData($quote, $transaction);
 
@@ -325,13 +325,13 @@ class CreateOrder implements CreateOrderInterface
      * Format redirect url taking into account the type of session
      * the order was created from, front-end vs. back-end
      *
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param Quote $quote
      * @return string
      */
     public function getReceivedUrl($quote)
     {
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
-        $urlInterface = $quote->getBoltIsBackendOrder() ? $this->backendUrl : $this->url;
+        $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
         $this->logHelper->addInfoLog('---> ' . $url);
 
@@ -339,14 +339,23 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
+     * @param $quote
+     * @return bool
+     */
+    public function isBackOfficeOrder($quote)
+    {
+        return (bool)$quote->getBoltIsBackendOrder();
+    }
+
+    /**
      * @param $quoteId
-     * @return \Magento\Quote\Model\Quote|null
+     * @return Quote|null
      * @throws LocalizedException
      */
     public function loadQuoteData($quoteId)
     {
         try {
-            /** @var \Magento\Quote\Model\Quote $quote */
+            /** @var Quote $quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
         } catch (NoSuchEntityException $e) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteId) {
@@ -370,7 +379,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param MagentoQuote $quote
+     * @param Quote $quote
      * @param \stdClass $transaction
      * @return void
      * @throws NoSuchEntityException
@@ -386,7 +395,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param MagentoQuote  $quote
+     * @param Quote  $quote
      * @param               $transaction
      * @throws BoltException
      * @throws NoSuchEntityException
@@ -485,7 +494,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param MagentoQuote $quote
+     * @param Quote $quote
      * @param              $transaction
      * @return void
      * @throws BoltException
@@ -493,7 +502,7 @@ class CreateOrder implements CreateOrderInterface
     public function validateTax($quote, $transaction)
     {
         $transactionTax = $this->getTaxAmountFromTransaction($transaction);
-        /** @var \Magento\Quote\Model\Quote\Address $address */
+        /** @var Quote\Address $address */
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         $tax = $this->cartHelper->getRoundAmount($address->getTaxAmount());
 
@@ -515,22 +524,24 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param MagentoQuote $quote
+     * @param Quote $quote
      * @param \stdClass $transaction
      * @return void
      * @throws BoltException
      */
     public function validateShippingCost($quote, $transaction)
     {
-        if ($quote->getShippingAddress()) {
-            $amount = $quote->getShippingAddress()->getShippingAmount() -
-                      $quote->getShippingAddress()->getShippingDiscountAmount();
+        if ($quote->getShippingAddress() && !$quote->isVirtual()) {
+            $amount = $quote->getShippingAddress()->getShippingAmount();
+            if (! $this->isBackOfficeOrder($quote)) {
+                $amount -= $quote->getShippingAddress()->getShippingDiscountAmount();
+            }
             $storeCost = $this->cartHelper->getRoundAmount($amount);
         } else {
             $storeCost = 0;
         }
 
-        $boltCost  = $this->getShippingAmountFromTransaction($transaction);
+        $boltCost = $this->getShippingAmountFromTransaction($transaction);
 
         if (abs($storeCost - $boltCost) > OrderHelper::MISMATCH_TOLERANCE) {
             $this->bugsnag->registerCallback(function ($report) use ($storeCost, $boltCost) {
@@ -550,7 +561,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param MagentoQuote $quote
+     * @param Quote $quote
      * @param \stdClass $transaction
      * @return void
      * @throws BoltException
@@ -638,7 +649,7 @@ class CreateOrder implements CreateOrderInterface
      */
     protected function getShippingAmountFromTransaction($transaction)
     {
-        return $transaction->order->cart->shipping_amount->amount;
+        return (int)@$transaction->order->cart->shipping_amount->amount;
     }
 
     /**
