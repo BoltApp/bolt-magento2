@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
-use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -68,9 +68,9 @@ class Cart extends AbstractHelper
     private $apiHelper;
 
     /**
-     * @var ProductFactory
+     * @var ProductRepository
      */
-    private $productFactory;
+    private $productRepository;
 
     /**
      * @var ConfigHelper
@@ -176,7 +176,7 @@ class Cart extends AbstractHelper
     /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
-     * @param ProductFactory    $productFactory
+     * @param ProductRepository $productRepository
      * @param ApiHelper         $apiHelper
      * @param ConfigHelper      $configHelper
      * @param CustomerSession   $customerSession
@@ -200,7 +200,7 @@ class Cart extends AbstractHelper
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
-        ProductFactory $productFactory,
+        ProductRepository $productRepository,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
         CustomerSession $customerSession,
@@ -221,7 +221,7 @@ class Cart extends AbstractHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
-        $this->productFactory = $productFactory;
+        $this->productRepository = $productRepository;
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
         $this->customerSession = $customerSession;
@@ -484,7 +484,6 @@ class Cart extends AbstractHelper
         $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
     ) {
         foreach ($parent->getData() as $key => $value) {
-
             if (in_array($key, $excludeFields)) continue;
             if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
 
@@ -505,7 +504,9 @@ class Cart extends AbstractHelper
     {
         // Skip the replication if source and destination point to the same quote
         // E.g. delayed Save Order - immutable quote is cleared by cron and we use the parent instead
-        if ($source->getId() == $destination->getId()) return;
+        if ($source->getId() === $destination->getId()) {
+            return;
+        }
 
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
@@ -564,6 +565,7 @@ class Cart extends AbstractHelper
      * so it can be replicated to immutable quote in replicateQuoteData.
      *
      * @param Quote $quote
+     * @return Quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      * @throws \Zend_Validate_Exception
      */
@@ -717,7 +719,7 @@ class Cart extends AbstractHelper
             true
         );
         /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
-        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
+        $imageBlock = $this->blockFactory->createBlock(\Magento\Catalog\Block\Product\ListProduct::class);
 
         foreach ($items as $item) {
             $product = [];
@@ -746,14 +748,17 @@ class Cart extends AbstractHelper
             // Get product description and image
             ////////////////////////////////////
             /**
-             * @var \Magento\Catalog\Model\Product
+             * @var \Magento\Catalog\Model\Product $_product
              */
-            $_product = $this->productFactory->create()->load($productId);
+            $_product = $this->productRepository->getById($productId);
             $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
-            if(isset($item_options['attributes_info'])){
-                $properties = array();
-                foreach($item_options['attributes_info'] as $attribute_info){
-                    $properties[] = (object) array( "name" => $attribute_info['label'], "value" => $attribute_info['value'] );
+            if (isset($item_options['attributes_info'])) {
+                $properties = [];
+                foreach ($item_options['attributes_info'] as $attribute_info) {
+                    $properties[] = (object) [
+                        "name" => $attribute_info['label'],
+                        "value" => $attribute_info['value']
+                    ];
                 }
                 $product['properties'] = $properties;
             }
@@ -936,8 +941,8 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ( ($amount = $address->getDiscountAmount()) || $address->getCouponCode() ) {
-            $amount         = abs($amount);
+        if (($amount = $address->getDiscountAmount()) || $address->getCouponCode()) {
+            $amount        = abs($amount);
             $roundedAmount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
@@ -1034,8 +1039,8 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
-        foreach ($this->discountTypes as $discount => $description) {
-
+        foreach ($this->discountTypes as $discount => $description)
+        {
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
                 ///////////////////////////////////////////////////////////////////////////
                 // If Amasty gift cards can be used for shipping and tax (PayForEverything)
@@ -1043,8 +1048,7 @@ class Cart extends AbstractHelper
                 // final discounts sum is greater than the cart total amount ($totalAmount < 0)
                 // the "fixed_amount" type is added below.
                 ///////////////////////////////////////////////////////////////////////////
-                if ($discount ==  Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
-
+                if ($discount == Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
                     $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
                 }
@@ -1123,6 +1127,7 @@ class Cart extends AbstractHelper
     /**
      * Round amount helper
      *
+     * @param $amount
      * @return  int
      */
     public function getRoundAmount($amount)
@@ -1182,10 +1187,10 @@ class Cart extends AbstractHelper
      *
      * @param Quote|null $quote
      * @return bool
+     * @throws NoSuchEntityException
      */
     public function hasProductRestrictions($quote = null)
     {
-
         $toggleCheckout = $this->configHelper->getToggleCheckout();
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
@@ -1205,6 +1210,7 @@ class Cart extends AbstractHelper
         /** @var Quote $quote */
         $quote = $quote ?: $this->checkoutSession->getQuote();
         foreach ($quote->getAllVisibleItems() as $item) {
+            /** @var \Magento\Quote\Model\Quote\Item $item */
             // call every method on item, if returns true, do restrict
             foreach ($itemRestrictionMethods as $method) {
                 if ($item->$method()) {
@@ -1214,7 +1220,7 @@ class Cart extends AbstractHelper
             // Non empty check to avoid unnecessary model load
             if ($productRestrictionMethods) {
                 // get item product
-                $product = $this->productFactory->create()->load($item->getProductId());
+                $product = $this->productRepository->getById($item->getProductId());
                 // call every method on product, if returns true, do restrict
                 foreach ($productRestrictionMethods as $method) {
                     if ($product->$method()) {
