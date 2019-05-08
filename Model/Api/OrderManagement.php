@@ -145,7 +145,8 @@ class OrderManagement implements OrderManagementInterface
             }
             $this->orderHelper->saveUpdateOrder(
                 $reference,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
+                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+                $type
             );
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
