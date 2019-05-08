@@ -19,17 +19,16 @@ namespace Bolt\Boltpay\Controller\Order;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\Controller\Result\JsonFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\UrlInterface;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Class ReceivedUrl
@@ -43,10 +42,6 @@ class ReceivedUrl extends Action
      */
     private $logHelper;
     /**
-     * @var JsonFactory
-     */
-    private $resultJsonFactory;
-    /**
      * @var ConfigHelper
      */
     private $configHelper;
@@ -55,10 +50,6 @@ class ReceivedUrl extends Action
      */
     private $bugsnag;
     /**
-     * @var UrlInterface
-     */
-    private $url;
-    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -66,37 +57,38 @@ class ReceivedUrl extends Action
      * @var CheckoutSession
      */
     private $checkoutSession;
+    /**
+     * @var OrderHelper
+     */
+    private $orderHelper;
 
     /**
      * ReceivedUrl constructor.
      *
      * @param Context         $context
-     * @param JsonFactory     $resultJsonFactory
      * @param ConfigHelper    $configHelper
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag
      * @param LogHelper       $logHelper
-     * @param UrlInterface    $url
      * @param CheckoutSession $checkoutSession
+     * @param OrderHelper     $orderHelper
      */
     public function __construct(
         Context $context,
-        JsonFactory $resultJsonFactory,
-        configHelper $configHelper,
+        ConfigHelper $configHelper,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
-        UrlInterface $url,
-        CheckoutSession $checkoutSession
+        CheckoutSession $checkoutSession,
+        OrderHelper $orderHelper
     ) {
         parent::__construct($context);
-        $this->resultJsonFactory = $resultJsonFactory;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
-        $this->url = $url;
         $this->checkoutSession = $checkoutSession;
+        $this->orderHelper = $orderHelper;
     }
 
     /**
@@ -116,7 +108,6 @@ class ReceivedUrl extends Action
 
         if ($signature === $hash) {
             // Seems that hook from Bolt.
-            $redirectUrl = $this->configHelper->getSuccessPageRedirect();
 
             try {
                 $payload = base64_decode($boltPayload);
@@ -133,6 +124,8 @@ class ReceivedUrl extends Action
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
+                $redirectUrl = $this->getRedirectUrl($order);
+
                 // clear the session data
                 if ($order->getId()) {
                     // add quote information to the session
@@ -140,6 +133,15 @@ class ReceivedUrl extends Action
 
                     // add order information to the session
                     $this->clearOrderSession($order, $redirectUrl);
+
+                    // Save reference to the Bolt transaction with the order
+                    $order->addStatusHistoryComment(
+                        __(
+                            'Bolt transaction: %1',
+                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payload))
+                        )
+                    );
+                    $order->save();
                 }
 
                 $this->_redirect($redirectUrl);
@@ -157,7 +159,7 @@ class ReceivedUrl extends Action
                 $errorMessage = __('Something went wrong. Please contact the seller.');
                 $this->messageManager->addErrorMessage($errorMessage);
 
-                $this->_redirect('/');
+                $this->_redirect($this->getErrorRedirectUrl());
             } catch (LocalizedException $e) {
                 $logMessage = $e->getMessage();
                 $this->logHelper->addInfoLog('LocalizedException:' . $logMessage);
@@ -172,7 +174,7 @@ class ReceivedUrl extends Action
                     ]);
                 });
                 $this->bugsnag->notifyError('LocalizedException: ', $logMessage);
-                $this->_redirect('/');
+                $this->_redirect($this->getErrorRedirectUrl());
             }
         } else {
             // Potentially it is attack.
@@ -189,7 +191,7 @@ class ReceivedUrl extends Action
 
             $errorMessage = __('Something went wrong. Please contact the seller.');
             $this->messageManager->addErrorMessage($errorMessage);
-            $this->_redirect('/');
+            $this->_redirect($this->getErrorRedirectUrl());
         }
     }
 
@@ -197,7 +199,17 @@ class ReceivedUrl extends Action
      * @param $payload
      * @return mixed
      */
-    public function getIncrementIdFromPayload($payload)
+    private function getReferenceFromPayload($payload)
+    {
+        $payloadArray = json_decode($payload, true);
+        return  $payloadArray['transaction_reference'];
+    }
+
+    /**
+     * @param $payload
+     * @return mixed
+     */
+    private function getIncrementIdFromPayload($payload)
     {
         $payloadArray = json_decode($payload, true);
         $displayId = $payloadArray['display_id'];
@@ -216,7 +228,7 @@ class ReceivedUrl extends Action
      * @return Order
      * @throws NoSuchEntityException
      */
-    public function getOrderByIncrementId($incrementId)
+    private function getOrderByIncrementId($incrementId)
     {
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
@@ -234,7 +246,7 @@ class ReceivedUrl extends Action
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getQuoteById($quoteId)
+    private function getQuoteById($quoteId)
     {
         return $this->cartHelper->getQuoteById($quoteId);
     }
@@ -258,7 +270,7 @@ class ReceivedUrl extends Action
      * Clear order session after successful order
      *
      * @param Order $order
-     * @param       $redirectUrl
+     * @param string $redirectUrl
      *
      * @return void
      */
@@ -269,5 +281,22 @@ class ReceivedUrl extends Action
             ->setRedirectUrl($redirectUrl)
             ->setLastRealOrderId($order->getIncrementId())
             ->setLastOrderStatus($order->getStatus());
+    }
+
+    /**
+     * @return string
+     */
+    protected function getErrorRedirectUrl()
+    {
+        return '/';
+    }
+
+    /**
+     * @param null|Order $order
+     * @return string
+     */
+    protected function getRedirectUrl($order = null)
+    {
+        return $this->configHelper->getSuccessPageRedirect();
     }
 }

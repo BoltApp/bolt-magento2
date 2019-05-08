@@ -569,10 +569,15 @@ class Cart extends AbstractHelper
      */
     protected function createImmutableQuote($quote)
     {
+        // assign origin session type flag to the parent quote
+        // to be replicated to the immutable quote with the other data
+        $quote->setBoltIsBackendOrder( (int) $this->isBackendSession() );
+
         if (!$quote->getBoltParentQuoteId()) {
             $quote->setBoltParentQuoteId($quote->getId());
             $this->quoteResourceSave($quote);
         }
+
         /** @var Quote $immutableQuote */
         $immutableQuote = $this->quoteFactory->create();
 
@@ -608,6 +613,16 @@ class Cart extends AbstractHelper
                 'ADDRESS_DATA' => $addressData
             ]);
         });
+    }
+
+    /**
+     * Check the session type.
+     *
+     * @return bool
+     */
+    private function isBackendSession()
+    {
+        return $this->checkoutSession instanceof \Magento\Backend\Model\Session\Quote;
     }
 
     /**
@@ -916,15 +931,19 @@ class Cart extends AbstractHelper
         $cart['discounts'] = [];
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process store integral discounts and coupons
+        // Process store integral discounts and coupons.
+        // For some types of applied coupon, the discount amount could be zero before
+        // selecting specific shipping option, so the conditional statement should also
+        // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = @$address->getDiscountAmount()) {
+        if ( ($amount = $address->getDiscountAmount()) || $address->getCouponCode() ) {
             $amount         = abs($amount);
             $roundedAmount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
+                'reference'   => $address->getCouponCode()
             ];
 
             $diff -= $amount * 100 - $roundedAmount;

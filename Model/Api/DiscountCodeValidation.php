@@ -40,6 +40,8 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Quote\Model\Quote\TotalsCollector;
 
 /**
  * Discount Code Validation class
@@ -147,6 +149,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $discountHelper;
 
     /**
+     * @var RegionModel
+     */
+    private $regionModel;
+
+    /**
+     * @var TotalsCollector
+     */
+    private $totalsCollector;
+
+    /**
      * DiscountCodeValidation constructor.
      *
      * @param Request                 $request
@@ -169,6 +181,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param ConfigHelper            $configHelper
      * @param HookHelper              $hookHelper
      * @param DiscountHelper          $discountHelper
+     * @param RegionModel             $regionModel
+     * @param TotalsCollector         $totalsCollector
      */
     public function __construct(
         Request $request,
@@ -190,7 +204,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
         HookHelper $hookHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        RegionModel $regionModel,
+        TotalsCollector $totalsCollector
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -212,6 +228,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
         $this->discountHelper = $discountHelper;
+        $this->regionModel = $regionModel;
+        $this->totalsCollector = $totalsCollector;
     }
 
     /**
@@ -344,6 +362,36 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 );
 
                 return false;
+            }
+
+            // Set the shipment if request payload has that info.
+            if(isset($request->cart->shipments[0]->reference)){
+                $shippingAddress = $immutableQuote->getShippingAddress();
+                $address = $request->cart->shipments[0]->shipping_address;
+                $address = $this->cartHelper->handleSpecialAddressCases($address);
+                $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
+                $addressData = [
+                            'firstname'    => @$address->first_name,
+                            'lastname'     => @$address->last_name,
+                            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
+                            'city'         => @$address->locality,
+                            'country_id'   => @$address->country_code,
+                            'region'       => @$address->region,
+                            'postcode'     => @$address->postal_code,
+                            'telephone'    => @$address->phone_number,
+                            'region_id'    => $region ? $region->getId() : null,
+                            'company'      => @$address->company,
+                        ];
+                if ($this->cartHelper->validateEmail(@$address->email_address)) {
+                    $addressData['email'] = $address->email_address;
+                }
+
+                $shippingAddress->setShouldIgnoreValidation(true);
+                $shippingAddress->addData($addressData);
+
+                $shippingAddress->setShippingMethod($request->cart->shipments[0]->reference)
+                                ->setCollectShippingRates(true)
+                                ->collectShippingRates()->save();
             }
 
             if ($coupon && $coupon->getCouponId()) {
@@ -519,12 +567,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $address = $immutableQuote->isVirtual() ?
             $immutableQuote->getBillingAddress() :
             $immutableQuote->getShippingAddress();
+        $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
-            'description'     =>  __('Discount ') . $address->getDiscountDescription(),
+            'description'     => trim( __('Discount ') . $rule->getDescription() ),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
 
@@ -628,8 +677,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      */
     private function getCartTotals($quote)
     {
-
-        $cart = $this->cartHelper->getCartData(false, null, $quote);
+        $request = $this->getRequestContent();
+        $is_has_shipment = isset($request->cart->shipments[0]->reference);
+        $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
         return [
             'total_amount' => $cart['total_amount'],
             'tax_amount'   => $cart['tax_amount'],
@@ -708,8 +758,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function setCouponCode($quote, $couponCode)
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->setCouponCode($couponCode);
-        $this->cartHelper->saveQuote($quote->collectTotals());
+        $quote->setCouponCode($couponCode)->collectTotals()->save();
     }
 
     /**

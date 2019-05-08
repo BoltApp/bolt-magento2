@@ -746,6 +746,11 @@ class Order extends AbstractHelper
                 );
             }
 
+            // Add the user_note to the order comments and make it visible for customer.
+            if (isset($transaction->order->user_note)) {
+                $this->setOrderUserNote($order, $transaction->order->user_note);
+            }
+
             $order->save();
         }
 
@@ -1444,6 +1449,15 @@ class Order extends AbstractHelper
         // set order state and status
         $this->setOrderState($order, $orderState);
 
+        // Send order confirmation email to customer.
+        // Emulate frontend area in order for email
+        // template to be loaded from the correct path
+        if ( ! $order->getEmailSent() ) {
+            $this->appState->emulateAreaCode('frontend', function () use ($order) {
+                $this->emailSender->send($order);
+            });
+        }
+
         // format the last transaction data for storing within the order payment record instance
 
         if ($newCapture) {
@@ -1520,19 +1534,6 @@ class Order extends AbstractHelper
         // save payment and order
         $payment->save();
         $order->save();
-
-        // Send order confirmation email to customer.
-        // Emulate frontend area in order for email
-        // template to be loaded from the correct path
-        if ( ! $order->getEmailSent() &&
-             ! in_array($order->getState(),
-                 [OrderModel::STATE_NEW, OrderModel::STATE_CANCELED, OrderModel::STATE_PAYMENT_REVIEW]
-             )
-        ) {
-            $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                $this->emailSender->send($order);
-            });
-        }
     }
 
     /**
@@ -1564,7 +1565,9 @@ class Order extends AbstractHelper
         $order->addRelatedObject($invoice);
 
         if (!$invoice->getEmailSent()) {
-            $this->invoiceSender->send($invoice);
+            $this->appState->emulateAreaCode('frontend', function () use ($invoice) {
+                $this->invoiceSender->send($invoice);
+            });
         }
 
         //Add notification comment to order
