@@ -17,47 +17,22 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
-use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Class ReceivedUrl
  *
  * @package Bolt\Boltpay\Controller\Adminhtml\Order
  */
-class ReceivedUrl extends Action
+class ReceivedUrl extends \Bolt\Boltpay\Controller\Order\ReceivedUrl
 {
-    /**
-     * @var LogHelper
-     */
-    private $logHelper;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-    /**
-     * @var CartHelper
-     */
-    private $cartHelper;
-    /**
-     * @var CheckoutSession
-     */
-    private $checkoutSession;
-
     /**
      * ReceivedUrl constructor.
      *
@@ -67,6 +42,7 @@ class ReceivedUrl extends Action
      * @param Bugsnag         $bugsnag
      * @param LogHelper       $logHelper
      * @param CheckoutSession $checkoutSession
+     * @param OrderHelper     $orderHelper
      */
     public function __construct(
         Context $context,
@@ -74,194 +50,34 @@ class ReceivedUrl extends Action
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
-        CheckoutSession $checkoutSession
+        CheckoutSession $checkoutSession,
+        OrderHelper $orderHelper
     ) {
-        parent::__construct($context);
-
-        $this->configHelper = $configHelper;
-        $this->cartHelper = $cartHelper;
-        $this->bugsnag = $bugsnag;
-        $this->logHelper = $logHelper;
-        $this->checkoutSession = $checkoutSession;
-    }
-
-    /**
-     * Check Permission.
-     *
-     * @return bool
-     */
-    protected function _isAllowed()
-    {
-        return true;
-    }
-
-    /**
-     * @return \Magento\Framework\App\ResponseInterface
-     */
-    public function execute()
-    {
-        $boltSignature = $this->getRequest()->getParam('bolt_signature');
-        $boltPayload = $this->getRequest()->getParam('bolt_payload');
-
-        $signature = base64_decode($boltSignature);
-
-        $magentoSavedSignature = $this->configHelper->getSigningSecret();
-
-        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSignature, true);
-        $hash = base64_encode($hashBoltPayloadWithKey);
-
-        if ($signature === $hash) {
-            // Seems that hook from Bolt.
-
-            try {
-                $payload = base64_decode($boltPayload);
-                $incrementId = $this->getIncrementIdFromPayload($payload);
-
-                /** @var Order $order */
-                $order = $this->getOrderByIncrementId($incrementId);
-
-                if ($order->getState() !== Order::STATE_NEW) {
-                    $message = __('An order have wrong state: %state', ['state' => $order->getState()]);
-                    throw new LocalizedException($message);
-                }
-
-                /** @var Quote $quote */
-                $quote = $this->getQuoteById($order->getQuoteId());
-
-                $params = ['order_id' => $order->getId(), '_secure' => true];
-                $redirectUrl = $this->_url->getUrl('sales/order/view', $params);
-
-                // clear the session data
-                if ($order->getId()) {
-                    // add quote information to the session
-                    $this->clearQuoteSession($quote);
-
-                    // add order information to the session
-                    $this->clearOrderSession($order);
-                }
-
-                $this->_redirect($redirectUrl);
-            } catch (NoSuchEntityException $noSuchEntityException) {
-                $logMessage = $noSuchEntityException->getMessage();
-                $this->logHelper->addInfoLog('NoSuchEntityException: ' . $logMessage);
-
-                $this->bugsnag->registerCallback(function ($report) use ($incrementId) {
-                    $report->setMetaData([
-                        'order incrementId' => $incrementId,
-                    ]);
-                });
-                $this->bugsnag->notifyError('NoSuchEntityException: ', $logMessage);
-
-                $errorMessage = __('Something went wrong. Please contact the seller.');
-                $this->messageManager->addErrorMessage($errorMessage);
-
-                $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
-            } catch (LocalizedException $e) {
-                $logMessage = $e->getMessage();
-                $this->logHelper->addInfoLog('LocalizedException:' . $logMessage);
-
-                $errorMessage = __('Something went wrong. Please contact the seller.');
-                $this->messageManager->addErrorMessage($errorMessage);
-
-                $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
-                    $report->setMetaData([
-                        'bolt_signature' => $boltSignature,
-                        'bolt_payload'   => $boltPayload,
-                    ]);
-                });
-                $this->bugsnag->notifyError('LocalizedException: ', $logMessage);
-                $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
-            }
-        } else {
-            // Potentially it is attack.
-            $logMessage = 'bolt_signature and Magento signature are not equal';
-            $this->logHelper->addInfoLog($logMessage);
-
-            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
-                $report->setMetaData([
-                    'bolt_signature' => $boltSignature,
-                    'bolt_payload'   => $boltPayload
-                ]);
-            });
-            $this->bugsnag->notifyError('OrderReceivedUrl Error', $logMessage);
-
-            $errorMessage = __('Something went wrong. Please contact the seller.');
-            $this->messageManager->addErrorMessage($errorMessage);
-            $this->_redirect($this->getUrl('sales/order', ['_secure' => true]));
-        }
-    }
-
-    /**
-     * @param $payload
-     * @return mixed
-     */
-    public function getIncrementIdFromPayload($payload)
-    {
-        $payloadArray = json_decode($payload, true);
-        $displayId = $payloadArray['display_id'];
-
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
+        parent::__construct(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $bugsnag,
+            $logHelper,
+            $checkoutSession,
+            $orderHelper
         );
-
-        return $incrementId;
     }
 
     /**
-     * @param $incrementId
-     * @return Order
-     * @throws NoSuchEntityException
+     * @return string
      */
-    public function getOrderByIncrementId($incrementId)
+    protected function getErrorRedirectUrl()
     {
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
-
-        if (!$order) {
-            throw new NoSuchEntityException(
-                __('Could not find the order data.')
-            );
-        }
-
-        return $order;
+        return $this->_url->getUrl('sales/order', ['_secure' => true]);
     }
 
     /**
-     * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @param null|Order $order
+     * @return string
      */
-    public function getQuoteById($quoteId)
+    protected function getRedirectUrl($order = null)
     {
-        return $this->cartHelper->getQuoteById($quoteId);
-    }
-
-    /**
-     * Clear quote session after successful order
-     *
-     * @param Quote
-     *
-     * @return void
-     */
-    private function clearQuoteSession($quote)
-    {
-        $this->checkoutSession->setLastQuoteId($quote->getId())
-            ->setLastSuccessQuoteId($quote->getId())
-            ->clearHelperData();
-    }
-
-    /**
-     * Clear order session after successful order
-     *
-     * @param Order
-     *
-     * @return void
-     */
-    private function clearOrderSession($order)
-    {
-        $this->checkoutSession->setLastOrderId($order->getId())
-            ->setLastRealOrderId($order->getIncrementId())
-            ->setLastOrderStatus($order->getStatus());
+        return $this->_url->getUrl('sales/order/view', ['order_id' => $order->getId(), '_secure' => true]);
     }
 }
