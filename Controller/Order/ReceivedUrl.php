@@ -199,7 +199,7 @@ class ReceivedUrl extends Action
      * @param $payload
      * @return mixed
      */
-    public function getReferenceFromPayload($payload)
+    private function getReferenceFromPayload($payload)
     {
         $payloadArray = json_decode($payload, true);
         return  $payloadArray['transaction_reference'];
@@ -209,7 +209,7 @@ class ReceivedUrl extends Action
      * @param $payload
      * @return mixed
      */
-    public function getIncrementIdFromPayload($payload)
+    private function getIncrementIdFromPayload($payload)
     {
         $payloadArray = json_decode($payload, true);
         $displayId = $payloadArray['display_id'];
@@ -228,7 +228,7 @@ class ReceivedUrl extends Action
      * @return Order
      * @throws NoSuchEntityException
      */
-    public function getOrderByIncrementId($incrementId)
+    private function getOrderByIncrementId($incrementId)
     {
         $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
@@ -246,7 +246,7 @@ class ReceivedUrl extends Action
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function getQuoteById($quoteId)
+    private function getQuoteById($quoteId)
     {
         return $this->cartHelper->getQuoteById($quoteId);
     }

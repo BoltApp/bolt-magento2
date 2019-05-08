@@ -650,7 +650,7 @@ class CreateOrder implements CreateOrderInterface
     protected function getShippingAmountFromTransaction($transaction)
     {
         if (isset($transaction->order->cart->shipping_amount->amount)) {
-            return $transaction->order->cart->shipping_amount->amount;
+            return (int) $transaction->order->cart->shipping_amount->amount;
         }
         return 0;
     }
