@@ -26,7 +26,7 @@ use Magento\Quote\Model\Quote;
 use \PHPUnit\Framework\TestCase;
 use Magento\Framework\App\Helper\Context as ContextHelper;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
-use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -65,7 +65,7 @@ class CartTest extends TestCase
     private $logHelper;
     private $bugsnag;
     private $blockFactory;
-    private $productFactory;
+    private $productRepository;
     private $appEmulation;
     private $dataObjectFactory;
     private $quoteFactory;
@@ -86,7 +86,7 @@ class CartTest extends TestCase
         $this->contextHelper = $this->createMock(ContextHelper::class);
 
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->productFactory = $this->getProductFactoryMock();
+        $this->productRepository = $this->getProductRepositoryMock();
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
@@ -156,7 +156,7 @@ class CartTest extends TestCase
         $currentMock = new BoltHelperCart(
             $this->contextHelper,
             $this->checkoutSession,
-            $this->productFactory,
+            $this->productRepository,
             $this->apiHelper,
             $this->configHelper,
             $this->customerSession,
@@ -370,19 +370,19 @@ class CartTest extends TestCase
     /**
      * @return \PHPUnit_Framework_MockObject_MockObject
      */
-    private function getProductFactoryMock()
+    private function getProductRepositoryMock()
     {
         $product = $this->getProductMock();
-        $this->productFactory = $this->getMockBuilder(ProductFactory::class)
-            ->setMethods(['create', 'load'])
+        $this->productRepository = $this->getMockBuilder(ProductRepository::class)
+            ->setMethods(['getById'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->productFactory->method('create')->willReturnSelf();
-        $this->productFactory->method('load')
+
+        $this->productRepository->method('getById')
             ->with(self::PRODUCT_ID)
             ->willReturn($product);
 
-        return $this->productFactory;
+        return $this->productRepository;
     }
 
     /**
