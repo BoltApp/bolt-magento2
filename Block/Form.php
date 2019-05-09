@@ -3,7 +3,7 @@
 namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
-use Magento\Framework\Session\SessionManagerInterface as MagentoQuote;
+use Magento\Framework\Session\SessionManager as MagentoQuote;
 use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
 
