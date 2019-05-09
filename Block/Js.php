@@ -451,4 +451,14 @@ class Js extends Template
         return (int) (($quote && $quote->getStoreId()) ?
             $quote->getStoreId() : 0);
     }
+
+    /**
+     * Get plugin version
+     *
+     * @return string|false Plugin version string or false if the module is missing or there is a DB connection problem
+     */
+    public function getModuleVersion()
+    {
+        return $this->configHelper->getModuleVersion();
+    }
 }
