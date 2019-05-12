@@ -22,7 +22,7 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 //check if we need Bolt on this page
-if (!$block->IsCartOrCheckoutPage() && !$block->IsMinicartPage() && !$block->isProductPage()) return;
+if (!$block->IsOnPageFromWhiteList() && !$block->IsMinicartPage() && !$block->isProductPage()) return;
 
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();

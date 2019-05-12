@@ -388,7 +388,7 @@ class Js extends Template
     /**
      * Return true if we are on cart page or checkout page
      */
-    public function IsCartOrCheckoutPage() {
+    public function IsOnPageFromWhiteList() {
         $currentPage = $this->getRequest()->getFullActionName();
         return in_array($currentPage, $this->getPageWhitelist());
     }
