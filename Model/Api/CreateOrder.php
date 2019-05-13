@@ -51,6 +51,7 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_ITEM_OUT_OF_INVENTORY = 2001005;
     const E_BOLT_DISCOUNT_CANNOT_APPLY = 2001006;
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
+    const E_BOLT_SHIPPING_EXPIRED = 2001008;
 
     /**
      * @var HookHelper
@@ -553,9 +554,9 @@ class CreateOrder implements CreateOrderInterface
                 ]);
             });
             throw new BoltException(
-                __('Shipping costs do not match.'),
+                __('Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_SHIPPING_EXPIRED
             );
         }
     }
