@@ -378,8 +378,11 @@ require([
         success: function (transaction, callback) {
             // abort previously sent save order request.
             if (save_request) save_request.abort();
-            // get thr transaction reference
-            var parameters = 'reference='+transaction.reference;
+            // add the transaction reference and admin form key to the request parameters
+            var parameters = [];
+            parameters.push('form_key=' + document.getElementsByName("form_key")[0].value);
+            parameters.push('reference=' + transaction.reference);
+            parameters = parameters.join('&');
             // update order ajax request callback
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
@@ -446,11 +449,11 @@ require([
         // define the params sent with the request variable
         var params = [];
 
+        params.push('form_key=' + document.getElementsByName("form_key")[0].value);
         params.push('store_id=' + magentoStoreId);
         params.push('payment_only=true');
         params = params.join('&');
 
-        if (params === '') params = null;
         // set cart and hints data in a response callback
         var onSuccess = function(data){
             cart = data.cart;
