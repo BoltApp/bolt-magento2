@@ -62,3 +62,5 @@
  - Update ajax order creation error message
 ## [v1.1.12.1](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.12.1) 2019-04-10
  - Fix to support multi-stores with no default api key
+## [v1.1.13](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.13) 2019-04-26
+ - Various bug fixes

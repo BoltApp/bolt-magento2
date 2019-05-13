@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Backend\Model\Session\Quote as BackendSessionQuote;
 
@@ -450,5 +450,15 @@ class Js extends Template
 
         return (int) (($quote && $quote->getStoreId()) ?
             $quote->getStoreId() : 0);
+    }
+
+    /**
+     * Get plugin version
+     *
+     * @return string|false Plugin version string or false if the module is missing or there is a DB connection problem
+     */
+    public function getModuleVersion()
+    {
+        return $this->configHelper->getModuleVersion();
     }
 }

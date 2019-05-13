@@ -459,7 +459,7 @@ class Cart extends AbstractHelper
         } else {
             $prefillHints($quote->getShippingAddress());
         }
-        
+
         if ($checkoutType === 'admin') {
             $hints['virtual_terminal_mode'] = true;
         }
@@ -504,6 +504,10 @@ class Cart extends AbstractHelper
      */
     public function replicateQuoteData($source, $destination)
     {
+        // Skip the replication if source and destination point to the same quote
+        // E.g. delayed Save Order - immutable quote is cleared by cron and we use the parent instead
+        if ($source->getId() == $destination->getId()) return;
+
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
 
@@ -913,15 +917,19 @@ class Cart extends AbstractHelper
         $cart['discounts'] = [];
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process store integral discounts and coupons
+        // Process store integral discounts and coupons.
+        // For some types of applied coupon, the discount amount could be zero before
+        // selecting specific shipping option, so the conditional statement should also
+        // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = @$address->getDiscountAmount()) {
+        if ( ($amount = $address->getDiscountAmount()) || $address->getCouponCode() ) {
             $amount         = abs($amount);
             $roundedAmount = $this->getRoundAmount($amount);
 
             $cart['discounts'][] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
+                'reference'   => $address->getCouponCode()
             ];
 
             $diff -= $amount * 100 - $roundedAmount;
