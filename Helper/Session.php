@@ -195,6 +195,6 @@ class Session extends AbstractHelper
     public function cacheFormKey($quote)
     {
         $cacheIdentifier = self::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId();
-        $this->cache->save($this->formKey->getFormKey(), $cacheIdentifier, [], 86400);
+        $this->cache->save($this->formKey->getFormKey(), $cacheIdentifier, [], 14400);
     }
 }
