@@ -35,6 +35,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class CreateOrder
@@ -109,6 +110,11 @@ class CreateOrder implements CreateOrderInterface
     private $stockRegistry;
 
     /**
+     * @var SessionHelper
+     */
+    private $sessionHelper;
+
+    /**
      * @param HookHelper             $hookHelper
      * @param OrderHelper            $orderHelper
      * @param CartHelper             $cartHelper
@@ -120,6 +126,7 @@ class CreateOrder implements CreateOrderInterface
      * @param BackendUrl             $backendUrl
      * @param ConfigHelper           $configHelper
      * @param StockRegistryInterface $stockRegistry
+     * @param SessionHelper          $sessionHelper
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -132,7 +139,8 @@ class CreateOrder implements CreateOrderInterface
         UrlInterface $url,
         BackendUrl $backendUrl,
         ConfigHelper $configHelper,
-        StockRegistryInterface $stockRegistry
+        StockRegistryInterface $stockRegistry,
+        SessionHelper $sessionHelper
     ) {
         $this->hookHelper = $hookHelper;
         $this->orderHelper = $orderHelper;
@@ -145,6 +153,7 @@ class CreateOrder implements CreateOrderInterface
         $this->url = $url;
         $this->backendUrl = $backendUrl;
         $this->stockRegistry = $stockRegistry;
+        $this->sessionHelper = $sessionHelper;
     }
 
     /**
@@ -205,7 +214,7 @@ class CreateOrder implements CreateOrderInterface
                 'message'   => 'Order create was successful',
                 'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
                 'total'      => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
-                'order_received_url' => $this->getReceivedUrl($quote),
+                'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -331,6 +340,8 @@ class CreateOrder implements CreateOrderInterface
      */
     public function getReceivedUrl($quote)
     {
+        $this->sessionHelper->setFormKey($quote);
+
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
