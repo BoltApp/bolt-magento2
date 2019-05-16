@@ -17,7 +17,8 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
-use Magento\Framework\App\Action\Context;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -25,14 +26,17 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
 
 /**
  * Class ReceivedUrl
  *
  * @package Bolt\Boltpay\Controller\Adminhtml\Order
  */
-class ReceivedUrl extends \Bolt\Boltpay\Controller\Order\ReceivedUrl
+class ReceivedUrl extends Action
 {
+    use ReceivedUrlTrait;
+
     /**
      * ReceivedUrl constructor.
      *
@@ -46,22 +50,20 @@ class ReceivedUrl extends \Bolt\Boltpay\Controller\Order\ReceivedUrl
      */
     public function __construct(
         Context $context,
-        configHelper $configHelper,
+        ConfigHelper $configHelper,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         CheckoutSession $checkoutSession,
         OrderHelper $orderHelper
     ) {
-        parent::__construct(
-            $context,
-            $configHelper,
-            $cartHelper,
-            $bugsnag,
-            $logHelper,
-            $checkoutSession,
-            $orderHelper
-        );
+        parent::__construct($context);
+        $this->configHelper = $configHelper;
+        $this->cartHelper = $cartHelper;
+        $this->bugsnag = $bugsnag;
+        $this->logHelper = $logHelper;
+        $this->checkoutSession = $checkoutSession;
+        $this->orderHelper = $orderHelper;
     }
 
     /**
