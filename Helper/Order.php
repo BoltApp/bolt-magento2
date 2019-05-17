@@ -1456,7 +1456,6 @@ class Order extends AbstractHelper
                 try {
                     $this->emailSender->send($order);
                 } catch (\Exception $e) {
-                    // report error in email sending routine but continue execution
                     $this->bugsnag->notifyException($e);
                 }
             });
@@ -1573,7 +1572,6 @@ class Order extends AbstractHelper
                 try {
                     $this->invoiceSender->send($invoice);
                 } catch (\Exception $e) {
-                    // report error in email sending routine but continue execution
                     $this->bugsnag->notifyException($e);
                 }
             });
