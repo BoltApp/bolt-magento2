@@ -1453,7 +1453,12 @@ class Order extends AbstractHelper
         // template to be loaded from the correct path
         if ( ! $order->getEmailSent() ) {
             $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                $this->emailSender->send($order);
+                try {
+                    $this->emailSender->send($order);
+                } catch (\Exception $e) {
+                    // report error in email sending routine but continue execution
+                    $this->bugsnag->notifyException($e);
+                }
             });
         }
 
@@ -1565,7 +1570,12 @@ class Order extends AbstractHelper
 
         if (!$invoice->getEmailSent()) {
             $this->appState->emulateAreaCode('frontend', function () use ($invoice) {
-                $this->invoiceSender->send($invoice);
+                try {
+                    $this->invoiceSender->send($invoice);
+                } catch (\Exception $e) {
+                    // report error in email sending routine but continue execution
+                    $this->bugsnag->notifyException($e);
+                }
             });
         }
 
