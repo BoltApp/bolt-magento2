@@ -174,6 +174,11 @@ class Cart extends AbstractHelper
     private $treshold = 0.01;
 
     /**
+     * @var array
+     */
+    private $quotes = [];
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -254,12 +259,23 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return \Magento\Quote\Model\Quote
      * @throws NoSuchEntityException
      */
     public function getQuoteById($quoteId)
     {
-        return $this->quoteRepository->get($quoteId);
+        if (!isset($this->quotes[$quoteId])) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('main_table.entity_id', $quoteId)->create();
+
+            $collection = $this->quoteRepository
+                ->getList($searchCriteria)
+                ->getItems();
+
+            $this->quotes[$quoteId] = reset($collection);
+        }
+
+        return $this->quotes[$quoteId];
     }
 
     /**
