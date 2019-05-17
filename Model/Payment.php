@@ -487,7 +487,7 @@ class Payment extends AbstractMethod
 
     public function getTitle()
     {
-        if ($this->_areaCode === 'adminhtml' && $this->getCode() === self::METHOD_CODE) {
+        if ($this->_areaCode === 'adminhtml') {
             $path = 'payment/' . $this->getCode() . '/title';
             $storeId = $this->getData('store');
             $configTitle = $this->_scopeConfig->getValue(
