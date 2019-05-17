@@ -154,6 +154,8 @@ class Payment extends AbstractMethod
      */
     protected $transactionRepository;
 
+    protected $_areaCode;
+
     /**
      * @param Context $context
      * @param Registry $registry
@@ -214,6 +216,8 @@ class Payment extends AbstractMethod
         $this->dataObjectFactory = $dataObjectFactory;
         $this->cartHelper = $cartHelper;
         $this->transactionRepository = $transactionRepository;
+
+        $this->_areaCode = $context->getAppState()->getAreaCode();
     }
 
     /**
@@ -250,7 +254,8 @@ class Payment extends AbstractMethod
 
             //Get transaction data
             $transactionData = ['transaction_id' => $transactionId];
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $payment->getOrder()->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -354,7 +359,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -421,7 +427,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -476,5 +483,14 @@ class Payment extends AbstractMethod
             return false;
         }
         return parent::isAvailable();
+    }
+
+    public function getTitle()
+    {
+        if ($this->_areaCode === 'adminhtml') {
+            return $this->getInfoInstance()->getAdditionalInformation('method_title');
+        } else {
+            return parent::getTitle();
+        }
     }
 }
