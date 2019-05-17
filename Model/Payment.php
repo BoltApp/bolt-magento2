@@ -488,8 +488,13 @@ class Payment extends AbstractMethod
     public function getTitle()
     {
         if ($this->_areaCode === 'adminhtml') {
+            if ($this->getInfoInstance()) {
+                $payment = $this->getInfoInstance();
+                $storeId = $payment->getOrder()->getStore()->getId();
+            } else {
+                $storeId = $this->getData('store');
+            }
             $path = 'payment/' . $this->getCode() . '/title';
-            $storeId = $this->getData('store');
             $configTitle = $this->_scopeConfig->getValue(
                 $path,
                 \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
