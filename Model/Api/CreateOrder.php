@@ -407,6 +407,18 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
+     * Get values that are in either array, but not both
+     *
+     * @param array $A
+     * @param array $B
+     * @return array
+     */
+    private function arrayDiff($A, $B) {
+        $intersect = array_intersect($A, $B);
+        return array_merge(array_diff($A, $intersect), array_diff($B, $intersect));
+    }
+
+    /**
      * @param Quote  $quote
      * @param               $transaction
      * @throws BoltException
@@ -422,21 +434,24 @@ class CreateOrder implements CreateOrderInterface
                 $this->getQtyFromTransaction($transactionItem);
         }
 
+        $quoteSkus = array_map(function($item){return trim($item->getSku());}, $quoteItems);
+        $transactionSkus = array_keys($transactionItemsSkuQty);
+
+        if ($diff = $this->arrayDiff($quoteSkus, $transactionSkus)) {
+            throw new BoltException(
+                __('Cart data has changed. SKU: ' . json_encode($diff)),
+                null,
+                self::E_BOLT_GENERAL_ERROR
+            );
+        }
+
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
-            $sku = $item->getSku();
+            $sku = trim($item->getSku());
+            $productId = $item->getProductId();
             $itemPrice = $this->cartHelper->getRoundAmount($item->getPrice());
 
-            if (!in_array($sku, array_keys($transactionItemsSkuQty))) {
-                throw new BoltException(
-                    __('Cart data has changed. SKU: ' . $sku),
-                    null,
-                    self::E_BOLT_GENERAL_ERROR
-                );
-            }
-
-            $this->validateItemInventory($sku, $transactionItemsSkuQty[$sku]);
-
+            $this->validateItemInventory($sku, $transactionItemsSkuQty[$sku], $productId);
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
     }
@@ -444,12 +459,13 @@ class CreateOrder implements CreateOrderInterface
     /**
      * @param string $itemSku
      * @param int $itemQty
+     * @param int $productId
      * @throws BoltException
      * @throws NoSuchEntityException
      */
-    public function validateItemInventory($itemSku, $itemQty)
+    public function validateItemInventory($itemSku, $itemQty, $productId)
     {
-        $stockItem = $this->stockRegistry->getStockItemBySku($itemSku);
+        $stockItem = $this->stockRegistry->getStockItem($productId);
 
         if (!$stockItem->getManageStock()) return;
 
@@ -497,7 +513,7 @@ class CreateOrder implements CreateOrderInterface
                     ]);
                 });
                 throw new BoltException(
-                    __('Price do not matched. Item sku: ' . $itemSku),
+                    __('Price does not match. Item sku: ' . $itemSku),
                     null,
                     self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
                 );
