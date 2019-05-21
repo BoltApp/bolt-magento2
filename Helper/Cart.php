@@ -368,13 +368,14 @@ class Cart extends AbstractHelper
     /**
      * Sign a payload using the Bolt endpoint
      *
-     * @param array $signRequest  payload to sign
+     * @param array $signRequest payload to sign
+     * @param null  $storeId
      *
      * @return Response|int
      */
-    private function getSignResponse($signRequest)
+    private function getSignResponse($signRequest, $storeId = null)
     {
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -450,7 +451,7 @@ class Cart extends AbstractHelper
             $signRequest = [
                 'merchant_user_id' => $customer->getId(),
             ];
-            $signResponse = $this->getSignResponse($signRequest)->getResponse();
+            $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
 
             if ($signResponse) {
                 $hints['merchant_user_id'] = $signResponse->merchant_user_id;

@@ -155,6 +155,7 @@ class Payment extends AbstractMethod
     protected $transactionRepository;
 
     protected $_areaCode;
+    protected $registryCurrentOrder;
 
     /**
      * @param Context $context
@@ -218,6 +219,7 @@ class Payment extends AbstractMethod
         $this->transactionRepository = $transactionRepository;
 
         $this->_areaCode = $context->getAppState()->getAreaCode();
+        $this->registryCurrentOrder = $registry->registry('current_order');
     }
 
     /**
@@ -490,6 +492,8 @@ class Payment extends AbstractMethod
         if ($this->_areaCode === 'adminhtml') {
             if ($this->getData('store')) {
                 $storeId = $this->getData('store');
+            } elseif ($this->registryCurrentOrder && $this->registryCurrentOrder->getStoreId()) {
+                $storeId = $this->registryCurrentOrder->getStoreId();
             } else {
                 $storeId = null;
             }

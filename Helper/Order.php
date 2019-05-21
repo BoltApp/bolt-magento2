@@ -274,21 +274,21 @@ class Order extends AbstractHelper
     /**
      * Fetch transaction details info
      *
-     * @api
-     *
      * @param string $reference
+     * @param        $magentoStoreId
      *
      * @return Response
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
+     *
+     * @api
      */
-    public function fetchTransactionInfo($reference)
+    public function fetchTransactionInfo($reference, $magentoStoreId = null)
     {
-
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
-        $requestData->setApiKey($this->configHelper->getApiKey());
+        $requestData->setApiKey($this->configHelper->getApiKey($magentoStoreId));
         $requestData->setRequestMethod('GET');
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
@@ -650,9 +650,9 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null)
+    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null, $magentoStoreId = null)
     {
-        $transaction = $this->fetchTransactionInfo($reference);
+        $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
 
         $parentQuoteId = $transaction->order->cart->order_reference;
 
