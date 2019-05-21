@@ -18,8 +18,22 @@
 namespace Bolt\Boltpay\Exception;
 
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Phrase;
 
 class BoltException extends LocalizedException
 {
-
+    /**
+     * Overide LocalizedException constructor because in older Magento versions
+     * it does not take the $code parameter into account, defaulting it to 0.
+     * Bypass the parent and call grandparent's constructor
+     *
+     * @param \Magento\Framework\Phrase $phrase
+     * @param \Exception $cause
+     * @param int $code
+     */
+    public function __construct(Phrase $phrase, \Exception $cause = null, $code = 0)
+    {
+        $this->phrase = $phrase;
+        \Exception::__construct($phrase->render(), intval($code), $cause);
+    }
 }
