@@ -441,7 +441,7 @@ class CreateOrder implements CreateOrderInterface
             throw new BoltException(
                 __('Cart data has changed. SKU: ' . json_encode($diff)),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
             );
         }
 
