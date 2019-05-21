@@ -33,7 +33,7 @@ class BoltException extends LocalizedException
      */
     public function __construct(Phrase $phrase, \Exception $cause = null, $code = 0)
     {
-        $this->phrase = $phrase;
-        \Exception::__construct($phrase->render(), intval($code), $cause);
+        parent::__construct($phrase, $cause);
+        $this->code = intval($code);
     }
 }
