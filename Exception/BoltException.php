@@ -25,7 +25,6 @@ class BoltException extends LocalizedException
     /**
      * Overide LocalizedException constructor because in older Magento versions
      * it does not take the $code parameter into account, defaulting it to 0.
-     * Bypass the parent and call grandparent's constructor
      *
      * @param \Magento\Framework\Phrase $phrase
      * @param \Exception $cause
