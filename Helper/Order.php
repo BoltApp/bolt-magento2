@@ -1413,7 +1413,7 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_REJECTED_REVERSIBLE:
-                $orderState = OrderModel::STATE_HOLDED;
+                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
                 break;
