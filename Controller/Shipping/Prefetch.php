@@ -137,7 +137,7 @@ class Prefetch extends Action
             ///////////////////////////////////////////////////////////////////////////
             // Prefetch Shipping and Tax for geolocated address
             ///////////////////////////////////////////////////////////////////////////
-            if ($locationJson = $this->geolocation->getLocation()) {
+            if ($locationJson = $this->geolocation->getLocation($quote->getStoreId())) {
                 $location = json_decode($locationJson);
 
                 // at least country code and zip are needed for shipping estimation
