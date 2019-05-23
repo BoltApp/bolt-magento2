@@ -368,8 +368,8 @@ class Cart extends AbstractHelper
     /**
      * Sign a payload using the Bolt endpoint
      *
-     * @param array $signRequest payload to sign
-     * @param null  $storeId
+     * @param array     $signRequest payload to sign
+     * @param null|int  $storeId
      *
      * @return Response|int
      */
@@ -1189,7 +1189,6 @@ class Cart extends AbstractHelper
      */
     public function hasProductRestrictions($quote = null, $magentoStoreId = null)
     {
-
         $toggleCheckout = $this->configHelper->getToggleCheckout($magentoStoreId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
