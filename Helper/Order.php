@@ -1112,7 +1112,8 @@ class Order extends AbstractHelper
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
-            $transaction = $this->fetchTransactionInfo($reference);
+            $magentoStoreId = ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+            $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
         } else {
             $reference = $transaction->reference;
         }
