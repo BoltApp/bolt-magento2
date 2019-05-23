@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
 use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
@@ -32,13 +33,13 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
-use Magento\Sales\Api\Data\InvoiceInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
@@ -174,6 +175,21 @@ class Order extends AbstractHelper
     private $timezone;
 
     /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
+     * @var OrderModel
+     */
+    private $orderData;
+
+    /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
@@ -240,6 +256,8 @@ class Order extends AbstractHelper
         OrderSender $emailSender,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        OrderRepository $orderRepository,
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
@@ -261,6 +279,8 @@ class Order extends AbstractHelper
         $this->invoiceSender = $invoiceSender;
         $this->transactionBuilder = $transactionBuilder;
         $this->timezone = $timezone;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->orderRepository = $orderRepository;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->appState = $appState;
         $this->logHelper = $logHelper;
@@ -525,7 +545,7 @@ class Order extends AbstractHelper
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
-        $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+        $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
 
         if ($order && $order->getId()) {
             throw new LocalizedException(__(
@@ -537,7 +557,6 @@ class Order extends AbstractHelper
         $order = $this->quoteManagement->submit($quote);
 
         if ($order === null) {
-
             $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
                 $report->setMetaData([
                     'CREATE ORDER' => [
@@ -642,11 +661,11 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference Bolt transaction reference
-     * @param null $boltTraceId
-     * @param null $hookType
+     * @param null   $boltTraceId
+     * @param null   $hookType
+     * @param null|int   $magentoStoreId
      *
-     * @return mixed
-     * @throws \Exception
+     * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
@@ -662,11 +681,8 @@ class Order extends AbstractHelper
         // where only reserved_order_id was stored in display_id field
         // and the immutable quote_id in order_reference
         ///////////////////////////////////////////////////////////////
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $transaction->order->cart->display_id),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+
         if (!$quoteId) {
             $quoteId = $parentQuoteId;
         }
@@ -693,7 +709,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
+        $order = $this->getOrderByIncrementId($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -710,7 +726,6 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
-
             // If Amasty Gif Cart Extension is present delete gift carts
             // applied to parent quote and unused immutable quotes
             $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
@@ -935,11 +950,8 @@ class Order extends AbstractHelper
         }
 
         // Get the order and quote id
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $transaction->order->cart->display_id),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+
         if (!$quoteId) {
             $quoteId = $transaction->order->cart->order_reference;
         }
@@ -1443,5 +1455,61 @@ class Order extends AbstractHelper
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
+    }
+
+    /**
+     * @param $displayId
+     *
+     * @return array - [incrementId, quoteId]
+     */
+    public function getDataFromDisplayID($displayId)
+    {
+        return array_pad(
+            explode(' / ', $displayId),
+            2,
+            null
+        );
+    }
+
+    /**
+     * @param string $displayId
+     * @return int|null
+     */
+    public function getOrderStoreIdByDisplayId($displayId)
+    {
+        if (empty($displayId)) {
+            return null;
+        }
+
+        list($incrementId) = $this->getDataFromDisplayID($displayId);
+
+        if (empty($incrementId)) {
+            return null;
+        }
+        $order = $this->getOrderByIncrementId(trim($incrementId));
+
+        return $order->getStoreId();
+    }
+
+    /**
+     * @param string $incrementId
+     * @param bool   $forceLoad
+     *
+     * @return OrderInterface
+     */
+    public function getOrderByIncrementId($incrementId, $forceLoad = false)
+    {
+        if (($incrementId && !isset($this->orderData[$incrementId])) || $forceLoad) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('increment_id', $incrementId, 'eq')
+                ->create();
+            $collection = $this->orderRepository
+                ->getList($searchCriteria)
+                ->getItems();
+
+            return reset($collection);
+        } else {
+            return $this->orderData[$incrementId];
+        }
     }
 }
