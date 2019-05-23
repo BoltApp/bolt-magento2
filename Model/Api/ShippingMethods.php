@@ -438,7 +438,7 @@ class ShippingMethods implements ShippingMethodsInterface
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
         // applied rules (discounts), region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
-        if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
+        if ($prefetchShipping = $this->configHelper->getPrefetchShipping($quote->getStoreId())) {
             // use parent quote id for caching.
             // if everything else matches the cache is used more efficiently this way
             $parentQuoteId = $quote->getBoltParentQuoteId();
@@ -459,7 +459,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             // get custom address fields to be included in cache key
-            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
+            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields($quote->getStoreId()));
             // trim values and filter out empty strings
             $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
             // convert to PascalCase
@@ -479,6 +479,10 @@ class ShippingMethods implements ShippingMethodsInterface
                 if ($value) {
                     $cacheIdentifier .= '_'.$value;
                 }
+            }
+
+            if ($quote->getStoreId()) {
+                $cacheIdentifier .= '_' . $quote->getStoreId();
             }
 
             $cacheIdentifier = md5($cacheIdentifier);
@@ -559,10 +563,11 @@ class ShippingMethods implements ShippingMethodsInterface
      * Use it carefully only when necesarry.
      *
      * @param \Magento\Quote\Model\Quote\Address $shippingAddress
+     * @param null|int                           $storeId
      */
-    private function resetShippingCalculationIfNeeded($shippingAddress)
+    private function resetShippingCalculationIfNeeded($shippingAddress, $storeId = null)
     {
-        if ($this->configHelper->getResetShippingCalculation()) {
+        if ($this->configHelper->getResetShippingCalculation($storeId)) {
             $shippingAddress->removeAllShippingRates();
             $shippingAddress->setCollectShippingRates(true);
         }
@@ -611,7 +616,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
         $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
-        $this->resetShippingCalculationIfNeeded($shippingAddress);
+        $this->resetShippingCalculationIfNeeded($shippingAddress, $quote->getStoreId());
 
         foreach ($shippingRates as $carrierRates) {
             foreach ($carrierRates as $rate) {
@@ -732,7 +737,8 @@ class ShippingMethods implements ShippingMethodsInterface
                         'address' => $addressData,
                         'immutable quote ID' => $quote->getId(),
                         'parent quote ID' => $quote->getBoltParentQuoteId(),
-                        'order increment ID' => $quote->getReservedOrderId()
+                        'order increment ID' => $quote->getReservedOrderId(),
+                        'Store Id'  => $quote->getStoreId()
                     ]
                 ]);
             });
