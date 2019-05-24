@@ -162,6 +162,7 @@ class ShippingMethodsTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
+            ->withAnyParameters()
             ->willReturn(true);
         $this->configHelper->method('getIgnoredShippingAddressCoupons')
             ->willReturn([]);
