@@ -64,3 +64,6 @@
  - Fix to support multi-stores with no default api key
 ## [v1.1.13](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.13) 2019-04-26
  - Various bug fixes
+## [v1.1.14](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.14) 2019-05-28
+ - Various bug fixes
+
