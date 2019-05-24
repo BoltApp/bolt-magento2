@@ -1488,7 +1488,7 @@ class Order extends AbstractHelper
         }
         $order = $this->getOrderByIncrementId(trim($incrementId));
 
-        return $order->getStoreId();
+        return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }
 
     /**

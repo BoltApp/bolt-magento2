@@ -313,7 +313,8 @@ class ShippingMethods implements ShippingMethodsInterface
         try {
 //            $this->logHelper->addInfoLog($this->request->getContent());
 
-            $this->preprocessHook();
+            // TODO: Temporally comment out.
+            //$this->preprocessHook();
 
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -324,6 +325,9 @@ class ShippingMethods implements ShippingMethodsInterface
             if (!$quote || !$quote->getId()) {
                 $this->throwUnknownQuoteIdException($quoteId);
             }
+
+            // TODO: temporally solution until was implement store_id through $cart variable.
+            $this->preprocessHook($quote->getStoreId());
 
             $this->checkCartItems($cart, $quote);
 
@@ -412,13 +416,17 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * @param null $storeId
+     *
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    protected function preprocessHook()
+    protected function preprocessHook($storeId = null)
     {
         $this->hookHelper->setCommonMetaData();
         $this->hookHelper->setHeaders();
+
+        $this->hookHelper->setMagentoStoreId($storeId);
 
         $this->hookHelper->verifyWebhook();
     }

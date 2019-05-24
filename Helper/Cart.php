@@ -1117,6 +1117,8 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
+        $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
+
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;

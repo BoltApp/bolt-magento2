@@ -449,6 +449,8 @@ class Js extends Template
             $quote = $this->checkoutSession->getQuote();
         }
 
+        // TODO: need to check and add unit tests for case when we return null instead of zero!
+        // Several time i caught when quote was created but do not have store_id - it was null.
         return (int) (($quote && $quote->getStoreId()) ?
             $quote->getStoreId() : 0);
     }

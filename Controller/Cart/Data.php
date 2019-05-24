@@ -115,11 +115,12 @@ class Data extends Action
             // get immutable quote id stored with cart data
             list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
 
-            $cart = (array)@$response->cart + [
-                'orderToken' => $response ? $response->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode($magentoStoreId),
+            $cart = array_merge((array) $response->cart, [
+                'orderToken'    => $response ? $response->token : '',
+                'authcapture'   => $this->configHelper->getAutomaticCaptureMode($magentoStoreId),
                 'cartReference' => $cartReference,
-            ];
+                'magento_store_id' => $magentoStoreId,
+            ]);
 
             if (isset($cart['currency']) && $cart['currency']->currency) {
                 // cart data validation requirement
