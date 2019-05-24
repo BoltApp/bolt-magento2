@@ -157,6 +157,34 @@ class CartTest extends TestCase
             ->method('getQuote')
             ->willReturn($quote);
 
+        $this->searchCriteriaBuilder = $this->getMockBuilder(SearchCriteriaBuilder::class)
+            ->setMethods(['addFilter', 'create'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->searchCriteriaBuilder->expects($this->once())
+            ->method('addFilter')
+            ->withAnyParameters()
+            ->willReturnSelf();
+        $this->searchCriteriaBuilder->expects($this->once())
+            ->method('create')
+            ->willReturn($this->createMock(\Magento\Framework\Api\SearchCriteria::class));
+
+        $methods = ['getList', 'getItems', 'getForCustomer', 'getActive',
+            'getActiveForCustomer', 'save', 'delete', 'get'];
+        $this->quoteCartRepository = $this->getMockBuilder(QuoteCartRepository::class)
+            ->setMethods($methods)
+            ->disableOriginalConstructor()
+            ->disableOriginalClone()
+            ->getMock();
+
+        $this->quoteCartRepository->expects($this->any())
+            ->method('getList')
+            ->with($this->createMock(\Magento\Framework\Api\SearchCriteria::class))
+            ->willReturnSelf();
+        $this->quoteCartRepository->expects($this->any())
+            ->method('getItems')
+            ->willReturn($quote);
+
         $currentMock = new BoltHelperCart(
             $this->contextHelper,
             $this->checkoutSession,

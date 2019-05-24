@@ -557,7 +557,10 @@ $trackCallbacks = $block->getTrackCallbacks();
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
-                var parameters = 'reference='+transaction.reference;
+                var parameters = [];
+                parameters.push('form_key=' + $('[name="form_key"]').val());
+                parameters.push('reference=' + transaction.reference);
+                parameters = parameters.join('&');
                 // update order ajax request callback
                 // sets the success order page redirect url from received data
                 // and calls the final Bolt defined callback
@@ -655,7 +658,11 @@ $trackCallbacks = $block->getTrackCallbacks();
 
             if (!settings.prefetch_shipping || !cart.cartReference) return;
 
-            var params = 'cartReference='+cart.cartReference+'&total='+cart.total_amount.amount;
+            var params = [];
+
+            params.push('form_key=' + $('[name="form_key"]').val());
+            params.push('cartReference=' + cart.cartReference);
+            params.push('total=' + cart.total_amount.amount);
 
             // parse Estimate Shipping and Tax location fields
             var country  = $('select[name=country_id]').val(),
@@ -663,10 +670,13 @@ $trackCallbacks = $block->getTrackCallbacks();
                 postcode = $('input[name=postcode]').val();
 
             if (country && region && postcode) {
-                params += '&country='+country+'&region='+region+'&postcode='+postcode;
+                params.push('country=' + country);
+                params.push('region=' + region);
+                params.push('postcode=' + postcode);
             } else {
                 return;
             }
+            params = params.join('&');
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
@@ -687,6 +697,7 @@ $trackCallbacks = $block->getTrackCallbacks();
             // define the params sent with the request variable
             var params = [];
 
+            params.push('form_key=' + $('[name="form_key"]').val());
             params.push('store_id=' + magentoStoreId);
 
             // check and set payment_only flag
@@ -732,7 +743,6 @@ $trackCallbacks = $block->getTrackCallbacks();
                 }
             }
             params = params.join('&');
-            if (params === '') params = null;
 
             var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 

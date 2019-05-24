@@ -18,6 +18,9 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
+        <referenceContainer name="js">
+            <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml" />
+        </referenceContainer>
         <referenceBlock name="order_create_billing_form">
             <action method="setMethodFormTemplate">
                 <argument name="method" xsi:type="string">boltpay</argument>
