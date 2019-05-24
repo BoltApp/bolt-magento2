@@ -993,6 +993,22 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($this->discountHelper->isMirasvitStoreCreditAllowed($immutableQuote)){
+            $amount = $this->discountHelper->getMirasvitStoreCreditAmount($immutableQuote, $paymentOnly);
+            $roundedAmount = $this->getRoundAmount($amount);
+            $cart['discounts'][] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($immutableQuote->getUseRewardPoints()) {

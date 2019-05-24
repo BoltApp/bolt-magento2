@@ -17,4 +17,8 @@
             <argument name="magentoQuote" xsi:type="object">Magento\Backend\Model\Session\Quote</argument>
         </arguments>
     </type>
+
+    <type name="Mirasvit\Credit\Observer\QuotePaymentImportDataBefore">
+        <plugin name="Bolt_Boltpay_Mirasvit_Credit_QuotePaymentImportDataBefore_Plugin" type="Bolt\Boltpay\Plugin\MirasvitCreditQuotePaymentImportDataBeforePlugin" sortOrder="1" />
+    </type>
 </config>
