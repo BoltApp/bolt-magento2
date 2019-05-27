@@ -112,7 +112,11 @@ class Data extends Action
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
-            $responseData = json_decode(json_encode($response), true);
+            if ($response) {
+                $responseData = json_decode(json_encode($response), true);
+            } else {
+                $responseData['cart'] = [];
+            }
 
             // get immutable quote id stored with cart data
 //            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
