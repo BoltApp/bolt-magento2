@@ -696,11 +696,12 @@ class Order extends AbstractHelper
         try {
             $quote = $this->cartHelper->getQuoteById($quoteId);
         } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $magentoStoreId) {
                 $report->setMetaData([
                     'ORDER' => [
                         'incrementId' => $incrementId,
                         'quoteId' => $quoteId,
+                        'Magento StoreId' => $magentoStoreId
                     ]
                 ]);
             });

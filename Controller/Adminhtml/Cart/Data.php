@@ -118,6 +118,13 @@ class Data extends Action
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($magentoStoreId) {
+                $report->setMetaData([
+                    'ORDER' => [
+                        'Magento StoreId' => $magentoStoreId
+                    ]
+                ]);
+            });
             $this->bugsnag->notifyException($e);
             throw $e;
         }
