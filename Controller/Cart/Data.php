@@ -119,7 +119,6 @@ class Data extends Action
             }
 
             // get immutable quote id stored with cart data
-//            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
             list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
 
             $cart = array_merge($responseData['cart'], [

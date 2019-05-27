@@ -100,7 +100,10 @@ class Data extends Action
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
 
-            $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+            if ($boltpayOrder) {
+                $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+            }
+
             // format and send the response
             $cart = [
                 'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
