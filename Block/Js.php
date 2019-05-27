@@ -213,7 +213,7 @@ class Js extends Template
             'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout($storeId),
             'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice($storeId),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION, $param),
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION, $param),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping($storeId),

@@ -95,7 +95,7 @@ class Save extends Action
         try {
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
-            $magentoStoreId = $this->getRequest()->getParam('magento_store_id');
+            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, null, null, $magentoStoreId);
 

@@ -112,19 +112,22 @@ class Data extends Action
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
-            // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
+            $responseData = json_decode(json_encode($response), true);
 
-            $cart = array_merge((array) $response->cart, [
-                'orderToken'    => $response ? $response->token : '',
+            // get immutable quote id stored with cart data
+//            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
+            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+
+            $cart = array_merge($responseData['cart'], [
+                'orderToken'    => $response ? $responseData['token'] : '',
                 'authcapture'   => $this->configHelper->getAutomaticCaptureMode($magentoStoreId),
                 'cartReference' => $cartReference,
                 'magento_store_id' => $magentoStoreId,
             ]);
 
-            if (isset($cart['currency']) && $cart['currency']->currency) {
+            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
                 // cart data validation requirement
-                $cart['currency']->currency_code = $cart['currency']->currency;
+                $cart['currency']['currency_code'] = $cart['currency']['currency'];
             }
 
             $hints = $this->cartHelper->getHints($cartReference, 'cart');
