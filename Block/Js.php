@@ -205,6 +205,7 @@ class Js extends Template
     public function getSettings()
     {
         $storeId = $this->getMagentoStoreId();
+        $param = ['magento_sid' => $storeId]; // Magento Store Id
 
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
@@ -212,9 +213,9 @@ class Js extends Template
             'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout($storeId),
             'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice($storeId),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION, $param),
             'selectors'                => $this->getReplaceSelectors(),
-            'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
+            'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION, $param),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping($storeId),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
@@ -448,6 +449,8 @@ class Js extends Template
             $quote = $this->checkoutSession->getQuote();
         }
 
+        // TODO: need to check and add unit tests for case when we return null instead of zero!
+        // Several time i caught when quote was created but do not have store_id - it was null.
         return (int) (($quote && $quote->getStoreId()) ?
             $quote->getStoreId() : 0);
     }

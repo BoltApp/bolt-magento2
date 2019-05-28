@@ -162,6 +162,7 @@ class ShippingMethodsTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
+            ->withAnyParameters()
             ->willReturn(true);
         $this->configHelper->method('getIgnoredShippingAddressCoupons')
             ->willReturn([]);
@@ -574,7 +575,7 @@ class ShippingMethodsTest extends TestCase
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode'
+            'getQuoteCurrencyCode', 'getStoreId'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -583,6 +584,9 @@ class ShippingMethodsTest extends TestCase
 
         $quote->method('getId')
             ->willReturn($quoteId);
+        // TODO: need to cover multi-website cases where different store_id
+        $quote->method('getStoreId')
+            ->willReturn(null);
         $quote->method('getBoltParentQuoteId')
             ->willReturn($parentQuoteId);
         $quote->method('getSubtotal')

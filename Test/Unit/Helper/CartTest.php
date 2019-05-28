@@ -176,14 +176,13 @@ class CartTest extends TestCase
             ->disableOriginalConstructor()
             ->disableOriginalClone()
             ->getMock();
-
         $this->quoteCartRepository->expects($this->any())
             ->method('getList')
             ->with($this->createMock(\Magento\Framework\Api\SearchCriteria::class))
             ->willReturnSelf();
         $this->quoteCartRepository->expects($this->any())
             ->method('getItems')
-            ->willReturn($quote);
+            ->will($this->returnValue([$quote]));
 
         $currentMock = new BoltHelperCart(
             $this->contextHelper,
@@ -244,6 +243,7 @@ class CartTest extends TestCase
                 'email'=> "integration@bolt.com"
             ],
             'discounts' => [],
+            'magento_store_id' => 1,
             'total_amount' => 10000,
             'tax_amount' => 0
         ];
@@ -317,8 +317,9 @@ class CartTest extends TestCase
             ->willReturnSelf();
         $quote->method('getTotals')
             ->willReturn([]);
-        $quote->method('getStoreId')
-            ->willReturn(1);
+        $quote->expects($this->any())
+            ->method('getStoreId')
+            ->will($this->returnValue("1"));
         $quote->method('getUseRewardPoints')
             ->willReturn(false);
         $quote->method('getUseCustomerBalance')

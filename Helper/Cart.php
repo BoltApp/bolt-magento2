@@ -350,13 +350,13 @@ class Cart extends AbstractHelper
      * @param bool   $paymentOnly              flag that represents the type of checkout
      * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
+     * @param null|int    $storeId
      *
-     * @param int    $storeId
      * @return Response|void
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = 0)
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = null)
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
@@ -384,7 +384,7 @@ class Cart extends AbstractHelper
         $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
 
         // If storeId was missed through request, then try to get it from the session quote.
-        if (!$storeId && $this->checkoutSession->getQuote()) {
+        if ($storeId === null && $this->checkoutSession->getQuote()) {
             $storeId = $this->checkoutSession->getQuote()->getStoreId();
         }
 
@@ -411,13 +411,14 @@ class Cart extends AbstractHelper
     /**
      * Sign a payload using the Bolt endpoint
      *
-     * @param array $signRequest  payload to sign
+     * @param array     $signRequest payload to sign
+     * @param null|int  $storeId
      *
      * @return Response|int
      */
-    private function getSignResponse($signRequest)
+    private function getSignResponse($signRequest, $storeId = null)
     {
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -493,7 +494,7 @@ class Cart extends AbstractHelper
             $signRequest = [
                 'merchant_user_id' => $customer->getId(),
             ];
-            $signResponse = $this->getSignResponse($signRequest)->getResponse();
+            $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
 
             if ($signResponse) {
                 $hints['merchant_user_id'] = $signResponse->merchant_user_id;
@@ -1175,6 +1176,8 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
+        $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
+
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         $this->lastImmutableQuote = $immutableQuote;
@@ -1243,12 +1246,13 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
+     * @param null|int   $magentoStoreId
+     *
      * @return bool
      */
-    public function hasProductRestrictions($quote = null)
+    public function hasProductRestrictions($quote = null, $magentoStoreId = null)
     {
-
-        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        $toggleCheckout = $this->configHelper->getToggleCheckout($magentoStoreId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
             return false;
