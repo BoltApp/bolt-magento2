@@ -1494,7 +1494,7 @@ class Order extends AbstractHelper
 
     /**
      * @param string $incrementId
-     * @param bool   $forceLoad
+     * @param bool   $forceLoad - use it if needed to load data without cache.
      *
      * @return OrderInterface
      */
