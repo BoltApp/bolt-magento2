@@ -133,6 +133,11 @@ class OrderManagement implements OrderManagementInterface
 
             $this->logHelper->addInfoLog($this->request->getContent());
 
+            $orderStoreId = $this->orderHelper->getOrderStoreIdByDisplayId($display_id);
+            $this->hookHelper->setMagentoStoreId($orderStoreId);
+
+            $this->logHelper->addInfoLog('Order StoreId: ' . $orderStoreId);
+
             $this->hookHelper->setCommonMetaData();
             $this->hookHelper->setHeaders();
 
@@ -146,7 +151,8 @@ class OrderManagement implements OrderManagementInterface
             $this->orderHelper->saveUpdateOrder(
                 $reference,
                 $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                $type
+                $type,
+                $orderStoreId
             );
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([

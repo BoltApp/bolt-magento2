@@ -285,6 +285,7 @@ class Api extends AbstractHelper
         }
 
         if ($responseBody) {
+            // TODO: implement array instead of StdCalss.
             $resultFromJSON = json_decode($responseBody);
             $jsonError  = $this->handleJsonParseError();
             if ($jsonError != null) {

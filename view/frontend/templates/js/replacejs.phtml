@@ -560,6 +560,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 var parameters = [];
                 parameters.push('form_key=' + $('[name="form_key"]').val());
                 parameters.push('reference=' + transaction.reference);
+                parameters.push('magento_sid=' + magentoStoreId);
                 parameters = parameters.join('&');
                 // update order ajax request callback
                 // sets the success order page redirect url from received data
@@ -695,7 +696,7 @@ $trackCallbacks = $block->getTrackCallbacks();
             var params = [];
 
             params.push('form_key=' + $('[name="form_key"]').val());
-            params.push('store_id=' + magentoStoreId);
+            params.push('magento_sid=' + magentoStoreId);
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
