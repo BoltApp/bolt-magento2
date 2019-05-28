@@ -313,9 +313,6 @@ class ShippingMethods implements ShippingMethodsInterface
         try {
 //            $this->logHelper->addInfoLog($this->request->getContent());
 
-            // TODO: Temporally comment out.
-            //$this->preprocessHook();
-
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
