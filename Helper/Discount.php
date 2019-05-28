@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Model\Payment;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -25,6 +26,10 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use \Magento\Framework\Event\Observer;
+use \Magento\Backend\App\Area\FrontNameResolver;
+use \Magento\Framework\App\State as AppState;
+
 
 /**
  * Boltpay Discount helper class
@@ -82,6 +87,26 @@ class Discount extends AbstractHelper
     protected $unirgyCertRepository;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitStoreCreditHelper;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitStoreCreditCalculationHelper;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    private $mirasvitStoreCreditCalculationConfig;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitStoreCreditConfig;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -95,12 +120,13 @@ class Discount extends AbstractHelper
      * @var Bugsnag
      */
     private $bugsnag;
+    private $appState;
 
     /**
      * Discount constructor.
      *
-     * @param Context $context
-     * @param ResourceConnection $resource
+     * @param Context                 $context
+     * @param ResourceConnection      $resource
      * @param ThirdPartyModuleFactory $amastyAccountFactory
      * @param ThirdPartyModuleFactory $amastyGiftCardManagement
      * @param ThirdPartyModuleFactory $amastyQuoteFactory
@@ -108,9 +134,13 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyQuoteRepository
      * @param ThirdPartyModuleFactory $amastyAccountCollection
      * @param ThirdPartyModuleFactory $unirgyCertRepository
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param CartRepositoryInterface $quoteRepository
-     * @param ConfigHelper $configHelper
-     * @param Bugsnag $bugsnag
+     * @param ConfigHelper            $configHelper
+     * @param Bugsnag                 $bugsnag
      *
      * @codeCoverageIgnore
      */
@@ -124,9 +154,14 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyQuoteRepository,
         ThirdPartyModuleFactory $amastyAccountCollection,
         ThirdPartyModuleFactory $unirgyCertRepository,
+        ThirdPartyModuleFactory $mirasvitStoreCreditHelper,
+        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
+        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
+        ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        AppState $appState
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -137,9 +172,14 @@ class Discount extends AbstractHelper
         $this->amastyQuoteRepository = $amastyQuoteRepository;
         $this->amastyAccountCollection = $amastyAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
+        $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
+        $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
+        $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
+        $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
+        $this->appState = $appState;
     }
 
     /**
@@ -399,5 +439,99 @@ class Discount extends AbstractHelper
         }
 
         return (float) $result;
+    }
+
+    /**
+     * Check whether the Mirasvit Store Credit module is allowed for quote
+     *
+     * @param $quote
+     *
+     * @return bool
+     */
+    public function isMirasvitStoreCreditAllowed($quote)
+    {
+        if (!$this->mirasvitStoreCreditHelper->isAvailable()) {
+            return false;
+        }
+
+        return $quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditBalanceAmount($quote) > 0;
+    }
+
+    /**
+     * @param      $quote
+     *
+     * @param bool $paymentOnly
+     *
+     * @return float
+     */
+    public function getMirasvitStoreCreditAmount($quote, $paymentOnly = false)
+    {
+        $miravitBalanceAmount = $this->getMirasvitStoreCreditBalanceAmount($quote);
+        if(!$paymentOnly){
+            /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
+            $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
+            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()){
+                return $miravitBalanceAmount;
+            }
+        }
+
+        $unresolvedTotal = $quote->getGrandTotal() + $quote->getCreditAmountUsed();
+        $totals = $quote->getTotals();
+
+        $tax      = isset($totals['tax']) ? $totals['tax']->getValue() : 0;
+        $shipping = isset($totals['shipping']) ? $totals['shipping']->getValue() : 0;
+
+        $unresolvedTotal = $this->mirasvitStoreCreditCalculationHelper->getInstance()->calc($unresolvedTotal, $tax, $shipping);
+
+        return min($unresolvedTotal, $miravitBalanceAmount);
+    }
+
+    /**
+     * @param $quote
+     *
+     * @return float
+     */
+    protected function getMirasvitStoreCreditBalanceAmount($quote)
+    {
+        $balance = $this->mirasvitStoreCreditHelper
+                        ->getInstance()
+                        ->getBalance($quote->getCustomerId(), $quote->getQuoteCurrencyCode());
+
+        $amount = $balance->getAmount();
+        if ($quote->getQuoteCurrencyCode() !== $balance->getCurrencyCode()) {
+            $amount = $this->mirasvitStoreCreditCalculationHelper->getInstance()->convertToCurrency(
+                $amount,
+                $balance->getCurrencyCode(),
+                $quote->getQuoteCurrencyCode(),
+                $quote->getStore()
+            );
+        }
+
+        return $amount;
+    }
+
+    /**
+     * @param Observer $observer
+     *
+     * @return bool
+     */
+    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer){
+        if(!$this->mirasvitStoreCreditConfig->isAvailable()){
+            return false;
+        }
+
+        try {
+            $payment = $observer->getEvent()->getPayment();
+            $miravitConfig = $this->mirasvitStoreCreditConfig->getInstance();
+
+            if ($payment->getMethod() == Payment::METHOD_CODE &&
+                $this->appState->getAreaCode() == FrontNameResolver::AREA_CODE &&
+                $payment->getQuote()->getUseCredit() == $miravitConfig::USE_CREDIT_YES
+            ) {
+                return true;
+            }
+        }catch (\Exception $e){}
+
+        return false;
     }
 }
