@@ -282,6 +282,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode);
             }
 
+            // Apply Mageplaza_GiftCard
+            if (empty($giftCard)) {
+                // Load the gift card by code
+                $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode);
+            }
+
             // Check if the coupon and gift card does not exist.
             if ((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)) {
                 $this->sendErrorResponse(
@@ -632,6 +638,18 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $checkoutSession->getQuote(),
                     $this->quoteRepositoryForUnirgyGiftCert
                 );
+
+                $giftAmount = $giftCard->getBalance();
+            }elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
+                // Remove Mageplaza Gift Card if it was already applied
+                // to avoid errors on multiple calls to the discount validation API
+                // (e.g. changing the address, going back and forth)
+                $this->discountHelper->removeMageplazaGiftCard($giftCard->getId(), $immutableQuote);
+                $this->discountHelper->removeMageplazaGiftCard($giftCard->getId(), $parentQuote);
+
+                // Apply Mageplaza Gift Card to the parent quote
+                $this->discountHelper->applyMageplazaGiftCard($code, $immutableQuote);
+                $this->discountHelper->applyMageplazaGiftCard($code, $parentQuote);
 
                 $giftAmount = $giftCard->getBalance();
             } else {
