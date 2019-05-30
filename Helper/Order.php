@@ -25,6 +25,7 @@ use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
 use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
@@ -34,6 +35,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
@@ -177,6 +179,21 @@ class Order extends AbstractHelper
     private $timezone;
 
     /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
+     * @var OrderModel
+     */
+    private $orderData;
+
+    /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
@@ -243,6 +260,8 @@ class Order extends AbstractHelper
         OrderSender $emailSender,
         InvoiceService $invoiceService,
         InvoiceSender $invoiceSender,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        OrderRepository $orderRepository,
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
@@ -264,6 +283,8 @@ class Order extends AbstractHelper
         $this->invoiceSender = $invoiceSender;
         $this->transactionBuilder = $transactionBuilder;
         $this->timezone = $timezone;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->orderRepository = $orderRepository;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->appState = $appState;
         $this->logHelper = $logHelper;
@@ -277,21 +298,21 @@ class Order extends AbstractHelper
     /**
      * Fetch transaction details info
      *
-     * @api
-     *
      * @param string $reference
+     * @param        $magentoStoreId
      *
      * @return Response
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
+     *
+     * @api
      */
-    public function fetchTransactionInfo($reference)
+    public function fetchTransactionInfo($reference, $magentoStoreId = null)
     {
-
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
-        $requestData->setApiKey($this->configHelper->getApiKey());
+        $requestData->setApiKey($this->configHelper->getApiKey($magentoStoreId));
         $requestData->setRequestMethod('GET');
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
@@ -527,7 +548,7 @@ class Order extends AbstractHelper
 
         // check if the order has been created in the meanwhile
         /** @var OrderModel $order */
-        $order = $this->cartHelper->getOrderByIncrementId($quote->getReservedOrderId());
+        $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
 
         if ($order && $order->getId()) {
             throw new LocalizedException(__(
@@ -630,17 +651,17 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference Bolt transaction reference
-     * @param null $boltTraceId
-     * @param null $hookType
+     * @param null   $boltTraceId
+     * @param null   $hookType
+     * @param null|int   $magentoStoreId
      *
-     * @return mixed
-     * @throws \Exception
+     * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null)
+    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null, $magentoStoreId = null)
     {
-        $transaction = $this->fetchTransactionInfo($reference);
+        $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
 
         $parentQuoteId = $transaction->order->cart->order_reference;
 
@@ -650,11 +671,8 @@ class Order extends AbstractHelper
         // where only reserved_order_id was stored in display_id field
         // and the immutable quote_id in order_reference
         ///////////////////////////////////////////////////////////////
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $transaction->order->cart->display_id),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+
         if (!$quoteId) {
             $quoteId = $parentQuoteId;
         }
@@ -668,11 +686,12 @@ class Order extends AbstractHelper
         try {
             $quote = $this->cartHelper->getQuoteById($quoteId);
         } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $magentoStoreId) {
                 $report->setMetaData([
                     'ORDER' => [
                         'incrementId' => $incrementId,
                         'quoteId' => $quoteId,
+                        'Magento StoreId' => $magentoStoreId
                     ]
                 ]);
             });
@@ -681,7 +700,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
+        $order = $this->getOrderByIncrementId($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -1124,11 +1143,8 @@ class Order extends AbstractHelper
         }
 
         // Get the order and quote id
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $transaction->order->cart->display_id),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+
         if (!$quoteId) {
             $quoteId = $transaction->order->cart->order_reference;
         }
@@ -1301,7 +1317,8 @@ class Order extends AbstractHelper
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
-            $transaction = $this->fetchTransactionInfo($reference);
+            $magentoStoreId = ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+            $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
         } else {
             $reference = $transaction->reference;
         }
@@ -1650,5 +1667,61 @@ class Order extends AbstractHelper
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
+    }
+
+    /**
+     * @param $displayId
+     *
+     * @return array - [incrementId, quoteId]
+     */
+    public function getDataFromDisplayID($displayId)
+    {
+        return array_pad(
+            explode(' / ', $displayId),
+            2,
+            null
+        );
+    }
+
+    /**
+     * @param string $displayId
+     * @return int|null
+     */
+    public function getOrderStoreIdByDisplayId($displayId)
+    {
+        if (empty($displayId)) {
+            return null;
+        }
+
+        list($incrementId) = $this->getDataFromDisplayID($displayId);
+
+        if (empty($incrementId)) {
+            return null;
+        }
+        $order = $this->getOrderByIncrementId(trim($incrementId));
+
+        return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+    }
+
+    /**
+     * @param string $incrementId
+     * @param bool   $forceLoad - use it if needed to load data without cache.
+     *
+     * @return OrderInterface
+     */
+    public function getOrderByIncrementId($incrementId, $forceLoad = false)
+    {
+        if (($incrementId && !isset($this->orderData[$incrementId])) || $forceLoad) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('increment_id', $incrementId, 'eq')
+                ->create();
+            $collection = $this->orderRepository
+                ->getList($searchCriteria)
+                ->getItems();
+
+            return reset($collection);
+        } else {
+            return $this->orderData[$incrementId];
+        }
     }
 }

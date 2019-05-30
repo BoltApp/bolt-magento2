@@ -70,6 +70,10 @@ class Hook extends AbstractHelper
     /** @var Response */
     private $response;
 
+    /**
+     * @var null|int
+     */
+    private $magentoStoreId = null;
 
     /**
      * @param Context $context
@@ -118,7 +122,7 @@ class Hook extends AbstractHelper
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData(json_decode($payload));
         $requestData->setDynamicApiUrl(ApiHelper::API_VERIFY_SIGNATURE);
-        $requestData->setApiKey($this->configHelper->getApiKey());
+        $requestData->setApiKey($this->configHelper->getApiKey($this->getMagentoStoreId()));
 
         $headers = [
             self::HMAC_HEADER => $hmac_header
@@ -149,7 +153,7 @@ class Hook extends AbstractHelper
      */
     public function verifyWebhookSecret($payload, $hmac_header)
     {
-        $signing_secret = $this->configHelper->getSigningSecret();
+        $signing_secret = $this->configHelper->getSigningSecret($this->getMagentoStoreId());
         $computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
 
         return $computed_hmac == $hmac_header;
@@ -196,5 +200,21 @@ class Hook extends AbstractHelper
             'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
             'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
         ]);
+    }
+
+    /**
+     * @param null|int $magentoStoreId
+     */
+    public function setMagentoStoreId($magentoStoreId = null)
+    {
+        $this->magentoStoreId = $magentoStoreId;
+    }
+
+    /**
+     * @return null|int
+     */
+    public function getMagentoStoreId()
+    {
+        return $this->magentoStoreId;
     }
 }

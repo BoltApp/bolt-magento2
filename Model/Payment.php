@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Model;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-use Magento\Backend\Model\Auth\Session;
+use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -32,10 +32,12 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Framework\App\Area as AppArea;
 use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
+use Magento\Sales\Model\Order as ModelOrder;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -158,10 +160,17 @@ class Payment extends AbstractMethod
      */
     protected $transactionRepository;
 
-    protected $_areaCode;
+    /**
+     * @var string
+     */
+    protected $areaCode;
+    /**
+     * @var ModelOrder
+     */
+    protected $registryCurrentOrder;
 
     /**
-     * @var Session
+     * @var AuthSession
      */
     protected $authSession;
 
@@ -181,10 +190,11 @@ class Payment extends AbstractMethod
      * @param DataObjectFactory          $dataObjectFactory
      * @param CartHelper                 $cartHelper
      * @param TransactionRepository      $transactionRepository
-     * @param Session                    $authSession
+     * @param AuthSession                $authSession
      * @param AbstractResource           $resource
      * @param AbstractDb                 $resourceCollection
      * @param array                      $data
+     * @throws LocalizedException
      */
     public function __construct(
         Context $context,
@@ -202,7 +212,7 @@ class Payment extends AbstractMethod
         DataObjectFactory $dataObjectFactory,
         CartHelper $cartHelper,
         TransactionRepository $transactionRepository,
-        Session $authSession,
+        AuthSession $authSession,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
@@ -227,7 +237,8 @@ class Payment extends AbstractMethod
         $this->dataObjectFactory = $dataObjectFactory;
         $this->cartHelper = $cartHelper;
         $this->transactionRepository = $transactionRepository;
-        $this->_areaCode = $context->getAppState()->getAreaCode();
+        $this->areaCode = $context->getAppState()->getAreaCode();
+        $this->registryCurrentOrder = $registry->registry('current_order');
         $this->authSession = $authSession;
     }
 
@@ -305,7 +316,7 @@ class Payment extends AbstractMethod
      * Update transaction info if there is one placing transaction only
      *
      * @param InfoInterface $payment
-     * @param string        $transactionId
+     * @param string $transactionId
      *
      * @return array
      * @throws \Exception
@@ -339,7 +350,7 @@ class Payment extends AbstractMethod
      * Capture the authorized transaction through the gateway
      *
      * @param InfoInterface $payment
-     * @param float         $amount
+     * @param float $amount
      *
      * @return $this
      * @throws \Exception
@@ -407,7 +418,7 @@ class Payment extends AbstractMethod
      * Refund the amount
      *
      * @param DataObject|InfoInterface $payment
-     * @param float                    $amount
+     * @param float $amount
      *
      * @return $this
      * @throws \Exception
@@ -491,7 +502,7 @@ class Payment extends AbstractMethod
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         // check for product restrictions
-        if ($this->cartHelper->hasProductRestrictions($quote)) {
+        if ($this->cartHelper->hasProductRestrictions($quote, $quote->getStoreId())) {
             return false;
         }
         return parent::isAvailable();
@@ -499,9 +510,11 @@ class Payment extends AbstractMethod
 
     public function getTitle()
     {
-        if ($this->_areaCode === 'adminhtml') {
+        if ($this->areaCode === AppArea::AREA_ADMINHTML) {
             if ($this->getData('store')) {
                 $storeId = $this->getData('store');
+            } elseif ($this->registryCurrentOrder && $this->registryCurrentOrder->getStoreId()) {
+                $storeId = $this->registryCurrentOrder->getStoreId();
             } else {
                 $storeId = null;
             }
@@ -607,9 +620,12 @@ class Payment extends AbstractMethod
      */
     protected function updateReviewedOrderHistory(InfoInterface $payment, $review)
     {
-        $statusMessage = $review == self::DECISION_APPROVE ? 'Force approve order by %1 %2.' : 'Confirm order rejection by %1 %2.';
+        $statusMessage = ($review == self::DECISION_APPROVE) ?
+            'Force approve order by %1 %2.' : 'Confirm order rejection by %1 %2.';
+
         $adminUser = $this->authSession->getUser();
         $message = __($statusMessage, $adminUser->getFirstname(), $adminUser->getLastname());
+
         $order = $payment->getOrder();
         $order->addStatusHistoryComment($message);
         $order->save();

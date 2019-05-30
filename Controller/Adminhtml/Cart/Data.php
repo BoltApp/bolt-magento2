@@ -96,13 +96,17 @@ class Data extends Action
     {
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('store_id');
+            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
 
+            if ($boltpayOrder) {
+                $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+            }
+
             // format and send the response
             $cart = [
-                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
+                'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
                 'authcapture' => true
             ];
 
@@ -114,6 +118,13 @@ class Data extends Action
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($magentoStoreId) {
+                $report->setMetaData([
+                    'ORDER' => [
+                        'Magento StoreId' => $magentoStoreId
+                    ]
+                ]);
+            });
             $this->bugsnag->notifyException($e);
             throw $e;
         }

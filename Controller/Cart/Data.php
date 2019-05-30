@@ -91,7 +91,9 @@ class Data extends Action
         $result = $this->resultJsonFactory->create();
 
         try {
-            if ($this->cartHelper->hasProductRestrictions()) {
+            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
+
+            if ($this->cartHelper->hasProductRestrictions(null, $magentoStoreId)) {
                 throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
             }
 
@@ -104,25 +106,31 @@ class Data extends Action
             // additional data collected from the (one page checkout) page,
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload, $magentoStoreId);
 
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
+            if ($response) {
+                $responseData = json_decode(json_encode($response), true);
+            } else {
+                $responseData['cart'] = [];
+            }
+
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
+            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
 
-            $cart = (array)@$response->cart + [
-                'orderToken' => $response ? $response->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
+            $cart = array_merge($responseData['cart'], [
+                'orderToken'    => $response ? $responseData['token'] : '',
+                'authcapture'   => $this->configHelper->getAutomaticCaptureMode($magentoStoreId),
                 'cartReference' => $cartReference,
-            ];
+                'magento_store_id' => $magentoStoreId,
+            ]);
 
-            if (isset($cart['currency']) && $cart['currency']->currency) {
+            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
                 // cart data validation requirement
-                $cart['currency']->currency_code = $cart['currency']->currency;
+                $cart['currency']['currency_code'] = $cart['currency']['currency'];
             }
 
             $hints = $this->cartHelper->getHints($cartReference, 'cart');
