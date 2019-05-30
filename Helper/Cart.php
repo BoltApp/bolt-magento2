@@ -347,11 +347,12 @@ class Cart extends AbstractHelper
     /**
      * Get Bolt Order Caching flag configuration
      *
+     * @param null|int    $storeId             The ID of the Magento store
      * @return bool
      */
-    protected function isBoltOrderCachingEnabled()
+    protected function isBoltOrderCachingEnabled($storeId)
     {
-        return $this->configHelper->isBoltOrderCachingEnabled();
+        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
     }
 
     /**
@@ -509,8 +510,13 @@ class Cart extends AbstractHelper
             return;
         }
 
+        // If storeId was missed through request, then try to get it from the session quote.
+        if ($storeId === null) {
+            $storeId = $this->getSessionQuoteStoreId();
+        }
+
         // Try fetching data from cache
-        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled()) {
+        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
 
             $cacheIdentifier = $this->getCartCacheIdentifier($cart);
 
@@ -529,11 +535,6 @@ class Cart extends AbstractHelper
 
         // cache the session id
         $this->saveCartSession($cart);
-
-        // If storeId was missed through request, then try to get it from the session quote.
-        if ($storeId === null) {
-            $storeId = $this->getSessionQuoteStoreId();
-        }
 
         $boltOrder = $this->boltCreateOrder($cart, $storeId);
 

@@ -625,7 +625,12 @@ ORDER;
             ->willReturn($cart);
 
         $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
             ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
             ->willReturn(false);
 
         $mock->expects($this->never())
@@ -649,10 +654,6 @@ ORDER;
         $mock->expects($this->once())
             ->method('saveCartSession')
             ->with($cart);
-
-        $mock->expects($this->once())
-            ->method('getSessionQuoteStoreId')
-            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
@@ -683,7 +684,12 @@ ORDER;
             ->willReturn($cart);
 
         $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
             ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
             ->willReturn(true);
 
         $mock->expects($this->once())
@@ -710,10 +716,6 @@ ORDER;
         $mock->expects($this->once())
             ->method('saveCartSession')
             ->with($cart);
-
-        $mock->expects($this->once())
-            ->method('getSessionQuoteStoreId')
-            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
@@ -746,7 +748,12 @@ ORDER;
             ->willReturn($cart);
 
         $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
             ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
             ->willReturn(true);
 
         $mock->expects($this->once())
@@ -780,9 +787,6 @@ ORDER;
             ->method('saveCartSession');
 
         $mock->expects($this->never())
-            ->method('getSessionQuoteStoreId');
-
-        $mock->expects($this->never())
             ->method('boltCreateOrder');
 
         $mock->expects($this->never())
@@ -809,7 +813,12 @@ ORDER;
             ->willReturn($cart);
 
         $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
             ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
             ->willReturn(true);
 
         $mock->expects($this->once())
@@ -840,10 +849,6 @@ ORDER;
         $mock->expects($this->once())
             ->method('saveCartSession')
             ->with($cart);
-
-        $mock->expects($this->once())
-            ->method('getSessionQuoteStoreId')
-            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
