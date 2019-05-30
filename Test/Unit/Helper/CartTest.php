@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
-use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Log;
 use Magento\Catalog\Model\Product;
 use Magento\Quote\Model\Quote;
@@ -45,6 +44,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
+use Bolt\Boltpay\Model\Response;
 
 /**
  * Class ConfigTest
@@ -54,9 +54,12 @@ use Magento\Framework\App\CacheInterface;
 class CartTest extends TestCase
 {
     const QUOTE_ID = 1001;
-    const PARENT_QUOTEI_D = 1000;
+    const PARENT_QUOTE_ID = 1000;
     const PRODUCT_ID = 20102;
     const PRODUCT_PRICE = 100;
+    const ORDER_ID = 100010001;
+    const STORE_ID = 1;
+    const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
 
     private $contextHelper;
     private $checkoutSession;
@@ -215,7 +218,7 @@ class CartTest extends TestCase
         $result = $currentMock->getCartData($paymentOnly, $placeOrderPayload, $immutableQuote);
 
         $expected = [
-            'order_reference' => self::PARENT_QUOTEI_D,
+            'order_reference' => self::PARENT_QUOTE_ID,
             'display_id' => '100010001 / '.self::QUOTE_ID,
             'currency' => '$',
             'items' => [[
@@ -298,7 +301,7 @@ class CartTest extends TestCase
         $quote->method('getReservedOrderId')
             ->willReturn('100010001');
         $quote->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTEI_D);
+            ->willReturn(self::PARENT_QUOTE_ID);
         $quote->method('getSubtotal')
             ->willReturn(self::PRODUCT_PRICE);
         $quote->method('getAllVisibleItems')
@@ -441,5 +444,418 @@ class CartTest extends TestCase
             ->willReturn([]);
 
         return $product;
+    }
+
+    /**
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getHelperCartMock()
+    {
+        $methods = [
+            'getCartData',
+            'isBoltOrderCachingEnabled',
+            'getCartCacheIdentifier',
+            'loadFromCache',
+            'getImmutableQuoteIdFromBoltOrder',
+            'isQuoteAvailable',
+            'deleteQuote',
+            'getLastImmutableQuote',
+            'saveCartSession',
+            'getSessionQuoteStoreId',
+            'boltCreateOrder',
+            'saveToCache'
+        ];
+
+        $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
+
+        return $mock;
+    }
+
+    /**
+     * @return array
+     */
+    private function getCart()
+    {
+        $parentQuoteId = self::PARENT_QUOTE_ID;
+        $quoteId = self::QUOTE_ID;
+        $orderId = self::ORDER_ID;
+
+        $cart = <<<CART
+        {
+          "order_reference": "$parentQuoteId",
+          "display_id": "$orderId / $quoteId",
+          "total_amount": 50000,
+          "tax_amount": 1000,
+          "currency": "USD",
+          "items": [
+            {
+              "name": "Beaded Long Dress",
+              "reference": "123ABC",
+              "total_amount": 50000,
+              "unit_price": 50000,
+              "quantity": 1,
+              "image_url": "https://images.example.com/dress.jpg",
+              "type": "physical",
+              "properties": [
+                {
+                  "name": "color",
+                  "value": "blue"
+                }
+              ]
+            }
+          ],
+          "discounts": [
+            {
+              "amount": 1000,
+              "description": "10 dollars off",
+              "reference": "DISCOUNT-10",
+              "details_url": "http://example.com/info/discount-10"
+            }
+          ]
+        }
+CART;
+        $cart = json_decode($cart, true);
+
+        return $cart;
+    }
+
+    /**
+     * @return object
+     */
+    private function getOrder()
+    {
+        $parentQuoteId = self::PARENT_QUOTE_ID;
+        $quoteId = self::QUOTE_ID;
+        $orderId = self::ORDER_ID;
+
+        $order = <<<ORDER
+        {
+          "token": "f34fff50f8b89db7cbe867326404d782fb688bdd8b26ab3affe8c0ba22b2ced5",
+          "cart": {
+            "order_reference": "$parentQuoteId",
+            "display_id": "$orderId / $quoteId",
+            "subtotal_amount": null,
+            "total_amount": {
+              "amount": 50000,
+              "currency": "USD",
+              "currency_symbol": "$"
+            },
+            "tax_amount": {
+              "amount": 1000,
+              "currency": "USD",
+              "currency_symbol": "$"
+            },
+            "items": [
+              {
+                "reference": "",
+                "name": "Beaded Long Dress",
+                "total_amount": {
+                  "amount": 50000,
+                  "currency": "USD",
+                  "currency_symbol": "$"
+                },
+                "unit_price": {
+                  "amount": 50000,
+                  "currency": "USD",
+                  "currency_symbol": "$"
+                },
+                "quantity": 1,
+                "type": "physical"
+              }
+            ],
+            "shipments": [
+              {
+                "shipping_address": {
+                  "street_address1": "123 Baker Street",
+                  "locality": "San Francisco",
+                  "region": "California",
+                  "postal_code": "94550",
+                  "country_code": "US",
+                  "name": "John Doe",
+                  "first_name": "John",
+                  "last_name": "Doe"
+                },
+                "shipping_method": "unknown"
+              }
+            ],
+            "discounts": [
+              {
+                "amount": {
+                  "amount": 1000,
+                  "currency": "USD",
+                  "currency_symbol": "$"
+                },
+                "description": "10 dollars off",
+                "reference": "DISCOUNT-10",
+                "details_url": "http://example.com/info/discount-10"
+              }
+            ]
+          }
+        }
+ORDER;
+        $order = json_decode($order);
+
+        return $order;
+    }
+
+    /**
+     * @return Response
+     */
+    private function getBoltOrderResponse()
+    {
+        $order = $this->getOrder();
+        $boltOrderResponse = new \Bolt\Boltpay\Model\Response;
+        $boltOrderResponse->setResponse($order);
+        return $boltOrderResponse;
+    }
+
+    /**
+     * @test
+     */
+    public function testGetBoltpayOrderCachingDisabled()
+    {
+        $mock = $this->getHelperCartMock();
+
+        $cart = $this->getCart();
+        $boltOrder = $this->getBoltOrderResponse();
+
+        $mock->expects($this->once())
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
+
+        $mock->expects($this->once())
+            ->method('isBoltOrderCachingEnabled')
+            ->willReturn(false);
+
+        $mock->expects($this->never())
+            ->method('getCartCacheIdentifier');
+
+        $mock->expects($this->never())
+            ->method('loadFromCache');
+
+        $mock->expects($this->never())
+            ->method('getImmutableQuoteIdFromBoltOrder');
+
+        $mock->expects($this->never())
+            ->method('isQuoteAvailable');
+
+        $mock->expects($this->never())
+            ->method('getLastImmutableQuote');
+
+        $mock->expects($this->never())
+            ->method('deleteQuote');
+
+        $mock->expects($this->once())
+            ->method('saveCartSession')
+            ->with($cart);
+
+        $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
+
+        $mock->expects($this->never())
+            ->method('saveToCache');
+
+        $result = $mock->getBoltpayOrder(false, '');
+
+        $this->assertEquals($result, $boltOrder);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetBoltpayOrderNotCached()
+    {
+        $mock = $this->getHelperCartMock();
+
+        $cart = $this->getCart();
+        $boltOrder = $this->getBoltOrderResponse();
+
+        $mock->expects($this->once())
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
+
+        $mock->expects($this->once())
+            ->method('isBoltOrderCachingEnabled')
+            ->willReturn(true);
+
+        $mock->expects($this->once())
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
+
+        $mock->expects($this->once())
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn(false);
+
+        $mock->expects($this->never())
+            ->method('getImmutableQuoteIdFromBoltOrder');
+
+        $mock->expects($this->never())
+            ->method('isQuoteAvailable');
+
+        $mock->expects($this->never())
+            ->method('getLastImmutableQuote');
+
+        $mock->expects($this->never())
+            ->method('deleteQuote');
+
+        $mock->expects($this->once())
+            ->method('saveCartSession')
+            ->with($cart);
+
+        $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
+
+        $mock->expects($this->once())
+            ->method('saveToCache')
+            ->with($boltOrder, self::CACHE_IDENTIFIER, 3600);
+
+        $result = $mock->getBoltpayOrder(false, '');
+
+        $this->assertEquals($result, $boltOrder);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetBoltpayOrderCachedQuoteAvailable()
+    {
+        $mock = $this->getHelperCartMock();
+
+        $cart = $this->getCart();
+        $boltOrder = $this->getBoltOrderResponse();
+        $immutableQuote = $this->getQuoteMock($this->getBillingAddress(), $this->getShippingAddress());
+
+        $mock->expects($this->once())
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
+
+        $mock->expects($this->once())
+            ->method('isBoltOrderCachingEnabled')
+            ->willReturn(true);
+
+        $mock->expects($this->once())
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
+
+        $mock->expects($this->once())
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn($boltOrder);
+
+        $mock->expects($this->once())
+            ->method('getImmutableQuoteIdFromBoltOrder')
+            ->with($boltOrder)
+            ->willReturn(self::QUOTE_ID);
+
+        $mock->expects($this->once())
+            ->method('isQuoteAvailable')
+            ->with(self::QUOTE_ID)
+            ->willReturn(true);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($immutableQuote);
+
+        $mock->expects($this->once())
+            ->method('deleteQuote')
+            ->with($immutableQuote);
+
+        $mock->expects($this->never())
+            ->method('saveCartSession');
+
+        $mock->expects($this->never())
+            ->method('getSessionQuoteStoreId');
+
+        $mock->expects($this->never())
+            ->method('boltCreateOrder');
+
+        $mock->expects($this->never())
+            ->method('saveToCache');
+
+        $result = $mock->getBoltpayOrder(false, '');
+
+        $this->assertEquals($result, $boltOrder);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetBoltpayOrderCachedQuoteNotAvailable()
+    {
+        $mock = $this->getHelperCartMock();
+
+        $cart = $this->getCart();
+        $boltOrder = $this->getBoltOrderResponse();
+
+        $mock->expects($this->once())
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
+
+        $mock->expects($this->once())
+            ->method('isBoltOrderCachingEnabled')
+            ->willReturn(true);
+
+        $mock->expects($this->once())
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
+
+        $mock->expects($this->once())
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn($boltOrder);
+
+        $mock->expects($this->once())
+            ->method('getImmutableQuoteIdFromBoltOrder')
+            ->with($boltOrder)
+            ->willReturn(self::QUOTE_ID);
+
+        $mock->expects($this->once())
+            ->method('isQuoteAvailable')
+            ->with(self::QUOTE_ID)
+            ->willReturn(false);
+
+        $mock->expects($this->never())
+            ->method('getLastImmutableQuote');
+
+        $mock->expects($this->never())
+            ->method('deleteQuote');
+
+        $mock->expects($this->once())
+            ->method('saveCartSession')
+            ->with($cart);
+
+        $mock->expects($this->once())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects($this->once())
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
+
+        $mock->expects($this->once())
+            ->method('saveToCache')
+            ->with($boltOrder, self::CACHE_IDENTIFIER, 3600);
+
+        $result = $mock->getBoltpayOrder(false, '');
+
+        $this->assertEquals($result, $boltOrder);
     }
 }

@@ -416,12 +416,12 @@ class Cart extends AbstractHelper
     /**
      * Get store id from the session quote
      *
-     * @return int|bool
+     * @return int
      */
     protected function getSessionQuoteStoreId()
     {
         $sessionQuote = $this->checkoutSession->getQuote();
-        return $sessionQuote ? $sessionQuote->getStoreId() : false;
+        return $sessionQuote ? $sessionQuote->getStoreId() : null;
     }
 
     /**
@@ -445,9 +445,9 @@ class Cart extends AbstractHelper
 
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
-        $result  = $this->apiHelper->sendRequest($request);
+        $boltOrder  = $this->apiHelper->sendRequest($request);
 
-        return $result;
+        return $boltOrder;
     }
 
     /**
@@ -505,7 +505,6 @@ class Cart extends AbstractHelper
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
-
         if (!$cart) {
             return;
         }
@@ -532,8 +531,8 @@ class Cart extends AbstractHelper
         $this->saveCartSession($cart);
 
         // If storeId was missed through request, then try to get it from the session quote.
-        if (!$storeId === null && $sessionQuoteStoreId = $this->getSessionQuoteStoreId()) {
-            $storeId = $sessionQuoteStoreId;
+        if ($storeId === null) {
+            $storeId = $this->getSessionQuoteStoreId();
         }
 
         $boltOrder = $this->boltCreateOrder($cart, $storeId);
