@@ -57,6 +57,7 @@ class Cart extends AbstractHelper
 {
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
+    const BOLT_ORDER_TAG = 'Bolt_Order';
 
     /** @var CacheInterface */
     private $cache;
@@ -378,7 +379,7 @@ class Cart extends AbstractHelper
      * @param bool $serialize
      * @param array $tags
      */
-    protected function saveToCache($data, $identifier, $lifeTime = null, $serialize = true, $tags = [])
+    protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
     {
         $data = $serialize ? serialize($data) : $data;
         $this->cache->save($data, $identifier, $tags, $lifeTime);
@@ -407,11 +408,11 @@ class Cart extends AbstractHelper
     /**
      * Cache the session id for the quote
      *
-     * @param array $cart
+     * @param int|string $qouoteId
      */
-    protected function saveCartSession($cart)
+    protected function saveCartSession($qouoteId)
     {
-        $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
+        $this->sessionHelper->saveSession($qouoteId, $this->checkoutSession);
     }
 
     /**
@@ -434,7 +435,7 @@ class Cart extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    protected function boltCreateOrder($cart, $storeId)
+    protected function boltCreateOrder($cart, $storeId = null)
     {
         $apiKey = $this->configHelper->getApiKey($storeId);
 
@@ -534,13 +535,13 @@ class Cart extends AbstractHelper
         }
 
         // cache the session id
-        $this->saveCartSession($cart);
+        $this->saveCartSession($cart['order_reference']);
 
         $boltOrder = $this->boltCreateOrder($cart, $storeId);
 
         // cache Bolt order
         if ($isBoltOrderCachingEnabled) {
-            $this->saveToCache($boltOrder, $cacheIdentifier, 3600);
+            $this->saveToCache($boltOrder, $cacheIdentifier, [self::BOLT_ORDER_TAG], 3600);
         }
 
         return $boltOrder;

@@ -653,7 +653,7 @@ ORDER;
 
         $mock->expects($this->once())
             ->method('saveCartSession')
-            ->with($cart);
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
@@ -715,7 +715,7 @@ ORDER;
 
         $mock->expects($this->once())
             ->method('saveCartSession')
-            ->with($cart);
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
@@ -724,7 +724,7 @@ ORDER;
 
         $mock->expects($this->once())
             ->method('saveToCache')
-            ->with($boltOrder, self::CACHE_IDENTIFIER, 3600);
+            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
 
         $result = $mock->getBoltpayOrder(false, '');
 
@@ -848,7 +848,7 @@ ORDER;
 
         $mock->expects($this->once())
             ->method('saveCartSession')
-            ->with($cart);
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
             ->method('boltCreateOrder')
@@ -857,7 +857,7 @@ ORDER;
 
         $mock->expects($this->once())
             ->method('saveToCache')
-            ->with($boltOrder, self::CACHE_IDENTIFIER, 3600);
+            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
 
         $result = $mock->getBoltpayOrder(false, '');
 
