@@ -19,7 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Model\Api\DiscountCodeValidation as BoltDiscountCodeValidation;
 
-use Magento\Framework\Phrase;
+use Magento\SalesRule\Model\Rule;
+use Magento\SalesRule\Model\RuleRepository;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -28,7 +29,6 @@ use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 use Magento\SalesRule\Model\CouponFactory;
-use Magento\SalesRule\Model\RuleFactory;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
@@ -61,19 +61,9 @@ use Magento\Quote\Model\Quote\TotalsCollector;
 class DiscountCodeValidationTest extends TestCase
 {
     /**
-     * @var BoltDiscountCodeValidation
-     */
-    private $currentMock;    
-    
-    /**
      * @var CouponFactory
      */
     private $couponFactoryMock;
-    
-    /**
-     * @var RuleFactory
-     */
-    private $ruleFactoryMock;
     
     /**
      * @var UsageFactory
@@ -228,6 +218,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteId = 1000;
         $customerId = null;
         $couponCode = 'FIXED20';
+        $ruleId = 6;
         $request_data = (object) ( array(
             'discount_code' => $couponCode,
             'cart'  =>
@@ -255,24 +246,34 @@ class DiscountCodeValidationTest extends TestCase
         
         $this->moduleUnirgyGiftCertMock->method('getInstance')
             ->willReturn(null);
-        
-        $ruleFactoryMock = $this->getMockBuilder(RuleFactory::class)
-            ->setMethods(['create', 'load', 'isObjectNew', 'getId', 'getToDate', 'getFromDate', 'getDescription', 'getSimpleAction'])
+
+        $ruleMethods = ['getRuleId', 'getToDate', 'getFromDate', 'getDescription', 'getSimpleAction',
+                'getWebsiteIds'
+            ];
+        $ruleMock = $this->getMockBuilder(Rule::class)
+            ->setMethods($ruleMethods)
             ->disableOriginalConstructor()
             ->getMock();
-        $ruleFactoryMock->method('create')
-            ->willReturnSelf();
-        $ruleFactoryMock->method('load')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $ruleFactoryMock->method('isObjectNew')
-            ->willReturn(false);
-        $ruleFactoryMock->method('getId')
-            ->willReturn(6);            
-        $ruleFactoryMock->method('getDescription')
+        $ruleMock->method('getRuleId')
+            ->willReturn($ruleId);
+        $ruleMock->method('getDescription')
             ->willReturn('Simple discount code');
-        $ruleFactoryMock->method('getSimpleAction')
-            ->willReturn('cart_fixed');      
+        $ruleMock->method('getSimpleAction')
+            ->willReturn('cart_fixed');
+        $ruleMock->method('getFromDate')
+            ->willReturn(null);
+        $ruleMock->method('getWebsiteIds')
+            ->will($this->returnValue(['1']));
+
+        $ruleRepositoryMock = $this->getMockBuilder(RuleRepository::class)
+            ->setMethods(['getRuleId', 'getById'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ruleRepositoryMock->method('getRuleId')
+            ->willReturn($this->returnValue($ruleId));
+        $ruleRepositoryMock->method('getById')
+            ->with($ruleId)
+            ->willReturn($ruleMock);
             
         $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
             ->setMethods(['addData', 'setCollectShippingRates', 'setShippingMethod', 'getGroupedAllShippingRates',
@@ -303,13 +304,13 @@ class DiscountCodeValidationTest extends TestCase
             
         $this->cartHelper->method('getActiveQuoteById')
             ->will(
-                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId){
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
                     return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
                 })
             );
         $this->cartHelper->method('getQuoteById')
             ->will(
-                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId){
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
                     return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
                 })
             );
@@ -327,7 +328,7 @@ class DiscountCodeValidationTest extends TestCase
             $this->moduleUnirgyGiftCertHelperMock,
             $this->quoteRepositoryForUnirgyGiftCert,
             $this->checkoutSession,
-            $ruleFactoryMock,
+            $ruleRepositoryMock,
             $this->logHelper,
             $this->errorResponse,
             $this->usageFactoryMock,
@@ -404,26 +405,33 @@ class DiscountCodeValidationTest extends TestCase
                 ) )
         ) );
 
-        $ruleFactoryMock = $this->getMockBuilder(RuleFactory::class)
-            ->setMethods(['create', 'load', 'isObjectNew', 'getId', 'getToDate',
-                          'getFromDate', 'getDescription', 'getSimpleAction',
-                          'getConditions'])
+        $ruleMethods = ['getRuleId', 'getToDate', 'getFromDate', 'getDescription', 'getSimpleAction',
+            'getWebsiteIds'
+        ];
+        $ruleMock = $this->getMockBuilder(Rule::class)
+            ->setMethods($ruleMethods)
             ->disableOriginalConstructor()
             ->getMock();
-        $ruleFactoryMock->method('create')
-            ->willReturnSelf();
-        $ruleFactoryMock->method('load')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $ruleFactoryMock->method('isObjectNew')
-            ->willReturn(false);
-        $ruleFactoryMock->method('getId')
-            ->willReturn(6);            
-        $ruleFactoryMock->method('getDescription')
-            ->willReturn('freeshipping for fixed price shipping option');
-        $ruleFactoryMock->method('getSimpleAction')
+        $ruleMock->method('getRuleId')
+            ->willReturn(6);
+        $ruleMock->method('getDescription')
+            ->willReturn('Simple discount code');
+        $ruleMock->method('getSimpleAction')
             ->willReturn('cart_fixed');
-    
+        $ruleMock->method('getFromDate')
+            ->willReturn(null);
+        $ruleMock->method('getWebsiteIds')
+            ->will($this->returnValue(['1']));
+
+        $ruleRepositoryMock = $this->getMockBuilder(RuleRepository::class)
+            ->setMethods(['getRuleId', 'getById'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ruleRepositoryMock->method('getRuleId')
+            ->willReturn($this->returnValue(6));
+        $ruleRepositoryMock->method('getById')
+            ->with(6)
+            ->willReturn($ruleMock);
         
         // Add Shipping Method Condition
         $shippingCondMock = $this->getMockBuilder(AddressFactory::class)
@@ -431,16 +439,13 @@ class DiscountCodeValidationTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $shippingCondMock->method('getType')
-            ->willReturn('Magento\SalesRule\Model\Rule\Condition\Address');
+            ->willReturn(\Magento\SalesRule\Model\Rule\Condition\Address::class);
         $shippingCondMock->method('getAttribute')
             ->willReturn('shipping_method');
         $shippingCondMock->method('getOperator')
             ->willReturn('==');
         $shippingCondMock->method('getValue')
             ->willReturn('flatrate_flatrate');
-
-        $ruleFactoryMock->method('getConditions')
-            ->willReturn(array($shippingCondMock));
 
         $this->request->method('getContent')
             ->willReturn(json_encode($request_data));
@@ -459,7 +464,7 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn(null);
         
         $this->moduleUnirgyGiftCertMock->method('getInstance')
-            ->willReturn(null);    
+            ->willReturn(null);
             
         $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
             ->setMethods(['addData', 'setCollectShippingRates', 'setShippingMethod', 'getGroupedAllShippingRates',
@@ -490,13 +495,13 @@ class DiscountCodeValidationTest extends TestCase
             
         $this->cartHelper->method('getActiveQuoteById')
             ->will(
-                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId){
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
                     return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
                 })
             );
         $this->cartHelper->method('getQuoteById')
             ->will(
-                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId){
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
                     return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
                 })
             );
@@ -518,7 +523,7 @@ class DiscountCodeValidationTest extends TestCase
             $this->moduleUnirgyGiftCertHelperMock,
             $this->quoteRepositoryForUnirgyGiftCert,
             $this->checkoutSession,
-            $ruleFactoryMock,
+            $ruleRepositoryMock,
             $this->logHelper,
             $this->errorResponse,
             $this->usageFactoryMock,
@@ -532,13 +537,212 @@ class DiscountCodeValidationTest extends TestCase
             $this->discountHelper,
             $this->regionModel,
             $this->totalsCollector
-        );  
+        );
         $result = $currentMock->validate();
 
         // If another exception happens, the test will fail.
         $this->assertTrue($result);
     }
 
+    /**
+     * @test
+     */
+    public function validateWithIncorrectWebsiteId()
+    {
+        $quoteId = 1001;
+        $parentQuoteId = 1000;
+        $customerId = null;
+        $couponCode = 'BOLT_TEST';
+        $websiteId = '7';
+        $ruleId = 6;
+
+        $request_shipping_addr = (object) array(
+            'company' => "",
+            'country' => "United States",
+            'country_code' => "US",
+            'email' => "integration@bolt.com",
+            'first_name' => "YevhenBolt",
+            'last_name' => "BoltTest2",
+            'locality' => "New York",
+            'phone' => "+1 231 231 1234",
+            'postal_code' => "10001",
+            'region' => "New York",
+            'street_address1' => "228 5th Avenue",
+            'street_address2' => "",
+            'email_address'   => 'test@bolt.com',
+        );
+        $request_data = (object) ( array(
+            'discount_code' => $couponCode,
+            'cart'  =>
+                (object) ( array(
+                    'order_reference' => $quoteId,
+                    'display_id'      => '100050001 / '.$quoteId,
+                    'shipments'       =>
+                        array(
+                            0 =>
+                                (object) ( array(
+                                    'shipping_address' => $request_shipping_addr,
+                                    'shipping_method'  => 'unknown',
+                                    'service'          => 'Flat Rate - Fixed',
+                                    'cost'             =>
+                                        (object) ( array(
+                                            'amount'          => 500,
+                                            'currency'        => 'USD',
+                                            'currency_symbol' => '$',
+                                        ) ),
+                                    'tax_amount'       =>
+                                        (object) ( array(
+                                            'amount'          => 0,
+                                            'currency'        => 'USD',
+                                            'currency_symbol' => '$',
+                                        ) ),
+                                    'reference'        => 'flatrate_flatrate',
+                                ) ),
+                        ),
+                ) )
+        ) );
+
+        $ruleMethods = ['getRuleId', 'getToDate', 'getFromDate', 'getDescription', 'getSimpleAction',
+            'getWebsiteIds'
+        ];
+        $ruleMock = $this->getMockBuilder(Rule::class)
+            ->setMethods($ruleMethods)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ruleMock->method('getRuleId')
+            ->willReturn($ruleId);
+        $ruleMock->method('getDescription')
+            ->willReturn('Simple discount code');
+        $ruleMock->method('getSimpleAction')
+            ->willReturn('cart_fixed');
+        $ruleMock->method('getFromDate')
+            ->willReturn(null);
+        $ruleMock->method('getWebsiteIds')
+            ->will($this->returnValue([$websiteId]));
+
+        $ruleRepositoryMock = $this->getMockBuilder(RuleRepository::class)
+            ->setMethods(['getRuleId', 'getById'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ruleRepositoryMock->method('getRuleId')
+            ->willReturn($this->returnValue($ruleId));
+        $ruleRepositoryMock->method('getById')
+            ->with($ruleId)
+            ->willReturn($ruleMock);
+
+        // Add Shipping Method Condition
+        $shippingCondMock = $this->getMockBuilder(AddressFactory::class)
+            ->setMethods(['getType', 'getAttribute', 'getOperator', 'getValue'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $shippingCondMock->method('getType')
+            ->willReturn(\Magento\SalesRule\Model\Rule\Condition\Address::class);
+        $shippingCondMock->method('getAttribute')
+            ->willReturn('shipping_method');
+        $shippingCondMock->method('getOperator')
+            ->willReturn('==');
+        $shippingCondMock->method('getValue')
+            ->willReturn('flatrate_flatrate');
+
+        $this->request->method('getContent')
+            ->willReturn(json_encode($request_data));
+
+        $this->couponFactoryMock->method('isObjectNew')
+            ->willReturn(false);
+        $this->couponFactoryMock->method('getCouponId')
+            ->willReturn(3);
+        $this->couponFactoryMock->method('getId')
+            ->willReturn(3);
+        $this->couponFactoryMock->method('getRuleId')
+            ->willReturn($ruleId);
+        $this->couponFactoryMock->method('getUsageLimit')
+            ->willReturn(100);
+        $this->couponFactoryMock->method('getTimesUsed')
+            ->willReturn(null);
+
+        $this->moduleUnirgyGiftCertMock->method('getInstance')
+            ->willReturn(null);
+
+        $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
+            ->setMethods(['addData', 'setCollectShippingRates', 'setShippingMethod', 'getGroupedAllShippingRates',
+                'getShippingDiscountAmount', 'getShippingAmount', 'save'
+            ])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $shippingAddress->method('setShippingMethod')
+            ->withAnyParameters()
+            ->willReturnSelf();
+        $shippingAddress->method('save')
+            ->willReturnSelf();
+        $shippingAddress->method('setCollectShippingRates')
+            ->with(true)
+            ->willReturnSelf();
+        $shippingAddress->method('getShippingDiscountAmount')
+            ->willReturn('0');
+        $shippingAddress->method('getShippingAmount')
+            ->willReturn('5');
+
+        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $shippingRates =[['flatrate' => $addressRate]];
+        $shippingAddress->method('getGroupedAllShippingRates')
+            ->willReturn($shippingRates);
+
+        $this->cartHelper->method('getActiveQuoteById')
+            ->will(
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
+                    return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
+                })
+            );
+        $this->cartHelper->method('getQuoteById')
+            ->will(
+                $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
+                    return $this->getQuoteMock($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId);
+                })
+            );
+
+        $this->response = $this->getMockBuilder(Response::class)
+            ->setMethods(['sendErrorResponse'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->response->method('sendErrorResponse')
+            ->with(
+                BoltErrorResponse::ERR_CODE_INVALID,
+                'The coupon code '.$couponCode.' is not found',
+                404
+            )
+            ->willReturn(false);
+
+        $currentMock = new BoltDiscountCodeValidation(
+            $this->request,
+            $this->response,
+            $this->couponFactoryMock,
+            $this->moduleGiftCardAccountMock,
+            $this->moduleUnirgyGiftCertMock,
+            $this->moduleUnirgyGiftCertHelperMock,
+            $this->quoteRepositoryForUnirgyGiftCert,
+            $this->checkoutSession,
+            $ruleRepositoryMock,
+            $this->logHelper,
+            $this->errorResponse,
+            $this->usageFactoryMock,
+            $this->dataObjectFactoryMock,
+            $this->timezone,
+            $this->customerFactoryMock,
+            $this->bugsnag,
+            $this->cartHelper,
+            $this->configHelper,
+            $this->hookHelper,
+            $this->discountHelper,
+            $this->regionModel,
+            $this->totalsCollector
+        );
+        $result = $currentMock->validate();
+
+        $this->assertFalse($result);
+    }
 
     /**
      * Get quote mock with quote items
@@ -566,7 +770,7 @@ class DiscountCodeValidationTest extends TestCase
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
             'getQuoteCurrencyCode', 'getItemsCount', 'getCustomerId', 'setCouponCode',
-            'getCouponCode'
+            'getCouponCode', 'getStoreId', 'getStore', 'getWebsiteId', 'save'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -576,7 +780,7 @@ class DiscountCodeValidationTest extends TestCase
         $quote->method('getId')
             ->willReturn($quoteId);
         $quote->method('getBoltParentQuoteId')
-            ->willReturn($quoteId);
+            ->willReturn($parentQuoteId);
         $quote->method('getSubtotal')
             ->willReturn(100);
         $quote->method('getAllVisibleItems')
@@ -595,10 +799,20 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn(1);
         $quote->method('getCustomerId')
             ->willReturn($customerId);
-        $quote->method('setCouponCode')
+        $quote->expects($this->any())
+            ->method('setCouponCode')
+            ->with($couponCode)
             ->willReturnSelf();
         $quote->method('getCouponCode')
             ->willReturn($couponCode);
+        $quote->method('getStoreId')
+            ->willReturn(1);
+        $quote->method('getStore')
+            ->willReturnSelf();
+        $quote->method('getWebsiteId')
+            ->willReturn(1);
+        $quote->method('save')
+            ->willReturnSelf();
 
         return $quote;
     }
