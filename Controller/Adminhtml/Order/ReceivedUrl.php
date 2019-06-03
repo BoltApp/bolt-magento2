@@ -83,7 +83,7 @@ class ReceivedUrl extends Action
         $params = ['_secure' => true];
         if ($order) {
             $params['order_id'] = $order->getId();
-            $params['store_id'] = $order->getStoreId();
+            $params['magento_sid'] = $order->getStoreId();
         }
 
         return $this->_url->getUrl('sales/order/view', $params);

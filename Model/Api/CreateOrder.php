@@ -207,14 +207,14 @@ class CreateOrder implements CreateOrderInterface
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
             $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
-            $orderReference = $this->getOrderReference($order);
 
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
-                'total'      => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
+                'display_id'  => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
+                'total'       => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
+                'magento_sid' => $immutableQuote->getStoreId(),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -349,7 +349,14 @@ class CreateOrder implements CreateOrderInterface
 
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
-        $url = $urlInterface->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
+        $params = [];
+        if ($quote && $quote->getStoreId()) {
+            $storeId = $quote->getStoreId();
+            $params['magento_sid'] = $storeId;
+            $urlInterface->setScope($storeId);
+        }
+
+        $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
         $this->logHelper->addInfoLog('---> ' . $url);
 
         return $url;
