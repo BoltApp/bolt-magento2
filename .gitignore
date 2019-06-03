@@ -2,6 +2,6 @@
 .idea/
 
 # magento container files
-platform_containers/m2/magento-cloud
+docker-container/magento-cloud
 auth.json
 config.sh
