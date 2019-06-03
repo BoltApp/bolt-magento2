@@ -182,6 +182,10 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
+            $payload = $this->request->getContent();
+
+            $this->validateHook();
+
             if (empty($order)) {
                 throw new BoltException(
                     __('Missing order data.'),
@@ -190,13 +194,9 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $payload = $this->request->getContent();
-
             $quoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($quoteId);
-
-            $this->validateHook($immutableQuote->getStoreId());
 
             // Convert to stdClass
             $transaction = json_decode($payload);
@@ -266,17 +266,12 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param null $storeId
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    public function validateHook($storeId = null)
+    public function validateHook()
     {
         HookHelper::$fromBolt = true;
-
-        if ($storeId) {
-            $this->hookHelper->setMagentoStoreId($storeId);
-        }
 
         $this->hookHelper->setCommonMetaData();
         $this->hookHelper->setHeaders();
@@ -446,13 +441,7 @@ class CreateOrder implements CreateOrderInterface
                 $this->getQtyFromTransaction($transactionItem);
         }
 
-        $quoteSkus = array_map(
-            function ($item) {
-                return trim($item->getSku());
-            },
-            $quoteItems
-        );
-
+        $quoteSkus = array_map(function($item){return trim($item->getSku());}, $quoteItems);
         $transactionSkus = array_keys($transactionItemsSkuQty);
 
         if ($diff = $this->arrayDiff($quoteSkus, $transactionSkus)) {
@@ -469,44 +458,42 @@ class CreateOrder implements CreateOrderInterface
             $productId = $item->getProductId();
             $itemPrice = $this->cartHelper->getRoundAmount($item->getPrice());
 
-            $this->hasItemErrors($item);
+            $this->validateItemInventory($sku, $transactionItemsSkuQty[$sku], $productId);
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
     }
 
     /**
-     * Check if quote have errors.
-     *
-     * @param $quoteItem
-     * @return bool
+     * @param string $itemSku
+     * @param int $itemQty
+     * @param int $productId
      * @throws BoltException
+     * @throws NoSuchEntityException
      */
-    public function hasItemErrors($quoteItem)
+    public function validateItemInventory($itemSku, $itemQty, $productId)
     {
-        if (empty($quoteItem->getErrorInfos())) {
-            return true;
+        $stockItem = $this->stockRegistry->getStockItem($productId);
+
+        if (!$stockItem->getManageStock()) return;
+
+        $inStock = $stockItem->getIsInStock();
+        $stockQty = $stockItem->getQty();
+
+        if (!$inStock || $stockQty < $itemQty) {
+            $this->bugsnag->registerCallback(function ($report) use ($stockQty, $itemQty) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'stock.quantity' => $stockQty,
+                        'cart.quantity' => $itemQty,
+                    ]
+                ]);
+            });
+            throw new BoltException(
+                __('Item is out of stock. Item sku: ' . $itemSku . ' Stock qty: ' . $stockQty . ' Cart qty: ' . $itemQty),
+                null,
+                self::E_BOLT_ITEM_OUT_OF_INVENTORY
+            );
         }
-
-        $errorInfos = $quoteItem->getErrorInfos();
-        $message = '';
-        foreach ($errorInfos as $errorInfo) {
-            $message .= '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL;
-        }
-
-        $this->bugsnag->registerCallback(function ($report) use ($message) {
-            $report->setMetaData([
-                'Pre Auth' => [
-                    'quoteItem errors' => $message,
-                ]
-            ]);
-        });
-        throw new BoltException(
-            __($message),
-            null,
-            self::E_BOLT_GENERAL_ERROR
-        );
-
-        return false;
     }
 
     /**
