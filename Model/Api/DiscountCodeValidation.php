@@ -23,7 +23,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\SalesRule\Model\CouponFactory;
-use Magento\SalesRule\Model\RuleFactory;
+use Magento\SalesRule\Model\RuleRepository;
+use Magento\SalesRule\Model\Coupon;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
@@ -75,9 +76,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $moduleUnirgyGiftCert;
 
     /**
-     * @var RuleFactory
+     * @var RuleRepository
      */
-    protected $ruleFactory;
+    protected $ruleRepository;
 
     /**
      * @var LogHelper
@@ -169,7 +170,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
      * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
-     * @param RuleFactory             $ruleFactory
+     * @param RuleRepository          $ruleRepository
      * @param LogHelper               $logHelper
      * @param BoltErrorResponse       $errorResponse
      * @param UsageFactory            $usageFactory
@@ -193,7 +194,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
         CheckoutSession $checkoutSessionForUnirgyGiftCert,
-        RuleFactory $ruleFactory,
+        RuleRepository $ruleRepository,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
         UsageFactory $usageFactory,
@@ -216,7 +217,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
         $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
         $this->checkoutSessionForUnirgyGiftCert = $checkoutSessionForUnirgyGiftCert;
-        $this->ruleFactory = $ruleFactory;
+        $this->ruleRepository = $ruleRepository;
         $this->logHelper = $logHelper;
         $this->usageFactory = $usageFactory;
         $this->objectFactory = $objectFactory;
@@ -240,12 +241,61 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     public function validate()
     {
         try {
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
-
-            $this->hookHelper->verifyWebhook();
-
             $request = $this->getRequestContent();
+
+            // # Temporally solution until magento_sid was passed from request
+            $requestArray = json_decode(json_encode($request), true);
+            if (isset($requestArray['cart']['order_reference'])) {
+                $parentQuoteId = $requestArray['cart']['order_reference'];
+                $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
+                // check if the cart / quote exists and it is active
+                try {
+                    /** @var Quote $parentQuote */
+                    $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+
+                    // get parent quote id, order increment id and child quote id
+                    // the latter two are transmitted as display_id field, separated by " / "
+                    list($incrementId, $immutableQuoteId) = array_pad(
+                        explode(' / ', $displayId),
+                        2,
+                        null
+                    );
+
+                    // check if cart identification data is sent
+                    if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
+                        $this->sendErrorResponse(
+                            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                            'The order reference is invalid.',
+                            422
+                        );
+
+                        return false;
+                    }
+
+                } catch (\Exception $e) {
+                    $this->bugsnag->notifyException($e);
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        sprintf('The cart reference [%s] is not found.', $parentQuoteId),
+                        404
+                    );
+                    return false;
+                }
+            } else {
+                $this->bugsnag->notifyError(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'The cart.order_reference is not set or empty.'
+                );
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'The cart reference is not found.',
+                    404
+                );
+                return false;
+            }
+
+            $this->preProcessWebhook($parentQuote->getStoreId());
+            // # Temporally solution until magento_sid was passed from request
 
             // get the coupon code
             $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
@@ -299,26 +349,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return false;
             }
 
-            // get parent quote id, order increment id and child quote id
-            // the latter two are transmited as display_id field, separated by " / "
-            $parentQuoteId = $request->cart->order_reference;
-            list($incrementId, $immutableQuoteId) = array_pad(
-                explode(' / ', $request->cart->display_id),
-                2,
-                null
-            );
-
-            // check if cart identification data is sent
-            if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The order reference is invalid.',
-                    422
-                );
-
-                return false;
-            }
-
             // check if the order has already been created
             if ($this->cartHelper->getOrderByIncrementId($incrementId)) {
                 $this->sendErrorResponse(
@@ -327,20 +357,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     422
                 );
 
-                return false;
-            }
-
-            // check if the cart / quote exists and it is active
-            try {
-                /** @var Quote $parentQuote */
-                $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] is not found.', $parentQuoteId),
-                    404
-                );
                 return false;
             }
 
@@ -369,9 +385,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 return false;
             }
-            
-            // Set the shipment if request payload has that info. 
-            if(isset($request->cart->shipments[0]->reference)){
+
+            // Set the shipment if request payload has that info.
+            if (isset($request->cart->shipments[0]->reference)) {
                 $shippingAddress = $immutableQuote->getShippingAddress();
                 $address = $request->cart->shipments[0]->shipping_address;
                 $address = $this->cartHelper->handleSpecialAddressCases($address);
@@ -395,15 +411,17 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
                         
-                $shippingAddress->setShippingMethod($request->cart->shipments[0]->reference)
-                                ->setCollectShippingRates(true)
-                                ->collectShippingRates()->save();               
+                $shippingAddress
+                    ->setShippingMethod($request->cart->shipments[0]->reference)
+                    ->setCollectShippingRates(true)
+                    ->collectShippingRates()
+                    ->save();
             }
 
             if ($coupon && $coupon->getCouponId()) {
-                if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)){
+                if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
                     $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
-                }else{
+                } else {
                     $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
                 }
             } elseif ($giftCard && $giftCard->getId()) {
@@ -412,7 +430,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 throw new WebApiException(__('Something happened with current code.'));
             }
 
-            if (isset($result['status']) && $result['status'] === 'error') {
+            if (!$result || (isset($result['status']) && $result['status'] === 'error')) {
                 // Already sent a response with error, so just return.
                 return false;
             }
@@ -424,11 +442,19 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
-                @$immutableQuote
+                ($immutableQuote) ? $immutableQuote : null
             );
 
             return false;
         } catch (LocalizedException $e) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                500
+            );
+
+            return false;
+        } catch (\Exception $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -442,7 +468,17 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @return string
+     * @param null|int $magentoStoreId
+     * @throws LocalizedException
+     * @throws WebApiException
+     */
+    public function preProcessWebhook($magentoStoreId = null)
+    {
+        return $this->hookHelper->preProcessWebhook($magentoStoreId);
+    }
+
+    /**
+     * @return array
      */
     private function getRequestContent()
     {
@@ -452,40 +488,61 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $couponCode
-     * @param $coupon
-     * @param $immutableQuote
-     * @param $parentQuote
-     * @return array
+     * Applying coupon code to immutable and parent quote.
+     *
+     * @param string $couponCode
+     * @param Coupon $coupon
+     * @param Quote  $immutableQuote
+     * @param Quote  $parentQuote
+     *
+     * @return array|false
+     * @throws LocalizedException
      * @throws \Exception
      */
     private function applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote)
     {
         // get coupon entity id and load the coupon discount rule
         $couponId = $coupon->getId();
-        $rule = $this->ruleFactory->create()->load($coupon->getRuleId());
-
-        // check if the rule exists
-        if (empty($rule) || $rule->isObjectNew()) {
-            return $this->sendErrorResponse(
+        try {
+            /** @var \Magento\SalesRule\Model\Rule $rule */
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());
+        } catch (NoSuchEntityException $e) {
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_INVALID,
                 sprintf('The coupon code %s is not found', $couponCode),
                 404
             );
+
+             return false;
+        }
+        $websiteId = $parentQuote->getStore()->getWebsiteId();
+        $ruleWebsiteIDs = $rule->getWebsiteIds();
+
+        if (!in_array($websiteId, $ruleWebsiteIDs)) {
+            $this->logHelper->addInfoLog('Error: coupon from another website.');
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_CODE_INVALID,
+                sprintf('The coupon code %s is not found', $couponCode),
+                404
+            );
+
+            return false;
         }
 
         // get the rule id
-        $ruleId = $rule->getId();
+        $ruleId = $rule->getRuleId();
 
         // Check date validity if "To" date is set for the rule
         $date = $rule->getToDate();
         if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_EXPIRED,
                 sprintf('The code [%s] has expired.', $couponCode),
                 422,
                 $immutableQuote
             );
+
+            return false;
         }
 
         // Check date validity if "From" date is set for the rule
@@ -495,22 +552,26 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 new \DateTime($rule->getFromDate()),
                 \IntlDateFormatter::MEDIUM
             );
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
                 $desc,
                 422,
                 $immutableQuote
             );
+
+            return false;
         }
 
         // Check coupon usage limits.
         if ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                 sprintf('The code [%s] has exceeded usage limit.', $couponCode),
                 422,
                 $immutableQuote
             );
+
+            return false;
         }
 
         // Check per customer usage limits
@@ -524,24 +585,28 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $couponId
                 );
                 if ($couponUsage->getCouponId() && $couponUsage->getTimesUsed() >= $usagePerCustomer) {
-                    return $this->sendErrorResponse(
+                    $this->sendErrorResponse(
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                         sprintf('The code [%s] has exceeded usage limit.', $couponCode),
                         422,
                         $immutableQuote
                     );
+
+                    return false;
                 }
             }
             // rule per customer usage
             if ($usesPerCustomer = $rule->getUsesPerCustomer()) {
                 $ruleCustomer = $this->customerFactory->create()->loadByCustomerRule($customerId, $ruleId);
                 if ($ruleCustomer->getId() && $ruleCustomer->getTimesUsed() >= $usesPerCustomer) {
-                    return $this->sendErrorResponse(
+                    $this->sendErrorResponse(
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                         sprintf('The code [%s] has exceeded usage limit.', $couponCode),
                         422,
                         $immutableQuote
                     );
+
+                    return false;
                 }
             }
         }
@@ -553,33 +618,36 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $this->setCouponCode($immutableQuote, $couponCode);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 422,
                 $immutableQuote
             );
+
+            return false;
         }
 
         if ($immutableQuote->getCouponCode() != $couponCode) {
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 __('Coupon code does not equal with a quote code!'),
                 422,
                 $immutableQuote
             );
+            return false;
         }
 
         $address = $immutableQuote->isVirtual() ?
             $immutableQuote->getBillingAddress() :
             $immutableQuote->getShippingAddress();
-        $this->totalsCollector->collectAddressTotals($immutableQuote, $address); 
+        $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
-            'description'     => trim( __('Discount ') . $rule->getDescription() ),
+            'description'     => trim(__('Discount ') . $rule->getDescription()),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
 
@@ -666,12 +734,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            return $this->sendErrorResponse(
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 422,
                 $immutableQuote
             );
+
+            return false;
         }
 
         $result = [
@@ -706,10 +776,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param int    $errCode
-     * @param string $message
-     * @param int    $httpStatusCode
-     * @param null   $quote
+     * @param int        $errCode
+     * @param string     $message
+     * @param int        $httpStatusCode
+     * @param null|Quote $quote
+     *
+     * @return void
      * @throws \Exception
      */
     private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
@@ -770,8 +842,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param Quote $quote
+     * @param Quote  $quote
      * @param string $couponCode
+     * @throws \Exception
      */
     private function setCouponCode($quote, $couponCode)
     {
@@ -783,7 +856,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * Load the coupon data by code
      *
      * @param $couponCode
-     * @return mixed
+     *
+     * @return Coupon
      */
     private function loadCouponCodeData($couponCode)
     {
@@ -793,7 +867,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * Load the gift card data by code
      *
-     * @param $code
+     * @param string $code
+     *
      * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
      */
     public function loadGiftCardData($code)
@@ -823,7 +898,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $code
+     * @param string $code
+     *
      * @return null|\Unirgy\Giftcert\Model\Cert
      * @throws NoSuchEntityException
      */
@@ -855,9 +931,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $couponCode
-     * @param Quote $immutableQuote
-     * @param Quote $parentQuote
+     * @param string $couponCode
+     * @param Quote  $immutableQuote
+     * @param Quote  $parentQuote
+     *
      * @return bool
      */
     protected function shouldUseParentQuoteShippingAddressDiscount($couponCode, Quote $immutableQuote, Quote $parentQuote)
@@ -870,24 +947,26 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $parentQuote
-     * @param $coupon
-     * @param $couponCode
-     * @return array
+     * @param string $couponCode
+     * @param Quote  $parentQuote
+     * @param Coupon $coupon
+     *
+     * @return array|false
      * @throws \Exception
      */
     protected function getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote)
     {
-        // Load the coupon discount rule
-        $rule = $this->ruleFactory->create()->load($coupon->getRuleId());
-
-        // Check if the rule exists
-        if (empty($rule) || $rule->isObjectNew()) {
-            return $this->sendErrorResponse(
+        try {
+            // Load the coupon discount rule
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());
+        } catch (NoSuchEntityException $e) {
+            $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_INVALID,
                 sprintf('The coupon code %s is not found', $couponCode),
                 404
             );
+
+            return false;
         }
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
