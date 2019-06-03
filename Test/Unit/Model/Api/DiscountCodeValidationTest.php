@@ -683,7 +683,7 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn([]);
             
         $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
-            ->setMethods(['loadAmastyGiftCard', 'removeAmastyGiftCard', 'applyAmastyGiftCard', 'cloneAmastyGiftCards'])
+            ->setMethods(['loadMageplazaGiftCard', 'loadAmastyGiftCard', 'removeAmastyGiftCard', 'applyAmastyGiftCard', 'cloneAmastyGiftCards'])
             ->disableOriginalConstructor()
             ->getMock();
             
