@@ -175,7 +175,8 @@ class Cart extends AbstractHelper
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
-        Discount::GIFT_VOUCHER => ''
+        Discount::GIFT_VOUCHER => '',
+        Discount::MAGEPLAZA_GIFTCARD => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
@@ -1249,6 +1250,14 @@ class Cart extends AbstractHelper
                     $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
                 }
                 ///////////////////////////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////////////////////////////
+                // Change giftcards balance as discount amount to giftcard balances to the discount amount
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodesFromSession();
+                    $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
+                }
 
                 ///////////////////////////////////////////////////////////////////////////
                 /// Was added a proper Unirgy_Giftcert Amount to the discount.

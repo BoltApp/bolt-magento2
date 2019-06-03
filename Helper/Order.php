@@ -527,6 +527,9 @@ class Order extends AbstractHelper
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
 
+        // Check if Mageplaza Gift Card data exist and apply it to the parent quote
+        $this->discountHelper->applyMageplazaDiscountToQuote($quote);
+
         $this->setPaymentMethod($quote);
         $this->cartHelper->quoteResourceSave($quote);
 

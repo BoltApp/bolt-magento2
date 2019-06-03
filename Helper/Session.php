@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 
 /**
  * Boltpay Session helper
@@ -166,5 +167,14 @@ class Session extends AbstractHelper
             $this->customerSession->loginById($customerId);
         }
         $this->replaceQuote($quote);
+    }
+
+    /**
+     * @return AdminCheckoutSession|CheckoutSession
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getCheckoutSession()
+    {
+        return ($this->appState->getAreaCode() == Area::AREA_ADMINHTML) ? $this->adminCheckoutSession : $this->checkoutSession;
     }
 }
