@@ -1,0 +1,12 @@
+#VARIABLES
+m2Version="master"
+phpVersion="7.1"
+boltBranch="dev-develop"
+boltRepo="/Users/ewayda/Documents/GitHub/bolt-magento2"
+publicKey=#<PUBLIC_KEY>
+privateKey=#<PRIVATE_KEY>
+buildCompose=false
+localRepo=true
+boltApiKey=#<BOLT_API_KEY>
+boltSigningSecret=#<BOLT_SIGNING_SECRET>
+boltPublishableKey=#<BOLT_PUBLISHABLE_KEY>
