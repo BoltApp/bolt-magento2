@@ -1,2 +1,7 @@
 .DS_Store
 .idea/
+
+# magento container files
+platform_containers/m2/magento-cloud
+auth.json
+config.sh
