@@ -80,10 +80,9 @@ class ReceivedUrl extends Action
      */
     protected function getRedirectUrl($order = null)
     {
-        $storeId = null;
-        if ($order && $order->getStoreId()) {
-            $storeId = $order->getStoreId();
-        }
-        return $this->configHelper->getSuccessPageRedirect($storeId);
+        $storeId = ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+        $urlPath = $this->configHelper->getSuccessPageRedirect($storeId);
+
+        return $this->_url->getUrl($urlPath);
     }
 }

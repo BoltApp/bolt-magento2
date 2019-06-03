@@ -27,7 +27,6 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
 
 trait ReceivedUrl
 {

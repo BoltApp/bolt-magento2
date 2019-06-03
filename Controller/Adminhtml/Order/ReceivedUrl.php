@@ -80,6 +80,12 @@ class ReceivedUrl extends Action
      */
     protected function getRedirectUrl($order = null)
     {
-        return $this->_url->getUrl('sales/order/view', ['order_id' => $order->getId(), '_secure' => true]);
+        $params = ['_secure' => true];
+        if ($order) {
+            $params['order_id'] = $order->getId();
+            $params['store_id'] = $order->getStoreId();
+        }
+
+        return $this->_url->getUrl('sales/order/view', $params);
     }
 }
