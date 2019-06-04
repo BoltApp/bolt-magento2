@@ -231,6 +231,11 @@ class Config extends AbstractHelper
     const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
 
     /**
+     * Bolt Order Caching configuration path
+     */
+    const XML_PATH_BOLT_ORDER_CACHING = 'payment/boltpay/bolt_order_caching';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -1084,5 +1089,21 @@ class Config extends AbstractHelper
     public function getIgnoredShippingAddressCoupons()
     {
         return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons');
+    }
+
+    /**
+     * Get Bolt Order Caching flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function isBoltOrderCachingEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_BOLT_ORDER_CACHING,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
     }
 }
