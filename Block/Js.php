@@ -22,7 +22,7 @@ use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Backend\Model\Session\Quote as BackendSessionQuote;
+use Magento\Quote\Model\Quote;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -443,11 +443,8 @@ class Js extends Template
      */
     public function getMagentoStoreId()
     {
-        if ($this->checkoutSession instanceof BackendSessionQuote) {
-            $quote = $this->checkoutSession->getQuote();
-        } else {
-            $quote = $this->checkoutSession->getQuote();
-        }
+        /** @var Quote $quote */
+        $quote = $this->checkoutSession->getQuote();
 
         return ($quote && $quote->getStoreId()) ?
             (int) $quote->getStoreId() : null;
