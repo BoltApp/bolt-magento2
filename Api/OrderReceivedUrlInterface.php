@@ -30,8 +30,8 @@ interface OrderReceivedUrlInterface
      *
      * @api
      *
-     * @param mixed $blt_signature
-     * @param mixed $blt_payload
+     * @param string $bolt_signature
+     * @param string  $bolt_payload
      *
      * @return void
      */
