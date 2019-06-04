@@ -24,7 +24,8 @@ namespace Bolt\Boltpay\Api;
 interface OrderReceivedUrlInterface
 {
     /**
-     * Create order.
+     * Display order confirmation screen
+     *
      * Hook formats:
      * bolt_payload=<HASH>&bolt_signature=<SIGN>
      *
