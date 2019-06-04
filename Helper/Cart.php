@@ -46,6 +46,7 @@ use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Boltpay Cart helper
@@ -58,6 +59,7 @@ class Cart extends AbstractHelper
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
     const BOLT_ORDER_TAG = 'Bolt_Order';
+    const BOLT_ORDER_CACHE_LIFETIME = 3600; // one hour
 
     /** @var CacheInterface */
     private $cache;
@@ -189,6 +191,11 @@ class Cart extends AbstractHelper
     private $quotes = [];
 
     /**
+     * @var ResourceConnection $resource
+     */
+    private $resourceConnection;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductFactory    $productFactory
@@ -210,6 +217,7 @@ class Cart extends AbstractHelper
      * @param CheckoutHelper $checkoutHelper
      * @param DiscountHelper $discountHelper
      * @param CacheInterface $cache
+     * @param ResourceConnection $resourceConnection
      *
      * @codeCoverageIgnore
      */
@@ -234,7 +242,8 @@ class Cart extends AbstractHelper
         SessionHelper $sessionHelper,
         CheckoutHelper $checkoutHelper,
         DiscountHelper $discountHelper,
-        CacheInterface $cache
+        CacheInterface $cache,
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -257,6 +266,7 @@ class Cart extends AbstractHelper
         $this->checkoutHelper = $checkoutHelper;
         $this->discountHelper = $discountHelper;
         $this->cache = $cache;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -493,6 +503,33 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Update quote updated_at column
+     *
+     * @param int|string $quoteId
+     */
+    protected function updateQuoteTimestamp($quoteId)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $connection->beginTransaction();
+        try {
+            // get table name with prefix
+            $tableName = $this->resourceConnection->getTableName('quote');
+
+            $sql = "UPDATE {$tableName} SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id";
+            $bind = [
+                'entity_id' => $quoteId
+            ];
+
+            $connection->query($sql, $bind);
+
+            $connection->commit();
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $connection->rollBack();
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
      * Create order on bolt
      *
      * @param bool   $paymentOnly              flag that represents the type of checkout
@@ -528,7 +565,9 @@ class Cart extends AbstractHelper
 
                 // found in cache, check if the old immutable quote is still there
                 if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
+                    // update old immutable quote updated_at timestamp,
                     // delete the last quote and return cached order
+                    $this->updateQuoteTimestamp($immutableQuoteId);
                     $this->deleteQuote($this->getLastImmutableQuote());
                     return $boltOrder;
                 }
@@ -542,7 +581,12 @@ class Cart extends AbstractHelper
 
         // cache Bolt order
         if ($isBoltOrderCachingEnabled) {
-            $this->saveToCache($boltOrder, $cacheIdentifier, [self::BOLT_ORDER_TAG], 3600);
+            $this->saveToCache(
+                $boltOrder,
+                $cacheIdentifier,
+                [self::BOLT_ORDER_TAG],
+                self::BOLT_ORDER_CACHE_LIFETIME
+            );
         }
 
         return $boltOrder;
