@@ -45,6 +45,7 @@ use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\Response;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Class ConfigTest
@@ -83,6 +84,7 @@ class CartTest extends TestCase
     private $discountHelper;
     /** @var CacheInterface */
     private $cache;
+    private $resourceConnection;
 
     /**
      * @inheritdoc
@@ -141,6 +143,7 @@ class CartTest extends TestCase
         $this->checkoutHelper = $this->createMock(CheckoutHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->cache = $this->createMock(CacheInterface::class);
+        $this->resourceConnection = $this->createMock(ResourceConnection::class);
     }
 
     /**
@@ -208,7 +211,8 @@ class CartTest extends TestCase
             $this->sessionHelper,
             $this->checkoutHelper,
             $this->discountHelper,
-            $this->cache
+            $this->cache,
+            $this->resourceConnection
         );
 
         $paymentOnly = false;
@@ -463,7 +467,8 @@ class CartTest extends TestCase
             'saveCartSession',
             'getSessionQuoteStoreId',
             'boltCreateOrder',
-            'saveToCache'
+            'saveToCache',
+            'updateQuoteTimestamp'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
