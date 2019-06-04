@@ -66,9 +66,9 @@ trait ReceivedUrl
 
         $signature = base64_decode($boltSignature);
 
-        $magentoSavedSignature = $this->configHelper->getSigningSecret($magentoStoreId);
+        $magentoSavedSecret = $this->configHelper->getSigningSecret($magentoStoreId);
 
-        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSignature, true);
+        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSecret, true);
         $hash = base64_encode($hashBoltPayloadWithKey);
 
         if ($signature === $hash) {
