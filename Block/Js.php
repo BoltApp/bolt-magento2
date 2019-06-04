@@ -444,15 +444,13 @@ class Js extends Template
     public function getMagentoStoreId()
     {
         if ($this->checkoutSession instanceof BackendSessionQuote) {
-            $quote = $this->checkoutSession;
+            $quote = $this->checkoutSession->getQuote();
         } else {
             $quote = $this->checkoutSession->getQuote();
         }
 
-        // TODO: need to check and add unit tests for case when we return null instead of zero!
-        // Several time i caught when quote was created but do not have store_id - it was null.
-        return (int) (($quote && $quote->getStoreId()) ?
-            $quote->getStoreId() : 0);
+        return ($quote && $quote->getStoreId()) ?
+            (int) $quote->getStoreId() : null;
     }
 
     /**
