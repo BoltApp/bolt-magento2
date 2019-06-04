@@ -35,6 +35,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
@@ -485,18 +486,28 @@ class CreateOrder implements CreateOrderInterface
         foreach ($errorInfos as $errorInfo) {
             $message .= '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL;
         }
+        $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 
-        $this->bugsnag->registerCallback(function ($report) use ($message) {
+        $this->bugsnag->registerCallback(function ($report) use ($message, $errorCode) {
             $report->setMetaData([
                 'Pre Auth' => [
                     'quoteItem errors' => $message,
+                    'Error Code' => $errorCode
                 ]
             ]);
         });
+
+        $boltErrorCode = self::E_BOLT_GENERAL_ERROR;
+        if ($errorCode && ($errorCode === CatalogInventoryData::ERROR_QTY
+                || $errorCode === CatalogInventoryData::ERROR_QTY_INCREMENTS)
+        ) {
+            $boltErrorCode = self::E_BOLT_ITEM_OUT_OF_INVENTORY;
+        }
+
         throw new BoltException(
             __($message),
             null,
-            self::E_BOLT_GENERAL_ERROR
+            $boltErrorCode
         );
 
         return false;
