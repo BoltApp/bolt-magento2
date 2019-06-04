@@ -30,9 +30,9 @@ interface CreateOrderInterface
      *
      * @api
      *
-     * @param mixed $type
-     * @param mixed $order
-     * @param mixed $currency
+     * @param string $type
+     * @param array  $order
+     * @param string $currency
      *
      * @return void
      */

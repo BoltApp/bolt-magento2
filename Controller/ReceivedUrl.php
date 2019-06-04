@@ -72,8 +72,6 @@ trait ReceivedUrl
         $hash = base64_encode($hashBoltPayloadWithKey);
 
         if ($signature === $hash) {
-            // Seems that hook from Bolt.
-
             try {
                 $payload = base64_decode($boltPayload);
                 $incrementId = $this->getIncrementIdFromPayload($payload);
