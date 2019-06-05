@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Api;
 
 /**
  * Create Order interface.
+ *
  * @api
  */
 interface CreateOrderInterface
@@ -31,7 +32,7 @@ interface CreateOrderInterface
      * @api
      *
      * @param string $type
-     * @param array  $order
+     * @param mixed  $order - which contain token and cart nodes.
      * @param string $currency
      *
      * @return void

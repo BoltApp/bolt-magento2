@@ -161,13 +161,8 @@ class CreateOrder implements CreateOrderInterface
      * Pre-Auth hook: Create order.
      *
      * @api
-     *
-     * @param string $type - "order.create"
-     * @param array $order
-     * @param string $currency
-     *
-     * @return void
-     * @throws \Exception
+     * @inheritDoc
+     * @see CreateOrderInterface
      */
     public function execute(
         $type = null,
@@ -208,7 +203,6 @@ class CreateOrder implements CreateOrderInterface
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
             $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
-            $orderReference = $this->getOrderReference($order);
 
             $this->sendResponse(200, [
                 'status'    => 'success',
@@ -350,7 +344,13 @@ class CreateOrder implements CreateOrderInterface
 
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
-        $url = $urlInterface->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
+        $params = ['_secure' => true];
+        if ($quote->getStoreId()) {
+            $storeId = $quote->getStoreId();
+            $params['magento_sid'] = $storeId;
+            $urlInterface->setScope($storeId);
+        }
+        $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
         $this->logHelper->addInfoLog('---> ' . $url);
 
         return $url;
