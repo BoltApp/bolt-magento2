@@ -18,11 +18,14 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-        <referenceBlock name="order_create_billing_form">
-            <action method="setMethodFormTemplate">
-                <argument name="method" xsi:type="string">boltpay</argument>
-                <argument name="template" xsi:type="string">Bolt_Boltpay::boltpay/button.phtml</argument>
-            </action>
+        <!--
+            Do not remove it or move to another place. This part work with payment section directly
+            and it is avoid many problems with incorrect store_id determination for admin side.
+        -->
+        <referenceBlock name="data">
+            <container name="additional_area">
+                <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml" />
+            </container>
         </referenceBlock>
     </body>
 </page>

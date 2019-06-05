@@ -450,7 +450,9 @@ require([
         var params = [];
 
         params.push('form_key=' + $('[name="form_key"]').val());
-        params.push('magento_sid=' + magentoStoreId);
+        if (!isNaN(magentoStoreId)) {
+            params.push('magento_sid=' + magentoStoreId);
+        }
         params.push('payment_only=true');
         params = params.join('&');
 
