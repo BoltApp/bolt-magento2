@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 
 /**
@@ -196,5 +197,14 @@ class Session extends AbstractHelper
     {
         $cacheIdentifier = self::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId();
         $this->cache->save($this->formKey->getFormKey(), $cacheIdentifier, [], 14400);
+    }
+
+    /**
+     * @return AdminCheckoutSession|CheckoutSession
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function getCheckoutSession()
+    {
+        return ($this->appState->getAreaCode() == Area::AREA_ADMINHTML) ? $this->adminCheckoutSession : $this->checkoutSession;
     }
 }

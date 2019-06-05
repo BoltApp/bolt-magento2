@@ -45,6 +45,8 @@ class Discount extends AbstractHelper
     const GIFT_VOUCHER = 'giftvoucher';
     const GIFT_CARD_ACCOUNT = 'giftcardaccount';
     const UNIRGY_GIFT_CERT = 'ugiftcert';
+    const MAGEPLAZA_GIFTCARD = 'gift_card';
+    const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
 
     /**
      * @var ResourceConnection $resource
@@ -80,6 +82,16 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     protected $amastyAccountCollection;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mageplazaGiftCardCollection;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mageplazaGiftCardFactory;
 
     /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
@@ -123,6 +135,11 @@ class Discount extends AbstractHelper
     private $appState;
 
     /**
+     * @var Session
+     */
+    private $sessionHelper;
+
+    /**
      * Discount constructor.
      *
      * @param Context                 $context
@@ -158,10 +175,13 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
+        ThirdPartyModuleFactory $mageplazaGiftCardCollection,
+        ThirdPartyModuleFactory $mageplazaGiftCardFactory,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
-        AppState $appState
+        AppState $appState,
+        Session $sessionHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -176,10 +196,13 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
+        $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
+        $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
         $this->appState = $appState;
+        $this->sessionHelper = $sessionHelper;
     }
 
     /**
@@ -533,5 +556,145 @@ class Discount extends AbstractHelper
         }catch (\Exception $e){}
 
         return false;
+    }
+
+    /**
+     * Check whether the Mageplaza Gift Card module is available (installed end enabled)
+     * @return bool
+     */
+    public function isMageplazaGiftCardAvailable()
+    {
+        return $this->mageplazaGiftCardFactory->isAvailable();
+    }
+
+    /**
+     * Load Magplaza Gift Card account object.
+     * @param string $code Gift Card coupon code
+     * @return \Mageplaza\GiftCard\Model\GiftCard|null
+     */
+    public function loadMageplazaGiftCard($code)
+    {
+        if (!$this->isMageplazaGiftCardAvailable()) {
+            return null;
+        }
+
+        try {
+            $accountModel = $this->mageplazaGiftCardFactory->getInstance()
+                ->load($code, 'code');
+            return $accountModel && $accountModel->getId() ? $accountModel : null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get Mageplaza GiftCard Codes From the Session
+     *
+     * @param $quote
+     * @return array
+     */
+    public function getMageplazaGiftCardCodesFromSession()
+    {
+        $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
+
+        return isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ? array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
+    }
+
+    /**
+     * Get accumulated balance of all applied Mageplaza Gift Cards
+     *
+     * @param $giftCardCodes
+     * @return float
+     */
+    public function getMageplazaGiftCardCodesCurrentValue($giftCardCodes)
+    {
+        $data = $this->mageplazaGiftCardCollection
+            ->getInstance()
+            ->addFieldToFilter('code', ['in' => $giftCardCodes])
+            ->getData();
+
+        return array_sum(array_column($data, 'balance'));
+    }
+
+    /**
+     * Remove Mageplaza Gift Card and update quote totals
+     *
+     * @param int $codeId
+     * @param Quote $quote
+     */
+    public function removeMageplazaGiftCard($codeId, $quote)
+    {
+        if (! $this->isMageplazaGiftCardAvailable()) {
+            return;
+        }
+
+        try {
+            $accountModel = $this->mageplazaGiftCardFactory->getInstance()
+                ->load($codeId);
+
+            $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
+            $code = $accountModel->getCode();
+
+            if($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
+                unset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code]);
+                $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
+                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, NULL);
+                $this->updateTotals($quote);
+            }
+
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Apply Mageplaza Gift Card coupon to cart
+     *
+     * @param $code
+     * @param $quote
+     * @return int|void
+     */
+    public function applyMageplazaGiftCard($code, $quote)
+    {
+        if (! $this->isMageplazaGiftCardAvailable()) {
+            return;
+        }
+
+        try {
+            $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
+            $giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code] = 0;
+            $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
+            $this->updateTotals($quote);
+            $totals = $quote->getTotals();
+            return isset($totals[self::MAGEPLAZA_GIFTCARD]) ? $totals[self::MAGEPLAZA_GIFTCARD]->getValue() : 0;
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Apply Mageplaza Gift Card to the quote
+     *
+     * @param $quote
+     */
+    public function applyMageplazaDiscountToQuote($quote)
+    {
+        if (! $this->isMageplazaGiftCardAvailable()) {
+            return;
+        }
+
+        try {
+            if ($mpGiftCards = $quote->getData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY)) {
+                foreach (json_decode($mpGiftCards, true) as $couponCode => $amount) {
+                    $giftCard = $this->loadMageplazaGiftCard($couponCode);
+                    if ($giftCard && $giftCard->getId()) {
+                        $this->removeMageplazaGiftCard($giftCard->getId(), $quote);
+                        $this->applyMageplazaGiftCard($giftCard->getCode(), $quote);
+                    }
+                }
+            }
+        }catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
     }
 }

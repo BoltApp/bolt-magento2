@@ -35,6 +35,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
@@ -182,10 +183,6 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $payload = $this->request->getContent();
-
-            $this->validateHook();
-
             if (empty($order)) {
                 throw new BoltException(
                     __('Missing order data.'),
@@ -194,9 +191,13 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
+            $payload = $this->request->getContent();
+
             $quoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($quoteId);
+
+            $this->validateHook($immutableQuote->getStoreId());
 
             // Convert to stdClass
             $transaction = json_decode($payload);
@@ -207,14 +208,14 @@ class CreateOrder implements CreateOrderInterface
 
             /** @var \Magento\Sales\Model\Order $createOrderData */
             $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
+            $orderReference = $this->getOrderReference($order);
 
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id'  => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
-                'total'       => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
+                'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
+                'total'      => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
-                'magento_sid' => $immutableQuote->getStoreId(),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -266,12 +267,17 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
+     * @param null $storeId
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    public function validateHook()
+    public function validateHook($storeId = null)
     {
         HookHelper::$fromBolt = true;
+
+        if ($storeId) {
+            $this->hookHelper->setMagentoStoreId($storeId);
+        }
 
         $this->hookHelper->setCommonMetaData();
         $this->hookHelper->setHeaders();
@@ -344,14 +350,7 @@ class CreateOrder implements CreateOrderInterface
 
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
-        $params = [];
-        if ($quote && $quote->getStoreId()) {
-            $storeId = $quote->getStoreId();
-            $params['magento_sid'] = $storeId;
-            $urlInterface->setScope($storeId);
-        }
-
-        $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
+        $url = $urlInterface->getUrl('boltpay/order/receivedurl', ['_secure' => true]);
         $this->logHelper->addInfoLog('---> ' . $url);
 
         return $url;
@@ -441,7 +440,13 @@ class CreateOrder implements CreateOrderInterface
                 $this->getQtyFromTransaction($transactionItem);
         }
 
-        $quoteSkus = array_map(function($item){return trim($item->getSku());}, $quoteItems);
+        $quoteSkus = array_map(
+            function ($item) {
+                return trim($item->getSku());
+            },
+            $quoteItems
+        );
+
         $transactionSkus = array_keys($transactionItemsSkuQty);
 
         if ($diff = $this->arrayDiff($quoteSkus, $transactionSkus)) {
@@ -458,42 +463,54 @@ class CreateOrder implements CreateOrderInterface
             $productId = $item->getProductId();
             $itemPrice = $this->cartHelper->getRoundAmount($item->getPrice());
 
-            $this->validateItemInventory($sku, $transactionItemsSkuQty[$sku], $productId);
+            $this->hasItemErrors($item);
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
     }
 
     /**
-     * @param string $itemSku
-     * @param int $itemQty
-     * @param int $productId
+     * Check if quote have errors.
+     *
+     * @param $quoteItem
+     * @return bool
      * @throws BoltException
-     * @throws NoSuchEntityException
      */
-    public function validateItemInventory($itemSku, $itemQty, $productId)
+    public function hasItemErrors($quoteItem)
     {
-        $stockItem = $this->stockRegistry->getStockItem($productId);
-
-        if (!$stockItem->getManageStock()) return;
-
-        $inStock = $stockItem->getIsInStock();
-        $stockQty = $stockItem->getQty();
-
-        if (!$inStock || $stockQty < $itemQty) {
-            $this->bugsnag->registerCallback(function ($report) use ($stockQty, $itemQty) {
-                $report->setMetaData([
-                    'Pre Auth' => [
-                        'stock.quantity' => $stockQty,
-                        'cart.quantity' => $itemQty,
-                    ]
-                ]);
-            });
-            throw new BoltException(
-                __('Item is out of stock. Item sku: ' . $itemSku . ' Stock qty: ' . $stockQty . ' Cart qty: ' . $itemQty),
-                null,
-                self::E_BOLT_ITEM_OUT_OF_INVENTORY
-            );
+        if (empty($quoteItem->getErrorInfos())) {
+            return true;
         }
+
+        $errorInfos = $quoteItem->getErrorInfos();
+        $message = '';
+        foreach ($errorInfos as $errorInfo) {
+            $message .= '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL;
+        }
+        $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
+
+        $this->bugsnag->registerCallback(function ($report) use ($message, $errorCode) {
+            $report->setMetaData([
+                'Pre Auth' => [
+                    'quoteItem errors' => $message,
+                    'Error Code' => $errorCode
+                ]
+            ]);
+        });
+
+        $boltErrorCode = self::E_BOLT_GENERAL_ERROR;
+        if ($errorCode && ($errorCode === CatalogInventoryData::ERROR_QTY
+                || $errorCode === CatalogInventoryData::ERROR_QTY_INCREMENTS)
+        ) {
+            $boltErrorCode = self::E_BOLT_ITEM_OUT_OF_INVENTORY;
+        }
+
+        throw new BoltException(
+            __($message),
+            null,
+            $boltErrorCode
+        );
+
+        return false;
     }
 
     /**

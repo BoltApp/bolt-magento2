@@ -217,4 +217,20 @@ class Hook extends AbstractHelper
     {
         return $this->magentoStoreId;
     }
+
+    /**
+     * @param null|int $magentoStoreId
+     * @throws WebapiException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function preProcessWebhook($magentoStoreId = null)
+    {
+        if ($magentoStoreId) {
+            $this->setMagentoStoreId($magentoStoreId);
+        }
+
+        $this->setCommonMetaData();
+        $this->setHeaders();
+        $this->verifyWebhook();
+    }
 }
