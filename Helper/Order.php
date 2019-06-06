@@ -768,7 +768,7 @@ class Order extends AbstractHelper
             if ($existingOrder) {
                 $order->addStatusToHistory(
                     false,
-                    "BoltPay Info :: The order was recreated."
+                    "BOLTPAY INFO :: The order was recreated."
                 );
             }
 

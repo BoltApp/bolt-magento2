@@ -410,7 +410,8 @@ class CreateOrder implements CreateOrderInterface
      * @param array $B
      * @return array
      */
-    private function arrayDiff($A, $B) {
+    private function arrayDiff($A, $B)
+    {
         $intersect = array_intersect($A, $B);
         return array_merge(array_diff($A, $intersect), array_diff($B, $intersect));
     }
@@ -462,7 +463,7 @@ class CreateOrder implements CreateOrderInterface
     /**
      * Check if quote have errors.
      *
-     * @param $quoteItem
+     * @param QuoteItem $quoteItem
      * @return bool
      * @throws BoltException
      */
