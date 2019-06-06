@@ -186,15 +186,13 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $payload = $this->request->getContent();
-
             $quoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($quoteId);
 
-            $this->validateHook($immutableQuote->getStoreId());
+            $this->preProcessWebhook($immutableQuote->getStoreId());
 
-            // Convert to stdClass
+            $payload = $this->request->getContent();
             $transaction = json_decode($payload);
 
             /** @var Quote $quote */
@@ -265,18 +263,11 @@ class CreateOrder implements CreateOrderInterface
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    public function validateHook($storeId = null)
+    public function preProcessWebhook($storeId = null)
     {
         HookHelper::$fromBolt = true;
 
-        if ($storeId) {
-            $this->hookHelper->setMagentoStoreId($storeId);
-        }
-
-        $this->hookHelper->setCommonMetaData();
-        $this->hookHelper->setHeaders();
-
-        $this->hookHelper->verifyWebhook();
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**
