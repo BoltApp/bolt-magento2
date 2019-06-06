@@ -760,13 +760,15 @@ class Order extends AbstractHelper
             $order = $this->processNewOrder($quote, $transaction);
 
             if (Hook::$fromBolt) {
-                $order->addStatusHistoryComment(
-                    "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA PRE-AUTH WEBHOOK"
+                $order->addStatusToHistory(
+                    false,
+                    "BoltPay Info :: This order was created via Pre-Auth Webhook"
                 );
             }
             if ($existingOrder) {
-                $order->addStatusHistoryComment(
-                    "BOLTPAY INFO :: The order was recreated."
+                $order->addStatusToHistory(
+                    false,
+                    "BoltPay Info :: The order was recreated."
                 );
             }
 
