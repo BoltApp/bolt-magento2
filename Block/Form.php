@@ -56,16 +56,6 @@ class Form extends PaymentForm
     }
 
     /**
-     * If we have multi-website, we need current quote store_id
-     *
-     * @return int
-     */
-    public function getMagentoStoreId()
-    {
-        return (int) $this->getQuoteData()->getStoreId();
-    }
-
-    /**
      * Return billing address information formatted to be used for magento order creation.
      *
      * Example return value:
@@ -129,56 +119,5 @@ class Form extends PaymentForm
         ];
 
         return json_encode($result);
-    }
-
-    /**
-     * Get Javascript page settings.
-     *
-     * @return string
-     */
-    public function getSettings()
-    {
-        return json_encode([
-            'connect_url'                   => $this->getConnectJsUrl(),
-            'publishable_key_back_office'   => $this->getBackOfficeKey(),
-            'create_order_url'              => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'                => $this->getUrl(Config::SAVE_ORDER_ACTION),
-        ]);
-    }
-
-    /**
-     * @return string
-     */
-    public function getConnectJsUrl()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        // Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
-
-        return $cdnUrl . '/connect.js';
-    }
-
-    /**
-     * Get back office key
-     *
-     * @return  string
-     */
-    public function getBackOfficeKey()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getPublishableKeyBackOffice($storeId);
-    }
-
-    /**
-     * Get Bolt Payment module active state.
-     * @return bool
-     */
-    public function isBoltEnabled()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->isActive($storeId);
     }
 }
