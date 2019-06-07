@@ -71,7 +71,7 @@ class ReceivedUrl extends Action
      */
     protected function getErrorRedirectUrl()
     {
-        return $this->_url->getUrl('sales/order', ['_secure' => true]);
+        return $this->_backendUrl->getUrl('sales/order', ['_secure' => true]);
     }
 
     /**
@@ -86,6 +86,6 @@ class ReceivedUrl extends Action
             $params['magento_sid'] = $order->getStoreId();
         }
 
-        return $this->_url->getUrl('sales/order/view', $params);
+        return $this->_backendUrl->getUrl('sales/order/view', $params);
     }
 }
