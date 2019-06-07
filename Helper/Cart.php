@@ -44,6 +44,9 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Framework\App\CacheInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Boltpay Cart helper
@@ -55,6 +58,14 @@ class Cart extends AbstractHelper
 {
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
+    const BOLT_ORDER_TAG = 'Bolt_Order';
+    const BOLT_ORDER_CACHE_LIFETIME = 3600; // one hour
+
+    /** @var CacheInterface */
+    private $cache;
+
+    /** @var CartInterface */
+    private $lastImmutableQuote = null;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -180,6 +191,11 @@ class Cart extends AbstractHelper
     private $quotes = [];
 
     /**
+     * @var ResourceConnection $resource
+     */
+    private $resourceConnection;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -200,6 +216,8 @@ class Cart extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
      * @param DiscountHelper $discountHelper
+     * @param CacheInterface $cache
+     * @param ResourceConnection $resourceConnection
      *
      * @codeCoverageIgnore
      */
@@ -223,7 +241,9 @@ class Cart extends AbstractHelper
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
         CheckoutHelper $checkoutHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        CacheInterface $cache,
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -245,6 +265,8 @@ class Cart extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
         $this->discountHelper = $discountHelper;
+        $this->cache = $cache;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -282,7 +304,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id if active
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      * @throws NoSuchEntityException
      */
     public function getActiveQuoteById($quoteId)
@@ -310,7 +332,7 @@ class Cart extends AbstractHelper
     /**
      * Save quote via repository
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      */
     public function saveQuote($quote)
     {
@@ -318,9 +340,19 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Delete quote via repository
+     *
+     * @param CartInterface $quote
+     */
+    public function deleteQuote($quote)
+    {
+        $this->quoteRepository->delete($quote);
+    }
+
+    /**
      * Save quote via resource model
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     public function quoteResourceSave($quote)
@@ -329,12 +361,185 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Get Bolt Order Caching flag configuration
+     *
+     * @param null|int    $storeId             The ID of the Magento store
+     * @return bool
+     */
+    protected function isBoltOrderCachingEnabled($storeId)
+    {
+        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
+    }
+
+    /**
+     * Load data from Magento cache
+     *
+     * @param string $identifier
+     * @param bool $unserialize
+     * @return bool|mixed|string
+     */
+    protected function loadFromCache($identifier, $unserialize = true)
+    {
+        $cached = $this->cache->load($identifier);
+        if (!$cached) return false;
+        return $unserialize ? unserialize($cached) : $cached;
+    }
+
+    /**
+     * Save data to Magento cache
+     *
+     * @param mixed $data
+     * @param string $identifier
+     * @param int $lifeTime
+     * @param bool $serialize
+     * @param array $tags
+     */
+    protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
+    {
+        $data = $serialize ? serialize($data) : $data;
+        $this->cache->save($data, $identifier, $tags, $lifeTime);
+    }
+
+    /**
+     * Last created immutable quote setter
+     *
+     * @param $quote
+     */
+    protected function setLastImmutableQuote($quote)
+    {
+        $this->lastImmutableQuote = $quote;
+    }
+
+    /**
+     * Last created immutable quote getter
+     *
+     * @return CartInterface
+     */
+    protected function getLastImmutableQuote()
+    {
+        return $this->lastImmutableQuote;
+    }
+
+    /**
+     * Cache the session id for the quote
+     *
+     * @param int|string $qouoteId
+     */
+    protected function saveCartSession($qouoteId)
+    {
+        $this->sessionHelper->saveSession($qouoteId, $this->checkoutSession);
+    }
+
+    /**
+     * Get store id from the session quote
+     *
+     * @return int
+     */
+    protected function getSessionQuoteStoreId()
+    {
+        $sessionQuote = $this->checkoutSession->getQuote();
+        return $sessionQuote ? $sessionQuote->getStoreId() : null;
+    }
+
+    /**
+     * Call Bolt Ceate Order API
+     *
+     * @param array $cart
+     * @param int $storeId
+     * @return Response|int
+     * @throws LocalizedException
+     * @throws Zend_Http_Client_Exception
+     */
+    protected function boltCreateOrder($cart, $storeId = null)
+    {
+        $apiKey = $this->configHelper->getApiKey($storeId);
+
+        //Request Data
+        $requestData = $this->dataObjectFactory->create();
+        $requestData->setApiData(['cart' => $cart]);
+        $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_ORDER);
+        $requestData->setApiKey($apiKey);
+
+        //Build Request
+        $request = $this->apiHelper->buildRequest($requestData);
+        $boltOrder  = $this->apiHelper->sendRequest($request);
+
+        return $boltOrder;
+    }
+
+    /**
+     * Get the hash of the cart to be used as cache identifier
+     *
+     * @param array $cart
+     * @return string
+     */
+    protected function getCartCacheIdentifier($cart)
+    {
+        // display_id is always different for every new cart / immutable quote
+        // unset it in the cache identifier so the rest of the data can be matched
+        unset ($cart['display_id']);
+        return md5(json_encode($cart));
+    }
+
+    /**
+     * Get the id of the quote Bolt order was created for
+     *
+     * @param Response $boltOrder
+     * @return mixed
+     */
+    protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
+    {
+        $response = $boltOrder ? $boltOrder->getResponse() : null;
+        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        return $immutableQuoteId;
+    }
+
+    /**
+     * Check if the quote is noot deleted
+     *
+     * @param int|string $quoteId
+     * @return bool
+     * @throws NoSuchEntityException
+     */
+    protected function isQuoteAvailable($quoteId)
+    {
+        return (bool)$this->getQuoteById($quoteId);
+    }
+
+    /**
+     * Update quote updated_at column
+     *
+     * @param int|string $quoteId
+     */
+    protected function updateQuoteTimestamp($quoteId)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $connection->beginTransaction();
+        try {
+            // get table name with prefix
+            $tableName = $this->resourceConnection->getTableName('quote');
+
+            $sql = "UPDATE {$tableName} SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id";
+            $bind = [
+                'entity_id' => $quoteId
+            ];
+
+            $connection->query($sql, $bind);
+
+            $connection->commit();
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $connection->rollBack();
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
      * Create order on bolt
      *
      * @param bool   $paymentOnly              flag that represents the type of checkout
      * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
-     * @param null|int    $storeId
+     * @param null|int    $storeId             The ID of the Magento store
      *
      * @return Response|void
      * @throws LocalizedException
@@ -348,26 +553,47 @@ class Cart extends AbstractHelper
             return;
         }
 
-        // cache the session id
-        $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
-
         // If storeId was missed through request, then try to get it from the session quote.
-        if ($storeId === null && $this->checkoutSession->getQuote()) {
-            $storeId = $this->checkoutSession->getQuote()->getStoreId();
+        if ($storeId === null) {
+            $storeId = $this->getSessionQuoteStoreId();
         }
 
-        $apiKey = $this->configHelper->getApiKey($storeId);
+        // Try fetching data from cache
+        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
 
-        //Request Data
-        $requestData = $this->dataObjectFactory->create();
-        $requestData->setApiData(['cart' => $cart]);
-        $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_ORDER);
-        $requestData->setApiKey($apiKey);
+            $cacheIdentifier = $this->getCartCacheIdentifier($cart);
 
-        //Build Request
-        $request = $this->apiHelper->buildRequest($requestData);
-        $result  = $this->apiHelper->sendRequest($request);
-        return $result;
+            if ($boltOrder = $this->loadFromCache($cacheIdentifier)) {
+
+                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder);
+
+                // found in cache, check if the old immutable quote is still there
+                if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
+                    // update old immutable quote updated_at timestamp,
+                    // delete the last quote and return cached order
+                    $this->updateQuoteTimestamp($immutableQuoteId);
+                    $this->deleteQuote($this->getLastImmutableQuote());
+                    return $boltOrder;
+                }
+            }
+        }
+
+        // cache the session id
+        $this->saveCartSession($cart['order_reference']);
+
+        $boltOrder = $this->boltCreateOrder($cart, $storeId);
+
+        // cache Bolt order
+        if ($isBoltOrderCachingEnabled) {
+            $this->saveToCache(
+                $boltOrder,
+                $cacheIdentifier,
+                [self::BOLT_ORDER_TAG],
+                self::BOLT_ORDER_CACHE_LIFETIME
+            );
+        }
+
+        return $boltOrder;
     }
 
     /**
@@ -1169,6 +1395,8 @@ class Cart extends AbstractHelper
         $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
 
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+
+        $this->setLastImmutableQuote($immutableQuote);
 
         return $cart;
     }
