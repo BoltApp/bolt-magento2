@@ -293,13 +293,17 @@ class Cart extends AbstractHelper
     /**
      * Load Order by increment id
      * @param $incrementId
-     * @return \Magento\Sales\Api\Data\OrderInterface|mixed
+     * @return \Magento\Sales\Model\Order|false
      */
     public function getOrderByIncrementId($incrementId)
     {
+        if (empty($incrementId) || !$incrementId) {
+            return false;
+        }
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('increment_id', $incrementId, 'eq')->create();
         $collection = $this->orderRepository->getList($searchCriteria)->getItems();
+
         return reset($collection);
     }
 
