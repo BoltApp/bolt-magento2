@@ -26,7 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
+use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 
 /**
  * Class ReceivedUrl

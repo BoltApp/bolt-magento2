@@ -28,7 +28,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 
-trait ReceivedUrl
+trait ReceivedUrlTrait
 {
     /**
      * @var LogHelper
