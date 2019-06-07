@@ -26,7 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
+use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 
 /**
  * Class ReceivedUrl
@@ -71,7 +71,7 @@ class ReceivedUrl extends Action
      */
     protected function getErrorRedirectUrl()
     {
-        return $this->_url->getUrl('sales/order', ['_secure' => true]);
+        return $this->_backendUrl->getUrl('sales/order', ['_secure' => true]);
     }
 
     /**
@@ -80,6 +80,12 @@ class ReceivedUrl extends Action
      */
     protected function getRedirectUrl($order = null)
     {
-        return $this->_url->getUrl('sales/order/view', ['order_id' => $order->getId(), '_secure' => true]);
+        $params = ['_secure' => true];
+        if ($order) {
+            $params['order_id'] = $order->getId();
+            $params['magento_sid'] = $order->getStoreId();
+        }
+
+        return $this->_backendUrl->getUrl('sales/order/view', $params);
     }
 }

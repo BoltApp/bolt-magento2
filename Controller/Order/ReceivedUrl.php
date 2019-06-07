@@ -26,7 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
+use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 
 /**
  * Class ReceivedUrl
@@ -80,6 +80,13 @@ class ReceivedUrl extends Action
      */
     protected function getRedirectUrl($order = null)
     {
-        return $this->configHelper->getSuccessPageRedirect();
+        $storeId = null;
+        if ($order && $order->getStoreId()) {
+            $storeId = $order->getStoreId();
+            $this->_url->setScope($storeId);
+        }
+        $urlPath = $this->configHelper->getSuccessPageRedirect($storeId);
+
+        return $this->_url->getUrl($urlPath);
     }
 }

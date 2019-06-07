@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Controller;
 
+use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -27,9 +28,8 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use Bolt\Boltpay\Controller\ReceivedUrl as ReceivedUrlTrait;
 
-trait ReceivedUrl
+trait ReceivedUrlTrait
 {
     /**
      * @var LogHelper
@@ -63,18 +63,20 @@ trait ReceivedUrl
     {
         $boltSignature = $this->getRequest()->getParam('bolt_signature');
         $boltPayload = $this->getRequest()->getParam('bolt_payload');
+        $magentoStoreId = $this->getRequest()->getParam('magento_sid');
 
         $signature = base64_decode($boltSignature);
 
-        $magentoSavedSignature = $this->configHelper->getSigningSecret();
+        $magentoSavedSecret = $this->configHelper->getSigningSecret($magentoStoreId);
 
-        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSignature, true);
+        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSecret, true);
         $hash = base64_encode($hashBoltPayloadWithKey);
 
         if ($signature === $hash) {
             try {
                 $payload = base64_decode($boltPayload);
-                $incrementId = $this->getIncrementIdFromPayload($payload);
+                $payloadArray = json_decode($payload, true);
+                $incrementId = $this->getIncrementIdFromPayload($payloadArray);
 
                 /** @var Order $order */
                 $order = $this->getOrderByIncrementId($incrementId);
@@ -89,32 +91,30 @@ trait ReceivedUrl
 
                 $redirectUrl = $this->getRedirectUrl($order);
 
-                // clear the session data
-                if ($order->getId()) {
-                    // add quote information to the session
-                    $this->clearQuoteSession($quote);
+                // add quote information to the session
+                $this->clearQuoteSession($quote);
 
-                    // add order information to the session
-                    $this->clearOrderSession($order, $redirectUrl);
+                // add order information to the session
+                $this->clearOrderSession($order, $redirectUrl);
 
-                    // Save reference to the Bolt transaction with the order
-                    $order->addStatusHistoryComment(
-                        __(
-                            'Bolt transaction: %1',
-                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payload))
-                        )
-                    );
-                    $order->save();
-                }
+                // Save reference to the Bolt transaction with the order
+                $order->addStatusHistoryComment(
+                    __(
+                        'Bolt transaction: %1',
+                        $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
+                    )
+                );
+                $order->save();
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {
                 $logMessage = $noSuchEntityException->getMessage();
                 $this->logHelper->addInfoLog('NoSuchEntityException: ' . $logMessage);
 
-                $this->bugsnag->registerCallback(function ($report) use ($incrementId) {
+                $this->bugsnag->registerCallback(function ($report) use ($incrementId, $magentoStoreId) {
                     $report->setMetaData([
                         'order incrementId' => $incrementId,
+                        'MagentoStoreId'    => $magentoStoreId
                     ]);
                 });
                 $this->bugsnag->notifyError('NoSuchEntityException: ', $logMessage);
@@ -130,10 +130,11 @@ trait ReceivedUrl
                 $errorMessage = __('Something went wrong. Please contact the seller.');
                 $this->messageManager->addErrorMessage($errorMessage);
 
-                $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
+                $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $magentoStoreId) {
                     $report->setMetaData([
                         'bolt_signature' => $boltSignature,
                         'bolt_payload'   => $boltPayload,
+                        'MagentoStoreId' => $magentoStoreId
                     ]);
                 });
                 $this->bugsnag->notifyError('LocalizedException: ', $logMessage);
@@ -144,10 +145,11 @@ trait ReceivedUrl
             $logMessage = 'bolt_signature and Magento signature are not equal';
             $this->logHelper->addInfoLog($logMessage);
 
-            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload) {
+            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $magentoStoreId) {
                 $report->setMetaData([
                     'bolt_signature' => $boltSignature,
-                    'bolt_payload'   => $boltPayload
+                    'bolt_payload'   => $boltPayload,
+                    'MagentoStoreId' => $magentoStoreId
                 ]);
             });
             $this->bugsnag->notifyError('OrderReceivedUrl Error', $logMessage);
@@ -164,26 +166,19 @@ trait ReceivedUrl
      */
     private function getReferenceFromPayload($payload)
     {
-        $payloadArray = json_decode($payload, true);
-        return  $payloadArray['transaction_reference'];
+        return ArrayHelper::getValueFromArray($payload, 'transaction_reference', '');
     }
 
     /**
      * @param $payload
-     * @return mixed
+     * @return string
      */
     private function getIncrementIdFromPayload($payload)
     {
-        $payloadArray = json_decode($payload, true);
-        $displayId = $payloadArray['display_id'];
+        $displayId = ArrayHelper::getValueFromArray($payload, 'display_id', '');
+        $data = ArrayHelper::extractDataFromDisplayId($displayId);
 
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
-
-        return $incrementId;
+        return isset($data[0]) ? $data[0] : '';
     }
 
     /**
