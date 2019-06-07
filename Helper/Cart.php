@@ -283,7 +283,6 @@ class Cart extends AbstractHelper
      * Load Quote by id
      * @param $quoteId
      * @return \Magento\Quote\Model\Quote
-     * @throws NoSuchEntityException
      */
     public function getQuoteById($quoteId)
     {
@@ -434,7 +433,7 @@ class Cart extends AbstractHelper
     protected function getSessionQuoteStoreId()
     {
         $sessionQuote = $this->checkoutSession->getQuote();
-        return $sessionQuote ? $sessionQuote->getStoreId() : null;
+        return $sessionQuote ? ($sessionQuote->getStoreId() ?: null) : null;
     }
 
     /**
@@ -459,6 +458,8 @@ class Cart extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
         $boltOrder  = $this->apiHelper->sendRequest($request);
+
+        $boltOrder->setStoreId($storeId);
 
         return $boltOrder;
     }
@@ -1367,9 +1368,6 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
-
-        $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
-
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         $this->setLastImmutableQuote($immutableQuote);
@@ -1438,13 +1436,13 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
-     * @param null|int   $magentoStoreId
+     * @param null|int   $storeId
      *
      * @return bool
      */
-    public function hasProductRestrictions($quote = null, $magentoStoreId = null)
+    public function hasProductRestrictions($quote = null, $storeId = null)
     {
-        $toggleCheckout = $this->configHelper->getToggleCheckout($magentoStoreId);
+        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
             return false;

@@ -319,11 +319,10 @@ class ShippingMethods implements ShippingMethodsInterface
             // Load quote from entity id
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 $this->throwUnknownQuoteIdException($quoteId);
             }
 
-            // TODO: temporally solution until was implement store_id through $cart variable.
             $this->preprocessHook($quote->getStoreId());
 
             $this->checkCartItems($cart, $quote);
@@ -486,9 +485,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 }
             }
 
-            if ($quote->getStoreId()) {
-                $cacheIdentifier .= '_' . $quote->getStoreId();
-            }
+            $cacheIdentifier .= '_' . $quote->getStoreId();
 
             $cacheIdentifier = md5($cacheIdentifier);
 
@@ -645,10 +642,10 @@ class ShippingMethods implements ShippingMethodsInterface
             if( ! empty($appliedQuoteCouponCode) ){
                 $shippingAddress->setCollectShippingRates(true)
                                 ->collectShippingRates()->save();
-                $quote->setCouponCode('')->collectTotals()->save();                
+                $quote->setCouponCode('')->collectTotals()->save();
                 $quote->setCouponCode($appliedQuoteCouponCode)->collectTotals()->save();
             }
-            
+
             // In order to get correct shipping discounts the following method must be called twice.
             // Being a bug in Magento, or a bug in the tested store version, shipping discounts
             // are not collected the first time the method is called.

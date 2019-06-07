@@ -587,7 +587,8 @@ class Payment extends AbstractMethod
                 'decision'       => $review,
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $payment->getOrder()->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();

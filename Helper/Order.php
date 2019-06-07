@@ -295,7 +295,7 @@ class Order extends AbstractHelper
      * Fetch transaction details info
      *
      * @param string $reference
-     * @param        $magentoStoreId
+     * @param        $storeId
      *
      * @return Response
      * @throws LocalizedException
@@ -303,12 +303,12 @@ class Order extends AbstractHelper
      *
      * @api
      */
-    public function fetchTransactionInfo($reference, $magentoStoreId = null)
+    public function fetchTransactionInfo($reference, $storeId = null)
     {
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
-        $requestData->setApiKey($this->configHelper->getApiKey($magentoStoreId));
+        $requestData->setApiKey($this->configHelper->getApiKey($storeId));
         $requestData->setRequestMethod('GET');
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
@@ -666,15 +666,15 @@ class Order extends AbstractHelper
      * @param string $reference Bolt transaction reference
      * @param null   $boltTraceId
      * @param null   $hookType
-     * @param null|int   $magentoStoreId
+     * @param null|int   $storeId
      *
      * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null, $magentoStoreId = null)
+    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null)
     {
-        $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
+        $transaction = $this->fetchTransactionInfo($reference, $storeId);
 
         $parentQuoteId = $transaction->order->cart->order_reference;
 
@@ -699,12 +699,12 @@ class Order extends AbstractHelper
         try {
             $quote = $this->cartHelper->getQuoteById($quoteId);
         } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $magentoStoreId) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
                 $report->setMetaData([
                     'ORDER' => [
                         'incrementId' => $incrementId,
                         'quoteId' => $quoteId,
-                        'Magento StoreId' => $magentoStoreId
+                        'Magento StoreId' => $storeId
                     ]
                 ]);
             });
@@ -1128,8 +1128,8 @@ class Order extends AbstractHelper
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
-            $magentoStoreId = ($order && $order->getStoreId()) ? $order->getStoreId() : null;
-            $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
+            $storeId = $order->getStoreId() ?: null;
+            $transaction = $this->fetchTransactionInfo($reference, $storeId);
         } else {
             $reference = $transaction->reference;
         }
@@ -1473,6 +1473,19 @@ class Order extends AbstractHelper
             2,
             null
         );
+    }
+
+    /**
+     * @param $quoteId
+     * @return int|null
+     */
+    public function getStoreIdByQuoteId($quoteId)
+    {
+        if (empty($quoteId)) {
+            return null;
+        }
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+        return $quote ? $quote->getStoreId() : null;
     }
 
     /**

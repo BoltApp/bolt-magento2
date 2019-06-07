@@ -148,12 +148,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var DiscountHelper
      */
     private $discountHelper;
-    
+
     /**
      * @var RegionModel
      */
     private $regionModel;
-    
+
     /**
      * @var TotalsCollector
      */
@@ -243,7 +243,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         try {
             $request = $this->getRequestContent();
 
-            // # Temporally solution until magento_sid was passed from request
             $requestArray = json_decode(json_encode($request), true);
             if (isset($requestArray['cart']['order_reference'])) {
                 $parentQuoteId = $requestArray['cart']['order_reference'];
@@ -294,8 +293,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return false;
             }
 
-            $this->preProcessWebhook($parentQuote->getStoreId());
-            // # Temporally solution until magento_sid was passed from request
+            $storeId = $parentQuote->getStoreId();
+            $websiteId = $parentQuote->getStore()->getWebsiteId();
+
+            $this->preProcessWebhook($storeId);
 
             // get the coupon code
             $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
@@ -312,30 +313,30 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return false;
             }
 
-            // Load the coupon
-            $coupon = $this->loadCouponCodeData($couponCode);
-
-            $giftCard = null;
-            if (empty($coupon) || $coupon->isObjectNew()) {
-                // Load the gift card by code
-                $giftCard = $this->loadGiftCardData($couponCode);
-            }
+            // Load the gift card by code
+            $giftCard = $this->loadGiftCardData($couponCode, $websiteId);
 
             // Apply Unirgy_GiftCert
             if (empty($giftCard)) {
                 // Load the gift cert by code
-                $giftCard = $this->loadGiftCertData($couponCode);
+                $giftCard = $this->loadGiftCertData($couponCode, $storeId);
             }
 
             // Load Amasty Gift Card account object
             if (empty($giftCard)) {
-                $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode);
+                $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode, $websiteId);
             }
 
             // Apply Mageplaza_GiftCard
             if (empty($giftCard)) {
                 // Load the gift card by code
-                $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode);
+                $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode, $storeId);
+            }
+
+            $coupon = null;
+            if (empty($giftCard)) {
+                // Load the coupon
+                $coupon = $this->loadCouponCodeData($couponCode);
             }
 
             // Check if the coupon and gift card does not exist.
@@ -407,10 +408,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 if ($this->cartHelper->validateEmail(@$address->email_address)) {
                     $addressData['email'] = $address->email_address;
                 }
-                
+
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
-                        
+
                 $shippingAddress
                     ->setShippingMethod($request->cart->shipments[0]->reference)
                     ->setCollectShippingRates(true)
@@ -468,13 +469,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param null|int $magentoStoreId
+     * @param null|int $storeId
      * @throws LocalizedException
      * @throws WebApiException
      */
-    public function preProcessWebhook($magentoStoreId = null)
+    public function preProcessWebhook($storeId = null)
     {
-        return $this->hookHelper->preProcessWebhook($magentoStoreId);
+        return $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**
@@ -868,14 +869,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * Load the gift card data by code
      *
      * @param string $code
+     * @param string|int $websiteId
      *
      * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
      */
-    public function loadGiftCardData($code)
+    public function loadGiftCardData($code, $websiteId)
     {
         $result = null;
 
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccount */
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
         $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
 
         if ($giftCardAccountResource) {
@@ -884,7 +886,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
             /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
             $giftCardsCollection = $giftCardAccountResource
-                ->addFieldToFilter('code', ['eq' => $code]);
+                ->addFieldToFilter('code', ['eq' => $code])
+                ->addWebsiteFilter([0, $websiteId]);
 
             /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
             $giftCard = $giftCardsCollection->getFirstItem();
@@ -899,11 +902,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
     /**
      * @param string $code
+     * @param string|int $storeId
      *
      * @return null|\Unirgy\Giftcert\Model\Cert
      * @throws NoSuchEntityException
      */
-    public function loadGiftCertData($code)
+    public function loadGiftCertData($code, $storeId)
     {
         $result = null;
 
@@ -918,7 +922,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
                 $giftCert = $giftCertRepository->get($code);
 
-                $result = ($giftCert->getData('status') !== 'I') ? $giftCert : null;
+                $gcStoreId = $giftCert->getStoreId();
+
+                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') !== 'I')
+                          ? $giftCert : null;
+
             } catch (NoSuchEntityException $e) {
                 //We must ignore the exception, because it is thrown when data does not exist.
                 $result = null;

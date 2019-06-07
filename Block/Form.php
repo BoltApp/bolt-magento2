@@ -132,28 +132,6 @@ class Form extends PaymentForm
     }
 
     /**
-     * @return string
-     */
-    public function getJavascriptSuccess()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getJavascriptSuccess($storeId);
-    }
-
-    /**
-     * Get Replace Button Selectors.
-     *
-     * @return string
-     */
-    public function getGlobalCSS()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getGlobalCSS($storeId);
-    }
-
-    /**
      * Get Javascript page settings.
      *
      * @return string

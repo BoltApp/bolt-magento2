@@ -103,8 +103,7 @@ class Prefetch extends Action
     public function execute()
     {
         try {
-            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
-            if (!$this->configHelper->getPrefetchShipping($magentoStoreId)) {
+            if (!$this->configHelper->getPrefetchShipping()) {
                 return;
             }
 
