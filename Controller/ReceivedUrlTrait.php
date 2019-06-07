@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Controller;
 
+use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -74,7 +75,8 @@ trait ReceivedUrlTrait
         if ($signature === $hash) {
             try {
                 $payload = base64_decode($boltPayload);
-                $incrementId = $this->getIncrementIdFromPayload($payload);
+                $payloadArray = json_decode($payload, true);
+                $incrementId = $this->getIncrementIdFromPayload($payloadArray);
 
                 /** @var Order $order */
                 $order = $this->getOrderByIncrementId($incrementId);
@@ -89,23 +91,20 @@ trait ReceivedUrlTrait
 
                 $redirectUrl = $this->getRedirectUrl($order);
 
-                // clear the session data
-                if ($order->getId()) {
-                    // add quote information to the session
-                    $this->clearQuoteSession($quote);
+                // add quote information to the session
+                $this->clearQuoteSession($quote);
 
-                    // add order information to the session
-                    $this->clearOrderSession($order, $redirectUrl);
+                // add order information to the session
+                $this->clearOrderSession($order, $redirectUrl);
 
-                    // Save reference to the Bolt transaction with the order
-                    $order->addStatusHistoryComment(
-                        __(
-                            'Bolt transaction: %1',
-                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payload))
-                        )
-                    );
-                    $order->save();
-                }
+                // Save reference to the Bolt transaction with the order
+                $order->addStatusHistoryComment(
+                    __(
+                        'Bolt transaction: %1',
+                        $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
+                    )
+                );
+                $order->save();
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {
@@ -167,26 +166,19 @@ trait ReceivedUrlTrait
      */
     private function getReferenceFromPayload($payload)
     {
-        $payloadArray = json_decode($payload, true);
-        return  $payloadArray['transaction_reference'];
+        return ArrayHelper::getValueFromArray($payload, 'transaction_reference', '');
     }
 
     /**
      * @param $payload
-     * @return mixed
+     * @return string
      */
     private function getIncrementIdFromPayload($payload)
     {
-        $payloadArray = json_decode($payload, true);
-        $displayId = $payloadArray['display_id'];
+        $displayId = ArrayHelper::getValueFromArray($payload, 'display_id', '');
+        $data = ArrayHelper::extractDataFromDisplayId($displayId);
 
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
-
-        return $incrementId;
+        return isset($data[0]) ? $data[0] : '';
     }
 
     /**
