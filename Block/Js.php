@@ -183,7 +183,9 @@ class Js extends Template
      */
     public function getAdditionalJavascript()
     {
-        return $this->configHelper->getAdditionalJS();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->getAdditionalJS($storeId);
     }
 
     /**
@@ -243,7 +245,7 @@ class Js extends Template
      */
     private function getQuoteIsVirtual()
     {
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuoteFromCheckoutSession();
         return $quote ? $quote->isVirtual() : false;
     }
 
@@ -421,7 +423,9 @@ class Js extends Template
      */
     protected function isIPRestricted()
     {
-        return $this->configHelper->isIPRestricted();
+        $storeId = $this->getMagentoStoreId();
+
+        return $this->configHelper->isIPRestricted($storeId);
     }
 
     /**
@@ -444,10 +448,18 @@ class Js extends Template
     public function getMagentoStoreId()
     {
         /** @var Quote $quote */
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuoteFromCheckoutSession();
 
         return  ($quote && $quote->getStoreId()) ?
             (int) $quote->getStoreId() :  null;
+    }
+
+    /**
+     * @return Quote
+     */
+    protected function getQuoteFromCheckoutSession()
+    {
+        return $this->checkoutSession->getQuote();
     }
 
     /**

@@ -272,7 +272,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->will($this->returnValue($value));
     }
 
-
     public function setBoltInitiateCheckout($value = true)
     {
         $this->checkoutSessionMock
@@ -290,5 +289,18 @@ class JsTest extends \PHPUnit\Framework\TestCase
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function getMagentoStoreId()
+    {
+        $storeId = 0;
+
+        $result = $this->block->getMagentoStoreId();
+
+        $this->assertTrue($result, 'IsEnabled() method: not working properly');
+        
     }
 }
