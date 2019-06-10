@@ -52,7 +52,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
-
 /**
  * Class Order
  * Boltpay Order helper
@@ -546,30 +545,34 @@ class Order extends AbstractHelper
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
 
-        // check if the order has been created in the meanwhile
-        /** @var OrderModel $order */
-        $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
+        $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
+            $report->setMetaData([
+                'CREATE ORDER' => [
+                    'order increment ID' => $quote->getReservedOrderId(),
+                    'parent quote ID' => $quote->getId(),
+                    'immutable quote ID' => $immutableQuote->getId()
+                ]
+            ]);
+        });
 
-        if ($order && $order->getId()) {
-            throw new LocalizedException(__(
-                'Duplicate Order Creation Attempt. Order #: %1',
-                $quote->getReservedOrderId()
-            ));
+        try {
+            $order = $this->quoteManagement->submit($quote);
+        } catch (\Exception $e) {
+            // check if the order has been created in the meanwhile
+            // from another request, hook vs. frontend on a slow network / server
+            /** @var OrderModel $order */
+            $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
+            if ($order) {
+                $this->bugsnag->notifyError(
+                    'Duplicate Order Creation Attempt',
+                    null
+                );
+                return $order;
+            }
+            throw $e;
         }
 
-        $order = $this->quoteManagement->submit($quote);
-
         if ($order === null) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
-                $report->setMetaData([
-                    'CREATE ORDER' => [
-                        'order increment ID' => $quote->getReservedOrderId(),
-                        'parent quote ID' => $quote->getId(),
-                        'immutable quote ID' => $immutableQuote->getId()
-                    ]
-                ]);
-            });
-
             throw new LocalizedException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
                 $quote->getReservedOrderId(),
@@ -587,6 +590,11 @@ class Order extends AbstractHelper
         $order->addStatusHistoryComment(
             __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
         );
+
+        // Add the user_note to the order comments and make it visible for customer.
+        if (isset($transaction->order->user_note)) {
+            $this->setOrderUserNote($order, $transaction->order->user_note);
+        }
 
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
@@ -720,13 +728,7 @@ class Order extends AbstractHelper
             if (!$quote || !$quote->getId()) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
-
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
-
-            // Add the user_note to the order comments and make it visible for customer.
-            if (isset($transaction->order->user_note)) {
-                $this->setOrderUserNote($order, $transaction->order->user_note);
-            }
         }
 
         if ($quote) {
@@ -755,8 +757,6 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param string     $userNote
-     *
-     * @return OrderModel
      */
     public function setOrderUserNote($order, $userNote)
     {
@@ -764,8 +764,6 @@ class Order extends AbstractHelper
             ->addStatusHistoryComment($userNote)
             ->setIsVisibleOnFront(true)
             ->setIsCustomerNotified(false);
-
-        return $order;
     }
 
     /**
