@@ -205,7 +205,7 @@ class Js extends Template
      */
     public function isEnabled()
     {
-        $storeId = $this->getMagentoStoreId();
+        $storeId = $this->getStoreId();
 
         return $this->configHelper->isActive($storeId);
     }
@@ -394,7 +394,7 @@ class Js extends Template
      *
      * @return int
      */
-    public function getMagentoStoreId()
+    public function getStoreId()
     {
         /** @var Quote $quote */
         $quote = $this->checkoutSession->getQuote();

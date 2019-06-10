@@ -317,7 +317,7 @@ class ShippingMethods implements ShippingMethodsInterface
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
             // Load quote from entity id
-            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $quote = $this->getQuoteById($quoteId);
 
             if (!$quote) {
                 $this->throwUnknownQuoteIdException($quoteId);
@@ -349,7 +349,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             /** @var \Magento\Quote\Model\Quote $parentQuote */
-            $parentQuote = $this->cartHelper->getQuoteById($cart['order_reference']);
+            $parentQuote = $this->getQuoteById($cart['order_reference']);
             if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode(), $quote)){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
                 $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
@@ -419,12 +419,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     protected function preprocessHook($storeId = null)
     {
-        $this->hookHelper->setCommonMetaData();
-        $this->hookHelper->setHeaders();
-
-        $this->hookHelper->setMagentoStoreId($storeId);
-
-        $this->hookHelper->verifyWebhook();
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**

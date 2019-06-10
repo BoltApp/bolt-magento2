@@ -323,7 +323,10 @@ require([
             BoltCheckout.configure(cart, hints, callbacks);
             return;
         }
-        if (!publishableKey) return;
+        if (!publishableKey) {
+            console.error('No publishable key set');
+            return;
+        }
         scriptTag = document.createElement('script');
         scriptTag.setAttribute('type', 'text/javascript');
         scriptTag.setAttribute('src', settings.connect_url);

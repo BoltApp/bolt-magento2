@@ -704,9 +704,8 @@ class Order extends AbstractHelper
         // hook the quote might have been cleared, resulting in error.
         // prevent failure and log event to bugsnag.
         ///////////////////////////////////////////////////////////////
-        try {
-            $quote = $this->cartHelper->getQuoteById($quoteId);
-        } catch (NoSuchEntityException $e) {
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+        if (!$quote) {
             $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
                 $report->setMetaData([
                     'ORDER' => [
@@ -716,7 +715,6 @@ class Order extends AbstractHelper
                     ]
                 ]);
             });
-            $quote = null;
         }
         ///////////////////////////////////////////////////////////////
 
@@ -725,7 +723,7 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
@@ -959,11 +957,9 @@ class Order extends AbstractHelper
         }
 
         // If the quote exists collect cart data for bugsnag
-        try {
-            $quote = $this->cartHelper->getQuoteById($quoteId);
+        if ($quote = $this->cartHelper->getQuoteById($quoteId)) {
             $cart = $this->cartHelper->getCartData(true, false, $quote);
-        } catch (NoSuchEntityException $e) {
-            // Quote was cleaned by cron job
+        } else {
             $cart = ['The quote does not exist.'];
         }
 

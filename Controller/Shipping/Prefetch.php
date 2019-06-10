@@ -112,7 +112,7 @@ class Prefetch extends Action
             /** @var Quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 return;
             }
 

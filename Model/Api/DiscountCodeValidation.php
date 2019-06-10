@@ -362,17 +362,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // check the existence of child quote
-            try {
-                /** @var Quote $immutableQuote */
-                $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
+            /** @var Quote $immutableQuote */
+            $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
+            if (!$immutableQuote) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
                     404
                 );
-
                 return false;
             }
 
@@ -475,7 +472,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      */
     public function preProcessWebhook($storeId = null)
     {
-        return $this->hookHelper->preProcessWebhook($storeId);
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**

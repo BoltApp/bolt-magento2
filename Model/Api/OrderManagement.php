@@ -138,14 +138,9 @@ class OrderManagement implements OrderManagementInterface
             $storeId = $this->orderHelper->getStoreIdByQuoteId($order)
                     ?: $this->orderHelper->getOrderStoreIdByDisplayId($display_id);
 
-            $this->hookHelper->setMagentoStoreId($storeId);
-
             $this->logHelper->addInfoLog('StoreId: ' . $storeId);
 
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
-
-            $this->hookHelper->verifyWebhook();
+            $this->hookHelper->preProcessWebhook($storeId);
 
             if (empty($reference)) {
                 throw new LocalizedException(
