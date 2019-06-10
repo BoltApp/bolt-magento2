@@ -492,6 +492,27 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check if the order has been created in the meanwhile
+     * from another request, hook vs. frontend on a slow network / server
+     *
+     * @param int|string $incrementId
+     * @return bool|OrderModel
+     */
+    private function checkExistingOrder($incrementId)
+    {
+        /** @var OrderModel $order */
+        $order = $this->getOrderByIncrementId($incrementId, true);
+        if ($order) {
+            $this->bugsnag->notifyError(
+                'Duplicate Order Creation Attempt',
+                null
+            );
+            return $order;
+        }
+        return false;
+    }
+
+    /**
      * Transform Quote to Order and send email to the customer.
      *
      * @param Quote $immutableQuote
@@ -555,18 +576,14 @@ class Order extends AbstractHelper
             ]);
         });
 
+        if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+            return $order;
+        }
+
         try {
             $order = $this->quoteManagement->submit($quote);
         } catch (\Exception $e) {
-            // check if the order has been created in the meanwhile
-            // from another request, hook vs. frontend on a slow network / server
-            /** @var OrderModel $order */
-            $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
-            if ($order) {
-                $this->bugsnag->notifyError(
-                    'Duplicate Order Creation Attempt',
-                    null
-                );
+            if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
                 return $order;
             }
             throw $e;
