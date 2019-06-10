@@ -6,7 +6,7 @@ This script adds the bolt repository dependencies to the compose file needed for
 
 
 data = {}
-with open('magento-cloud/composer.json') as json_file:  
+with open('../../magento-cloud/composer.json') as json_file:  
     data = json.load(json_file)
     repositories = []
     try:
@@ -20,5 +20,5 @@ with open('magento-cloud/composer.json') as json_file:
         data["repositories"] = repositories
     data["require"]["boltpay/bolt-magento2"] = sys.argv[1]
 
-with open('magento-cloud/composer.json', 'w') as outfile:  
+with open('../../magento-cloud/composer.json', 'w') as outfile:  
     json.dump(data, outfile, indent=4)

@@ -8,7 +8,7 @@ if [[ $currentPhpVersion != *"7.0"* &&  $currentPhpVersion != *"7.1"*  &&  $curr
     echo 'export PATH="/usr/local/opt/php@7.2/bin:$PATH"' >> ~/.bash_profile
     source ~/.bash_profile
 fi
-rm -rf magento-cloud/
-git clone -b $m2Version https://github.com/magento/magento-cloud.git
+rm -rf ../../magento-cloud/
+git clone -b $m2Version https://github.com/magento/magento-cloud.git ../../magento-cloud
 python auth-format.py $publicKey $privateKey
-cp auth.json magento-cloud/
+cp auth.json ../../magento-cloud/
