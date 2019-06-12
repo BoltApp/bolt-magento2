@@ -250,7 +250,6 @@ class CartTest extends TestCase
                 'email'=> "integration@bolt.com"
             ],
             'discounts' => [],
-            'magento_store_id' => 1,
             'total_amount' => 10000,
             'tax_amount' => 0
         ];

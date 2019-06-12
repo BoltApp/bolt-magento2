@@ -830,7 +830,6 @@ class Config extends AbstractHelper
     {
         $config = $this->getAdditionalConfigObject($storeId);
         return @$config->$name;
-//        return ($config && property_exists($config, $name)) ? $config->$name: '';
     }
 
     /**

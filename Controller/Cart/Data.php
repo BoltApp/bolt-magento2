@@ -91,9 +91,7 @@ class Data extends Action
         $result = $this->resultJsonFactory->create();
 
         try {
-            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
-
-            if ($this->cartHelper->hasProductRestrictions(null, $magentoStoreId)) {
+            if ($this->cartHelper->hasProductRestrictions()) {
                 throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
             }
 
@@ -107,7 +105,7 @@ class Data extends Action
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload, $magentoStoreId);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
@@ -123,9 +121,8 @@ class Data extends Action
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',
-                'authcapture'   => $this->configHelper->getAutomaticCaptureMode($magentoStoreId),
+                'authcapture'   => $this->configHelper->getAutomaticCaptureMode(),
                 'cartReference' => $cartReference,
-                'magento_store_id' => $magentoStoreId,
             ]);
 
             if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {

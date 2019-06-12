@@ -282,8 +282,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Model\Quote
-     * @throws NoSuchEntityException
+     * @return \Magento\Quote\Model\Quote|false
      */
     public function getQuoteById($quoteId)
     {
@@ -295,7 +294,13 @@ class Cart extends AbstractHelper
                 ->getList($searchCriteria)
                 ->getItems();
 
-            $this->quotes[$quoteId] = reset($collection);
+            $quote = reset($collection);
+
+            if ($quote === false) {
+                return false;
+            }
+
+            $this->quotes[$quoteId] = $quote;
         }
 
         return $this->quotes[$quoteId];
@@ -434,7 +439,7 @@ class Cart extends AbstractHelper
     protected function getSessionQuoteStoreId()
     {
         $sessionQuote = $this->checkoutSession->getQuote();
-        return $sessionQuote ? $sessionQuote->getStoreId() : null;
+        return $sessionQuote && $sessionQuote->getStoreId() ? $sessionQuote->getStoreId() : null;
     }
 
     /**
@@ -459,6 +464,8 @@ class Cart extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
         $boltOrder  = $this->apiHelper->sendRequest($request);
+
+        $boltOrder->setStoreId($storeId);
 
         return $boltOrder;
     }
@@ -873,16 +880,10 @@ class Cart extends AbstractHelper
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
-        try {
-            /** @var Quote $quote */
-            $quote = $immutableQuote ?
-                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
-                $this->checkoutSession->getQuote();
-        } catch (NoSuchEntityException $e) {
-            // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
-            $this->bugsnag->notifyException($e);
-            $quote = null;
-        }
+        /** @var Quote $quote */
+        $quote = $immutableQuote ?
+            $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
+            $this->checkoutSession->getQuote();
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
@@ -1367,9 +1368,6 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
-
-        $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
-
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         $this->setLastImmutableQuote($immutableQuote);
@@ -1438,13 +1436,13 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
-     * @param null|int   $magentoStoreId
+     * @param null|int   $storeId
      *
      * @return bool
      */
-    public function hasProductRestrictions($quote = null, $magentoStoreId = null)
+    public function hasProductRestrictions($quote = null, $storeId = null)
     {
-        $toggleCheckout = $this->configHelper->getToggleCheckout($magentoStoreId);
+        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
             return false;

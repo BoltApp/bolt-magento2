@@ -28,7 +28,6 @@ if (!$block->isEnabled()) return;
 <script type="text/javascript">
 
 // If we have multi-website, we need current quote store_id
-magentoStoreId = parseInt(<?php echo $block->getMagentoStoreId(); ?>);
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -318,21 +317,22 @@ require([
      * Inject connect.js
      * return void
      */
-    var insertConnectScript = function() {
-        var scriptTag = document.getElementById('bolt-connect'),
-            publishableKey = getCheckoutKey();
+    var insertConnectScript = function(publishableKey) {
+        var scriptTag = document.getElementById('bolt-connect');
         if (scriptTag) {
-            scriptTag.setAttribute('data-publishable-key', publishableKey);
-            createOrder();
+            BoltCheckout.configure(cart, hints, callbacks);
+            return;
+        }
+        if (!publishableKey) {
+            console.error('No publishable key set');
             return;
         }
         scriptTag = document.createElement('script');
         scriptTag.setAttribute('type', 'text/javascript');
-        scriptTag.setAttribute('async', '');
         scriptTag.setAttribute('src', settings.connect_url);
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
-        scriptTag.onload = createOrder;
+        scriptTag.onload = function() {BoltCheckout.configure(cart, hints, callbacks);}
         document.head.appendChild(scriptTag);
     };
 
@@ -343,7 +343,7 @@ require([
     var processButtons = function () {
         if (getCheckoutKey() !== '') {
             setCheckoutTypeStyle();
-            insertConnectScript();
+            createOrder();
         }
     };
 
@@ -382,13 +382,12 @@ require([
             var parameters = [];
             parameters.push('form_key=' + $('[name="form_key"]').val());
             parameters.push('reference=' + transaction.reference);
+            parameters.push('store_id=' + window.boltConfig.storeId);
             parameters = parameters.join('&');
             // update order ajax request callback
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
-
-                <?php echo $block->getJavascriptSuccess(); ?>
 
                 callbacks.success_url = data.success_url;
                 callback();
@@ -450,12 +449,12 @@ require([
         var params = [];
 
         params.push('form_key=' + $('[name="form_key"]').val());
-        params.push('magento_sid=' + magentoStoreId);
         params.push('payment_only=true');
         params = params.join('&');
 
         // set cart and hints data in a response callback
         var onSuccess = function(data){
+
             cart = data.cart;
             create_request = null;
 
@@ -463,9 +462,9 @@ require([
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
-            hints.publishableKey = getCheckoutKey();
+            window.boltConfig.storeId = data.storeId;
 
-            if (window.BoltCheckout) BoltCheckout.configure(cart, hints, callbacks);
+            insertConnectScript(data.publishableKey);
         };
 
         var onError = function(error) {
@@ -686,7 +685,3 @@ require([
 });
 
 </script>
-
-<style>
-    <?php echo $block->getGlobalCSS();?>
-</style>

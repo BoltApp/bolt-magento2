@@ -52,7 +52,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
-
 /**
  * Class Order
  * Boltpay Order helper
@@ -295,7 +294,7 @@ class Order extends AbstractHelper
      * Fetch transaction details info
      *
      * @param string $reference
-     * @param        $magentoStoreId
+     * @param        $storeId
      *
      * @return Response
      * @throws LocalizedException
@@ -303,12 +302,12 @@ class Order extends AbstractHelper
      *
      * @api
      */
-    public function fetchTransactionInfo($reference, $magentoStoreId = null)
+    public function fetchTransactionInfo($reference, $storeId = null)
     {
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
-        $requestData->setApiKey($this->configHelper->getApiKey($magentoStoreId));
+        $requestData->setApiKey($this->configHelper->getApiKey($storeId));
         $requestData->setRequestMethod('GET');
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
@@ -493,6 +492,27 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check if the order has been created in the meanwhile
+     * from another request, hook vs. frontend on a slow network / server
+     *
+     * @param int|string $incrementId
+     * @return bool|OrderModel
+     */
+    private function checkExistingOrder($incrementId)
+    {
+        /** @var OrderModel $order */
+        $order = $this->getOrderByIncrementId($incrementId, true);
+        if ($order) {
+            $this->bugsnag->notifyError(
+                'Duplicate Order Creation Attempt',
+                null
+            );
+            return $order;
+        }
+        return false;
+    }
+
+    /**
      * Transform Quote to Order and send email to the customer.
      *
      * @param Quote $immutableQuote
@@ -546,30 +566,30 @@ class Order extends AbstractHelper
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
 
-        // check if the order has been created in the meanwhile
-        /** @var OrderModel $order */
-        $order = $this->getOrderByIncrementId($quote->getReservedOrderId(), true);
+        $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
+            $report->setMetaData([
+                'CREATE ORDER' => [
+                    'order increment ID' => $quote->getReservedOrderId(),
+                    'parent quote ID' => $quote->getId(),
+                    'immutable quote ID' => $immutableQuote->getId()
+                ]
+            ]);
+        });
 
-        if ($order && $order->getId()) {
-            throw new LocalizedException(__(
-                'Duplicate Order Creation Attempt. Order #: %1',
-                $quote->getReservedOrderId()
-            ));
+        if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+            return $order;
         }
 
-        $order = $this->quoteManagement->submit($quote);
+        try {
+            $order = $this->quoteManagement->submit($quote);
+        } catch (\Exception $e) {
+            if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+                return $order;
+            }
+            throw $e;
+        }
 
         if ($order === null) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
-                $report->setMetaData([
-                    'CREATE ORDER' => [
-                        'order increment ID' => $quote->getReservedOrderId(),
-                        'parent quote ID' => $quote->getId(),
-                        'immutable quote ID' => $immutableQuote->getId()
-                    ]
-                ]);
-            });
-
             throw new LocalizedException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
                 $quote->getReservedOrderId(),
@@ -587,6 +607,11 @@ class Order extends AbstractHelper
         $order->addStatusHistoryComment(
             __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
         );
+
+        // Add the user_note to the order comments and make it visible for customer.
+        if (isset($transaction->order->user_note)) {
+            $this->setOrderUserNote($order, $transaction->order->user_note);
+        }
 
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
@@ -666,15 +691,15 @@ class Order extends AbstractHelper
      * @param string $reference Bolt transaction reference
      * @param null   $boltTraceId
      * @param null   $hookType
-     * @param null|int   $magentoStoreId
+     * @param null|int   $storeId
      *
      * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $boltTraceId = null, $hookType = null, $magentoStoreId = null)
+    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null)
     {
-        $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
+        $transaction = $this->fetchTransactionInfo($reference, $storeId);
 
         $parentQuoteId = $transaction->order->cart->order_reference;
 
@@ -696,19 +721,17 @@ class Order extends AbstractHelper
         // hook the quote might have been cleared, resulting in error.
         // prevent failure and log event to bugsnag.
         ///////////////////////////////////////////////////////////////
-        try {
-            $quote = $this->cartHelper->getQuoteById($quoteId);
-        } catch (NoSuchEntityException $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $magentoStoreId) {
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+        if (!$quote) {
+            $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
                 $report->setMetaData([
                     'ORDER' => [
                         'incrementId' => $incrementId,
                         'quoteId' => $quoteId,
-                        'Magento StoreId' => $magentoStoreId
+                        'Magento StoreId' => $storeId
                     ]
                 ]);
             });
-            $quote = null;
         }
         ///////////////////////////////////////////////////////////////
 
@@ -717,16 +740,10 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
-
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
-
-            // Add the user_note to the order comments and make it visible for customer.
-            if (isset($transaction->order->user_note)) {
-                $this->setOrderUserNote($order, $transaction->order->user_note);
-            }
         }
 
         if ($quote) {
@@ -755,8 +772,6 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param string     $userNote
-     *
-     * @return OrderModel
      */
     public function setOrderUserNote($order, $userNote)
     {
@@ -764,8 +779,6 @@ class Order extends AbstractHelper
             ->addStatusHistoryComment($userNote)
             ->setIsVisibleOnFront(true)
             ->setIsCustomerNotified(false);
-
-        return $order;
     }
 
     /**
@@ -961,11 +974,9 @@ class Order extends AbstractHelper
         }
 
         // If the quote exists collect cart data for bugsnag
-        try {
-            $quote = $this->cartHelper->getQuoteById($quoteId);
+        if ($quote = $this->cartHelper->getQuoteById($quoteId)) {
             $cart = $this->cartHelper->getCartData(true, false, $quote);
-        } catch (NoSuchEntityException $e) {
-            // Quote was cleaned by cron job
+        } else {
             $cart = ['The quote does not exist.'];
         }
 
@@ -1128,8 +1139,8 @@ class Order extends AbstractHelper
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
-            $magentoStoreId = ($order && $order->getStoreId()) ? $order->getStoreId() : null;
-            $transaction = $this->fetchTransactionInfo($reference, $magentoStoreId);
+            $storeId = $order->getStoreId() ?: null;
+            $transaction = $this->fetchTransactionInfo($reference, $storeId);
         } else {
             $reference = $transaction->reference;
         }
@@ -1473,6 +1484,19 @@ class Order extends AbstractHelper
             2,
             null
         );
+    }
+
+    /**
+     * @param $quoteId
+     * @return int|null
+     */
+    public function getStoreIdByQuoteId($quoteId)
+    {
+        if (empty($quoteId)) {
+            return null;
+        }
+        $quote = $this->cartHelper->getQuoteById($quoteId);
+        return $quote ? $quote->getStoreId() : null;
     }
 
     /**
