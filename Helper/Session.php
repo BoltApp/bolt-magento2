@@ -27,6 +27,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
  * Boltpay Session helper
@@ -58,13 +59,17 @@ class Session extends AbstractHelper
     /** @var State */
     private $appState;
 
+    /** @var ConfigHelper */
+    private $configHelper;
+
     /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param CustomerSession   $customerSession
      * @param LogHelper         $logHelper
      * @param CacheInterface    $cache
-     * @param State $appState
+     * @param State             $appState
+     * @param ConfigHelper      $configHelper
      *
      * @codeCoverageIgnore
      */
@@ -75,7 +80,8 @@ class Session extends AbstractHelper
         CustomerSession $customerSession,
         LogHelper $logHelper,
         CacheInterface $cache,
-        State $appState
+        State $appState,
+        ConfigHelper $configHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -84,6 +90,7 @@ class Session extends AbstractHelper
         $this->logHelper = $logHelper;
         $this->cache = $cache;
         $this->appState = $appState;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -109,8 +116,11 @@ class Session extends AbstractHelper
      * @param mixed $session
      * @param string $sessionID
      */
-    private function setSession($session, $sessionID)
+    private function setSession($session, $sessionID, $storeId)
     {
+        if (! $this->configHelper->isSessionEmulationEnabled($storeId)) {
+            return;
+        }
         // close current session
         $session->writeClose();
         // set session id (to value loaded from cache)
@@ -149,17 +159,18 @@ class Session extends AbstractHelper
         if ($serialized = $this->cache->load($cacheIdentifier)) {
             $sessionData = unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
+            $storeId = $quote->getStoreId();
 
             if ($sessionData["sessionType"] == "frontend") {
                 // shipping and tax, orphaned transaction
                 // cart belongs to logged in customer?
                 if ($customerId) {
-                    $this->setSession($this->checkoutSession, $sessionID);
-                    $this->setSession($this->customerSession, $sessionID);
+                    $this->setSession($this->checkoutSession, $sessionID, $storeId);
+                    $this->setSession($this->customerSession, $sessionID, $storeId);
                 }
             } else {
                 // orphaned transaction
-                $this->setSession($this->adminCheckoutSession, $sessionID);
+                $this->setSession($this->adminCheckoutSession, $sessionID, $storeId);
             }
         }
 

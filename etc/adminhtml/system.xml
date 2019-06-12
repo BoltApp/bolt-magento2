@@ -153,6 +153,10 @@
                     <label>Cache Bolt Order Token (Performance Optimization)</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="api_emulate_session" translate="label" type="select" sortOrder="270" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Emulate Customer Session in API Calls</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
             </group>
         </section>
     </system>

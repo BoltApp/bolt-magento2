@@ -236,6 +236,11 @@ class Config extends AbstractHelper
     const XML_PATH_BOLT_ORDER_CACHING = 'payment/boltpay/bolt_order_caching';
 
     /**
+     * Emulate Customer Session in API Calls configuration path
+     */
+    const XML_PATH_API_EMULATE_SESSION = 'payment/boltpay/api_emulate_session';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -1102,6 +1107,21 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_BOLT_ORDER_CACHING,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+    /**
+     * Get Emulate Customer Session in API Calls flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function isSessionEmulationEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_API_EMULATE_SESSION,
             ScopeInterface::SCOPE_STORE,
             $store
         );
