@@ -902,10 +902,10 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                /** @var \Magento\Catalog\Model\ProductFactory $_product */
+                /** @var \Magento\Catalog\Model\ProductFactory */
                 $productFactory = $this->productFactory->create();
                 $productId = $productFactory->getIdBySku($item->getSku());
-                /** @var \Magento\Catalog\Model\Product $_product */
+                /** @var \Magento\Catalog\Model\Product */
                 $_product = $productFactory->load($productId);
 
                 $product['reference']    = $productId;
