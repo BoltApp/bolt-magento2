@@ -238,21 +238,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
-                $quoteItems = array_map(function ($item) {
-                    $product = [];
-                    $productId = $item->getProductId();
-                    $unitPrice   = $item->getCalculationPrice();
-                    $totalAmount = $unitPrice * $item->getQty();
-                    $roundedTotalAmount = $this->cartHelper->getRoundAmount($totalAmount);
-                    $product['reference']    = $productId;
-                    $product['name']         = $item->getName();
-                    $product['description']  = $item->getDescription();
-                    $product['total_amount'] = $roundedTotalAmount;
-                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unitPrice);
-                    $product['quantity']     = round($item->getQty());
-                    $product['sku']          = trim($item->getSku());
-                    return $product;
-                }, $quote->getAllVisibleItems());
+                list($quoteItems) = $this->cartHelper->getCartItems($quote->getAllVisibleItems(), $quote->getStoreId());
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
