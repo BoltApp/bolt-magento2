@@ -34,15 +34,18 @@ Ensure you have the yaml library is installed for your python version.
 #VARIABLES
 m2Version="master"
 phpVersion="7.1"
-boltBranch="develop"
+boltBranch="dev-develop"
 boltRepo="/Users/ewayda/Documents/GitHub/bolt-magento2"
-publicKey= <PUBLIC_KEY>
-privateKey= <PRIVATE_KEY>
-buildCompose=false
-localRepo=true
-boltApiKey=#<BOLT_API_KEY>
-boltSigningSecret=#<BOLT_SIGNING_SECRET>
-boltPublishableKey=#<BOLT_PUBLISHABLE_KEY>
+magentoCloudPublicKey=""
+magentoCloudPrivateKey=""
+buildCompose=true
+localRepo=false
+boltApiKey=""
+boltSigningSecret=""
+boltPublishableKey=""
+ngrokUrlHTTP="http://ethan-m2.ngrok.io/"
+ngrokUrlHTTPS="https://ethan-m2.ngrok.io/"
+installSampleData=true
 ```    
 
 - Run **install.sh** to install the Magento Cloud configuration and repository locally
