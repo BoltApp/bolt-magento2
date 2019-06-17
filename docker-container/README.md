@@ -26,6 +26,19 @@ Make sure you have a stable version of python in your environment. These scripts
 Ensure you have the yaml library is installed for your python version. 
 
     pip install pyyaml
+    
+### Local php version
+
+If the following error occurs:
+```
+Problem 1
+    - magento/product-enterprise-edition 2.3.1 requires ext-intl * -> the requested PHP extension intl is missing from your system.
+    - magento/product-enterprise-edition 2.3.1 requires ext-intl * -> the requested PHP extension intl is missing from your system.
+    - magento/product-enterprise-edition 2.3.1 requires ext-intl * -> the requested PHP extension intl is missing from your system.
+    - Installation request for magento/product-enterprise-edition (locked at 2.3.1) -> satisfiable by magento/product-enterprise-edition[2.3.1].
+```
+
+This means th proper php dependencies are not built in your local environment. To fix this use the commands in the **install.sh** to setup a PHP version with dependencies within your path. A proper location looks like `/usr/local/opt/php@7.2/bin/php`
 
 # How to run
 
@@ -53,7 +66,7 @@ installSampleData=true
 - For the initial run set **buildCompose** to true
 - One can find the public and private key for an M2 store when creating a magento cloud account
 - Run **launch-magento.sh** to fully deploy a docker container containing Magento2 with Bolt
-- Visit store ([https://magento2.docker/](https://magento2.docker/admin)) and admin ([https://magento2.docker/admin](https://magento2.docker/admin))
+- Visit store at your set ngrokUrlHTTP and admin ngrokUrlHTTP/admin
     - Admin credentials are username: **bolt** password: **admin123**
 
 # Trouble Shooting
