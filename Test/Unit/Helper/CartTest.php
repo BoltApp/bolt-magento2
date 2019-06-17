@@ -414,10 +414,12 @@ class CartTest extends TestCase
     {
         $product = $this->getProductMock();
         $this->productFactory = $this->getMockBuilder(ProductFactory::class)
-            ->setMethods(['create', 'load'])
+            ->setMethods(['create', 'load', 'getIdBySku'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->productFactory->method('create')->willReturnSelf();
+        $this->productFactory->method('getIdBySku')
+            ->willReturn(self::PRODUCT_ID);
         $this->productFactory->method('load')
             ->with(self::PRODUCT_ID)
             ->willReturn($product);
