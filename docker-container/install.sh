@@ -10,5 +10,5 @@ if [[ $currentPhpVersion != *"7.0"* &&  $currentPhpVersion != *"7.1"*  &&  $curr
 fi
 rm -rf ../../magento-cloud/
 git clone -b $m2Version https://github.com/magento/magento-cloud.git ../../magento-cloud
-python auth-format.py $publicKey $privateKey
+python auth-format.py $magentoCloudPublicKey $magentoCloudPrivateKey
 cp auth.json ../../magento-cloud/
