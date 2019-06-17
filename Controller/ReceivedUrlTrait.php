@@ -81,11 +81,6 @@ trait ReceivedUrlTrait
                 /** @var Order $order */
                 $order = $this->getOrderByIncrementId($incrementId);
 
-                if ($order->getState() !== Order::STATE_NEW) {
-                    $message = __('An order have wrong state: %state', ['state' => $order->getState()]);
-                    throw new LocalizedException($message);
-                }
-
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
@@ -97,14 +92,21 @@ trait ReceivedUrlTrait
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
 
-                // Save reference to the Bolt transaction with the order
-                $order->addStatusHistoryComment(
-                    __(
-                        'Bolt transaction: %1',
-                        $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
-                    )
-                );
-                $order->save();
+                if ($order->getState() == Order::STATE_NEW) {
+                    // Save reference to the Bolt transaction with the order
+                    $order->addStatusHistoryComment(
+                        __(
+                            'Bolt transaction: %1',
+                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
+                        )
+                    );
+                    $order->save();
+                } else {
+                    $this->bugsnag->notifyError(
+                        "Pre-Auth redirect wrong order state",
+                        "OrderNo: $incrementId, State: {$order->getState()}"
+                    );
+                }
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {

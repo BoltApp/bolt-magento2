@@ -75,17 +75,16 @@ class ReceivedUrl extends Action
     }
 
     /**
-     * @param null|Order $order
+     * @param Order $order
      * @return string
      */
-    protected function getRedirectUrl($order = null)
+    protected function getRedirectUrl($order)
     {
-        $params = ['_secure' => true];
-        if ($order) {
-            $params['order_id'] = $order->getId();
-            $params['magento_sid'] = $order->getStoreId();
-        }
-
+        $params = [
+            '_secure' => true,
+            'order_id' => $order->getId(),
+            'magento_sid' => $order->getStoreId()
+        ];
         return $this->_backendUrl->getUrl('sales/order/view', $params);
     }
 }

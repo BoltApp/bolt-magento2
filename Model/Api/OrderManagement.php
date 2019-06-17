@@ -119,12 +119,12 @@ class OrderManagement implements OrderManagementInterface
     public function manage(
         $id = null,
         $reference,
-        $order = null,
+        $order = null, // <parent quote ID>
         $type = null,
         $amount = null,
         $currency = null,
         $status = null,
-        $display_id = null,
+        $display_id = null, // <order increment ID / immutable quote ID>
         $source_transaction_id = null,
         $source_transaction_reference = null
     ) {
@@ -133,15 +133,14 @@ class OrderManagement implements OrderManagementInterface
 
             $this->logHelper->addInfoLog($this->request->getContent());
 
-            $orderStoreId = $this->orderHelper->getOrderStoreIdByDisplayId($display_id);
-            $this->hookHelper->setMagentoStoreId($orderStoreId);
+            // get the store id. try fetching from quote first,
+            // otherwise load it from order if there's one created
+            $storeId = $this->orderHelper->getStoreIdByQuoteId($order)
+                    ?: $this->orderHelper->getOrderStoreIdByDisplayId($display_id);
 
-            $this->logHelper->addInfoLog('Order StoreId: ' . $orderStoreId);
+            $this->logHelper->addInfoLog('StoreId: ' . $storeId);
 
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
-
-            $this->hookHelper->verifyWebhook();
+            $this->hookHelper->preProcessWebhook($storeId);
 
             if (empty($reference)) {
                 throw new LocalizedException(
@@ -159,9 +158,9 @@ class OrderManagement implements OrderManagementInterface
             } else {
                 $this->orderHelper->saveUpdateOrder(
                     $reference,
+                    $storeId,
                     $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                    $type,
-                    $orderStoreId
+                    $type
                 );
 
                 $this->response->setHttpResponseCode(200);

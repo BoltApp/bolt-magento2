@@ -103,8 +103,7 @@ class Prefetch extends Action
     public function execute()
     {
         try {
-            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
-            if (!$this->configHelper->getPrefetchShipping($magentoStoreId)) {
+            if (!$this->configHelper->getPrefetchShipping()) {
                 return;
             }
 
@@ -113,7 +112,7 @@ class Prefetch extends Action
             /** @var Quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 return;
             }
 

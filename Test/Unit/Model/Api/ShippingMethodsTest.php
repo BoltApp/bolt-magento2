@@ -321,16 +321,6 @@ class ShippingMethodsTest extends TestCase
         $this->cartHelper->method('validateEmail')
             ->withAnyParameters()
             ->willReturn(true);
-        $this->cartHelper->method('getQuoteById')
-            ->will(
-                $this->returnCallback(function ($arg) use ($quoteId, $parentQuoteId, $shippingAddress){
-                    if ($arg == $quoteId) {
-                        return $this->getQuoteMock($shippingAddress, $quoteId, $parentQuoteId);
-                    }
-
-                    return $this->getQuoteMock($shippingAddress, $parentQuoteId, $quoteId);
-                })
-            );
 
         $this->configHelper->method('getResetShippingCalculation')
             ->withAnyParameters()
@@ -362,6 +352,17 @@ class ShippingMethodsTest extends TestCase
                 $this->sessionHelper
             ])
             ->getMock();
+
+        $this->currentMock->method('getQuoteById')
+            ->will(
+                $this->returnCallback(function ($arg) use ($quoteId, $parentQuoteId, $shippingAddress){
+                    if ($arg == $quoteId) {
+                        return $this->getQuoteMock($shippingAddress, $quoteId, $parentQuoteId);
+                    }
+
+                    return $this->getQuoteMock($shippingAddress, $parentQuoteId, $quoteId);
+                })
+            );
 
         $this->currentMock->method('validateAddressData')
             ->willReturnSelf();

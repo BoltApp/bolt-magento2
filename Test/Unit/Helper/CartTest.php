@@ -61,6 +61,7 @@ class CartTest extends TestCase
     const ORDER_ID = 100010001;
     const STORE_ID = 1;
     const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
+    const PRODUCT_SKU = 'TestProduct';
 
     private $contextHelper;
     private $checkoutSession;
@@ -231,7 +232,7 @@ class CartTest extends TestCase
                 'total_amount'  => 10000,
                 'unit_price'    => 10000,
                 'quantity'      => 1,
-                'sku'           => 'TestProduct',
+                'sku'           => self::PRODUCT_SKU,
                 'type'          => 'physical',
                 'description'   => 'Product Description',
                 'image_url'     => 'no-image'
@@ -250,7 +251,6 @@ class CartTest extends TestCase
                 'email'=> "integration@bolt.com"
             ],
             'discounts' => [],
-            'magento_store_id' => 1,
             'total_amount' => 10000,
             'tax_amount' => 0
         ];
@@ -414,13 +414,14 @@ class CartTest extends TestCase
     private function getProductRepositoryMock()
     {
         $product = $this->getProductMock();
+
         $this->productRepository = $this->getMockBuilder(ProductRepository::class)
-            ->setMethods(['getById'])
+            ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->productRepository->method('getById')
-            ->with(self::PRODUCT_ID)
+        $this->productRepository->method('get')
+            ->with(self::PRODUCT_SKU)
             ->willReturn($product);
 
         return $this->productRepository;

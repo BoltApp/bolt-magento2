@@ -105,23 +105,21 @@ class Save extends Action
         try {
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
-            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
             // call order save and update
-            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, null, null, $magentoStoreId);
+            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
 
             // clear the session data
-            if ($order->getId()) {
-                $this->replaceQuote($quote);
-                //Clear quote session
-                $this->clearQuoteSession($quote);
-                //Clear order session
-                $this->clearOrderSession($order);
-            }
+            $this->replaceQuote($quote);
+            //Clear quote session
+            $this->clearQuoteSession($quote);
+            //Clear order session
+            $this->clearOrderSession($order);
+
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
             return $result->setData([
                 'status' => 'success',
-                'success_url' => $this->_url->getUrl($this->configHelper->getSuccessPageRedirect($magentoStoreId)),
+                'success_url' => $this->_url->getUrl($this->configHelper->getSuccessPageRedirect()),
             ]);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);

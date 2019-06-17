@@ -238,21 +238,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
             $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
 
-                $quoteItems = array_map(function ($item) {
-                    $product = [];
-                    $productId = $item->getProductId();
-                    $unitPrice   = $item->getCalculationPrice();
-                    $totalAmount = $unitPrice * $item->getQty();
-                    $roundedTotalAmount = $this->cartHelper->getRoundAmount($totalAmount);
-                    $product['reference']    = $productId;
-                    $product['name']         = $item->getName();
-                    $product['description']  = $item->getDescription();
-                    $product['total_amount'] = $roundedTotalAmount;
-                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unitPrice);
-                    $product['quantity']     = round($item->getQty());
-                    $product['sku']          = trim($item->getSku());
-                    return $product;
-                }, $quote->getAllVisibleItems());
+                list($quoteItems) = $this->cartHelper->getCartItems($quote->getAllVisibleItems(), $quote->getStoreId());
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
@@ -317,13 +303,12 @@ class ShippingMethods implements ShippingMethodsInterface
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
             // Load quote from entity id
-            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $quote = $this->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 $this->throwUnknownQuoteIdException($quoteId);
             }
 
-            // TODO: temporally solution until was implement store_id through $cart variable.
             $this->preprocessHook($quote->getStoreId());
 
             $this->checkCartItems($cart, $quote);
@@ -350,7 +335,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             /** @var \Magento\Quote\Model\Quote $parentQuote */
-            $parentQuote = $this->cartHelper->getQuoteById($cart['order_reference']);
+            $parentQuote = $this->getQuoteById($cart['order_reference']);
             if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode(), $quote)){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
                 $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
@@ -420,12 +405,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     protected function preprocessHook($storeId = null)
     {
-        $this->hookHelper->setCommonMetaData();
-        $this->hookHelper->setHeaders();
-
-        $this->hookHelper->setMagentoStoreId($storeId);
-
-        $this->hookHelper->verifyWebhook();
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**
@@ -486,9 +466,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 }
             }
 
-            if ($quote->getStoreId()) {
-                $cacheIdentifier .= '_' . $quote->getStoreId();
-            }
+            $cacheIdentifier .= '_' . $quote->getStoreId();
 
             $cacheIdentifier = md5($cacheIdentifier);
 
@@ -645,10 +623,10 @@ class ShippingMethods implements ShippingMethodsInterface
             if( ! empty($appliedQuoteCouponCode) ){
                 $shippingAddress->setCollectShippingRates(true)
                                 ->collectShippingRates()->save();
-                $quote->setCouponCode('')->collectTotals()->save();                
+                $quote->setCouponCode('')->collectTotals()->save();
                 $quote->setCouponCode($appliedQuoteCouponCode)->collectTotals()->save();
             }
-            
+
             // In order to get correct shipping discounts the following method must be called twice.
             // Being a bug in Magento, or a bug in the tested store version, shipping discounts
             // are not collected the first time the method is called.

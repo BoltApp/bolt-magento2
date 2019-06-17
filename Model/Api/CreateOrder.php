@@ -404,7 +404,8 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * Get values that are in either array, but not both
+     * Get values that are in either array, but not in both of them.
+     * Used for comparing / validating item SKU arrays
      *
      * @param array $A
      * @param array $B

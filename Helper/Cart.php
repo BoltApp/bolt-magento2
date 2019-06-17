@@ -282,8 +282,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Model\Quote
-     * @throws NoSuchEntityException
+     * @return \Magento\Quote\Model\Quote|false
      */
     public function getQuoteById($quoteId)
     {
@@ -295,7 +294,13 @@ class Cart extends AbstractHelper
                 ->getList($searchCriteria)
                 ->getItems();
 
-            $this->quotes[$quoteId] = reset($collection);
+            $quote = reset($collection);
+
+            if ($quote === false) {
+                return false;
+            }
+
+            $this->quotes[$quoteId] = $quote;
         }
 
         return $this->quotes[$quoteId];
@@ -319,9 +324,6 @@ class Cart extends AbstractHelper
      */
     public function getOrderByIncrementId($incrementId)
     {
-        if (empty($incrementId) || !$incrementId) {
-            return false;
-        }
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('increment_id', $incrementId, 'eq')->create();
         $collection = $this->orderRepository->getList($searchCriteria)->getItems();
@@ -438,7 +440,7 @@ class Cart extends AbstractHelper
     protected function getSessionQuoteStoreId()
     {
         $sessionQuote = $this->checkoutSession->getQuote();
-        return $sessionQuote ? $sessionQuote->getStoreId() : null;
+        return $sessionQuote && $sessionQuote->getStoreId() ? $sessionQuote->getStoreId() : null;
     }
 
     /**
@@ -463,6 +465,8 @@ class Cart extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
         $boltOrder  = $this->apiHelper->sendRequest($request);
+
+        $boltOrder->setStoreId($storeId);
 
         return $boltOrder;
     }
@@ -876,6 +880,103 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Create cart data items array
+     *
+     * @param \Magento\Quote\Model\Quote\Item[] $items
+     * @param null|int $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     */
+    public function getCartItems($items, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->startEnvironmentEmulation(
+            $storeId,
+            \Magento\Framework\App\Area::AREA_FRONTEND,
+            true
+        );
+        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
+        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        $products = array_map(
+            function ($item) use ($imageBlock, &$totalAmount, &$diff, $storeId) {
+                $product = [];
+
+                $unitPrice   = $item->getCalculationPrice();
+                $itemTotalAmount = $unitPrice * $item->getQty();
+
+                $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
+
+                // Aggregate eventual total differences if prices are stored with more than 2 decimal places
+                $diff += $itemTotalAmount * 100 -$roundedTotalAmount;
+
+                // Aggregate cart total
+                $totalAmount += $roundedTotalAmount;
+
+                ////////////////////////////////////
+                // Load item product object
+                ////////////////////////////////////
+                $_product = $this->productRepository->get($item->getSku(), false, $storeId);
+
+                $product['reference']    = $_product->getId();
+                $product['name']         = $item->getName();
+                $product['total_amount'] = $roundedTotalAmount;
+                $product['unit_price']   = $this->getRoundAmount($unitPrice);
+                $product['quantity']     = round($item->getQty());
+                $product['sku']          = trim($item->getSku());
+                $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
+                ///////////////////////////////////////////
+                // Get item attributes / product properties
+                ///////////////////////////////////////////
+                $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+                if(isset($item_options['attributes_info'])){
+                    $properties = [];
+                    foreach($item_options['attributes_info'] as $attribute_info){
+                        $properties[] = (object) [
+                            "name" => $attribute_info['label'],
+                            "value" => $attribute_info['value']
+                        ];
+                    }
+                    $product['properties'] = $properties;
+                }
+                ////////////////////////////////////
+                // Get product description and image
+                ////////////////////////////////////
+                $product['description'] = strip_tags($_product->getDescription());
+                try {
+                    $productImage = $imageBlock->getImage($_product, 'product_small_image');
+                } catch (\Exception $e) {
+                    try {
+                        $productImage = $imageBlock->getImage($_product, 'product_image');
+                    } catch (\Exception $e) {
+                        $this->bugsnag->registerCallback(function ($report) use ($product) {
+                            $report->setMetaData([
+                                'ITEM' => $product
+                            ]);
+                        });
+                        $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
+                    }
+                }
+                if (@$productImage) {
+                    $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
+                }
+                ////////////////////////////////////
+                return  $product;
+            },
+            $items
+        );
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->stopEnvironmentEmulation();
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        return [$products, $totalAmount, $diff];
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -894,16 +995,10 @@ class Cart extends AbstractHelper
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
-        try {
-            /** @var Quote $quote */
-            $quote = $immutableQuote ?
-                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
-                $this->checkoutSession->getQuote();
-        } catch (NoSuchEntityException $e) {
-            // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
-            $this->bugsnag->notifyException($e);
-            $quote = null;
-        }
+        /** @var Quote $quote */
+        $quote = $immutableQuote ?
+            $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
+            $this->checkoutSession->getQuote();
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
@@ -955,87 +1050,7 @@ class Cart extends AbstractHelper
         //Currency
         $cart['currency'] = $immutableQuote->getQuoteCurrencyCode();
 
-        $totalAmount = 0;
-        $diff = 0;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        $this->appEmulation->startEnvironmentEmulation(
-            $immutableQuote->getStoreId(),
-            \Magento\Framework\App\Area::AREA_FRONTEND,
-            true
-        );
-        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
-        $imageBlock = $this->blockFactory->createBlock(\Magento\Catalog\Block\Product\ListProduct::class);
-
-        foreach ($items as $item) {
-            $product = [];
-            $productId = $item->getProductId();
-
-            $unitPrice   = $item->getCalculationPrice();
-            $itemTotalAmount = $unitPrice * $item->getQty();
-
-            $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
-
-            // Aggregate eventual total differences if prices are stored with more than 2 decimal places
-            $diff += $itemTotalAmount * 100 -$roundedTotalAmount;
-
-            // Aggregate cart total
-            $totalAmount += $roundedTotalAmount;
-
-            $product['reference']    = $productId;
-            $product['name']         = $item->getName();
-            $product['total_amount'] = $roundedTotalAmount;
-            $product['unit_price']   = $this->getRoundAmount($unitPrice);
-            $product['quantity']     = round($item->getQty());
-            $product['sku']          = trim($item->getSku());
-            $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
-
-            ////////////////////////////////////
-            // Get product description and image
-            ////////////////////////////////////
-            /**
-             * @var \Magento\Catalog\Model\Product $_product
-             */
-            $_product = $this->productRepository->getById($productId);
-            $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
-            if (isset($item_options['attributes_info'])) {
-                $properties = [];
-                foreach ($item_options['attributes_info'] as $attribute_info) {
-                    $properties[] = (object) [
-                        "name" => $attribute_info['label'],
-                        "value" => $attribute_info['value']
-                    ];
-                }
-                $product['properties'] = $properties;
-            }
-            $product['description'] = strip_tags($_product->getDescription());
-            try {
-                $productImage = $imageBlock->getImage($_product, 'product_small_image');
-            } catch (\Exception $e) {
-                try {
-                    $productImage = $imageBlock->getImage($_product, 'product_image');
-                } catch (\Exception $e) {
-                    $this->bugsnag->registerCallback(function ($report) use ($product) {
-                        $report->setMetaData([
-                            'ITEM' => $product
-                        ]);
-                    });
-                    $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
-                }
-            }
-            if (@$productImage) {
-                $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
-            }
-            ////////////////////////////////////
-
-            //Add product to items array
-            $cart['items'][] = $product;
-        }
-
-        $this->appEmulation->stopEnvironmentEmulation();
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($items, $immutableQuote->getStoreId());
 
         // Email field is mandatory for saving the address.
         // For back-office orders (payment only) we need to get it from the store.
@@ -1392,7 +1407,6 @@ class Cart extends AbstractHelper
         }
 
         $this->sessionHelper->cacheFormKey($immutableQuote);
-        $cart['magento_store_id'] = ($quote->getStoreId()) ? $quote->getStoreId() : null ;
 
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
@@ -1463,14 +1477,18 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
-     * @param null|int   $magentoStoreId
+     * @param null|int   $storeId
      *
      * @return bool
      * @throws NoSuchEntityException
      */
-    public function hasProductRestrictions($quote = null, $magentoStoreId = null)
+    public function hasProductRestrictions($quote = null)
     {
-        $toggleCheckout = $this->configHelper->getToggleCheckout($magentoStoreId);
+        /** @var Quote $quote */
+        $quote = $quote ?: $this->checkoutSession->getQuote();
+        $storeId = $quote->getStoreId();
+
+        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
             return false;
@@ -1486,8 +1504,6 @@ class Cart extends AbstractHelper
             return false;
         }
 
-        /** @var Quote $quote */
-        $quote = $quote ?: $this->checkoutSession->getQuote();
         foreach ($quote->getAllVisibleItems() as $item) {
             /** @var \Magento\Quote\Model\Quote\Item $item */
             // call every method on item, if returns true, do restrict
@@ -1499,7 +1515,7 @@ class Cart extends AbstractHelper
             // Non empty check to avoid unnecessary model load
             if ($productRestrictionMethods) {
                 // get item product
-                $product = $this->productRepository->getById($item->getProductId());
+                $product = $this->productRepository->get($item->getSku(), false, $storeId);
                 // call every method on product, if returns true, do restrict
                 foreach ($productRestrictionMethods as $method) {
                     if ($product->$method()) {

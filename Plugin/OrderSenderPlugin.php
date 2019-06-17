@@ -16,6 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Model\Payment;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 
@@ -40,8 +41,14 @@ class OrderSenderPlugin
         Order $order,
         $forceSyncMode = false
     ) {
-        if (in_array($order->getState(),
-            [Order::STATE_NEW, Order::STATE_CANCELED, Order::STATE_PAYMENT_REVIEW, Order::STATE_HOLDED])
+        $payment = $order->getPayment();
+        $paymentMethod = $payment->getMethod();
+
+        if ($paymentMethod == Payment::METHOD_CODE &&
+            in_array(
+                $order->getState(),
+                [Order::STATE_NEW, Order::STATE_CANCELED, Order::STATE_PAYMENT_REVIEW, Order::STATE_HOLDED]
+            )
         ) {
             return false;
         }

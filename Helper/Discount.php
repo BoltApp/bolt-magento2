@@ -230,9 +230,10 @@ class Discount extends AbstractHelper
     /**
      * Load Amasty Gift Card account object.
      * @param string $code Gift Card coupon code
+     * @param string|int $websiteId
      * @return \Amasty\GiftCard\Model\Account|null
      */
-    public function loadAmastyGiftCard($code)
+    public function loadAmastyGiftCard($code, $websiteId)
     {
         try {
             if (!$this->isAmastyGiftCardAvailable()) {
@@ -242,7 +243,9 @@ class Discount extends AbstractHelper
             $accountModel = $this->amastyAccountFactory->getInstance()
                 ->create()
                 ->loadByCode($code);
-            return $accountModel && $accountModel->getId() ? $accountModel : null;
+            return $accountModel && $accountModel->getId()
+                   && (! $accountModel->getWebsiteId() || $accountModel->getWebsiteId() == $websiteId)
+                   ? $accountModel : null;
         } catch (\Exception $e) {
             return null;
         }
@@ -570,9 +573,10 @@ class Discount extends AbstractHelper
     /**
      * Load Magplaza Gift Card account object.
      * @param string $code Gift Card coupon code
+     * @param string|int $storeId
      * @return \Mageplaza\GiftCard\Model\GiftCard|null
      */
-    public function loadMageplazaGiftCard($code)
+    public function loadMageplazaGiftCard($code, $storeId)
     {
         if (!$this->isMageplazaGiftCardAvailable()) {
             return null;
@@ -581,7 +585,11 @@ class Discount extends AbstractHelper
         try {
             $accountModel = $this->mageplazaGiftCardFactory->getInstance()
                 ->load($code, 'code');
-            return $accountModel && $accountModel->getId() ? $accountModel : null;
+
+            return $accountModel && $accountModel->getId()
+                   && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId)
+                   ? $accountModel : null;
+
         } catch (\Exception $e) {
             return null;
         }
@@ -675,7 +683,7 @@ class Discount extends AbstractHelper
     /**
      * Apply Mageplaza Gift Card to the quote
      *
-     * @param $quote
+     * @param Quote $quote
      */
     public function applyMageplazaDiscountToQuote($quote)
     {
@@ -686,7 +694,7 @@ class Discount extends AbstractHelper
         try {
             if ($mpGiftCards = $quote->getData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY)) {
                 foreach (json_decode($mpGiftCards, true) as $couponCode => $amount) {
-                    $giftCard = $this->loadMageplazaGiftCard($couponCode);
+                    $giftCard = $this->loadMageplazaGiftCard($couponCode, $quote->getStoreId());
                     if ($giftCard && $giftCard->getId()) {
                         $this->removeMageplazaGiftCard($giftCard->getId(), $quote);
                         $this->applyMageplazaGiftCard($giftCard->getCode(), $quote);

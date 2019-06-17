@@ -54,6 +54,7 @@ tr.shipping.totals td.amount span.price,
                 <store_credit>0</store_credit>
                 <enable_payment_only_checkout>0</enable_payment_only_checkout>
                 <bolt_order_caching>1</bolt_order_caching>
+                <api_emulate_session>1</api_emulate_session>
             </boltpay>
         </payment>
     </default>

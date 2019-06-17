@@ -73,7 +73,7 @@ class Hook extends AbstractHelper
     /**
      * @var null|int
      */
-    private $magentoStoreId = null;
+    private $storeId = null;
 
     /**
      * @param Context $context
@@ -122,7 +122,7 @@ class Hook extends AbstractHelper
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData(json_decode($payload));
         $requestData->setDynamicApiUrl(ApiHelper::API_VERIFY_SIGNATURE);
-        $requestData->setApiKey($this->configHelper->getApiKey($this->getMagentoStoreId()));
+        $requestData->setApiKey($this->configHelper->getApiKey($this->getStoreId()));
 
         $headers = [
             self::HMAC_HEADER => $hmac_header
@@ -153,7 +153,7 @@ class Hook extends AbstractHelper
      */
     public function verifyWebhookSecret($payload, $hmac_header)
     {
-        $signing_secret = $this->configHelper->getSigningSecret($this->getMagentoStoreId());
+        $signing_secret = $this->configHelper->getSigningSecret($this->getStoreId());
         $computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
 
         return $computed_hmac == $hmac_header;
@@ -203,31 +203,29 @@ class Hook extends AbstractHelper
     }
 
     /**
-     * @param null|int $magentoStoreId
+     * @param null|int $storeId
      */
-    public function setMagentoStoreId($magentoStoreId = null)
+    public function setStoreId($storeId = null)
     {
-        $this->magentoStoreId = $magentoStoreId;
+        $this->storeId = $storeId;
     }
 
     /**
      * @return null|int
      */
-    public function getMagentoStoreId()
+    public function getStoreId()
     {
-        return $this->magentoStoreId;
+        return $this->storeId;
     }
 
     /**
-     * @param null|int $magentoStoreId
+     * @param null|int $storeId
      * @throws WebapiException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function preProcessWebhook($magentoStoreId = null)
+    public function preProcessWebhook($storeId = null)
     {
-        if ($magentoStoreId) {
-            $this->setMagentoStoreId($magentoStoreId);
-        }
+        $this->setStoreId($storeId);
 
         $this->setCommonMetaData();
         $this->setHeaders();

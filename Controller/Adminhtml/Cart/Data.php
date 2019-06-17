@@ -96,12 +96,13 @@ class Data extends Action
     {
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('magento_sid');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
 
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+                $storeId = $boltpayOrder->getStoreId();
+                $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
             }
 
             // format and send the response
@@ -115,16 +116,11 @@ class Data extends Action
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
             $result->setData('hints', $hints);
+            $result->setData('publishableKey', @$publishableKey);
+            $result->setData('storeId', @$storeId);
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
-            $this->bugsnag->registerCallback(function ($report) use ($magentoStoreId) {
-                $report->setMetaData([
-                    'ORDER' => [
-                        'Magento StoreId' => $magentoStoreId
-                    ]
-                ]);
-            });
             $this->bugsnag->notifyException($e);
             throw $e;
         }

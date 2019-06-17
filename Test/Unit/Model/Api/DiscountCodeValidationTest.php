@@ -64,47 +64,47 @@ class DiscountCodeValidationTest extends TestCase
      * @var CouponFactory
      */
     private $couponFactoryMock;
-    
+
     /**
      * @var UsageFactory
      */
     private $usageFactoryMock;
-    
+
     /**
      * @var DataObjectFactory
      */
     private $dataObjectFactoryMock;
-    
+
     /**
      * @var ThirdPartyModuleFactory
      */
     private $moduleGiftCardAccountMock;
-    
+
     /**
      * @var ThirdPartyModuleFactory
      */
     private $moduleUnirgyGiftCertMock;
-    
+
     /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
      */
     private $moduleUnirgyGiftCertHelperMock;
-    
+
     /**
      * @var CustomerFactory
      */
     private $customerFactoryMock;
-    
+
     /**
      * @var AddressFactory
      */
     private $addressFactory;
-    
+
     /**
      * @var Request
      */
     private $request;
-    
+
     /**
      * @var Response
      */
@@ -114,62 +114,62 @@ class DiscountCodeValidationTest extends TestCase
      * @var HookHelper
      */
     private $hookHelper;
-    
+
     /**
      * @var LogHelper
      */
     private $logHelper;
-    
+
     /**
      * @var ConfigHelper
      */
     private $configHelper;
-    
+
     /**
      * @var CartHelper
      */
     private $cartHelper;
-    
+
     /**
      * @var DiscountHelper
      */
     private $discountHelper;
-    
+
     /**
      * @var Bugsnag
      */
     private $bugsnag;
-    
+
     /**
      * @var TimezoneInterface
      */
     private $timezone;
-    
+
     /**
      * @var BoltErrorResponse
      */
     private $errorResponse;
-    
+
     /**
      * @var QuoteRepository
      */
     private $quoteRepositoryForUnirgyGiftCert;
-    
+
     /**
      * @var CheckoutSession
      */
     private $checkoutSession;
-    
+
     /**
      * @var RegionModel
      */
     private $regionModel;
-    
+
     /**
      * @var TotalsCollector
      */
     private $totalsCollector;
-    
+
 
     /**
      * @inheritdoc
@@ -178,7 +178,7 @@ class DiscountCodeValidationTest extends TestCase
     {
         $this->createFactoryMocks();
         $this->createHelperMocks();
-        
+
         $this->request = $this->getMockBuilder(Request::class)
             ->setMethods(['getContent'])
             ->disableOriginalConstructor()
@@ -198,8 +198,8 @@ class DiscountCodeValidationTest extends TestCase
             ->setMethods(['loadByName'])
             ->disableOriginalConstructor()
             ->getMock();
-        
-        
+
+
         $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
             ->setMethods(['collectAddressTotals'])
             ->disableOriginalConstructor()
@@ -230,7 +230,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->method('getContent')
             ->willReturn(json_encode($request_data));
-        
+
         $this->couponFactoryMock->method('isObjectNew')
             ->willReturn(false);
         $this->couponFactoryMock->method('getCouponId')
@@ -243,7 +243,7 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn(100);
         $this->couponFactoryMock->method('getTimesUsed')
             ->willReturn(null);
-        
+
         $this->moduleUnirgyGiftCertMock->method('getInstance')
             ->willReturn(null);
 
@@ -274,7 +274,7 @@ class DiscountCodeValidationTest extends TestCase
         $ruleRepositoryMock->method('getById')
             ->with($ruleId)
             ->willReturn($ruleMock);
-            
+
         $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
             ->setMethods(['addData', 'setCollectShippingRates', 'setShippingMethod', 'getGroupedAllShippingRates',
                 'getShippingDiscountAmount', 'getShippingAmount', 'save'
@@ -301,7 +301,7 @@ class DiscountCodeValidationTest extends TestCase
         $shippingRates =[['flatrate' => $addressRate]];
         $shippingAddress->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
-            
+
         $this->cartHelper->method('getActiveQuoteById')
             ->will(
                 $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
@@ -318,12 +318,20 @@ class DiscountCodeValidationTest extends TestCase
             ->will($this->returnCallback(function ($arg1) {
                 return round($arg1 * 100);
             }));
-            
+
+        $moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $moduleGiftCardAccountMock->method('getInstance')
+            ->willReturn(null);
+
         $currentMock = new BoltDiscountCodeValidation(
             $this->request,
             $this->response,
             $this->couponFactoryMock,
-            $this->moduleGiftCardAccountMock,
+            $moduleGiftCardAccountMock,
             $this->moduleUnirgyGiftCertMock,
             $this->moduleUnirgyGiftCertHelperMock,
             $this->quoteRepositoryForUnirgyGiftCert,
@@ -342,13 +350,14 @@ class DiscountCodeValidationTest extends TestCase
             $this->discountHelper,
             $this->regionModel,
             $this->totalsCollector
-        );  
+        );
+
         $result = $currentMock->validate();
 
         // If another exception happens, the test will fail.
         $this->assertTrue($result);
     }
-    
+
     /**
      * @test
      */
@@ -432,7 +441,7 @@ class DiscountCodeValidationTest extends TestCase
         $ruleRepositoryMock->method('getById')
             ->with(6)
             ->willReturn($ruleMock);
-        
+
         // Add Shipping Method Condition
         $shippingCondMock = $this->getMockBuilder(AddressFactory::class)
             ->setMethods(['getType', 'getAttribute', 'getOperator', 'getValue'])
@@ -449,7 +458,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->method('getContent')
             ->willReturn(json_encode($request_data));
-        
+
         $this->couponFactoryMock->method('isObjectNew')
             ->willReturn(false);
         $this->couponFactoryMock->method('getCouponId')
@@ -462,10 +471,10 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn(100);
         $this->couponFactoryMock->method('getTimesUsed')
             ->willReturn(null);
-        
+
         $this->moduleUnirgyGiftCertMock->method('getInstance')
             ->willReturn(null);
-            
+
         $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
             ->setMethods(['addData', 'setCollectShippingRates', 'setShippingMethod', 'getGroupedAllShippingRates',
                 'getShippingDiscountAmount', 'getShippingAmount', 'save'
@@ -492,7 +501,7 @@ class DiscountCodeValidationTest extends TestCase
         $shippingRates =[['flatrate' => $addressRate]];
         $shippingAddress->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
-            
+
         $this->cartHelper->method('getActiveQuoteById')
             ->will(
                 $this->returnCallback(function ($arg) use ($couponCode, $shippingAddress, $customerId, $quoteId, $parentQuoteId) {
@@ -513,12 +522,20 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn($request_shipping_addr);
         $this->cartHelper->method('validateEmail')
             ->willReturn(true);
-            
+
+        $moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $moduleGiftCardAccountMock->method('getInstance')
+            ->willReturn(null);
+
         $currentMock = new BoltDiscountCodeValidation(
             $this->request,
             $this->response,
             $this->couponFactoryMock,
-            $this->moduleGiftCardAccountMock,
+            $moduleGiftCardAccountMock,
             $this->moduleUnirgyGiftCertMock,
             $this->moduleUnirgyGiftCertHelperMock,
             $this->quoteRepositoryForUnirgyGiftCert,
@@ -715,11 +732,19 @@ class DiscountCodeValidationTest extends TestCase
             )
             ->willReturn(false);
 
+        $moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $moduleGiftCardAccountMock->method('getInstance')
+            ->willReturn(null);
+
         $currentMock = new BoltDiscountCodeValidation(
             $this->request,
             $this->response,
             $this->couponFactoryMock,
-            $this->moduleGiftCardAccountMock,
+            $moduleGiftCardAccountMock,
             $this->moduleUnirgyGiftCertMock,
             $this->moduleUnirgyGiftCertHelperMock,
             $this->quoteRepositoryForUnirgyGiftCert,
@@ -827,8 +852,8 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturnSelf();
         $this->couponFactoryMock->method('loadByCode')
             ->withAnyParameters()
-            ->willReturnSelf();         
-            
+            ->willReturnSelf();
+
         $this->usageFactoryMock = $this->getMockBuilder(UsageFactory::class)
             ->setMethods(['create', 'loadByCustomerCoupon'])
             ->disableOriginalConstructor()
@@ -838,33 +863,33 @@ class DiscountCodeValidationTest extends TestCase
         $this->usageFactoryMock->method('loadByCustomerCoupon')
             ->withAnyParameters()
             ->willReturnSelf();
-            
+
         $this->dataObjectFactoryMock = $this->getMockBuilder(DataObjectFactory::class)
             ->setMethods(['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactoryMock->method('create')
             ->willReturnSelf();
-            
+
         $this->moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
             ->setMethods(['getInstance'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->moduleGiftCardAccountMock->method('getInstance')
             ->willReturnSelf();
-        
+
         $this->moduleUnirgyGiftCertMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
             ->setMethods(['getInstance'])
             ->disableOriginalConstructor()
             ->getMock();
-        
+
         $this->moduleUnirgyGiftCertHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
             ->setMethods(['getInstance'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->moduleUnirgyGiftCertHelperMock->method('getInstance')
             ->willReturnSelf();
-        
+
         $this->customerFactoryMock = $this->getMockBuilder(CustomerFactory::class)
             ->setMethods(['create', 'loadByCustomerRule'])
             ->disableOriginalConstructor()
@@ -875,32 +900,32 @@ class DiscountCodeValidationTest extends TestCase
             ->withAnyParameters()
             ->willReturnSelf();
     }
-    
+
     private function createHelperMocks()
     {
         $this->hookHelper = $this->createMock(HookHelper::class);
-        
+
         $this->logHelper = $this->createMock(LogHelper::class);
-            
+
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods(['getOrderByIncrementId', 'getQuoteById', 'getActiveQuoteById', 'handleSpecialAddressCases', 'validateEmail', 'getRoundAmount', 'getCartData'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->cartHelper->method('getOrderByIncrementId')
             ->willReturn(false);
-            
+
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
             ->setMethods(['getIgnoredShippingAddressCoupons'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getIgnoredShippingAddressCoupons')
             ->willReturn([]);
-            
+
         $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
             ->setMethods(['loadMageplazaGiftCard', 'loadAmastyGiftCard', 'removeAmastyGiftCard', 'applyAmastyGiftCard', 'cloneAmastyGiftCards'])
             ->disableOriginalConstructor()
             ->getMock();
-            
+
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
             ->setMethods(['notifyException'])
             ->disableOriginalConstructor()

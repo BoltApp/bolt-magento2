@@ -66,4 +66,6 @@
  - Various bug fixes
 ## [v1.1.14](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.14) 2019-05-28
  - Various bug fixes
-
+## [v1.1.15](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.15) 2019-06-12
+ - Fixes for multi-store backend support.
+ - Option to toggle emulated session in api calls
