@@ -942,9 +942,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      *
      * @return bool
      */
-    protected function shouldUseParentQuoteShippingAddressDiscount($couponCode, Quote $immutableQuote, Quote $parentQuote)
-    {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+    protected function shouldUseParentQuoteShippingAddressDiscount(
+        $couponCode,
+        Quote $immutableQuote,
+        Quote $parentQuote
+    ) {
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons(
+            $parentQuote->getStoreId()
+        );
 
         return $immutableQuote->getCouponCode() == $couponCode &&
                $immutableQuote->getCouponCode() == $parentQuote->getCouponCode() &&

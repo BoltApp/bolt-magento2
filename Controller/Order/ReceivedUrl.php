@@ -81,7 +81,6 @@ class ReceivedUrl extends Action
     protected function getRedirectUrl($order)
     {
         $storeId = $order->getStoreId();
-        $storeId = $order->getStoreId();
         $this->_url->setScope($storeId);
         $urlPath = $this->configHelper->getSuccessPageRedirect($storeId);
 

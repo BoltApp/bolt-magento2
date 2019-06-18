@@ -23,7 +23,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleResource;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\Context as ContextHelper;
+use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\Request\Http as Request;
 
 /**
@@ -59,9 +59,9 @@ class ConfigTest extends TestCase
     private $currentMock;
 
     /**
-     * @var ContextHelper
+     * @var Context
      */
-    private $contextHelper;
+    private $context;
 
     /**
      * @var Request
@@ -73,7 +73,7 @@ class ConfigTest extends TestCase
      */
     public function setUp()
     {
-        $this->contextHelper = $this->createMock(ContextHelper::class);
+        $this->context = $this->createMock(Context::class);
         $this->encryptor = $this->createMock(EncryptorInterface::class);
         $this->moduleResource = $this->createMock(ModuleResource::class);
 
@@ -90,7 +90,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -177,7 +177,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -207,7 +207,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -237,7 +237,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -265,7 +265,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -422,7 +422,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -450,7 +450,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,

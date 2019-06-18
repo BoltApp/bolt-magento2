@@ -764,7 +764,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $parentQuoteCoupon,
         \Magento\Quote\Api\Data\CartInterface $quote
     ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($quote->getStoreId());
 
         return $parentQuoteCoupon &&
                !$quote->getCouponCode() &&

@@ -767,27 +767,27 @@ class Order extends AbstractHelper
     public function preAuthCreateOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
-        $order = $existingOrder = $this->getExistingOrder($quote->getReservedOrderId());
-        $isStillNeedCreateNewOrder = true;
-        if ($existingOrder) {
-            $isStillNeedCreateNewOrder = $this->deleteOrderIfPriceIsDifferent($existingOrder, $transaction);
+        $order = $this->getExistingOrder($quote->getReservedOrderId());
+        if ($order) {
+            if ($this->hasSamePrice($order, $transaction)) {
+                return $order;
+            } else {
+                $this->deleteOrder($order);
+            }
         }
 
-        if ($isStillNeedCreateNewOrder) {
-            $order = $this->processNewOrder($quote, $transaction);
+        $order = $this->processNewOrder($quote, $transaction);
 
-            if (Hook::$fromBolt) {
-                $order->addStatusHistoryComment(
-                    "BOLTPAY INFO :: This order was created via Pre-Auth Webhook"
-                );
-            }
-            // Add the user_note to the order comments and make it visible for customer.
-            if (isset($transaction->order->user_note)) {
-                $this->setOrderUserNote($order, $transaction->order->user_note);
-            }
+        $order->addStatusHistoryComment(
+            "BOLTPAY INFO :: This order was created via Pre-Auth Webhook"
+        );
 
-            $order->save();
+        // Add the user_note to the order comments and make it visible for customer.
+        if (isset($transaction->order->user_note)) {
+            $this->setOrderUserNote($order, $transaction->order->user_note);
         }
+
+        $order->save();
 
         return $order;
     }
@@ -840,12 +840,12 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param $order
-     * @param $transaction
+     * @param OrderModel $order
+     * @param \stdClass $transaction
      * @return bool
      * @throws \Exception
      */
-    public function deleteOrderIfPriceIsDifferent($order, $transaction)
+    protected function hasSamePrice($order, $transaction)
     {
         /** @var OrderModel $order */
         $subtotal = (int) ($order->getSubtotal() * 100);
@@ -858,22 +858,22 @@ class Order extends AbstractHelper
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
         $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
 
-        // If totals differs then delete order.
-        if (abs($subtotal - $transactionSubtotalAmount) <= self::MISMATCH_TOLERANCE
+        return abs($subtotal - $transactionSubtotalAmount) <= self::MISMATCH_TOLERANCE
             && abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
             && abs($shippingAmount - $transactionShippingAmount) <= self::MISMATCH_TOLERANCE
-            && abs($totalAmount - $transactionGrandTotalAmount) <= self::MISMATCH_TOLERANCE
-        ) {
-            return false;
-        }
+            && abs($totalAmount - $transactionGrandTotalAmount) <= self::MISMATCH_TOLERANCE;
+    }
 
+    /**
+     * @param OrderModel $order
+     */
+    protected function deleteOrder($order)
+    {
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
             $order->delete();
         }
-
-        return true;
     }
 
     /**
