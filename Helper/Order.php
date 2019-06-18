@@ -767,8 +767,7 @@ class Order extends AbstractHelper
     public function preAuthCreateOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
-        $order = $this->getExistingOrder($quote->getReservedOrderId());
-        if ($order) {
+        if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             } else {
@@ -890,20 +889,18 @@ class Order extends AbstractHelper
 
         $order = $this->getExistingOrder($incrementId);
         if ($order && $order->getState() === OrderModel::STATE_NEW) {
-            $order->cancel()->save()->delete();
+            $this->deleteOrder($order);
         }
     }
 
     /**
      * @param $orderIncrementId
-     * @return OrderModel|null
+     * @return OrderModel|false
      */
     private function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
-        $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId);
-
-        return ($order && $order->getId()) ? $order : null;
+        return $this->cartHelper->getOrderByIncrementId($orderIncrementId);
     }
 
     /**

@@ -153,7 +153,7 @@ class OrderManagement implements OrderManagementInterface
                 $this->response->setHttpResponseCode(200);
                 $this->response->setBody(json_encode([
                     'status' => 'success',
-                    'message' => 'Order was deleted. '.$display_id,
+                    'message' => 'Order was deleted: ' . $display_id,
                 ]));
             } else {
                 $this->orderHelper->saveUpdateOrder(
