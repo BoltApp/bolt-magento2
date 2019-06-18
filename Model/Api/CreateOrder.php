@@ -338,7 +338,7 @@ class CreateOrder implements CreateOrderInterface
         $params = ['_secure' => true];
         if ($quote->getStoreId()) {
             $storeId = $quote->getStoreId();
-            $params['magento_sid'] = $storeId;
+            $params['store_id'] = $storeId;
             $urlInterface->setScope($storeId);
         }
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);

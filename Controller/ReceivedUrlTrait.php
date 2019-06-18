@@ -63,13 +63,13 @@ trait ReceivedUrlTrait
     {
         $boltSignature = $this->getRequest()->getParam('bolt_signature');
         $boltPayload = $this->getRequest()->getParam('bolt_payload');
-        $magentoStoreId = $this->getRequest()->getParam('magento_sid');
+        $storeId = $this->getRequest()->getParam('store_id');
 
         $signature = base64_decode($boltSignature);
 
-        $magentoSavedSecret = $this->configHelper->getSigningSecret($magentoStoreId);
+        $signingSecret = $this->configHelper->getSigningSecret($storeId);
 
-        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $magentoSavedSecret, true);
+        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $signingSecret, true);
         $hash = base64_encode($hashBoltPayloadWithKey);
 
         if ($signature === $hash) {
@@ -113,10 +113,10 @@ trait ReceivedUrlTrait
                 $logMessage = $noSuchEntityException->getMessage();
                 $this->logHelper->addInfoLog('NoSuchEntityException: ' . $logMessage);
 
-                $this->bugsnag->registerCallback(function ($report) use ($incrementId, $magentoStoreId) {
+                $this->bugsnag->registerCallback(function ($report) use ($incrementId, $storeId) {
                     $report->setMetaData([
-                        'order incrementId' => $incrementId,
-                        'MagentoStoreId'    => $magentoStoreId
+                        'order_id' => $incrementId,
+                        'store_id'    => $storeId
                     ]);
                 });
                 $this->bugsnag->notifyError('NoSuchEntityException: ', $logMessage);
@@ -132,11 +132,11 @@ trait ReceivedUrlTrait
                 $errorMessage = __('Something went wrong. Please contact the seller.');
                 $this->messageManager->addErrorMessage($errorMessage);
 
-                $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $magentoStoreId) {
+                $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $storeId) {
                     $report->setMetaData([
                         'bolt_signature' => $boltSignature,
                         'bolt_payload'   => $boltPayload,
-                        'MagentoStoreId' => $magentoStoreId
+                        'store_id' => $storeId
                     ]);
                 });
                 $this->bugsnag->notifyError('LocalizedException: ', $logMessage);
@@ -147,11 +147,11 @@ trait ReceivedUrlTrait
             $logMessage = 'bolt_signature and Magento signature are not equal';
             $this->logHelper->addInfoLog($logMessage);
 
-            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $magentoStoreId) {
+            $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $storeId) {
                 $report->setMetaData([
                     'bolt_signature' => $boltSignature,
                     'bolt_payload'   => $boltPayload,
-                    'MagentoStoreId' => $magentoStoreId
+                    'store_id' => $storeId
                 ]);
             });
             $this->bugsnag->notifyError('OrderReceivedUrl Error', $logMessage);
