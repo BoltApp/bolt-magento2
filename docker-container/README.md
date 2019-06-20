@@ -6,16 +6,16 @@
 
 ## ngrok
 
-[https://ngrok.com/](https://ngrok.com/pricing)
+[https://ngrok.com/](https://ngrok.com/)
 [https://ngrok.com/pricing](https://ngrok.com/pricing)
 
-In order for your docker container to communicate with the webhook and shipping & tax url set on [merchant.bolt.com](http://merchant.bolt.com/), one must set up an ngrok account to expose your store's docker ports to a public IP address. In order to do this one must have at least the Basic plan with ngrok to reserve a domain for themselves. 
+In order for your docker container to communicate with the webhook and shipping & tax url set on [merchant.bolt.com](https://merchant.bolt.com/), one must set up an ngrok account to expose your store's docker ports to a public IP address. In order to do this one must have at least the Basic plan with ngrok to reserve a domain for themselves. 
 
 Once the initial configuration scripts are ran in your local environment and a public domain is reserved, run the following command 
 
     ./ngrok http <STORE_PORT> -subdomain=<NGROK_DOMAIN>
 
-***Make sure not to include [ngrok.io](http://ngrok.io) in your domain***. For example if your store is [test-store.ngrok.io](http://test-store.ngrok.io), **just enter test-store** for the domain. 
+***Make sure not to include [ngrok.io](https://ngrok.io) in your domain***. For example if your store is [test-store.ngrok.io](http://test-store.ngrok.io), **just enter test-store** for the domain. 
 
 ## Launch Script Dependencies
 
@@ -38,7 +38,7 @@ Problem 1
     - Installation request for magento/product-enterprise-edition (locked at 2.3.1) -> satisfiable by magento/product-enterprise-edition[2.3.1].
 ```
 
-This means th proper php dependencies are not built in your local environment. To fix this use the commands in the **install.sh** to setup a PHP version with dependencies within your path. A proper location looks like `/usr/local/opt/php@7.2/bin/php`
+This means the proper PHP dependencies are not built in your local environment. To fix this use the commands in the **install.sh** to set up a PHP version with dependencies within your path. A proper location looks like `/usr/local/opt/php@7.2/bin/php`
 
 # How to run
 
@@ -61,6 +61,7 @@ ngrokUrlHTTPS="https://ethan-m2.ngrok.io/"
 installSampleData=true
 ```    
 
+- Proper versioning for **m2Version** can be found in all the branch names for [https://github.com/magento/magento-cloud](https://github.com/magento/magento-cloud)
 - Run **install.sh** to install the Magento Cloud configuration and repository locally
 - Otherwise you can copy the pre-existing **docker-compose.yml** into the magento cloud directory
 - For the initial run set **buildCompose** to true
