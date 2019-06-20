@@ -241,6 +241,11 @@ class Config extends AbstractHelper
     const XML_PATH_API_EMULATE_SESSION = 'payment/boltpay/api_emulate_session';
 
     /**
+     * Minify JavaScript configuration path
+     */
+    const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -1121,6 +1126,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_API_EMULATE_SESSION,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get minimize javascript flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function shouldMinifyJavascript($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
             ScopeInterface::SCOPE_STORE,
             $store
         );
