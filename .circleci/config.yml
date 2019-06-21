@@ -9,7 +9,10 @@ jobs:
       - run:
           name: PHP 7.2 Magento2.3
           command: |
+            mkdir ./artifacts
+            export TEST_ENV=php72
             MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
+
   unit-php71-magento22:
     docker:
       - image: circleci/php:7.1-apache-node-browsers-legacy
@@ -19,6 +22,8 @@ jobs:
       - run:
           name: PHP 7.1 Magento2.2
           command: |
+            mkdir ./artifacts
+            export TEST_ENV=php71
             MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
   unit-php70-magento22:
     docker:
@@ -29,6 +34,8 @@ jobs:
       - run:
           name: PHP 7.0 Magento2.2
           command: |
+            mkdir ./artifacts
+            export TEST_ENV=php70
             MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
   phpcs:
     docker:
