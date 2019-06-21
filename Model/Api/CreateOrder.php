@@ -334,13 +334,13 @@ class CreateOrder implements CreateOrderInterface
         $this->sessionHelper->setFormKey($quote);
 
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
+        $storeId = $quote->getStoreId();
         $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
-        $params = ['_secure' => true];
-        if ($quote->getStoreId()) {
-            $storeId = $quote->getStoreId();
-            $params['store_id'] = $storeId;
-            $urlInterface->setScope($storeId);
-        }
+        $urlInterface->setScope($storeId);
+        $params = [
+            '_secure' => true,
+            'store_id' => $storeId
+        ];
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
         $this->logHelper->addInfoLog('---> ' . $url);
 
