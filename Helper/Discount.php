@@ -480,7 +480,7 @@ class Discount extends AbstractHelper
             return false;
         }
 
-        return $quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditBalanceAmount($quote) > 0;
+        return $quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditUsedAmount($quote) > 0;
     }
 
     /**
@@ -492,7 +492,7 @@ class Discount extends AbstractHelper
      */
     public function getMirasvitStoreCreditAmount($quote, $paymentOnly = false)
     {
-        $miravitBalanceAmount = $this->getMirasvitStoreCreditBalanceAmount($quote);
+        $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
         if(!$paymentOnly){
             /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
             $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
@@ -513,17 +513,20 @@ class Discount extends AbstractHelper
     }
 
     /**
+     * Get Mirasvit Store credit balance used amount.
+     * This method is only called when the Mirasvit_Credit module is installed and available on the quote.
+     *
      * @param $quote
      *
      * @return float
      */
-    protected function getMirasvitStoreCreditBalanceAmount($quote)
+    protected function getMirasvitStoreCreditUsedAmount($quote)
     {
         $balance = $this->mirasvitStoreCreditHelper
                         ->getInstance()
                         ->getBalance($quote->getCustomerId(), $quote->getQuoteCurrencyCode());
 
-        $amount = $balance->getAmount();
+        $amount = ((float)$quote->getManualUsedCredit() > 0) ? $quote->getManualUsedCredit() : $balance->getAmount();
         if ($quote->getQuoteCurrencyCode() !== $balance->getCurrencyCode()) {
             $amount = $this->mirasvitStoreCreditCalculationHelper->getInstance()->convertToCurrency(
                 $amount,
