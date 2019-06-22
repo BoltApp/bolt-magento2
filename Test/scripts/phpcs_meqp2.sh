@@ -11,7 +11,7 @@ echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY
 
 cd ..
 composer create-project --repository=https://repo.magento.com magento/marketplace-eqp
-composer create-project magento/magento-coding-standard --stability=dev magento-coding-standard
+composer create-project magento/magento-coding-standard --stability=dev magento-coding-standard -y
 
 cd magento-coding-standard
 
