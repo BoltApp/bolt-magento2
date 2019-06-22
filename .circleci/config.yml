@@ -22,7 +22,7 @@ jobs:
             MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
   unit-php70-magento22:
     docker:
-      - image: circleci/php:7.0-apache-node-browsers-legacy
+      - image: boltdev/m2-plugin-ci-php70:v1
       - image: circleci/mysql:5.7
     steps:
       - checkout
