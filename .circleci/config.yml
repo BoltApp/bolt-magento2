@@ -2,7 +2,7 @@ version: 2
 jobs:
   unit-php72-magento23:
     docker:
-      - image: circleci/php:7.2-apache-node-browsers-legacy
+      - image: boltdev/m2-plugin-ci-php72:v1
       - image: circleci/mysql:5.7
     steps:
       - checkout
@@ -12,7 +12,7 @@ jobs:
             MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
   unit-php71-magento22:
     docker:
-      - image: circleci/php:7.1-apache-node-browsers-legacy
+      - image: boltdev/m2-plugin-ci-php71:v1
       - image: circleci/mysql:5.7
     steps:
       - checkout
