@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\Js as BlockJs;
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 
@@ -54,6 +55,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @var CartHelper
      */
     private $cartHelperMock;
+
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnagHelperMock;
 
     private $magentoQuote;
 
@@ -96,6 +102,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
+        $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
 
         $this->block = $this->getMockBuilder(BlockJs::class)
             ->setMethods(['configHelper', 'getUrl'])
@@ -105,6 +112,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
+                    $this->bugsnagHelperMock
                 ]
             )
             ->getMock();

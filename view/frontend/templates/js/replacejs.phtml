@@ -25,8 +25,9 @@
 if ($block->shouldDisableBoltCheckout()) return;
 
 $trackCallbacks = $block->getTrackCallbacks();
-?>
 
+ob_start();
+?>
 <script type="text/javascript">
 
     // Store the configuration parameters passed from the php block
@@ -1109,3 +1110,10 @@ $trackCallbacks = $block->getTrackCallbacks();
 
     <?php echo $block->getAdditionalJavascript(); ?>
 </script>
+<?php
+$js = ob_get_clean();
+
+echo $block->minifyJs($js);
+
+?>
+
