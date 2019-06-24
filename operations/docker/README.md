@@ -11,5 +11,5 @@ If you want add a dependency  to one of these images you need update the image b
 - `docker build -f Dockerfile . --tag bolt boltdev/m2-plugin-ci-php70:v2` 
    Note: Make sure you update the version number to be one higher than what is currently be used in the circle yml
 - `docker push boltdev/m2-plugin-ci-php70:v2`
-  Note: you need to be logged into docker with a user who has push rights to the dockerhub repo (pretty much all of us)
+  Note: you need to be logged into docker with a user who has push rights to the dockerhub repo.
 - Update circle config yml to use the new image.
