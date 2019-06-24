@@ -23,6 +23,7 @@ use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -44,11 +45,15 @@ class Js extends Template
      */
     private $cartHelper;
 
+     /** @var Bugsnag  Bug logging interface*/
+    private $bugsnag;
+
     /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
+     * @param Bugsnag         $bugsnag;
      * @param array           $data
      */
     public function __construct(
@@ -56,12 +61,14 @@ class Js extends Template
         Config $configHelper,
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
+        Bugsnag $bugsnag,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
+        $this->bugsnag = $bugsnag;
     }
 
     /**
@@ -411,5 +418,27 @@ class Js extends Template
     public function getModuleVersion()
     {
         return $this->configHelper->getModuleVersion();
+    }
+
+    /**
+     * Takes a string containing javascript and removes unneeded characters in
+     * order to shrink the code without altering it's functionality.
+     *
+     * @param string $js
+     * @return string
+     * @throws \Exception
+     */
+    public function minifyJs($js)
+    {
+        if ($this->configHelper->shouldMinifyJavascript()) {
+            try {
+                return \JShrink\Minifier::minify($js);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+                return $js;
+            }
+        } else {
+            return $js;
+        }
     }
 }
