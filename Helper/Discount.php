@@ -457,10 +457,14 @@ class Discount extends AbstractHelper
         $unirgyInstance = $this->unirgyCertRepository->getInstance();
 
         $result = 0;
-        if ($unirgyInstance) {
-            $giftCert = $unirgyInstance->get($giftcertCode);
-            if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
-                $result = $giftCert->getBalance();
+        $giftCodes = explode(',', $giftcertCode);
+
+        foreach ($giftCodes as $giftCode) {
+            if ($unirgyInstance) {
+                $giftCert = $unirgyInstance->get($giftCode);
+                if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
+                    $result += $giftCert->getBalance();
+                }
             }
         }
 
