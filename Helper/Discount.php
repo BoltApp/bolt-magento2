@@ -447,20 +447,22 @@ class Discount extends AbstractHelper
     /**
      * Get Unirgy_Giftcert balance.
      *
-     * @param $giftcertCode
+     * @param string $giftcertCode
      * @return float
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getUnirgyGiftCertBalanceByCode($giftcertCode)
     {
+        $result = 0;
+
         /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
         $unirgyInstance = $this->unirgyCertRepository->getInstance();
 
-        $result = 0;
-        $giftCodes = explode(',', $giftcertCode);
+        if ($unirgyInstance) {
 
-        foreach ($giftCodes as $giftCode) {
-            if ($unirgyInstance) {
+            $giftCodes = array_map('trim', explode(',', $giftcertCode));
+
+            foreach ($giftCodes as $giftCode) {
                 $giftCert = $unirgyInstance->get($giftCode);
                 if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
                     $result += $giftCert->getBalance();
