@@ -28,7 +28,4 @@ workflows:
   version: 2
   build:
     jobs:
-      - phpcs
-      - unit-php72-magento23
-      - unit-php71-magento22
-      - unit-php70-magento22
+      - wip-test
