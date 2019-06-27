@@ -17,15 +17,22 @@ php bin/magento module:enable Bolt_Boltpay
 
 # set config
 php bin/magento config:set payment/boltpay/active 1
-php bin/magento config:set payment/boltpay/api_key "TODO"
-php bin/magento config:set payment/boltpay/signing_secret "TODO"
-php bin/magento config:set payment/boltpay/publishable_key_checkout "TODO"
+php bin/magento config:set payment/boltpay/api_key $BOLT_STAGING_MERCHANT_API_KEY
+php bin/magento config:set payment/boltpay/signing_secret $BOLT_STAGING_MERCHANT_SIGNING_SECRET
+php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGING_MERCHANT_PUBLISHABLE_KEY
+
+# install and run ngrok
+wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+unzip ngrok.zip
+./ngrok http 80 &
+curl http://127.0.0.1:4040/api/tunnels
+NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"http://([^"]+)' | cut -c15-)/
 
 # TODO use proper store URL
-php bin/magento config:set web/unsecure/base_url "http://localhost/"
-php bin/magento config:set web/secure/base_url "http://localhost/"
-php bin/magento config:set web/unsecure/base_link_url "http://localhost/"
-php bin/magento config:set web/secure/base_link_url "http://localhost/"
+php bin/magento config:set web/unsecure/base_url NGROK_URL
+php bin/magento config:set web/secure/base_url NGROK_URL
+php bin/magento config:set web/unsecure/base_link_url NGROK_URL
+php bin/magento config:set web/secure/base_link_url NGROK_URL
 
 php bin/magento setup:upgrade
 php bin/magento cache:flush
@@ -49,6 +56,6 @@ cd ..
 mkdir log
 sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
 
-curl localhost
-mkdir ~/artifacts
-curl localhost -o ~/artifacts/magento-index.html
+curl NGROK_URL
+curl NGROK_URL -o ~/project/artifacts/magento-index.html
+
