@@ -8,10 +8,47 @@ trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit
 
 Test/scripts/install_magento.sh
 
+# install bolt plugin
 cd ..
 mkdir -p magento/app/code/Bolt/Boltpay
 cp -r project/. magento/app/code/Bolt/Boltpay/
-cp magento/app/code/Bolt/Boltpay/Test/Unit/phpunit.xml magento/dev/tests/unit/bolt_phpunit.xml
-echo "Starting Bolt Unit Tests"
-php magento/vendor/phpunit/phpunit/phpunit --verbose -c magento/dev/tests/unit/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
-bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV
+cd magento
+php bin/magento module:enable Bolt_Boltpay
+
+# set config
+php bin/magento config:set payment/boltpay/active 1
+php bin/magento config:set payment/boltpay/api_key $boltApiKeyTODO
+php bin/magento config:set payment/boltpay/signing_secret $boltSigningSecretTODO
+php bin/magento config:set payment/boltpay/publishable_key_checkout $boltPublishableKeyTODO
+
+# TODO
+$storeURL=http://localhost/
+php bin/magento config:set web/unsecure/base_url $storeURL
+php bin/magento config:set web/secure/base_url $storeURL
+php bin/magento config:set web/unsecure/base_link_url $storeURL
+php bin/magento config:set web/secure/base_link_url $storeURL
+
+php bin/magento setup:upgrade
+php bin/magento cache:flush
+
+# tweak apache config
+echo "update apache config"
+sudo sh -c 'echo "<VirtualHost *:80>
+    DocumentRoot /home/circleci/magento
+    <Directory /home/circleci/magento>
+        order allow,deny
+        allow from all
+    </Directory>
+</VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
+sudo sh -c 'echo "<Directory /home/circleci/magento/>
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+</Directory>" >> /etc/apache2/apache2.conf'
+
+cd ..
+mkdir log
+sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
+
+curl localhost
+curl localhost -o ~/artifacts/magento-index.html
