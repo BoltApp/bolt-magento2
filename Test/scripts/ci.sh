@@ -50,4 +50,5 @@ mkdir log
 sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
 
 curl localhost
+mkdir ~/artifacts
 curl localhost -o ~/artifacts/magento-index.html
