@@ -21,12 +21,11 @@ php bin/magento config:set payment/boltpay/api_key "TODO"
 php bin/magento config:set payment/boltpay/signing_secret "TODO"
 php bin/magento config:set payment/boltpay/publishable_key_checkout "TODO"
 
-# TODO
-$storeURL=http://localhost/
-php bin/magento config:set web/unsecure/base_url $storeURL
-php bin/magento config:set web/secure/base_url $storeURL
-php bin/magento config:set web/unsecure/base_link_url $storeURL
-php bin/magento config:set web/secure/base_link_url $storeURL
+# TODO use proper store URL
+php bin/magento config:set web/unsecure/base_url "http://localhost/"
+php bin/magento config:set web/secure/base_url "http://localhost/"
+php bin/magento config:set web/unsecure/base_link_url "http://localhost/"
+php bin/magento config:set web/secure/base_link_url "http://localhost/"
 
 php bin/magento setup:upgrade
 php bin/magento cache:flush
