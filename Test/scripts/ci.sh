@@ -25,6 +25,7 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 unzip ngrok.zip
 ./ngrok http 80 &
+sleep 10
 curl http://127.0.0.1:4040/api/tunnels
 NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"http://([^"]+)' | cut -c15-)/
 
