@@ -17,9 +17,9 @@ php bin/magento module:enable Bolt_Boltpay
 
 # set config
 php bin/magento config:set payment/boltpay/active 1
-php bin/magento config:set payment/boltpay/api_key $boltApiKeyTODO
-php bin/magento config:set payment/boltpay/signing_secret $boltSigningSecretTODO
-php bin/magento config:set payment/boltpay/publishable_key_checkout $boltPublishableKeyTODO
+php bin/magento config:set payment/boltpay/api_key "TODO"
+php bin/magento config:set payment/boltpay/signing_secret "TODO"
+php bin/magento config:set payment/boltpay/publishable_key_checkout "TODO"
 
 # TODO
 $storeURL=http://localhost/
