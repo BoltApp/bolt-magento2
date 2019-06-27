@@ -57,6 +57,6 @@ cd ..
 mkdir log
 sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
 
-curl NGROK_URL
-curl NGROK_URL -o ~/project/artifacts/magento-index.html
+curl $NGROK_URL
+curl $NGROK_URL -o ~/project/artifacts/magento-index.html
 
