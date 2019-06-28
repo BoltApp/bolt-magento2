@@ -47,6 +47,7 @@ class Discount extends AbstractHelper
     const UNIRGY_GIFT_CERT = 'ugiftcert';
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
+    const AMASTY_STORE_CREDIT = 'aw_store_credit';
 
     /**
      * @var ResourceConnection $resource

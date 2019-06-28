@@ -1277,6 +1277,22 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
+        // Process Amasty Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if (array_key_exists(Discount::AMASTY_STORE_CREDIT, $totals)) {
+            $amount = @$totals[Discount::AMASTY_STORE_CREDIT]->getValue();
+            $roundedAmount = abs($this->getRoundAmount($amount));
+            $cart['discounts'][] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($immutableQuote->getUseRewardPoints()) {
