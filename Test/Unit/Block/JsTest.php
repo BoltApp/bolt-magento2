@@ -280,7 +280,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->will($this->returnValue($value));
     }
 
-
     public function setBoltInitiateCheckout($value = true)
     {
         $this->checkoutSessionMock
