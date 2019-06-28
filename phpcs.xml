@@ -67,6 +67,7 @@
     <rule ref="Magento2.Security.InsecureFunction">
         <severity>10</severity>
         <type>error</type>
+        <exclude name="Magento2.Security.InsecureFunction.FoundWithAlternative"/>
     </rule>
     <rule ref="Magento2.Security.LanguageConstruct">
         <severity>10</severity>

@@ -47,7 +47,6 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\Serialize\SerializerInterface as SerializerInterface;
 
 
 /**
@@ -385,7 +384,7 @@ class Cart extends AbstractHelper
     {
         $cached = $this->cache->load($identifier);
         if (!$cached) return false;
-        return $unserialize ? SerializerInterface::unserialize($cached) : $cached;
+        return $unserialize ? unserialize($cached) : $cached;
     }
 
     /**
@@ -399,7 +398,7 @@ class Cart extends AbstractHelper
      */
     protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
     {
-        $data = $serialize ? SerializerInterface::serialize($data) : $data;
+        $data = $serialize ? serialize($data) : $data;
         $this->cache->save($data, $identifier, $tags, $lifeTime);
     }
 
@@ -483,9 +482,7 @@ class Cart extends AbstractHelper
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
         unset ($cart['display_id']);
-        // phpcs:disable
         return md5(json_encode($cart));
-        // phpcs:enable
     }
 
     /**
