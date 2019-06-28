@@ -40,6 +40,7 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
+use Magento\Framework\Serialize\SerializerInterface as SerializerInterface;
 
 /**
  * Class ShippingMethods
@@ -468,11 +469,13 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $cacheIdentifier .= '_' . $quote->getStoreId();
 
+            // phpcs:disable
             $cacheIdentifier = md5($cacheIdentifier);
+            // phpcs:enable
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address->setShippingMethod(null)->save();
-                return unserialize($serialized);
+                return SerializerInterface::unserialize($serialized);
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -509,7 +512,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Cache the calculated result
         if ($prefetchShipping) {
-            $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
+            $this->cache->save(SerializerInterface::serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
         }
 
         return $shippingOptionsModel;

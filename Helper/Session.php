@@ -28,6 +28,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\Serialize\SerializerInterface as SerializerInterface;
 
 /**
  * Boltpay Session helper
@@ -107,7 +108,7 @@ class Session extends AbstractHelper
             "sessionType" => $checkoutSession instanceof \Magento\Checkout\Model\Session ? "frontend" : "admin",
             "sessionID"   => $checkoutSession->getSessionId()
         ];
-        $this->cache->save(serialize($sessionData), $cacheIdentifier, [], 86400);
+        $this->cache->save(SerializerInterface::serialize($sessionData), $cacheIdentifier, [], 86400);
     }
 
     /**
@@ -157,7 +158,7 @@ class Session extends AbstractHelper
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
         if ($serialized = $this->cache->load($cacheIdentifier)) {
-            $sessionData = unserialize($serialized);
+            $sessionData = SerializerInterface::unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
             $storeId = $quote->getStoreId();
 
