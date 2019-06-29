@@ -1277,11 +1277,12 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process Amasty Store Credit
+        // Process Aheadworks Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if (array_key_exists(Discount::AMASTY_STORE_CREDIT, $totals)) {
-            $amount = @$totals[Discount::AMASTY_STORE_CREDIT]->getValue();
-            $roundedAmount = abs($this->getRoundAmount($amount));
+        if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
+            $customerId = $this->customerSession->getCustomer()->getId();
+            $aheadStoreCredits = $this->discountHelper->getAheadworksStoreCredit($customerId);
+            $roundedAmount = abs($this->getRoundAmount($aheadStoreCredits));
             $cart['discounts'][] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
