@@ -469,7 +469,8 @@ class CartTest extends TestCase
             'getSessionQuoteStoreId',
             'boltCreateOrder',
             'saveToCache',
-            'updateQuoteTimestamp'
+            'updateQuoteTimestamp',
+            'clearExternalData'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
@@ -781,7 +782,7 @@ ORDER;
             ->with(self::QUOTE_ID)
             ->willReturn(true);
 
-        $mock->expects($this->once())
+        $mock->expects($this->exactly(2))
             ->method('getLastImmutableQuote')
             ->willReturn($immutableQuote);
 
