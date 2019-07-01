@@ -539,6 +539,17 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Clear external data applied to immutable quote (third party modules DB tables)
+     *
+     * @param Quote $quote
+     */
+    protected function clearExternalData($quote)
+    {
+        $this->discountHelper->clearAmastyGiftCard($quote);
+        $this->discountHelper->clearAmastyRewardPoints($quote);
+    }
+
+    /**
      * Create order on bolt
      *
      * @param bool   $paymentOnly              flag that represents the type of checkout
@@ -577,8 +588,7 @@ class Cart extends AbstractHelper
                     // update old immutable quote updated_at timestamp,
                     $this->updateQuoteTimestamp($immutableQuoteId);
                     // clear external data applied to immutable quote (third party modules DB tables)
-                    $this->discountHelper->clearAmastyGiftCard($this->getLastImmutableQuote());
-                    $this->discountHelper->clearAmastyRewardPoints($this->getLastImmutableQuote());
+                    $this->clearExternalData($this->getLastImmutableQuote());
                     // delete the last quote and return cached order
                     $this->deleteQuote($this->getLastImmutableQuote());
                     return $boltOrder;
