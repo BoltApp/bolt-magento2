@@ -601,6 +601,13 @@ class Order extends AbstractHelper
             ));
         }
 
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
+
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
@@ -737,9 +744,13 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
-            // If Amasty Gif Cart Extension is present delete gift carts
-            // applied to parent quote and unused immutable quotes
+            // If Amasty Gif Cart Extension is present
+            // clear gift carts applied to immutable quotes
             $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
+
+            // If Amasty Reward Points Extension is present
+            // clear reward points applied to immutable quotes
+            $this->discountHelper->deleteRedundantAmastyRewardPoints($quote);
 
             // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($quote);
@@ -822,6 +833,13 @@ class Order extends AbstractHelper
                 CreateOrder::E_BOLT_GENERAL_ERROR
             ));
         }
+
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
 
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {

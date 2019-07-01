@@ -575,8 +575,11 @@ class Cart extends AbstractHelper
                 // found in cache, check if the old immutable quote is still there
                 if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
                     // update old immutable quote updated_at timestamp,
-                    // delete the last quote and return cached order
                     $this->updateQuoteTimestamp($immutableQuoteId);
+                    // clear external data applied to immutable quote (third party modules DB tables)
+                    $this->discountHelper->clearAmastyGiftCard($this->getLastImmutableQuote());
+                    $this->discountHelper->clearAmastyRewardPoints($this->getLastImmutableQuote());
+                    // delete the last quote and return cached order
                     $this->deleteQuote($this->getLastImmutableQuote());
                     return $boltOrder;
                 }
@@ -783,6 +786,9 @@ class Cart extends AbstractHelper
 
         // If Amasty Gif Cart Extension is present clone applied gift cards
         $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
+
+        // If Amasty Reward Points extension is present clone applied reward points
+        $this->discountHelper->cloneAmastyRewardPoints($source, $destination);
     }
 
     /**
