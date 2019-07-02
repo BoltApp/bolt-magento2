@@ -742,6 +742,11 @@ class Discount extends AbstractHelper
      */
     public function getAheadworksStoreCredit($customerId)
     {
-        return $this->aheadworksCustomerStoreCreditManagement->getInstance()->getCustomerStoreCreditBalance($customerId);
+        if (! $this->isAheadworksStoreCreditAvailable()) {
+            return 0;
+        }
+        return $this->aheadworksCustomerStoreCreditManagement
+                    ->getInstance()
+                    ->getCustomerStoreCreditBalance($customerId);
     }
 }
