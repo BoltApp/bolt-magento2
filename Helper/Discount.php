@@ -239,7 +239,7 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Check whether the Amasty Gift Card module is available (installed end enabled)
+     * Check whether the Amasty Gift Card module is available (installed and enabled)
      * @return bool
      */
     public function isAmastyGiftCardAvailable()
@@ -629,7 +629,7 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Check whether the Mageplaza Gift Card module is available (installed end enabled)
+     * Check whether the Mageplaza Gift Card module is available (installed and enabled)
      * @return bool
      */
     public function isMageplazaGiftCardAvailable()
@@ -774,7 +774,7 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Check whether the Amasty Reward Points module is available (installed end enabled)
+     * Check whether the Amasty Reward Points module is available (installed and enabled)
      * @return bool
      */
     public function isAmastyRewardPointsAvailable()
@@ -783,13 +783,21 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Copy Amasty Reward Points data from source to destination quote
+     * Copy Amasty Reward Points data from source to destination quote.
+     * The reward points are fetched from the 3rd party module DB table (amasty_rewards_quote)
+     * and assigned to the destination quote temporarily (not persistent to the quote table).
+     * This is the reason there are cases when the reward points data is read for and applied
+     * to the (source) quote itself. The data is needed to be set before the quote totals are calculated,
+     * for example in the Shipping and Tax call.
      *
      * @param Quote $source
-     * @param Quote $destination
+     * @param Quote|null $destination
      */
-    public function cloneAmastyRewardPoints($source, $destination)
+    public function setAmastyRewardPoints($source, $destination = null)
     {
+        if ($destination === null) {
+            $destination = $source;
+        }
         if (! $this->isAmastyRewardPointsAvailable()) {
             return;
         }

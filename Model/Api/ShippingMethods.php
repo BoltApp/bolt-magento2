@@ -426,8 +426,8 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         $data = '';
         // Amasty reward points are held in a separate table and are not assigned to a quote directly
-        // out of a customer session. We appy it here every time before the shipping and tax estimation.
-        $this->discountHelper->cloneAmastyRewardPoints($quote, $quote);
+        // out of a customer session. We apply it here every time before the shipping and tax estimation.
+        $this->discountHelper->setAmastyRewardPoints($quote);
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
         }
