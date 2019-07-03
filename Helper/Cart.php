@@ -798,7 +798,7 @@ class Cart extends AbstractHelper
         $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
 
         // If Amasty Reward Points extension is present clone applied reward points
-        $this->discountHelper->cloneAmastyRewardPoints($source, $destination);
+        $this->discountHelper->setAmastyRewardPoints($source, $destination);
     }
 
     /**
