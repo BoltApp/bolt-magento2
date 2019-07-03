@@ -795,11 +795,11 @@ class Discount extends AbstractHelper
      */
     public function setAmastyRewardPoints($source, $destination = null)
     {
-        if ($destination === null) {
-            $destination = $source;
-        }
         if (! $this->isAmastyRewardPointsAvailable()) {
             return;
+        }
+        if ($destination === null) {
+            $destination = $source;
         }
         $amastyQuoteResourceModel = $this->amastyRewardsResourceQuote->getInstance();
         $amastyQuoteModel = $this->amastyRewardsQuote->getInstance();
