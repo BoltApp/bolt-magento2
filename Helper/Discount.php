@@ -123,11 +123,6 @@ class Discount extends AbstractHelper
     /**
      * @var ThirdPartyModuleFactory
      */
-    protected $aheadworksCustomerStoreCreditManagement;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
     protected $amastyRewardsResourceQuote;
 
     /**
@@ -188,7 +183,6 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
-     * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
@@ -217,7 +211,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
-        ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
@@ -243,7 +236,6 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
-        $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
@@ -788,32 +780,6 @@ class Discount extends AbstractHelper
         }catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
-    }
-
-    /**
-     * Check if Aheadworks_StoreCredit module is available
-     *
-     * @return bool true if module is available, else false
-     */
-    public function isAheadworksStoreCreditAvailable()
-    {
-        return $this->aheadworksCustomerStoreCreditManagement->isAvailable();
-    }
-
-    /**
-     * Get Aheadworks store credit for the user
-     *
-     * @param int $customerId Logged in customer ID
-     * @return float User store credit
-     */
-    public function getAheadworksStoreCredit($customerId)
-    {
-        if (! $this->isAheadworksStoreCreditAvailable()) {
-            return 0;
-        }
-        return $this->aheadworksCustomerStoreCreditManagement
-                    ->getInstance()
-                    ->getCustomerStoreCreditBalance($customerId);
     }
 
     /**
