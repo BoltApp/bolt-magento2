@@ -167,6 +167,20 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="boltAmastyRewardsResourceQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
+            <argument name="className" xsi:type="string">Amasty\Rewards\Model\ResourceModel\Quote</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyRewardsQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
+            <argument name="className" xsi:type="string">Amasty\Rewards\Model\Quote</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="boltAheadworksCustomerStoreCreditManagementInterface" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Aheadworks_StoreCredit</argument>
@@ -210,6 +224,8 @@
             <argument name="mirasvitStoreCreditConfig" xsi:type="object">boltMirasvitStoreCreditConfig</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
+            <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
+            <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
