@@ -45,7 +45,6 @@ use Bolt\Boltpay\Model\Service\InvoiceService;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\App\ResourceConnection;
@@ -128,9 +127,6 @@ class Order extends AbstractHelper
             self::TS_CANCELED
         ]
     ];
-
-    /** @var State */
-    private $appState;
 
     /**
      * @var ApiHelper
@@ -240,7 +236,6 @@ class Order extends AbstractHelper
      * @param TransactionBuilder $transactionBuilder
      * @param TimezoneInterface $timezone
      * @param DataObjectFactory $dataObjectFactory
-     * @param State $appState
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
@@ -264,7 +259,6 @@ class Order extends AbstractHelper
         TransactionBuilder $transactionBuilder,
         TimezoneInterface $timezone,
         DataObjectFactory $dataObjectFactory,
-        State $appState,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
@@ -285,7 +279,6 @@ class Order extends AbstractHelper
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->orderRepository = $orderRepository;
         $this->dataObjectFactory = $dataObjectFactory;
-        $this->appState = $appState;
         $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
         $this->cartHelper = $cartHelper;
@@ -1472,16 +1465,12 @@ class Order extends AbstractHelper
         $this->setOrderState($order, $orderState);
 
         // Send order confirmation email to customer.
-        // Emulate frontend area in order for email
-        // template to be loaded from the correct path
         if ( ! $order->getEmailSent() ) {
-            $this->appState->emulateAreaCode('frontend', function () use ($order) {
-                try {
-                    $this->emailSender->send($order);
-                } catch (\Exception $e) {
-                    $this->bugsnag->notifyException($e);
-                }
-            });
+            try {
+                $this->emailSender->send($order);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }
         }
 
         // format the last transaction data for storing within the order payment record instance
@@ -1591,13 +1580,11 @@ class Order extends AbstractHelper
         $order->addRelatedObject($invoice);
 
         if (!$invoice->getEmailSent()) {
-            $this->appState->emulateAreaCode('frontend', function () use ($invoice) {
-                try {
-                    $this->invoiceSender->send($invoice);
-                } catch (\Exception $e) {
-                    $this->bugsnag->notifyException($e);
-                }
-            });
+            try {
+                $this->invoiceSender->send($invoice);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }
         }
 
         //Add notification comment to order
