@@ -862,9 +862,6 @@ class Discount extends AbstractHelper
         if (! $this->isAmastyRewardPointsAvailable()) {
             return;
         }
-
-        $this->logHelper->addInfoLog('clearAmastyRewardPoints: ' . $quote->getId());
-
         $connection = $this->resource->getConnection();
         try {
             $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
