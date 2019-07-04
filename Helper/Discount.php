@@ -47,6 +47,7 @@ class Discount extends AbstractHelper
     const UNIRGY_GIFT_CERT = 'ugiftcert';
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
+    const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
 
     /**
      * @var ResourceConnection $resource
@@ -119,6 +120,11 @@ class Discount extends AbstractHelper
     protected $mirasvitStoreCreditConfig;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $aheadworksCustomerStoreCreditManagement;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -155,6 +161,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
+     * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -177,6 +184,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
+        ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -198,6 +206,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
+        $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -713,5 +722,31 @@ class Discount extends AbstractHelper
         }catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
+    }
+
+    /**
+     * Check if Aheadworks_StoreCredit module is available
+     *
+     * @return bool true if module is available, else false
+     */
+    public function isAheadworksStoreCreditAvailable()
+    {
+        return $this->aheadworksCustomerStoreCreditManagement->isAvailable();
+    }
+
+    /**
+     * Get Aheadworks store credit for the user
+     *
+     * @param int $customerId Logged in customer ID
+     * @return float User store credit
+     */
+    public function getAheadworksStoreCredit($customerId)
+    {
+        if (! $this->isAheadworksStoreCreditAvailable()) {
+            return 0;
+        }
+        return $this->aheadworksCustomerStoreCreditManagement
+                    ->getInstance()
+                    ->getCustomerStoreCreditBalance($customerId);
     }
 }
