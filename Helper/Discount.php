@@ -136,6 +136,11 @@ class Discount extends AbstractHelper
     protected $amastyRewardsQuote;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $aheadworksCustomerStoreCreditManagement;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -186,6 +191,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
+     * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -214,6 +220,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
+        ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -239,6 +246,7 @@ class Discount extends AbstractHelper
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
+        $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -888,9 +896,6 @@ class Discount extends AbstractHelper
         if (! $this->isAmastyRewardPointsAvailable()) {
             return;
         }
-
-        $this->logHelper->addInfoLog('clearAmastyRewardPoints: ' . $quote->getId());
-
         $connection = $this->resource->getConnection();
         try {
             $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
@@ -904,5 +909,31 @@ class Discount extends AbstractHelper
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
+    }
+
+    /**
+     * Check if Aheadworks_StoreCredit module is available
+     *
+     * @return bool true if module is available, else false
+     */
+    public function isAheadworksStoreCreditAvailable()
+    {
+        return $this->aheadworksCustomerStoreCreditManagement->isAvailable();
+    }
+
+    /**
+     * Get Aheadworks store credit for the user
+     *
+     * @param int $customerId Logged in customer ID
+     * @return float User store credit
+     */
+    public function getAheadworksStoreCredit($customerId)
+    {
+        if (! $this->isAheadworksStoreCreditAvailable()) {
+            return 0;
+        }
+        return $this->aheadworksCustomerStoreCreditManagement
+                    ->getInstance()
+                    ->getCustomerStoreCreditBalance($customerId);
     }
 }
