@@ -48,6 +48,7 @@ class Discount extends AbstractHelper
     const UNIRGY_GIFT_CERT = 'ugiftcert';
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
+    const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
 
     /**
      * @var ResourceConnection $resource
@@ -130,6 +131,11 @@ class Discount extends AbstractHelper
     protected $amastyRewardsQuote;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $aheadworksCustomerStoreCreditManagement;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -179,6 +185,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
+     * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -206,6 +213,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
+        ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -230,6 +238,7 @@ class Discount extends AbstractHelper
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
+        $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -775,6 +784,7 @@ class Discount extends AbstractHelper
 
     /**
      * Check whether the Amasty Reward Points module is available (installed and enabled)
+     *
      * @return bool
      */
     public function isAmastyRewardPointsAvailable()
@@ -868,5 +878,31 @@ class Discount extends AbstractHelper
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
+    }
+
+    /**
+     * Check if Aheadworks_StoreCredit module is available
+     *
+     * @return bool true if module is available, else false
+     */
+    public function isAheadworksStoreCreditAvailable()
+    {
+        return $this->aheadworksCustomerStoreCreditManagement->isAvailable();
+    }
+
+    /**
+     * Get Aheadworks store credit for the user
+     *
+     * @param int $customerId Logged in customer ID
+     * @return float User store credit
+     */
+    public function getAheadworksStoreCredit($customerId)
+    {
+        if (! $this->isAheadworksStoreCreditAvailable()) {
+            return 0;
+        }
+        return $this->aheadworksCustomerStoreCreditManagement
+                    ->getInstance()
+                    ->getCustomerStoreCreditBalance($customerId);
     }
 }

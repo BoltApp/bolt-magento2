@@ -181,6 +181,13 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="boltAheadworksCustomerStoreCreditManagementInterface" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Aheadworks_StoreCredit</argument>
+            <argument name="className" xsi:type="string">Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface</argument>
+        </arguments>
+    </virtualType>
+
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
             <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
@@ -198,6 +205,7 @@
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
+            <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
         </arguments>
     </type>
 
