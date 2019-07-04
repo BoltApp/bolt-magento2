@@ -921,7 +921,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 $gcStoreId = $giftCert->getStoreId();
 
-                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') !== 'I')
+                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
                           ? $giftCert : null;
 
             } catch (NoSuchEntityException $e) {
