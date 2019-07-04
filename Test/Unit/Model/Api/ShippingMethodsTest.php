@@ -39,6 +39,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Class ShippingMethodsTest
@@ -126,6 +127,11 @@ class ShippingMethodsTest extends TestCase
      * @var SessionHelper
      */
     private $sessionHelper;
+
+    /**
+     * @var DiscountHelper
+     */
+    private $discountHelper;
 
     /**
      * @var Bugsnag
@@ -218,6 +224,7 @@ class ShippingMethodsTest extends TestCase
         $this->cache = $this->createMock(CacheInterface::class);
         $this->priceHelper = $this->createMock(PriceHelper::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
+        $this->discountHelper = $this->createMock(DiscountHelper::class);
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
             ->setMethods(['notifyException'])
@@ -271,7 +278,8 @@ class ShippingMethodsTest extends TestCase
                 $this->request,
                 $this->cache,
                 $this->priceHelper,
-                $this->sessionHelper
+                $this->sessionHelper,
+                $this->discountHelper
             ])
             ->getMock();
 
@@ -349,7 +357,8 @@ class ShippingMethodsTest extends TestCase
                 $this->request,
                 $this->cache,
                 $this->priceHelper,
-                $this->sessionHelper
+                $this->sessionHelper,
+                $this->discountHelper
             ])
             ->getMock();
 
@@ -445,7 +454,8 @@ class ShippingMethodsTest extends TestCase
             $this->request,
             $this->cache,
             $this->priceHelper,
-            $this->sessionHelper
+            $this->sessionHelper,
+            $this->discountHelper
         );
 
         $this->expectException(LocalizedException::class);
@@ -545,7 +555,8 @@ class ShippingMethodsTest extends TestCase
             $this->request,
             $this->cache,
             $this->priceHelper,
-            $this->sessionHelper
+            $this->sessionHelper,
+            $this->discountHelper
         );
 
         $result = $testClass->shippingEstimation($quote, $shippingAddressData);

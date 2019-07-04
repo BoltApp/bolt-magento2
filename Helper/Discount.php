@@ -29,6 +29,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 
 /**
@@ -122,6 +123,16 @@ class Discount extends AbstractHelper
     /**
      * @var ThirdPartyModuleFactory
      */
+    protected $amastyRewardsResourceQuote;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyRewardsQuote;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
     protected $aheadworksCustomerStoreCreditManagement;
 
     /**
@@ -138,12 +149,21 @@ class Discount extends AbstractHelper
      * @var Bugsnag
      */
     private $bugsnag;
+
+    /**
+     * @var AppState
+     */
     private $appState;
 
     /**
      * @var Session
      */
     private $sessionHelper;
+
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
     /**
      * Discount constructor.
@@ -161,10 +181,17 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
+     * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
+     * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
+     * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
+     * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
+     * @param AppState                $appState
+     * @param Session                 $sessionHelper
+     * @param LogHelper               $logHelper
      *
      * @codeCoverageIgnore
      */
@@ -184,12 +211,15 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
+        ThirdPartyModuleFactory $amastyRewardsResourceQuote,
+        ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         AppState $appState,
-        Session $sessionHelper
+        Session $sessionHelper,
+        LogHelper $logHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -206,16 +236,19 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
+        $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
+        $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
+        $this->logHelper = $logHelper;
     }
 
     /**
-     * Check whether the Amasty Gift Card module is available (installed end enabled)
+     * Check whether the Amasty Gift Card module is available (installed and enabled)
      * @return bool
      */
     public function isAmastyGiftCardAvailable()
@@ -348,6 +381,31 @@ class Discount extends AbstractHelper
             $connection->commit();
         } catch (\Zend_Db_Statement_Exception $e) {
             $connection->rollBack();
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Remove Amasty Gift Card quote info
+     *
+     * @param Quote $quote
+     */
+    public function clearAmastyGiftCard($quote)
+    {
+        if (! $this->isAmastyGiftCardAvailable()) {
+            return;
+        }
+        $connection = $this->resource->getConnection();
+        try {
+            $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
+            $bind = [
+                'quote_id' => $quote->getId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
     }
@@ -580,7 +638,7 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Check whether the Mageplaza Gift Card module is available (installed end enabled)
+     * Check whether the Mageplaza Gift Card module is available (installed and enabled)
      * @return bool
      */
     public function isMageplazaGiftCardAvailable()
@@ -720,6 +778,101 @@ class Discount extends AbstractHelper
                 }
             }
         }catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Check whether the Amasty Reward Points module is available (installed and enabled)
+     *
+     * @return bool
+     */
+    public function isAmastyRewardPointsAvailable()
+    {
+        return $this->amastyRewardsQuote->isAvailable();
+    }
+
+    /**
+     * Copy Amasty Reward Points data from source to destination quote.
+     * The reward points are fetched from the 3rd party module DB table (amasty_rewards_quote)
+     * and assigned to the destination quote temporarily (not persistent to the quote table).
+     * This is the reason there are cases when the reward points data is read for and applied
+     * to the (source) quote itself. The data is needed to be set before the quote totals are calculated,
+     * for example in the Shipping and Tax call.
+     *
+     * @param Quote $source
+     * @param Quote|null $destination
+     */
+    public function setAmastyRewardPoints($source, $destination = null)
+    {
+        if (! $this->isAmastyRewardPointsAvailable()) {
+            return;
+        }
+        if ($destination === null) {
+            $destination = $source;
+        }
+        $amastyQuoteResourceModel = $this->amastyRewardsResourceQuote->getInstance();
+        $amastyQuoteModel = $this->amastyRewardsQuote->getInstance();
+
+        $amastyQuote = $amastyQuoteResourceModel->loadByQuoteId($source->getId());
+
+        if ($amastyQuote) {
+            $amastyRewardPoints = $amastyQuoteResourceModel->getUsedRewards($source->getId());
+            $amastyQuoteModel->addReward($destination->getId(), $amastyRewardPoints);
+            $destination->setAmrewardsPoint($amastyRewardPoints);
+        }
+    }
+
+    /**
+     * Try to clear Amasty Reward Points data for the immutable quotes
+     *
+     * @param Quote $quote parent quote
+     */
+    public function deleteRedundantAmastyRewardPoints($quote)
+    {
+        if (! $this->isAmastyRewardPointsAvailable()) {
+            return;
+        }
+        $connection = $this->resource->getConnection();
+        try {
+            $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
+            $quoteTable = $this->resource->getTableName('quote');
+
+            $sql = "DELETE FROM {$rewardsTable} WHERE quote_id IN
+                    (SELECT entity_id FROM {$quoteTable}
+                    WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+            $bind = [
+                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+                'entity_id' => $quote->getBoltParentQuoteId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Remove Amasty Reward Points quote info
+     *
+     * @param Quote $quote
+     */
+    public function clearAmastyRewardPoints($quote)
+    {
+        if (! $this->isAmastyRewardPointsAvailable()) {
+            return;
+        }
+        $connection = $this->resource->getConnection();
+        try {
+            $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
+
+            $sql = "DELETE FROM {$rewardsTable} WHERE quote_id = :quote_id";
+            $bind = [
+                'quote_id' => $quote->getId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
     }
