@@ -762,42 +762,30 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param string                     $transaction
-     * @return OrderModel
-     * @throws BoltException
-     * @throws LocalizedException
+     * Try to fetch and price-validate already existing order.
+     * Use case: order has been created but the payment failes due to the ivnalid credit card data.
+     * Then the customer enters the correct card info, the previously created order is used if the amounts match.
+     *
+     * @param Quote $quote
+     * @param \stdClass $transaction
+     * @return bool|false|OrderModel
+     * @throws \Exception
      */
-    public function preAuthCreateOrder($quote, $transaction)
+    public function processExistingOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
-            } else {
-                $this->deleteOrder($order);
             }
+            $this->deleteOrder($order);
         }
-
-        $order = $this->processNewOrder($quote, $transaction);
-
-        $order->addStatusHistoryComment(
-            "BOLTPAY INFO :: This order was created via Pre-Auth Webhook"
-        );
-
-        // Add the user_note to the order comments and make it visible for customer.
-        if (isset($transaction->order->user_note)) {
-            $this->setOrderUserNote($order, $transaction->order->user_note);
-        }
-
-        $order->save();
-
-        return $order;
+        return false;
     }
 
     /**
-     * @param $quote
-     * @param $transaction
+     * @param Quote $quote
+     * @param \stdClass $transaction
      * @return OrderModel
      * @throws BoltException
      * @throws LocalizedException
@@ -834,6 +822,10 @@ class Order extends AbstractHelper
             ]
         );
 
+        $order->addStatusHistoryComment(
+            "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
+        );
+
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
@@ -846,6 +838,13 @@ class Order extends AbstractHelper
             );
         }
 
+        // Add the user_note to the order comments and make it visible for customer.
+        if (isset($transaction->order->user_note)) {
+            $this->setOrderUserNote($order, $transaction->order->user_note);
+        }
+
+        $order->save();
+
         return $order;
     }
 
@@ -857,21 +856,20 @@ class Order extends AbstractHelper
      */
     protected function hasSamePrice($order, $transaction)
     {
-        /** @var OrderModel $order */
-        $subtotal = (int) ($order->getSubtotal() * 100);
-        $taxAmount = (int) ($order->getTaxAmount() * 100);
-        $shippingAmount = (int) ($order->getShippingAmount() * 100);
-        $totalAmount = (int) ($order->getGrandTotal() * 100);
 
-        $transactionSubtotalAmount = $transaction->order->cart->subtotal_amount->amount;
+        $this->cartHelper->getRoundAmount($order->getTaxAmount());
+        /** @var OrderModel $order */
+        $taxAmount = $this->cartHelper->getRoundAmount($order->getTaxAmount());
+        $shippingAmount = $this->cartHelper->getRoundAmount($order->getShippingAmount());
+        $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
         $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
 
-        return abs($subtotal - $transactionSubtotalAmount) <= self::MISMATCH_TOLERANCE
-            && abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
+        return abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
             && abs($shippingAmount - $transactionShippingAmount) <= self::MISMATCH_TOLERANCE
-            && abs($totalAmount - $transactionGrandTotalAmount) <= self::MISMATCH_TOLERANCE;
+            && $grandTotalAmount == $transactionGrandTotalAmount;
     }
 
     /**
@@ -917,8 +915,8 @@ class Order extends AbstractHelper
     /**
      * Load and prepare parent quote
      *
-     * @param $immutableQuote
-     * @param $transaction
+     * @param Quote $immutableQuote
+     * @param  \stdClass $transaction
      * @return Quote
      * @throws LocalizedException
      * @throws NoSuchEntityException
