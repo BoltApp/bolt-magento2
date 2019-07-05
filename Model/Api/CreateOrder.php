@@ -170,6 +170,11 @@ class CreateOrder implements CreateOrderInterface
         $currency = null
     ) {
         try {
+
+            $payload = $this->request->getContent();
+            $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
+            $this->logHelper->addInfoLog($payload);
+
             if ($type !== 'order.create') {
                 throw new BoltException(
                     __('Invalid hook type!'),
@@ -192,21 +197,24 @@ class CreateOrder implements CreateOrderInterface
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
 
-            $payload = $this->request->getContent();
             $transaction = json_decode($payload);
 
             /** @var Quote $quote */
             $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
-            $this->validateQuoteData($quote, $transaction);
 
-            /** @var \Magento\Sales\Model\Order $createOrderData */
-            $createOrderData = $this->orderHelper->preAuthCreateOrder($quote, $transaction);
+            /** @var \Magento\Sales\Model\Order $createdOrder */
+            $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
+
+            if (! $createdOrder) {
+                $this->validateQuoteData($quote, $transaction);
+                $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
+            }
 
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createOrderData->getIncrementId() . ' / ' . $quote->getId(),
-                'total'      => $this->cartHelper->getRoundAmount($createOrderData->getGrandTotal()),
+                'display_id' => $createdOrder->getIncrementId() . ' / ' . $quote->getId(),
+                'total'      => $this->cartHelper->getRoundAmount($createdOrder->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
         } catch (\Magento\Framework\Webapi\Exception $e) {
@@ -616,7 +624,7 @@ class CreateOrder implements CreateOrderInterface
         $quoteTotal = $this->cartHelper->getRoundAmount($quote->getGrandTotal());
         $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
 
-        if (abs($quoteTotal - $transactionTotal) > OrderHelper::MISMATCH_TOLERANCE) {
+        if ($quoteTotal != $transactionTotal) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $transactionTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [
