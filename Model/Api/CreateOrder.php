@@ -624,7 +624,7 @@ class CreateOrder implements CreateOrderInterface
         $quoteTotal = $this->cartHelper->getRoundAmount($quote->getGrandTotal());
         $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
 
-        if (abs($quoteTotal - $transactionTotal) > OrderHelper::MISMATCH_TOLERANCE) {
+        if ($quoteTotal != $transactionTotal) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $transactionTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [
