@@ -36,6 +36,7 @@ php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_link_url "${NGROK_URL}"
 
 php bin/magento setup:upgrade
+php bin/magento deploy:mode:set developer
 php bin/magento cache:flush
 
 # tweak apache config
