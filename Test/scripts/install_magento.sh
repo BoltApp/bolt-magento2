@@ -51,8 +51,7 @@ php bin/magento setup:install -q \
 echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > auth.json
 
 echo "Installing sample data"
-# php -dmemory_limit=5G bin/magento sampledata:deploy
-php bin/magento setup:performance:generate-fixtures setup/performance-toolkit/profiles/ce/small.xml
+php -dmemory_limit=5G bin/magento sampledata:deploy
 
 echo "Install bugsnag"
 composer require "bugsnag/bugsnag:^3.0"
