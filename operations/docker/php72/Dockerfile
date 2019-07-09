@@ -6,7 +6,7 @@ ENV LANG=C.UTF-8
 
 RUN MAGENTO_VERSION=2.3.0
 
-RUN apt-get update && apt-get -y install curl mysql-client libmcrypt-dev mcrypt libpng-dev libjpeg-dev libxml2-dev libxslt-dev
+RUN apt-get update && apt-get -y install curl mysql-client libmcrypt-dev mcrypt libpng-dev libjpeg-dev libxml2-dev libxslt-dev libfreetype6-dev
 RUN pecl channel-update pecl.php.net
 RUN pecl install zip &&  docker-php-ext-enable zip
 RUN docker-php-ext-enable xdebug
