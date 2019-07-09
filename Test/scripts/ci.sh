@@ -24,7 +24,8 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 # install and run ngrok
 wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 unzip ngrok.zip
-./ngrok http 80 &
+./ngrok authtoken $NGROK_TOKEN
+./ngrok http 80 -hostname=ethan-m2.dev.bolt.me &
 sleep 10
 curl http://127.0.0.1:4040/api/tunnels
 NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"http://([^"]+)' | cut -c15-)/
@@ -60,4 +61,8 @@ sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circle
 
 curl $NGROK_URL
 curl $NGROK_URL -o ~/project/artifacts/magento-index.html
+git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
+cd integration-tests
+npm install
+TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
 
