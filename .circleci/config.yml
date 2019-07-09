@@ -2,15 +2,15 @@ version: 2
 jobs:
   wip-test:
     docker:
-      - image: boltdev/m2-plugin-ci-php72:v1
+      - image: boltdev/m2-plugin-ci-php72:v2-ethan
       - image: circleci/mysql:5.7
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v1-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
-            - v1-php72mag23-composer-lock-{{ arch }}
-            - v1-php72mag23-composer-lock
+            - v2-ethan-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - v2-ethan-php72mag23-composer-lock-{{ arch }}
+            - v2-ethan-php72mag23-composer-lock
       - run:
           name: PHP 7.2 Magento2.3
           command: |
@@ -18,7 +18,7 @@ jobs:
             export TEST_ENV=php72
             MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
       - save_cache:
-          key: v1-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+          key: v2-ethan-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
