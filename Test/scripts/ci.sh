@@ -35,6 +35,7 @@ php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "https://ethan-m2.dev.bolt.me/"
 php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_link_url "https://ethan-m2.dev.bolt.me/"
+php -dmemory_limit=5G bin/magento setup:upgrade
 php bin/magento cache:flush
 
 # tweak apache config
