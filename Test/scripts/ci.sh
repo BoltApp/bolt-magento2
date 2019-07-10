@@ -35,7 +35,6 @@ php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "https://ethan-m2.dev.bolt.me/"
 php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_link_url "https://ethan-m2.dev.bolt.me/"
-
 php bin/magento setup:upgrade
 php bin/magento cache:flush
 
@@ -50,7 +49,7 @@ sudo sh -c 'echo "<VirtualHost *:80>
 </VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
 sudo sh -c 'echo "<Directory /home/circleci/magento/>
         Options Indexes FollowSymLinks
-        AllowOverride None
+        AllowOverride All
         Require all granted
 </Directory>" >> /etc/apache2/apache2.conf'
 
