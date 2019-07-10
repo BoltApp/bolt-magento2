@@ -689,6 +689,11 @@ class Cart extends AbstractHelper
                 }
             }
 
+            // Skip pre-fill for Apple Pay related data.
+            if (!($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111')) {
+                $hints['prefill'] = $prefill;
+            }
+
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
 
