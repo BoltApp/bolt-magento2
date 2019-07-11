@@ -119,7 +119,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_IRREVERSIBLE,
             self::TS_CANCELED
         ],
-        self::TS_REJECTED_IRREVERSIBLE => [],
+        self::TS_REJECTED_IRREVERSIBLE => [self::TS_COMPLETED],
         self::TS_CREDIT_COMPLETED => [
             self::TS_CREDIT_COMPLETED,
             self::TS_COMPLETED,
