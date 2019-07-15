@@ -56,6 +56,7 @@ sudo sh -c 'echo "<VirtualHost *:80>
 </VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
 sudo sh -c 'echo "<Directory /home/circleci/magento/>
         Options Indexes FollowSymLinks
+        DirectoryIndex index.php
         AllowOverride None
         Require all granted
 </Directory>" >> /etc/apache2/apache2.conf'
