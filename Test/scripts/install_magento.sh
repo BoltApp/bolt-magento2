@@ -67,12 +67,3 @@ php -dmemory_limit=5G bin/magento sampledata:deploy
 
 php -dmemory_limit=5G bin/magento module:enable Magento_CustomerSampleData Magento_MsrpSampleData Magento_CatalogSampleData Magento_DownloadableSampleData Magento_OfflineShippingSampleData Magento_BundleSampleData Magento_ConfigurableSampleData Magento_ThemeSampleData Magento_ProductLinksSampleData Magento_ReviewSampleData Magento_CatalogRuleSampleData Magento_SwatchesSampleData Magento_GroupedProductSampleData Magento_TaxSampleData Magento_CmsSampleData Magento_SalesRuleSampleData Magento_SalesSampleData Magento_WidgetSampleData Magento_WishlistSampleData
 
-php -dmemory_limit=5G bin/magento setup:upgrade
-
-php -dmemory_limit=5G bin/magento setup:di:compile
-
-php -dmemory_limit=5G bin/magento indexer:reindex
-
-php -dmemory_limit=5G bin/magento setup:static-content:deploy -f
-
-php bin/magento cache:flush
