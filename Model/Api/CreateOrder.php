@@ -213,7 +213,7 @@ class CreateOrder implements CreateOrderInterface
 
             if($createdOrder->isCanceled()){
                 throw new BoltException(
-                    __('Order has already Canceled ',
+                    __('Order has been canceled due to the previously declined payment',
                     null,
                     self::E_BOLT_REJECTED_ORDER
                 ));
