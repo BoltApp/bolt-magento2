@@ -11,8 +11,8 @@ Test/scripts/install_magento.sh
 # install bolt plugin
 # cd ..
 # mkdir -p magento/app/code/Bolt/Boltpay
-# cp -r project/. magento/app/code/Bolt/Boltpay/
-# cd magento
+cp -r project/. magento/app/code/Bolt/Boltpay/
+cd magento
 # php bin/magento module:enable Bolt_Boltpay
 
 # # set config
@@ -35,8 +35,7 @@ NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"ht
 # php bin/magento config:set web/secure/base_url "https://ethan-m2.dev.bolt.me/"
 # php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 # php bin/magento config:set web/secure/base_link_url "https://ethan-m2.dev.bolt.me/"
-pwd
-sleep 5
+
 
 php -dmemory_limit=5G bin/magento setup:upgrade
 
