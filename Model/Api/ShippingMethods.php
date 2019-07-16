@@ -471,7 +471,9 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cacheIdentifier .= '_'.$ruleIds;
             }
 
-            $cacheIdentifier .= '_' . $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
+            // extend cache identifier with custom address fields
+            $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
+
             $cacheIdentifier = md5($cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
