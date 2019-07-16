@@ -35,6 +35,8 @@ NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"ht
 # php bin/magento config:set web/secure/base_url "https://ethan-m2.dev.bolt.me/"
 # php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 # php bin/magento config:set web/secure/base_link_url "https://ethan-m2.dev.bolt.me/"
+pwd
+sleep 5
 
 php -dmemory_limit=5G bin/magento setup:upgrade
 
