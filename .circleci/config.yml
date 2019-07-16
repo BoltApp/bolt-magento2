@@ -9,7 +9,7 @@ jobs:
       - run:
           name: Install nginx
           command: |
-            apt get -y install nginx php7.2-fpm php7.2-cli
+            apt-get -y install nginx php7.2-fpm php7.2-cli
       - restore_cache:
           keys:
             - v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
