@@ -12,7 +12,7 @@ Test/scripts/install_magento.sh
 # cd ..
 # mkdir -p magento/app/code/Bolt/Boltpay
 # cp -r project/. magento/app/code/Bolt/Boltpay/
-cd magento
+cd ../magento
 # php bin/magento module:enable Bolt_Boltpay
 
 # # set config
