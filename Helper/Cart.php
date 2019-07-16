@@ -483,7 +483,47 @@ class Cart extends AbstractHelper
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
         unset ($cart['display_id']);
-        return md5(json_encode($cart));
+
+        $identifier = json_encode($cart) .  '_' . $this->convertCustomAddressFieldsToCacheIdentifier($this->getLastImmutableQuote());
+
+        return md5($identifier);
+    }
+
+    /**
+     * Get cache identifier from fields defined in PrefetchAddressFields
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    public function convertCustomAddressFieldsToCacheIdentifier($quote){
+
+        // get custom address fields to be included in cache key
+        $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields($quote->getStoreId()));
+        // trim values and filter out empty strings
+        $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
+        // convert to PascalCase
+        $prefetchAddressFields = array_map(
+            function ($el) {
+                return str_replace('_', '', ucwords($el, '_'));
+            },
+            $prefetchAddressFields
+        );
+
+        $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+
+        $cacheIdentifier = "";
+        // get the value of each valid field and include it in the cache identifier
+        foreach ($prefetchAddressFields as $key) {
+            $getter = 'get'.$key;
+            $value = $address->$getter();
+            if ($value) {
+                $cacheIdentifier .= '_'.$value;
+            }
+        }
+
+        $cacheIdentifier .= '_' . $quote->getStoreId();
+
+        return $cacheIdentifier;
     }
 
     /**
