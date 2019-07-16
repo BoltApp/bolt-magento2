@@ -25,7 +25,7 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
-./ngrok http 80 -hostname=ethan-m2.dev.bolt.me &
+./ngrok http 80 -hostname=ethan-${CIRCLE_BUILD_NUM}.dev.bolt.me &
 sleep 10
 curl http://127.0.0.1:4040/api/tunnels
 NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"http://([^"]+)' | cut -c15-)/
@@ -63,7 +63,10 @@ sudo sh -c 'echo "<Directory /home/circleci/magento/>
 
 cd ..
 mkdir log
-sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
+sudo service apache2 restart
+echo "restarted apache2"
+wget ethan-${CIRCLE_BUILD_NUM}.dev.bolt.me
+#sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
 
 curl $NGROK_URL
 curl $NGROK_URL -o ~/project/artifacts/magento-index.html
