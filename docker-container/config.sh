@@ -1,0 +1,15 @@
+#VARIABLES
+m2Version="master"
+phpVersion="7.1"
+boltBranch="dev-develop"
+boltRepo="/Users/ewayda/Documents/GitHub/bolt-magento2"
+magentoCloudPublicKey=""
+magentoCloudPrivateKey=""
+buildCompose=true
+localRepo=false
+boltApiKey=""
+boltSigningSecret=""
+boltPublishableKey=""
+ngrokUrlHTTP="http://ethan-m2.ngrok.io/"
+ngrokUrlHTTPS="https://ethan-m2.ngrok.io/"
+installSampleData=true
