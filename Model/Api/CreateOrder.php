@@ -54,6 +54,7 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_DISCOUNT_CANNOT_APPLY = 2001006;
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
     const E_BOLT_SHIPPING_EXPIRED = 2001008;
+    const E_BOLT_REJECTED_ORDER = 2001010;
 
     /**
      * @var HookHelper
@@ -208,6 +209,14 @@ class CreateOrder implements CreateOrderInterface
             if (! $createdOrder) {
                 $this->validateQuoteData($quote, $transaction);
                 $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
+            }
+
+            if($createdOrder->isCanceled()){
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment',
+                    null,
+                    self::E_BOLT_REJECTED_ORDER
+                ));
             }
 
             $this->sendResponse(200, [
