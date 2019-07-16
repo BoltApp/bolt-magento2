@@ -472,6 +472,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             $cacheIdentifier .= '_' . $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
+            $cacheIdentifier = md5($cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
