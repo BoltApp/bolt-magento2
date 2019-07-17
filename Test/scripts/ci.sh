@@ -50,13 +50,9 @@ php bin/magento cache:flush
 echo "update apache config"
 sudo sh -c 'echo "<VirtualHost *:80>
     DocumentRoot /home/circleci/magento
-    <Directory />
-        Options Indexes FollowSymLinks Includes ExecCGI
-        AllowOverride All
-        Require all granted
-        Allow from all
-    </Directory>
     <Directory /home/circleci/magento>
+        Options FollowSymLinks 
+        AllowOverride All
         order allow,deny
         allow from all
     </Directory>
