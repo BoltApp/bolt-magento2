@@ -63,6 +63,7 @@ sudo sh -c 'echo "<Directory /home/circleci/magento/>
 </Directory>" >> /etc/apache2/apache2.conf'
 
 cd ..
+sudo chmod -R 775 /home/circleci/magento/
 mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
