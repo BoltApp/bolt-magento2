@@ -683,15 +683,15 @@ class Cart extends AbstractHelper
                 'country'      => $address->getCountryId(),
             ];
 
+            // Skip pre-fill for Apple Pay related data.
+            if ($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111') {
+                return;
+            }
+
             foreach ($prefill as $name => $value) {
                 if (empty($value)) {
                     unset($prefill[$name]);
                 }
-            }
-
-            // Skip pre-fill for Apple Pay related data.
-            if (!($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111')) {
-                $hints['prefill'] = $prefill;
             }
 
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
