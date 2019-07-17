@@ -32,9 +32,9 @@ NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"ht
 
 # TODO use proper store URL
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
-php bin/magento config:set web/secure/base_url "https://ethan-m2.dev.bolt.me/"
+php bin/magento config:set web/secure/base_url "${NGROK_URL}"
 php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
-php bin/magento config:set web/secure/base_link_url "https://ethan-m2.dev.bolt.me/"
+php bin/magento config:set web/secure/base_link_url "${NGROK_URL}"
 
 
 php -dmemory_limit=5G bin/magento setup:upgrade
@@ -50,13 +50,19 @@ php bin/magento cache:flush
 echo "update apache config"
 sudo sh -c 'echo "<VirtualHost *:80>
     DocumentRoot /home/circleci/magento
+    <Directory />
+        Options Indexes FollowSymLinks Includes ExecCGI
+        AllowOverride All
+        Require all granted
+        Allow from all
+    </Directory>
     <Directory /home/circleci/magento>
         order allow,deny
         allow from all
     </Directory>
 </VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
 sudo sh -c 'echo "<Directory /home/circleci/magento/>
-        Options Indexes FollowSymLinks
+        Options Indexes FollowSymLinks Includes ExecCGI
         DirectoryIndex index.html index.php
         AllowOverride ALL
         Require all granted
