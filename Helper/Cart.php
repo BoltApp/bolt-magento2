@@ -491,33 +491,46 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Get array of custom address field names converted to PascalCase
+     * used to build method names (i.e. getters)
+     *
+     * @param int $storeId
+     * @return array
+     */
+    protected function getCustomAddressFieldsPascalCaseArray($storeId)
+    {
+        // get custom address fields from config
+        $customAddressFields = explode(
+            ',', $this->configHelper->getPrefetchAddressFields($storeId)
+        );
+        // trim values and filter out empty strings
+        $customAddressFields = array_filter(array_map('trim', $customAddressFields));
+        // convert to PascalCase
+        $customAddressFields = array_map(
+            function ($el) {
+                return str_replace('_', '', ucwords($el, '_'));
+            },
+            $customAddressFields
+        );
+
+        return $customAddressFields;
+    }
+
+    /**
      * Create cache identifier string from custom address fields
      *
      * @param Quote $quote
      * @return string
      */
-    public function convertCustomAddressFieldsToCacheIdentifier($quote) {
-
-        // get custom address fields to be included in cache key
-        $prefetchAddressFields = explode(
-            ',', $this->configHelper->getPrefetchAddressFields($quote->getStoreId())
-        );
-        // trim values and filter out empty strings
-        $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
-        // convert to PascalCase
-        $prefetchAddressFields = array_map(
-            function ($el) {
-                return str_replace('_', '', ucwords($el, '_'));
-            },
-            $prefetchAddressFields
-        );
-
+    public function convertCustomAddressFieldsToCacheIdentifier($quote)
+    {
+        $customAddressFields = $this->getCustomAddressFieldsPascalCaseArray($quote->getStoreId());
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
 
         $cacheIdentifier = "";
 
         // get the value of each valid field and include it in the cache identifier
-        foreach ($prefetchAddressFields as $key) {
+        foreach ($customAddressFields as $key) {
             $hasField = 'has'.$key;
             $getValue = 'get'.$key;
             if ($address->$hasField()) {

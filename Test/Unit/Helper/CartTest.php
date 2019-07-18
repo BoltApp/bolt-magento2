@@ -470,7 +470,9 @@ class CartTest extends TestCase
             'boltCreateOrder',
             'saveToCache',
             'updateQuoteTimestamp',
-            'clearExternalData'
+            'clearExternalData',
+            'convertCustomAddressFieldsToCacheIdentifier',
+            'getCustomAddressFieldsPascalCaseArray'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
