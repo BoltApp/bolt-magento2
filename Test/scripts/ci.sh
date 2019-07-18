@@ -70,13 +70,13 @@ sudo a2enmod rewrite
 mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
-wget ${CIRCLE_BUILD_NUM}.integrations.dev.bolt.me
+# wget ${CIRCLE_BUILD_NUM}.integrations.dev.bolt.me
 #sudo APACHE_PID_FILE=apache.pid APACHE_RUN_USER=circleci APACHE_RUN_GROUP=circleci APACHE_LOG_DIR=~/log APACHE_RUN_DIR=~/magento apache2 -k start
 
 # curl $NGROK_URL
 # curl $NGROK_URL -o ~/project/artifacts/magento-index.html
-# git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
-# cd integration-tests
-# npm install
-# TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
+git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
+cd integration-tests
+npm install
+TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
 
