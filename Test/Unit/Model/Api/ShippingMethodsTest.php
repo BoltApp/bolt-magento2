@@ -159,12 +159,17 @@ class ShippingMethodsTest extends TestCase
             ->willReturnSelf();
 
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods(['getQuoteById', 'validateEmail', 'getRoundAmount'])
-            ->disableOriginalConstructor()
+            ->setMethods([
+                'getQuoteById', 'validateEmail', 'getRoundAmount', 'convertCustomAddressFieldsToCacheIdentifier'
+            ])->disableOriginalConstructor()
             ->getMock();
 
+        $this->cartHelper->expects($this->any())
+            ->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->willReturn("");
+
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
+            ->setMethods(['getPrefetchShipping', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
@@ -172,8 +177,6 @@ class ShippingMethodsTest extends TestCase
             ->willReturn(true);
         $this->configHelper->method('getIgnoredShippingAddressCoupons')
             ->willReturn([]);
-        $this->configHelper->method('getPrefetchAddressFields')
-            ->willReturn('');
         $this->configHelper->expects($this->any())
             ->method('getResetShippingCalculation')
             ->with(null)
@@ -495,11 +498,11 @@ class ShippingMethodsTest extends TestCase
             'city' => 'New York'
         ];
 
-        $this->cartHelper->expects($this->at(0))
+        $this->cartHelper->expects($this->at(1))
             ->method('getRoundAmount')
             ->with('5')
             ->will($this->returnValue((int)500));
-        $this->cartHelper->expects($this->at(1))
+        $this->cartHelper->expects($this->at(2))
             ->method('getRoundAmount')
             ->with(0)
             ->will($this->returnValue(0));

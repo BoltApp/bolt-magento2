@@ -483,7 +483,62 @@ class Cart extends AbstractHelper
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
         unset ($cart['display_id']);
-        return md5(json_encode($cart));
+        $identifier  = json_encode($cart);
+        // extend cache identifier with custom address fields
+        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($this->getLastImmutableQuote());
+
+        return md5($identifier);
+    }
+
+    /**
+     * Get array of custom address field names converted to PascalCase
+     * used to build method names (i.e. getters)
+     *
+     * @param int $storeId
+     * @return array
+     */
+    protected function getCustomAddressFieldsPascalCaseArray($storeId)
+    {
+        // get custom address fields from config
+        $customAddressFields = explode(
+            ',', $this->configHelper->getPrefetchAddressFields($storeId)
+        );
+        // trim values and filter out empty strings
+        $customAddressFields = array_filter(array_map('trim', $customAddressFields));
+        // convert to PascalCase
+        $customAddressFields = array_map(
+            function ($el) {
+                return str_replace('_', '', ucwords($el, '_'));
+            },
+            $customAddressFields
+        );
+
+        return $customAddressFields;
+    }
+
+    /**
+     * Create cache identifier string from custom address fields
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    public function convertCustomAddressFieldsToCacheIdentifier($quote)
+    {
+        $customAddressFields = $this->getCustomAddressFieldsPascalCaseArray($quote->getStoreId());
+        $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+
+        $cacheIdentifier = "";
+
+        // get the value of each valid field and include it in the cache identifier
+        foreach ($customAddressFields as $key) {
+            $hasField = 'has'.$key;
+            $getValue = 'get'.$key;
+            if ($address->$hasField()) {
+                $cacheIdentifier .= '_'.$address->$getValue();
+            }
+        }
+
+        return $cacheIdentifier;
     }
 
     /**

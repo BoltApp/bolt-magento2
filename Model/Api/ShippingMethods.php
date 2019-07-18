@@ -471,34 +471,13 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cacheIdentifier .= '_'.$ruleIds;
             }
 
-            // get custom address fields to be included in cache key
-            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields($quote->getStoreId()));
-            // trim values and filter out empty strings
-            $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
-            // convert to PascalCase
-            $prefetchAddressFields = array_map(
-                function ($el) {
-                    return str_replace('_', '', ucwords($el, '_'));
-                },
-                $prefetchAddressFields
-            );
-
-            $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
-
-            // get the value of each valid field and include it in the cache identifier
-            foreach ($prefetchAddressFields as $key) {
-                $getter = 'get'.$key;
-                $value = $address->$getter();
-                if ($value) {
-                    $cacheIdentifier .= '_'.$value;
-                }
-            }
-
-            $cacheIdentifier .= '_' . $quote->getStoreId();
+            // extend cache identifier with custom address fields
+            $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
 
             $cacheIdentifier = md5($cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
