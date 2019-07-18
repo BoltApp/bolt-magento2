@@ -25,10 +25,10 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
-./ngrok http 80 -hostname=${CIRCLE_BUILD_NUM}.integrations.dev.bolt.me &
+./ngrok http 80 -hostname=m2-test.integrations.dev.bolt.me &
 sleep 10
 curl http://127.0.0.1:4040/api/tunnels
-NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"http://([^"]+)' | cut -c15-)/
+NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"https://([^"]+)' | cut -c15-)/
 
 # TODO use proper store URL
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
