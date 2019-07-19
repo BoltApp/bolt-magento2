@@ -438,7 +438,7 @@ class Cart extends AbstractHelper
      *
      * @return int
      */
-    protected function getSessionQuoteStoreId()
+    public function getSessionQuoteStoreId()
     {
         $sessionQuote = $this->checkoutSession->getQuote();
         return $sessionQuote && $sessionQuote->getStoreId() ? $sessionQuote->getStoreId() : null;

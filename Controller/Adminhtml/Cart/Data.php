@@ -102,8 +102,12 @@ class Data extends Action
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $storeId = $boltpayOrder->getStoreId();
-                $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
             }
+            else{
+                $storeId = $this->cartHelper->getSessionQuoteStoreId();
+            }
+
+            $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
 
             // format and send the response
             $cart = [
