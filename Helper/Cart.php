@@ -1358,7 +1358,13 @@ class Cart extends AbstractHelper
         // Process Aheadworks Store Credit
         /////////////////////////////////////////////////////////////////////////////////
         if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
-            $customerId = $this->customerSession->getCustomer()->getId();
+            if ($paymentOnly) {
+                $customerId = $immutableQuote->getCustomerId();
+            }
+            else{
+                $customerId = $this->customerSession->getCustomer()->getId();
+            }
+
             $aheadStoreCredits = $this->discountHelper->getAheadworksStoreCredit($customerId);
             $roundedAmount = abs($this->getRoundAmount($aheadStoreCredits));
             $cart['discounts'][] = [
