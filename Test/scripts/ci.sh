@@ -7,6 +7,8 @@ set -x
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
 Test/scripts/install_magento.sh
+cp Test/scripts/CouponCode.php ../magento
+cp Test/scripts/FreeShipping.php ../magento
 
 # install bolt plugin
 cd ..
@@ -35,6 +37,8 @@ php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "${NGROK_URL}"
 php bin/magento config:set web/unsecure/base_link_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_link_url "${NGROK_URL}"
+php CouponCode.php
+php FreeShipping.php
 
 
 php -dmemory_limit=5G bin/magento setup:upgrade
@@ -79,4 +83,7 @@ git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
 TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
+TEST_ENV=ci SCREENSHOT_DIR=./screenshots WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2discount.spec.ts
+TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2LoggedInQuickCheckout.spec.ts
+
 
