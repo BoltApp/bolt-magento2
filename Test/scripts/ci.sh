@@ -82,7 +82,7 @@ echo "restarted apache2"
 git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
-sleep 10
+sleep 30
 TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
 TEST_ENV=ci SCREENSHOT_DIR=./screenshots WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2discount.spec.ts
 TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2LoggedInQuickCheckout.spec.ts
