@@ -15,7 +15,7 @@ $state->setAreaCode('adminhtml');
 
 
 $coupon['name'] = 'simple percentage based discount.';
-$coupon['desc'] = 'discount simple percentage based discount.';
+$coupon['desc'] = 'simple percentage based discount.';
 $coupon['start'] = date('Y-m-d');
 $coupon['end'] = '';
 $coupon['max_redemptions'] = 1;
