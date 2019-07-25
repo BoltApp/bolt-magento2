@@ -50,6 +50,9 @@ php -dmemory_limit=5G bin/magento indexer:reindex
 php -dmemory_limit=5G bin/magento setup:static-content:deploy -f
 
 php bin/magento cache:flush
+INC_NUM=$((100*${CIRCLE_BUILD_NUM}))
+mysql -uroot -h 127.0.0.1 -e "USE magento2 ALTER TABLE quote AUTO_INCREMENT=${INC_NUM};"
+
 # tweak apache config
 echo "update apache config"
 sudo sh -c 'echo "<VirtualHost *:80>
