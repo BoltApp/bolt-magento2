@@ -14,8 +14,8 @@ $state = $obj->get('Magento\Framework\App\State');
 $state->setAreaCode('adminhtml');  
 
 
-$coupon['name'] = 'discount simple percentage based discount. (percent15)';
-$coupon['desc'] = 'discount simple percentage based discount. (percent15)';
+$coupon['name'] = 'simple percentage based discount.';
+$coupon['desc'] = 'discount simple percentage based discount.';
 $coupon['start'] = date('Y-m-d');
 $coupon['end'] = '';
 $coupon['max_redemptions'] = 1;
