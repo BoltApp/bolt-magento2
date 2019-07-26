@@ -27,6 +27,8 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Model\Order as OrderModel;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
@@ -47,7 +49,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
-
+use \Magento\Sales\Model\Order;
 
 /**
  * Boltpay Cart helper
@@ -197,6 +199,11 @@ class Cart extends AbstractHelper
     private $resourceConnection;
 
     /**
+     * @var Order[]
+     */
+    private $orderData;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -320,16 +327,25 @@ class Cart extends AbstractHelper
 
     /**
      * Load Order by increment id
-     * @param $incrementId
-     * @return \Magento\Sales\Model\Order|false
+     *
+     * @param string $incrementId
+     * @param bool   $forceLoad - use it if needed to load data without cache.
+     *
+     * @return OrderInterface|false
      */
-    public function getOrderByIncrementId($incrementId)
+    public function getOrderByIncrementId($incrementId, $forceLoad = false)
     {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('increment_id', $incrementId, 'eq')->create();
-        $collection = $this->orderRepository->getList($searchCriteria)->getItems();
+        if ($forceLoad || !isset($this->orderData[$incrementId])) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('increment_id', $incrementId, 'eq')
+                ->create();
+            $collection = $this->orderRepository
+                ->getList($searchCriteria)
+                ->getItems();
 
-        return reset($collection);
+            $this->orderData[$incrementId] = reset($collection);
+        }
+        return $this->orderData[$incrementId];
     }
 
     /**
