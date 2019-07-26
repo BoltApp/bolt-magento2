@@ -497,7 +497,7 @@ class Order extends AbstractHelper
     private function checkExistingOrder($incrementId)
     {
         /** @var OrderModel $order */
-        if ($order = $order = $this->getExistingOrder($incrementId)) {
+        if ($order = $this->getExistingOrder($incrementId)) {
             $this->bugsnag->notifyError(
                 'Duplicate Order Creation Attempt',
                 null
