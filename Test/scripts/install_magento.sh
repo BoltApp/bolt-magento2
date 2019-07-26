@@ -55,7 +55,8 @@ echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY
 echo "Install bugsnag"
 composer require "bugsnag/bugsnag:^3.0"
 
-php bin/magento module:disable Magento_Captcha
+php bin/magento module:disable Magento_Captcha --clear-static-content
+php bin/magento module:disable MSP_ReCaptcha --clear-static-content
 
 php bin/magento config:set dev/static/sign 0
 
