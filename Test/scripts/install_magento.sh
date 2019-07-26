@@ -56,7 +56,11 @@ echo "Install bugsnag"
 composer require "bugsnag/bugsnag:^3.0"
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
-php bin/magento module:disable MSP_ReCaptcha --clear-static-content
+
+if [ "${MAGENTO_VERSION}" -eq '2.3.0' ]; then 
+    php bin/magento module:disable MSP_ReCaptcha --clear-static-content
+fi
+
 
 php bin/magento config:set dev/static/sign 0
 
