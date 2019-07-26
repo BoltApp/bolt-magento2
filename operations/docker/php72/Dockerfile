@@ -10,7 +10,7 @@ RUN apt-get update && apt-get -y install curl mysql-client libmcrypt-dev mcrypt 
 RUN pecl channel-update pecl.php.net
 RUN pecl install zip &&  docker-php-ext-enable zip
 RUN docker-php-ext-enable xdebug
-RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/
+RUN docker-php-ext-configure gd --with-jpeg-dir=/usr/include/
 RUN docker-php-ext-install gd
 RUN docker-php-ext-install soap
 RUN docker-php-ext-install xsl
