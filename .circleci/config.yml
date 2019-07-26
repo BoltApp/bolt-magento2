@@ -87,5 +87,9 @@ workflows:
     jobs:
       - phpcs
       - unit-php72-magento23
-      - unit-php71-magento22
-      - unit-php70-magento22
+      - unit-php71-magento22:
+          requires:
+            - unit-php72-magento23
+      - unit-php70-magento22:
+          requires:
+            - unit-php71-magento22
