@@ -23,10 +23,10 @@ set -x
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
 composer show -i
-echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > $HOME/.composer/auth.json
-cd ..
+# echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > $HOME/.composer/auth.json
+# cd ..
 
-composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=${MAGENTO_VERSION} magento/
+# composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=${MAGENTO_VERSION} magento/
 cd magento
 composer install
 
@@ -48,12 +48,12 @@ php bin/magento setup:install -q \
     --admin-use-security-key=0 \
     --admin-password="123123q"
 
-echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > auth.json
+# echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > auth.json
 
 
 
-echo "Install bugsnag"
-composer require "bugsnag/bugsnag:^3.0"
+# echo "Install bugsnag"
+# composer require "bugsnag/bugsnag:^3.0"
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
 

@@ -7,8 +7,8 @@ set -x
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
 Test/scripts/install_magento.sh
-cp Test/scripts/CouponCode.php ../magento
-cp Test/scripts/FreeShipping.php ../magento
+cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
+cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
 
 # install bolt plugin
 cd ..
@@ -55,27 +55,27 @@ mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${I
 
 
 # tweak apache config
-echo "update apache config"
-sudo sh -c 'echo "<VirtualHost *:80>
-    DocumentRoot /home/circleci/magento
-    <Directory /home/circleci/magento>
-        Options FollowSymLinks 
-        AllowOverride All
-        order allow,deny
-        allow from all
-    </Directory>
-</VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
-sudo sh -c 'echo "<Directory /home/circleci/magento/>
-        Options Indexes FollowSymLinks Includes ExecCGI
-        DirectoryIndex index.html index.php
-        AllowOverride ALL
-        Require all granted
-</Directory>" >> /etc/apache2/apache2.conf'
+# echo "update apache config"
+# sudo sh -c 'echo "<VirtualHost *:80>
+#     DocumentRoot /home/circleci/magento
+#     <Directory /home/circleci/magento>
+#         Options FollowSymLinks 
+#         AllowOverride All
+#         order allow,deny
+#         allow from all
+#     </Directory>
+# </VirtualHost>" > /etc/apache2/sites-enabled/000-default.conf'
+# sudo sh -c 'echo "<Directory /home/circleci/magento/>
+#         Options Indexes FollowSymLinks Includes ExecCGI
+#         DirectoryIndex index.html index.php
+#         AllowOverride ALL
+#         Require all granted
+# </Directory>" >> /etc/apache2/apache2.conf'
 
 cd ..
 sudo chmod -R 777 /home/circleci/magento/
-sudo a2enmod rewrite
-mkdir log
+# sudo a2enmod rewrite
+# mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 # wget ${CIRCLE_BUILD_NUM}.integrations.dev.bolt.me

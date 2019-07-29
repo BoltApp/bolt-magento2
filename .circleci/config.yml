@@ -2,15 +2,18 @@ version: 2
 jobs:
   integration-php72-magento23:
     docker:
-      - image: boltdev/m2-plugin-ci-php72:v2
+      - image: boltdev/m2-plugin-ci-integration-php72:v0
       - image: circleci/mysql:5.7
+    environment:
+        MAGENTO_DIR: magento
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
-            - v2-php72mag23-composer-lock-{{ arch }}
-            - v2-php72mag23-composer-lock
+            - v0-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - v0-php72mag23-composer-lock-{{ arch }}
+            
+            - v0-php72mag23-composer-lock
       - run:
           name: PHP 7.2 Magento2.3
           command: |
@@ -18,7 +21,7 @@ jobs:
             export TEST_ENV=php72
             MAGENTO_VERSION=2.3.0 Test/scripts/ci-integration.sh
       - save_cache:
-          key: v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+          key: v0-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
