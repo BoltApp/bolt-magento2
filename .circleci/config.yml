@@ -1,29 +1,51 @@
 version: 2
 jobs:
-  unit-php72-magento23:
+  integration-php72-magento23:
     docker:
-      - image: boltdev/m2-plugin-ci-php72:v1
+      - image: boltdev/m2-plugin-ci-php72:v2
       - image: circleci/mysql:5.7
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v1-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
-            - v1-php72mag23-composer-lock-{{ arch }}
-            - v1-php72mag23-composer-lock
+            - v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - v2-php72mag23-composer-lock-{{ arch }}
+            - v2-php72mag23-composer-lock
       - run:
           name: PHP 7.2 Magento2.3
           command: |
             mkdir ./artifacts
             export TEST_ENV=php72
-            MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.3.0 Test/scripts/ci-integration.sh
       - save_cache:
-          key: v1-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+          key: v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
-
+  unit-php72-magento23:
+    docker:
+      - image: boltdev/m2-plugin-ci-php72:v2
+      - image: circleci/mysql:5.7
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - v2-php72mag23-composer-lock-{{ arch }}
+            - v2-php72mag23-composer-lock
+      - run:
+          name: PHP 7.2 Magento2.3
+          command: |
+            mkdir ./artifacts
+            export TEST_ENV=php72
+            MAGENTO_VERSION=2.3.0 Test/scripts/ci-unit.sh
+      - save_cache:
+          key: v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+          paths:
+            - /home/circleci/.composer/cache/
+      - store_artifacts:
+          path: ./artifacts
   unit-php71-magento22:
     docker:
       - image: boltdev/m2-plugin-ci-php71:v1
@@ -40,14 +62,13 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php71
-            MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.2.0 Test/scripts/ci-unit.sh
       - save_cache:
           key: v1-php71mag22-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
-
   unit-php70-magento22:
     docker:
       - image: boltdev/m2-plugin-ci-php70:v1
@@ -64,7 +85,7 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php70
-            MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.2.0 Test/scripts/ci-unit.sh
       - save_cache:
           key: v1-php70mag22-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
@@ -82,11 +103,13 @@ jobs:
           command: |
             Test/scripts/phpcs_meqp2.sh
 
+
 workflows:
   version: 2
   build:
     jobs:
       - phpcs
+      - integration-php72-magento23
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22
