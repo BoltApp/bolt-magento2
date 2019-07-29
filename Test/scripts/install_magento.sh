@@ -29,7 +29,9 @@ composer show -i
 # composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=${MAGENTO_VERSION} magento/
 cd ../magento
 composer install
-
+while ! mysql -uroot -h 127.0.0.1 -e "SELECT 1" >/dev/null 2>&1; do
+    sleep 1
+done
 echo "Installing Magento..."
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
 php bin/magento setup:install -q \
