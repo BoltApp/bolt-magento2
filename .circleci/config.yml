@@ -1,5 +1,28 @@
 version: 2
 jobs:
+  integration-php72-magento23:
+    docker:
+      - image: boltdev/m2-plugin-ci-php72:v2
+      - image: circleci/mysql:5.7
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - v2-php72mag23-composer-lock-{{ arch }}
+            - v2-php72mag23-composer-lock
+      - run:
+          name: PHP 7.2 Magento2.3
+          command: |
+            mkdir ./artifacts
+            export TEST_ENV=php72
+            MAGENTO_VERSION=2.3.0 Test/scripts/ci-integration.sh
+      - save_cache:
+          key: v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+          paths:
+            - /home/circleci/.composer/cache/
+      - store_artifacts:
+          path: ./artifacts
   unit-php72-magento23:
     docker:
       - image: boltdev/m2-plugin-ci-php72:v2
@@ -16,7 +39,7 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php72
-            MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.3.0 Test/scripts/ci-unit.sh
       - save_cache:
           key: v2-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
@@ -39,7 +62,7 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php71
-            MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.2.0 Test/scripts/ci-unit.sh
       - save_cache:
           key: v1-php71mag22-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
@@ -62,7 +85,7 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php70
-            MAGENTO_VERSION=2.2.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.2.0 Test/scripts/ci-unit.sh
       - save_cache:
           key: v1-php70mag22-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
@@ -86,10 +109,7 @@ workflows:
   build:
     jobs:
       - phpcs
+      - integration-php72-magento23
       - unit-php72-magento23
-      - unit-php71-magento22:
-          requires:
-            - unit-php72-magento23
-      - unit-php70-magento22:
-          requires:
-            - unit-php71-magento22
+      - unit-php71-magento22
+      - unit-php70-magento22
