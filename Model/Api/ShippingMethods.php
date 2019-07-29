@@ -40,6 +40,7 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Class ShippingMethods
@@ -137,6 +138,9 @@ class ShippingMethods implements ShippingMethodsInterface
     /** @var SessionHelper */
     private $sessionHelper;
 
+    /** @var DiscountHelper */
+    private $discountHelper;
+
     // Totals adjustment threshold
     private $threshold = 1;
 
@@ -162,6 +166,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface                  $cache
      * @param PriceHelper                     $priceHelper
      * @param SessionHelper                   $sessionHelper
+     * @param DiscountHelper                  $discountHelper
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -180,7 +185,8 @@ class ShippingMethods implements ShippingMethodsInterface
         Request $request,
         CacheInterface $cache,
         PriceHelper $priceHelper,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        DiscountHelper $discountHelper
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -199,6 +205,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->priceHelper = $priceHelper;
         $this->sessionHelper = $sessionHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -409,6 +416,25 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * Apply external data applied to quote (third party modules DB tables)
+     * If data is applied it is used as a part of the cache identifier.
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    protected function applyExternalQuoteData($quote)
+    {
+        $data = '';
+        // Amasty reward points are held in a separate table and are not assigned to a quote directly
+        // out of a customer session. We apply it here every time before the shipping and tax estimation.
+        $this->discountHelper->setAmastyRewardPoints($quote);
+        if ($quote->getAmrewardsPoint()) {
+            $data .= $quote->getAmrewardsPoint();
+        }
+        return $data;
+    }
+
+    /**
      * Get Shipping and Tax from cache or run the Shipping options collection routine, store it in cache and return.
      *
      * @param Quote $quote
@@ -419,6 +445,8 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function shippingEstimation($quote, $addressData)
     {
+        // Take into account external data applied to quote in thirt party modules
+        $externalData = $this->applyExternalQuoteData($quote);
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
         // applied rules (discounts), region and postal_code match then use the cached version.
@@ -430,7 +458,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
                 $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code']. '_'.
-                @$addressData['street_address1'].'_'.@$addressData['street_address2'];
+                @$addressData['street_address1'].'_'.@$addressData['street_address2'].'_'.$externalData;
 
             // include products in cache key
             foreach ($quote->getAllVisibleItems() as $item) {
@@ -443,34 +471,13 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cacheIdentifier .= '_'.$ruleIds;
             }
 
-            // get custom address fields to be included in cache key
-            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields($quote->getStoreId()));
-            // trim values and filter out empty strings
-            $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
-            // convert to PascalCase
-            $prefetchAddressFields = array_map(
-                function ($el) {
-                    return str_replace('_', '', ucwords($el, '_'));
-                },
-                $prefetchAddressFields
-            );
-
-            $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
-
-            // get the value of each valid field and include it in the cache identifier
-            foreach ($prefetchAddressFields as $key) {
-                $getter = 'get'.$key;
-                $value = $address->$getter();
-                if ($value) {
-                    $cacheIdentifier .= '_'.$value;
-                }
-            }
-
-            $cacheIdentifier .= '_' . $quote->getStoreId();
+            // extend cache identifier with custom address fields
+            $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
 
             $cacheIdentifier = md5($cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
@@ -764,10 +771,10 @@ class ShippingMethods implements ShippingMethodsInterface
         $parentQuoteCoupon,
         \Magento\Quote\Api\Data\CartInterface $quote
     ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($quote->getStoreId());
 
         return $parentQuoteCoupon &&
-               !$quote->getCouponCode() &&
-               in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons);
+                in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons) &&
+                !$quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 }

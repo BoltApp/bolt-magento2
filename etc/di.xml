@@ -36,6 +36,7 @@
 
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
+    <preference for="Bolt\Boltpay\Api\CreateOrderInterface" type="Bolt\Boltpay\Model\Api\CreateOrder" />
 
     <!-- For rest api shipping methods -->
     <preference for="Bolt\Boltpay\Api\ShippingMethodsInterface"      type="Bolt\Boltpay\Model\Api\ShippingMethods" />
@@ -74,13 +75,6 @@
             <argument name="moduleUnirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
     </type>
-
-    <virtualType name="boltAmastyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Account</argument>
-        </arguments>
-    </virtualType>
 
     <virtualType name="boltAmastyAccountFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -173,6 +167,27 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="boltAmastyRewardsResourceQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
+            <argument name="className" xsi:type="string">Amasty\Rewards\Model\ResourceModel\Quote</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAmastyRewardsQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
+            <argument name="className" xsi:type="string">Amasty\Rewards\Model\Quote</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="boltAheadworksCustomerStoreCreditManagementInterface" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Aheadworks_StoreCredit</argument>
+            <argument name="className" xsi:type="string">Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface</argument>
+        </arguments>
+    </virtualType>
+
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
             <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
@@ -188,6 +203,9 @@
             <argument name="mirasvitStoreCreditConfig" xsi:type="object">boltMirasvitStoreCreditConfig</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
+            <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
+            <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
+            <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
         </arguments>
     </type>
 
@@ -197,5 +215,9 @@
 
     <type name="Magento\Framework\RequireJs\Config\File\Collector\Aggregated">
         <plugin name="Bolt_Boltpay_RequireJs_Plugin" type="Bolt\Boltpay\Plugin\RequireJs" sortOrder="1" />
+    </type>
+
+    <type name="Magento\Sales\Model\Order\Email\Sender\OrderSender">
+        <plugin name="Bolt_Boltpay_OrderSender_Plugin" type="Bolt\Boltpay\Plugin\OrderSenderPlugin" sortOrder="1" />
     </type>
 </config>

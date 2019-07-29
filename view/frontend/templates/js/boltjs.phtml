@@ -38,11 +38,6 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-connect"
     type="text/javascript"
     src="<?php echo $connectJsUrl; ?>"
+    async
     data-publishable-key="<?php echo $checkoutKey; ?>">
-</script>
-<script>
-    // Prevent checkout to pop up until reconfigured in replacejs.html
-    // Checkout may be restricted, i.e. guest checkout not allowed
-    // The status is unknown at this point
-    BoltCheckout.configure({},{},{check:function(){return false}});
 </script>

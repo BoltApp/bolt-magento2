@@ -27,6 +27,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
+use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 /**
@@ -38,6 +39,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 class Session extends AbstractHelper
 {
     const BOLT_SESSION_PREFIX  = 'BOLT_SESSION_';
+    const BOLT_SESSION_PREFIX_FORM_KEY  = 'BOLT_SESSION_FORM_KEY_';
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -59,6 +61,9 @@ class Session extends AbstractHelper
     /** @var State */
     private $appState;
 
+    /** @var FormKey */
+    private $formKey;
+
     /** @var ConfigHelper */
     private $configHelper;
 
@@ -69,6 +74,7 @@ class Session extends AbstractHelper
      * @param LogHelper         $logHelper
      * @param CacheInterface    $cache
      * @param State             $appState
+     * @param FormKey           $formKey
      * @param ConfigHelper      $configHelper
      *
      * @codeCoverageIgnore
@@ -81,6 +87,7 @@ class Session extends AbstractHelper
         LogHelper $logHelper,
         CacheInterface $cache,
         State $appState,
+        FormKey $formKey,
         ConfigHelper $configHelper
     ) {
         parent::__construct($context);
@@ -90,6 +97,7 @@ class Session extends AbstractHelper
         $this->logHelper = $logHelper;
         $this->cache = $cache;
         $this->appState = $appState;
+        $this->formKey = $formKey;
         $this->configHelper = $configHelper;
     }
 
@@ -178,6 +186,28 @@ class Session extends AbstractHelper
             $this->customerSession->loginById($customerId);
         }
         $this->replaceQuote($quote);
+    }
+
+    /**
+     * Load and set cached form key
+     *
+     * @param Quote $quote
+     */
+    public function setFormKey($quote)
+    {
+        $cacheIdentifier = self::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId();
+        $this->formKey->set($this->cache->load($cacheIdentifier));
+    }
+
+    /**
+     * Store form key in cache for use later from the create order API call
+     *
+     * @param Quote $quote
+     */
+    public function cacheFormKey($quote)
+    {
+        $cacheIdentifier = self::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId();
+        $this->cache->save($this->formKey->getFormKey(), $cacheIdentifier, [], 14400);
     }
 
     /**

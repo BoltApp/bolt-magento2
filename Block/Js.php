@@ -223,7 +223,7 @@ class Js extends Template
      */
     private function getQuoteIsVirtual()
     {
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuoteFromCheckoutSession();
         return $quote ? $quote->isVirtual() : false;
     }
 
@@ -232,7 +232,8 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
-        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?: ( $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' );
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?:
+                         $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' ;
         return __('Your payment was successful and we\'re now processing your order.' .
         'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
@@ -404,10 +405,17 @@ class Js extends Template
     public function getStoreId()
     {
         /** @var Quote $quote */
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuoteFromCheckoutSession();
 
-        return ($quote && $quote->getStoreId()) ?
-            (int) $quote->getStoreId() : null;
+        return  $quote && $quote->getStoreId() ? $quote->getStoreId() : null;
+    }
+
+    /**
+     * @return Quote
+     */
+    protected function getQuoteFromCheckoutSession()
+    {
+        return $this->checkoutSession->getQuote();
     }
 
     /**

@@ -100,13 +100,10 @@ class Save extends Action
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, $storeId);
 
             $orderId = $order->getId();
-            // clear the session data
-            if ($orderId) {
-                //Clear quote session
-                $this->clearQuoteSession($quote);
-                //Clear order session
-                $this->clearOrderSession($order);
-            }
+            // clear quote session
+            $this->clearQuoteSession($quote);
+            // clear order session
+            $this->clearOrderSession($order);
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
 
@@ -118,6 +115,7 @@ class Save extends Action
             $result = $this->resultJsonFactory->create();
             $result->setHttpResponseCode(422);
             $result->setData(['status' => 'error', 'code' => '1000','message' => $e->getMessage()]);
+
             return $result;
         }
     }

@@ -69,3 +69,5 @@
 ## [v1.1.15](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.15) 2019-06-12
  - Fixes for multi-store backend support.
  - Option to toggle emulated session in api calls
+## [v2.0.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.0) 2019-07-02
+ - Introducing pre-authorized order creation
