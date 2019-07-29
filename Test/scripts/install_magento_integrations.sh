@@ -59,7 +59,7 @@ php bin/magento setup:install -q \
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
 
-if [ "${MAGENTO_VERSION}" -eq 2.3.0 ]; then 
+if [ "${MAGENTO_VERSION}" == "2.3.0" ]; then 
     php bin/magento module:disable MSP_ReCaptcha --clear-static-content
 fi
 
