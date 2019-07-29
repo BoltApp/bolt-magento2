@@ -27,7 +27,7 @@ composer show -i
 # cd ..
 
 # composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=${MAGENTO_VERSION} magento/
-cd magento
+cd ../magento
 composer install
 
 echo "Installing Magento..."
