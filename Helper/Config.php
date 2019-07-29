@@ -24,6 +24,7 @@ use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\Store;
+use Magento\Framework\App\Request\Http as Request;
 
 /**
  * Boltpay Configuration helper
@@ -269,10 +270,17 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
+     * @var Request
+     */
+    private $request;
+    private $contextHelper;
+
+    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
+     * @param Request                  $request
      *
      * @codeCoverageIgnore
      */
@@ -280,25 +288,26 @@ class Config extends AbstractHelper
         Context $context,
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
-        ProductMetadataInterface $productMetadata
+        ProductMetadataInterface $productMetadata,
+        Request $request
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
         $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
+        $this->request = $request;
+        $this->contextHelper = $context;
     }
 
     /**
      * Get Bolt API base URL
      *
-     * @param null|string $storeId
-     *
      * @return  string
      */
-    public function getApiUrl($storeId = null)
+    public function getApiUrl()
     {
         //Check for sandbox mode
-        if ($this->isSandboxModeSet($storeId)) {
+        if ($this->isSandboxModeSet()) {
             return self::API_URL_SANDBOX;
         } else {
             return self::API_URL_PRODUCTION;
@@ -308,14 +317,12 @@ class Config extends AbstractHelper
     /**
      * Get Bolt Merchant Dashboard URL
      *
-     * @param null|string $storeId
-     *
      * @return  string
      */
-    public function getMerchantDashboardUrl($storeId = null)
+    public function getMerchantDashboardUrl()
     {
         //Check for sandbox mode
-        if ($this->isSandboxModeSet($storeId)) {
+        if ($this->isSandboxModeSet()) {
             return self::MERCHANT_DASH_SANDBOX;
         } else {
             return self::MERCHANT_DASH_PRODUCTION;
@@ -713,16 +720,13 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param int|string $storeId
-     *
      * @return string
      */
-    public function getOnEmailEnter($storeId = null)
+    public function getOnEmailEnter()
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_EMAIL_ENTER,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
+            ScopeInterface::SCOPE_STORE
         );
     }
 
@@ -1024,7 +1028,7 @@ class Config extends AbstractHelper
     {
         foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
                      'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
-            if ($ips = $this->_request->getServer($key, false)) {
+            if ($ips = $this->request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
                     if (filter_var(
@@ -1089,12 +1093,11 @@ class Config extends AbstractHelper
      *   "ignoredShippingAddressCoupons": ["coupon_code", "coupon_code_1", "coupon_code_2"]
      * }
      *
-     * @param int|string $storeId
-     * @return array
+     * return array
      */
-    public function getIgnoredShippingAddressCoupons($storeId)
+    public function getIgnoredShippingAddressCoupons()
     {
-        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons');
     }
 
     /**

@@ -101,10 +101,9 @@ class Data extends Action
 
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+                $storeId = $boltpayOrder->getStoreId();
+                $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
             }
-
-            $storeId = $this->cartHelper->getSessionQuoteStoreId();
-            $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
 
             // format and send the response
             $cart = [
@@ -117,8 +116,8 @@ class Data extends Action
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
             $result->setData('hints', $hints);
-            $result->setData('publishableKey', $publishableKey);
-            $result->setData('storeId', $storeId);
+            $result->setData('publishableKey', @$publishableKey);
+            $result->setData('storeId', @$storeId);
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
