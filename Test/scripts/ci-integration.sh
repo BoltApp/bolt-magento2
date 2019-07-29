@@ -56,6 +56,8 @@ mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${I
 
 # tweak apache config
 # echo "update apache config"
+sudo cp /home/circleci/project/Test/scripts/000-default.conf /etc/apache2/sites-enabled/000-default.conf
+sudo cp /home/circleci/project/Test/scripts/apache2.conf /etc/apache2/sites-enabled/apache2.conf
 # sudo sh -c 'echo "<VirtualHost *:80>
 #     DocumentRoot /home/circleci/magento
 #     <Directory /home/circleci/magento>
@@ -74,8 +76,8 @@ mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${I
 
 cd ..
 sudo chmod -R 777 /home/circleci/magento/
-# sudo a2enmod rewrite
-# mkdir log
+sudo a2enmod rewrite
+mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 # wget ${CIRCLE_BUILD_NUM}.integrations.dev.bolt.me

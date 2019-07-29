@@ -57,8 +57,8 @@ RUN composer require "bugsnag/bugsnag:^3.0"
 # RUN cp -r project/. magento/app/code/Bolt/Boltpay/
 # RUN cd magento
 # RUN php bin/magento module:enable Bolt_Boltpay
-COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
-COPY apache2.conf /etc/apache2/apache2.conf
-RUN sudo a2enmod rewrite
+# COPY 000-default.conf /etc/apache2/sites-enabled/000-default.conf
+# COPY apache2.conf /etc/apache2/apache2.conf
+# RUN sudo a2enmod rewrite
 WORKDIR /home/circleci
 
