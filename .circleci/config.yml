@@ -3,6 +3,9 @@ jobs:
   integration-php72-magento23:
     docker:
       - image: boltdev/m2-plugin-ci-integration-php72:v0
+        auth: 
+          username: ethanwayda22  # can specify string literal values
+          password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     environment:
         MAGENTO_DIR: magento
