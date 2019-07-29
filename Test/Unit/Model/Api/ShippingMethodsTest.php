@@ -39,7 +39,6 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 
 /**
  * Class ShippingMethodsTest
@@ -129,11 +128,6 @@ class ShippingMethodsTest extends TestCase
     private $sessionHelper;
 
     /**
-     * @var DiscountHelper
-     */
-    private $discountHelper;
-
-    /**
      * @var Bugsnag
      */
     private $bugsnag;
@@ -159,17 +153,12 @@ class ShippingMethodsTest extends TestCase
             ->willReturnSelf();
 
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods([
-                'getQuoteById', 'validateEmail', 'getRoundAmount', 'convertCustomAddressFieldsToCacheIdentifier'
-            ])->disableOriginalConstructor()
+            ->setMethods(['getQuoteById', 'validateEmail', 'getRoundAmount'])
+            ->disableOriginalConstructor()
             ->getMock();
 
-        $this->cartHelper->expects($this->any())
-            ->method('convertCustomAddressFieldsToCacheIdentifier')
-            ->willReturn("");
-
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
+            ->setMethods(['getPrefetchShipping', 'getPrefetchAddressFields', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
@@ -177,6 +166,8 @@ class ShippingMethodsTest extends TestCase
             ->willReturn(true);
         $this->configHelper->method('getIgnoredShippingAddressCoupons')
             ->willReturn([]);
+        $this->configHelper->method('getPrefetchAddressFields')
+            ->willReturn('');
         $this->configHelper->expects($this->any())
             ->method('getResetShippingCalculation')
             ->with(null)
@@ -227,7 +218,6 @@ class ShippingMethodsTest extends TestCase
         $this->cache = $this->createMock(CacheInterface::class);
         $this->priceHelper = $this->createMock(PriceHelper::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
-        $this->discountHelper = $this->createMock(DiscountHelper::class);
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
             ->setMethods(['notifyException'])
@@ -281,8 +271,7 @@ class ShippingMethodsTest extends TestCase
                 $this->request,
                 $this->cache,
                 $this->priceHelper,
-                $this->sessionHelper,
-                $this->discountHelper
+                $this->sessionHelper
             ])
             ->getMock();
 
@@ -360,8 +349,7 @@ class ShippingMethodsTest extends TestCase
                 $this->request,
                 $this->cache,
                 $this->priceHelper,
-                $this->sessionHelper,
-                $this->discountHelper
+                $this->sessionHelper
             ])
             ->getMock();
 
@@ -457,8 +445,7 @@ class ShippingMethodsTest extends TestCase
             $this->request,
             $this->cache,
             $this->priceHelper,
-            $this->sessionHelper,
-            $this->discountHelper
+            $this->sessionHelper
         );
 
         $this->expectException(LocalizedException::class);
@@ -498,11 +485,11 @@ class ShippingMethodsTest extends TestCase
             'city' => 'New York'
         ];
 
-        $this->cartHelper->expects($this->at(1))
+        $this->cartHelper->expects($this->at(0))
             ->method('getRoundAmount')
             ->with('5')
             ->will($this->returnValue((int)500));
-        $this->cartHelper->expects($this->at(2))
+        $this->cartHelper->expects($this->at(1))
             ->method('getRoundAmount')
             ->with(0)
             ->will($this->returnValue(0));
@@ -558,8 +545,7 @@ class ShippingMethodsTest extends TestCase
             $this->request,
             $this->cache,
             $this->priceHelper,
-            $this->sessionHelper,
-            $this->discountHelper
+            $this->sessionHelper
         );
 
         $result = $testClass->shippingEstimation($quote, $shippingAddressData);

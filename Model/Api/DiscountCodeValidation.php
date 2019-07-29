@@ -764,7 +764,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function getCartTotals($quote)
     {
         $request = $this->getRequestContent();
-        $is_has_shipment = isset($request->cart->shipments[0]->reference);
+        $is_has_shipment = isset($request->cart->shipments[0]->reference) ? true : false;
         $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
         return [
             'total_amount' => $cart['total_amount'],
@@ -921,7 +921,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 $gcStoreId = $giftCert->getStoreId();
 
-                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
+                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') !== 'I')
                           ? $giftCert : null;
 
             } catch (NoSuchEntityException $e) {
@@ -942,14 +942,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      *
      * @return bool
      */
-    protected function shouldUseParentQuoteShippingAddressDiscount(
-        $couponCode,
-        Quote $immutableQuote,
-        Quote $parentQuote
-    ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons(
-            $parentQuote->getStoreId()
-        );
+    protected function shouldUseParentQuoteShippingAddressDiscount($couponCode, Quote $immutableQuote, Quote $parentQuote)
+    {
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
 
         return $immutableQuote->getCouponCode() == $couponCode &&
                $immutableQuote->getCouponCode() == $parentQuote->getCouponCode() &&
