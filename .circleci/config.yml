@@ -15,7 +15,6 @@ jobs:
           keys:
             - v0-php72mag23-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
             - v0-php72mag23-composer-lock-{{ arch }}
-            
             - v0-php72mag23-composer-lock
       - run:
           name: PHP 7.2 Magento2.3
