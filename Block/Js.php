@@ -203,6 +203,7 @@ class Js extends Template
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
+            'is_pre_auth'              => $this->getIsPreAuth(),
         ]);
     }
 
@@ -319,6 +320,19 @@ class Js extends Template
     {
         $toggleCheckout = $this->configHelper->getToggleCheckout();
         return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
+    }
+
+    /**
+     * Get Is Pre-Auth configuration
+     *
+     * @return mixed
+     */
+    private function getIsPreAuth()
+    {
+        $storeId = $this->getStoreId();
+        $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
+
+        return !empty($isPreAuth);
     }
 
     /**

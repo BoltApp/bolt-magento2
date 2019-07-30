@@ -101,6 +101,11 @@ class Config extends AbstractHelper
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
 
     /**
+     * Is pre-auth
+     */
+    const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
+
+    /**
      * Prefetch shipping
      */
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
@@ -836,6 +841,22 @@ class Config extends AbstractHelper
     {
         $config = $this->getAdditionalConfigObject($storeId);
         return @$config->$name;
+    }
+
+    /**
+     * Get Is Pre-Auth from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getIsPreAUth($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_IS_PRE_AUTH,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
     }
 
     /**

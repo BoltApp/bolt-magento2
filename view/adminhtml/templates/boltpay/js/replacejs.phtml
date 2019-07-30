@@ -355,6 +355,7 @@ require([
         multi_step_css_class     = 'bolt-multi-step-checkout',
         billing_address_selector = '#bolt-billing-address',
         place_order_payload_id   = 'bolt-place-order-payload';
+    var is_pre_auth              = settings.is_pre_auth;
 
     // On multiple checkout open/close actions the success event remains registered
     // resulting in making the success call multiple times. This variable stores
@@ -376,6 +377,11 @@ require([
         },
 
         success: function (transaction, callback) {
+            if (is_pre_auth) {
+                processSuccess(transaction, callback);
+                return;
+            }
+
             // abort previously sent save order request.
             if (save_request) save_request.abort();
             // add the transaction reference and admin form key to the request parameters
@@ -389,8 +395,7 @@ require([
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
 
-                callbacks.success_url = data.success_url;
-                callback();
+                processSuccess(data, callback);
             };
             // ajax call to the update order transaction data endpoint.
             // passes the bolt transaction reference
@@ -434,6 +439,10 @@ require([
             // return !!cart.orderToken;
         }
     };
+    var processSuccess = function(data, callback){
+        callbacks.success_url = data.success_url;
+        callback();
+    }
     ////////////////////////////////////
 
     /////////////////////////////////////////////////////

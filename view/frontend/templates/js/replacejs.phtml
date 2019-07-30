@@ -458,6 +458,7 @@ ob_start();
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+        var is_pre_auth              = settings.is_pre_auth;
 
         ////////////////////////////////////////////////////////
         // Toggle between Bolt button and magento checkout button
@@ -553,6 +554,11 @@ ob_start();
             },
 
             success: function (transaction, callback) {
+                if (is_pre_auth) {
+                    processSuccess(transaction, callback);
+                    return;
+                }
+
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -574,14 +580,8 @@ ob_start();
 
                         return false;
                     }
-                    try {
-                        <?php echo $block->getJavascriptSuccess(); ?>
-                        callbacks.success_url = data.success_url;
 
-                        trackCallbacks.onSuccess();
-                    } finally {
-                        callback();
-                    }
+                    processSuccess(data, callback);
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
@@ -646,6 +646,17 @@ ob_start();
                 }
             }
         };
+
+        var processSuccess = function(data, callback){
+            try {
+                <?php echo $block->getJavascriptSuccess(); ?>
+                callbacks.success_url = data.success_url;
+
+                trackCallbacks.onSuccess();
+            } finally {
+                callback();
+            }
+        }
         ////////////////////////////////////
 
         /////////////////////////////////////////////////////
