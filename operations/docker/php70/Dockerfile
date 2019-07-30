@@ -20,4 +20,15 @@ RUN docker-php-ext-install pdo_mysql && docker-php-ext-enable pdo_mysql
 
 RUN  composer self-update -q
 
+COPY auth.json /home/circleci/.composer/auth.json
 USER circleci
+WORKDIR /home/circleci
+RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.2.0 magento/
+WORKDIR /home/circleci/magento
+RUN composer install
+
+
+COPY auth.json /home/circleci/magento/auth.json
+RUN composer require "bugsnag/bugsnag:^3.0"
+
+WORKDIR /home/circleci
