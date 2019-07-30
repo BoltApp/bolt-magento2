@@ -10,7 +10,6 @@ $params = $_SERVER;
 $bootstrap = Bootstrap::create(BP, $params);
 $obj = $bootstrap->getObjectManager();
 $state = $obj->get('Magento\Framework\App\State');
-//$state->setAreaCode('frontend');
 $state->setAreaCode('adminhtml');  
 
 
