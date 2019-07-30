@@ -21,7 +21,7 @@ jobs:
           command: |
             mkdir ./artifacts
             export TEST_ENV=php72
-            MAGENTO_VERSION=2.3.0 Test/scripts/ci.sh
+            MAGENTO_VERSION=2.3.0 Test/scripts/ci-integration.sh
       - save_cache:
           key: 2.3.0-php72mag23installed-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
