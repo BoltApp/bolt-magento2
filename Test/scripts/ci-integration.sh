@@ -28,7 +28,7 @@ wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
 ./ngrok http 80 -hostname=m2-test.integrations.dev.bolt.me &
-NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"https://([^"]+)' | cut -c15-)/
+NGROK_URL="https://m2-test.integrations.dev.bolt.me"
 
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "${NGROK_URL}"
