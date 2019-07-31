@@ -26,9 +26,6 @@ WORKDIR /home/circleci
 RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.2.0 magento/
 WORKDIR /home/circleci/magento
 RUN composer install
-
-
-COPY auth.json /home/circleci/magento/auth.json
 RUN composer require "bugsnag/bugsnag:^3.0"
 
 WORKDIR /home/circleci
