@@ -63,6 +63,7 @@ php bin/magento config:set dev/static/sign 0
 echo "Create admin user"
 php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
 
+cp /home/circleci/.composer/auth.json /home/circleci/magento/auth.json
 echo "Installing sample data"
 php -dmemory_limit=5G bin/magento sampledata:deploy
 
