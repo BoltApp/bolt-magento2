@@ -101,7 +101,7 @@ class Config extends AbstractHelper
     const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
 
     /**
-     * Is pre-auth
+     * Is pre-auth configuration path
      */
     const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
 
@@ -844,7 +844,7 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get Is Pre-Auth from config
+     * Get Is Pre-Auth flag from config
      *
      * @param int|string|Store $store
      *

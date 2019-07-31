@@ -85,7 +85,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString'
+            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString',
+            'getIsPreAuth'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -232,7 +233,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(15, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');

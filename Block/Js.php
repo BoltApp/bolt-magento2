@@ -214,7 +214,6 @@ class Js extends Template
     public function isEnabled()
     {
         $storeId = $this->getStoreId();
-
         return $this->configHelper->isActive($storeId);
     }
 
@@ -325,14 +324,12 @@ class Js extends Template
     /**
      * Get Is Pre-Auth configuration
      *
-     * @return mixed
+     * @return bool
      */
     private function getIsPreAuth()
     {
         $storeId = $this->getStoreId();
-        $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
-
-        return !empty($isPreAuth);
+        return $this->configHelper->getIsPreAuth($storeId);
     }
 
     /**

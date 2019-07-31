@@ -458,7 +458,6 @@ ob_start();
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var customer_email_selector  = '#checkoutSteps #customer-email';
-        var is_pre_auth              = settings.is_pre_auth;
 
         ////////////////////////////////////////////////////////
         // Toggle between Bolt button and magento checkout button
@@ -554,7 +553,17 @@ ob_start();
             },
 
             success: function (transaction, callback) {
-
+                /**
+                 * Success transaction handler.
+                 * Sets the success url for the non-preauth flow.
+                 * Calls additional javascript if defined in configuration.
+                 * Triggers on success track event handler.
+                 * Finally, calls the callback function
+                 * that finishes the checkout modal operation.
+                 *
+                 * param object data    response from the non-preauth order/save controller, optional
+                 * return void
+                 */
                 var processSuccess = function (data) {
                     try {
                         if (typeof data !== 'undefined') {
@@ -567,7 +576,7 @@ ob_start();
                     }
                 };
 
-                if (is_pre_auth) {
+                if (settings.is_pre_auth) {
                     processSuccess();
                     return;
                 }
@@ -590,10 +599,8 @@ ob_start();
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
                         }
-
-                        return false;
+                        return;
                     }
-
                     processSuccess(data);
                 };
                 // ajax call to the update order transaction data endpoint.
