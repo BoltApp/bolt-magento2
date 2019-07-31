@@ -62,7 +62,7 @@ mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 
-git clone -b add_ci_config git@github.com:BoltApp/integration-tests.git
+git clone git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
 TEST_ENV=ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
