@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Quote\Model\Quote\Validator\MinimumOrderAmount\ValidationMessage as MoaValidationMessage;
 
 /**
  * Class JsTest
@@ -60,6 +61,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @var Bugsnag
      */
     private $bugsnagHelperMock;
+
+    /**
+     * @var MoaValidationMessage
+     */
+    private $moaValidationMessage;
 
     private $magentoQuote;
 
@@ -101,6 +107,20 @@ class JsTest extends \PHPUnit\Framework\TestCase
             )
             ->getMock();
 
+        $this->moaValidationMessage = $this->getMockBuilder(MoaValidationMessage::class)
+            ->setMethods(['getMessage'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $phrase = $this->getMockBuilder(\Magento\Framework\Phrase::class)
+            ->setMethods(['getText'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $phrase->method('getText')
+            ->willReturn($this->returnValue('test text'));
+        $this->moaValidationMessage->method('getMessage')
+            ->willReturn($phrase);
+
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
 
@@ -112,7 +132,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
-                    $this->bugsnagHelperMock
+                    $this->bugsnagHelperMock,
+                    $this->moaValidationMessage
                 ]
             )
             ->getMock();
@@ -232,7 +253,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(15, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -250,6 +271,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
+        $this->assertArrayHasKey('is_valid_minimum_amount_rule', $array, $message . 'is_valid_minimum_amount_rule');
+        $this->assertArrayHasKey('minimum_amount_rule_message', $array, $message . 'minimum_amount_rule_message');
     }
 
     /**

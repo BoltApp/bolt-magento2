@@ -24,6 +24,7 @@ use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Magento\Quote\Model\Quote\Validator\MinimumOrderAmount\ValidationMessage as MoaValidationMessage;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -49,12 +50,18 @@ class Js extends Template
     private $bugsnag;
 
     /**
-     * @param Context         $context
-     * @param Config          $configHelper
-     * @param CheckoutSession $checkoutSession
-     * @param CartHelper      $cartHelper
-     * @param Bugsnag         $bugsnag;
-     * @param array           $data
+     * @var MoaValidationMessage
+     */
+    private $moaValidationMessage;
+
+    /**
+     * @param Context              $context
+     * @param Config               $configHelper
+     * @param CheckoutSession      $checkoutSession
+     * @param CartHelper           $cartHelper
+     * @param Bugsnag              $bugsnag
+     * @param MoaValidationMessage $moaValidationMessage
+     * @param array                $data
      */
     public function __construct(
         Context $context,
@@ -62,6 +69,7 @@ class Js extends Template
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
+        MoaValidationMessage $moaValidationMessage,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -69,6 +77,7 @@ class Js extends Template
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
+        $this->moaValidationMessage = $moaValidationMessage;
     }
 
     /**
@@ -203,6 +212,8 @@ class Js extends Template
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
+            'is_valid_minimum_amount_rule' => $this->isValidMinimumAmountRule(),
+            'minimum_amount_rule_message'  => $this->getMinimumAmountRuleMessage()
         ]);
     }
 
@@ -225,6 +236,35 @@ class Js extends Template
     {
         $quote = $this->getQuoteFromCheckoutSession();
         return $quote ? $quote->isVirtual() : false;
+    }
+
+    /**
+     * Check is valid minimum amount rule for cart.
+     *
+     * @return bool
+     */
+    private function isValidMinimumAmountRule()
+    {
+        $quote = $this->getQuoteFromCheckoutSession();
+        return ($quote && $quote->validateMinimumAmount());
+    }
+
+    /**
+     *  Get minimum amount rule message text.
+     *
+     * @return string
+     * @throws \Zend_Currency_Exception
+     */
+    private function getMinimumAmountRuleMessage()
+    {
+        $message = '';
+
+        if (!$this->isValidMinimumAmountRule()) {
+            $minimumAmountMessage = $this->moaValidationMessage->getMessage();
+            $message = $minimumAmountMessage->getText();
+        }
+
+        return $message;
     }
 
     /**

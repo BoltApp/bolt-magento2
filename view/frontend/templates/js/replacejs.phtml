@@ -634,6 +634,14 @@ ob_start();
                     }
                 }
 
+                // Is valid minimum amount for cart.
+                if (settings.length && settings.is_valid_minimum_amount_rule) {
+                    console.error(settings.minimum_amount_rule_message);
+                    showBoltErrorMessage(settings.minimum_amount_rule_message);
+
+                    return false;
+                }
+
                 popUpOpen = true;
                 return true;
             },
