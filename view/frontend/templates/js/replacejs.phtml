@@ -554,8 +554,21 @@ ob_start();
             },
 
             success: function (transaction, callback) {
+
+                var processSuccess = function (data) {
+                    try {
+                        if (typeof data !== 'undefined') {
+                            callbacks.success_url = data.success_url;
+                        }
+                        <?php echo $block->getJavascriptSuccess(); ?>
+                        trackCallbacks.onSuccess();
+                    } finally {
+                        callback();
+                    }
+                };
+
                 if (is_pre_auth) {
-                    processSuccess(transaction, callback);
+                    processSuccess();
                     return;
                 }
 
@@ -581,7 +594,7 @@ ob_start();
                         return false;
                     }
 
-                    processSuccess(data, callback);
+                    processSuccess(data);
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
@@ -647,16 +660,6 @@ ob_start();
             }
         };
 
-        var processSuccess = function(data, callback){
-            try {
-                <?php echo $block->getJavascriptSuccess(); ?>
-                callbacks.success_url = data.success_url;
-
-                trackCallbacks.onSuccess();
-            } finally {
-                callback();
-            }
-        }
         ////////////////////////////////////
 
         /////////////////////////////////////////////////////

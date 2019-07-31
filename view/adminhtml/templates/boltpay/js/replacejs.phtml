@@ -377,8 +377,14 @@ require([
         },
 
         success: function (transaction, callback) {
+
+            var processSuccess = function (data) {
+                callbacks.success_url = data.success_url;
+                callback();
+            };
+
             if (is_pre_auth) {
-                processSuccess(transaction, callback);
+                processSuccess(transaction);
                 return;
             }
 
@@ -394,8 +400,7 @@ require([
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
-
-                processSuccess(data, callback);
+                processSuccess(data);
             };
             // ajax call to the update order transaction data endpoint.
             // passes the bolt transaction reference
@@ -439,10 +444,7 @@ require([
             // return !!cart.orderToken;
         }
     };
-    var processSuccess = function(data, callback){
-        callbacks.success_url = data.success_url;
-        callback();
-    }
+
     ////////////////////////////////////
 
     /////////////////////////////////////////////////////
