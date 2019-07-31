@@ -47,3 +47,4 @@ php bin/magento setup:install -q \
     --use-rewrites=1 \
     --admin-use-security-key=0 \
     --admin-password="123123q"
+
