@@ -28,8 +28,7 @@ wget -O ngrok.zip https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
 ./ngrok http 80 -hostname=m2-test.integrations.dev.bolt.me &
-sleep 10
-curl http://127.0.0.1:4040/api/tunnels
+while true; do ping -c1 https://m2-test.integrations.dev.bolt.me > /dev/null && break; done
 NGROK_URL=$(curl http://127.0.0.1:4040/api/tunnels | grep  -oE '"public_url":"https://([^"]+)' | cut -c15-)/
 
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
@@ -52,8 +51,6 @@ php bin/magento cache:flush
 INC_NUM=$((100*${CIRCLE_BUILD_NUM}))
 mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${INC_NUM};"
 
-
-# tweak apache config
 echo "update apache config"
 sudo cp /home/circleci/project/Test/scripts/000-default.conf /etc/apache2/sites-enabled/000-default.conf
 sudo cp /home/circleci/project/Test/scripts/apache2.conf /etc/apache2/sites-enabled/apache2.conf
