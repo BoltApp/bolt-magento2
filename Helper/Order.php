@@ -567,13 +567,6 @@ class Order extends AbstractHelper
      */
     protected function orderPostprocess($order, $quote, $transaction)
     {
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
-
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
@@ -592,6 +585,13 @@ class Order extends AbstractHelper
         }
 
         $order->save();
+
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -855,6 +855,15 @@ class Order extends AbstractHelper
         return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
     }
 
+    protected function quoteAfterChange($quote)
+    {
+        $this->_eventManager->dispatch(
+            'sales_quote_save_after', [
+                'quote' => $quote
+            ]
+        );
+    }
+
     /**
      * Load and prepare parent quote
      *
@@ -872,8 +881,7 @@ class Order extends AbstractHelper
         /** @var Quote $quote */
         $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
-
-        $this->cartHelper->quoteResourceSave($quote);
+        $this->quoteAfterChange($quote);
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace quote in checkout session.
@@ -881,10 +889,10 @@ class Order extends AbstractHelper
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
-        $this->cartHelper->quoteResourceSave($quote);
+        $this->quoteAfterChange($quote);
 
         $this->setShippingMethod($quote, $transaction);
-        $this->cartHelper->quoteResourceSave($quote);
+        $this->quoteAfterChange($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
@@ -894,7 +902,7 @@ class Order extends AbstractHelper
         $this->discountHelper->applyMageplazaDiscountToQuote($quote);
 
         $this->setPaymentMethod($quote);
-        $this->cartHelper->quoteResourceSave($quote);
+        $this->quoteAfterChange($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -904,7 +912,6 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
-        $this->cartHelper->quoteResourceSave($quote);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
