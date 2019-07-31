@@ -50,12 +50,6 @@ php bin/magento setup:install -q \
     --admin-use-security-key=0 \
     --admin-password="123123q"
 
-# echo "{\"http-basic\":{\"repo.magento.com\":{\"username\":\"${MAGENTO_PUBLIC_KEY}\",\"password\":\"${MAGENTO_PRIVATE_KEY}\"}}}" > auth.json
-
-
-
-# echo "Install bugsnag"
-# composer require "bugsnag/bugsnag:^3.0"
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
 
