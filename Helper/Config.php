@@ -850,7 +850,7 @@ class Config extends AbstractHelper
      *
      * @return  boolean
      */
-    public function getIsPreAUth($store = null)
+    public function getIsPreAuth($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_IS_PRE_AUTH,
