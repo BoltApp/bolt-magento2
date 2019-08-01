@@ -253,7 +253,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -271,7 +271,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
-        $this->assertArrayHasKey('is_valid_minimum_amount_rule', $array, $message . 'is_valid_minimum_amount_rule');
         $this->assertArrayHasKey('minimum_amount_rule_message', $array, $message . 'minimum_amount_rule_message');
     }
 
