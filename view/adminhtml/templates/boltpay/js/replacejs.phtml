@@ -376,21 +376,41 @@ require([
         },
 
         success: function (transaction, callback) {
+
+            /**
+             * Success transaction handler.
+             * Sets the success url for the non-preauth flow.
+             * Calls the callback function
+             * that finishes the checkout modal operation.
+             *
+             * param object data    response from the non-preauth order/save controller, optional
+             * return void
+             */
+            var processSuccess = function (data) {
+                if (typeof data !== 'undefined') {
+                    callbacks.success_url = data.success_url;
+                }
+                callback();
+            };
+
+            if (settings.is_pre_auth) {
+                processSuccess();
+                return;
+            }
+
             // abort previously sent save order request.
             if (save_request) save_request.abort();
             // add the transaction reference and admin form key to the request parameters
             var parameters = [];
             parameters.push('form_key=' + $('[name="form_key"]').val());
             parameters.push('reference=' + transaction.reference);
-            parameters.push('store_id=' + window.boltConfig.storeId);
+            parameters.push('store_id=' + settings.storeId);
             parameters = parameters.join('&');
             // update order ajax request callback
             // sets the success order page redirect url from received data
             // and calls the final Bolt defined callback
             var onSuccess = function(data){
-
-                callbacks.success_url = data.success_url;
-                callback();
+                processSuccess(data);
             };
             // ajax call to the update order transaction data endpoint.
             // passes the bolt transaction reference
@@ -434,6 +454,7 @@ require([
             // return !!cart.orderToken;
         }
     };
+
     ////////////////////////////////////
 
     /////////////////////////////////////////////////////
@@ -463,6 +484,7 @@ require([
             hints.prefill = prefill;
 
             window.boltConfig.storeId = data.storeId;
+            window.boltConfig.isPreAuth = data.isPreAuth;
 
             insertConnectScript(data.publishableKey);
         };

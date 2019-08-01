@@ -105,6 +105,7 @@ class Data extends Action
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
             $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
 
             // format and send the response
             $cart = [
@@ -119,6 +120,7 @@ class Data extends Action
             $result->setData('hints', $hints);
             $result->setData('publishableKey', $publishableKey);
             $result->setData('storeId', $storeId);
+            $result->setData('isPreAuth', $isPreAuth);
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
