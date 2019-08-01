@@ -212,7 +212,6 @@ class Js extends Template
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
-            'is_valid_minimum_amount_rule' => $this->isValidMinimumAmountRule(),
             'minimum_amount_rule_message'  => $this->getMinimumAmountRuleMessage()
         ]);
     }
@@ -239,32 +238,16 @@ class Js extends Template
     }
 
     /**
-     * Check is valid minimum amount rule for cart.
-     *
-     * @return bool
-     */
-    private function isValidMinimumAmountRule()
-    {
-        $quote = $this->getQuoteFromCheckoutSession();
-        return ($quote && $quote->validateMinimumAmount());
-    }
-
-    /**
-     *  Get minimum amount rule message text.
+     *  Get MinimumOrderAmount message text.
      *
      * @return string
      * @throws \Zend_Currency_Exception
      */
     private function getMinimumAmountRuleMessage()
     {
-        $message = '';
+        $minimumAmountMessage = $this->moaValidationMessage->getMessage();
 
-        if (!$this->isValidMinimumAmountRule()) {
-            $minimumAmountMessage = $this->moaValidationMessage->getMessage();
-            $message = $minimumAmountMessage->getText();
-        }
-
-        return $message;
+        return $minimumAmountMessage->getText();
     }
 
     /**

@@ -99,6 +99,16 @@ class Data extends Action
                 throw new BoltException(__('Guest checkout is not allowed.'));
             }
 
+            if (!$this->cartHelper->hasValidMinimumOrderAmountForCart()) {
+                return $result->setData([
+                    'status' => 'success',
+                    'cart' => [],
+                    'hints' => [],
+                    'is_not_valid_minimum_amount' => true,
+                    'backUrl' => '',
+                ]);
+            }
+
             // flag to determinate the type of checkout / data sent to Bolt
             $payment_only = $this->getRequest()->getParam('payment_only');
             // additional data collected from the (one page checkout) page,

@@ -1623,4 +1623,16 @@ class Cart extends AbstractHelper
         // no restrictions
         return false;
     }
+
+    /**
+     * Get is valid Minimum Order Amount value for the cart.
+     *
+     * @return bool
+     */
+    public function hasValidMinimumOrderAmountForCart()
+    {
+        $quote = $this->checkoutSession->getQuote();
+
+        return ($quote && $quote->validateMinimumAmount());
+    }
 }

@@ -754,7 +754,6 @@ ob_start();
                 // send create order request
                 $.post(settings.create_order_url, params)
                     .done(function (data) {
-
                         var boltRestricted = !!data.restrict;
 
                         toggleCheckoutIfNeeded(boltRestricted);
@@ -767,6 +766,11 @@ ob_start();
 
                         if (data.status !== 'success') {
                             reject(new Error(data.message || 'Network request failed'));
+                            return;
+                        }
+
+                        if (data.status === 'success' && data.is_not_valid_minimum_amount === true) {
+                            reject(new Error(data.message || 'Minimum Amount not reached'));
                             return;
                         }
 
