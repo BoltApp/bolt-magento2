@@ -96,11 +96,6 @@ class Config extends AbstractHelper
     const XML_PATH_JAVASCRIPT_SUCCESS = 'payment/boltpay/javascript_success';
 
     /**
-     * Automatic capture mode
-     */
-    const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
-
-    /**
      * Is pre-auth configuration path
      */
     const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
@@ -566,22 +561,6 @@ class Config extends AbstractHelper
             self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
-    }
-
-    /**
-     * Get Automatic Capture mode from config
-     *
-     * @param int|string|Store $store
-     *
-     * @return  boolean
-     */
-    public function getAutomaticCaptureMode($store = null)
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
-            ScopeInterface::SCOPE_STORE,
-            $store
         );
     }
 
