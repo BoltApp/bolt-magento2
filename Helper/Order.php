@@ -52,6 +52,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use \Magento\Framework\Stdlib\DateTime\DateTime;
 
 /**
  * Class Order
@@ -224,6 +225,9 @@ class Order extends AbstractHelper
     /** @var DiscountHelper */
     private $discountHelper;
 
+    /** @var DateTime */
+    protected $date;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -242,6 +246,7 @@ class Order extends AbstractHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
+     * @param DateTime $date
      *
      * @codeCoverageIgnore
      */
@@ -264,7 +269,8 @@ class Order extends AbstractHelper
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        DateTime $date
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -285,6 +291,7 @@ class Order extends AbstractHelper
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
+        $this->date = $date;
     }
 
     /**
@@ -855,8 +862,14 @@ class Order extends AbstractHelper
         return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
     }
 
+    /**
+     * Update quote change time and dispatch after save event
+     *
+     * @param Quote $quote
+     */
     protected function quoteAfterChange($quote)
     {
+        $quote->setUpdatedAt($this->date->gmtDate());
         $this->_eventManager->dispatch(
             'sales_quote_save_after', [
                 'quote' => $quote
