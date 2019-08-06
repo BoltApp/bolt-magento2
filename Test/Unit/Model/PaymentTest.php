@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Bolt\Boltpay\Model\Payment as BoltPayment;
-
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +31,7 @@ use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -170,11 +170,35 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function voidPayment()
+    public function voidPayment_success()
     {
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $response = new Response();
+        $response->setResponse(json_decode('{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'));
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
         $orderMock = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
-        $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('1');
+        $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        $paymentMock->method('getOrder')->willReturn($orderMock);
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->void($paymentMock);
+    }
+
+    /**
+     * @test
+     */
+    public function voidPayment_throwExceptionWhenBoltRespondWithError()
+    {
+        $this->expectException(LocalizedException::class);
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $response = new Response();
+        $response->setResponse(json_decode('{"status": "error", "message": "Unknown error"}'));
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
+        $orderMock = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
+        $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
+        $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
         $paymentMock->method('getOrder')->willReturn($orderMock);
 
         $this->currentMock->void($paymentMock);
@@ -200,15 +224,10 @@ class PaymentTest extends TestCase
         $this->cartHelper = $this->createMock(CartHelper::class);
         $this->transactionRepository = $this->createMock(TransactionRepository::class);
         $this->authSession = $this->createMock(Session::class);
-
         $this->paymentInfo = $this->createMock(InfoInterface::class);
 
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->dataObjectFactory->method('create')->willReturn(new DataObject());
-        $this->apiHelper->method('buildRequest')->willReturn(new Request());
-        $response = new Response;
-        $response->setResponse(json_decode('{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'));
-        $this->apiHelper->method('sendRequest')->willReturn($response);
     }
 
     /**
