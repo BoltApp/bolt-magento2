@@ -110,7 +110,6 @@ class Data extends Action
             // format and send the response
             $cart = [
                 'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
-                'authcapture' => true
             ];
 
             $hints = $this->cartHelper->getHints();
