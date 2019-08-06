@@ -185,11 +185,6 @@ class Order extends AbstractHelper
     private $orderRepository;
 
     /**
-     * @var OrderModel[]
-     */
-    private $orderData;
-
-    /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
