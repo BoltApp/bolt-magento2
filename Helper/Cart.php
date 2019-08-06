@@ -48,7 +48,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
-use \Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order;
 
 /**
  * Boltpay Cart helper
