@@ -120,7 +120,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_IRREVERSIBLE,
             self::TS_CANCELED
         ],
-        self::TS_REJECTED_IRREVERSIBLE => [],
+        self::TS_REJECTED_IRREVERSIBLE => [self::TS_REJECTED_IRREVERSIBLE],
         self::TS_CREDIT_COMPLETED => [
             self::TS_CREDIT_COMPLETED,
             self::TS_COMPLETED,
@@ -1356,6 +1356,14 @@ class Order extends AbstractHelper
                 $prevTransactionState,
                 $transactionState
             ));
+        }
+
+        // The order has already been canceled, i.e. PERMANENTLY REJECTED
+        // Discard subsequent REJECTED_IRREVERSIBLE hooks processing and return (resulting in 200 OK response to Bolt)
+        if ($transactionState == self::TS_REJECTED_IRREVERSIBLE &&
+            $prevTransactionState == self::TS_REJECTED_IRREVERSIBLE
+        ) {
+            return;
         }
 
         // preset default payment / transaction values

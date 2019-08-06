@@ -553,6 +553,34 @@ ob_start();
             },
 
             success: function (transaction, callback) {
+                /**
+                 * Success transaction handler.
+                 * Sets the success url for the non-preauth flow.
+                 * Calls additional javascript if defined in configuration.
+                 * Triggers on success track event handler.
+                 * Finally, calls the callback function
+                 * that finishes the checkout modal operation.
+                 *
+                 * param object data    response from the non-preauth order/save controller, optional
+                 * return void
+                 */
+                var processSuccess = function (data) {
+                    try {
+                        if (typeof data !== 'undefined') {
+                            callbacks.success_url = data.success_url;
+                        }
+                        <?php echo $block->getJavascriptSuccess(); ?>
+                        trackCallbacks.onSuccess();
+                    } finally {
+                        callback();
+                    }
+                };
+
+                if (settings.is_pre_auth) {
+                    processSuccess();
+                    return;
+                }
+
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
@@ -571,17 +599,9 @@ ob_start();
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
                         }
-
-                        return false;
+                        return;
                     }
-                    try {
-                        <?php echo $block->getJavascriptSuccess(); ?>
-                        callbacks.success_url = data.success_url;
-
-                        trackCallbacks.onSuccess();
-                    } finally {
-                        callback();
-                    }
+                    processSuccess(data);
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
@@ -646,6 +666,7 @@ ob_start();
                 }
             }
         };
+
         ////////////////////////////////////
 
         /////////////////////////////////////////////////////
