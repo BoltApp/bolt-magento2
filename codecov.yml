@@ -1,2 +1,2 @@
 fixes:
-  - "/home/circleci/magento/::./magento/"
+  - "/home/circleci/magento/app/code/Bolt/Boltpay/::"
