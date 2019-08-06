@@ -1,2 +1,2 @@
 fixes:
-  - "./magento/::/home/circleci/magento/"
+  - "/home/circleci/magento/::./magento/"
