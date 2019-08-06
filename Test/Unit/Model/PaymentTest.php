@@ -172,10 +172,7 @@ class PaymentTest extends TestCase
      */
     public function voidPayment_success()
     {
-        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
-        $response = new Response();
-        $response->setResponse(json_decode('{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'));
-        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
+        $this->mockApiResponse('{"status": "cancelled", "reference": "ABCD-1234-XXXX"}');
         $orderMock = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
         $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
@@ -192,10 +189,7 @@ class PaymentTest extends TestCase
     {
         $this->expectException(LocalizedException::class);
 
-        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
-        $response = new Response();
-        $response->setResponse(json_decode('{"status": "error", "message": "Unknown error"}'));
-        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
+        $this->mockApiResponse('{"status": "error", "message": "Unknown error"}');
         $orderMock = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
         $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
@@ -260,5 +254,12 @@ class PaymentTest extends TestCase
                           ->willReturn($this->paymentInfo);
 
         return $this->currentMock;
+    }
+
+    private function mockApiResponse($responseJSON) {
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $response = new Response();
+        $response->setResponse(json_decode($responseJSON));
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
     }
 }
