@@ -40,6 +40,7 @@ use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\Logger;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use \Magento\Sales\Model\Order;
 use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
 
 /**
@@ -66,6 +67,11 @@ class PaymentTest extends TestCase
      * @var OrderHelper
      */
     private $orderHelper;
+
+    /**
+     * @var Order\
+     */
+    private $orderMock;
 
     /**
      * @var Bugsnag
@@ -258,6 +264,52 @@ class PaymentTest extends TestCase
         $this->currentMock->refund($paymentMock, 100);
     }
 
+    /**
+     * @test
+     */
+    public function acceptPayment_success()
+    {
+        $this->mockApiResponse("merchant/transactions/review", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $paymentMock = $this->createPaymentMock();
+        $this->orderMock->expects($this->once())->method('addStatusHistoryComment');
+
+        $this->assertTrue($this->currentMock->acceptPayment($paymentMock));
+    }
+
+    /**
+     * @test
+     */
+    public function acceptPayment_throwExceptionWhenBoltRespondWithError()
+    {
+        $this->mockApiResponse("merchant/transactions/review", '{"status": "error", "message": "Unknown error"}');
+        $paymentMock = $this->createPaymentMock();
+
+        $this->assertFalse($this->currentMock->denyPayment($paymentMock));
+    }
+
+    /**
+     * @test
+     */
+    public function rejectPayment_success()
+    {
+        $this->mockApiResponse("merchant/transactions/review", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $paymentMock = $this->createPaymentMock();
+        $this->orderMock->expects($this->once())->method('addStatusHistoryComment');
+
+        $this->assertTrue($this->currentMock->denyPayment($paymentMock));
+    }
+    
+    /**
+     * @test
+     */
+    public function rejectPayment_throwExceptionWhenBoltRespondWithError()
+    {
+        $this->mockApiResponse("merchant/transactions/review", '{"status": "error", "message": "Unknown error"}');
+        $paymentMock = $this->createPaymentMock();
+
+        $this->assertFalse($this->currentMock->acceptPayment($paymentMock));
+    }
+
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
@@ -277,11 +329,12 @@ class PaymentTest extends TestCase
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
         $this->transactionRepository = $this->createMock(TransactionRepository::class);
-        $this->authSession = $this->createMock(Session::class);
+        $this->authSession = $this->getMockBuilder(Session::class)->disableOriginalConstructor()->setMethods(['getUser'])->getMock();
         $this->paymentInfo = $this->createMock(InfoInterface::class);
 
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->dataObjectFactory->method('create')->willReturn(new DataObject());
+        $this->authSession->method('getUser')->willReturn(new DataObject());
     }
 
     /**
@@ -327,10 +380,10 @@ class PaymentTest extends TestCase
     }
 
     private function createPaymentMock() {
-        $orderMock = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
+        $this->orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
         $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
         $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
-        $paymentMock->method('getOrder')->willReturn($orderMock);
+        $paymentMock->method('getOrder')->willReturn($this->orderMock);
         return $paymentMock;
     }
 }
