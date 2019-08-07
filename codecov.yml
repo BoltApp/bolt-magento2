@@ -1,3 +1,4 @@
 fixes:
   - "/home/circleci/magento/app/code/Bolt/Boltpay/::"
   - "/home/circleci/project/::"
+  - "./project/::"
