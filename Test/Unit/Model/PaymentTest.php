@@ -232,6 +232,32 @@ class PaymentTest extends TestCase
         $this->currentMock->capture($paymentMock, 100);
     }
 
+    /**
+     * @test
+     */
+    public function refundPayment_success()
+    {
+        $this->mockApiResponse("merchant/transactions/credit", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $paymentMock = $this->createPaymentMock();
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->refund($paymentMock, 100);
+    }
+
+    /**
+     * @test
+     */
+    public function refundPayment_throwExceptionWhenBoltRespondWithError()
+    {
+        $this->expectException(LocalizedException::class);
+
+        $this->mockApiResponse("merchant/transactions/credit", '{"status": "error", "message": "Unknown error"}');
+        $paymentMock = $this->createPaymentMock();
+        $this->orderHelper->expects($this->never())->method('updateOrderPayment');
+
+        $this->currentMock->refund($paymentMock, 100);
+    }
+
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
