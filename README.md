@@ -51,11 +51,6 @@ used to open the Bolt Payment Popup typically on Shopping cart and product pages
 used to open the Bolt Payment Popup typically on checkout pages
 + **Sandbox Mode**
 setting up testing vs. production execution environment
-+ **Automatic Capture Mode**
-capturing funds configuration
->> **YES** - both authorization and capture are done in a single step
->>
->> **NO** - the funds are captured in a separate request, initiated either from the store admin panel or from the Bolt merchant dashboard
 + **Replace Button Selectors**
 comma separated list of CSS selectors matching the elements to be replaced with Bolt checkout buttons, or Bolt checkout buttons placed alongside them
 >> `no suffix` - the default, inserts the Bolt button in place of the element and removes the element

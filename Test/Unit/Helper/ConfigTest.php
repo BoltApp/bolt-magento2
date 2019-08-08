@@ -358,18 +358,6 @@ class ConfigTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function testGetAutomaticCaptureMode()
-    {
-        $this->scopeConfig->method('isSetFlag')
-            ->with(BoltConfig::XML_PATH_AUTOMATIC_CAPTURE_MODE)
-            ->will($this->returnValue(false));
-
-        $this->assertFalse($this->currentMock->getAutomaticCaptureMode(), 'getAutomaticCaptureMode() method: not working properly');
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function testGetPrefetchShipping()
     {
         $this->scopeConfig->method('isSetFlag')

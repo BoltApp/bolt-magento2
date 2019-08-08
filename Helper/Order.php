@@ -52,6 +52,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use \Magento\Framework\Stdlib\DateTime\DateTime;
 
 /**
  * Class Order
@@ -184,11 +185,6 @@ class Order extends AbstractHelper
     private $orderRepository;
 
     /**
-     * @var OrderModel
-     */
-    private $orderData;
-
-    /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
@@ -224,6 +220,9 @@ class Order extends AbstractHelper
     /** @var DiscountHelper */
     private $discountHelper;
 
+    /** @var DateTime */
+    protected $date;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -242,6 +241,7 @@ class Order extends AbstractHelper
      * @param ResourceConnection $resourceConnection
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
+     * @param DateTime $date
      *
      * @codeCoverageIgnore
      */
@@ -264,7 +264,8 @@ class Order extends AbstractHelper
         CartHelper $cartHelper,
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        DateTime $date
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -285,6 +286,7 @@ class Order extends AbstractHelper
         $this->resourceConnection = $resourceConnection;
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
+        $this->date = $date;
     }
 
     /**
@@ -497,8 +499,7 @@ class Order extends AbstractHelper
     private function checkExistingOrder($incrementId)
     {
         /** @var OrderModel $order */
-        $order = $this->getOrderByIncrementId($incrementId, true);
-        if ($order) {
+        if ($order = $this->getExistingOrder($incrementId)) {
             $this->bugsnag->notifyError(
                 'Duplicate Order Creation Attempt',
                 null
@@ -519,64 +520,18 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws \Exception
      */
-    private function createOrder($immutableQuote, $transaction, $boltTraceId = null)
+    protected function createOrder($immutableQuote, $transaction, $boltTraceId = null)
     {
         // Load and prepare parent quote
         /** @var Quote $quote */
-        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
-        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
-
-        $this->cartHelper->quoteResourceSave($quote);
-
-        // Load logged in customer checkout and customer sessions from cached session id.
-        // Replace quote in checkout session.
-        $this->sessionHelper->loadSession($quote);
-
-        $this->setShippingAddress($quote, $transaction);
-        $this->setBillingAddress($quote, $transaction);
-        $this->cartHelper->quoteResourceSave($quote);
-
-        $this->setShippingMethod($quote, $transaction);
-        $this->cartHelper->quoteResourceSave($quote);
-
-        $email = @$transaction->order->cart->billing_address->email_address ?:
-            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
-        $this->addCustomerDetails($quote, $email);
-
-        // Check if Mageplaza Gift Card data exist and apply it to the parent quote
-        $this->discountHelper->applyMageplazaDiscountToQuote($quote);
-
-        $this->setPaymentMethod($quote);
-        $this->cartHelper->quoteResourceSave($quote);
-
-        // assign credit card info to the payment info instance
-        $this->setQuotePaymentInfoData(
-            $quote,
-            [
-                'cc_last_4' => @$transaction->from_credit_card->last4,
-                'cc_type' => @$transaction->from_credit_card->network
-            ]
-        );
-        $this->cartHelper->quoteResourceSave($quote);
-
-        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
-        $this->cartHelper->quoteResourceSave($quote);
-
-        $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
-            $report->setMetaData([
-                'CREATE ORDER' => [
-                    'order increment ID' => $quote->getReservedOrderId(),
-                    'parent quote ID' => $quote->getId(),
-                    'immutable quote ID' => $immutableQuote->getId()
-                ]
-            ]);
-        });
+        $quote = $this->prepareQuote($immutableQuote, $transaction);
 
         if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
             return $order;
         }
 
         try {
+            /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
         } catch (\Exception $e) {
             if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
@@ -594,37 +549,51 @@ class Order extends AbstractHelper
             ));
         }
 
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
+        if (Hook::$fromBolt) {
+            $order->addStatusHistoryComment(
+                "BOLTPAY INFO :: This order was created via Bolt Webhook<br>Bolt traceId: $boltTraceId"
+            );
+        }
 
+        $this->orderPostprocess($order, $quote, $transaction);
+
+        return $order;
+    }
+
+    /**
+     * Save additional order data and dispatch the after submit event
+     *
+     * @param OrderModel $order
+     * @param Quote $quote
+     * @param \stdClass $transaction
+     */
+    protected function orderPostprocess($order, $quote, $transaction)
+    {
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
 
         // Save reference to the Bolt transaction with the order
-        $order->addStatusHistoryComment(
-            __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
-        );
+        if (isset($transaction->reference)) {
+            $order->addStatusHistoryComment(
+                __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+            );
+        }
 
-        // Add the user_note to the order comments and make it visible for customer.
+        // Add the user_note to the order comments and make it visible for the customer.
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
 
-        if (Hook::$fromBolt) {
-            $order->addStatusHistoryComment(
-                "BOLTPAY INFO :: THIS ORDER WAS CREATED VIA WEBHOOK<br>Bolt traceId: $boltTraceId"
-            );
-        }
-
         $order->save();
 
-        return $order;
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -726,7 +695,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->getOrderByIncrementId($incrementId);
+        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -792,7 +761,7 @@ class Order extends AbstractHelper
      */
     public function processNewOrder($quote, $transaction)
     {
-        /** @var \Magento\Sales\Model\Order $order */
+        /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
 
         if ($order === null) {
@@ -815,35 +784,11 @@ class Order extends AbstractHelper
             ));
         }
 
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
-
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );
 
-        // Check and fix tax mismatch
-        if ($this->configHelper->shouldAdjustTaxMismatch()) {
-            $this->adjustTaxMismatch($transaction, $order, $quote);
-        }
-
-        if (isset($transaction->reference)) {
-            // Save reference to the Bolt transaction with the order
-            $order->addStatusHistoryComment(
-                __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
-            );
-        }
-
-        // Add the user_note to the order comments and make it visible for customer.
-        if (isset($transaction->order->user_note)) {
-            $this->setOrderUserNote($order, $transaction->order->user_note);
-        }
-
-        $order->save();
+        $this->orderPostprocess($order, $quote, $transaction);
 
         return $order;
     }
@@ -909,7 +854,22 @@ class Order extends AbstractHelper
     private function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId);
+        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+    }
+
+    /**
+     * Update quote change time and dispatch after save event
+     *
+     * @param Quote $quote
+     */
+    protected function quoteAfterChange($quote)
+    {
+        $quote->setUpdatedAt($this->date->gmtDate());
+        $this->_eventManager->dispatch(
+            'sales_quote_save_after', [
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -929,6 +889,7 @@ class Order extends AbstractHelper
         /** @var Quote $quote */
         $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
         $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+        $this->quoteAfterChange($quote);
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace quote in checkout session.
@@ -936,14 +897,20 @@ class Order extends AbstractHelper
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);
+        $this->quoteAfterChange($quote);
 
         $this->setShippingMethod($quote, $transaction);
+        $this->quoteAfterChange($quote);
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
 
+        // Check if Mageplaza Gift Card data exist and apply it to the parent quote
+        $this->discountHelper->applyMageplazaDiscountToQuote($quote);
+
         $this->setPaymentMethod($quote);
+        $this->quoteAfterChange($quote);
 
         // assign credit card info to the payment info instance
         $this->setQuotePaymentInfoData(
@@ -956,6 +923,16 @@ class Order extends AbstractHelper
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
+
+        $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
+            $report->setMetaData([
+                'CREATE ORDER' => [
+                    'order increment ID' => $quote->getReservedOrderId(),
+                    'parent quote ID' => $quote->getId(),
+                    'immutable quote ID' => $immutableQuote->getId()
+                ]
+            ]);
+        });
 
         return $quote;
     }
@@ -1728,30 +1705,8 @@ class Order extends AbstractHelper
         if (empty($incrementId)) {
             return null;
         }
-        $order = $this->getOrderByIncrementId(trim($incrementId));
+        $order = $this->cartHelper->getOrderByIncrementId(trim($incrementId));
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
-    }
-
-    /**
-     * @param string $incrementId
-     * @param bool   $forceLoad - use it if needed to load data without cache.
-     *
-     * @return OrderInterface
-     */
-    public function getOrderByIncrementId($incrementId, $forceLoad = false)
-    {
-        if (($incrementId && !isset($this->orderData[$incrementId])) || $forceLoad) {
-            $searchCriteria = $this->searchCriteriaBuilder
-                ->addFilter('increment_id', $incrementId, 'eq')
-                ->create();
-            $collection = $this->orderRepository
-                ->getList($searchCriteria)
-                ->getItems();
-
-            return reset($collection);
-        } else {
-            return $this->orderData[$incrementId];
-        }
     }
 }

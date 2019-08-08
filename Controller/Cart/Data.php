@@ -121,7 +121,6 @@ class Data extends Action
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',
-                'authcapture'   => $this->configHelper->getAutomaticCaptureMode(),
                 'cartReference' => $cartReference,
             ]);
 
