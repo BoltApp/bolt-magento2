@@ -69,7 +69,7 @@ class PaymentTest extends TestCase
     private $orderHelper;
 
     /**
-     * @var Order\
+     * @var Order
      */
     private $orderMock;
 
