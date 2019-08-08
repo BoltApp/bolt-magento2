@@ -545,7 +545,7 @@ class Payment extends AbstractMethod
      *
      * @param InfoInterface $payment
      *
-     * @return false
+     * @return bool
      */
     public function acceptPayment(InfoInterface $payment)
     {
@@ -557,7 +557,7 @@ class Payment extends AbstractMethod
      *
      * @param InfoInterface $payment
      *
-     * @return false
+     * @return bool
      */
     public function denyPayment(InfoInterface $payment)
     {
