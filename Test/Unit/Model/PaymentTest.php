@@ -42,6 +42,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use \Magento\Sales\Model\Order;
 use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
+use \Magento\Sales\Model\Order\Payment\Transaction;
 
 /**
  * Class PaymentTest
@@ -304,6 +305,20 @@ class PaymentTest extends TestCase
         $this->assertFalse($this->currentMock->acceptPayment($this->paymentMock));
     }
 
+    /**
+     * @test
+     */
+    public function fetchTransaction()
+    {
+        $magentoTxnMock = $this->createMock(Transaction::class);
+        $magentoTxnMock->method('getAdditionalInformation')->willReturn(array('Reference' => 'ABCD-XXXX-1234'));
+        $this->transactionRepository->method('getByTransactionId')->willReturn($magentoTxnMock);
+
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->fetchTransactionInfo($this->paymentMock, 'transaction-1');
+    }
+
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
@@ -322,7 +337,7 @@ class PaymentTest extends TestCase
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->transactionRepository = $this->createMock(TransactionRepository::class);
+        $this->transactionRepository = $this->getMockBuilder(TransactionRepository::class)->disableOriginalConstructor()->setMethods(['getByTransactionId'])->getMock();
         $this->authSession = $this->getMockBuilder(Session::class)->disableOriginalConstructor()->setMethods(['getUser'])->getMock();
         $this->paymentInfo = $this->createMock(InfoInterface::class);
 
@@ -331,7 +346,9 @@ class PaymentTest extends TestCase
         $this->authSession->method('getUser')->willReturn(new DataObject());
 
         $this->orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getOrder'])->getMockForAbstractClass();
+        $this->orderMock->method('getId')->willReturn('order-123');
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $this->paymentMock->method('getId')->willReturn('payment-1');
         $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
         $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
     }

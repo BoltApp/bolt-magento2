@@ -311,9 +311,8 @@ class Payment extends AbstractMethod
     }
 
     /**
-     * Fetch transaction details info
-     *
-     * Update transaction info if there is one placing transaction only
+     * Fetch transaction details info. This will fetch the latest transaction information from Bolt and update the
+     * payment status in magento if needed.
      *
      * @param InfoInterface $payment
      * @param string $transactionId
@@ -321,8 +320,7 @@ class Payment extends AbstractMethod
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
-    {
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
         try {
 
             $transaction = $this->transactionRepository->getByTransactionId(
@@ -331,16 +329,15 @@ class Payment extends AbstractMethod
                 $payment->getOrder()->getId()
             );
 
-            $transactionDetails = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
+            $transactionDetails   = $transaction->getAdditionalInformation( Transaction::RAW_DETAILS );
             $transactionReference = $transactionDetails['Reference'];
 
-            if (!empty($transactionReference)) {
+            if ( ! empty( $transactionReference ) ) {
                 $order = $payment->getOrder();
-                $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
+                $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
-
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
+        } catch ( \Exception $e ) {
+            $this->bugsnag->notifyException( $e );
         } finally {
             return [];
         }
