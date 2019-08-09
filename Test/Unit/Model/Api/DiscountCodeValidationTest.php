@@ -846,7 +846,7 @@ class DiscountCodeValidationTest extends TestCase
     {
         $this->couponFactoryMock = $this->getMockBuilder(CouponFactory::class)
             ->setMethods(['create', 'loadByCode', 'isObjectNew', 'getCouponId', 'getId', 'getRuleId', 'getUsageLimit', 'getTimesUsed'])
-            //->disableOriginalConstructor()
+            ->disableOriginalConstructor()
             ->getMock();
         $this->couponFactoryMock->method('create')
             ->willReturnSelf();

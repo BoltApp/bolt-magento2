@@ -46,6 +46,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Quote\Model\Quote\Address\Total;
 
 /**
  * Class ConfigTest
@@ -86,6 +87,7 @@ class CartTest extends TestCase
     /** @var CacheInterface */
     private $cache;
     private $resourceConnection;
+    private $quoteAddressTotal;
 
     /**
      * @inheritdoc
@@ -145,6 +147,10 @@ class CartTest extends TestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
+        $this->quoteAddressTotal = $this->getMockBuilder(Total::class)
+            ->setMethods(['getValue', 'setValue', 'getTitle'])
+            ->disableOriginalConstructor()
+            ->getMock();
     }
 
     /**
@@ -155,6 +161,9 @@ class CartTest extends TestCase
         $billingAddress = $this->getBillingAddress();
         $shippingAddress = $this->getShippingAddress();
         $quote = $this->getQuoteMock($billingAddress, $shippingAddress);
+
+        $quote->method('getTotals')
+            ->willReturn([]);
 
         $this->checkoutSession = $this->getMockBuilder(\Magento\Framework\Session\SessionManager::class)
             ->setMethods(['getQuote'])
@@ -293,7 +302,8 @@ class CartTest extends TestCase
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
             'getQuoteCurrencyCode', 'getBillingAddress', 'getReservedOrderId', 'getTotals',
-            'getStoreId', 'getUseRewardPoints', 'getUseCustomerBalance'
+            'getStoreId', 'getUseRewardPoints', 'getUseCustomerBalance', 'getRewardCurrencyAmount',
+            'getCustomerBalanceAmountUsed','getData'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -322,15 +332,15 @@ class CartTest extends TestCase
             ->willReturn('$');
         $quote->method('collectTotals')
             ->willReturnSelf();
-        $quote->method('getTotals')
-            ->willReturn([]);
+        //$quote->method('getTotals')
+        //    ->willReturn([]);
         $quote->expects($this->any())
             ->method('getStoreId')
             ->will($this->returnValue("1"));
-        $quote->method('getUseRewardPoints')
-            ->willReturn(false);
-        $quote->method('getUseCustomerBalance')
-            ->willReturn(false);
+       // $quote->method('getUseRewardPoints')
+       //     ->willReturn(false);
+        //$quote->method('getUseCustomerBalance')
+        //    ->willReturn(false);
 
         return $quote;
     }
@@ -345,7 +355,7 @@ class CartTest extends TestCase
             ->setMethods([
                 'getFirstname', 'getLastname', 'getCompany', 'getTelephone', 'getStreetLine',
                 'getCity', 'getRegion', 'getPostcode', 'getCountryId', 'getEmail',
-                'getDiscountAmount'
+                'getDiscountAmount', 'getCouponCode'
             ])
             ->disableOriginalConstructor()
             ->getMock();
@@ -373,8 +383,8 @@ class CartTest extends TestCase
             ->willReturn($addressData['country_code']);
         $billingAddress->method('getEmail')
             ->willReturn($addressData['email']);
-        $billingAddress->method('getDiscountAmount')
-            ->willReturn(0);
+//        $billingAddress->method('getDiscountAmount')
+//            ->willReturn(0);
 
         return $billingAddress;
     }
@@ -472,7 +482,8 @@ class CartTest extends TestCase
             'updateQuoteTimestamp',
             'clearExternalData',
             'convertCustomAddressFieldsToCacheIdentifier',
-            'getCustomAddressFieldsPascalCaseArray'
+            'getCustomAddressFieldsPascalCaseArray',
+            'getCalculationAddress'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
@@ -872,4 +883,876 @@ ORDER;
 
         $this->assertEquals($result, $boltOrder);
     }
+
+    /**
+     * @return BoltHelperCart
+     */
+    protected function getCurrentMock()
+    {
+        return $this->getMockBuilder(BoltHelperCart::class)
+            ->setMethods([
+                'getLastImmutableQuote',
+                'getCalculationAddress',
+            ])->setConstructorArgs([
+                $this->contextHelper,
+                $this->checkoutSession,
+                $this->productRepository,
+                $this->apiHelper,
+                $this->configHelper,
+                $this->customerSession,
+                $this->logHelper,
+                $this->bugsnag,
+                $this->dataObjectFactory,
+                $this->blockFactory,
+                $this->appEmulation,
+                $this->quoteFactory,
+                $this->totalsCollector,
+                $this->quoteCartRepository,
+                $this->orderRepository,
+                $this->searchCriteriaBuilder,
+                $this->quoteResource,
+                $this->sessionHelper,
+                $this->checkoutHelper,
+                $this->discountHelper,
+                $this->cache,
+                $this->resourceConnection
+            ])->getMock();
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_NoDiscounts()
+    {
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $this->getShippingAddress());
+
+        $quote->method('getTotals')
+            ->willReturn([]);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->once())
+            ->method('getDiscountAmount')
+            ->willReturn(0);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $totalAmount = 10000;
+        $diff = 0;
+        $paymentOnly = false;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+        $expectedTotalAmount = 10000;
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+        $expectedDiscounts = [];
+        $this->assertEquals($expectedDiscounts, $discounts);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_Coupon()
+    {
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getTotals')
+            ->willReturn([]);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn('123456');
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $appliedDiscount = 10; // $
+
+        $shippingAddress->expects($this->once())
+            ->method('getDiscountAmount')
+            ->willReturn($appliedDiscount);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = false;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_StoreCreditWithPaymentOnly()
+    {
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getTotals')
+            ->willReturn([]);
+
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())->method('getUseCustomerBalance')
+            ->willReturn(true);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $appliedDiscount = 10; // $
+
+        $quote->expects($this->once())
+            ->method('getCustomerBalanceAmountUsed')
+            ->willReturn($appliedDiscount);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_MirasvitStoreCredit()
+    {
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getTotals')
+            ->willReturn([]);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(true);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+        $appliedDiscount = 10; // $
+
+        $this->discountHelper->expects($this->once())
+            ->method('getMirasvitStoreCreditAmount')
+            ->with($quote, $paymentOnly)
+            ->willReturn($appliedDiscount);
+
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_RewardPointsWithPaymentOnly()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getTotals')
+            ->willReturn([]);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(true);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+        $appliedDiscount = 10; // $
+
+        $quote->expects($this->once())
+            ->method('getRewardCurrencyAmount')
+            ->willReturn($appliedDiscount);
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_AheadworksStoreCredit()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $appliedDiscount = 10; // $
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::AHEADWORKS_STORE_CREDIT => $this->quoteAddressTotal]);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getAheadworksStoreCredit')
+            ->with($quote->getCustomerId())
+            ->willReturn($appliedDiscount);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_Amasty_Giftcard()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $appliedDiscount = 10; // $
+        $amastyGiftCode = "12345";
+
+        $this->discountHelper->expects($this->once())
+            ->method('getAmastyPayForEverything')
+            ->willReturn(true);
+        $this->discountHelper->expects($this->once())
+            ->method('getAmastyGiftCardCodesFromTotals')
+            ->willReturn($amastyGiftCode);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getAmastyGiftCardCodesCurrentValue')
+            ->with($amastyGiftCode)
+            ->willReturn($appliedDiscount);
+
+
+        $this->quoteAddressTotal->expects($this->once())
+        ->method('getValue')
+        ->willReturn($appliedDiscount);
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_Mageplaza_GiftCard()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $appliedDiscount = 10; // $
+        $mageplazaGiftCode = "12345";
+
+        $this->discountHelper->expects($this->once())
+            ->method('getMageplazaGiftCardCodesFromSession')
+            ->willReturn($mageplazaGiftCode);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getMageplazaGiftCardCodesCurrentValue')
+            ->with($mageplazaGiftCode)
+            ->willReturn($appliedDiscount);
+
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::MAGEPLAZA_GIFTCARD => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_Unirgy_Giftcert()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $appliedDiscount = 10; // $
+        $unirgyGiftcertCode = "12345";
+
+        $quote->expects($this->any())
+            ->method("getData")
+            ->with("giftcert_code")
+            ->willReturn($unirgyGiftcertCode);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getUnirgyGiftCertBalanceByCode')
+            ->with($unirgyGiftcertCode)
+            ->willReturn($appliedDiscount);
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_GiftVoucher()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $appliedDiscount = 10; // $
+        $giftVaucher = "12345";
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn($giftVaucher);
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getTitle')
+            ->willReturn("Gift Voucher");
+
+        $shippingAddress->expects($this->once())
+            ->method('getDiscountAmount')
+            ->willReturn($appliedDiscount);
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[1]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
+    public function collectDiscounts_OtherDiscount()
+    {
+
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAheadworksStoreCredit');
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $appliedDiscount = 10; // $
+        $discountCode = "12345";
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
+
+        $this->quoteAddressTotal->expects($this->once())
+            ->method('getTitle')
+            ->willReturn("Other Discount");
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::GIFT_VOUCHER_AFTER_TAX => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
 }

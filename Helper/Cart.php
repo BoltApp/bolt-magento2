@@ -27,6 +27,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
 use Magento\Sales\Api\Data\OrderInterface;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -184,8 +185,8 @@ class Cart extends AbstractHelper
     ];
     /////////////////////////////////////////////////////////////////////////////
 
-    // Totals adjustment treshold
-    private $treshold = 0.01;
+    // Totals adjustment threshold
+    private $threshold = 0.01;
 
     /**
      * @var array
@@ -540,7 +541,7 @@ class Cart extends AbstractHelper
     public function convertCustomAddressFieldsToCacheIdentifier($quote)
     {
         $customAddressFields = $this->getCustomAddressFieldsPascalCaseArray($quote->getStoreId());
-        $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+        $address = $this->getCalculationAddress($quote);
 
         $cacheIdentifier = "";
 
@@ -1071,6 +1072,17 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Get the address for totals calculation based on the quote physical / virtual type
+     *
+     * @param Quote $quote
+     * @return QuoteAddress
+     */
+    protected function getCalculationAddress($quote)
+    {
+        return $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -1128,10 +1140,8 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
+        $this->setLastImmutableQuote($immutableQuote);
         $immutableQuote->collectTotals();
-        $totals = $immutableQuote->getTotals();
-
-        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
 
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way
@@ -1198,7 +1208,7 @@ class Cart extends AbstractHelper
             $cart['billing_address'] = $cartBillingAddress;
         }
 
-        $address = $immutableQuote->isVirtual() ? $billingAddress : $shippingAddress;
+        $address = $this->getCalculationAddress($immutableQuote);
 
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
@@ -1290,19 +1300,118 @@ class Cart extends AbstractHelper
         $diff = 0;
 
         // add discount data
-        $cart['discounts'] = [];
+        list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (
+            $totalAmount, $diff, $paymentOnly
+        );
+        $cart['discounts'] = $discounts;
+        /////////////////////////////////////////////////////////////////////////////////
+        // Add fixed amount type to all discounts if total amount is negative
+        // and set total to 0. Otherwise add calculated diff to cart total.
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($totalAmount < 0) {
+            $totalAmount = 0;
+            foreach ($cart['discounts'] as &$discount) {
+                $discount['type'] = 'fixed_amount';
+            }
+        } else {
+            // add the diff to first item total to pass bolt order create check
+            $cart['items'][0]['total_amount'] += round($diff);
+            $totalAmount += round($diff);
+        }
+        /////////////////////////////////////////////////////////////////////////////////
 
+        $cart['total_amount'] = $totalAmount;
+        $cart['tax_amount']   = $taxAmount;
+
+        if (abs($diff) >= $this->threshold) {
+            $this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
+                $report->setMetaData([
+                    'TOTALS_DIFF' => [
+                        'diff' => $diff,
+                        'cart' => $cart,
+                    ]
+                ]);
+            });
+            $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
+        }
+
+        $this->sessionHelper->cacheFormKey($immutableQuote);
+
+        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+
+        return $cart;
+    }
+
+    /**
+     * Round amount helper
+     *
+     * @param $amount
+     * @return  int
+     */
+    public function getRoundAmount($amount)
+    {
+        return (int)round($amount * 100);
+    }
+
+    /**
+     * Email validator
+     *
+     * @param string $email
+     * @return bool
+     * @throws \Zend_Validate_Exception
+     */
+    public function validateEmail($email)
+    {
+        $emailClass = version_compare(
+            $this->configHelper->getStoreVersion(),
+            '2.2.0',
+            '<'
+        ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
+
+        return \Zend_Validate::is($email, $emailClass);
+    }
+
+    /**
+     * Get website_id from the session quote store
+     *
+     * @return string|int|null
+     */
+    protected function getWebsiteId()
+    {
+        return $this->checkoutSession->getQuote()->getStore()->getWebsiteId();
+    }
+
+    /**
+     * Collect various type of discounts and add them to cart
+     *
+     * @param int $totalAmount
+     * @param float $diff
+     * @param AddressTotal[] $totals
+     * @param bool $paymentOnly
+     * @return array
+     * @throws NoSuchEntityException
+     */
+    public function collectDiscounts (
+        $totalAmount,
+        $diff,
+        $paymentOnly
+    ) {
+        $quote = $this->getLastImmutableQuote();
+        $address = $this->getCalculationAddress($quote);
+        /** @var AddressTotal[] */
+        $totals = $quote->getTotals();
+        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
+        $discounts = [];
         /////////////////////////////////////////////////////////////////////////////////
         // Process store integral discounts and coupons.
         // For some types of applied coupon, the discount amount could be zero before
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if (($amount = $address->getDiscountAmount()) || $address->getCouponCode()) {
-            $amount        = abs($amount);
+        if ( ( $amount = abs( $address->getDiscountAmount() ) ) || $address->getCouponCode() ) {
             $roundedAmount = $this->getRoundAmount($amount);
 
-            $cart['discounts'][] = [
+            $discounts[] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
                 'reference'   => $address->getCouponCode()
@@ -1316,11 +1425,11 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if ($immutableQuote->getUseCustomerBalance()) {
-            if ($paymentOnly && $amount = abs($immutableQuote->getCustomerBalanceAmountUsed())) {
+        if ($quote->getUseCustomerBalance()) {
+            if ($paymentOnly && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
                 $roundedAmount = $this->getRoundAmount($amount);
 
-                $cart['discounts'][] = [
+                $discounts[] = [
                     'description' => 'Store Credit',
                     'amount'      => $roundedAmount,
                 ];
@@ -1334,19 +1443,20 @@ class Cart extends AbstractHelper
                 $balanceModel->setCustomer(
                     $this->customerSession->getCustomer()
                 )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                    $this->getWebsiteId()
                 );
                 $balanceModel->loadByCustomer();
 
                 if ($amount = abs($balanceModel->getAmount())) {
                     $roundedAmount = $this->getRoundAmount($amount);
 
-                    $cart['discounts'][] = [
+                    $discounts[] = [
                         'description' => 'Store Credit',
                         'amount'      => $roundedAmount,
                         'type'        => 'fixed_amount',
                     ];
 
+                    $diff -= $amount * 100 - $roundedAmount;
                     $totalAmount -= $roundedAmount;
                 }
             }
@@ -1356,15 +1466,16 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Mirasvit Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if ($this->discountHelper->isMirasvitStoreCreditAllowed($immutableQuote)){
-            $amount = $this->discountHelper->getMirasvitStoreCreditAmount($immutableQuote, $paymentOnly);
+        if ($this->discountHelper->isMirasvitStoreCreditAllowed($quote)){
+            $amount = abs($this->discountHelper->getMirasvitStoreCreditAmount($quote, $paymentOnly));
             $roundedAmount = $this->getRoundAmount($amount);
-            $cart['discounts'][] = [
+            $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
                 'type'        => 'fixed_amount',
             ];
 
+            $diff -= $amount * 100 - $roundedAmount;
             $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
@@ -1373,14 +1484,15 @@ class Cart extends AbstractHelper
         // Process Aheadworks Store Credit
         /////////////////////////////////////////////////////////////////////////////////
         if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
-            $aheadStoreCredits = $this->discountHelper->getAheadworksStoreCredit($immutableQuote->getCustomerId());
-            $roundedAmount = abs($this->getRoundAmount($aheadStoreCredits));
-            $cart['discounts'][] = [
+            $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
                 'type'        => 'fixed_amount',
             ];
 
+            $diff -= $amount * 100 - $roundedAmount;
             $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
@@ -1388,11 +1500,11 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
-        if ($immutableQuote->getUseRewardPoints()) {
-            if ($paymentOnly && $amount = abs($immutableQuote->getRewardCurrencyAmount())) {
+        if ($quote->getUseRewardPoints()) {
+            if ($paymentOnly && $amount = abs($quote->getRewardCurrencyAmount())) {
                 $roundedAmount = $this->getRoundAmount($amount);
 
-                $cart['discounts'][] = [
+                $discounts[] = [
                     'description' => 'Reward Points',
                     'amount'      => $roundedAmount,
                 ];
@@ -1406,19 +1518,20 @@ class Cart extends AbstractHelper
                 $rewardModel->setCustomer(
                     $this->customerSession->getCustomer()
                 )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
+                    $this->getWebsiteId()
                 );
                 $rewardModel->loadByCustomer();
 
                 if ($amount = abs($rewardModel->getCurrencyAmount())) {
                     $roundedAmount = $this->getRoundAmount($amount);
 
-                    $cart['discounts'][] = [
+                    $discounts[] = [
                         'description' => 'Reward Points',
                         'amount'      => $roundedAmount,
                         'type'        => 'fixed_amount',
                     ];
 
+                    $diff -= $amount * 100 - $roundedAmount;
                     $totalAmount -= $roundedAmount;
                 }
             }
@@ -1457,8 +1570,8 @@ class Cart extends AbstractHelper
                 ///  The Unirgy_Giftcert add the only discount which covers only product price.
                 ///  We should get the whole balance at first of the Giftcert.
                 ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
-                    $gcCode = $immutableQuote->getData('giftcert_code');
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    $gcCode = $quote->getData('giftcert_code');
                     $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
                     if ($giftCertBalance > 0) {
                         $amount = $giftCertBalance;
@@ -1468,7 +1581,7 @@ class Cart extends AbstractHelper
                 $amount = abs($amount);
                 $roundedAmount = $this->getRoundAmount($amount);
 
-                $cart['discounts'][] = [
+                $discounts[] = [
                     'description' => $description . @$totals[$discount]->getTitle(),
                     'amount'      => $roundedAmount,
                 ];
@@ -1476,7 +1589,7 @@ class Cart extends AbstractHelper
                 if ($discount == Discount::GIFT_VOUCHER) {
                     // the amount is added to adress discount included above, $address->getDiscountAmount(),
                     // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
-                    $cart['discounts'][0]['amount'] -= $roundedAmount;
+                    $discounts[0]['amount'] -= $roundedAmount;
                 } else {
                     $diff -= $amount * 100 - $roundedAmount;
                     $totalAmount -= $roundedAmount;
@@ -1484,74 +1597,7 @@ class Cart extends AbstractHelper
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Add fixed amount type to all discounts if total amount is negative
-        // and set total to 0. Otherwise add calculated diff to cart total.
-        /////////////////////////////////////////////////////////////////////////////////
-        if ($totalAmount < 0) {
-            $totalAmount = 0;
-            foreach ($cart['discounts'] as &$discount) {
-                $discount['type'] = 'fixed_amount';
-            }
-        } else {
-            // add the diff to first item total to pass bolt order create check
-            $cart['items'][0]['total_amount'] += round($diff);
-            $totalAmount += round($diff);
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        $cart['total_amount'] = $totalAmount;
-        $cart['tax_amount']   = $taxAmount;
-
-        if (abs($diff) >= $this->treshold) {
-            $this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
-                $report->setMetaData([
-                    'TOTALS_DIFF' => [
-                        'diff' => $diff,
-                        'cart' => $cart,
-                    ]
-                ]);
-            });
-            $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
-        }
-
-        $this->sessionHelper->cacheFormKey($immutableQuote);
-
-        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
-
-        $this->setLastImmutableQuote($immutableQuote);
-
-        return $cart;
-    }
-
-    /**
-     * Round amount helper
-     *
-     * @param $amount
-     * @return  int
-     */
-    public function getRoundAmount($amount)
-    {
-        return round($amount * 100);
-    }
-
-    /**
-     * Email validator
-     *
-     * @param string $email
-     * @return bool
-     * @throws \Zend_Validate_Exception
-     */
-    public function validateEmail($email)
-    {
-        $emailClass = version_compare(
-            $this->configHelper->getStoreVersion(),
-            '2.2.0',
-            '<'
-        ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
-
-        return \Zend_Validate::is($email, $emailClass);
+        return [$discounts, $totalAmount, $diff];
     }
 
     /**
