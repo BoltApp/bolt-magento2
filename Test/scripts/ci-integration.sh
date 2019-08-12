@@ -62,10 +62,9 @@ mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 
-git clone git@github.com:BoltApp/integration-tests.git
+git clone -b m2-testing git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
-sleep 10
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2discount.spec.ts
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2LoggedInQuickCheckout.spec.ts
