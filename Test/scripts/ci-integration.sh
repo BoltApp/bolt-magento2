@@ -27,8 +27,7 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 wget -O ngrok.zip https://bolt-devops.s3-us-west-2.amazonaws.com/testing/ngrok.zip
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
-./ngrok http 80 -hostname=m2-test.integrations.dev.bolt.me &
-NGROK_URL="https://m2-test.integrations.dev.bolt.me/"
+./ngrok http 80 -hostname=$NGROK_HOSTNAME &
 
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "${NGROK_URL}"
