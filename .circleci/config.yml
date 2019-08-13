@@ -28,7 +28,7 @@ jobs:
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
-          path: ./artifacts\
+          path: ./artifacts
 
   unit-php72-magento23:
     docker:
