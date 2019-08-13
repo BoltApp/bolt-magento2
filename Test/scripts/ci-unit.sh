@@ -10,7 +10,7 @@ Test/scripts/install_magento.sh
 
 cd ..
 mkdir -p magento/app/code/Bolt/Boltpay
-mv project/* magento/app/code/Bolt/Boltpay/
+cp project/* magento/app/code/Bolt/Boltpay/
 cp magento/app/code/Bolt/Boltpay/Test/Unit/phpunit.xml magento/dev/tests/unit/bolt_phpunit.xml
 echo "Starting Bolt Unit Tests"
 php magento/vendor/phpunit/phpunit/phpunit --verbose -c magento/dev/tests/unit/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml

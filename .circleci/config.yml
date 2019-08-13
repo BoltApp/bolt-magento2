@@ -4,7 +4,7 @@ jobs:
     unit-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth: 
+        auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
@@ -28,11 +28,12 @@ jobs:
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
-          path: ./artifacts
+          path: ./artifacts\
+
   unit-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth: 
+        auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
@@ -55,10 +56,11 @@ jobs:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
+
   unit-php71-magento22:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php71:2.2.0-v1
-        auth: 
+        auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
@@ -81,10 +83,11 @@ jobs:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
+
   unit-php70-magento22:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
-        auth: 
+        auth:
             username: $DOCKERHUB_USER
             password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
