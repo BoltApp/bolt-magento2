@@ -41,6 +41,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\SalesRule\Model\RuleFactory;
 
 /**
  * Class ShippingMethods
@@ -147,6 +148,11 @@ class ShippingMethods implements ShippingMethodsInterface
     private $taxAdjusted = false;
 
     /**
+     * @var RuleFactory
+     */
+    private $ruleFactory;
+
+    /**
      * Assigns local references to global resources
      *
      * @param HookHelper                      $hookHelper
@@ -167,6 +173,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param PriceHelper                     $priceHelper
      * @param SessionHelper                   $sessionHelper
      * @param DiscountHelper                  $discountHelper
+     * @param RuleFactory                     $ruleFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -186,7 +193,8 @@ class ShippingMethods implements ShippingMethodsInterface
         CacheInterface $cache,
         PriceHelper $priceHelper,
         SessionHelper $sessionHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        RuleFactory $ruleFactory
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -206,6 +214,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->priceHelper = $priceHelper;
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
+        $this->ruleFactory = $ruleFactory;
     }
 
     /**
@@ -634,12 +643,14 @@ class ShippingMethods implements ShippingMethodsInterface
                 $quote->setCouponCode($appliedQuoteCouponCode)->collectTotals()->save();
             }
 
-            // In order to get correct shipping discounts the following method must be called twice.
-            // Being a bug in Magento, or a bug in the tested store version, shipping discounts
-            // are not collected the first time the method is called.
-            // There was one loop step delay in applying discount to shipping options when method was called once.
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-            $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+            if($this->doesDiscountApplyToShipping($quote)){
+                // In order to get correct shipping discounts the following method must be called twice.
+                // Being a bug in Magento, or a bug in the tested store version, shipping discounts
+                // are not collected the first time the method is called.
+                // There was one loop step delay in applying discount to shipping options when method was called once.
+                $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+            }
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
@@ -741,6 +752,28 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         return $shippingMethods;
+    }
+
+    /**
+     * @param $quote
+     * @return bool
+     */
+    protected function doesDiscountApplyToShipping($quote){
+        $appliedRuleIds = $quote->getAppliedRuleIds();
+        if ($appliedRuleIds) {
+            foreach (explode(',', $appliedRuleIds) as $appliedRuleId) {
+                try{
+                    $rule = $this->ruleFactory->create()->load($appliedRuleId);
+                    if ($rule->getApplyToShipping()) {
+                        return true;
+                    }
+                }catch (\Throwable $exception){
+                    $this->bugsnag->notifyException($exception);
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
