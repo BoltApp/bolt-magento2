@@ -19,8 +19,9 @@
 set -e
 set -u
 set -x
-
+cd launch
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
+source config.sh
 
 cd ../magento
 composer install
@@ -36,7 +37,7 @@ php bin/magento setup:install -q \
     --currency="USD" \
     --db-host=db \
     --db-user=root \
-    --base-url="http://magento2.test/" \
+    --base-url=$ngrokUrlHTTP \
     --admin-firstname="Dev" \
     --admin-lastname="Bolt" \
     --backend-frontname="backend" \
@@ -49,7 +50,7 @@ php bin/magento setup:install -q \
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
 
-if [ "${MAGENTO_VERSION}" == "2.3.0" ]; then 
+if [ "${magentoVersion}" == "2.3.0" ]; then 
     php bin/magento module:disable MSP_ReCaptcha --clear-static-content
 fi
 
@@ -60,8 +61,11 @@ echo "Create admin user"
 php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
 
 cp /home/circleci/.composer/auth.json /home/circleci/magento/auth.json
-echo "Installing sample data"
-php -dmemory_limit=5G bin/magento sampledata:deploy
+
+if [ "$installSampleData" = true ] ; then
+    echo "Installing sample data"
+    php -dmemory_limit=5G bin/magento sampledata:deploy
+fi
 
 php -dmemory_limit=5G bin/magento module:enable Magento_CustomerSampleData Magento_MsrpSampleData Magento_CatalogSampleData Magento_DownloadableSampleData Magento_OfflineShippingSampleData Magento_BundleSampleData Magento_ConfigurableSampleData Magento_ThemeSampleData Magento_ProductLinksSampleData Magento_ReviewSampleData Magento_CatalogRuleSampleData Magento_SwatchesSampleData Magento_GroupedProductSampleData Magento_TaxSampleData Magento_CmsSampleData Magento_SalesRuleSampleData Magento_SalesSampleData Magento_WidgetSampleData Magento_WishlistSampleData
 
