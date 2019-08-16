@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\Js as BlockJs;
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 
@@ -55,6 +56,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     private $cartHelperMock;
 
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnagHelperMock;
+
     private $magentoQuote;
 
     /**
@@ -79,7 +85,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString'
+            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -96,6 +102,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
+        $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
 
         $this->block = $this->getMockBuilder(BlockJs::class)
             ->setMethods(['configHelper', 'getUrl'])
@@ -105,6 +112,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
+                    $this->bugsnagHelperMock
                 ]
             )
             ->getMock();
@@ -224,7 +232,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(15, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -271,7 +279,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
     }
-
 
     public function setBoltInitiateCheckout($value = true)
     {

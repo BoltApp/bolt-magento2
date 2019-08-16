@@ -25,12 +25,11 @@
 if ($block->shouldDisableBoltCheckout()) return;
 
 $trackCallbacks = $block->getTrackCallbacks();
-?>
 
+ob_start();
+?>
 <script type="text/javascript">
 
-    // If we have multi-website, we need current quote store_id
-    magentoStoreId = parseInt(<?php echo $block->getMagentoStoreId(); ?>);
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -202,7 +201,8 @@ $trackCallbacks = $block->getTrackCallbacks();
         'Magento_Customer/js/model/authentication-popup',
         'Magento_Customer/js/customer-data',
         'mage/validation/validation',
-        'mage/cookies'
+        'mage/cookies',
+        'domReady!'
     ], function ($, authenticationPopup, customerData) {
         ////////////////////////////////////////////////////
 
@@ -553,10 +553,41 @@ $trackCallbacks = $block->getTrackCallbacks();
             },
 
             success: function (transaction, callback) {
+                /**
+                 * Success transaction handler.
+                 * Sets the success url for the non-preauth flow.
+                 * Calls additional javascript if defined in configuration.
+                 * Triggers on success track event handler.
+                 * Finally, calls the callback function
+                 * that finishes the checkout modal operation.
+                 *
+                 * param object data    response from the non-preauth order/save controller, optional
+                 * return void
+                 */
+                var processSuccess = function (data) {
+                    try {
+                        if (typeof data !== 'undefined') {
+                            callbacks.success_url = data.success_url;
+                        }
+                        <?php echo $block->getJavascriptSuccess(); ?>
+                        trackCallbacks.onSuccess();
+                    } finally {
+                        callback();
+                    }
+                };
+
+                if (settings.is_pre_auth) {
+                    processSuccess();
+                    return;
+                }
+
                 // abort previously sent save order request.
                 if (save_request) save_request.abort();
                 // get thr transaction reference
-                var parameters = 'reference='+transaction.reference;
+                var parameters = [];
+                parameters.push('form_key=' + $('[name="form_key"]').val());
+                parameters.push('reference=' + transaction.reference);
+                parameters = parameters.join('&');
                 // update order ajax request callback
                 // sets the success order page redirect url from received data
                 // and calls the final Bolt defined callback
@@ -568,17 +599,9 @@ $trackCallbacks = $block->getTrackCallbacks();
                             // we need to call this; otherwise bolt modal show infinte spinner.
                             callback();
                         }
-
-                        return false;
+                        return;
                     }
-                    try {
-                        <?php echo $block->getJavascriptSuccess(); ?>
-                        callbacks.success_url = data.success_url;
-
-                        trackCallbacks.onSuccess();
-                    } finally {
-                        callback();
-                    }
+                    processSuccess(data);
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
@@ -643,6 +666,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                 }
             }
         };
+
         ////////////////////////////////////
 
         /////////////////////////////////////////////////////
@@ -654,7 +678,10 @@ $trackCallbacks = $block->getTrackCallbacks();
 
             if (!settings.prefetch_shipping || !cart.cartReference) return;
 
-            var params = 'cartReference='+cart.cartReference;
+            var params = [];
+
+            params.push('form_key=' + $('[name="form_key"]').val());
+            params.push('cartReference=' + cart.cartReference);
 
             // parse Estimate Shipping and Tax location fields
             var country  = $('select[name=country_id]').val(),
@@ -662,8 +689,11 @@ $trackCallbacks = $block->getTrackCallbacks();
                 postcode = $('input[name=postcode]').val();
 
             if (country && region && postcode) {
-                params += '&country='+country+'&region='+region+'&postcode='+postcode;
+                params.push('country=' + country);
+                params.push('region=' + region);
+                params.push('postcode=' + postcode);
             }
+            params = params.join('&');
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
@@ -684,7 +714,7 @@ $trackCallbacks = $block->getTrackCallbacks();
             // define the params sent with the request variable
             var params = [];
 
-            params.push('store_id=' + magentoStoreId);
+            params.push('form_key=' + $('[name="form_key"]').val());
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
@@ -729,7 +759,6 @@ $trackCallbacks = $block->getTrackCallbacks();
                 }
             }
             params = params.join('&');
-            if (params === '') params = null;
 
             var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
 
@@ -773,7 +802,6 @@ $trackCallbacks = $block->getTrackCallbacks();
 
                         hints = deepMergeObjects(hints, data.hints);
                         hints.prefill = prefill;
-                        hints.publishableKey = getCheckoutKey();
                         //////////////////////////
 
                         // Ensure bolt checkout is configured with the hints updated from the response
@@ -1103,3 +1131,10 @@ $trackCallbacks = $block->getTrackCallbacks();
 
     <?php echo $block->getAdditionalJavascript(); ?>
 </script>
+<?php
+$js = ob_get_clean();
+
+echo $block->minifyJs($js);
+
+?>
+

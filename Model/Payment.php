@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -31,10 +32,12 @@ use Magento\Framework\Model\Context;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Framework\App\Area as AppArea;
 use Magento\Payment\Helper\Data;
 use Magento\Payment\Model\InfoInterface;
 use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
+use Magento\Sales\Model\Order as ModelOrder;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -52,6 +55,9 @@ class Payment extends AbstractMethod
     const TRANSACTION_COMPLETED = 'completed';
 
     const METHOD_CODE = 'boltpay';
+
+    const DECISION_APPROVE = 'approve';
+    const DECISION_REJECT = 'reject';
 
     /**
      * Payment code
@@ -155,24 +161,40 @@ class Payment extends AbstractMethod
     protected $transactionRepository;
 
     /**
-     * @param Context $context
-     * @param Registry $registry
+     * @var string
+     */
+    protected $areaCode;
+    /**
+     * @var ModelOrder
+     */
+    protected $registryCurrentOrder;
+
+    /**
+     * @var AuthSession
+     */
+    protected $authSession;
+
+    /**
+     * @param Context                    $context
+     * @param Registry                   $registry
      * @param ExtensionAttributesFactory $extensionFactory
-     * @param AttributeValueFactory $customAttributeFactory
-     * @param Data $paymentData
-     * @param ScopeConfigInterface $scopeConfig
-     * @param Logger $logger
-     * @param TimezoneInterface $localeDate
-     * @param ConfigHelper $configHelper
-     * @param ApiHelper $apiHelper
-     * @param OrderHelper $orderHelper
-     * @param Bugsnag $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
-     * @param CartHelper $cartHelper
-     * @param TransactionRepository $transactionRepository
-     * @param AbstractResource $resource
-     * @param AbstractDb $resourceCollection
-     * @param array $data
+     * @param AttributeValueFactory      $customAttributeFactory
+     * @param Data                       $paymentData
+     * @param ScopeConfigInterface       $scopeConfig
+     * @param Logger                     $logger
+     * @param TimezoneInterface          $localeDate
+     * @param ConfigHelper               $configHelper
+     * @param ApiHelper                  $apiHelper
+     * @param OrderHelper                $orderHelper
+     * @param Bugsnag                    $bugsnag
+     * @param DataObjectFactory          $dataObjectFactory
+     * @param CartHelper                 $cartHelper
+     * @param TransactionRepository      $transactionRepository
+     * @param AuthSession                $authSession
+     * @param AbstractResource           $resource
+     * @param AbstractDb                 $resourceCollection
+     * @param array                      $data
+     * @throws LocalizedException
      */
     public function __construct(
         Context $context,
@@ -190,6 +212,7 @@ class Payment extends AbstractMethod
         DataObjectFactory $dataObjectFactory,
         CartHelper $cartHelper,
         TransactionRepository $transactionRepository,
+        AuthSession $authSession,
         AbstractResource $resource = null,
         AbstractDb $resourceCollection = null,
         array $data = []
@@ -214,6 +237,9 @@ class Payment extends AbstractMethod
         $this->dataObjectFactory = $dataObjectFactory;
         $this->cartHelper = $cartHelper;
         $this->transactionRepository = $transactionRepository;
+        $this->areaCode = $context->getAppState()->getAreaCode();
+        $this->registryCurrentOrder = $registry->registry('current_order');
+        $this->authSession = $authSession;
     }
 
     /**
@@ -250,7 +276,8 @@ class Payment extends AbstractMethod
 
             //Get transaction data
             $transactionData = ['transaction_id' => $transactionId];
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $payment->getOrder()->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -284,9 +311,8 @@ class Payment extends AbstractMethod
     }
 
     /**
-     * Fetch transaction details info
-     *
-     * Update transaction info if there is one placing transaction only
+     * Fetch transaction details info. This will fetch the latest transaction information from Bolt and update the
+     * payment status in magento if needed.
      *
      * @param InfoInterface $payment
      * @param string $transactionId
@@ -294,8 +320,7 @@ class Payment extends AbstractMethod
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
-    {
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
         try {
 
             $transaction = $this->transactionRepository->getByTransactionId(
@@ -304,16 +329,15 @@ class Payment extends AbstractMethod
                 $payment->getOrder()->getId()
             );
 
-            $transactionDetails = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
+            $transactionDetails   = $transaction->getAdditionalInformation( Transaction::RAW_DETAILS );
             $transactionReference = $transactionDetails['Reference'];
 
-            if (!empty($transactionReference)) {
+            if ( ! empty( $transactionReference ) ) {
                 $order = $payment->getOrder();
-                $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
+                $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
-
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
+        } catch ( \Exception $e ) {
+            $this->bugsnag->notifyException( $e );
         } finally {
             return [];
         }
@@ -354,7 +378,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -421,7 +446,8 @@ class Payment extends AbstractMethod
                 'currency'       => $order->getOrderCurrencyCode()
             ];
 
-            $apiKey = $this->configHelper->getApiKey();
+            $storeId = $order->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
 
             //Request Data
             $requestData = $this->dataObjectFactory->create();
@@ -467,6 +493,7 @@ class Payment extends AbstractMethod
      * Check whether payment method can be used
      *
      * @param \Magento\Quote\Api\Data\CartInterface|null $quote
+     *
      * @return bool
      */
     public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
@@ -476,5 +503,129 @@ class Payment extends AbstractMethod
             return false;
         }
         return parent::isAvailable();
+    }
+
+    public function getTitle()
+    {
+        if ($this->areaCode === AppArea::AREA_ADMINHTML) {
+            if ($this->getData('store')) {
+                $storeId = $this->getData('store');
+            } elseif ($this->registryCurrentOrder && $this->registryCurrentOrder->getStoreId()) {
+                $storeId = $this->registryCurrentOrder->getStoreId();
+            } else {
+                $storeId = null;
+            }
+            $path = 'payment/' . $this->getCode() . '/title';
+            $configTitle = $this->_scopeConfig->getValue(
+                $path,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            return $configTitle;
+        } else {
+            return parent::getTitle();
+        }
+    }
+
+    /**
+     * Whether this method can accept or deny payment
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function canReviewPayment()
+    {
+        return $this->getInfoInstance()->getAdditionalInformation('transaction_state') == OrderHelper::TS_REJECTED_REVERSIBLE;
+    }
+
+    /**
+     * Attempt to approve the order
+     *
+     * @param InfoInterface $payment
+     *
+     * @return bool
+     */
+    public function acceptPayment(InfoInterface $payment)
+    {
+        return $this->review($payment, self::DECISION_APPROVE);
+    }
+
+    /**
+     * Attempt to deny the order
+     *
+     * @param InfoInterface $payment
+     *
+     * @return bool
+     */
+    public function denyPayment(InfoInterface $payment)
+    {
+        return $this->review($payment, self::DECISION_REJECT);
+    }
+
+    /**
+     * Function to process the review (approve/reject), sends data to Bolt API
+     * And update order history
+     *
+     * @param InfoInterface $payment
+     * @param               $review
+     *
+     * @return bool
+     */
+    protected function review(InfoInterface $payment, $review)
+    {
+        try {
+            $transId = $payment->getAdditionalInformation('real_transaction_id');
+
+            if (empty($transId)) {
+                throw new LocalizedException(__('Please wait while transaction gets updated from Bolt.'));
+            }
+
+            $transactionData = [
+                'transaction_id' => $transId,
+                'decision'       => $review,
+            ];
+
+            $storeId = $payment->getOrder()->getStoreId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
+
+            //Request Data
+            $requestData = $this->dataObjectFactory->create();
+            $requestData->setApiData($transactionData);
+            $requestData->setDynamicApiUrl(ApiHelper::API_REVIEW_TRANSACTION);
+            $requestData->setApiKey($apiKey);
+
+            //Build Request
+            $request = $this->apiHelper->buildRequest($requestData);
+            $result = $this->apiHelper->sendRequest($request);
+            $response = $result->getResponse();
+
+            if (strlen($response->reference) == 0) {
+                throw new LocalizedException(__('Bad review response. Empty transaction reference'));
+            }
+
+            $this->updateReviewedOrderHistory($payment, $review);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param InfoInterface $payment
+     * @param               $review
+     */
+    protected function updateReviewedOrderHistory(InfoInterface $payment, $review)
+    {
+        $statusMessage = ($review == self::DECISION_APPROVE) ?
+            'Force approve order by %1 %2.' : 'Confirm order rejection by %1 %2.';
+
+        $adminUser = $this->authSession->getUser();
+        $message = __($statusMessage, $adminUser->getFirstname(), $adminUser->getLastname());
+
+        $order = $payment->getOrder();
+        $order->addStatusHistoryComment($message);
+        $order->save();
     }
 }

@@ -8,8 +8,8 @@
 namespace Bolt\Boltpay\Controller\Adminhtml\Order;
 
 use Exception;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObjectFactory;
@@ -95,17 +95,15 @@ class Save extends Action
         try {
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
+            $storeId = $this->getRequest()->getParam('store_id');
             // call order save and update
-            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
+            list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, $storeId);
 
             $orderId = $order->getId();
-            // clear the session data
-            if ($orderId) {
-                //Clear quote session
-                $this->clearQuoteSession($quote);
-                //Clear order session
-                $this->clearOrderSession($order);
-            }
+            // clear quote session
+            $this->clearQuoteSession($quote);
+            // clear order session
+            $this->clearOrderSession($order);
             // return the success page redirect URL
             $result = $this->resultJsonFactory->create();
 
@@ -117,6 +115,7 @@ class Save extends Action
             $result = $this->resultJsonFactory->create();
             $result->setHttpResponseCode(422);
             $result->setData(['status' => 'error', 'code' => '1000','message' => $e->getMessage()]);
+
             return $result;
         }
     }

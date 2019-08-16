@@ -67,6 +67,11 @@ class Api extends AbstractHelper
     const API_VOID_TRANSACTION = 'merchant/transactions/void';
 
     /**
+     * Api review transaction
+     */
+    const API_REVIEW_TRANSACTION = 'merchant/transactions/review';
+
+    /**
      * Api capture transaction
      */
     const API_CAPTURE_TRANSACTION = 'merchant/transactions/capture';
@@ -280,6 +285,7 @@ class Api extends AbstractHelper
         }
 
         if ($responseBody) {
+            // TODO: implement array instead of StdCalss.
             $resultFromJSON = json_decode($responseBody);
             $jsonError  = $this->handleJsonParseError();
             if ($jsonError != null) {

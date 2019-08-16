@@ -24,7 +24,6 @@ use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Model\Store;
-use Magento\Framework\App\Request\Http as Request;
 
 /**
  * Boltpay Configuration helper
@@ -97,9 +96,9 @@ class Config extends AbstractHelper
     const XML_PATH_JAVASCRIPT_SUCCESS = 'payment/boltpay/javascript_success';
 
     /**
-     * Automatic capture mode
+     * Is pre-auth configuration path
      */
-    const XML_PATH_AUTOMATIC_CAPTURE_MODE = 'payment/boltpay/automatic_capture_mode';
+    const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
 
     /**
      * Prefetch shipping
@@ -231,6 +230,21 @@ class Config extends AbstractHelper
     const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
 
     /**
+     * Bolt Order Caching configuration path
+     */
+    const XML_PATH_BOLT_ORDER_CACHING = 'payment/boltpay/bolt_order_caching';
+
+    /**
+     * Emulate Customer Session in API Calls configuration path
+     */
+    const XML_PATH_API_EMULATE_SESSION = 'payment/boltpay/api_emulate_session';
+
+    /**
+     * Minify JavaScript configuration path
+     */
+    const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -255,17 +269,10 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
-     * @var Request
-     */
-    private $request;
-    private $contextHelper;
-
-    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
-     * @param Request                  $request
      *
      * @codeCoverageIgnore
      */
@@ -273,26 +280,25 @@ class Config extends AbstractHelper
         Context $context,
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
-        ProductMetadataInterface $productMetadata,
-        Request $request
+        ProductMetadataInterface $productMetadata
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
         $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
-        $this->request = $request;
-        $this->contextHelper = $context;
     }
 
     /**
      * Get Bolt API base URL
      *
+     * @param null|string $storeId
+     *
      * @return  string
      */
-    public function getApiUrl()
+    public function getApiUrl($storeId = null)
     {
         //Check for sandbox mode
-        if ($this->isSandboxModeSet()) {
+        if ($this->isSandboxModeSet($storeId)) {
             return self::API_URL_SANDBOX;
         } else {
             return self::API_URL_PRODUCTION;
@@ -302,12 +308,14 @@ class Config extends AbstractHelper
     /**
      * Get Bolt Merchant Dashboard URL
      *
+     * @param null|string $storeId
+     *
      * @return  string
      */
-    public function getMerchantDashboardUrl()
+    public function getMerchantDashboardUrl($storeId = null)
     {
         //Check for sandbox mode
-        if ($this->isSandboxModeSet()) {
+        if ($this->isSandboxModeSet($storeId)) {
             return self::MERCHANT_DASH_SANDBOX;
         } else {
             return self::MERCHANT_DASH_PRODUCTION;
@@ -557,22 +565,6 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get Automatic Capture mode from config
-     *
-     * @param int|string|Store $store
-     *
-     * @return  boolean
-     */
-    public function getAutomaticCaptureMode($store = null)
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_AUTOMATIC_CAPTURE_MODE,
-            ScopeInterface::SCOPE_STORE,
-            $store
-        );
-    }
-
-    /**
      * Get Prefetch Shipping and Tax config
      *
      * @param int|string|Store $store
@@ -705,13 +697,16 @@ class Config extends AbstractHelper
     }
 
     /**
+     * @param int|string $storeId
+     *
      * @return string
      */
-    public function getOnEmailEnter()
+    public function getOnEmailEnter($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TRACK_EMAIL_ENTER,
-            ScopeInterface::SCOPE_STORE
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 
@@ -825,7 +820,22 @@ class Config extends AbstractHelper
     {
         $config = $this->getAdditionalConfigObject($storeId);
         return @$config->$name;
-//        return ($config && property_exists($config, $name)) ? $config->$name: '';
+    }
+
+    /**
+     * Get Is Pre-Auth flag from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getIsPreAuth($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_IS_PRE_AUTH,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
     }
 
     /**
@@ -1014,7 +1024,7 @@ class Config extends AbstractHelper
     {
         foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
                      'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
-            if ($ips = $this->request->getServer($key, false)) {
+            if ($ips = $this->_request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
                     if (filter_var(
@@ -1079,10 +1089,58 @@ class Config extends AbstractHelper
      *   "ignoredShippingAddressCoupons": ["coupon_code", "coupon_code_1", "coupon_code_2"]
      * }
      *
-     * return array
+     * @param int|string $storeId
+     * @return array
      */
-    public function getIgnoredShippingAddressCoupons()
+    public function getIgnoredShippingAddressCoupons($storeId)
     {
-        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons');
+        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+    }
+
+    /**
+     * Get Bolt Order Caching flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function isBoltOrderCachingEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_BOLT_ORDER_CACHING,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+    /**
+     * Get Emulate Customer Session in API Calls flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function isSessionEmulationEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_API_EMULATE_SESSION,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get minimize javascript flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function shouldMinifyJavascript($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
     }
 }

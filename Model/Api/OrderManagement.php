@@ -119,12 +119,12 @@ class OrderManagement implements OrderManagementInterface
     public function manage(
         $id = null,
         $reference,
-        $order = null,
+        $order = null, // <parent quote ID>
         $type = null,
         $amount = null,
         $currency = null,
         $status = null,
-        $display_id = null,
+        $display_id = null, // <order increment ID / immutable quote ID>
         $source_transaction_id = null,
         $source_transaction_reference = null
     ) {
@@ -133,25 +133,42 @@ class OrderManagement implements OrderManagementInterface
 
             $this->logHelper->addInfoLog($this->request->getContent());
 
-            $this->hookHelper->setCommonMetaData();
-            $this->hookHelper->setHeaders();
+            // get the store id. try fetching from quote first,
+            // otherwise load it from order if there's one created
+            $storeId = $this->orderHelper->getStoreIdByQuoteId($order)
+                    ?: $this->orderHelper->getOrderStoreIdByDisplayId($display_id);
 
-            $this->hookHelper->verifyWebhook();
+            $this->logHelper->addInfoLog('StoreId: ' . $storeId);
+
+            $this->hookHelper->preProcessWebhook($storeId);
 
             if (empty($reference)) {
                 throw new LocalizedException(
                     __('Missing required parameters.')
                 );
             }
-            $this->orderHelper->saveUpdateOrder(
-                $reference,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER)
-            );
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order creation / upadte was successful',
-            ]));
+            if ($type === 'failed_payment') {
+                $this->orderHelper->deleteOrderByIncrementId($display_id);
+
+                $this->response->setHttpResponseCode(200);
+                $this->response->setBody(json_encode([
+                    'status' => 'success',
+                    'message' => 'Order was deleted: ' . $display_id,
+                ]));
+            } else {
+                $this->orderHelper->saveUpdateOrder(
+                    $reference,
+                    $storeId,
+                    $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+                    $type
+                );
+
+                $this->response->setHttpResponseCode(200);
+                $this->response->setBody(json_encode([
+                    'status' => 'success',
+                    'message' => 'Order creation / update was successful',
+                ]));
+            }
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->response->setHttpResponseCode($e->getHttpCode());

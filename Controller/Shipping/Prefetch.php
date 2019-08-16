@@ -112,7 +112,7 @@ class Prefetch extends Action
             /** @var Quote */
             $quote = $this->cartHelper->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$quote) {
                 return;
             }
 
@@ -137,7 +137,7 @@ class Prefetch extends Action
             ///////////////////////////////////////////////////////////////////////////
             // Prefetch Shipping and Tax for geolocated address
             ///////////////////////////////////////////////////////////////////////////
-            if ($locationJson = $this->geolocation->getLocation()) {
+            if ($locationJson = $this->geolocation->getLocation($quote->getStoreId())) {
                 $location = json_decode($locationJson);
 
                 // at least country code and zip are needed for shipping estimation
@@ -159,14 +159,16 @@ class Prefetch extends Action
             $prefetchForStoredAddress = function ($shippingAddress) use ($quote) {
 
                 if ($shippingAddress &&
-                    ($country_code = $shippingAddress->getData('country_id')) &&
-                    ($postal_code  = $shippingAddress->getData('postcode'))
+                    ($country_code = $shippingAddress->getCountryId()) &&
+                    ($postal_code  = $shippingAddress->getPostcode())
                 ) {
                     $shipping_address = [
                         'country_code' => $country_code,
                         'postal_code'  => $postal_code,
-                        'region'       => $shippingAddress->getData('region') ?: '',
-                        'locality'     => $shippingAddress->getData('city') ?: '',
+                        'region'       => $shippingAddress->getRegion(),
+                        'locality'     => $shippingAddress->getCity(),
+                        'street_address1' => $shippingAddress->getStreetLine(1),
+                        'street_address2' => $shippingAddress->getStreetLine(2),
                     ];
 
                     $this->shippingMethods->shippingEstimation($quote, $shipping_address);

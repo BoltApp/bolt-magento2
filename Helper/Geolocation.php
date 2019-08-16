@@ -83,11 +83,13 @@ class Geolocation extends AbstractHelper
     }
 
     /**
+     * @param null $storeId
+     *
      * @return string
      */
-    private function getApiKey()
+    private function getApiKey($storeId = null)
     {
-        return $this->configHelper->getGeolocationApiKey();
+        return $this->configHelper->getGeolocationApiKey($storeId);
     }
 
     /**
@@ -120,13 +122,15 @@ class Geolocation extends AbstractHelper
     /**
      * Fetch / cache Geolocation data.
      *
+     * @param null $storeId
+     *
      * @return null|string      JSON formated response
      * @throws \Zend_Http_Client_Exception
      */
-    public function getLocation()
+    public function getLocation($storeId = null)
     {
 
-        if (! $apiKey = $this->getApiKey()) {
+        if (! $apiKey = $this->getApiKey($storeId)) {
             return null;
         }
 

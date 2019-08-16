@@ -17,8 +17,8 @@ namespace Bolt\Boltpay\Controller\Adminhtml\Cart;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObjectFactory;
@@ -96,14 +96,20 @@ class Data extends Action
     {
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
+
+            if ($boltpayOrder) {
+                $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+            }
+
+            $storeId = $this->cartHelper->getSessionQuoteStoreId();
+            $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
 
             // format and send the response
             $cart = [
-                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-                'authcapture' => true
+                'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
             ];
 
             $hints = $this->cartHelper->getHints();
@@ -111,6 +117,9 @@ class Data extends Action
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
             $result->setData('hints', $hints);
+            $result->setData('publishableKey', $publishableKey);
+            $result->setData('storeId', $storeId);
+            $result->setData('isPreAuth', $isPreAuth);
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {

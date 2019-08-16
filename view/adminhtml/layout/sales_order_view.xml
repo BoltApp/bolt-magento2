@@ -12,16 +12,16 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-        <referenceBlock name="data">
-            <container name="additional_area">
-                <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml" />
-            </container>
-        </referenceBlock>
+        <referenceContainer name="before.body.end">
+            <block class="Bolt\Boltpay\Block\Js"
+                   name="bolt.transaction.target"
+                   template="Bolt_Boltpay::boltpay/js/transaction.phtml"/>
+        </referenceContainer>
     </body>
 </page>

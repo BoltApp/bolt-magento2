@@ -3,7 +3,7 @@
 namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
-use Magento\Framework\Session\SessionManagerInterface as MagentoQuote;
+use Magento\Framework\Session\SessionManager as MagentoQuote;
 use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
 
@@ -53,16 +53,6 @@ class Form extends PaymentForm
     public function getQuoteData()
     {
         return $this->_quote;
-    }
-
-    /**
-     * If we have multi-website, we need current quote store_id
-     *
-     * @return int
-     */
-    public function getMagentoStoreId()
-    {
-        return (int) $this->getQuoteData()->getStoreId();
     }
 
     /**
@@ -129,78 +119,5 @@ class Form extends PaymentForm
         ];
 
         return json_encode($result);
-    }
-
-    /**
-     * @return string
-     */
-    public function getJavascriptSuccess()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getJavascriptSuccess($storeId);
-    }
-
-    /**
-     * Get Replace Button Selectors.
-     *
-     * @return string
-     */
-    public function getGlobalCSS()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getGlobalCSS($storeId);
-    }
-
-    /**
-     * Get Javascript page settings.
-     *
-     * @return string
-     */
-    public function getSettings()
-    {
-        return json_encode([
-            'connect_url'                   => $this->getConnectJsUrl(),
-            'publishable_key_back_office'   => $this->getBackOfficeKey(),
-            'create_order_url'              => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'                => $this->getUrl(Config::SAVE_ORDER_ACTION),
-        ]);
-    }
-
-    /**
-     * @return string
-     */
-    public function getConnectJsUrl()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        // Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
-
-        return $cdnUrl . '/connect.js';
-    }
-
-    /**
-     * Get back office key
-     *
-     * @return  string
-     */
-    public function getBackOfficeKey()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getPublishableKeyBackOffice($storeId);
-    }
-
-    /**
-     * Get Bolt Payment module active state.
-     * @return bool
-     */
-    public function isBoltEnabled()
-    {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->isActive($storeId);
     }
 }
