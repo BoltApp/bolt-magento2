@@ -533,7 +533,6 @@ class Order extends AbstractHelper
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
-            $order->setState(OrderModel::STATE_PENDING_PAYMENT);
         } catch (\Exception $e) {
             if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
                 return $order;
@@ -735,6 +734,7 @@ class Order extends AbstractHelper
         $this->checkPaymentMethod($payment);
 
         if (! $payment->getAdditionalInformation('transaction_reference')) {
+            $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
             $this->_eventManager->dispatch(
                 'checkout_submit_all_after', [
                     'order' => $order,
@@ -777,8 +777,6 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
-        $order->setState(OrderModel::STATE_PENDING_PAYMENT);
-
         if ($order === null) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([

@@ -220,4 +220,8 @@
     <type name="Magento\Sales\Model\Order\Email\Sender\OrderSender">
         <plugin name="Bolt_Boltpay_OrderSender_Plugin" type="Bolt\Boltpay\Plugin\OrderSenderPlugin" sortOrder="1" />
     </type>
+
+    <type name="Magento\Sales\Model\Order">
+        <plugin name="Bolt_Boltpay_Order_Plugin" type="Bolt\Boltpay\Plugin\OrderPlugin" sortOrder="1" />
+    </type>
 </config>
