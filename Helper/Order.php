@@ -533,6 +533,7 @@ class Order extends AbstractHelper
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
+            $order->setState(OrderModel::STATE_PENDING_PAYMENT);
         } catch (\Exception $e) {
             if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
                 return $order;
@@ -587,13 +588,6 @@ class Order extends AbstractHelper
         }
 
         $order->save();
-
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
     }
 
     /**
@@ -720,6 +714,7 @@ class Order extends AbstractHelper
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
+            $this->dispatchPostCheckoutEvents($order, $quote);
             $this->updateOrderPayment($order, $transaction, null, $hookType);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
@@ -727,6 +722,25 @@ class Order extends AbstractHelper
             // if called from the store controller return quote and order
             // wait for the hook call to update the payment
             return [$quote, $order];
+        }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param Quote $quote
+     */
+    protected function dispatchPostCheckoutEvents($order, $quote) {
+
+        $payment = $order->getPayment();
+        $this->checkPaymentMethod($payment);
+
+        if (! $payment->getAdditionalInformation('transaction_reference')) {
+            $this->_eventManager->dispatch(
+                'checkout_submit_all_after', [
+                    'order' => $order,
+                    'quote' => $quote
+                ]
+            );
         }
     }
 
@@ -763,6 +777,7 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
+        $order->setState(OrderModel::STATE_PENDING_PAYMENT);
 
         if ($order === null) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
@@ -775,13 +790,15 @@ class Order extends AbstractHelper
                 ]);
             });
 
-            throw new BoltException(__(
-                'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                $quote->getReservedOrderId(),
-                $quote->getId(),
+            throw new BoltException(
+                __(
+                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
+                    $quote->getReservedOrderId(),
+                    $quote->getId()
+                ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
-            ));
+            );
         }
 
         $order->addStatusHistoryComment(
@@ -818,7 +835,10 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Cancel and delete the order
+     *
      * @param OrderModel $order
+     * @throws \Exception
      */
     protected function deleteOrder($order)
     {
@@ -842,9 +862,34 @@ class Order extends AbstractHelper
         );
 
         $order = $this->getExistingOrder($incrementId);
-        if ($order && $order->getState() === OrderModel::STATE_NEW) {
-            $this->deleteOrder($order);
+
+        if (!$order) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
+                    $incrementId,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
         }
+
+        $state = $order->getState();
+        if ($state !== OrderModel::STATE_PENDING_PAYMENT) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                    $incrementId,
+                    $state,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+
+        $this->deleteOrder($order);
     }
 
     /**
@@ -1248,7 +1293,7 @@ class Order extends AbstractHelper
         if ($state == OrderModel::STATE_HOLDED) {
             // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
             // to avoid no state on admin order unhold
-            if ($prevState != OrderModel::STATE_NEW) {
+            if ($prevState != OrderModel::STATE_PROCESSING) {
                 $order->setState(OrderModel::STATE_PROCESSING);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
             }
