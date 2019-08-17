@@ -529,7 +529,6 @@ class Order extends AbstractHelper
         if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
             return $order;
         }
-
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
@@ -539,7 +538,6 @@ class Order extends AbstractHelper
             }
             throw $e;
         }
-
         if ($order === null) {
             throw new LocalizedException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
@@ -548,15 +546,12 @@ class Order extends AbstractHelper
                 $immutableQuote->getId()
             ));
         }
-
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: This order was created via Bolt Webhook<br>Bolt traceId: $boltTraceId"
             );
         }
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
@@ -573,20 +568,18 @@ class Order extends AbstractHelper
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
-
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
                 __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
             );
         }
-
         // Add the user_note to the order comments and make it visible for the customer.
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
-
         $order->save();
+        $this->dispatchPostCheckoutEvents($order, $quote);
     }
 
     /**
@@ -713,7 +706,6 @@ class Order extends AbstractHelper
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
-            $this->dispatchPostCheckoutEvents($order, $quote);
             $this->updateOrderPayment($order, $transaction, null, $hookType);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
@@ -728,20 +720,14 @@ class Order extends AbstractHelper
      * @param OrderInterface $order
      * @param Quote $quote
      */
-    protected function dispatchPostCheckoutEvents($order, $quote) {
-
-        $payment = $order->getPayment();
-        $this->checkPaymentMethod($payment);
-
-        if (! $payment->getAdditionalInformation('transaction_reference')) {
-            $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
-            $this->_eventManager->dispatch(
-                'checkout_submit_all_after', [
-                    'order' => $order,
-                    'quote' => $quote
-                ]
-            );
-        }
+    public function dispatchPostCheckoutEvents($order, $quote) {
+        $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
     }
 
     /**
@@ -787,7 +773,6 @@ class Order extends AbstractHelper
                     ]
                 ]);
             });
-
             throw new BoltException(
                 __(
                     'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
@@ -798,13 +783,10 @@ class Order extends AbstractHelper
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
         }
-
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
