@@ -76,6 +76,13 @@
         </arguments>
     </type>
 
+    <virtualType name="boltAmastyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Account</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="boltAmastyAccountFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
