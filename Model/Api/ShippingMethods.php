@@ -146,6 +146,9 @@ class ShippingMethods implements ShippingMethodsInterface
 
     private $taxAdjusted = false;
 
+    /** @var Quote */
+    protected $quote;
+
     /**
      * Assigns local references to global resources
      *
@@ -219,7 +222,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Quote $quote
      * @throws LocalizedException
      */
-    protected function checkCartItems($cart, $quote)
+    protected function checkCartItems($cart)
     {
         $cartItems = [];
         foreach ($cart['items'] as $item) {
@@ -228,7 +231,7 @@ class ShippingMethods implements ShippingMethodsInterface
             @$cartItems['total'][$sku] += $item['total_amount'];
         }
         $quoteItems = [];
-        foreach ($quote->getAllVisibleItems() as $item) {
+        foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
             $unitPrice = $item->getCalculationPrice();
@@ -243,9 +246,12 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
-            $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart) {
 
-                list($quoteItems) = $this->cartHelper->getCartItems($quote->getAllVisibleItems(), $quote->getStoreId());
+                list($quoteItems) = $this->cartHelper->getCartItems(
+                    $this->quote->getAllVisibleItems(),
+                    $this->quote->getStoreId()
+                );
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
@@ -310,19 +316,19 @@ class ShippingMethods implements ShippingMethodsInterface
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
             // Load quote from entity id
-            $quote = $this->getQuoteById($quoteId);
+            $this->quote = $this->getQuoteById($quoteId);
 
-            if (!$quote) {
+            if (!$this->quote) {
                 $this->throwUnknownQuoteIdException($quoteId);
             }
 
-            $this->preprocessHook($quote->getStoreId());
+            $this->preprocessHook();
 
-            $this->checkCartItems($cart, $quote);
+            $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.
             // Replace parent quote with immutable quote in checkout session.
-            $this->sessionHelper->loadSession($quote);
+            $this->sessionHelper->loadSession($this->quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
 
@@ -330,7 +336,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $this->validateAddressData($addressData);
             }
 
-            $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
+            $shippingOptionsModel = $this->shippingEstimation($this->quote, $addressData);
 
             if ($this->taxAdjusted) {
                 $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
@@ -343,7 +349,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             /** @var \Magento\Quote\Model\Quote $parentQuote */
             $parentQuote = $this->getQuoteById($cart['order_reference']);
-            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode(), $quote)){
+            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
                 $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
 
@@ -386,15 +392,6 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * @param $quote
-     * @throws \Magento\Framework\Exception\SessionException
-     */
-    protected function loadSessionByQuote($quote)
-    {
-        return $this->sessionHelper->loadSession($quote);
-    }
-
-    /**
      * @param $quoteId
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -405,14 +402,12 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * @param null $storeId
-     *
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    protected function preprocessHook($storeId = null)
+    protected function preprocessHook()
     {
-        $this->hookHelper->preProcessWebhook($storeId);
+        $this->hookHelper->preProcessWebhook($this->quote->getStoreId());
     }
 
     /**
@@ -564,6 +559,27 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
+     * @param Quote $quote
+     * @param \Magento\Quote\Model\Quote\Address $shippingAddress
+     * @return array
+     */
+    public function generateShippingMethodArray($quote, $shippingAddress)
+    {
+        $shippingMethodArray = [];
+        $shippingRates = $shippingAddress->getGroupedAllShippingRates();
+
+        $this->resetShippingCalculationIfNeeded($shippingAddress, $quote->getStoreId());
+
+        foreach ($shippingRates as $carrierRates) {
+            foreach ($carrierRates as $rate) {
+                $shippingMethodArray[] = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
+            }
+        }
+
+        return $shippingMethodArray;
+    }
+
+    /**
      * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
@@ -592,33 +608,22 @@ class ShippingMethods implements ShippingMethodsInterface
             ];
         }
 
-        $output = [];
         $appliedQuoteCouponCode = $quote->getCouponCode();
 
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->addData($addressData);
-
         $shippingAddress->setCollectShippingRates(true);
         $shippingAddress->setShippingMethod(null);
 
         $quote->collectTotals();
-
         $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-        $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
-        $this->resetShippingCalculationIfNeeded($shippingAddress, $quote->getStoreId());
-
-        foreach ($shippingRates as $carrierRates) {
-            foreach ($carrierRates as $rate) {
-                $output[] = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
-            }
-        }
+        $shippingMethodArray = $this->generateShippingMethodArray($quote, $shippingAddress);
 
         $shippingMethods = [];
-
         $errors = [];
 
-        foreach ($output as $shippingMethod) {
+        foreach ($shippingMethodArray as $shippingMethod) {
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
@@ -764,17 +769,15 @@ class ShippingMethods implements ShippingMethodsInterface
      * point Bolt has already applied the discount, the discount amount is added back to the shipping.
      *
      * @param $parentQuoteCoupon
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
      * @return bool
      */
     protected function couponInvalidForShippingAddress(
-        $parentQuoteCoupon,
-        \Magento\Quote\Api\Data\CartInterface $quote
+        $parentQuoteCoupon
     ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($quote->getStoreId());
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
 
         return $parentQuoteCoupon &&
                 in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons) &&
-                !$quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
+                !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 }
