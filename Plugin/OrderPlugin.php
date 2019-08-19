@@ -25,16 +25,29 @@ use Magento\Sales\Model\Order;
  */
 class OrderPlugin
 {
-    public function beforeSetState(\Magento\Sales\Model\Order $subject, $state)
+    /**
+     * @param Order $subject
+     * @param string $state
+     * @return array
+     */
+    public function beforeSetState(Order $subject, $state)
     {
-        return $state === Order::STATE_NEW ? Order::STATE_PENDING_PAYMENT : $state;
+        if ($state === Order::STATE_NEW) {
+            $state = Order::STATE_PENDING_PAYMENT;
+        }
+        return [$state];
     }
 
-    public function beforeSetStatus(\Magento\Sales\Model\Order $subject, $status)
+    /**
+     * @param Order $subject
+     * @param string $status
+     * @return array
+     */
+    public function beforeSetStatus(Order $subject, $status)
     {
         if (!$subject->getState() || $subject->getState() === Order::STATE_PENDING_PAYMENT) {
-            return $subject->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT);
+            $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT);
         }
-        return $status;
+        return [$status];
     }
 }
