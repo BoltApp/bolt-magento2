@@ -92,7 +92,7 @@ trait ReceivedUrlTrait
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
 
-                if ($order->getState() == Order::STATE_NEW) {
+                if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
                     // Save reference to the Bolt transaction with the order
                     $order->addStatusHistoryComment(
                         __(

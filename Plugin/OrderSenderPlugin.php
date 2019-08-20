@@ -47,7 +47,13 @@ class OrderSenderPlugin
         if ($paymentMethod == Payment::METHOD_CODE &&
             in_array(
                 $order->getState(),
-                [Order::STATE_NEW, Order::STATE_CANCELED, Order::STATE_PAYMENT_REVIEW, Order::STATE_HOLDED]
+                [
+                    Order::STATE_PENDING_PAYMENT,
+                    Order::STATE_NEW,
+                    Order::STATE_CANCELED,
+                    Order::STATE_PAYMENT_REVIEW,
+                    Order::STATE_HOLDED
+                ]
             )
         ) {
             return false;

@@ -529,7 +529,6 @@ class Order extends AbstractHelper
         if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
             return $order;
         }
-
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
@@ -539,7 +538,6 @@ class Order extends AbstractHelper
             }
             throw $e;
         }
-
         if ($order === null) {
             throw new LocalizedException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
@@ -548,15 +546,12 @@ class Order extends AbstractHelper
                 $immutableQuote->getId()
             ));
         }
-
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: This order was created via Bolt Webhook<br>Bolt traceId: $boltTraceId"
             );
         }
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
@@ -573,27 +568,18 @@ class Order extends AbstractHelper
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
-
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
                 __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
             );
         }
-
         // Add the user_note to the order comments and make it visible for the customer.
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
-
         $order->save();
-
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
+        $this->dispatchPostCheckoutEvents($order, $quote);
     }
 
     /**
@@ -731,6 +717,20 @@ class Order extends AbstractHelper
     }
 
     /**
+     * @param OrderInterface $order
+     * @param Quote $quote
+     */
+    public function dispatchPostCheckoutEvents($order, $quote) {
+        $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
+    }
+
+    /**
      * Try to fetch and price-validate already existing order.
      * Use case: order has been created but the payment failes due to the ivnalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
@@ -763,7 +763,6 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
-
         if ($order === null) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([
@@ -774,22 +773,20 @@ class Order extends AbstractHelper
                     ]
                 ]);
             });
-
-            throw new BoltException(__(
-                'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                $quote->getReservedOrderId(),
-                $quote->getId(),
+            throw new BoltException(
+                __(
+                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
+                    $quote->getReservedOrderId(),
+                    $quote->getId()
+                ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
-            ));
+            );
         }
-
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
@@ -818,7 +815,10 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Cancel and delete the order
+     *
      * @param OrderModel $order
+     * @throws \Exception
      */
     protected function deleteOrder($order)
     {
@@ -842,9 +842,34 @@ class Order extends AbstractHelper
         );
 
         $order = $this->getExistingOrder($incrementId);
-        if ($order && $order->getState() === OrderModel::STATE_NEW) {
-            $this->deleteOrder($order);
+
+        if (!$order) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
+                    $incrementId,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
         }
+
+        $state = $order->getState();
+        if ($state !== OrderModel::STATE_PENDING_PAYMENT) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                    $incrementId,
+                    $state,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+
+        $this->deleteOrder($order);
     }
 
     /**
@@ -1248,7 +1273,7 @@ class Order extends AbstractHelper
         if ($state == OrderModel::STATE_HOLDED) {
             // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
             // to avoid no state on admin order unhold
-            if ($prevState != OrderModel::STATE_NEW) {
+            if ($prevState !== OrderModel::STATE_PROCESSING) {
                 $order->setState(OrderModel::STATE_PROCESSING);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
             }
