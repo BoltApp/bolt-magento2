@@ -1273,7 +1273,7 @@ class Order extends AbstractHelper
         if ($state == OrderModel::STATE_HOLDED) {
             // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
             // to avoid no state on admin order unhold
-            if ($prevState != OrderModel::STATE_PROCESSING) {
+            if ($prevState !== OrderModel::STATE_PROCESSING) {
                 $order->setState(OrderModel::STATE_PROCESSING);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
             }
