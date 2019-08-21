@@ -6,7 +6,8 @@ set -x
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
-Test/scripts/install_magento_integrations.sh
+sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
+
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
 
@@ -36,16 +37,6 @@ php bin/magento config:set web/secure/base_link_url "${NGROK_URL}"
 php CouponCode.php
 php FreeShipping.php
 
-
-php -dmemory_limit=5G bin/magento setup:upgrade
-
-php -dmemory_limit=5G bin/magento setup:di:compile
-
-php -dmemory_limit=5G bin/magento indexer:reindex
-
-php -dmemory_limit=5G bin/magento setup:static-content:deploy -f
-
-php bin/magento cache:flush
 INC_NUM=$((100*${CIRCLE_BUILD_NUM}))
 mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${INC_NUM};"
 
