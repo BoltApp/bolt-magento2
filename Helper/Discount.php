@@ -902,4 +902,18 @@ class Discount extends AbstractHelper
                     ->getInstance()
                     ->getCustomerStoreCreditBalance($customerId);
     }
+
+    /**
+     * Some 3rd party discounts are not stored with the quote / totals. They are held in other tables
+     * and applied to quote temporarily in checkout / customer session via magic set methods.
+     * There is need in API calls (shipping & tax and webhook) to explicitly fetch and set this data
+     * to have quote object in sync with the one used in session.
+     *
+     * @param Quote $quote
+     */
+    public function applyExternalDiscountData($quote) {
+        // Amasty reward points are held in a separate table
+        // and are not assigned to the quote / totals directly out of the customer session.
+        $this->setAmastyRewardPoints($quote);
+    }
 }

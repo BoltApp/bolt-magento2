@@ -718,14 +718,25 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Fetch and apply external quote data, not stored within the quote or totals
+     * (usually in 3rd party modules DB tables)
+     *
+     * @param Quote $quote
+     */
+    public function applyExternalQuoteData($quote) {
+        $this->discountHelper->applyExternalDiscountData($quote);
+    }
+
+    /**
      * @param OrderInterface $order
      * @param Quote $quote
      */
     public function dispatchPostCheckoutEvents($order, $quote) {
-
         // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
         // as a flag to determine if the events were dispatched
         if (! $quote->getBoltReservedOrderId()) return; // already dispatched
+
+        $this->applyExternalQuoteData($quote);
 
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
