@@ -84,6 +84,8 @@ trait ReceivedUrlTrait
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
+                $this->orderHelper->dispatchPostCheckoutEvents($order, $quote);
+
                 $redirectUrl = $this->getRedirectUrl($order);
 
                 // add quote information to the session

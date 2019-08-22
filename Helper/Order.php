@@ -579,7 +579,6 @@ class Order extends AbstractHelper
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
         $order->save();
-        $this->dispatchPostCheckoutEvents($order, $quote);
     }
 
     /**
@@ -692,6 +691,7 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
+            $this->dispatchPostCheckoutEvents($order, $quote);
             // If Amasty Gif Cart Extension is present
             // clear gift carts applied to immutable quotes
             $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
@@ -703,6 +703,7 @@ class Order extends AbstractHelper
             // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($quote);
         }
+
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
@@ -721,6 +722,11 @@ class Order extends AbstractHelper
      * @param Quote $quote
      */
     public function dispatchPostCheckoutEvents($order, $quote) {
+
+        // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
+        // as a flag to determine if the events were dispatched
+        if (! $quote->getBoltReservedOrderId()) return; // already dispatched
+
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
             'checkout_submit_all_after', [
@@ -728,6 +734,10 @@ class Order extends AbstractHelper
                 'quote' => $quote
             ]
         );
+
+        // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
+        $quote->setBoltReservedOrderId(null);
+        $this->cartHelper->quoteResourceSave($quote);
     }
 
     /**
