@@ -91,11 +91,8 @@ WORKDIR /home/circleci/magento
 COPY install_magento_data.sh /home/circleci/magento
 COPY init_mysql.sh /home/circleci/magento
 
-USER root
-# RUN ["bash", "init_mysql.sh", "./install_magento_data.sh"]
 RUN ["bash", "install_magento_data.sh"]
 
-USER circleci
 RUN composer require "bugsnag/bugsnag:^3.0"
 
 WORKDIR /home/circleci
