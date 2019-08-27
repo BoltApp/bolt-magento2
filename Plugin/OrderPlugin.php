@@ -26,26 +26,43 @@ use Magento\Sales\Model\Order;
 class OrderPlugin
 {
     /**
+     * Override the default "new" order state with the "pending_payment"
+     * unless the special "bolt_new" state is received in which case state "new" is used.
+     *
      * @param Order $subject
      * @param string $state
      * @return array
      */
     public function beforeSetState(Order $subject, $state)
     {
-        if ($state === Order::STATE_NEW) {
+        if ($state === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW) {
+            $state = Order::STATE_NEW;
+        }
+        elseif (!$subject->getState() || $state === Order::STATE_NEW) {
             $state = Order::STATE_PENDING_PAYMENT;
         }
         return [$state];
     }
 
     /**
+     * Override the default "pending" order status with the "pending_payment"
+     * unless the special "bolt_pending" status is received in which case status "pending" is used.
+     *
      * @param Order $subject
      * @param string $status
      * @return array
      */
     public function beforeSetStatus(Order $subject, $status)
     {
-        if (!$subject->getState() || $subject->getState() === Order::STATE_PENDING_PAYMENT) {
+        if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
+            $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_NEW);
+        }
+        elseif ((
+            !  $subject->getStatus()
+            || $subject->getStatus() == Order::STATE_PENDING_PAYMENT
+            || $subject->getStatus() == Order::STATE_NEW
+            ) && $status === \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING
+        ) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT);
         }
         return [$status];

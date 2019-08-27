@@ -79,6 +79,10 @@ class Order extends AbstractHelper
 
     const MISMATCH_TOLERANCE = 1;
 
+    const BOLT_ORDER_STATE_NEW = 'bolt_new';
+    const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
+    const MAGENTO_ORDER_STATUS_PENDING = 'pending';
+
     // Posible transation state transitions
     private $validStateTransitions = [
         null => [
@@ -629,6 +633,23 @@ class Order extends AbstractHelper
     }
 
     /**
+     * After the order gets approved by Bolt set its state/status
+     * to Magento default for the new orders "new"/"Pending".
+     * Required for the order to be imported by some ERP systems.
+     *
+     * @param OrderModel $order
+     * @param string $state
+     */
+    public function resetOrderState($order) {
+        $order->setState(self::BOLT_ORDER_STATE_NEW);
+        $order->setStatus(self::BOLT_ORDER_STATUS_PENDING);
+        $order->addStatusHistoryComment(
+            "BOLTPAY INFO :: This order was approved by Bolt"
+        );
+        $order->save();
+    }
+
+    /**
      * Save/create the order (checkout, orphaned transaction),
      * Update order payment / transaction data (checkout, web hooks)
      *
@@ -691,6 +712,9 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
+            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+                $this->resetOrderState($order);
+            }
             $this->dispatchPostCheckoutEvents($order, $quote);
             // If Amasty Gif Cart Extension is present
             // clear gift carts applied to immutable quotes
@@ -703,7 +727,6 @@ class Order extends AbstractHelper
             // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($quote);
         }
-
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
@@ -1165,10 +1188,6 @@ class Order extends AbstractHelper
         // Put the order ON HOLD and add the status message.
         // Do it once only, skip on subsequent hooks
         if ($order->getState() != OrderModel::STATE_HOLDED) {
-
-            // Put the order on hold
-            $this->setOrderState($order, OrderModel::STATE_HOLDED);
-
             // Add order status history comment
             $comment = __(
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
@@ -1179,7 +1198,8 @@ class Order extends AbstractHelper
             );
             $order->addStatusHistoryComment($comment);
 
-            $order->save();
+            // Put the order on hold
+            $this->setOrderState($order, OrderModel::STATE_HOLDED);
         }
 
         // Get the order and quote id
@@ -1288,7 +1308,7 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param string $state
      */
-    private function setOrderState($order, $state)
+    public function setOrderState($order, $state)
     {
         $prevState = $order->getState();
         if ($state == OrderModel::STATE_HOLDED) {
@@ -1319,6 +1339,7 @@ class Order extends AbstractHelper
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
+        $order->save();
     }
 
     /**

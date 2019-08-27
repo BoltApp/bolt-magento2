@@ -84,6 +84,22 @@ trait ReceivedUrlTrait
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
+                if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
+                    // Save reference to the Bolt transaction with the order
+                    $order->addStatusHistoryComment(
+                        __(
+                            'Bolt transaction: %1',
+                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
+                        )
+                    );
+                    $this->orderHelper->resetOrderState($order);
+                } else {
+                    $this->bugsnag->notifyError(
+                        "Pre-Auth redirect wrong order state",
+                        "OrderNo: $incrementId, State: {$order->getState()}"
+                    );
+                }
+
                 $this->orderHelper->dispatchPostCheckoutEvents($order, $quote);
 
                 $redirectUrl = $this->getRedirectUrl($order);
@@ -93,22 +109,6 @@ trait ReceivedUrlTrait
 
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
-
-                if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
-                    // Save reference to the Bolt transaction with the order
-                    $order->addStatusHistoryComment(
-                        __(
-                            'Bolt transaction: %1',
-                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
-                        )
-                    );
-                    $order->save();
-                } else {
-                    $this->bugsnag->notifyError(
-                        "Pre-Auth redirect wrong order state",
-                        "OrderNo: $incrementId, State: {$order->getState()}"
-                    );
-                }
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {
