@@ -1319,6 +1319,29 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Map class internal Bolt transaction state representation to Magento order state
+     *
+     * @param string $transactionState
+     * @return string
+     */
+    public function transactionToOrderState($transactionState)
+    {
+        return [
+            self::TS_ZERO_AMOUNT => OrderModel::STATE_PROCESSING,
+            self::TS_PENDING => OrderModel::STATE_PAYMENT_REVIEW,
+            self::TS_AUTHORIZED => OrderModel::STATE_PROCESSING,
+            self::TS_CAPTURED => OrderModel::STATE_PROCESSING,
+            self::TS_COMPLETED => OrderModel::STATE_PROCESSING,
+            self::TS_CANCELED => OrderModel::STATE_CANCELED,
+            self::TS_REJECTED_REVERSIBLE => OrderModel::STATE_PAYMENT_REVIEW,
+            self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
+            // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
+            // If called from Bolt merchant dashboard there is no enough info to sync the totals
+            self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+        ][$transactionState];
+    }
+
+    /**
      * Update order payment / transaction data
      *
      * @param OrderModel $order
@@ -1405,24 +1428,20 @@ class Order extends AbstractHelper
         switch ($transactionState) {
 
             case self::TS_ZERO_AMOUNT:
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_ORDER;
                 break;
 
             case self::TS_PENDING:
-                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
                 break;
 
             case self::TS_AUTHORIZED:
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
                 $transactionId = $transaction->id.'-auth';
                 break;
 
             case self::TS_CAPTURED:
                 if (!$newCapture) return;
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_CAPTURE;
                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
                 $parentTransactionId = $transaction->id.'-auth';
@@ -1437,7 +1456,6 @@ class Order extends AbstractHelper
 
             case self::TS_COMPLETED:
                 if (!$newCapture) return;
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_CAPTURE;
                 if ($paymentAuthorized) {
                     $transactionId = $transaction->id.'-capture-'.$newCapture->id;
@@ -1448,20 +1466,17 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CANCELED:
-                $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_VOID;
                 $transactionId = $transaction->id.'-void';
                 $parentTransactionId = $paymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
                 break;
 
             case self::TS_REJECTED_REVERSIBLE:
-                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
                 break;
 
             case self::TS_REJECTED_IRREVERSIBLE:
-                $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_irreversible';
                 break;
@@ -1470,13 +1485,6 @@ class Order extends AbstractHelper
                 if (in_array($transaction->id, $processedRefunds)) return;
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
-                if (Hook::$fromBolt) {
-                    // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
-                    // If called from Bolt merchant dashboard there is no enough info to sync the totals
-                    $orderState = OrderModel::STATE_HOLDED;
-                } else {
-                    $orderState = OrderModel::STATE_PROCESSING;
-                }
                 break;
 
             default:
@@ -1488,6 +1496,7 @@ class Order extends AbstractHelper
         }
 
         // set order state and status
+        $orderState = $this->transactionToOrderState($transactionState);
         $this->setOrderState($order, $orderState);
 
         // Send order confirmation email to customer.
