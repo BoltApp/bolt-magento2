@@ -825,7 +825,8 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id',
+            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
     ) {
         foreach ($parent->getData() as $key => $value) {
             if (in_array($key, $excludeFields)) continue;
