@@ -275,7 +275,7 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
-            $startTime = time();
+            $startTime = round(microtime(true) * 1000);
             $transactionId = $payment->getAdditionalInformation('real_transaction_id');
 
             if (empty($transactionId)) {
@@ -313,12 +313,12 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_void.success", 1, "order_void.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_void.success", 1, "order_void.latency", $latency);
             return $this;
         } catch (\Exception $e) {
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_void.failure", 1, "order_void.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_void.failure", 1, "order_void.latency", $latency);
             $this->bugsnag->notifyException($e);
             throw $e;
         }
@@ -336,7 +336,7 @@ class Payment extends AbstractMethod
      */
     public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
         try {
-            $startTime = time();
+            $startTime = round(microtime(true) * 1000);
 
             $transaction = $this->transactionRepository->getByTransactionId(
                 $transactionId,
@@ -351,11 +351,11 @@ class Payment extends AbstractMethod
                 $order = $payment->getOrder();
                 $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_fetch.success", 1, "order_fetch.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_fetch.success", 1, "order_fetch.latency", $latency);
         } catch ( \Exception $e ) {
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_fetch.failure", 1, "order_fetch.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_fetch.failure", 1, "order_fetch.latency", $latency);
             $this->bugsnag->notifyException( $e );
         } finally {
             return [];
@@ -374,7 +374,7 @@ class Payment extends AbstractMethod
     public function capture(InfoInterface $payment, $amount)
     {
         try {
-            $startTime = time();
+            $startTime = round(microtime(true) * 1000);
             $order = $payment->getOrder();
 
             if ($amount <= 0) {
@@ -423,13 +423,13 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_capture.success", 1, "order_capture.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_capture.success", 1, "order_capture.latency", $latency);
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_capture.failure", 1, "order_capture.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_capture.failure", 1, "order_capture.latency", $latency);
             throw $e;
         }
     }
@@ -446,7 +446,7 @@ class Payment extends AbstractMethod
     public function refund(InfoInterface $payment, $amount)
     {
         try {
-            $startTime = time();
+            $startTime = round(microtime(true) * 1000);
 
             $order = $payment->getOrder();
 
@@ -496,14 +496,14 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_refund.success", 1, "order_refund.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_refund.success", 1, "order_refund.latency", $latency);
 
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_refund.failure", 1, "order_refund.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_refund.failure", 1, "order_refund.latency", $latency);
             throw $e;
         }
     }

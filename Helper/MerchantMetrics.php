@@ -23,11 +23,11 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Spatie\Async\Pool;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+// use Spatie\Async\Pool;
 
 /**
- * Boltpay Bugsnag wrapper helper
+ * Boltpay Merchant Metrics wrapper helper
  *
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
@@ -35,10 +35,8 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 class MerchantMetrics extends AbstractHelper
 {
-    const API_KEY           = '888766c6cfe49858afc36b3a2a2c6548';
     const STAGE_DEVELOPMENT = 'development';
     const STAGE_PRODUCTION  = 'production';
-    const METRICS_FILE  = '/Applications/MAMP/htdocs/magento2/metrics.json';
 
     /**
      * @var \GuzzleHttp\Client
@@ -50,10 +48,15 @@ class MerchantMetrics extends AbstractHelper
      */
     private $configHelper;
 
-    /* @var StoreManagerInterface */
+    /**
+     * @var StoreManagerInterface
+     */
     protected $storeManager;
 
-    protected $metricsFile;
+    /**
+     * @var string
+     */
+    private $metricsFile;
 
     /**
      * @var LogHelper
@@ -63,12 +66,12 @@ class MerchantMetrics extends AbstractHelper
      /**
      * @var array
      */
-    private $Metrics;
+    public $metrics;
 
      /**
      * @var array
      */
-    private $Headers;
+    private $headers;
 
     /**
      * @var Bugsnag
@@ -81,7 +84,7 @@ class MerchantMetrics extends AbstractHelper
      * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
      * @param Bugsnag $bugsnag
-     * @param LogHelper                       $logHelper
+     * @param LogHelper $logHelper
      *
      * @codeCoverageIgnore
      */
@@ -96,7 +99,6 @@ class MerchantMetrics extends AbstractHelper
         parent::__construct($context);
 
         $this->storeManager = $storeManager;
-        $this->metricsFile = '/Applications/MAMP/htdocs/magento2/metrics.json';
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         //////////////////////////////////////////
@@ -108,38 +110,70 @@ class MerchantMetrics extends AbstractHelper
         if (!class_exists('\GuzzleHttp\Client')) {
             require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
         }
-
-
         $this->configHelper = $configHelper;
+        $this->metrics = array();
+        $this->metricsFile = null;
+        $this->guzzleClient = null;
+        $this->metricsFile = null;
 
-        // $release_stage = $this->configHelper->isSandboxModeSet() ? self::STAGE_DEVELOPMENT : self::STAGE_PRODUCTION;
-        $this->guzzleClient = new \GuzzleHttp\Client(['base_uri' => 'http://api.ethan.dev.bolt.me/']);
-        $this->Metrics = array();
-        $this->Headers = [
+
+    }
+
+    protected function getCurrentTime() {
+        return round(microtime(true) * 1000);
+    }
+
+    protected function setClient() {
+        // determines if we are in the Sandbox env or not
+
+        $base_uri =  $this->configHelper->isSandboxModeSet() ? 'https://api-sandbox.bolt.com/' : 'https://api.bolt.com/' ;
+        // Creates a Guzzle Client and Headers needed for Metrics Requests
+        return new \GuzzleHttp\Client(['base_uri' => $base_uri]);
+    }
+
+    protected function setHeaders() {
+        return [
             'Content-Type' => 'application/json',
-            'x-api-key' =>  "0b543baeb28c872792d7ba34ba83960eecb63f5fdbc633bedb1880b0ede5101b" //$this->configHelper->getApiKey()
+            'x-api-key' =>  $this->configHelper->getApiKey()
         ];
     }
 
-
-    /**
-     * @param        $exception
-     * @param string $msg
-     * @param int    $code
-     * @param int    $httpStatusCode
-     */
-    protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
-    {
-        $this->bugsnag->notifyException($exception);
-
-        $this->sendErrorResponse($code, $msg, $httpStatusCode);
+    protected function setFile() {
+        // determine root directory and add create a metrics file there
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
+        $rootPath  =  $directory->getRoot();
+        return $rootPath . '/bolt_metrics.json';
     }
 
+    protected function waitForFile(){
+        $count = 0;
+        $timeoutMsecs = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
+
+        $workingFile = fopen($this->metricsFile, "a+");
+
+        // logic for properly grabbing file and locking it
+        while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
+            if ($count++ < $timeoutMsecs) {
+                usleep(500);
+            } else {
+                return null;
+                break;
+            }
+        }
+        return $workingFile;
+    }
+
+    public function unlockFile($workingFile){
+        flock($workingFile, LOCK_UN);    // release the lock
+    }
+
+
     /**
-     * Notify Bugsnag of a non-fatal/handled error.
+     * Add a count metric to the array of metrics being stored
      *
-     * @param string        $key     the name of the error, a short (1 word) string
-     * @param int           $value  the error message 
+     * @param string        $key    name of count metric
+     * @param int           $value  count hit 
      *
      * @return void
      */
@@ -148,16 +182,16 @@ class MerchantMetrics extends AbstractHelper
         $data = [
                 'value' => $value,
                 "metric_type" => "count",
-                "timestamp" => time()
+                "timestamp" => $this->getCurrentTime(),
             ];
-        $this->Metrics[$key] = $data;
+        $this->metrics[$key] = $data;
     }
 
      /**
-     * Notify Bugsnag of a non-fatal/handled error.
+     * Add a latency metric to the array of metrics being stored
      *
-     * @param string        $key     the name of the error, a short (1 word) string
-     * @param int           $value  the error message 
+     * @param string        $key     name of latency metric
+     * @param int           $value  the total time of the metric
      *
      * @return void
      */
@@ -166,61 +200,58 @@ class MerchantMetrics extends AbstractHelper
         $data = [
                 'value' => $value,
                 "metric_type" => "latency",
-                "timestamp" => time(),
+                "timestamp" => $this->getCurrentTime(),
             ];
-        $this->Metrics[$key] = $data;
+        $this->metrics[$key] = $data;
+
     }
 
     /**
-     * Regsier a new notification callback.
+     * Adds a count and latency for a given event
      *
-     *
+     * @param string        $countKey           name of count metric
+     * @param int           $countValue         the count value of the metric
+     * @param string        $latencyKey         name of latency metric
+     * @param int           $latencyValue  the total time of the metric
      * @return void
      */
-
-     // Add events directly to file with no storage, the file is the source of truth, add metrics one by one
-     // Thread is to simply add data to file
-     // Cron job running the post
     public function processMetrics($countKey, $countValue, $latencyKey, $latencyValue)
     {
+
+
+        // checks if flag is set for Merchant Metrics if not ignore
         if ($this->configHelper->shouldCaptureMerchantMetrics()) {
-        // add delimieter
             $this->addCountMetric($countKey, $countValue);
             $this->addLatencyMetric($latencyKey, $latencyValue);
-        
-            $count = 0;
-            $timeoutMsecs = 10; //number of seconds of timeout
-            $availableFile = true;
-            $workingFile = fopen($this->metricsFile, "a+");
-            while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
-                if ($count++ < $timeoutMsecs) {
-                    usleep(500);
-                } else {
-                    $availableFile = false;
-                    break;
-                }
-            }
-            if ($availableFile) {
-                file_put_contents($this->metricsFile, json_encode($this->Metrics), FILE_APPEND);
-                file_put_contents($this->metricsFile, ",", FILE_APPEND);
-                flock($workingFile, LOCK_UN);    // release the lock
-            }
 
+            if ($this->metricsFile == null) {
+                $this->metricsFile = $this->setFile();
+            }
+            $workingFile = $this->waitForFile();
+            if ($workingFile) {
+                file_put_contents($this->metricsFile, json_encode($this->metrics), FILE_APPEND);
+                file_put_contents($this->metricsFile, ",", FILE_APPEND);
+                $this->unlockFile($workingFile);
+
+            }
             fclose($workingFile);
         }
     }
 
-    public function processMetricsThread($countKey, $countValue, $latencyKey, $latencyValue)
-    {
-        $this->logHelper->addInfoLog($countKey);
-        $pool = Pool::create();
+    // to be used at a later time if threading is needed 
+    // public function processMetricsThread($countKey, $countValue, $latencyKey, $latencyValue)
+    // {
+    //     $this->logHelper->addInfoLog($countKey);
+    //     $pool = Pool::create();
 
-        $pool[] = async(function () use ($countKey, $countValue, $latencyKey, $latencyValue) {
-            $this->processMetrics($countKey, $countValue, $latencyKey, $latencyValue);
-        });
+    //     $pool[] = async(function () use ($countKey, $countValue, $latencyKey, $latencyValue) {
+    //         $this->processMetrics($countKey, $countValue, $latencyKey, $latencyValue);
+    //     });
         
-        await($pool); // figure out how to manage multiple cases
-    }
+    //     await($pool); // figure out how to manage multiple cases
+    // }
+
+
 
     /**
      * Regsier a new notification callback.
@@ -230,33 +261,28 @@ class MerchantMetrics extends AbstractHelper
      */
     public function postMetrics()
     {
+        // logic for properly grabbing file and locking it
         if ($this->configHelper->shouldCaptureMerchantMetrics()) {
             try{
                 $output = "";
-                $count = 0;
-                $timeoutMsecs = 10; //number of seconds of timeout
-                $availableFile = true;
-                $workingFile = fopen($this->metricsFile, "a+");
-
-                // Is it possible for a task to get stuck? Keeps choosing at the wrong time?
-                while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
-                    if ($count++ < $timeoutMsecs) {
-                        usleep(500);
-                    } else {
-                        $availableFile = false;
-                        break;
-                    }
+                if ($this->metricsFile == null) {
+                    $this->metricsFile = $this->setFile();
                 }
-                if ($availableFile) 
-                {
+                $workingFile = $this->waitForFile();
+                if ($workingFile) {
+                    //takes file contents and puts it to appropriate posting format
                     $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
-                
                     $output = json_decode($raw_file, true);
                     
                 }
+                if ($this->guzzleClient == null) {
+                    $this->guzzleClient = $this->setClient();
+                    $this->headers = $this->setHeaders();
+                }
+
                 $outputMetrics = ['metrics' => $output];
                 $response = $this->guzzleClient->post("v1/merchant/metrics", [
-                    'headers' => $this->Headers, 
+                    'headers' => $this->headers,
                     'json' => $outputMetrics,
                 ]);
 
@@ -264,8 +290,9 @@ class MerchantMetrics extends AbstractHelper
                 if ($response->getStatusCode() == 200) {
                     file_put_contents($this->metricsFile, ""); 
                 }
+                return $response->getStatusCode();
             } catch (\Exception $e) {
-                // $this->catchExceptionAndSendError($e, $e->getMessage(), 6009, 422);
+                $this->bugsnag->notifyException(new Exception("Merchant Metrics send error", $e));
             } finally {
                 flock($workingFile, LOCK_UN);    // release the lock
                 fclose($workingFile);

@@ -97,7 +97,7 @@ class Data extends Action
      */
     public function execute()
     {
-        $startTime = time();
+        $startTime = round(microtime(true) * 1000);
         $result = $this->resultJsonFactory->create();
 
         try {
@@ -122,12 +122,12 @@ class Data extends Action
 
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
-                $latency = time() - $startTime;
-                $this->merchantMetrics->processMetricsThread("order_token.success", 1, "order_token.latency", $latency);
+                $latency = round(microtime(true) * 1000) - $startTime;
+                $this->merchantMetrics->processMetrics("order_token.success", 1, "order_token.latency", $latency);
             } else {
                 $responseData['cart'] = [];
-                $latency = time() - $startTime;
-                $this->merchantMetrics->processMetricsThread("order_token.failure", 1, "order_token.latency", $latency);
+                $latency = round(microtime(true) * 1000) - $startTime;
+                $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
             }
 
             // get immutable quote id stored with cart data
@@ -158,8 +158,8 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_token.failure", 1, "order_token.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);-
             $result->setData([
@@ -167,8 +167,8 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("order_token.failure", 1, "order_token.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
         } finally {
             return $result;
         }

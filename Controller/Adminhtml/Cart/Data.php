@@ -103,7 +103,7 @@ class Data extends Action
      */
     public function execute()
     {
-        $startTime = time();
+        $startTime = round(microtime(true) * 1000);
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
@@ -111,11 +111,11 @@ class Data extends Action
 
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
-                $latency = time() - $startTime;
-                $this->merchantMetrics->processMetricsThread("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
+                $latency = round(microtime(true) * 1000) - $startTime;
+                $this->merchantMetrics->processMetrics("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
             } else {
-                $latency = time() - $startTime;
-                $this->merchantMetrics->processMetricsThread("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+                $latency = round(microtime(true) * 1000) - $startTime;
+                $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
@@ -139,8 +139,8 @@ class Data extends Action
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
             throw $e;
         }
     }

@@ -327,7 +327,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethods($cart, $shipping_address)
     {
-        $startTime = time();
+        $startTime = round(microtime(true) * 1000);
         try {
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -372,22 +372,22 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("ship_tax.success", 1, "ship_tax.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("ship_tax.success", 1, "ship_tax.latency", $latency);
             // $this->merchantMetrics->postMetrics();
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }

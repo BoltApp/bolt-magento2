@@ -138,7 +138,7 @@ class OrderManagement implements OrderManagementInterface
         $source_transaction_reference = null
     ) {
         try {
-            $startTime = time();
+            $startTime = round(microtime(true) * 1000);
             HookHelper::$fromBolt = true;
 
             $this->logHelper->addInfoLog($this->request->getContent());
@@ -179,12 +179,12 @@ class OrderManagement implements OrderManagementInterface
                     'message' => 'Order creation / update was successful',
                 ]));
             }
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("webhooks.success", 1, "webhooks.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("webhooks.success", 1, "webhooks.latency", $latency);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("webhooks.failure", 1, "webhooks.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
             $this->response->setHttpResponseCode($e->getHttpCode());
             $this->response->setBody(json_encode([
                 'status' => 'error',
@@ -193,8 +193,8 @@ class OrderManagement implements OrderManagementInterface
             ]));
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = time() - $startTime;
-            $this->merchantMetrics->processMetricsThread("webhooks.failure", 1, "webhooks.latency", $latency);
+            $latency = round(microtime(true) * 1000) - $startTime;
+            $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([
                 'status' => 'error',
