@@ -374,8 +374,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
             $latency = time() - $startTime;
             $this->merchantMetrics->processMetricsThread("ship_tax.success", 1, "ship_tax.latency", $latency);
-            // $res = $this->merchantMetrics->postMetrics();
-            // $this->logHelper->addInfoLog($res->getStatusCode());
+            // $this->merchantMetrics->postMetrics();
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {

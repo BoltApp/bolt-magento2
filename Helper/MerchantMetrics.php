@@ -145,16 +145,12 @@ class MerchantMetrics extends AbstractHelper
      */
     public function addCountMetric($key, $value)
     {
-        if (array_key_exists($key, $this->Metrics)){
-            $this->Metrics[$key][0]["value"] += $value;
-        } else {
-            $data = [
-                    'value' => $value,
-                    "metric_type" => "count",
-                    "timestamp" => time()
-                ];
-            $this->Metrics[$key] = [$data];
-        }
+        $data = [
+                'value' => $value,
+                "metric_type" => "count",
+                "timestamp" => time()
+            ];
+        $this->Metrics[$key] = $data;
     }
 
      /**
@@ -167,21 +163,12 @@ class MerchantMetrics extends AbstractHelper
      */
     public function addLatencyMetric($key, $value)
     {
-        if (array_key_exists($key, $this->Metrics)){
-            $data = [
+        $data = [
                 'value' => $value,
                 "metric_type" => "latency",
                 "timestamp" => time(),
             ];
-            array_push($this->Metrics[$key], $data);
-        } else {
-            $data = [
-                    'value' => $value,
-                    "metric_type" => "latency",
-                    "timestamp" => time(),
-                ];
-            $this->Metrics[$key] = [$data];
-        }
+        $this->Metrics[$key] = $data;
     }
 
     /**
@@ -205,7 +192,7 @@ class MerchantMetrics extends AbstractHelper
         $availableFile = true;
         $workingFile = fopen($this->metricsFile, "a+");
         while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
-            if ($count++ < $timeout_secs) {
+            if ($count++ < $timeoutMsecs) {
                 usleep(500);
             } else {
                 $availableFile = false;
@@ -237,15 +224,18 @@ class MerchantMetrics extends AbstractHelper
      * Regsier a new notification callback.
      *
      *
-     * @return Response
+     * @return void
      */
     public function postMetrics()
     {
-        try {
+        try{
+            $output = "";
             $count = 0;
             $timeoutMsecs = 10; //number of seconds of timeout
             $availableFile = true;
             $workingFile = fopen($this->metricsFile, "a+");
+
+            // Is it possible for a task to get stuck? Keeps choosing at the wrong time?
             while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
                 if ($count++ < $timeoutMsecs) {
                     usleep(500);
@@ -254,17 +244,28 @@ class MerchantMetrics extends AbstractHelper
                     break;
                 }
             }
-            if ($availableFile) {
-                $this->Metrics = json_decode(file_get_contents($this->metricsFile), true);
-                flock($workingFile, LOCK_UN);    // release the lock
+            if ($availableFile) 
+            {
+                $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
+               
+                $output = json_decode($raw_file, true);
+                
             }
-            $outputMetrics = ['metrics' => $this->Metrics];
-            return $this->guzzleClient->post("v1/merchant/metrics", [
+            $outputMetrics = ['metrics' => $output];
+            $response = $this->guzzleClient->post("v1/merchant/metrics", [
                 'headers' => $this->Headers, 
                 'json' => $outputMetrics,
             ]);
+
+            // Clear File if successfully posted
+            if ($response->getStatusCode() == 200) {
+                file_put_contents($this->metricsFile, ""); 
+            }
         } catch (\Exception $e) {
-            $this->catchExceptionAndSendError($e, $e->getMessage(), 6009, 422);
+            // $this->catchExceptionAndSendError($e, $e->getMessage(), 6009, 422);
+        } finally {
+            flock($workingFile, LOCK_UN);    // release the lock
+            fclose($workingFile);
         }
     }
 }
