@@ -183,29 +183,31 @@ class MerchantMetrics extends AbstractHelper
      // Cron job running the post
     public function processMetrics($countKey, $countValue, $latencyKey, $latencyValue)
     {
-       // add delimieter
-        $this->addCountMetric($countKey, $countValue);
-        $this->addLatencyMetric($latencyKey, $latencyValue);
-       
-        $count = 0;
-        $timeoutMsecs = 10; //number of seconds of timeout
-        $availableFile = true;
-        $workingFile = fopen($this->metricsFile, "a+");
-        while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
-            if ($count++ < $timeoutMsecs) {
-                usleep(500);
-            } else {
-                $availableFile = false;
-                break;
+        if ($this->configHelper->shouldCaptureMerchantMetrics()) {
+        // add delimieter
+            $this->addCountMetric($countKey, $countValue);
+            $this->addLatencyMetric($latencyKey, $latencyValue);
+        
+            $count = 0;
+            $timeoutMsecs = 10; //number of seconds of timeout
+            $availableFile = true;
+            $workingFile = fopen($this->metricsFile, "a+");
+            while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
+                if ($count++ < $timeoutMsecs) {
+                    usleep(500);
+                } else {
+                    $availableFile = false;
+                    break;
+                }
             }
-        }
-        if ($availableFile) {
-            file_put_contents($this->metricsFile, json_encode($this->Metrics), FILE_APPEND);
-            file_put_contents($this->metricsFile, ",", FILE_APPEND);
-            flock($workingFile, LOCK_UN);    // release the lock
-        }
+            if ($availableFile) {
+                file_put_contents($this->metricsFile, json_encode($this->Metrics), FILE_APPEND);
+                file_put_contents($this->metricsFile, ",", FILE_APPEND);
+                flock($workingFile, LOCK_UN);    // release the lock
+            }
 
-        fclose($workingFile);
+            fclose($workingFile);
+        }
     }
 
     public function processMetricsThread($countKey, $countValue, $latencyKey, $latencyValue)
@@ -228,44 +230,46 @@ class MerchantMetrics extends AbstractHelper
      */
     public function postMetrics()
     {
-        try{
-            $output = "";
-            $count = 0;
-            $timeoutMsecs = 10; //number of seconds of timeout
-            $availableFile = true;
-            $workingFile = fopen($this->metricsFile, "a+");
+        if ($this->configHelper->shouldCaptureMerchantMetrics()) {
+            try{
+                $output = "";
+                $count = 0;
+                $timeoutMsecs = 10; //number of seconds of timeout
+                $availableFile = true;
+                $workingFile = fopen($this->metricsFile, "a+");
 
-            // Is it possible for a task to get stuck? Keeps choosing at the wrong time?
-            while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
-                if ($count++ < $timeoutMsecs) {
-                    usleep(500);
-                } else {
-                    $availableFile = false;
-                    break;
+                // Is it possible for a task to get stuck? Keeps choosing at the wrong time?
+                while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
+                    if ($count++ < $timeoutMsecs) {
+                        usleep(500);
+                    } else {
+                        $availableFile = false;
+                        break;
+                    }
                 }
-            }
-            if ($availableFile) 
-            {
-                $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
-               
-                $output = json_decode($raw_file, true);
+                if ($availableFile) 
+                {
+                    $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
                 
-            }
-            $outputMetrics = ['metrics' => $output];
-            $response = $this->guzzleClient->post("v1/merchant/metrics", [
-                'headers' => $this->Headers, 
-                'json' => $outputMetrics,
-            ]);
+                    $output = json_decode($raw_file, true);
+                    
+                }
+                $outputMetrics = ['metrics' => $output];
+                $response = $this->guzzleClient->post("v1/merchant/metrics", [
+                    'headers' => $this->Headers, 
+                    'json' => $outputMetrics,
+                ]);
 
-            // Clear File if successfully posted
-            if ($response->getStatusCode() == 200) {
-                file_put_contents($this->metricsFile, ""); 
+                // Clear File if successfully posted
+                if ($response->getStatusCode() == 200) {
+                    file_put_contents($this->metricsFile, ""); 
+                }
+            } catch (\Exception $e) {
+                // $this->catchExceptionAndSendError($e, $e->getMessage(), 6009, 422);
+            } finally {
+                flock($workingFile, LOCK_UN);    // release the lock
+                fclose($workingFile);
             }
-        } catch (\Exception $e) {
-            // $this->catchExceptionAndSendError($e, $e->getMessage(), 6009, 422);
-        } finally {
-            flock($workingFile, LOCK_UN);    // release the lock
-            fclose($workingFile);
         }
     }
 }

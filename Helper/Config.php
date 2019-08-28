@@ -244,6 +244,8 @@ class Config extends AbstractHelper
      */
     const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
 
+    const XML_PATH_CAPTURE_MERCHANT_METRICS = 'payment/boltpay/capture_merchant_metrics';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1139,6 +1141,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get minimize javascript flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function shouldCaptureMerchantMetrics($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CAPTURE_MERCHANT_METRICS,
             ScopeInterface::SCOPE_STORE,
             $store
         );
