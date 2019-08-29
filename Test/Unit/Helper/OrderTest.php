@@ -75,7 +75,7 @@ class OrderTest extends TestCase
      */
     public function deleteOrderByIncrementId_noOrder()
     {
-        $this->currentMock->expects($this->once())->method('getExistingOrder')->with(self::INCREMENT_ID)
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn(null);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
@@ -86,6 +86,7 @@ class OrderTest extends TestCase
                 self::QUOTE_ID
             )
         );
+        $this->currentMock->expects(static::never())->method('deleteOrder');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
     }
 
@@ -94,10 +95,10 @@ class OrderTest extends TestCase
      */
     public function deleteOrderByIncrementId_invalidState()
     {
-        $this->currentMock->expects($this->once())->method('getExistingOrder')->with(self::INCREMENT_ID)
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
         $state = Order::STATE_NEW;
-        $this->orderMock->expects($this->once())->method('getState')->willReturn($state);
+        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
         $this->expectExceptionMessage(
@@ -108,6 +109,7 @@ class OrderTest extends TestCase
                 self::QUOTE_ID
             )
         );
+        $this->currentMock->expects(static::never())->method('deleteOrder');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
     }
 
@@ -116,12 +118,11 @@ class OrderTest extends TestCase
      */
     public function deleteOrderByIncrementId_noError()
     {
-        $this->currentMock->expects($this->once())->method('getExistingOrder')->with(self::INCREMENT_ID)
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
         $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects($this->once())->method('getState')->willReturn($state);
-        $this->currentMock->expects($this->once())->method('deleteOrder')->with($this->orderMock);
-
+        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
     }
 }
