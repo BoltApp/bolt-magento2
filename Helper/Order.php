@@ -920,7 +920,7 @@ class Order extends AbstractHelper
      * @param $orderIncrementId
      * @return OrderModel|false
      */
-    private function getExistingOrder($orderIncrementId)
+    protected function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
         return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
