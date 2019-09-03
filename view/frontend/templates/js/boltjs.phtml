@@ -21,6 +21,8 @@
  * @var $block \Bolt\Boltpay\Block\Js
  */
 if ($block->shouldDisableBoltCheckout()) return;
+//check if we need Bolt on this page
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartPage() && !$block->isProductPage()) return;
 
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();

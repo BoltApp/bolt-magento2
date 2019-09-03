@@ -35,7 +35,7 @@ class Js extends Template
     /**
      * @var Config
      */
-    private $configHelper;
+    protected $configHelper;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -344,7 +344,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageBlacklist()
+    protected function getPageBlacklist()
     {
         return $this->configHelper->getPageBlacklist();
     }
@@ -356,7 +356,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageWhitelist()
+    protected function getPageWhitelist()
     {
         $values =  $this->configHelper->getPageWhitelist();
         return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
@@ -379,16 +379,12 @@ class Js extends Template
             return true;
         }
 
-        // If minicart is supported (allowing Bolt on every page)
-        // and no IP whitelist is defined there are no additional restrictions.
-        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
-            return false;
-        }
-
-        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
         // If IP whitelist is defined, the Bolt checkout functionality
         // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
-        return ! in_array($currentPage, $this->getPageWhitelist());
+        if (!$this->configHelper->getIPWhitelistArray()) {
+            return false;
+        }
+        return !in_array($currentPage, $this->getPageWhitelist());
     }
 
     /**
@@ -403,8 +399,8 @@ class Js extends Template
     }
 
     /**
-     * Determines if Bolt javascript should be loaded on the current page
-     * and Bolt checkout button displayed. Checks whether the module is active,
+     * Return true if we need to disable bolt scripts and button
+     * Checks whether the module is active,
      * the page is Bolt checkout restricted and if there is an IP restriction.
      *
      * @return bool
@@ -469,5 +465,31 @@ class Js extends Template
         } else {
             return $js;
         }
+    }
+
+    /**
+     * Return true if we are on cart page or checkout page
+     */
+    public function isOnPageFromWhiteList() {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return in_array($currentPage, $this->getPageWhitelist());
+    }
+
+    /**
+     * Return true if bolt on minicart is enabled
+     */
+    public function isMinicartPage() {
+        return $this->configHelper->getMinicartSupport();
+    }
+
+    /**
+     * Return true if we are on product page, and bolt on product page is enabled
+     */
+    public function isProductPage() {
+        if (!$this->configHelper->getProductPageCheckoutFlag()) {
+            return false;
+        }
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage=="catalog_product_view";
     }
 }
