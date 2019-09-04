@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
+use Bolt\Boltpay\Helper\MerchantMetrics;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\State;
@@ -148,6 +149,11 @@ class PaymentTest extends TestCase
      * @var BoltPayment
      */
     private $currentMock;
+
+    /**
+     * @var MerchantMetrics
+     */
+    private $merchantMetrics;
 
     protected function setUp()
     {
@@ -336,6 +342,7 @@ class PaymentTest extends TestCase
         $this->localeDate = $this->createMock(TimezoneInterface::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->merchantMetrics = $this->createMock(MerchantMetrics::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
         $this->transactionRepository = $this->getMockBuilder(TransactionRepository::class)->disableOriginalConstructor()->setMethods(['getByTransactionId'])->getMock();
         $this->authSession = $this->getMockBuilder(Session::class)->disableOriginalConstructor()->setMethods(['getUser'])->getMock();
@@ -373,6 +380,7 @@ class PaymentTest extends TestCase
                                     $this->apiHelper,
                                     $this->orderHelper,
                                     $this->bugsnag,
+                                      $this->merchantMetrics,
                                     $this->dataObjectFactory,
                                     $this->cartHelper,
                                     $this->transactionRepository,

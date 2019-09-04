@@ -87,6 +87,7 @@ class MerchantMetrics extends AbstractHelper
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
      *
+     *
      * @throws
      */
     public function __construct(
@@ -109,6 +110,7 @@ class MerchantMetrics extends AbstractHelper
         // lib/internal/Bolt/guzzle
         //////////////////////////////////////////
         if (!class_exists('\GuzzleHttp\Client')) {
+            // phpcs:ignore
             require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
         }
         $this->configHelper = $configHelper;
