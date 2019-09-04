@@ -17,15 +17,15 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use http\Encoding\Stream;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Exception\BoltException;
-// use Spatie\Async\Pool;
+
+
 
 /**
  * Boltpay Merchant Metrics wrapper helper
@@ -87,7 +87,7 @@ class MerchantMetrics extends AbstractHelper
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
      *
-     * @codeCoverageIgnore
+     * @throws
      */
     public function __construct(
         Context $context,
@@ -120,26 +120,56 @@ class MerchantMetrics extends AbstractHelper
 
     }
 
+    /**
+     * Attempts to lock a file and returns a boolean based off of the result
+     *
+     * @param Stream        $workingFile    file that is attempting to be written to
+     *
+     * @return bool
+     */
     protected function lockFile($workingFile){
         return flock($workingFile, LOCK_EX | LOCK_NB);
     }
 
+    /**
+     * Unlocks a file when finished
+     *
+     * @param Stream        $workingFile    file that is attempting to be written to
+     *
+     * @return void
+     */
     protected function unlockFile($workingFile){
         flock($workingFile, LOCK_UN);    // release the lock
     }
 
+
+    /**
+     * Retrieves currrent time for when metrics are uploaded
+     *
+     * @return int
+     */
     protected function getCurrentTime() {
         return round(microtime(true) * 1000);
     }
 
+    /**
+     * Based off the environment the project is ran in, determines the endpoint to add merchant metrics
+     *
+     * @return \GuzzleHttp\Client
+     */
     protected function setClient() {
         // determines if we are in the Sandbox env or not
-
         $base_uri =  $this->configHelper->isSandboxModeSet() ? 'https://api-sandbox.bolt.com/' : 'https://api.bolt.com/' ;
+
         // Creates a Guzzle Client and Headers needed for Metrics Requests
         return new \GuzzleHttp\Client(['base_uri' => $base_uri]);
     }
 
+    /**
+     * Retrieves Headers needed to communicate with Bolt
+     *
+     * @return array
+     */
     protected function setHeaders() {
         return [
             'Content-Type' => 'application/json',
@@ -147,6 +177,11 @@ class MerchantMetrics extends AbstractHelper
         ];
     }
 
+    /**
+     * Fetches the current root directory for magento and creates a bolt metrics file in that location
+     *
+     * @return string
+     */
     protected function setFile() {
         // determine root directory and add create a metrics file there
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
@@ -155,6 +190,11 @@ class MerchantMetrics extends AbstractHelper
         return $rootPath . '/bolt_metrics.json';
     }
 
+    /**
+     * Attempts to open a file and if it cannot open in 5 seconds it will return null
+     *
+     * @return Stream
+     */
     public function waitForFile(){
         $count = 0;
         $timeoutMsecs = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
@@ -176,9 +216,6 @@ class MerchantMetrics extends AbstractHelper
         }
         return $workingFile;
     }
-
-
-
 
     /**
      * Add a count metric to the array of metrics being stored
@@ -224,6 +261,7 @@ class MerchantMetrics extends AbstractHelper
      * @param int           $countValue         the count value of the metric
      * @param string        $latencyKey         name of latency metric
      * @param int           $latencyValue  the total time of the metric
+     *
      * @return void
      */
     public function processMetrics($countKey, $countValue, $latencyKey, $latencyValue)
@@ -249,26 +287,11 @@ class MerchantMetrics extends AbstractHelper
         }
     }
 
-    // to be used at a later time if threading is needed 
-    // public function processMetricsThread($countKey, $countValue, $latencyKey, $latencyValue)
-    // {
-    //     $this->logHelper->addInfoLog($countKey);
-    //     $pool = Pool::create();
-
-    //     $pool[] = async(function () use ($countKey, $countValue, $latencyKey, $latencyValue) {
-    //         $this->processMetrics($countKey, $countValue, $latencyKey, $latencyValue);
-    //     });
-        
-    //     await($pool); // figure out how to manage multiple cases
-    // }
-
-
-
     /**
-     * Regsier a new notification callback.
+     * Post Metrics Collected in File to Merchant Metrics Endpoint, returning a 200 response if successful
      *
      *
-     * @return void
+     * @return int
      */
     public function postMetrics()
     {
@@ -285,24 +308,25 @@ class MerchantMetrics extends AbstractHelper
                     //takes file contents and puts it to appropriate posting format
                     $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
                     $output = json_decode($raw_file, true);
-                    
-                }
-                if ($this->guzzleClient == null) {
-                    $this->guzzleClient = $this->setClient();
-                    $this->headers = $this->setHeaders();
-                }
+                    if ($this->guzzleClient == null) {
+                        $this->guzzleClient = $this->setClient();
+                        $this->headers = $this->setHeaders();
+                    }
 
-                $outputMetrics = ['metrics' => $output];
-                $response = $this->guzzleClient->post("v1/merchant/metrics", [
-                    'headers' => $this->headers,
-                    'json' => $outputMetrics,
-                ]);
+                    $outputMetrics = ['metrics' => $output];
+                    $response = $this->guzzleClient->post("v1/merchant/metrics", [
+                        'headers' => $this->headers,
+                        'json' => $outputMetrics,
+                    ]);
 
-                // Clear File if successfully posted
-                if ($response->getStatusCode() == 200) {
-                    file_put_contents($this->metricsFile, ""); 
+                    // Clear File if successfully posted
+                    if ($response->getStatusCode() == 200) {
+                        file_put_contents($this->metricsFile, "");
+                    }
+                    return $response->getStatusCode();
+                } else {
+                    return null;
                 }
-                return $response->getStatusCode();
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
             } finally {
