@@ -43,6 +43,7 @@ use Bolt\Boltpay\Model\Api\CreateOrder;
 class CreateOrderTest extends TestCase
 {
     const STORE_ID = 1;
+    const MINIMUM_ORDER_AMOUNT = 50;
 
     /**
      * @var HookHelper
@@ -119,6 +120,12 @@ class CreateOrderTest extends TestCase
      */
     protected function setUp()
     {
+        $this->initRequiredMocks();
+        $this->initCurrentMock();
+    }
+
+    private function initRequiredMocks()
+    {
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
@@ -133,26 +140,27 @@ class CreateOrderTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
 
         $this->quoteMock = $this->createMock(Quote::class);
-
-        $this->initCurrentMock();
     }
 
     private function initCurrentMock()
     {
-        $this->currentMock = new CreateOrder(
-            $this->hookHelper,
-            $this->orderHelper,
-            $this->cartHelper,
-            $this->logHelper,
-            $this->request,
-            $this->bugsnag,
-            $this->response,
-            $this->url,
-            $this->backendUrl,
-            $this->configHelper,
-            $this->stockRegistry,
-            $this->sessionHelper
-        );
+        $this->currentMock = $this->getMockBuilder(CreateOrder::class)
+            ->setConstructorArgs([
+                $this->hookHelper,
+                $this->orderHelper,
+                $this->cartHelper,
+                $this->logHelper,
+                $this->request,
+                $this->bugsnag,
+                $this->response,
+                $this->url,
+                $this->backendUrl,
+                $this->configHelper,
+                $this->stockRegistry,
+                $this->sessionHelper
+            ])
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
     }
 
     /**
@@ -169,16 +177,16 @@ class CreateOrderTest extends TestCase
      */
     public function validateMinimumAmount_invalid()
     {
-        $minAmount = 50;
         $this->quoteMock->expects(static::once())->method('validateMinimumAmount')->willReturn(false);
         $this->quoteMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())->method('getMinimumOrderAmount')->with(static::STORE_ID)->willReturn($minAmount);
+        $this->configHelper->expects(static::once())->method('getMinimumOrderAmount')->with(static::STORE_ID)
+            ->willReturn(static::MINIMUM_ORDER_AMOUNT);
         $this->bugsnag->expects(static::once())->method('registerCallback');
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_MINIMUM_PRICE_NOT_MET);
         $this->expectExceptionMessage(
             sprintf(
-                'The minimum order amount: %s has not being met.', $minAmount
+                'The minimum order amount: %s has not being met.', static::MINIMUM_ORDER_AMOUNT
             )
         );
         $this->currentMock->validateMinimumAmount($this->quoteMock);
