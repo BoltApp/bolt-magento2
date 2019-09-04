@@ -23,7 +23,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
- * Class ConfigTest
+ * Class OrderTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
