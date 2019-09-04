@@ -181,10 +181,12 @@ class OrderManagement implements OrderManagementInterface
             }
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("webhooks.success", 1, "webhooks.latency", $latency);
+            $this->merchantMetrics->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->response->setHttpResponseCode($e->getHttpCode());
             $this->response->setBody(json_encode([
                 'status' => 'error',
@@ -195,6 +197,7 @@ class OrderManagement implements OrderManagementInterface
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([
                 'status' => 'error',

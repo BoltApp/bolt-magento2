@@ -237,10 +237,12 @@ class CreateOrder implements CreateOrderInterface
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_creation.success", 1, "order_creation.latency", $latency);
+            $this->merchantMetrics->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
                 'error'  => [[
@@ -254,6 +256,7 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error'  => [[
@@ -267,6 +270,7 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
@@ -280,6 +284,7 @@ class CreateOrder implements CreateOrderInterface
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[

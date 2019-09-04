@@ -315,10 +315,12 @@ class Payment extends AbstractMethod
 
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_void.success", 1, "order_void.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             return $this;
         } catch (\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_void.failure", 1, "order_void.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->bugsnag->notifyException($e);
             throw $e;
         }
@@ -353,9 +355,11 @@ class Payment extends AbstractMethod
             }
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_fetch.success", 1, "order_fetch.latency", $latency);
+            $this->merchantMetrics->postMetrics();
         } catch ( \Exception $e ) {
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_fetch.failure", 1, "order_fetch.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             $this->bugsnag->notifyException( $e );
         } finally {
             return [];
@@ -425,11 +429,13 @@ class Payment extends AbstractMethod
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_capture.success", 1, "order_capture.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_capture.failure", 1, "order_capture.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             throw $e;
         }
     }
@@ -498,12 +504,14 @@ class Payment extends AbstractMethod
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_refund.success", 1, "order_refund.latency", $latency);
+            $this->merchantMetrics->postMetrics();
 
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_refund.failure", 1, "order_refund.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             throw $e;
         }
     }

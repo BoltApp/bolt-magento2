@@ -113,9 +113,11 @@ class Data extends Action
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
                 $this->merchantMetrics->processMetrics("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
+                $this->merchantMetrics->postMetrics();
             } else {
                 $latency = round(microtime(true) * 1000) - $startTime;
                 $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+                $this->merchantMetrics->postMetrics();
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
@@ -141,6 +143,7 @@ class Data extends Action
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+            $this->merchantMetrics->postMetrics();
             throw $e;
         }
     }

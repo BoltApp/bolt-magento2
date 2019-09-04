@@ -124,10 +124,12 @@ class Data extends Action
                 $responseData = json_decode(json_encode($response), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
                 $this->merchantMetrics->processMetrics("order_token.success", 1, "order_token.latency", $latency);
+                $this->merchantMetrics->postMetrics();
             } else {
                 $responseData['cart'] = [];
                 $latency = round(microtime(true) * 1000) - $startTime;
                 $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+                $this->merchantMetrics->postMetrics();
             }
 
             // get immutable quote id stored with cart data
@@ -160,6 +162,7 @@ class Data extends Action
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->merchantMetrics->postMetrics();
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);-
             $result->setData([
@@ -169,6 +172,7 @@ class Data extends Action
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
             $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->merchantMetrics->postMetrics();
         } finally {
             return $result;
         }
