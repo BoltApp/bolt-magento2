@@ -24,6 +24,7 @@ use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Exception\BoltException;
 // use Spatie\Async\Pool;
 
 /**
@@ -119,6 +120,14 @@ class MerchantMetrics extends AbstractHelper
 
     }
 
+    protected function lockFile($workingFile){
+        return flock($workingFile, LOCK_EX | LOCK_NB);
+    }
+
+    protected function unlockFile($workingFile){
+        flock($workingFile, LOCK_UN);    // release the lock
+    }
+
     protected function getCurrentTime() {
         return round(microtime(true) * 1000);
     }
@@ -146,14 +155,18 @@ class MerchantMetrics extends AbstractHelper
         return $rootPath . '/bolt_metrics.json';
     }
 
-    protected function waitForFile(){
+    public function waitForFile(){
         $count = 0;
         $timeoutMsecs = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
+
+        if ($this->metricsFile == null) {
+            $this->metricsFile = $this->setFile();
+        }
 
         $workingFile = fopen($this->metricsFile, "a+");
 
         // logic for properly grabbing file and locking it
-        while (!flock($workingFile, LOCK_EX | LOCK_NB)) {
+        while (!$this->lockFile($workingFile)) {
             if ($count++ < $timeoutMsecs) {
                 usleep(500);
             } else {
@@ -164,9 +177,7 @@ class MerchantMetrics extends AbstractHelper
         return $workingFile;
     }
 
-    public function unlockFile($workingFile){
-        flock($workingFile, LOCK_UN);    // release the lock
-    }
+
 
 
     /**
@@ -219,8 +230,9 @@ class MerchantMetrics extends AbstractHelper
     {
 
 
+        $test = $this->configHelper->shouldCaptureMerchantMetrics();
         // checks if flag is set for Merchant Metrics if not ignore
-        if ($this->configHelper->shouldCaptureMerchantMetrics()) {
+        if ($test) {
             $this->addCountMetric($countKey, $countValue);
             $this->addLatencyMetric($latencyKey, $latencyValue);
 
@@ -232,9 +244,8 @@ class MerchantMetrics extends AbstractHelper
                 file_put_contents($this->metricsFile, json_encode($this->metrics), FILE_APPEND);
                 file_put_contents($this->metricsFile, ",", FILE_APPEND);
                 $this->unlockFile($workingFile);
-
+                fclose($workingFile);
             }
-            fclose($workingFile);
         }
     }
 
@@ -263,6 +274,7 @@ class MerchantMetrics extends AbstractHelper
     {
         // logic for properly grabbing file and locking it
         if ($this->configHelper->shouldCaptureMerchantMetrics()) {
+            $workingFile = null;
             try{
                 $output = "";
                 if ($this->metricsFile == null) {
@@ -292,11 +304,14 @@ class MerchantMetrics extends AbstractHelper
                 }
                 return $response->getStatusCode();
             } catch (\Exception $e) {
-                $this->bugsnag->notifyException(new Exception("Merchant Metrics send error", $e));
+                $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
             } finally {
-                flock($workingFile, LOCK_UN);    // release the lock
-                fclose($workingFile);
+                if ($workingFile) {
+                    flock($workingFile, LOCK_UN);    // release the lock
+                    fclose($workingFile);
+                }
             }
         }
+        return null;
     }
 }
