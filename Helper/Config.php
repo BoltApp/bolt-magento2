@@ -1143,4 +1143,19 @@ class Config extends AbstractHelper
             $store
         );
     }
+
+    /**
+     * Get minimum order amount configuration
+     *
+     * @param int|string|Store $storeId
+     * @return float|int
+     */
+    public function getMinimumOrderAmount($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            'sales/minimum_order/amount',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
 }
