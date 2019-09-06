@@ -24,7 +24,7 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 
 /**
  * Class Data.
@@ -57,9 +57,9 @@ class Data extends Action
     private $bugsnag;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
-    private $merchantMetrics;
+    private $metricsClient;
     
     /**
      * @var DataObjectFactory
@@ -72,7 +72,7 @@ class Data extends Action
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
-     * @param MerchantMetrics $merchantMetrics
+     * @param MetricsClient $metricsClient
      * @param DataObjectFactory $dataObjectFactory
      *
      * @codeCoverageIgnore
@@ -83,7 +83,7 @@ class Data extends Action
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
-        MerchantMetrics $merchantMetrics,
+        MetricsClient $metricsClient,
         DataObjectFactory $dataObjectFactory
     ) {
         parent::__construct($context);
@@ -91,7 +91,7 @@ class Data extends Action
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
-        $this->merchantMetrics = $merchantMetrics;
+        $this->metricsClient = $metricsClient;
         $this->dataObjectFactory = $dataObjectFactory;
     }
 
@@ -112,12 +112,12 @@ class Data extends Action
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->merchantMetrics->processMetrics("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
-                $this->merchantMetrics->postMetrics();
+                $this->metricsClient->processMetrics("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
+                $this->metricsClient->postMetrics();
             } else {
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
-                $this->merchantMetrics->postMetrics();
+                $this->metricsClient->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+                $this->metricsClient->postMetrics();
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
@@ -142,8 +142,8 @@ class Data extends Action
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+            $this->metricsClient->postMetrics();
             throw $e;
         }
     }

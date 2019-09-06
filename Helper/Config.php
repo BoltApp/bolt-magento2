@@ -1153,7 +1153,7 @@ class Config extends AbstractHelper
      *
      * @return  boolean
      */
-    public function shouldCaptureMerchantMetrics($store = null)
+    public function shouldCaptureMetrics($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_CAPTURE_MERCHANT_METRICS,

@@ -30,11 +30,10 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 /**
  * Boltpay Merchant Metrics wrapper helper
  *
- * @SuppressWarnings(PHPMD.TooManyFields)
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
  */
 
-class MerchantMetrics extends AbstractHelper
+class MetricsClient extends AbstractHelper
 {
     const STAGE_DEVELOPMENT = 'development';
     const STAGE_PRODUCTION  = 'production';
@@ -270,7 +269,7 @@ class MerchantMetrics extends AbstractHelper
     {
 
 
-        $test = $this->configHelper->shouldCaptureMerchantMetrics();
+        $test = $this->configHelper->shouldCaptureMetrics();
         // checks if flag is set for Merchant Metrics if not ignore
         if ($test) {
             $this->addCountMetric($countKey, $countValue);
@@ -298,7 +297,7 @@ class MerchantMetrics extends AbstractHelper
     public function postMetrics()
     {
         // logic for properly grabbing file and locking it
-        if ($this->configHelper->shouldCaptureMerchantMetrics()) {
+        if ($this->configHelper->shouldCaptureMetrics()) {
             $workingFile = null;
             try{
                 $output = "";

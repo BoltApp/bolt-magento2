@@ -23,7 +23,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use PHPUnit\Framework\TestCase;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Filesystem\DirectoryList;
@@ -36,7 +36,7 @@ use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
 
 
-class MerchantMetricsTest extends TestCase
+class MetricsClientTest extends TestCase
 {
     /**
     * @var \GuzzleHttp\Client
@@ -44,7 +44,7 @@ class MerchantMetricsTest extends TestCase
    private $guzzleClient;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
     private $currentMock;
 
@@ -147,7 +147,7 @@ class MerchantMetricsTest extends TestCase
 
         // Partially Mock the Class we are tesing
         $methods = ['unlockFile', 'lockFile', 'getCurrentTime'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
@@ -219,7 +219,7 @@ class MerchantMetricsTest extends TestCase
 
 
         $methods = ['setFile'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
@@ -259,7 +259,7 @@ class MerchantMetricsTest extends TestCase
 
 
         $methods = ['setFile', 'lockFile'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
@@ -296,7 +296,7 @@ class MerchantMetricsTest extends TestCase
 
 
         $methods = ['setFile'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
@@ -343,7 +343,7 @@ class MerchantMetricsTest extends TestCase
             ->will($this->returnValue($this->timeStamp));
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
         $this->currentMock->method('waitForFile')
@@ -379,7 +379,7 @@ class MerchantMetricsTest extends TestCase
             ->will($this->returnValue($this->timeStamp));
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
         $this->currentMock->expects($this->once())->method('waitForFile')
@@ -399,7 +399,7 @@ class MerchantMetricsTest extends TestCase
      */
     public function testFlagOffProcessMetrics()
     {
-        $this->configHelper->method('shouldCaptureMerchantMetrics')
+        $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
 
         $this->initProcessMetrics();
@@ -442,7 +442,7 @@ class MerchantMetricsTest extends TestCase
             ->will($this->returnValue( $this->guzzleClient));
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
         $this->configHelper->expects($this->once())
@@ -491,7 +491,7 @@ class MerchantMetricsTest extends TestCase
             ->will($this->returnValue( $this->guzzleClient));
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
         $this->configHelper->expects($this->once())
@@ -541,7 +541,7 @@ class MerchantMetricsTest extends TestCase
             ->will($this->returnValue( $this->guzzleClient));
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
         $this->configHelper->expects($this->once())
@@ -567,7 +567,7 @@ class MerchantMetricsTest extends TestCase
         $this->initPostMetrics();
 
         $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMerchantMetrics')
+            ->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
 
         $this->currentMock->expects($this->never())->method('setFile');
@@ -583,7 +583,7 @@ class MerchantMetricsTest extends TestCase
 
     private function initProcessMetrics() {
         $methods = ['setFile', 'waitForFile', 'unlockFile', 'getCurrentTime'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
@@ -601,7 +601,7 @@ class MerchantMetricsTest extends TestCase
 
     private function initPostMetrics() {
         $methods = ['setFile', 'waitForFile', 'unlockFile', 'setClient'];
-        $this->currentMock = $this->getMockBuilder(MerchantMetrics::class)
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(

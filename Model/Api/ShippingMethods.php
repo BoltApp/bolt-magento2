@@ -31,7 +31,7 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -103,9 +103,9 @@ class ShippingMethods implements ShippingMethodsInterface
     private $bugsnag;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
-    private $merchantMetrics;
+    private $metricsClient;
 
     /**
      * @var LogHelper
@@ -173,7 +173,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
-     * @param MerchantMetrics                 $merchantMetrics
+     * @param MetricsClient                 $metricsClient
      * @param LogHelper                       $logHelper
      * @param BoltErrorResponse               $errorResponse
      * @param Response                        $response
@@ -195,7 +195,7 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingMethodConverter $converter,
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
-        MerchantMetrics $merchantMetrics,
+        MetricsClient $metricsClient,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
         Response $response,
@@ -216,7 +216,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->converter = $converter;
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
-        $this->merchantMetrics = $merchantMetrics;
+        $this->metricsClient = $metricsClient;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
         $this->response = $response;
@@ -373,24 +373,24 @@ class ShippingMethods implements ShippingMethodsInterface
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("ship_tax.success", 1, "ship_tax.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("ship_tax.success", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->postMetrics();
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->postMetrics();
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }

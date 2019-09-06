@@ -25,7 +25,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
@@ -59,9 +59,9 @@ class Data extends Action
     private $bugsnag;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
-    private $merchantMetrics;
+    private $metricsClient;
 
     /**
      * @param Context $context
@@ -69,7 +69,7 @@ class Data extends Action
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
-     * @param MerchantMetrics $merchantMetrics
+     * @param MetricsClient $metricsClient
      *
      * @codeCoverageIgnore
      */
@@ -79,14 +79,14 @@ class Data extends Action
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
-        MerchantMetrics $merchantMetrics
+        MetricsClient $metricsClient
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
-        $this->merchantMetrics   = $merchantMetrics;
+        $this->metricsClient   = $metricsClient;
     }
 
     /**
@@ -123,13 +123,13 @@ class Data extends Action
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->merchantMetrics->processMetrics("order_token.success", 1, "order_token.latency", $latency);
-                $this->merchantMetrics->postMetrics();
+                $this->metricsClient->processMetrics("order_token.success", 1, "order_token.latency", $latency);
+                $this->metricsClient->postMetrics();
             } else {
                 $responseData['cart'] = [];
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
-                $this->merchantMetrics->postMetrics();
+                $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+                $this->metricsClient->postMetrics();
             }
 
             // get immutable quote id stored with cart data
@@ -161,18 +161,19 @@ class Data extends Action
                 'backUrl' => '',
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->metricsClient->postMetrics();
         } catch (Exception $e) {
-            $this->bugsnag->notifyException($e);-
+            $this->bugsnag->notifyException($e);
+
             $result->setData([
                 'status' => 'failure',
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->metricsClient->postMetrics();
         } finally {
             return $result;
         }

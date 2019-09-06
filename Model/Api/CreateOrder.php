@@ -28,7 +28,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
@@ -83,9 +83,9 @@ class CreateOrder implements CreateOrderInterface
     private $bugsnag;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
-    private $merchantMetrics;
+    private $metricsClient;
 
     /**
      * @var Response
@@ -129,7 +129,7 @@ class CreateOrder implements CreateOrderInterface
      * @param LogHelper              $logHelper
      * @param Request                $request
      * @param Bugsnag                $bugsnag
-     * @param MerchantMetrics        $merchantMetrics
+     * @param MetricsClient        $metricsClient
      * @param Response               $response
      * @param UrlInterface           $url
      * @param BackendUrl             $backendUrl
@@ -144,7 +144,7 @@ class CreateOrder implements CreateOrderInterface
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
-        MerchantMetrics $merchantMetrics,
+        MetricsClient $metricsClient,
         Response $response,
         UrlInterface $url,
         BackendUrl $backendUrl,
@@ -157,7 +157,7 @@ class CreateOrder implements CreateOrderInterface
         $this->logHelper = $logHelper;
         $this->request = $request;
         $this->bugsnag = $bugsnag;
-        $this->merchantMetrics = $merchantMetrics;
+        $this->metricsClient = $metricsClient;
         $this->response = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
@@ -236,13 +236,13 @@ class CreateOrder implements CreateOrderInterface
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_creation.success", 1, "order_creation.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_creation.success", 1, "order_creation.latency", $latency);
+            $this->metricsClient->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
                 'error'  => [[
@@ -255,8 +255,8 @@ class CreateOrder implements CreateOrderInterface
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error'  => [[
@@ -269,8 +269,8 @@ class CreateOrder implements CreateOrderInterface
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
@@ -283,8 +283,8 @@ class CreateOrder implements CreateOrderInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("order_creation.failure", 1, "order_creation.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[

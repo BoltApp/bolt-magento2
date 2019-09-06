@@ -24,7 +24,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MerchantMetrics;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
@@ -62,9 +62,9 @@ class OrderManagement implements OrderManagementInterface
     private $bugsnag;
 
     /**
-     * @var MerchantMetrics
+     * @var MetricsClient
      */
-    private $merchantMetrics;
+    private $metricsClient;
 
     /**
      * @var Response
@@ -82,7 +82,7 @@ class OrderManagement implements OrderManagementInterface
      * @param LogHelper $logHelper
      * @param Request $request
      * @param Bugsnag $bugsnag
-     * @param MerchantMetrics $merchantMetrics
+     * @param MetricsClient $metricsClient
      * @param Response $response
      * @param Config $configHelper
      */
@@ -92,7 +92,7 @@ class OrderManagement implements OrderManagementInterface
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
-        MerchantMetrics $merchantMetrics,
+        MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper
     ) {
@@ -101,7 +101,7 @@ class OrderManagement implements OrderManagementInterface
         $this->logHelper    = $logHelper;
         $this->request      = $request;
         $this->bugsnag      = $bugsnag;
-        $this->merchantMetrics = $merchantMetrics;
+        $this->metricsClient = $metricsClient;
         $this->response     = $response;
         $this->configHelper = $configHelper;
     }
@@ -180,13 +180,13 @@ class OrderManagement implements OrderManagementInterface
                 ]));
             }
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("webhooks.success", 1, "webhooks.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("webhooks.success", 1, "webhooks.latency", $latency);
+            $this->metricsClient->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->response->setHttpResponseCode($e->getHttpCode());
             $this->response->setBody(json_encode([
                 'status' => 'error',
@@ -196,8 +196,8 @@ class OrderManagement implements OrderManagementInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->merchantMetrics->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
-            $this->merchantMetrics->postMetrics();
+            $this->metricsClient->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->metricsClient->postMetrics();
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([
                 'status' => 'error',
