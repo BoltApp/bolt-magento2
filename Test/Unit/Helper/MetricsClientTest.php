@@ -218,7 +218,7 @@ class MetricsClientTest extends TestCase
         $root = vfsStream::setup('root',null,$structure);
 
 
-        $methods = ['setFile'];
+        $methods = ['getFilePath'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
@@ -234,7 +234,7 @@ class MetricsClientTest extends TestCase
             )
             ->getMock();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $outputFile = $this->currentMock->waitForFile();
@@ -258,7 +258,7 @@ class MetricsClientTest extends TestCase
         $root = vfsStream::setup('root',null,$structure);
 
 
-        $methods = ['setFile', 'lockFile'];
+        $methods = ['getFilePath', 'lockFile'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
@@ -277,7 +277,7 @@ class MetricsClientTest extends TestCase
         $this->currentMock->method('lockFile')
             ->will($this->returnValue(false));
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
         $this->assertNull( $this->currentMock->waitForFile());
 
@@ -295,7 +295,7 @@ class MetricsClientTest extends TestCase
         $root = vfsStream::setup('root',null,$structure);
 
 
-        $methods = ['setFile'];
+        $methods = ['getFilePath'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
@@ -311,7 +311,7 @@ class MetricsClientTest extends TestCase
             )
             ->getMock();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/nofile.json'));
 
         $outputFile = $this->currentMock->waitForFile();
@@ -336,7 +336,7 @@ class MetricsClientTest extends TestCase
 
         $this->initProcessMetrics();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/metrics.json'));
 
         $this->currentMock->method('getCurrentTime')
@@ -372,7 +372,7 @@ class MetricsClientTest extends TestCase
 
         $this->initProcessMetrics();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/metrics.json'));
 
         $this->currentMock->method('getCurrentTime')
@@ -404,7 +404,7 @@ class MetricsClientTest extends TestCase
 
         $this->initProcessMetrics();
 
-        $this->currentMock->expects($this->never())->method('setFile');
+        $this->currentMock->expects($this->never())->method('getFilePath');
         $this->currentMock->expects($this->never())->method('getCurrentTime');
         $this->currentMock->expects($this->never())->method('waitForFile');
 
@@ -435,7 +435,7 @@ class MetricsClientTest extends TestCase
 
         $this->initPostMetrics();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
@@ -484,7 +484,7 @@ class MetricsClientTest extends TestCase
 
         $this->initPostMetrics();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
@@ -534,7 +534,7 @@ class MetricsClientTest extends TestCase
 
         $this->initPostMetrics();
 
-        $this->currentMock->method('setFile')
+        $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
@@ -570,7 +570,7 @@ class MetricsClientTest extends TestCase
             ->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
 
-        $this->currentMock->expects($this->never())->method('setFile');
+        $this->currentMock->expects($this->never())->method('getFilePath');
 
         $this->currentMock->expects($this->never())->method('setClient');
 
@@ -582,7 +582,7 @@ class MetricsClientTest extends TestCase
     }
 
     private function initProcessMetrics() {
-        $methods = ['setFile', 'waitForFile', 'unlockFile', 'getCurrentTime'];
+        $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'getCurrentTime'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
@@ -600,7 +600,7 @@ class MetricsClientTest extends TestCase
     }
 
     private function initPostMetrics() {
-        $methods = ['setFile', 'waitForFile', 'unlockFile', 'setClient'];
+        $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'setClient'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()

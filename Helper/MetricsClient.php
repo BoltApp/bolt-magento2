@@ -105,7 +105,6 @@ class MetricsClient extends AbstractHelper
         //////////////////////////////////////////
         // Composerless installation.
         // Make sure libraries are in place:
-        // lib/internal/Bolt/bugsnag
         // lib/internal/Bolt/guzzle
         //////////////////////////////////////////
         if (!class_exists('\GuzzleHttp\Client')) {
@@ -160,7 +159,7 @@ class MetricsClient extends AbstractHelper
      */
     protected function setClient() {
         // determines if we are in the Sandbox env or not
-        $base_uri =  $this->configHelper->isSandboxModeSet() ? 'https://api-sandbox.bolt.com/' : 'https://api.bolt.com/' ;
+        $base_uri = $this->configHelper->getApiUrl();
 
         // Creates a Guzzle Client and Headers needed for Metrics Requests
         return new \GuzzleHttp\Client(['base_uri' => $base_uri]);
@@ -183,7 +182,7 @@ class MetricsClient extends AbstractHelper
      *
      * @return string
      */
-    protected function setFile() {
+    protected function getFilePath() {
         // determine root directory and add create a metrics file there
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
@@ -198,17 +197,17 @@ class MetricsClient extends AbstractHelper
      */
     public function waitForFile(){
         $count = 0;
-        $timeoutMsecs = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
+        $maxRetryCount = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
 
         if ($this->metricsFile == null) {
-            $this->metricsFile = $this->setFile();
+            $this->metricsFile = $this->getFilePath();
         }
 
         $workingFile = fopen($this->metricsFile, "a+");
 
         // logic for properly grabbing file and locking it
         while (!$this->lockFile($workingFile)) {
-            if ($count++ < $timeoutMsecs) {
+            if ($count++ < $maxRetryCount) {
                 usleep(500);
             } else {
                 return null;
@@ -267,24 +266,22 @@ class MetricsClient extends AbstractHelper
      */
     public function processMetrics($countKey, $countValue, $latencyKey, $latencyValue)
     {
+        if (!$this->configHelper->shouldCaptureMetrics()) {
+            return null;
+        }
 
+        $this->addCountMetric($countKey, $countValue);
+        $this->addLatencyMetric($latencyKey, $latencyValue);
 
-        $test = $this->configHelper->shouldCaptureMetrics();
-        // checks if flag is set for Merchant Metrics if not ignore
-        if ($test) {
-            $this->addCountMetric($countKey, $countValue);
-            $this->addLatencyMetric($latencyKey, $latencyValue);
-
-            if ($this->metricsFile == null) {
-                $this->metricsFile = $this->setFile();
-            }
-            $workingFile = $this->waitForFile();
-            if ($workingFile) {
-                file_put_contents($this->metricsFile, json_encode($this->metrics), FILE_APPEND);
-                file_put_contents($this->metricsFile, ",", FILE_APPEND);
-                $this->unlockFile($workingFile);
-                fclose($workingFile);
-            }
+        if ($this->metricsFile == null) {
+            $this->metricsFile = $this->getFilePath();
+        }
+        $workingFile = $this->waitForFile();
+        if ($workingFile) {
+            file_put_contents($this->metricsFile, json_encode($this->metrics), FILE_APPEND);
+            file_put_contents($this->metricsFile, ",", FILE_APPEND);
+            $this->unlockFile($workingFile);
+            fclose($workingFile);
         }
     }
 
@@ -297,44 +294,45 @@ class MetricsClient extends AbstractHelper
     public function postMetrics()
     {
         // logic for properly grabbing file and locking it
-        if ($this->configHelper->shouldCaptureMetrics()) {
-            $workingFile = null;
-            try{
-                $output = "";
-                if ($this->metricsFile == null) {
-                    $this->metricsFile = $this->setFile();
+        if (!$this->configHelper->shouldCaptureMetrics()) {
+            return null;
+        }
+        $workingFile = null;
+        try{
+            $output = "";
+            if ($this->metricsFile == null) {
+                $this->metricsFile = $this->getFilePath();
+            }
+            $workingFile = $this->waitForFile();
+            if ($workingFile) {
+                //takes file contents and puts it to appropriate posting format
+                $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
+                $output = json_decode($raw_file, true);
+                if ($this->guzzleClient == null) {
+                    $this->guzzleClient = $this->setClient();
+                    $this->headers = $this->setHeaders();
                 }
-                $workingFile = $this->waitForFile();
-                if ($workingFile) {
-                    //takes file contents and puts it to appropriate posting format
-                    $raw_file = "[" . rtrim(file_get_contents($this->metricsFile), ",") . "]";
-                    $output = json_decode($raw_file, true);
-                    if ($this->guzzleClient == null) {
-                        $this->guzzleClient = $this->setClient();
-                        $this->headers = $this->setHeaders();
-                    }
 
-                    $outputMetrics = ['metrics' => $output];
-                    $response = $this->guzzleClient->post("v1/merchant/metrics", [
-                        'headers' => $this->headers,
-                        'json' => $outputMetrics,
-                    ]);
+                $outputMetrics = ['metrics' => $output];
+                $response = $this->guzzleClient->post("v1/merchant/metrics", [
+                    'headers' => $this->headers,
+                    'json' => $outputMetrics,
+                ]);
 
-                    // Clear File if successfully posted
-                    if ($response->getStatusCode() == 200) {
-                        file_put_contents($this->metricsFile, "");
-                    }
-                    return $response->getStatusCode();
-                } else {
-                    return null;
+                // Clear File if successfully posted
+                if ($response->getStatusCode() == 200) {
+                    file_put_contents($this->metricsFile, "");
                 }
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
-            } finally {
-                if ($workingFile) {
-                    flock($workingFile, LOCK_UN);    // release the lock
-                    fclose($workingFile);
-                }
+                return $response->getStatusCode();
+            } else {
+                return null;
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
+        } finally {
+            if ($workingFile) {
+                flock($workingFile, LOCK_UN);    // release the lock
+                fclose($workingFile);
             }
         }
         return null;
