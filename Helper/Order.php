@@ -79,6 +79,10 @@ class Order extends AbstractHelper
 
     const MISMATCH_TOLERANCE = 1;
 
+    const BOLT_ORDER_STATE_NEW = 'bolt_new';
+    const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
+    const MAGENTO_ORDER_STATUS_PENDING = 'pending';
+
     /**
      * @var ApiHelper
      */
