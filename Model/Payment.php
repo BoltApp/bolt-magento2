@@ -314,12 +314,14 @@ class Payment extends AbstractMethod
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_void.success", 1, "order_void.latency", $latency);
+            $this->metricsClient->processCountMetric("order_void.success", 1);
+            $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
             $this->metricsClient->postMetrics();
             return $this;
         } catch (\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_void.failure", 1, "order_void.latency", $latency);
+            $this->metricsClient->processCountMetric("order_void.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->bugsnag->notifyException($e);
             throw $e;
@@ -354,11 +356,13 @@ class Payment extends AbstractMethod
                 $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_fetch.success", 1, "order_fetch.latency", $latency);
+            $this->metricsClient->processCountMetric("order_fetch.success", 1);
+            $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch ( \Exception $e ) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_fetch.failure", 1, "order_fetch.latency", $latency);
+            $this->metricsClient->processCountMetric("order_fetch.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->bugsnag->notifyException( $e );
         } finally {
@@ -428,13 +432,15 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_capture.success", 1, "order_capture.latency", $latency);
+            $this->metricsClient->processCountMetric("order_capture.success", 1);
+            $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
             $this->metricsClient->postMetrics();
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_capture.failure", 1, "order_capture.latency", $latency);
+            $this->metricsClient->processCountMetric("order_capture.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
             $this->metricsClient->postMetrics();
             throw $e;
         }
@@ -503,14 +509,16 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_refund.success", 1, "order_refund.latency", $latency);
+            $this->metricsClient->processCountMetric("order_refund.success", 1);
+            $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
             $this->metricsClient->postMetrics();
 
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_refund.failure", 1, "order_refund.latency", $latency);
+            $this->metricsClient->processCountMetric("order_refund.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
             $this->metricsClient->postMetrics();
             throw $e;
         }

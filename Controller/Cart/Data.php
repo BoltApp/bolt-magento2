@@ -123,12 +123,14 @@ class Data extends Action
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->metricsClient->processMetrics("order_token.success", 1, "order_token.latency", $latency);
+                $this->metricsClient->processCountMetric("order_token.success", 1);
+                $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
             } else {
                 $responseData['cart'] = [];
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+                $this->metricsClient->processCountMetric("order_token.failure", 1);
+                $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
             }
 
@@ -161,7 +163,8 @@ class Data extends Action
                 'backUrl' => '',
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->metricsClient->processCountMetric("order_token.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -172,7 +175,8 @@ class Data extends Action
                 'backUrl' => '',
             ]);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("order_token.failure", 1, "order_token.latency", $latency);
+            $this->metricsClient->processCountMetric("order_token.failure", 1);
+            $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
             $this->metricsClient->postMetrics();
         } finally {
             return $result;

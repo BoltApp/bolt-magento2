@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Metric;
 use PHPUnit\Framework\TestCase;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -126,7 +127,7 @@ class MetricsClientTest extends TestCase
         $this->countValue = 2;
         $this->latencyKey = "test_latency";
         $this->latencyValue = 1234;
-        $this->fileInput = '{"' . $this->countKey . '":{"value":' . $this->countValue . ',"metric_type":"count","timestamp":' . $this->timeStamp . '},"' . $this->latencyKey . '":{"value":' . $this->latencyValue . ',"metric_type":"latency","timestamp":' . $this->timeStamp . '}},';
+        $this->fileInput = '{"' . $this->countKey . '":{"value":' . $this->countValue . ',"metric_type":"count","timestamp":' . $this->timeStamp . '}},';
 
         // set up successful endpoint
         $successfulEndpoint = new MockHandler([
@@ -172,19 +173,18 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function testAddMetricCount()
+    public function testFormatCountMetric()
     {
         $data = [
             'value' => $this->countValue,
             "metric_type" => "count",
             "timestamp" => $this->timeStamp
         ];
-        $expectedKey = array();
-        $expectedKey[$this->countKey] = $data;
-        $this->currentMock->addCountMetric($this->countKey, $this->countValue);
+        $expectedMetric = new Metric($this->countKey, $data);
+        $result = $this->currentMock->formatCountMetric($this->countKey, $this->countValue);
 
 
-        $this->assertEquals($expectedKey,  $this->currentMock->metrics);
+        $this->assertEquals($expectedMetric,  $result);
     }
 
     /**
@@ -197,12 +197,11 @@ class MetricsClientTest extends TestCase
             "metric_type" => "latency",
             "timestamp" => $this->timeStamp
         ];
-        $expectedKey = array();
-        $expectedKey["test"] = $data;
 
-        $this->currentMock->addLatencyMetric("test", $this->latencyValue);
+        $expectedMetric = new Metric($this->latencyKey, $data);
+        $result = $this->currentMock->formatLatencyMetric($this->latencyKey, $this->latencyValue);
 
-        $this->assertEquals($expectedKey,  $this->currentMock->metrics);
+        $this->assertEquals($expectedMetric,  $result);
     }
 
     /**
@@ -324,7 +323,7 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function testValidProcessMetrics()
+    public function testValidWriteMetricToFile()
     {
         $structure = [
             'test' => []
@@ -334,7 +333,14 @@ class MetricsClientTest extends TestCase
 
         $workingFile = fopen($root->url() . '/test/metrics.json', "a+");
 
-        $this->initProcessMetrics();
+        $data = [
+            'value' => $this->countValue,
+            "metric_type" => "count",
+            "timestamp" => $this->timeStamp
+        ];
+        $testMetric = new Metric($this->countKey, $data);
+
+        $this->initWriteMetricToFile();
 
         $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/metrics.json'));
@@ -342,15 +348,12 @@ class MetricsClientTest extends TestCase
         $this->currentMock->method('getCurrentTime')
             ->will($this->returnValue($this->timeStamp));
 
-        $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
 
         $this->currentMock->method('waitForFile')
             ->will($this->returnValue($workingFile));
 
 
-        $this->currentMock->processMetrics($this->countKey, $this->countValue, $this->latencyKey, $this->latencyValue);
+        $this->currentMock->writeMetricToFile($testMetric);
 
         $this->assertEquals(
         $this->fileInput,
@@ -362,7 +365,7 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function testNoFileProcessMetrics()
+    public function testNoFileWriteMetricToFile()
     {
         $structure = [
             'test' => []
@@ -370,7 +373,7 @@ class MetricsClientTest extends TestCase
 
         $root = vfsStream::setup('root',null,$structure);
 
-        $this->initProcessMetrics();
+        $this->initWriteMetricToFile();
 
         $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/metrics.json'));
@@ -378,15 +381,18 @@ class MetricsClientTest extends TestCase
         $this->currentMock->method('getCurrentTime')
             ->will($this->returnValue($this->timeStamp));
 
-        $this->configHelper->expects($this->once())
-            ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
 
         $this->currentMock->expects($this->once())->method('waitForFile')
             ->will($this->returnValue(null));
 
 
-        $this->currentMock->processMetrics($this->countKey, $this->countValue, $this->latencyKey, $this->latencyValue);
+        $data = [
+            'value' => $this->countValue,
+            "metric_type" => "count",
+            "timestamp" => $this->timeStamp
+        ];
+        $testMetric = new Metric($this->countKey, $data);
+        $this->currentMock->writeMetricToFile($testMetric);
 
         $this->assertNull(
             $root->getChild('test/metrics.json')
@@ -394,27 +400,72 @@ class MetricsClientTest extends TestCase
 
     }
 
+
     /**
      * @inheritdoc
      */
-    public function testFlagOffProcessMetrics()
+    public function testValidProcessCountMetric()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('shouldCaptureMetrics')
+            ->will($this->returnValue(true));
+
+
+        $this->initProcessMetrics();
+
+        $this->currentMock->expects($this->once())->method('writeMetricToFile');
+        $this->currentMock->expects($this->once())->method('formatCountMetric');
+
+
+        $this->currentMock->processCountMetric($this->countKey, $this->countValue);
+    }
+
+    public function testValidProcessLatencyMetric()
+    {
+        $this->configHelper->expects($this->once())
+            ->method('shouldCaptureMetrics')
+            ->will($this->returnValue(true));
+
+
+        $this->initProcessMetrics();
+
+        $this->currentMock->expects($this->once())->method('writeMetricToFile');
+        $this->currentMock->expects($this->once())->method('formatLatencyMetric');
+
+
+        $this->currentMock->processLatencyMetric($this->latencyKey, $this->latencyValue);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testFlagOffProcessCountMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
 
         $this->initProcessMetrics();
 
-        $this->currentMock->expects($this->never())->method('getFilePath');
-        $this->currentMock->expects($this->never())->method('getCurrentTime');
-        $this->currentMock->expects($this->never())->method('waitForFile');
+        $this->currentMock->expects($this->never())->method('formatCountMetric');
+        $this->currentMock->expects($this->never())->method('writeMetricToFile');
 
-        $this->currentMock->processMetrics($this->countKey, $this->countValue, $this->latencyKey, $this->latencyValue);
+        $this->currentMock->processCountMetric($this->countKey, $this->countValue);
+    }
 
-        $this->assertEquals(
-            array(),
-            $this->currentMock->metrics
-        );
+    /**
+     * @inheritdoc
+     */
+    public function testFlagOffProcessLatencyMetric()
+    {
+        $this->configHelper->method('shouldCaptureMetrics')
+            ->will($this->returnValue(false));
 
+        $this->initProcessMetrics();
+
+        $this->currentMock->expects($this->never())->method('formatLatencyMetric');
+        $this->currentMock->expects($this->never())->method('writeMetricToFile');
+
+        $this->currentMock->processLatencyMetric($this->countKey, $this->countValue);
     }
 
     /**
@@ -581,8 +632,26 @@ class MetricsClientTest extends TestCase
         $this->assertNull($this->currentMock->postMetrics());
     }
 
-    private function initProcessMetrics() {
+    private function initWriteMetricToFile() {
         $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'getCurrentTime'];
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
+            ->setMethods($methods)
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->configHelper,
+                    $this->directoryList,
+                    $this->storeManager,
+                    $this->bugsnag,
+                    $this->logHelper
+                ]
+            )
+            ->getMock();
+    }
+
+    private function initProcessMetrics() {
+        $methods = ['formatCountMetric', 'formatLatencyMetric', 'writeMetricToFile'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()

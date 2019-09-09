@@ -373,23 +373,27 @@ class ShippingMethods implements ShippingMethodsInterface
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("ship_tax.success", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->processCountMetric("ship_tax.success", 1);
+            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
+            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
+            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("ship_tax.failure", 1, "ship_tax.latency", $latency);
+            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
+            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);

@@ -180,12 +180,14 @@ class OrderManagement implements OrderManagementInterface
                 ]));
             }
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("webhooks.success", 1, "webhooks.latency", $latency);
+            $this->metricsClient->processCountMetric("webhooks.success", 1);
+            $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->metricsClient->processCountMetric("webhooks.failure", 1);
+            $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->response->setHttpResponseCode($e->getHttpCode());
             $this->response->setBody(json_encode([
@@ -196,7 +198,8 @@ class OrderManagement implements OrderManagementInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("webhooks.failure", 1, "webhooks.latency", $latency);
+            $this->metricsClient->processCountMetric("webhooks.failure", 1);
+            $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([

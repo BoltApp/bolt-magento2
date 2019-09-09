@@ -112,11 +112,13 @@ class Data extends Action
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->metricsClient->processMetrics("back_office_order_token.success", 1, "back_office_order_token.latency", $latency);
+                $this->metricsClient->processCountMetric("back_office_order_token.success", 1);
+                $this->metricsClient->processLatencyMetric("back_office_order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
             } else {
                 $latency = round(microtime(true) * 1000) - $startTime;
-                $this->metricsClient->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+                $this->metricsClient->processCountMetric("back_office_order_token.failure", 1);
+                $this->metricsClient->processLatencyMetric("back_office_order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
             }
 
@@ -142,7 +144,8 @@ class Data extends Action
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             $latency = round(microtime(true) * 1000) - $startTime;
-            $this->metricsClient->processMetrics("back_office_order_token.failure", 1, "back_office_order_token.latency", $latency);
+            $this->metricsClient->processCountMetric("back_office_order_token.failure", 1);
+            $this->metricsClient->processLatencyMetric("back_office_order_token.latency", $latency);
             $this->metricsClient->postMetrics();
             throw $e;
         }

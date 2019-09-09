@@ -27,8 +27,29 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 
 
+class Metric implements \JsonSerializable
+{
+    protected $key;
+    protected $data;
+
+    function __construct($key,$data) {
+        $this->key = $key;
+        $this->data = $data;
+    }
+
+    public function getMetricJson() {
+        return json_encode($this);
+    }
+
+    public function jsonSerialize() {
+        return
+            [ $this->key => $this->data ];
+    }
+}
+
+
 /**
- * Boltpay Merchant Metrics wrapper helper
+ * Boltpay Merchant Client  helper
  *
  *
  */
@@ -225,14 +246,14 @@ class MetricsClient extends AbstractHelper
      *
      * @return void
      */
-    public function addCountMetric($key, $value)
+    public function formatCountMetric($key, $value)
     {
         $data = [
                 'value' => $value,
                 "metric_type" => "count",
                 "timestamp" => $this->getCurrentTime(),
             ];
-        $this->metrics[$key] = $data;
+        return new Metric($key, $data);
     }
 
      /**
@@ -243,46 +264,73 @@ class MetricsClient extends AbstractHelper
      *
      * @return void
      */
-    public function addLatencyMetric($key, $value)
+    public function formatLatencyMetric($key, $value)
     {
         $data = [
                 'value' => $value,
                 "metric_type" => "latency",
                 "timestamp" => $this->getCurrentTime(),
             ];
-        $this->metrics[$key] = $data;
+        return new Metric($key, $data);
 
     }
 
     /**
-     * Adds a count and latency for a given event
+     * Writes a metric to the metrics file
      *
-     * @param string        $countKey           name of count metric
-     * @param int           $countValue         the count value of the metric
-     * @param string        $latencyKey         name of latency metric
-     * @param int           $latencyValue  the total time of the metric
+     * @param Metric        $metric     metric and its data
      *
      * @return void
      */
-    public function processMetrics($countKey, $countValue, $latencyKey, $latencyValue)
+    public function writeMetricToFile($metric)
     {
-        if (!$this->configHelper->shouldCaptureMetrics()) {
-            return null;
-        }
-
-        $this->addCountMetric($countKey, $countValue);
-        $this->addLatencyMetric($latencyKey, $latencyValue);
-
         if ($this->metricsFile == null) {
             $this->metricsFile = $this->getFilePath();
         }
         $workingFile = $this->waitForFile();
         if ($workingFile) {
-            file_put_contents($this->metricsFile, json_encode($this->metrics), FILE_APPEND);
+            file_put_contents($this->metricsFile, [$metric->getMetricJson()], FILE_APPEND);
             file_put_contents($this->metricsFile, ",", FILE_APPEND);
             $this->unlockFile($workingFile);
             fclose($workingFile);
         }
+    }
+
+    /**
+     * Adds a count metric to the metric file
+     *
+     * @param string        $countKey           name of count metric
+     * @param int           $countValue         the count value of the metric
+     *
+     * @return void
+     */
+    public function processCountMetric($countKey, $countValue)
+    {
+        if (!$this->configHelper->shouldCaptureMetrics()) {
+            return null;
+        }
+        $metric = $this->formatCountMetric($countKey, $countValue);
+
+        $this->writeMetricToFile($metric);
+    }
+
+    /**
+     * Adds a latency metric to the metric file
+     *
+     * @param string        $latencyKey         name of latency metric
+     * @param int           $latencyValue  the total time of the metric
+     *
+     * @return void
+     */
+    public function processLatencyMetric($latencyKey, $latencyValue)
+    {
+        if (!$this->configHelper->shouldCaptureMetrics()) {
+            return null;
+        }
+
+        $metric = $this->formatLatencyMetric($latencyKey, $latencyValue);
+
+        $this->writeMetricToFile($metric);
     }
 
     /**
