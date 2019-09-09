@@ -43,6 +43,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
+use Bolt\Boltpay\Helper\Timer;
 
 /**
  * Class Payment.
@@ -275,7 +276,7 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
             $transactionId = $payment->getAdditionalInformation('real_transaction_id');
 
             if (empty($transactionId)) {
@@ -313,13 +314,13 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_void.success", 1);
             $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
             $this->metricsClient->postMetrics();
             return $this;
         } catch (\Exception $e) {
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_void.failure", 1);
             $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -340,7 +341,7 @@ class Payment extends AbstractMethod
      */
     public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
 
             $transaction = $this->transactionRepository->getByTransactionId(
                 $transactionId,
@@ -355,12 +356,12 @@ class Payment extends AbstractMethod
                 $order = $payment->getOrder();
                 $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_fetch.success", 1);
             $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch ( \Exception $e ) {
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_fetch.failure", 1);
             $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -382,7 +383,7 @@ class Payment extends AbstractMethod
     public function capture(InfoInterface $payment, $amount)
     {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
             $order = $payment->getOrder();
 
             if ($amount <= 0) {
@@ -431,14 +432,14 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_capture.success", 1);
             $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
             $this->metricsClient->postMetrics();
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_capture.failure", 1);
             $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -458,7 +459,7 @@ class Payment extends AbstractMethod
     public function refund(InfoInterface $payment, $amount)
     {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
 
             $order = $payment->getOrder();
 
@@ -508,7 +509,7 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_refund.success", 1);
             $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -516,7 +517,7 @@ class Payment extends AbstractMethod
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_refund.failure", 1);
             $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
             $this->metricsClient->postMetrics();

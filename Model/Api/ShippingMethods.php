@@ -43,6 +43,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
+use Bolt\Boltpay\Helper\Timer;
 
 /**
  * Class ShippingMethods
@@ -327,7 +328,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethods($cart, $shipping_address)
     {
-        $startTime = round(microtime(true) * 1000);
+        $timer = new Timer();
         try {
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -372,26 +373,26 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("ship_tax.success", 1);
             $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("ship_tax.failure", 1);
             $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("ship_tax.failure", 1);
             $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("ship_tax.failure", 1);
             $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
             $this->metricsClient->postMetrics();

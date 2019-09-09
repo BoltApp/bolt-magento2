@@ -27,9 +27,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 
 /**
- * Boltpay Merchant Client  helper
- *
- *
+ * Boltpay Metric Client Helper
  */
 
 class MetricsClient extends AbstractHelper

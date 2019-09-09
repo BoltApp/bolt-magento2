@@ -15,50 +15,38 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
+
 namespace Bolt\Boltpay\Helper;
 
 /**
- * Boltpay Metrics used by the Metric Client
+ * Timer class used to measure latency of requests in ms
  */
-class Metric implements \JsonSerializable
+class Timer
 {
     /**
-     * @var string
+     * @var int
      */
-    protected $key;
-    /**
-     * @var array
-     */
-    protected $data;
+    protected $startTime;
 
-    /**
-     * @param string $key
-     * @param array $data
-     *
-     */
-    function __construct($key,$data) {
-        $this->key = $key;
-        $this->data = $data;
+    function __construct() {
+        $this->startTime = round(microtime(true) * 1000);
     }
 
-
     /**
-     * Gets JSON for object
+     * Restarts the timer to the current time
      *
-     * @return JSON
+     * @return void
      */
-    public function getMetricJson() {
-        return json_encode($this);
+    public function startTimer() {
+        $this->startTime = round(microtime(true) * 1000);
     }
 
-
     /**
-     * Required function to use the json_encode function
+     * Returns the amount of ms since the start time
      *
-     * @return array()
+     * @return int
      */
-    public function jsonSerialize() {
-        return
-            [ $this->key => $this->data ];
+    public function getElapsedTime() {
+        return round(microtime(true) * 1000) - $this->startTime;
     }
 }

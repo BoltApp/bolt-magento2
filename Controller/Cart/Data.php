@@ -26,6 +26,7 @@ use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Timer;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
@@ -97,7 +98,7 @@ class Data extends Action
      */
     public function execute()
     {
-        $startTime = round(microtime(true) * 1000);
+        $timer = new Timer();
         $result = $this->resultJsonFactory->create();
 
         try {
@@ -122,13 +123,13 @@ class Data extends Action
 
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
-                $latency = round(microtime(true) * 1000) - $startTime;
+                $latency = $timer->getElapsedTime();
                 $this->metricsClient->processCountMetric("order_token.success", 1);
                 $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
             } else {
                 $responseData['cart'] = [];
-                $latency = round(microtime(true) * 1000) - $startTime;
+                $latency = $timer->getElapsedTime();
                 $this->metricsClient->processCountMetric("order_token.failure", 1);
                 $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
                 $this->metricsClient->postMetrics();
@@ -162,7 +163,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_token.failure", 1);
             $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -174,7 +175,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_token.failure", 1);
             $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
             $this->metricsClient->postMetrics();

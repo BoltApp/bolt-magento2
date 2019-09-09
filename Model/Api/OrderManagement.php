@@ -27,6 +27,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Timer;
 
 /**
  * Class OrderManagement
@@ -138,7 +139,7 @@ class OrderManagement implements OrderManagementInterface
         $source_transaction_reference = null
     ) {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
             HookHelper::$fromBolt = true;
 
             $this->logHelper->addInfoLog($this->request->getContent());
@@ -179,13 +180,13 @@ class OrderManagement implements OrderManagementInterface
                     'message' => 'Order creation / update was successful',
                 ]));
             }
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("webhooks.success", 1);
             $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("webhooks.failure", 1);
             $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -197,7 +198,7 @@ class OrderManagement implements OrderManagementInterface
             ]));
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("webhooks.failure", 1);
             $this->metricsClient->processLatencyMetric("webhooks.latency", $latency);
             $this->metricsClient->postMetrics();

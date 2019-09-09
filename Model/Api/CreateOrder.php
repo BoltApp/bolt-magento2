@@ -29,6 +29,7 @@ use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Timer;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
@@ -180,7 +181,7 @@ class CreateOrder implements CreateOrderInterface
         $currency = null
     ) {
         try {
-            $startTime = round(microtime(true) * 1000);
+            $timer = new Timer();
             $payload = $this->request->getContent();
             $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
             $this->logHelper->addInfoLog($payload);
@@ -235,13 +236,13 @@ class CreateOrder implements CreateOrderInterface
                 'total'      => $this->cartHelper->getRoundAmount($createdOrder->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_creation.success", 1);
             $this->metricsClient->processLatencyMetric("order_creation.latency", $latency);
             $this->metricsClient->postMetrics();
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_creation.failure", 1);
             $this->metricsClient->processLatencyMetric("order_creation.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -256,7 +257,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_creation.failure", 1);
             $this->metricsClient->processLatencyMetric("order_creation.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -271,7 +272,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_creation.failure", 1);
             $this->metricsClient->processLatencyMetric("order_creation.latency", $latency);
             $this->metricsClient->postMetrics();
@@ -286,7 +287,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = round(microtime(true) * 1000) - $startTime;
+            $latency = $timer->getElapsedTime();
             $this->metricsClient->processCountMetric("order_creation.failure", 1);
             $this->metricsClient->processLatencyMetric("order_creation.latency", $latency);
             $this->metricsClient->postMetrics();
