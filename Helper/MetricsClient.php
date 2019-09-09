@@ -26,28 +26,6 @@ use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 
 
-
-class Metric implements \JsonSerializable
-{
-    protected $key;
-    protected $data;
-
-    function __construct($key,$data) {
-        $this->key = $key;
-        $this->data = $data;
-    }
-
-    public function getMetricJson() {
-        return json_encode($this);
-    }
-
-    public function jsonSerialize() {
-        return
-            [ $this->key => $this->data ];
-    }
-}
-
-
 /**
  * Boltpay Merchant Client  helper
  *
