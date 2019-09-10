@@ -29,7 +29,7 @@ class Timer
     protected $startTime;
 
     function __construct() {
-        $this->startTime = round(microtime(true) * 1000);
+        $this->startTimer();
     }
 
     /**

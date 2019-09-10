@@ -32,8 +32,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 class MetricsClient extends AbstractHelper
 {
-    const STAGE_DEVELOPMENT = 'development';
-    const STAGE_PRODUCTION  = 'production';
+
 
     /**
      * @var \GuzzleHttp\Client
