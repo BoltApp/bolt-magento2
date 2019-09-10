@@ -330,11 +330,12 @@ class MetricsClient extends AbstractHelper
             return null;
         }
         $previousPostTime = $this->loadFromCache(self::METRICS_TIMESTAMP_ID);
+        // checks if key exists
         if (!$previousPostTime) {
             $this->saveToCache(self::METRICS_TIMESTAMP_ID, round(microtime(true) * 1000));
-            return null;
         } else {
             $timeDiff = round(microtime(true) * 1000) - $previousPostTime;
+            // if its under 30 seconds since last key don't do anything
             if ($timeDiff < 30000) {
                 return null;
             }
