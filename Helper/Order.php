@@ -888,6 +888,10 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
+            $this->bugsnag->notifyError(
+                "Order Delete Error",
+                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $quoteId"
+            );
             return;
         }
 
