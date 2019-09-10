@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Metric;
+use Magento\Framework\App\CacheInterface;
 use PHPUnit\Framework\TestCase;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -114,6 +115,11 @@ class MetricsClientTest extends TestCase
      */
     private $directoryList;
 
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
 
 
     /**
@@ -145,6 +151,7 @@ class MetricsClientTest extends TestCase
             ->getMock();
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->cache = $this->createMock(CacheInterface::class);
 
         // Partially Mock the Class we are tesing
         $methods = ['unlockFile', 'lockFile', 'getCurrentTime'];
@@ -158,7 +165,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -631,6 +639,7 @@ class MetricsClientTest extends TestCase
 
         $this->assertNull($this->currentMock->postMetrics());
     }
+
 
     private function initWriteMetricToFile() {
         $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'getCurrentTime'];
