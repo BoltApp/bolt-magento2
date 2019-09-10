@@ -77,15 +77,7 @@ class OrderTest extends TestCase
     {
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn(null);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->expectExceptionMessage(
-            sprintf(
-                'Order Delete Error. Order does not exist. Order #: %s Immutable Quote ID: %s',
-                self::INCREMENT_ID,
-                self::QUOTE_ID
-            )
-        );
+        $this->orderMock->expects(static::never())->method('getState');
         $this->currentMock->expects(static::never())->method('deleteOrder');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
     }

@@ -888,15 +888,7 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
-            throw new BoltException(
-                __(
-                    'Order Delete Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
-                    $incrementId,
-                    $quoteId
-                ),
-                null,
-                CreateOrder::E_BOLT_GENERAL_ERROR
-            );
+            return;
         }
 
         $state = $order->getState();
