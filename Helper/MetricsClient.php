@@ -184,7 +184,7 @@ class MetricsClient extends AbstractHelper
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
         $rootPath  =  $directory->getRoot();
-        return $rootPath . '/bolt_metrics.json';
+        return $rootPath . '/var/log/bolt_metrics.json';
     }
 
     /**
