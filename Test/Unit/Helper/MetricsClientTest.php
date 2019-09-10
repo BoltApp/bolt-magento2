@@ -236,7 +236,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -276,7 +277,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -313,7 +315,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -653,7 +656,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -671,7 +675,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();
@@ -689,7 +694,8 @@ class MetricsClientTest extends TestCase
                     $this->directoryList,
                     $this->storeManager,
                     $this->bugsnag,
-                    $this->logHelper
+                    $this->logHelper,
+                    $this->cache
                 ]
             )
             ->getMock();

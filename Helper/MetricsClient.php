@@ -35,6 +35,8 @@ use Magento\Framework\App\CacheInterface;
 class MetricsClient extends AbstractHelper
 {
     const METRICS_TIMESTAMP_ID = 'bolt_metrics_timestamp';
+    // amount of ms between metrics posts
+    const METRICS_POST_INTERVAL = 30000;
 
     /**
      * @var \GuzzleHttp\Client
@@ -336,7 +338,7 @@ class MetricsClient extends AbstractHelper
         } else {
             $timeDiff = round(microtime(true) * 1000) - $previousPostTime;
             // if its under 30 seconds since last key don't do anything
-            if ($timeDiff < 30000) {
+            if ($timeDiff < self::METRICS_POST_INTERVAL) {
                 return null;
             }
         }
