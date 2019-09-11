@@ -22,6 +22,8 @@ set -x
 
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 composer install
+sudo mysql -u root -e "USE mysql;UPDATE user SET plugin='mysql_native_password' WHERE User='root';FLUSH PRIVILEGES;"
+sudo service mysql restart
 mysql -uroot -h localhost -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
 mysql -uroot -h localhost -e "CREATE USER 'root'@'127.0.0.1';"
 mysql -uroot -h localhost -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;"

@@ -2,7 +2,7 @@ version: 2
 jobs:
   integration-php72-magento23:
     docker:
-      - image: boltdev/m2_composite_demo:v2
+      - image: boltdev/m2_composite_demo:v3
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS

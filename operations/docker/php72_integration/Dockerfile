@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN set -ex; \
+# Not the most reliable may need to run a couple times https://github.com/docker-library/mysql/issues/530
 # gpg: key 5072E1F5: public key "MySQL Release Engineering <mysql-build@oss.oracle.com>" imported
 	key='A4A9406876FCBD3C456770C88C718D3B5072E1F5'; \
 	export GNUPGHOME="$(mktemp -d)"; \
@@ -89,7 +90,6 @@ WORKDIR /home/circleci
 RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.3.0 magento/
 WORKDIR /home/circleci/magento
 COPY install_magento_data.sh /home/circleci/magento
-COPY init_mysql.sh /home/circleci/magento
 
 RUN ["bash", "install_magento_data.sh"]
 
