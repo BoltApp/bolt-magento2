@@ -32,9 +32,7 @@ while ! mysql -h localhost -uroot -e "SELECT 1" >/dev/null 2>&1; do
     echo "waiting for mysql"
     sleep 1
 done
-cd ..
-sudo chmod -R 777 magento/
-cd magento
+
 echo "Installing Magento..."
 mysql -uroot -h localhost -e 'CREATE DATABASE magento2;'
 php bin/magento setup:install \
@@ -54,9 +52,6 @@ php bin/magento setup:install \
     --admin-use-security-key=0 \
     --admin-password="123123q"
 
-cd ..
-sudo chmod -R 777 magento/
-cd magento
 
 php bin/magento module:disable Magento_Captcha --clear-static-content
 

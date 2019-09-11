@@ -40,6 +40,16 @@ php FreeShipping.php
 INC_NUM=$((100*${CIRCLE_BUILD_NUM}))
 mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${INC_NUM};"
 
+
+cd ..
+sudo chmod -R 777 magento/
+cd magento
+
+php -dmemory_limit=5G bin/magento setup:upgrade
+php -dmemory_limit=5G bin/magento setup:di:compile
+php bin/magento cache:flush
+
+
 echo "update apache config"
 sudo cp /home/circleci/project/Test/scripts/000-default.conf /etc/apache2/sites-enabled/000-default.conf
 sudo cp /home/circleci/project/Test/scripts/apache2.conf /etc/apache2/sites-enabled/apache2.conf
