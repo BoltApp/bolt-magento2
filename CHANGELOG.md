@@ -75,4 +75,4 @@
  - Added generic ERP support
  - Removed Autocapture from settings
 ## [v2.0.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.1) 2019-09-12
- - Added Paypal types `paypal_payment` and `paypal_refund`
+ - Support for Paypal
