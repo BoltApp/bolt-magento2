@@ -13,7 +13,7 @@
         "phpunit/phpunit": "~6.2.0"
     },
     "type": "magento2-module",
-    "version": "2.0.1",
+    "version": "2.0.2",
     "license": "MIT",
     "autoload": {
         "files": [ "registration.php" ],
