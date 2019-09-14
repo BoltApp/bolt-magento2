@@ -212,14 +212,6 @@ class CreateOrder implements CreateOrderInterface
                 $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
             }
 
-            if($createdOrder->isCanceled()){
-                throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment'),
-                    null,
-                    self::E_BOLT_REJECTED_ORDER
-                );
-            }
-
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
