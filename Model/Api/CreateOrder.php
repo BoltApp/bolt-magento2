@@ -558,30 +558,32 @@ class CreateOrder implements CreateOrderInterface
      * @param array     $transactionItems
      * @throws BoltException
      */
-    public function validateItemPrice($itemSku, $itemPrice, $transactionItems)
+    public function validateItemPrice($itemSku, $itemPrice, &$transactionItems)
     {
-        foreach ($transactionItems as $transactionItem) {
+        foreach ($transactionItems as $index => $transactionItem) {
             $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
-            if ($transactionItemSku === $itemSku
-                && abs($itemPrice - $transactionUnitPrice) > OrderHelper::MISMATCH_TOLERANCE
+            if ($transactionItemSku === $itemSku &&
+                abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
             ) {
-                $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
-                    $report->setMetaData([
-                        'Pre Auth' => [
-                            'item.price' => $itemPrice,
-                            'transaction.unit_price' => $transactionUnitPrice,
-                        ]
-                    ]);
-                });
-                throw new BoltException(
-                    __('Price does not match. Item sku: ' . $itemSku),
-                    null,
-                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-                );
+                unset ($transactionItems[$index]);
+                return true;
             }
         }
+        $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
+            $report->setMetaData([
+                'Pre Auth' => [
+                    'item.price' => $itemPrice,
+                    'transaction.unit_price' => $transactionUnitPrice,
+                ]
+            ]);
+        });
+        throw new BoltException(
+            __('Price does not match. Item sku: ' . $itemSku),
+            null,
+            self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+        );
     }
 
     /**
