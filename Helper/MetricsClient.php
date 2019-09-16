@@ -62,11 +62,6 @@ class MetricsClient extends AbstractHelper
      /**
      * @var array
      */
-    public $metrics;
-
-     /**
-     * @var array
-     */
     private $headers;
 
     /**
@@ -108,7 +103,6 @@ class MetricsClient extends AbstractHelper
             require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
         }
         $this->configHelper = $configHelper;
-        $this->metrics = array();
         $this->metricsFile = null;
         $this->guzzleClient = null;
         $this->metricsFile = null;

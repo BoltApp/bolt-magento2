@@ -29,7 +29,7 @@ class Timer
     protected $startTime;
 
     function __construct() {
-        $this->startTimer();
+        $this->start();
     }
 
     /**
@@ -37,8 +37,8 @@ class Timer
      *
      * @return void
      */
-    public function startTimer() {
-        $this->startTime = round(microtime(true) * 1000);
+    public function start() {
+        $this->startTime = microtime(true) * 1000;
     }
 
     /**
@@ -47,6 +47,6 @@ class Timer
      * @return int
      */
     public function getElapsedTime() {
-        return round(microtime(true) * 1000) - $this->startTime;
+        return round((microtime(true) * 1000) - $this->startTime);
     }
 }
