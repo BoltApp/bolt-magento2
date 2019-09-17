@@ -738,6 +738,15 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+
+            if($order->isCanceled()) {
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment'),
+                    null,
+                    CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             }
