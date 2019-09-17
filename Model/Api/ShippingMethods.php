@@ -420,18 +420,16 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * Apply external data applied to quote (third party modules DB tables)
+     * Fetch and apply external quote data, not stored within a quote or totals (third party modules DB tables)
      * If data is applied it is used as a part of the cache identifier.
      *
      * @param Quote $quote
      * @return string
      */
-    protected function applyExternalQuoteData($quote)
+    public function applyExternalQuoteData($quote)
     {
         $data = '';
-        // Amasty reward points are held in a separate table and are not assigned to a quote directly
-        // out of a customer session. We apply it here every time before the shipping and tax estimation.
-        $this->discountHelper->setAmastyRewardPoints($quote);
+        $this->discountHelper->applyExternalDiscountData($quote);
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
         }
