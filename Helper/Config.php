@@ -1094,7 +1094,13 @@ class Config extends AbstractHelper
      */
     public function getIgnoredShippingAddressCoupons($storeId)
     {
-        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+        $coupons = (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+
+        $coupons = array_map(function ($coupon) {
+            return strtolower($coupon);
+        }, $coupons);
+
+        return $coupons;
     }
 
     /**

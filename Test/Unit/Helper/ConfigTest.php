@@ -513,4 +513,21 @@ class ConfigTest extends TestCase
 
         $this->assertInstanceOf(ScopeConfigInterface::class, $result, 'getScopeConfig() method: not working properly');
     }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetIgnoredShippingAddressCoupons()
+    {
+        $configCouponsJson = '{"ignoredShippingAddressCoupons": ["IGNORED_SHIPPING_ADDRESS_COUPON"]}';
+
+        $this->scopeConfig->method('getValue')
+                ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG)
+                ->will($this->returnValue($configCouponsJson));
+
+        $result = $this->currentMock->getIgnoredShippingAddressCoupons(null);
+        $expected = ['ignored_shipping_address_coupon'];
+
+        $this->assertEquals($expected, $result, 'getIgnoredShippingAddressCoupons() method: not working properly');
+    }
 }
