@@ -1163,6 +1163,7 @@ class Config extends AbstractHelper
           );
     }
 
+    /**
      * Get minimum order amount configuration
      *
      * @param int|string|Store $storeId

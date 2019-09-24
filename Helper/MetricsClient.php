@@ -222,7 +222,7 @@ class MetricsClient extends AbstractHelper
      * @param string        $key    name of count metric
      * @param int           $value  count hit 
      *
-     * @return void
+     * @return Metric
      */
     public function formatCountMetric($key, $value)
     {
@@ -240,7 +240,7 @@ class MetricsClient extends AbstractHelper
      * @param string        $key     name of latency metric
      * @param int           $value  the total time of the metric
      *
-     * @return void
+     * @return Metric
      */
     public function formatLatencyMetric($key, $value)
     {
@@ -296,7 +296,7 @@ class MetricsClient extends AbstractHelper
      * Adds a latency metric to the metric file
      *
      * @param string        $latencyKey         name of latency metric
-     * @param int           $latencyValue  the total time of the metric
+     * @param mixed         $latencyStartTime  the total time of the metric
      *
      * @return void
      */
@@ -311,6 +311,16 @@ class MetricsClient extends AbstractHelper
         $this->writeMetricToFile($metric);
     }
 
+    /**
+     * Centralized logic for handling the count and latency for a metric
+     *
+     * @param string        $countKey           name of count metric
+     * @param int           $countValue         the count value of the metric
+     * @param string        $latencyKey         name of latency metric
+     * @param mixed         $latencyStartTime  the total time of the metric
+     *
+     * @return void
+     */
     public function processMetric($countKey, $countValue, $latencyKey, $latencyStartTime)
     {
         $this->processCountMetric($countKey, $countValue);
