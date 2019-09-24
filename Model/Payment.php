@@ -43,7 +43,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
-use Bolt\Boltpay\Helper\Timer;
 
 /**
  * Class Payment.
@@ -276,7 +275,7 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
-            $timer = new Timer();
+            $startTime = $this->metricsClient->getCurrentTime();
             $transactionId = $payment->getAdditionalInformation('real_transaction_id');
 
             if (empty($transactionId)) {
@@ -314,16 +313,10 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_void.success", 1);
-            $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_void.success", 1, "order_void.latency", $startTime);
             return $this;
         } catch (\Exception $e) {
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_void.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_void.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_void.failure", 1, "order_void.latency", $startTime);
             $this->bugsnag->notifyException($e);
             throw $e;
         }
@@ -341,7 +334,7 @@ class Payment extends AbstractMethod
      */
     public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
         try {
-            $timer = new Timer();
+            $startTime = $this->metricsClient->getCurrentTime();
 
             $transaction = $this->transactionRepository->getByTransactionId(
                 $transactionId,
@@ -356,15 +349,9 @@ class Payment extends AbstractMethod
                 $order = $payment->getOrder();
                 $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
             }
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_fetch.success", 1);
-            $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_fetch.success", 1, "order_fetch.latency", $startTime);
         } catch ( \Exception $e ) {
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_fetch.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_fetch.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_fetch.failure", 1, "order_fetch.latency", $startTime);
             $this->bugsnag->notifyException( $e );
         } finally {
             return [];
@@ -383,7 +370,7 @@ class Payment extends AbstractMethod
     public function capture(InfoInterface $payment, $amount)
     {
         try {
-            $timer = new Timer();
+            $startTime = $this->metricsClient->getCurrentTime();
             $order = $payment->getOrder();
 
             if ($amount <= 0) {
@@ -432,17 +419,11 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_capture.success", 1);
-            $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_capture.success", 1, "order_capture.latency", $startTime);
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_capture.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_capture.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_capture.failure", 1, "order_capture.latency", $startTime);
             throw $e;
         }
     }
@@ -459,7 +440,7 @@ class Payment extends AbstractMethod
     public function refund(InfoInterface $payment, $amount)
     {
         try {
-            $timer = new Timer();
+            $startTime = $this->metricsClient->getCurrentTime();
 
             $order = $payment->getOrder();
 
@@ -509,18 +490,12 @@ class Payment extends AbstractMethod
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_refund.success", 1);
-            $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_refund.success", 1, "order_refund.latency", $startTime);
 
             return $this;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_refund.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_refund.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_refund.failure", 1, "order_refund.latency", $startTime);
             throw $e;
         }
     }

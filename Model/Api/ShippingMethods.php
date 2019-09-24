@@ -43,7 +43,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
-use Bolt\Boltpay\Helper\Timer;
 
 /**
  * Class ShippingMethods
@@ -328,7 +327,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethods($cart, $shipping_address)
     {
-        $timer = new Timer();
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
@@ -373,29 +372,17 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("ship_tax.success", 1);
-            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("ship_tax.success", 1, "ship_tax.latency", $startTime);
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
-            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
-            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("ship_tax.failure", 1);
-            $this->metricsClient->processLatencyMetric("ship_tax.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }

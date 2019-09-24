@@ -26,7 +26,6 @@ use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Timer;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
@@ -98,7 +97,7 @@ class Data extends Action
      */
     public function execute()
     {
-        $timer = new Timer();
+        $startTime = $this->metricsClient->getCurrentTime();
         $result = $this->resultJsonFactory->create();
 
         try {
@@ -123,16 +122,10 @@ class Data extends Action
 
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
-                $latency = $timer->getElapsedTime();
-                $this->metricsClient->processCountMetric("order_token.success", 1);
-                $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
-                $this->metricsClient->postMetrics();
+                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
             } else {
                 $responseData['cart'] = [];
-                $latency = $timer->getElapsedTime();
-                $this->metricsClient->processCountMetric("order_token.failure", 1);
-                $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
-                $this->metricsClient->postMetrics();
+                $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
             }
 
             // get immutable quote id stored with cart data
@@ -163,10 +156,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_token.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
 
@@ -175,10 +165,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $latency = $timer->getElapsedTime();
-            $this->metricsClient->processCountMetric("order_token.failure", 1);
-            $this->metricsClient->processLatencyMetric("order_token.latency", $latency);
-            $this->metricsClient->postMetrics();
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } finally {
             return $result;
         }

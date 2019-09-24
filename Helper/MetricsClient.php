@@ -138,8 +138,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return int
      */
-    protected function getCurrentTime() {
-        return round(microtime(true) * 1000);
+    public function getCurrentTime() {
+        return microtime(true) * 1000;
     }
 
     /**
@@ -165,6 +165,15 @@ class MetricsClient extends AbstractHelper
             'Content-Type' => 'application/json',
             'x-api-key' =>  $this->configHelper->getApiKey()
         ];
+    }
+
+    /**
+     * Returns the amount of ms since the start time
+     *
+     * @return int
+     */
+    public function getElapsedTime($startTime) {
+        return round((microtime(true) * 1000) - $startTime);
     }
 
     /**
@@ -220,7 +229,7 @@ class MetricsClient extends AbstractHelper
         $data = [
                 'value' => $value,
                 "metric_type" => "count",
-                "timestamp" => $this->getCurrentTime(),
+                "timestamp" => round($this->getCurrentTime()),
             ];
         return new Metric($key, $data);
     }
@@ -238,7 +247,7 @@ class MetricsClient extends AbstractHelper
         $data = [
                 'value' => $value,
                 "metric_type" => "latency",
-                "timestamp" => $this->getCurrentTime(),
+                "timestamp" => round($this->getCurrentTime()),
             ];
         return new Metric($key, $data);
 
@@ -291,15 +300,23 @@ class MetricsClient extends AbstractHelper
      *
      * @return void
      */
-    public function processLatencyMetric($latencyKey, $latencyValue)
+    public function processLatencyMetric($latencyKey, $latencyStartTime)
     {
         if (!$this->configHelper->shouldCaptureMetrics()) {
             return null;
         }
-
+        $latencyValue = $this->getElapsedTime($latencyStartTime);
         $metric = $this->formatLatencyMetric($latencyKey, $latencyValue);
 
         $this->writeMetricToFile($metric);
+    }
+
+    public function processMetric($countKey, $countValue, $latencyKey, $latencyStartTime)
+    {
+        $this->processCountMetric($countKey, $countValue);
+        $this->processLatencyMetric($latencyKey, $latencyStartTime);
+
+        $this->postMetrics();
     }
 
     /**
