@@ -56,6 +56,7 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
     const E_BOLT_SHIPPING_EXPIRED = 2001008;
     const E_BOLT_REJECTED_ORDER = 2001010;
+    const E_BOLT_MINIMUM_PRICE_NOT_MET = 2001011;
 
     /**
      * @var HookHelper
@@ -218,14 +219,6 @@ class CreateOrder implements CreateOrderInterface
             if (! $createdOrder) {
                 $this->validateQuoteData($quote, $transaction);
                 $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
-            }
-
-            if($createdOrder->isCanceled()){
-                throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment'),
-                    null,
-                    self::E_BOLT_REJECTED_ORDER
-                );
             }
 
             $this->sendResponse(200, [
@@ -427,11 +420,39 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateQuoteData($quote, $transaction)
     {
+        $this->validateMinimumAmount($quote);
         $this->validateCartItems($quote, $transaction);
-
         $this->validateTax($quote, $transaction);
         $this->validateShippingCost($quote, $transaction);
         $this->validateTotalAmount($quote, $transaction);
+    }
+
+    /**
+     * Validate minimum order amount
+     *
+     * @param Quote $quote
+     * @throws BoltException
+     */
+    public function validateMinimumAmount($quote)
+    {
+        if (!$quote->validateMinimumAmount()) {
+            $minAmount = $this->configHelper->getMinimumOrderAmount($quote->getStoreId());
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $minAmount) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'Minimum order amount' => $minAmount,
+                        'Subtotal' => $quote->getSubtotal(),
+                        'Subtotal with discount' => $quote->getSubtotalWithDiscount(),
+                        'Total' => $quote->getGrandTotal(),
+                    ]
+                ]);
+            });
+            throw new BoltException(
+                __('The minimum order amount: %1 has not being met.', $minAmount),
+                null,
+                self::E_BOLT_MINIMUM_PRICE_NOT_MET
+            );
+        }
     }
 
     /**
@@ -543,30 +564,32 @@ class CreateOrder implements CreateOrderInterface
      * @param array     $transactionItems
      * @throws BoltException
      */
-    public function validateItemPrice($itemSku, $itemPrice, $transactionItems)
+    public function validateItemPrice($itemSku, $itemPrice, &$transactionItems)
     {
-        foreach ($transactionItems as $transactionItem) {
+        foreach ($transactionItems as $index => $transactionItem) {
             $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
-            if ($transactionItemSku === $itemSku
-                && abs($itemPrice - $transactionUnitPrice) > OrderHelper::MISMATCH_TOLERANCE
+            if ($transactionItemSku === $itemSku &&
+                abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
             ) {
-                $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
-                    $report->setMetaData([
-                        'Pre Auth' => [
-                            'item.price' => $itemPrice,
-                            'transaction.unit_price' => $transactionUnitPrice,
-                        ]
-                    ]);
-                });
-                throw new BoltException(
-                    __('Price does not match. Item sku: ' . $itemSku),
-                    null,
-                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-                );
+                unset ($transactionItems[$index]);
+                return true;
             }
         }
+        $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
+            $report->setMetaData([
+                'Pre Auth' => [
+                    'item.price' => $itemPrice,
+                    'transaction.unit_price' => $transactionUnitPrice,
+                ]
+            ]);
+        });
+        throw new BoltException(
+            __('Price does not match. Item sku: ' . $itemSku),
+            null,
+            self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+        );
     }
 
     /**

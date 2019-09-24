@@ -1147,6 +1147,7 @@ class Config extends AbstractHelper
     }
 
     /**
+
      * Get minimize javascript flag configuration
      *
      * @param int|string|Store $store
@@ -1159,6 +1160,20 @@ class Config extends AbstractHelper
             self::XML_PATH_CAPTURE_MERCHANT_METRICS,
             ScopeInterface::SCOPE_STORE,
             $store
+          );
+    }
+
+     * Get minimum order amount configuration
+     *
+     * @param int|string|Store $storeId
+     * @return float|int
+     */
+    public function getMinimumOrderAmount($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            'sales/minimum_order/amount',
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 }

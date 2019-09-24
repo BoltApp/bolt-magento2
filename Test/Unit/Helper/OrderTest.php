@@ -17,13 +17,33 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
+use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Quote\Model\QuoteManagement;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
+use Magento\Sales\Model\Order\Email\Sender\OrderSender;
+use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
- * Class ConfigTest
+ * Class OrderTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
@@ -31,6 +51,100 @@ class OrderTest extends TestCase
 {
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
+
+    /**
+     * @var ApiHelper
+     */
+    private $apiHelper;
+
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
+     * @var RegionModel
+     */
+    private $regionModel;
+
+    /**
+     * @var QuoteManagement
+     */
+    private $quoteManagement;
+
+    /**
+     * @var OrderSender
+     */
+    private $emailSender;
+
+    /**
+     * @var InvoiceService
+     */
+    private $invoiceService;
+
+    /**
+     * @var InvoiceSender
+     */
+    private $invoiceSender;
+
+    /**
+     * @var TransactionBuilder
+     */
+    private $transactionBuilder;
+
+    /**
+     * @var TimezoneInterface
+     */
+    private $timezone;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
+     * @var \Magento\Payment\Model\Info
+     */
+    private $quotePaymentInfoInstance = null;
+
+    /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
+
+    /** @var SessionHelper */
+    private $sessionHelper;
+
+    /** @var DiscountHelper */
+    private $discountHelper;
+
+    /** @var DateTime */
+    protected $date;
 
     /**
      * @var PHPUnit_Framework_MockObject_MockObject
@@ -53,16 +167,59 @@ class OrderTest extends TestCase
 
     private function initCurrentMock()
     {
-        $this->currentMock = $this->createPartialMock(
-            OrderHelper::class,
-            [
+        $this->currentMock = $this->getMockBuilder(OrderHelper::class)
+            ->setConstructorArgs([
+                $this->context,
+                $this->apiHelper,
+                $this->configHelper,
+                $this->regionModel,
+                $this->quoteManagement,
+                $this->emailSender,
+                $this->invoiceService,
+                $this->invoiceSender,
+                $this->searchCriteriaBuilder,
+                $this->orderRepository,
+                $this->transactionBuilder,
+                $this->timezone,
+                $this->dataObjectFactory,
+                $this->logHelper,
+                $this->bugsnag,
+                $this->cartHelper,
+                $this->resourceConnection,
+                $this->sessionHelper,
+                $this->discountHelper,
+                $this->date
+            ])
+            ->setMethods([
                 'getExistingOrder',
                 'deleteOrder'
-            ]);
+            ])
+            ->getMock();
     }
 
     private function initRequiredMocks()
     {
+        $this->context = $this->createMock(Context::class);
+        $this->apiHelper = $this->createMock(ApiHelper::class);
+        $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->regionModel = $this->createMock(RegionModel::class);
+        $this->quoteManagement = $this->createMock(QuoteManagement::class);
+        $this->emailSender = $this->createMock(OrderSender::class);
+        $this->invoiceService = $this->createMock(InvoiceService::class);
+        $this->invoiceSender = $this->createMock(InvoiceSender::class);
+        $this->transactionBuilder = $this->createMock(TransactionBuilder::class);
+        $this->timezone = $this->createMock(TimezoneInterface::class);
+        $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
+        $this->orderRepository = $this->createMock(OrderRepository::class);
+        $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
+        $this->logHelper = $this->createMock(LogHelper::class);
+        $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->cartHelper = $this->createMock(CartHelper::class);
+        $this->resourceConnection = $this->createMock(ResourceConnection::class);
+        $this->sessionHelper = $this->createMock(SessionHelper::class);
+        $this->discountHelper = $this->createMock(DiscountHelper::class);
+        $this->date = $this->createMock(DateTime::class);
+
         $this->orderMock = $this->createPartialMock(
             Order::class,
             [
@@ -77,15 +234,7 @@ class OrderTest extends TestCase
     {
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn(null);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->expectExceptionMessage(
-            sprintf(
-                'Order Delete Error. Order does not exist. Order #: %s Immutable Quote ID: %s',
-                self::INCREMENT_ID,
-                self::QUOTE_ID
-            )
-        );
+        $this->orderMock->expects(static::never())->method('getState');
         $this->currentMock->expects(static::never())->method('deleteOrder');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
     }

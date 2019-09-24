@@ -83,56 +83,6 @@ class Order extends AbstractHelper
     const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
     const MAGENTO_ORDER_STATUS_PENDING = 'pending';
 
-    // Posible transation state transitions
-    private $validStateTransitions = [
-        null => [
-            self::TS_ZERO_AMOUNT,
-            self::TS_PENDING,
-            self::TS_COMPLETED, // back office
-            // for historic data (order placed before plugin update) does not have "previous state"
-            self::TS_CREDIT_COMPLETED
-        ],
-        self::TS_PENDING => [
-            self::TS_AUTHORIZED,
-            self::TS_COMPLETED,
-            self::TS_CANCELED,
-            self::TS_REJECTED_REVERSIBLE,
-            self::TS_REJECTED_IRREVERSIBLE,
-            self::TS_ZERO_AMOUNT
-        ],
-        self::TS_AUTHORIZED => [
-            self::TS_CAPTURED,
-            self::TS_CANCELED,
-            self::TS_COMPLETED
-        ],
-        self::TS_CAPTURED => [
-            self::TS_CAPTURED,
-            self::TS_CANCELED,
-            self::TS_COMPLETED,
-            self::TS_CREDIT_COMPLETED,
-            self::TS_PARTIAL_VOIDED
-        ],
-        self::TS_CANCELED => [self::TS_CANCELED],
-        self::TS_COMPLETED => [
-            self::TS_COMPLETED,
-            self::TS_CREDIT_COMPLETED
-        ],
-        self::TS_ZERO_AMOUNT => [],
-        self::TS_REJECTED_REVERSIBLE => [
-            self::TS_AUTHORIZED,
-            self::TS_COMPLETED,
-            self::TS_REJECTED_IRREVERSIBLE,
-            self::TS_CANCELED
-        ],
-        self::TS_REJECTED_IRREVERSIBLE => [self::TS_REJECTED_IRREVERSIBLE],
-        self::TS_CREDIT_COMPLETED => [
-            self::TS_CREDIT_COMPLETED,
-            self::TS_COMPLETED,
-            self::TS_CAPTURED,
-            self::TS_CANCELED
-        ]
-    ];
-
     /**
      * @var ApiHelper
      */
@@ -788,6 +738,15 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+
+            if($order->isCanceled()) {
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment'),
+                    null,
+                    CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             }
@@ -888,15 +847,11 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
-            throw new BoltException(
-                __(
-                    'Order Delete Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
-                    $incrementId,
-                    $quoteId
-                ),
-                null,
-                CreateOrder::E_BOLT_GENERAL_ERROR
+            $this->bugsnag->notifyError(
+                "Order Delete Error",
+                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $quoteId"
             );
+            return;
         }
 
         $state = $order->getState();
@@ -1152,18 +1107,6 @@ class Order extends AbstractHelper
 
         // return transaction state as it is in fetched transaction info. No need to change it.
         return $transactionState;
-    }
-
-    /**
-     * Check if the transition from one transaction state to another is valid.
-     *
-     * @param string|null $prevTransactionState
-     * @param string $newTransactionState
-     * @return bool
-     */
-    private function validateTransition($prevTransactionState, $newTransactionState)
-    {
-        return in_array($newTransactionState, $this->validStateTransitions[$prevTransactionState]);
     }
 
     /**
@@ -1433,14 +1376,6 @@ class Order extends AbstractHelper
                 $payment->setIsTransactionApproved(true);
             }
             return;
-        }
-
-        if (!$this->validateTransition($prevTransactionState, $transactionState)) {
-            throw new LocalizedException(__(
-                'Invalid transaction state transition: %1 -> %2',
-                $prevTransactionState,
-                $transactionState
-            ));
         }
 
         // The order has already been canceled, i.e. PERMANENTLY REJECTED
