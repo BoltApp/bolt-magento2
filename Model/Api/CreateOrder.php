@@ -28,6 +28,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
@@ -83,6 +84,11 @@ class CreateOrder implements CreateOrderInterface
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @var Response
      */
     private $response;
@@ -124,6 +130,7 @@ class CreateOrder implements CreateOrderInterface
      * @param LogHelper              $logHelper
      * @param Request                $request
      * @param Bugsnag                $bugsnag
+     * @param MetricsClient        $metricsClient
      * @param Response               $response
      * @param UrlInterface           $url
      * @param BackendUrl             $backendUrl
@@ -138,6 +145,7 @@ class CreateOrder implements CreateOrderInterface
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         Response $response,
         UrlInterface $url,
         BackendUrl $backendUrl,
@@ -150,6 +158,7 @@ class CreateOrder implements CreateOrderInterface
         $this->logHelper = $logHelper;
         $this->request = $request;
         $this->bugsnag = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->response = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
@@ -172,7 +181,7 @@ class CreateOrder implements CreateOrderInterface
         $currency = null
     ) {
         try {
-
+            $startTime = $this->metricsClient->getCurrentTime();
             $payload = $this->request->getContent();
             $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
             $this->logHelper->addInfoLog($payload);
@@ -219,8 +228,10 @@ class CreateOrder implements CreateOrderInterface
                 'total'      => $this->cartHelper->getRoundAmount($createdOrder->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
+            $this->metricsClient->processMetric("order_creation.success", 1, "order_creation.latency", $startTime);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
                 'error'  => [[
@@ -232,6 +243,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error'  => [[
@@ -243,6 +255,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
@@ -254,6 +267,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
