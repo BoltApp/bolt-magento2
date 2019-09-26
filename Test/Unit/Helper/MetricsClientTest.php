@@ -137,7 +137,8 @@ class MetricsClientTest extends TestCase
 
         // set up successful endpoint
         $successfulEndpoint = new MockHandler([
-            new Response(200, ['X-Foo' => 'Bar'])
+            new Response(200, ['X-Foo' => 'Bar']),
+            new Response(200, ['X-Foo' => 'Bar']),
         ]);
         $handler = HandlerStack::create($successfulEndpoint);
         $this->guzzleClient = new Client(['handler' => $handler]);
@@ -526,6 +527,101 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
+    public function testPostValidBatchMetrics()
+    {
+
+        $structure = [
+            'test' => [
+                'valid.json' => $this->fileInput,
+            ]
+        ];
+
+        $root = vfsStream::setup('root',null,$structure);
+
+        $workingFile = fopen($root->url() . '/test/valid.json', "a+");
+
+        $this->initPostMetrics();
+
+        $this->currentMock->method('getFilePath')
+            ->will($this->returnValue($root->url() . '/test/valid.json'));
+
+        $this->currentMock->method('setClient')
+            ->will($this->returnValue( $this->guzzleClient));
+
+        $this->configHelper->method('shouldCaptureMetrics')
+            ->will($this->returnValue(true));
+
+        $this->currentMock->method('loadFromCache')
+            ->will($this->onConsecutiveCalls(false, microtime(true)));
+
+        $this->configHelper->method('getApiKey')
+            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+
+        $this->currentMock->method('waitForFile')
+            ->will($this->returnValue($workingFile));
+
+
+
+        $this->assertEquals(200,  $this->currentMock->postMetrics());
+        $this->assertNull($this->currentMock->postMetrics());
+        $this->assertEquals(
+            "",
+            $root->getChild('test/valid.json')->getContent()
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testPostDoubleBatchMetrics()
+    {
+
+        $structure = [
+            'test' => [
+                'valid.json' => $this->fileInput,
+                'valid1.json' => $this->fileInput,
+            ]
+        ];
+
+        $root = vfsStream::setup('root',null,$structure);
+
+        $workingFile1 = fopen($root->url() . '/test/valid.json', "a+");
+        $workingFile2 = fopen($root->url() . '/test/valid1.json', "a+");
+
+        $this->initPostMetrics();
+
+        $this->currentMock->method('getFilePath')
+            ->will($this->returnValue($root->url() . '/test/valid.json'));
+
+        $this->currentMock->method('setClient')
+            ->will($this->returnValue( $this->guzzleClient));
+
+        $this->configHelper->method('shouldCaptureMetrics')
+            ->will($this->returnValue(true));
+
+        $this->currentMock->method('loadFromCache')
+            ->will($this->onConsecutiveCalls(false, microtime(true) - 40000000));
+
+        $this->configHelper->method('getApiKey')
+            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+
+        $this->currentMock->method('waitForFile')
+            ->will($this->onConsecutiveCalls($workingFile1, $workingFile2 ));
+
+
+
+        $this->assertEquals(200,  $this->currentMock->postMetrics());
+
+        $this->assertEquals(200,  $this->currentMock->postMetrics());
+        $this->assertEquals(
+            "",
+            $root->getChild('test/valid.json')->getContent()
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function testPostInValidMetrics()
     {
         $unSuccessfulEndpoint = new MockHandler([
@@ -606,6 +702,7 @@ class MetricsClientTest extends TestCase
             ->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
 
+
         $this->configHelper->expects($this->once())
             ->method('getApiKey')
             ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
@@ -683,7 +780,7 @@ class MetricsClientTest extends TestCase
     }
 
     private function initPostMetrics() {
-        $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'setClient'];
+        $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'setClient', 'loadFromCache'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
