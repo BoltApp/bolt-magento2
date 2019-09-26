@@ -820,7 +820,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
 
         return $parentQuoteCoupon &&
-                in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons) &&
+                in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
                 !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 }

@@ -621,6 +621,35 @@ class ShippingMethodsTest extends TestCase
     }
 
     /**
+     * @test
+     * @throws \ReflectionException
+     */
+    public function testCouponInvalidForShippingAddress()
+    {
+        $parentQuoteCoupon = 'IGNORED_SHIPPING_ADDRESS_COUPON';
+        $configCoupons = ['BOLT_TEST', 'ignored_shipping_address_coupon'];
+        $immutableQuoteMock = $this->getQuoteMock([]);
+
+        $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
+            ->setMethods(['getIgnoredShippingAddressCoupons'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->configHelper->method('getIgnoredShippingAddressCoupons')->with(null)->willReturn($configCoupons);
+
+        $currentTestObject = $this->getCurrentTestObject();
+
+        $reflection = new \ReflectionClass($currentTestObject);
+        $reflectionProperty = $reflection->getProperty('quote');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($currentTestObject, $immutableQuoteMock);
+
+        $testMethod = new \ReflectionMethod(BoltShippingMethods::class, 'couponInvalidForShippingAddress');
+        $testMethod->setAccessible(true);
+
+        $this->assertTrue($testMethod->invokeArgs($currentTestObject, [$parentQuoteCoupon]));
+    }
+
+    /**
      * Get quote mock with quote items
      *
      * @param $shippingAddress
