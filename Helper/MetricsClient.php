@@ -35,8 +35,8 @@ use Magento\Framework\App\CacheInterface;
 class MetricsClient extends AbstractHelper
 {
     const METRICS_TIMESTAMP_ID = 'bolt_metrics_timestamp';
-    // amount of ms between metrics posts
-    const METRICS_POST_INTERVAL_MICROS = 30000;
+    // amount of microseconds between metrics posts
+    const METRICS_POST_INTERVAL_MICROS = 30000000;
 
     /**
      * @var \GuzzleHttp\Client
@@ -354,12 +354,9 @@ class MetricsClient extends AbstractHelper
         }
         $previousPostTime = $this->loadFromCache(self::METRICS_TIMESTAMP_ID);
         // checks if key exists
-        if (!$previousPostTime) {
-            $this->saveToCache(self::METRICS_TIMESTAMP_ID, round(microtime(true) * 1000));
-        } else {
-            $timeDiff = round(microtime(true) * 1000) - $previousPostTime;
-            // if its under 30 seconds since last key don't do anything
-            if ($timeDiff < self::METRICS_POST_INTERVAL) {
+        if ($previousPostTime) {
+            $timeDiff = 1000000 * (microtime(true)  - $previousPostTime);
+            if ($timeDiff < self::METRICS_POST_INTERVAL_MICROS) {
                 return null;
             }
         }
@@ -387,7 +384,7 @@ class MetricsClient extends AbstractHelper
                 // Clear File if successfully posted
                 if ($response->getStatusCode() == 200) {
                     file_put_contents($this->metricsFile, "");
-                    $this->saveToCache(self::METRICS_TIMESTAMP_ID, round(microtime(true) * 1000));
+                    $this->saveToCache(self::METRICS_TIMESTAMP_ID, microtime(true));
                 }
                 return $response->getStatusCode();
             } else {
