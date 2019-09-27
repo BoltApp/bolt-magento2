@@ -452,7 +452,6 @@ class CartTest extends TestCase
         $product->method('getDescription')
             ->willReturn('Product Description');
         $product->method('getTypeInstance')
-            ->with(true)
             ->willReturnSelf();
         $product->method('getOrderOptions')
             ->withAnyParameters()
