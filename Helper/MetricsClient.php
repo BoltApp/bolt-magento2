@@ -408,11 +408,11 @@ class MetricsClient extends AbstractHelper
      * @param bool $unserialize
      * @return bool|mixed|string
      */
-    protected function loadFromCache($identifier, $unserialize = true)
+    protected function loadFromCache($identifier, $decode = true)
     {
         $cached = $this->cache->load($identifier);
         if (!$cached) return false;
-        return $unserialize ? unserialize($cached) : $cached;
+        return $decode ? json_decode($cached) : $cached;
     }
     /**
      * Save data to Magento cache
@@ -420,12 +420,12 @@ class MetricsClient extends AbstractHelper
      * @param mixed $data
      * @param string $identifier
      * @param int $lifeTime
-     * @param bool $serialize
+     * @param bool $encode
      * @param array $tags
      */
-    protected function saveToCache($identifier, $data, $tags = [], $lifeTime = null, $serialize = true)
+    protected function saveToCache($identifier, $data, $tags = [], $lifeTime = null, $encode = true)
     {
-        $data = $serialize ? serialize($data) : $data;
+        $data = $encode ? json_encode($data) : $data;
         $this->cache->save($data, $identifier, $tags, $lifeTime);
     }
 }
