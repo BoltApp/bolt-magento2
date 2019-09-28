@@ -8,6 +8,9 @@ trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit
 
 source config.sh
 # install bolt plugin
+
+sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket 
+
 cd ..
 mkdir -p magento/app/code/Bolt/Boltpay
 cp -r project/. magento/app/code/Bolt/Boltpay/

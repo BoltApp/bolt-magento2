@@ -1,24 +1,12 @@
 version: '2'
 services:
-  db:
-    image: 'circleci/mysql:5.7'
-    container_name: m2_test_db
-    ports: 
-      - "127.0.0.1:5432:5432"
-    restart: always
-    volumes:
-    - db_data:/var/lib/mysql
   m2: 
-    image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+    image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
     container_name: m2_php
     restart: always
     tty: true
     volumes:
       - .:/home/circleci/launch
       - ..:/home/circleci/project
-    depends_on:
-    - db
     ports:
     - 80:80
-volumes:
-  db_data: {}

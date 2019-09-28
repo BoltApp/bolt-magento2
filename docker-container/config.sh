@@ -1,9 +1,9 @@
 #VARIABLES
 m2Version="master"
 magentoVersion="2.3.0"
-boltApiKey=""
-boltSigningSecret=""
-boltPublishableKey=""
-ngrokUrlHTTP="https://m2.name.dev.bolt.me/"
-ngrokUrlHTTPS="https://m2.name.dev.bolt.me/"
+boltApiKey="7126650a865dba2a32617e077a352940a36f6b72283e3bf5ba384975755b3450"
+boltSigningSecret="7126650a865dba2a32617e077a352940a36f6b72283e3bf5ba384975755b3450"
+boltPublishableKey="I6GyaLUn1gHs.26nFCSkdXE3Y.85a728b7bb77d515dff7fe199fb431c8db6b3e742ebda077b75142e7d5b66193"
+ngrokUrlHTTP="https://m2.ethan.dev.bolt.me/"
+ngrokUrlHTTPS="https://m2.ethan.dev.bolt.me/"
 installSampleData=true
