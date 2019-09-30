@@ -1016,9 +1016,9 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $this->productRepository->get($item->getSku(), false, $storeId);
+                $_product = $item->getProduct();
 
-                $product['reference']    = $_product->getId();
+                $product['reference']    = $item->getProductId();
                 $product['name']         = $item->getName();
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = $this->getRoundAmount($unitPrice);
@@ -1028,7 +1028,7 @@ class Cart extends AbstractHelper
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
-                $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+                $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
                 if(isset($item_options['attributes_info'])){
                     $properties = [];
                     foreach($item_options['attributes_info'] as $attribute_info){
