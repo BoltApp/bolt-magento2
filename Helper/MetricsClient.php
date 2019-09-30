@@ -405,7 +405,7 @@ class MetricsClient extends AbstractHelper
      * Load data from Magento cache
      *
      * @param string $identifier
-     * @param bool $unserialize
+     * @param bool $decode
      * @return bool|mixed|string
      */
     protected function loadFromCache($identifier, $decode = true)
