@@ -24,6 +24,8 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\Framework\App\CacheInterface;
+
 
 
 /**
@@ -32,7 +34,9 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 
 class MetricsClient extends AbstractHelper
 {
-
+    const METRICS_TIMESTAMP_ID = 'bolt_metrics_timestamp';
+    // amount of microseconds between metrics posts
+    const METRICS_POST_INTERVAL_MICROS = 30000000;
 
     /**
      * @var \GuzzleHttp\Client
@@ -70,13 +74,18 @@ class MetricsClient extends AbstractHelper
     private $bugsnag;
 
     /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
      * @param Context $context
      * @param Config $configHelper
      * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
-     *
+     * @param CacheInterface $cache
      *
      * @throws
      */
@@ -86,13 +95,15 @@ class MetricsClient extends AbstractHelper
         DirectoryList $directoryList,
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        CacheInterface $cache
     ) {
         parent::__construct($context);
 
         $this->storeManager = $storeManager;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
+        $this->cache = $cache;
         //////////////////////////////////////////
         // Composerless installation.
         // Make sure libraries are in place:
@@ -341,9 +352,16 @@ class MetricsClient extends AbstractHelper
         if (!$this->configHelper->shouldCaptureMetrics()) {
             return null;
         }
+        $previousPostTime = $this->loadFromCache(self::METRICS_TIMESTAMP_ID);
+        // checks if key exists
+        if ($previousPostTime) {
+            $timeDiff = 1000000 * (microtime(true)  - $previousPostTime);
+            if ($timeDiff < self::METRICS_POST_INTERVAL_MICROS) {
+                return null;
+            }
+        }
         $workingFile = null;
         try{
-            $output = "";
             if ($this->metricsFile == null) {
                 $this->metricsFile = $this->getFilePath();
             }
@@ -366,6 +384,7 @@ class MetricsClient extends AbstractHelper
                 // Clear File if successfully posted
                 if ($response->getStatusCode() == 200) {
                     file_put_contents($this->metricsFile, "");
+                    $this->saveToCache(self::METRICS_TIMESTAMP_ID, microtime(true));
                 }
                 return $response->getStatusCode();
             } else {
@@ -380,5 +399,33 @@ class MetricsClient extends AbstractHelper
             }
         }
         return null;
+    }
+
+    /**
+     * Load data from Magento cache
+     *
+     * @param string $identifier
+     * @param bool $decode
+     * @return bool|mixed|string
+     */
+    protected function loadFromCache($identifier, $decode = true)
+    {
+        $cached = $this->cache->load($identifier);
+        if (!$cached) return false;
+        return $decode ? json_decode($cached) : $cached;
+    }
+    /**
+     * Save data to Magento cache
+     *
+     * @param mixed $data
+     * @param string $identifier
+     * @param int $lifeTime
+     * @param bool $encode
+     * @param array $tags
+     */
+    protected function saveToCache($identifier, $data, $tags = [], $lifeTime = null, $encode = true)
+    {
+        $data = $encode ? json_encode($data) : $data;
+        $this->cache->save($data, $identifier, $tags, $lifeTime);
     }
 }
