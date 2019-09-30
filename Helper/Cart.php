@@ -1028,7 +1028,7 @@ class Cart extends AbstractHelper
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
-                $item_options =$_product->getTypeInstance()->getOrderOptions($_product);
+                $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
                 if(isset($item_options['attributes_info'])){
                     $properties = [];
                     foreach($item_options['attributes_info'] as $attribute_info){
