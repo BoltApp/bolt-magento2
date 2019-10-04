@@ -761,6 +761,9 @@ class Order extends AbstractHelper
 
         $this->applyExternalQuoteData($quote);
 
+        // do not verify inventory, it is already reserved
+        $quote->setInventoryProcessed(true);
+
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
             'checkout_submit_all_after', [
