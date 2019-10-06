@@ -878,6 +878,7 @@ class Order extends AbstractHelper
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
             $order->delete();
         }
     }
