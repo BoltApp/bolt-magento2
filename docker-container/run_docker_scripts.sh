@@ -1,1 +1,0 @@
-docker exec m2_php sh -c "/home/circleci/launch/setup_bolt.sh"

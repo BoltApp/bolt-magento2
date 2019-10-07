@@ -7,6 +7,6 @@ services:
     tty: true
     volumes:
       - .:/home/circleci/launch
-      - ..:/home/circleci/project
+      - ../../..:/home/circleci/project
     ports:
     - 80:80

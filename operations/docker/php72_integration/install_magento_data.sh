@@ -20,8 +20,8 @@ set -e
 set -u
 set -x
 
+# Initializes MySQL environment
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
-composer install
 sudo mysql -u root -e "USE mysql;UPDATE user SET plugin='mysql_native_password' WHERE User='root';FLUSH PRIVILEGES;"
 sudo service mysql restart
 mysql -uroot -h localhost -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
@@ -33,6 +33,7 @@ while ! mysql -h localhost -uroot -e "SELECT 1" >/dev/null 2>&1; do
     sleep 1
 done
 
+# Install Magneto 2 with given user and parameters
 echo "Installing Magento..."
 mysql -uroot -h localhost -e 'CREATE DATABASE magento2;'
 php bin/magento setup:install \
@@ -50,30 +51,27 @@ php bin/magento setup:install \
     --admin-user="admin" \
     --use-rewrites=1 \
     --admin-use-security-key=0 \
-    --admin-password="123123q"
+    --admin-password="bolt1234"
 
 
+# Disable modules that are flaky 
 php bin/magento module:disable Magento_Captcha --clear-static-content
-
 php bin/magento module:disable MSP_ReCaptcha --clear-static-content
-
 php bin/magento config:set dev/static/sign 0
 
 echo "Create admin user"
 php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
 
+# Puts auth.json in correct dir for sample data
 cp /home/circleci/.composer/auth.json /home/circleci/magento/auth.json
+
 echo "Installing sample data"
 php -dmemory_limit=5G bin/magento sampledata:deploy
-
 php -dmemory_limit=5G bin/magento module:enable Magento_CustomerSampleData Magento_MsrpSampleData Magento_CatalogSampleData Magento_DownloadableSampleData Magento_OfflineShippingSampleData Magento_BundleSampleData Magento_ConfigurableSampleData Magento_ThemeSampleData Magento_ProductLinksSampleData Magento_ReviewSampleData Magento_CatalogRuleSampleData Magento_SwatchesSampleData Magento_GroupedProductSampleData Magento_TaxSampleData Magento_CmsSampleData Magento_SalesRuleSampleData Magento_SalesSampleData Magento_WidgetSampleData Magento_WishlistSampleData
 
+# Resets the Magento 2 environment so that all changes occur
 php -dmemory_limit=5G bin/magento setup:upgrade
-
 php -dmemory_limit=5G bin/magento setup:di:compile
-
 php -dmemory_limit=5G bin/magento indexer:reindex
-
 php -dmemory_limit=5G bin/magento setup:static-content:deploy -f
-
 php bin/magento cache:flush

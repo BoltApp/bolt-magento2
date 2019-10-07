@@ -65,10 +65,12 @@ innodb_flush_log_at_trx_commit=2\n\
 sync_binlog=0\n\
 innodb_use_native_aio=0\n' >> /etc/mysql/my.cnf
 
-##########################################################################
+################ MAgento 2 Install ################
 
-RUN MAGENTO_VERSION=2.3.0
+# Sets Magento 2 Version
+ENV MAGENTO_VERSION 2.3.0
 
+# Installs dependencies needed for docker image
 RUN apt-get update && apt-get -y install curl mysql-client libmcrypt-dev mcrypt libpng-dev libjpeg-dev libxml2-dev libxslt-dev
 RUN pecl channel-update pecl.php.net
 RUN pecl install zip &&  docker-php-ext-enable zip
@@ -82,12 +84,13 @@ RUN pecl install mcrypt-1.0.2
 RUN docker-php-ext-enable mcrypt
 RUN docker-php-ext-install bcmath && docker-php-ext-enable bcmath
 RUN docker-php-ext-install pdo_mysql && docker-php-ext-enable pdo_mysql
-RUN composer self-update -q
 
+# Runs commands to update composer and fetch the Magento 2
+RUN composer self-update -q
 COPY auth.json /home/circleci/.composer/auth.json
 USER circleci
 WORKDIR /home/circleci
-RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.3.0 magento/
+RUN composer create-project --repository-url=https://repo.magento.com/ magento/project-community-edition="${MAGENTO_VERSION}" magento/
 WORKDIR /home/circleci/magento
 COPY install_magento_data.sh /home/circleci/magento
 
