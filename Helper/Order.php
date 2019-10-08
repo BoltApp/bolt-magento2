@@ -83,56 +83,6 @@ class Order extends AbstractHelper
     const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
     const MAGENTO_ORDER_STATUS_PENDING = 'pending';
 
-    // Posible transation state transitions
-    private $validStateTransitions = [
-        null => [
-            self::TS_ZERO_AMOUNT,
-            self::TS_PENDING,
-            self::TS_COMPLETED, // back office
-            // for historic data (order placed before plugin update) does not have "previous state"
-            self::TS_CREDIT_COMPLETED
-        ],
-        self::TS_PENDING => [
-            self::TS_AUTHORIZED,
-            self::TS_COMPLETED,
-            self::TS_CANCELED,
-            self::TS_REJECTED_REVERSIBLE,
-            self::TS_REJECTED_IRREVERSIBLE,
-            self::TS_ZERO_AMOUNT
-        ],
-        self::TS_AUTHORIZED => [
-            self::TS_CAPTURED,
-            self::TS_CANCELED,
-            self::TS_COMPLETED
-        ],
-        self::TS_CAPTURED => [
-            self::TS_CAPTURED,
-            self::TS_CANCELED,
-            self::TS_COMPLETED,
-            self::TS_CREDIT_COMPLETED,
-            self::TS_PARTIAL_VOIDED
-        ],
-        self::TS_CANCELED => [self::TS_CANCELED],
-        self::TS_COMPLETED => [
-            self::TS_COMPLETED,
-            self::TS_CREDIT_COMPLETED
-        ],
-        self::TS_ZERO_AMOUNT => [],
-        self::TS_REJECTED_REVERSIBLE => [
-            self::TS_AUTHORIZED,
-            self::TS_COMPLETED,
-            self::TS_REJECTED_IRREVERSIBLE,
-            self::TS_CANCELED
-        ],
-        self::TS_REJECTED_IRREVERSIBLE => [self::TS_REJECTED_IRREVERSIBLE],
-        self::TS_CREDIT_COMPLETED => [
-            self::TS_CREDIT_COMPLETED,
-            self::TS_COMPLETED,
-            self::TS_CAPTURED,
-            self::TS_CANCELED
-        ]
-    ];
-
     /**
      * @var ApiHelper
      */
@@ -1163,18 +1113,6 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Check if the transition from one transaction state to another is valid.
-     *
-     * @param string|null $prevTransactionState
-     * @param string $newTransactionState
-     * @return bool
-     */
-    private function validateTransition($prevTransactionState, $newTransactionState)
-    {
-        return in_array($newTransactionState, $this->validStateTransitions[$prevTransactionState]);
-    }
-
-    /**
      * Record total amount mismatch between magento and bolt order.
      * Log the error in order comments and report via bugsnag.
      * Put the order ON HOLD if it's a mismatch.
@@ -1441,14 +1379,6 @@ class Order extends AbstractHelper
                 $payment->setIsTransactionApproved(true);
             }
             return;
-        }
-
-        if (!$this->validateTransition($prevTransactionState, $transactionState)) {
-            throw new LocalizedException(__(
-                'Invalid transaction state transition: %1 -> %2',
-                $prevTransactionState,
-                $transactionState
-            ));
         }
 
         // The order has already been canceled, i.e. PERMANENTLY REJECTED
