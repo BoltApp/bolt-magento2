@@ -878,6 +878,14 @@ class Order extends AbstractHelper
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($order) {
+                $report->setMetaData([
+                    'DELETE ORDER' => [
+                        'order increment ID' => $order->getIncrementId(),
+                        'order entity ID' => $order->getId(),
+                    ]
+                ]);
+            });
             $this->bugsnag->notifyException($e);
             $order->delete();
         }
