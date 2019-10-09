@@ -84,15 +84,7 @@ trait ReceivedUrlTrait
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
-                $redirectUrl = $this->getRedirectUrl($order);
-
-                // add quote information to the session
-                $this->clearQuoteSession($quote);
-
-                // add order information to the session
-                $this->clearOrderSession($order, $redirectUrl);
-
-                if ($order->getState() == Order::STATE_NEW) {
+                if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
                     // Save reference to the Bolt transaction with the order
                     $order->addStatusHistoryComment(
                         __(
@@ -100,13 +92,23 @@ trait ReceivedUrlTrait
                             $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
                         )
                     );
-                    $order->save();
+                    $this->orderHelper->resetOrderState($order);
                 } else {
                     $this->bugsnag->notifyError(
                         "Pre-Auth redirect wrong order state",
                         "OrderNo: $incrementId, State: {$order->getState()}"
                     );
                 }
+
+                $this->orderHelper->dispatchPostCheckoutEvents($order, $quote);
+
+                $redirectUrl = $this->getRedirectUrl($order);
+
+                // add quote information to the session
+                $this->clearQuoteSession($quote);
+
+                // add order information to the session
+                $this->clearOrderSession($order, $redirectUrl);
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {

@@ -55,6 +55,7 @@ tr.shipping.totals td.amount span.price,
                 <bolt_order_caching>1</bolt_order_caching>
                 <api_emulate_session>1</api_emulate_session>
                 <should_minify_javascript>1</should_minify_javascript>
+                <capture_merchant_metrics>0</capture_merchant_metrics>
                 <is_pre_auth>0</is_pre_auth>
             </boltpay>
         </payment>

@@ -376,7 +376,6 @@ require([
         },
 
         success: function (transaction, callback) {
-
             /**
              * Success transaction handler.
              * Sets the success url for the non-preauth flow.
@@ -484,7 +483,7 @@ require([
             hints.prefill = prefill;
 
             window.boltConfig.storeId = data.storeId;
-            window.boltConfig.isPreAuth = data.isPreAuth;
+            window.boltConfig.is_pre_auth = data.isPreAuth;
 
             insertConnectScript(data.publishableKey);
         };

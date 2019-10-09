@@ -79,6 +79,10 @@ class Order extends AbstractHelper
 
     const MISMATCH_TOLERANCE = 1;
 
+    const BOLT_ORDER_STATE_NEW = 'bolt_new';
+    const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
+    const MAGENTO_ORDER_STATUS_PENDING = 'pending';
+
     // Posible transation state transitions
     private $validStateTransitions = [
         null => [
@@ -529,7 +533,6 @@ class Order extends AbstractHelper
         if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
             return $order;
         }
-
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
@@ -539,7 +542,6 @@ class Order extends AbstractHelper
             }
             throw $e;
         }
-
         if ($order === null) {
             throw new LocalizedException(__(
                 'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
@@ -548,15 +550,12 @@ class Order extends AbstractHelper
                 $immutableQuote->getId()
             ));
         }
-
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
                 "BOLTPAY INFO :: This order was created via Bolt Webhook<br>Bolt traceId: $boltTraceId"
             );
         }
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
@@ -573,27 +572,17 @@ class Order extends AbstractHelper
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
-
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
                 __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
             );
         }
-
         // Add the user_note to the order comments and make it visible for the customer.
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
-
         $order->save();
-
-        $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
-                'order' => $order,
-                'quote' => $quote
-            ]
-        );
     }
 
     /**
@@ -641,6 +630,23 @@ class Order extends AbstractHelper
         ];
 
         $connection->query($sql, $bind);
+    }
+
+    /**
+     * After the order gets approved by Bolt set its state/status
+     * to Magento default for the new orders "new"/"Pending".
+     * Required for the order to be imported by some ERP systems.
+     *
+     * @param OrderModel $order
+     * @param string $state
+     */
+    public function resetOrderState($order) {
+        $order->setState(self::BOLT_ORDER_STATE_NEW);
+        $order->setStatus(self::BOLT_ORDER_STATUS_PENDING);
+        $order->addStatusHistoryComment(
+            "BOLTPAY INFO :: This order was approved by Bolt"
+        );
+        $order->save();
     }
 
     /**
@@ -706,6 +712,10 @@ class Order extends AbstractHelper
         }
 
         if ($quote) {
+            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+                $this->resetOrderState($order);
+            }
+            $this->dispatchPostCheckoutEvents($order, $quote);
             // If Amasty Gif Cart Extension is present
             // clear gift carts applied to immutable quotes
             $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
@@ -731,6 +741,43 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Fetch and apply external quote data, not stored within the quote or totals
+     * (usually in 3rd party modules DB tables)
+     *
+     * @param Quote $quote
+     */
+    public function applyExternalQuoteData($quote) {
+        $this->discountHelper->applyExternalDiscountData($quote);
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param Quote $quote
+     */
+    public function dispatchPostCheckoutEvents($order, $quote) {
+        // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
+        // as a flag to determine if the events were dispatched
+        if (! $quote->getBoltReservedOrderId()) return; // already dispatched
+
+        $this->applyExternalQuoteData($quote);
+
+        // do not verify inventory, it is already reserved
+        $quote->setInventoryProcessed(true);
+
+        $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
+        $this->_eventManager->dispatch(
+            'checkout_submit_all_after', [
+                'order' => $order,
+                'quote' => $quote
+            ]
+        );
+
+        // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
+        $quote->setBoltReservedOrderId(null);
+        $this->cartHelper->quoteResourceSave($quote);
+    }
+
+    /**
      * Try to fetch and price-validate already existing order.
      * Use case: order has been created but the payment failes due to the ivnalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
@@ -744,6 +791,15 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+
+            if($order->isCanceled()) {
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment'),
+                    null,
+                    CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             }
@@ -763,7 +819,6 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
-
         if ($order === null) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([
@@ -774,22 +829,20 @@ class Order extends AbstractHelper
                     ]
                 ]);
             });
-
-            throw new BoltException(__(
-                'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                $quote->getReservedOrderId(),
-                $quote->getId(),
+            throw new BoltException(
+                __(
+                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
+                    $quote->getReservedOrderId(),
+                    $quote->getId()
+                ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
-            ));
+            );
         }
-
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );
-
         $this->orderPostprocess($order, $quote, $transaction);
-
         return $order;
     }
 
@@ -818,7 +871,10 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Cancel and delete the order
+     *
      * @param OrderModel $order
+     * @throws \Exception
      */
     protected function deleteOrder($order)
     {
@@ -842,16 +898,37 @@ class Order extends AbstractHelper
         );
 
         $order = $this->getExistingOrder($incrementId);
-        if ($order && $order->getState() === OrderModel::STATE_NEW) {
-            $this->deleteOrder($order);
+
+        if (!$order) {
+            $this->bugsnag->notifyError(
+                "Order Delete Error",
+                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $quoteId"
+            );
+            return;
         }
+
+        $state = $order->getState();
+        if ($state !== OrderModel::STATE_PENDING_PAYMENT) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                    $incrementId,
+                    $state,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+
+        $this->deleteOrder($order);
     }
 
     /**
      * @param $orderIncrementId
      * @return OrderModel|false
      */
-    private function getExistingOrder($orderIncrementId)
+    protected function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
         return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
@@ -1119,10 +1196,6 @@ class Order extends AbstractHelper
         // Put the order ON HOLD and add the status message.
         // Do it once only, skip on subsequent hooks
         if ($order->getState() != OrderModel::STATE_HOLDED) {
-
-            // Put the order on hold
-            $this->setOrderState($order, OrderModel::STATE_HOLDED);
-
             // Add order status history comment
             $comment = __(
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
@@ -1133,7 +1206,8 @@ class Order extends AbstractHelper
             );
             $order->addStatusHistoryComment($comment);
 
-            $order->save();
+            // Put the order on hold
+            $this->setOrderState($order, OrderModel::STATE_HOLDED);
         }
 
         // Get the order and quote id
@@ -1242,13 +1316,13 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param string $state
      */
-    private function setOrderState($order, $state)
+    public function setOrderState($order, $state)
     {
         $prevState = $order->getState();
         if ($state == OrderModel::STATE_HOLDED) {
             // Ensure order is in one of the "can hold" states [STATE_NEW | STATE_PROCESSING]
             // to avoid no state on admin order unhold
-            if ($prevState != OrderModel::STATE_NEW) {
+            if ($prevState !== OrderModel::STATE_PROCESSING) {
                 $order->setState(OrderModel::STATE_PROCESSING);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_PROCESSING));
             }
@@ -1273,6 +1347,7 @@ class Order extends AbstractHelper
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
+        $order->save();
     }
 
     /**
@@ -1291,6 +1366,29 @@ class Order extends AbstractHelper
                 $paymentMethod
             ));
         }
+    }
+
+    /**
+     * Map class internal Bolt transaction state representation to Magento order state
+     *
+     * @param string $transactionState
+     * @return string
+     */
+    public function transactionToOrderState($transactionState)
+    {
+        return [
+            self::TS_ZERO_AMOUNT => OrderModel::STATE_PROCESSING,
+            self::TS_PENDING => OrderModel::STATE_PAYMENT_REVIEW,
+            self::TS_AUTHORIZED => OrderModel::STATE_PROCESSING,
+            self::TS_CAPTURED => OrderModel::STATE_PROCESSING,
+            self::TS_COMPLETED => OrderModel::STATE_PROCESSING,
+            self::TS_CANCELED => OrderModel::STATE_CANCELED,
+            self::TS_REJECTED_REVERSIBLE => OrderModel::STATE_PAYMENT_REVIEW,
+            self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
+            // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
+            // If called from Bolt merchant dashboard there is no enough info to sync the totals
+            self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+        ][$transactionState];
     }
 
     /**
@@ -1380,24 +1478,20 @@ class Order extends AbstractHelper
         switch ($transactionState) {
 
             case self::TS_ZERO_AMOUNT:
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_ORDER;
                 break;
 
             case self::TS_PENDING:
-                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
                 break;
 
             case self::TS_AUTHORIZED:
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_AUTH;
                 $transactionId = $transaction->id.'-auth';
                 break;
 
             case self::TS_CAPTURED:
                 if (!$newCapture) return;
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_CAPTURE;
                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
                 $parentTransactionId = $transaction->id.'-auth';
@@ -1412,7 +1506,6 @@ class Order extends AbstractHelper
 
             case self::TS_COMPLETED:
                 if (!$newCapture) return;
-                $orderState = OrderModel::STATE_PROCESSING;
                 $transactionType = Transaction::TYPE_CAPTURE;
                 if ($paymentAuthorized) {
                     $transactionId = $transaction->id.'-capture-'.$newCapture->id;
@@ -1423,20 +1516,17 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CANCELED:
-                $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_VOID;
                 $transactionId = $transaction->id.'-void';
                 $parentTransactionId = $paymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
                 break;
 
             case self::TS_REJECTED_REVERSIBLE:
-                $orderState = OrderModel::STATE_PAYMENT_REVIEW;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_reversible';
                 break;
 
             case self::TS_REJECTED_IRREVERSIBLE:
-                $orderState = OrderModel::STATE_CANCELED;
                 $transactionType = Transaction::TYPE_ORDER;
                 $transactionId = $transaction->id.'-rejected_irreversible';
                 break;
@@ -1445,13 +1535,6 @@ class Order extends AbstractHelper
                 if (in_array($transaction->id, $processedRefunds)) return;
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id.'-refund';
-                if (Hook::$fromBolt) {
-                    // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
-                    // If called from Bolt merchant dashboard there is no enough info to sync the totals
-                    $orderState = OrderModel::STATE_HOLDED;
-                } else {
-                    $orderState = OrderModel::STATE_PROCESSING;
-                }
                 break;
 
             default:
@@ -1463,6 +1546,7 @@ class Order extends AbstractHelper
         }
 
         // set order state and status
+        $orderState = $this->transactionToOrderState($transactionState);
         $this->setOrderState($order, $orderState);
 
         // Send order confirmation email to customer.
