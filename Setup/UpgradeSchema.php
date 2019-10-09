@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Setup;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Bolt\Boltpay\Helper\FeatureSwitches\Config as FeatureSwitchConfig;
 
 /**
  * @codeCoverageIgnore
@@ -73,6 +74,59 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['bolt_parent_quote_id']
         );
 
+        $this->setupFeatureSwitchTable($setup);
+
         $setup->endSetup();
+    }
+
+    private function setupFeatureSwitchTable(SchemaSetupInterface $setup) {
+        // If the table exists we do nothing. In the future, we can add migrations here based on
+        // current version from context, however for now just move on.
+        // The reason we do ugrade schema instead of install schema is that install schema is triggered *only*
+        // once during install. This makes debugging harder.
+        // However upgrade schema is triggered on every update and we get a chance to make changes as needed.
+        $tableCreated = $setup->getConnection()->isTableExists(FeatureSwitchConfig::TABLE_NAME);
+
+        if ($tableCreated) {
+            return;
+        }
+
+        // Create table now that we know it doesnt already exists.
+        $table = $setup->getConnection()
+          ->newTable($setup->getTable(FeatureSwitchConfig::TABLE_NAME))
+          ->addColumn(
+            'id',
+            \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+            null,
+            ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+            'ID'
+        )
+        ->addColumn(
+            FeatureSwitchConfig::SWITCH_NAME_COL,
+            \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+            255,
+            ['nullable' => false],
+            'Switch name'
+        )
+        ->addColumn(
+            FeatureSwitchConfig::SWITCH_VALUE_COL,
+            \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'switch value'
+        )->addColumn(
+            FeatureSwitchConfig::DEFAULT_VALUE_COL,
+            \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'default value'
+        )->addColumn(
+            FeatureSwitchConfig::ROLLOUT_PERCENTAGE_COL,
+            \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+            null,
+            ['nullable' => false, 'default' => '0'],
+            'rollout percentage'
+        )->setComment("Bolt feature switch table");
+          $setup->getConnection()->createTable($table);
     }
 }
