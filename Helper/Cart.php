@@ -181,7 +181,8 @@ class Cart extends AbstractHelper
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
         Discount::GIFT_VOUCHER => '',
-        Discount::MAGEPLAZA_GIFTCARD => ''
+        Discount::MAGEPLAZA_GIFTCARD => '',
+        Discount::BSS_STORE_CREDIT => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
