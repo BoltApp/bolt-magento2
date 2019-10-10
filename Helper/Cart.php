@@ -1540,6 +1540,22 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Rewards Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($quote))){
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Rewards Points',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description)

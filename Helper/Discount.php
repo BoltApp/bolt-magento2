@@ -121,6 +121,13 @@ class Discount extends AbstractHelper
     protected $mirasvitStoreCreditConfig;
 
     /**
+     * Mirasvit Rewards Points entry point
+     *
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitRewardsPurchaseHelper;
+
+    /**
      * @var ThirdPartyModuleFactory
      */
     protected $amastyRewardsResourceQuote;
@@ -180,6 +187,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
@@ -209,6 +217,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
+        ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
@@ -234,6 +243,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
+        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
@@ -636,6 +646,42 @@ class Discount extends AbstractHelper
 
         return false;
     }
+
+    /**
+     * @param      $quote
+     *
+     * @param bool $paymentOnly
+     *
+     * @return float
+     */
+    public function getMirasvitRewardsAmount($quote, $paymentOnly = false)
+    {
+        /** @var \Mirasvit\Rewards\Helper\Purchase $miravitRewardsPurchaseHelper */
+        $miravitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+
+        $miravitRewardsPurchase = $miravitRewardsPurchaseHelper->getByQuote($quote);
+
+        /*
+        if(!$paymentOnly){
+
+            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()){
+                return $miravitBalanceAmount;
+            }
+        }
+
+        $unresolvedTotal = $quote->getGrandTotal() + $quote->getCreditAmountUsed();
+        $totals = $quote->getTotals();
+
+        $tax      = isset($totals['tax']) ? $totals['tax']->getValue() : 0;
+        $shipping = isset($totals['shipping']) ? $totals['shipping']->getValue() : 0;
+
+        $unresolvedTotal = $this->mirasvitStoreCreditCalculationHelper->getInstance()->calc($unresolvedTotal, $tax, $shipping);
+
+        return min($unresolvedTotal, $miravitBalanceAmount);
+        */
+        return $miravitRewardsPurchase->getSpendAmount();
+    }
+
 
     /**
      * Check whether the Mageplaza Gift Card module is available (installed and enabled)
