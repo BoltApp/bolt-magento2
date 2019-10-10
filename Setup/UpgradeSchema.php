@@ -102,26 +102,26 @@ class UpgradeSchema implements UpgradeSchemaInterface
             'ID'
         )
         ->addColumn(
-            FeatureSwitchConfig::SWITCH_NAME_COL,
+            'switch_name',
             \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
             255,
             ['nullable' => false],
             'Switch name'
         )
         ->addColumn(
-            FeatureSwitchConfig::SWITCH_VALUE_COL,
+            'switch_value',
             \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
             null,
             ['nullable' => false, 'default' => '0'],
             'switch value'
         )->addColumn(
-            FeatureSwitchConfig::DEFAULT_VALUE_COL,
+            'default_value',
             \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
             null,
             ['nullable' => false, 'default' => '0'],
             'default value'
         )->addColumn(
-            FeatureSwitchConfig::ROLLOUT_PERCENTAGE_COL,
+            'rollout_percentage',
             \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
             null,
             ['nullable' => false, 'default' => '0'],
