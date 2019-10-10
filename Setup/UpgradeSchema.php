@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Setup;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
-use Bolt\Boltpay\Helper\FeatureSwitches\Config as FeatureSwitchConfig;
 
 /**
  * @codeCoverageIgnore
