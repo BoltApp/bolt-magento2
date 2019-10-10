@@ -84,7 +84,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // The reason we do ugrade schema instead of install schema is that install schema is triggered *only*
         // once during install. This makes debugging harder.
         // However upgrade schema is triggered on every update and we get a chance to make changes as needed.
-        $tableCreated = $setup->getConnection()->isTableExists(FeatureSwitchConfig::TABLE_NAME);
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_feature_switches');
 
         if ($tableCreated) {
             return;
@@ -92,7 +92,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         // Create table now that we know it doesnt already exists.
         $table = $setup->getConnection()
-          ->newTable($setup->getTable(FeatureSwitchConfig::TABLE_NAME))
+          ->newTable($setup->getTable('bolt_feature_switches'))
           ->addColumn(
             'id',
             \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
