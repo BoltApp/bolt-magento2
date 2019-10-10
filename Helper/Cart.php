@@ -50,6 +50,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Boltpay Cart helper
@@ -1398,6 +1399,7 @@ class Cart extends AbstractHelper
         $paymentOnly
     ) {
         $quote = $this->getLastImmutableQuote();
+        $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);
         /** @var AddressTotal[] */
         $totals = $quote->getTotals();
@@ -1542,10 +1544,16 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Mirasvit Rewards Points
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($quote))){
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
             $roundedAmount = $this->getRoundAmount($amount);
+
             $discounts[] = [
-                'description' => 'Rewards Points',
+                'description' =>
+                    $this->configHelper->getScopeConfig()->getValue(
+                        'rewards/general/point_unit_name',
+                        ScopeInterface::SCOPE_STORE,
+                        $quote->getStoreId()
+                    ),
                 'amount'      => $roundedAmount,
                 'type'        => 'fixed_amount',
             ];

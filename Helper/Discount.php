@@ -648,40 +648,22 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * @param      $quote
+     * If enabled, gets the Mirasvit Rewards amount used
      *
-     * @param bool $paymentOnly
+     * @param \Magento\Quote\Model\Quote $quote  The parent quote of this order which contains Rewards points references
      *
-     * @return float
+     * @return float  If enabled, the currency amount used in the order, otherwise 0
      */
-    public function getMirasvitRewardsAmount($quote, $paymentOnly = false)
+    public function getMirasvitRewardsAmount($quote)
     {
-        /** @var \Mirasvit\Rewards\Helper\Purchase $miravitRewardsPurchaseHelper */
-        $miravitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
+        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
 
-        $miravitRewardsPurchase = $miravitRewardsPurchaseHelper->getByQuote($quote);
+        if (!$mirasvitRewardsPurchaseHelper) { return 0; }
 
-        /*
-        if(!$paymentOnly){
-
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()){
-                return $miravitBalanceAmount;
-            }
-        }
-
-        $unresolvedTotal = $quote->getGrandTotal() + $quote->getCreditAmountUsed();
-        $totals = $quote->getTotals();
-
-        $tax      = isset($totals['tax']) ? $totals['tax']->getValue() : 0;
-        $shipping = isset($totals['shipping']) ? $totals['shipping']->getValue() : 0;
-
-        $unresolvedTotal = $this->mirasvitStoreCreditCalculationHelper->getInstance()->calc($unresolvedTotal, $tax, $shipping);
-
-        return min($unresolvedTotal, $miravitBalanceAmount);
-        */
+        $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
         return $miravitRewardsPurchase->getSpendAmount();
     }
-
 
     /**
      * Check whether the Mageplaza Gift Card module is available (installed and enabled)

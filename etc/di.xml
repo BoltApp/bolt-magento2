@@ -167,6 +167,10 @@
         </arguments>
     </virtualType>
 
+    <type name="Mirasvit\Rewards\Model\Purchase">
+        <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
+    </type>
+
     <virtualType name="boltMageplazaGiftCardFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
