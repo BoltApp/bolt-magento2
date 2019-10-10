@@ -49,6 +49,7 @@ class Discount extends AbstractHelper
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
+    const BSS_STORE_CREDIT = 'bss_storecredit';
 
     /**
      * @var ResourceConnection $resource
