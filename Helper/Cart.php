@@ -182,7 +182,9 @@ class Cart extends AbstractHelper
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
         Discount::GIFT_VOUCHER => '',
         Discount::MAGEPLAZA_GIFTCARD => '',
-        Discount::BSS_STORE_CREDIT => ''
+        Discount::BSS_STORE_CREDIT => '',
+        Discount::AMASTY_COUPON_AMOUNT => '',
+        Discount::AHEADWORKS_GIFTCARD => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
