@@ -31,6 +31,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Shared\Utils;
 
 /**
  * Boltpay API helper
@@ -178,37 +179,6 @@ class Api extends AbstractHelper
     }
 
     /**
-     * A helper methond for checking errors in JSON object.
-     *
-     * @return null|string
-     */
-    private function handleJsonParseError()
-    {
-        switch (json_last_error()) {
-            case JSON_ERROR_NONE:
-                return null;
-
-            case JSON_ERROR_DEPTH:
-                return 'Maximum stack depth exceeded';
-
-            case JSON_ERROR_STATE_MISMATCH:
-                return 'Underflow or the modes mismatch';
-
-            case JSON_ERROR_CTRL_CHAR:
-                return 'Unexpected control character found';
-
-            case JSON_ERROR_SYNTAX:
-                return 'Syntax error, malformed JSON';
-
-            case JSON_ERROR_UTF8:
-                return 'Malformed UTF-8 characters, possibly incorrectly encoded';
-
-            default:
-                return 'Unknown error';
-        }
-    }
-
-    /**
      * Send request to Bolt Gateway and return response
      *
      * @param Request $request
@@ -285,18 +255,7 @@ class Api extends AbstractHelper
         }
 
         if ($responseBody) {
-            // TODO: implement array instead of StdCalss.
-            $resultFromJSON = json_decode($responseBody);
-            $jsonError  = $this->handleJsonParseError();
-            if ($jsonError != null) {
-                $message = __("JSON Parse Error: " . $jsonError);
-                throw new LocalizedException($message);
-            }
-
-            if ($this->isResponseError($resultFromJSON)) {
-                $message = isset($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) :  __("Bolt API Error Response");
-                throw new LocalizedException($message);
-            }
+            $resultFromJSON = Utils::getJSONFromResponseBody($responseBody);
 
             $result->setResponse($resultFromJSON);
         } else {
