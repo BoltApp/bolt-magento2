@@ -21,7 +21,7 @@ namespace Bolt\Boltpay\Helper\Shared;
 use Magento\Framework\Exception\LocalizedException;
 
 
-class Utils {
+class ApiUtils {
     /**
      * A helper method for checking errors in JSON object.
      *
@@ -74,5 +74,22 @@ class Utils {
             throw new LocalizedException($message);
         }
         return $resultFromJSON;
+    }
+
+    public static function constructRequestHeaders(
+        $storeVersion,
+        $moduleVersion,
+        $requestData,
+        $apiKey,
+        $additionalHeaders) {
+
+        return [
+                'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,
+                'X-Bolt-Plugin-Version' => $moduleVersion,
+                'Content-Type'          => 'application/json',
+                'Content-Length'        => $requestData ? strlen($requestData) : null,
+                'X-Api-Key'             => $apiKey,
+                'X-Nonce'               => rand(100000000000, 999999999999)
+            ] + $additionalHeaders;
     }
 }

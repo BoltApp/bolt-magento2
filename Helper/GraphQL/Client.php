@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Shared\Utils;
+use Bolt\Boltpay\Helper\Shared\ApiUtils;
 
 
 /**
@@ -107,20 +107,20 @@ class Client extends AbstractHelper
         $this->bugsnag = $bugsnag;
     }
 
+
     private function makeGQLCall($query, $operation, $variables) {
         $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
-        error_log("KOKOKOKOK");
 
         $apiKey = $this->configHelper->getApiKey();
 
-        $gql_request = array(
+        $gqlRequest = array(
             "operationName" => $operation,
             "variables" => $variables,
             "query" => $query
         );
 
-        $requestData = json_encode($gql_request, JSON_UNESCAPED_SLASHES);
+        $requestData = json_encode($gqlRequest, JSON_UNESCAPED_SLASHES);
 
         $apiURL = $this->configHelper->getApiUrl() . self::MERCHANT_API_GQL_ENDPOINT;
         error_log($apiURL);
@@ -129,14 +129,13 @@ class Client extends AbstractHelper
 
         $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
-        $headers =  [
-                'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
-                'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
-                'Content-Type'          => 'application/json',
-                'Content-Length'        => strlen($requestData),
-                'X-Api-Key'             => $apiKey,
-                'X-Nonce'               => rand(100000000000, 999999999999)
-            ];
+        $headers =  ApiUtils::constructRequestHeaders(
+            $this->configHelper->getStoreVersion(),
+            $this->configHelper->getModuleVersion(),
+            $requestData,
+            $apiKey,
+            array()
+        );
 
         $client->setHeaders($headers);
 
@@ -168,9 +167,8 @@ class Client extends AbstractHelper
         }
 
         if ($responseBody) {
-            error_log("ok got bdy");
             try {
-                $resultFromJSON = Utils::getJSONFromResponseBody($responseBody);
+                $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
             } catch (\Exception $e) {
                 error_log($e);
                 error_log("all broke");
@@ -182,7 +180,6 @@ class Client extends AbstractHelper
         }
         return $result;
     }
-
     public function getFeatureSwitches() {
         $res = $this->makeGQLCall(Constants::GET_FEATURE_SWITCHES_QUERY, Constants::GET_FEATURE_SWITCHES_OPERATION, array(
             "type" => Constants::PLUGIN_TYPE,

@@ -31,7 +31,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Shared\Utils;
+use Bolt\Boltpay\Helper\Shared\ApiUtils;
 
 /**
  * Boltpay API helper
@@ -204,14 +204,13 @@ class Api extends AbstractHelper
 
         $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 
-        $headers =  [
-            'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
-            'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
-            'Content-Type'          => 'application/json',
-            'Content-Length'        => $requestData ? strlen($requestData) : null,
-            'X-Api-Key'             => $apiKey,
-            'X-Nonce'               => rand(100000000000, 999999999999)
-        ] + (array)$request->getHeaders();
+        $headers = ApiUtils::constructRequestHeaders(
+            $this->configHelper->getStoreVersion(),
+            $this->configHelper->getModuleVersion(),
+            $requestData,
+            $apiKey,
+            (array)$request->getHeaders()
+        );
 
         $request->setHeaders($headers);
 
@@ -255,7 +254,7 @@ class Api extends AbstractHelper
         }
 
         if ($responseBody) {
-            $resultFromJSON = Utils::getJSONFromResponseBody($responseBody);
+            $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
 
             $result->setResponse($resultFromJSON);
         } else {
