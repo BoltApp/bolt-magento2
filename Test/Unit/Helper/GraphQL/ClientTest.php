@@ -165,14 +165,3 @@ class ClientTest extends TestCase
     }
 }
 
-class ResponseObserver {
-    public $response;
-
-    public function setResponse($res) {
-        $this->response = $res;
-    }
-
-    public function getResponse() {
-        return $this->response;
-    }
-}

@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
+use Magento\Framework\Exception\LocalizedException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -43,8 +44,10 @@ class ApiUtilsTest extends TestCase
      */
     public function testGetJSONFromResponseBody_badJSON() {
         $body = '{"status": notok}';
-        $this->expectExceptionMessageRegExp("/JSON Parse Error.*/");
-        ApiUtils::getJSONFromResponseBody($body);
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage("JSON Parse Error: Syntax error, malformed JSON");
+        $result = ApiUtils::getJSONFromResponseBody($body);
+        $this->assertEquals($result, null);
     }
 
     /**
@@ -52,8 +55,10 @@ class ApiUtilsTest extends TestCase
      */
     public function testGetJSONFromResponseBody_errorFromBolt() {
         $body = '{"error": {"something": "here"}}';
+        $this->expectException(LocalizedException::class);
         $this->expectExceptionMessageRegExp("/Bolt API Error.*/");
-        ApiUtils::getJSONFromResponseBody($body);
+        $result = ApiUtils::getJSONFromResponseBody($body);
+        $this->assertEquals($result, null);
     }
 
     /**
@@ -61,8 +66,10 @@ class ApiUtilsTest extends TestCase
      */
     public function testGetJSONFromResponseBody_errorFromBoltWithMsg() {
         $body = '{"errors": [{"message": "here"}]}';
+        $this->expectException(LocalizedException::class);
         $this->expectExceptionMessageRegExp("/here.*/");
-        ApiUtils::getJSONFromResponseBody($body);
+        $result = ApiUtils::getJSONFromResponseBody($body);
+        $this->assertEquals($result, null);
     }
 
     public function testConstructRequestHeaders_basic() {
