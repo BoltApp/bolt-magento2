@@ -80,7 +80,7 @@ class ApiUtils {
         $moduleVersion,
         $requestData,
         $apiKey,
-        $additionalHeaders) {
+        $additionalHeaders = array()) {
 
         return [
                 'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,

@@ -123,7 +123,6 @@ class Client extends AbstractHelper
         $requestData = json_encode($gqlRequest, JSON_UNESCAPED_SLASHES);
 
         $apiURL = $this->configHelper->getApiUrl() . self::MERCHANT_API_GQL_ENDPOINT;
-        error_log($apiURL);
 
         $client->setUri($apiURL);
 
