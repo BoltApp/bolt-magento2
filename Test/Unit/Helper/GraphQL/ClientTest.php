@@ -130,12 +130,10 @@ class ClientTest extends TestCase
         $response->method('getBody')
             ->willReturn('{"data": {"features": {"name": "OK", "value": true, "default_value": false, "rollout_percentage": 100}}}');
 
-        $boltResponseObserver = new BoltResponse();
+        $this->responseFactory->method('create')->willReturn(new BoltResponse());
 
-        $this->responseFactory->method('create')->willReturn($boltResponseObserver);
-
-        $this->graphQLClient->getFeatureSwitches();
-        $this->assertEquals($boltResponseObserver->getData()["response"]->data->features->name, "OK");
+        $response = $this->graphQLClient->getFeatureSwitches();
+        $this->assertEquals($response->getData()["response"]->data->features->name, "OK");
     }
 
     /**

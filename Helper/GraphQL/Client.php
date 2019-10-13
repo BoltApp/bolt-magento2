@@ -179,6 +179,13 @@ class Client extends AbstractHelper
         return $result;
     }
 
+    /**
+     * This Method makes a call to Bolt and returns the feature switches and their values for this server with
+     * its current version and the current merchant in question.
+     * 
+     * @return mixed
+     * @throws LocalizedException
+     */
     public function getFeatureSwitches() {
         $res = $this->makeGQLCall(Constants::GET_FEATURE_SWITCHES_QUERY, Constants::GET_FEATURE_SWITCHES_OPERATION, array(
             "type" => Constants::PLUGIN_TYPE,
