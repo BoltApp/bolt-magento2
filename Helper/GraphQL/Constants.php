@@ -25,6 +25,6 @@ query GetFeatureSwitches($type: PluginType!, $version: String!) {
 }
 GQL;
 
-    // Operation name for graphql retrieve ferature switch query.
+    // Operation name for graphql query to retrieve feature switches.
     const GET_FEATURE_SWITCHES_OPERATION = 'GetFeatureSwitches';
 }
