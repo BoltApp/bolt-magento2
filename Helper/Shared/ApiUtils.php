@@ -61,7 +61,6 @@ class ApiUtils {
     }
 
     public static function getJSONFromResponseBody($responseBody) {
-        error_log("ok json deserializing bdy");
         $resultFromJSON = json_decode($responseBody);
         $jsonError  = self::handleJsonParseError();
         if ($jsonError != null) {

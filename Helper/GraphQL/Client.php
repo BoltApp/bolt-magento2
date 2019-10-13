@@ -170,8 +170,7 @@ class Client extends AbstractHelper
             try {
                 $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
             } catch (\Exception $e) {
-                error_log($e);
-                error_log("all broke");
+                throw new LocalizedException(__('Something went wrong when talking to Bolt.'));
             }
 
             $result->setResponse($resultFromJSON);
@@ -180,6 +179,7 @@ class Client extends AbstractHelper
         }
         return $result;
     }
+
     public function getFeatureSwitches() {
         $res = $this->makeGQLCall(Constants::GET_FEATURE_SWITCHES_QUERY, Constants::GET_FEATURE_SWITCHES_OPERATION, array(
             "type" => Constants::PLUGIN_TYPE,
