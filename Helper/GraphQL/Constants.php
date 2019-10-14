@@ -7,7 +7,7 @@ namespace Bolt\Boltpay\Helper\GraphQL;
 class Constants {
 
     // The const via which Bolt identifies the type of plugin.
-    const PLUGIN_TYPE='MAGENTO2';
+    const PLUGIN_TYPE='MAGENTO_2';
 
     /**
      * The graphql query to retrieve feature switches. This will be maintained backward compatible.
