@@ -47,6 +47,9 @@
     <!-- For rest api discount code validation for gift card module -->
     <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
 
+    <!-- For REST feature switch change hook -->
+    <preference for="Bolt\Boltpay\Api\FeatureSwitchesInterface" type="Bolt\Boltpay\Model\Api\FeatureSwitches" />
+
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
