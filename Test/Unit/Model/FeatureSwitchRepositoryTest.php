@@ -101,7 +101,7 @@ class FeatureSwitchRepositoryTest extends TestCase
         $this->mockSwitch
             ->expects($this->once())
             ->method('load')
-            ->with($this->anything(), "SOME_SWITCH", "switch_name")
+            ->with($this->anything(), "SOME_SWITCH", FeatureSwitch::NAME)
             ->willReturn($foundSwitch);
 
         $this->mockSwitch
@@ -135,7 +135,7 @@ class FeatureSwitchRepositoryTest extends TestCase
         $this->mockSwitch
             ->expects($this->once())
             ->method('load')
-            ->with($this->anything(), "SOME_SWITCH", "switch_name")
+            ->with($this->anything(), "SOME_SWITCH", FeatureSwitch::NAME)
             ->willReturn(null);
 
         $this->mockSwitch
