@@ -63,13 +63,7 @@ class Manager extends AbstractHelper {
         $switches = array();
         if ($switchesResponse->getData()) {
             $data = $switchesResponse->getData();
-            if (isset($data["response"])
-                && isset($data["response"]->data)
-                && isset($data["response"]->data->plugin)
-                && isset($data["response"]->data->plugin->features)
-            ) {
-                $switches = $data["response"]->data->plugin->features;
-            }
+            $switches = @$data["response"]->data->plugin->features;
         }
 
         if (!is_array($switches) || count($switches) == 0) {
