@@ -1644,15 +1644,20 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param                                        $captureAmount
+     * @param float          $captureAmount
      *
+     * @return void
      * @throws \Exception
      */
-    protected function validateCaptureAmount(OrderInterface $order, $captureAmount) {
+    protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
+    {
         $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
-        $isInvalidAmountRange = $order->getTotalInvoiced() + $captureAmount > $order->getGrandTotal();
 
-        if($isInvalidAmount || $isInvalidAmountRange) {
+        $isInvalidAmountRange = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
+            + $this->cartHelper->getRoundAmount($captureAmount)
+            > $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
+        if ($isInvalidAmount || $isInvalidAmountRange) {
             throw new \Exception( __('Capture amount is invalid'));
         }
     }
