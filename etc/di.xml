@@ -50,6 +50,9 @@
     <!-- For REST feature switch change hook -->
     <preference for="Bolt\Boltpay\Api\FeatureSwitchesInterface" type="Bolt\Boltpay\Model\Api\FeatureSwitches" />
 
+    <preference for="Bolt\Boltpay\Api\Data\FeatureSwitchInterface" type="Bolt\Boltpay\Model\FeatureSwitch"/>
+    <preference for="Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface" type="Bolt\Boltpay\Model\FeatureSwitchRepository"/>
+
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
