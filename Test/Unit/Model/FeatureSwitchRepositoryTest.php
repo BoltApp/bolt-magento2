@@ -81,6 +81,78 @@ class FeatureSwitchRepositoryTest extends TestCase
             $this->switchRepo->getByName("SOME_SWITCH")->getName());
     }
 
+    /**
+     * Test that upsertByName() works as expected.
+     */
+    public function testUpsertByName_switchFound()
+    {
+        $foundSwitch = $this
+            ->getMockBuilder(FeatureSwitchInterface::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $foundSwitch
+            ->method('getName')
+            ->willReturn("SOME_SWITCH");
+
+        $this->mockSwitch
+            ->expects($this->exactly(2))
+            ->method('getResource')
+            ->willReturn($this->mockSwitch);
+        $this->mockSwitch
+            ->expects($this->once())
+            ->method('load')
+            ->with($this->anything(), "SOME_SWITCH", "switch_name")
+            ->willReturn($foundSwitch);
+
+        $this->mockSwitch
+            ->method('getName')
+            ->willReturn("SOME_SWITCH");
+
+        $this->mockSwitch
+            ->expects($this->once())
+            ->method('save')
+            ->with(
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+
+        $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
+        $this->mockSwitch->expects($this->once())
+            ->method('setDefaultValue')->with(false);
+        $this->mockSwitch->expects($this->once())
+            ->method('setRolloutPercentage')->with(10);
+
+        $this->switchRepo->upsertByName("SOME_SWITCH", true, false, 10);
+    }
+
+    /**
+     * Test that upsertByName() works as expected.
+     */
+    public function testUpsertByName_switchNotFound()
+    {
+        $this->mockSwitch
+            ->expects($this->exactly(2))
+            ->method('getResource')
+            ->willReturn($this->mockSwitch);
+        $this->mockSwitch
+            ->expects($this->once())
+            ->method('load')
+            ->with($this->anything(), "SOME_SWITCH", "switch_name")
+            ->willReturn(null);
+
+        $this->mockSwitch
+            ->expects($this->once())
+            ->method('save')
+            ->with(
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+
+        $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
+        $this->mockSwitch->expects($this->once())
+            ->method('setDefaultValue')->with(false);
+        $this->mockSwitch->expects($this->once())
+            ->method('setRolloutPercentage')->with(10);
+
+        $this->switchRepo->upsertByName("SOME_SWITCH", true, false, 10);
+    }
+
     public function testSave()
     {
         $this->mockSwitch

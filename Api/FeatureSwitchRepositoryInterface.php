@@ -14,6 +14,15 @@ interface FeatureSwitchRepositoryInterface {
     public function getByName($name);
 
     /**
+     * @param string $name
+     * @param bool $value
+     * @param bool $defaultValue
+     * @param int $rolloutPercentage
+     * @return \Bolt\Boltpay\Api\Data\FeatureSwitchInterface
+     */
+    public function upsertByName($name, $value, $defaultValue, $rolloutPercentage);
+
+    /**
      * @param \Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch
      * @return \Bolt\Boltpay\Api\Data\FeatureSwitchInterface
      */
