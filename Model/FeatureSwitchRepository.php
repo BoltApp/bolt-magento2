@@ -19,7 +19,7 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
 
     public function getByName($name) {
         $switch = $this->featureSwitchFactory->create();
-        $switch->getResource()->load($switch, $name, "switch_name");
+        $switch->getResource()->load($switch, $name, FeatureSwitch::NAME);
         if (! $switch->getName()) {
             throw new NoSuchEntityException(__('Unable to find switch with name "%1"', $name));
         }
