@@ -66,16 +66,16 @@ use \Magento\Framework\Stdlib\DateTime\DateTime;
 class Order extends AbstractHelper
 {
     // Bolt transaction states
-    const TS_PENDING               = 'payment:pending';
-    const TS_AUTHORIZED            = 'payment:authorized';
-    const TS_CAPTURED              = 'payment:captured';
-    const TS_PARTIAL_VOIDED        = 'payment:partial_voided';
-    const TS_COMPLETED             = 'payment:completed';
-    const TS_CANCELED              = 'payment:cancelled';
-    const TS_REJECTED_REVERSIBLE   = 'payment:rejected_reversible';
-    const TS_REJECTED_IRREVERSIBLE = 'payment:rejected_irreversible';
+    const TS_PENDING               = 'cc_payment:pending';
+    const TS_AUTHORIZED            = 'cc_payment:authorized';
+    const TS_CAPTURED              = 'cc_payment:captured';
+    const TS_PARTIAL_VOIDED        = 'cc_payment:partial_voided';
+    const TS_COMPLETED             = 'cc_payment:completed';
+    const TS_CANCELED              = 'cc_payment:cancelled';
+    const TS_REJECTED_REVERSIBLE   = 'cc_payment:rejected_reversible';
+    const TS_REJECTED_IRREVERSIBLE = 'cc_payment:rejected_irreversible';
     const TS_ZERO_AMOUNT           = 'zero_amount:completed';
-    const TS_CREDIT_COMPLETED      = 'credit:completed';
+    const TS_CREDIT_COMPLETED      = 'cc_credit:completed';
 
     const MISMATCH_TOLERANCE = 1;
 
@@ -1046,11 +1046,13 @@ class Order extends AbstractHelper
     public function getTransactionState($transaction, $payment, $hookType = null)
     {
         $transactionType = $transaction->type;
-        if (in_arry($transactionType, ["cc_payment", "paypal_payment", "apm_payment"])) {
-            $transactionType = "payment";
+        // If it is an apm type, it needs to behave as regular payment/credit.
+        // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
+        if (in_arry($transactionType, ["paypal_payment", "apm_payment"])) {
+            $transactionType = "cc_payment";
         }
-        if (in_arry($transactionType, ["cc_credit", "paypal_refund", "apm_refund"])) {
-            $transactionType = "credit";
+        if (in_arry($transactionType, ["paypal_refund", "apm_refund"])) {
+            $transactionType = "cc_credit";
         }
         $transactionState = $transactionType.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
