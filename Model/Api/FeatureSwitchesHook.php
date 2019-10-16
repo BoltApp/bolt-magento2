@@ -101,6 +101,10 @@ class FeatureSwitchesHook implements FeatureSwitchesHookInterface {
     }
 
     /**
+     * This webhook handler will reach out to bolt and then store switches on
+     * the plugin table for feature switches. It returns only when the entire
+     * call is done, i.e. it is a blocking call.
+     * 
      * @api
      * @return void
      * @throws \Exception
