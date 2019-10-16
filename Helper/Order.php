@@ -1055,7 +1055,8 @@ class Order extends AbstractHelper
         //     $transactionType = "cc_credit";
         // }
         $transactionState = $transactionType.":".$transaction->status;
-        $this->logHelper->addInfoLog('State: ' . $transactionState . " from " . $transaction->type);
+        $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+        $this->logHelper->addInfoLog('State[' . $transactionReference . ']: ' . $transactionState . " from " . $transaction->type);
         // $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
