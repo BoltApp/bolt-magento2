@@ -21,10 +21,10 @@ namespace Bolt\Boltpay\Api;
  * Feature Switches Interface
  * @api
  */
-interface FeatureSwitchesInterface {
+interface FeatureSwitchesHookInterface {
     /**
      * @api
-     * @return bool
+     * @return void
      */
     public function notifyChanged();
 }
