@@ -1641,12 +1641,16 @@ class Order extends AbstractHelper
      */
     private function createOrderInvoice($order, $transactionId, $amount)
     {
-        if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
-            $invoice = $this->invoiceService->prepareInvoice($order);
-        } else {
-            $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+        try {
+            if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+                $invoice = $this->invoiceService->prepareInvoice($order);
+            } else {
+                $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
-
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
         $invoice->setBaseGrandTotal($amount);
