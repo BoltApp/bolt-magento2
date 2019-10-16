@@ -1048,12 +1048,12 @@ class Order extends AbstractHelper
         $transactionType = $transaction->type;
         // // If it is an apm type, it needs to behave as regular payment/credit.
         // // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
-        // if (in_arry($transactionType, ["paypal_payment", "apm_payment"])) {
-        //     $transactionType = "cc_payment";
-        // }
-        // if (in_arry($transactionType, ["paypal_refund", "apm_refund"])) {
-        //     $transactionType = "cc_credit";
-        // }
+        if (in_array($transactionType, ["paypal_payment", "apm_payment"])) {
+            $transactionType = "cc_payment";
+        }
+        if (in_array($transactionType, ["paypal_refund", "apm_refund"])) {
+            $transactionType = "cc_credit";
+        }
         $transactionState = $transactionType.":".$transaction->status;
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
         $this->logHelper->addInfoLog('State[' . $transactionReference . ']: ' . $transactionState . " from " . $transaction->type);
