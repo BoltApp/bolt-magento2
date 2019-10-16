@@ -42,11 +42,11 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
         } catch(NoSuchEntityException $e) {
             // If the switch is not found we create it.
             $switch = $this->featureSwitchFactory->create();
-            $switch ->setName($name);
+            $switch->setName($name);
         }
-        $switch ->setValue($value);
-        $switch ->setDefaultValue($defaultValue);
-        $switch ->setRolloutPercentage($rolloutPercentage);
+        $switch->setValue($value);
+        $switch->setDefaultValue($defaultValue);
+        $switch->setRolloutPercentage($rolloutPercentage);
         return $this->save($switch);
     }
 
