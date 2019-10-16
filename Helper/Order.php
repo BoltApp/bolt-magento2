@@ -1045,16 +1045,17 @@ class Order extends AbstractHelper
      */
     public function getTransactionState($transaction, $payment, $hookType = null)
     {
-        $transactionType = $transaction->type;
-        // If it is an apm type, it needs to behave as regular payment/credit.
-        // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
-        if (in_arry($transactionType, ["paypal_payment", "apm_payment"])) {
-            $transactionType = "cc_payment";
-        }
-        if (in_arry($transactionType, ["paypal_refund", "apm_refund"])) {
-            $transactionType = "cc_credit";
-        }
-        $transactionState = $transactionType.":".$transaction->status;
+        // $transactionType = $transaction->type;
+        // // If it is an apm type, it needs to behave as regular payment/credit.
+        // // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
+        // if (in_arry($transactionType, ["paypal_payment", "apm_payment"])) {
+        //     $transactionType = "cc_payment";
+        // }
+        // if (in_arry($transactionType, ["paypal_refund", "apm_refund"])) {
+        //     $transactionType = "cc_credit";
+        // }
+        // $transactionState = $transactionType.":".$transaction->status;
+        $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
         $transactionId = $payment->getAdditionalInformation('real_transaction_id');
