@@ -31,9 +31,14 @@ class Definitions {
     const DEFAULT_VAL_KEY="default_value";
     const ROLLOUT_KEY="rollout_percentage";
 
+    /**
+     * This switch is a sample of how to set up a feature switch.
+     * Every feature switch added here should have a corresponding helper
+     * in Decider.php
+     */
     const M2_SAMPLE_SWITCH_NAME = "M2_SAMPLE_SWITCH";
 
-    const SWITCHES = array(
+    const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
           self::VAL_KEY             => false,
