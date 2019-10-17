@@ -1053,8 +1053,8 @@ class Order extends AbstractHelper
     public function getTransactionState($transaction, $payment, $hookType = null)
     {
         $transactionType = $transaction->type;
-        // // If it is an apm type, it needs to behave as regular payment/credit.
-        // // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
+        // If it is an apm type, it needs to behave as regular payment/credit.
+        // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
         if (in_array($transactionType, [self::TT_PAYPAL_PAYMENT, self::TT_APM_PAYMENT])) {
             $transactionType = self::TT_PAYMENT;
         }
