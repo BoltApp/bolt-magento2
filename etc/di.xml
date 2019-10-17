@@ -166,6 +166,17 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="boltMirasvitRewardsPurchaseHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Mirasvit_Rewards</argument>
+            <argument name="className" xsi:type="string">Mirasvit\Rewards\Helper\Purchase</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Mirasvit\Rewards\Model\Purchase">
+        <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
+    </type>
+
     <virtualType name="boltMageplazaGiftCardFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
@@ -214,6 +225,7 @@
             <argument name="mirasvitStoreCreditCalculationHelper" xsi:type="object">boltMirasvitStoreCreditCalculationHelper</argument>
             <argument name="mirasvitStoreCreditCalculationConfig" xsi:type="object">boltMirasvitStoreCreditCalculationConfig</argument>
             <argument name="mirasvitStoreCreditConfig" xsi:type="object">boltMirasvitStoreCreditConfig</argument>
+            <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>

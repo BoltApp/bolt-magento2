@@ -121,6 +121,13 @@ class Discount extends AbstractHelper
     protected $mirasvitStoreCreditConfig;
 
     /**
+     * Mirasvit Rewards Points entry point
+     *
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitRewardsPurchaseHelper;
+
+    /**
      * @var ThirdPartyModuleFactory
      */
     protected $amastyRewardsResourceQuote;
@@ -180,6 +187,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
@@ -209,6 +217,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
+        ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
@@ -234,6 +243,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
+        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
@@ -635,6 +645,24 @@ class Discount extends AbstractHelper
         }catch (\Exception $e){}
 
         return false;
+    }
+
+    /**
+     * If enabled, gets the Mirasvit Rewards amount used
+     *
+     * @param \Magento\Quote\Model\Quote $quote  The parent quote of this order which contains Rewards points references
+     *
+     * @return float  If enabled, the currency amount used in the order, otherwise 0
+     */
+    public function getMirasvitRewardsAmount($quote)
+    {
+        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
+        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+
+        if (!$mirasvitRewardsPurchaseHelper) { return 0; }
+
+        $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
+        return $miravitRewardsPurchase->getSpendAmount();
     }
 
     /**
