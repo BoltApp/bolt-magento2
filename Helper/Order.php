@@ -83,6 +83,13 @@ class Order extends AbstractHelper
     const BOLT_ORDER_STATUS_PENDING = 'bolt_pending';
     const MAGENTO_ORDER_STATUS_PENDING = 'pending';
 
+    const TT_PAYMENT = 'cc_payment';
+    const TT_CREDIT = 'cc_credit';
+    const TT_PAYPAL_PAYMENT = 'paypal_payment';
+    const TT_PAYPAL_REFUND = 'paypal_refund';
+    const TT_APM_PAYMENT = 'apm_payment';
+    const TT_APM_REFUND = 'apm_refund';
+
     /**
      * @var ApiHelper
      */
@@ -1048,16 +1055,13 @@ class Order extends AbstractHelper
         $transactionType = $transaction->type;
         // // If it is an apm type, it needs to behave as regular payment/credit.
         // // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
-        if (in_array($transactionType, ["paypal_payment", "apm_payment"])) {
-            $transactionType = "cc_payment";
+        if (in_array($transactionType, [self::TT_PAYPAL_PAYMENT, self::TT_APM_PAYMENT])) {
+            $transactionType = self::TT_PAYMENT;
         }
-        if (in_array($transactionType, ["paypal_refund", "apm_refund"])) {
-            $transactionType = "cc_credit";
+        if (in_array($transactionType, [self::TT_PAYPAL_REFUND, self::TT_APM_REFUND])) {
+            $transactionType = self::TT_CREDIT;
         }
         $transactionState = $transactionType.":".$transaction->status;
-        $transactionReference = $payment->getAdditionalInformation('transaction_reference');
-        $this->logHelper->addInfoLog('State[' . $transactionReference . ']: ' . $transactionState . " from " . $transaction->type);
-        // $transactionState = $transaction->type.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
         $transactionId = $payment->getAdditionalInformation('real_transaction_id');
