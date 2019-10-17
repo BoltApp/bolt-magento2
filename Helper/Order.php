@@ -1654,45 +1654,10 @@ class Order extends AbstractHelper
         $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
 
         /**
-         * Due to grand total sent to Bolt is rounded,
-         * the same operation should be used when validating captured amount.
-         *
-         * The rounding operations are applied to each operand to avoid cases when grand total
-         * is formally lower than the sum of captured amount and total invoiced.
-         *
-         * ---------
-         * Example 1.
-         *
-         * As of the previous behavior, we had:
-         *
-         * $captureAmount: 203.29
-         * $order->getTotalInvoiced(): [empty]
-         * $order->getGrandTotal(): 203.2874
-         *
-         *      203.29 > 203.2874 [ = true ] -> leads to raise an exception
-         *
-         * After applying rounding, got:
-         *
-         * getRoundAmount($order->getTotalInvoiced()) [0] + getRoundAmount($captureAmount) [20329]: 20329
-         * getRoundAmount($order->getGrandTotal()): 20329
-         *
-         *      20329 > 20329 [ = false ] -> validation passed
-         *
-         * ---------
-         * Example 2.
-         *
-         * $captureAmount: 203.49
-         * $order->getTotalInvoiced(): 2.49
-         * $order->getGrandTotal(): 205.9877
-         *
-         *      203.49 + 2.49 ( = 205.98 ) > 205.9877 [ = false ] -> validation passed
-         *
-         * Applying rounding, we got:
-         *
-         * getRoundAmount($order->getTotalInvoiced()) [249] + getRoundAmount($captureAmount) [20349]: 20598
-         * getRoundAmount($order->getGrandTotal()): 20599
-         *
-         *      20598 > 20599 [ = false ] -> validation also passed
+         * Due to grand total sent to Bolt is rounded, the same operation should be used
+         * when validating captured amount.
+         * Rounding operations are applied to each operand in order to avoid cases when the grand total
+         * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
          */
         $isInvalidAmountRange = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
             + $this->cartHelper->getRoundAmount($captureAmount)
