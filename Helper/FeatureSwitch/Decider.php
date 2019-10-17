@@ -18,8 +18,6 @@
 namespace Bolt\Boltpay\Helper\FeatureSwitch;
 
 
-use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
-use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 
