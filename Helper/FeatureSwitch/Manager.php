@@ -22,6 +22,8 @@ use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\LocalizedException;
 
 class Manager extends AbstractHelper {
 
@@ -81,4 +83,28 @@ class Manager extends AbstractHelper {
             }
         }
     }
+
+    /**
+     * The returns if the switch is enabled.
+     * TODO(roopakv): Take sessions & rollout percentage into account.
+     *
+     * @param string $switchName name of the switch
+     *
+     * @throws LocalizedException
+     * @return bool
+     */
+    public function isSwitchEnabled($switchName) {
+        $defaultDef = isset(Definitions::SWITCHES[$switchName]) ? Definitions::SWITCHES[$switchName] : null;
+        if (!$defaultDef) {
+            throw new LocalizedException(__("Unknown feature switch"));
+        }
+        try {
+            $switch = $this->fsRepo->getByName($switchName);
+            return $switch->getValue();
+        } catch (NoSuchEntityException $e) {
+            // Switch is not in DB. Fall back to defaults.
+            return $defaultDef[Definitions::VAL_KEY];
+        }
+    }
+
 }
