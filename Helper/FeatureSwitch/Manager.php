@@ -17,14 +17,26 @@
 
 namespace Bolt\Boltpay\Helper\FeatureSwitch;
 
-
+use Bolt\Boltpay\Model\FeatureSwitchFactory;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+use Magento\Framework\App\State;
 
+/**
+ * This package manages feature switches. As much as possible this package should NOT
+ * depend on any other code in the code base. This makes it so that feature switches
+ * can be used by all part of our code base. This means that this package manages
+ * its own sessions etc.
+ *
+ * Class Manager
+ *
+ * @package Bolt\Boltpay\Helper\FeatureSwitch
+ */
 class Manager extends AbstractHelper {
 
     /**
@@ -37,20 +49,39 @@ class Manager extends AbstractHelper {
      */
     private $fsRepo;
 
+    /** @var State */
+    private $state;
+
+    /** @var CoreSession */
+    private $session;
+
     /**
-     * @param Context $context
-     * @param GQL $gql
+     * @var FeatureSwitchFactory
+     */
+    private $fsFactory;
+
+    /**
+     * @param Context                 $context
+     * @param CoreSession             $coreSession
+     * @param State                   $state
+     * @param GQL                     $gql
      * @param FeatureSwitchRepository $fsRepo
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
+        CoreSession $coreSession,
+        State $state,
         GQL $gql,
-        FeatureSwitchRepository $fsRepo
+        FeatureSwitchRepository $fsRepo,
+        FeatureSwitchFactory $fsFactory
     ) {
         parent::__construct($context);
+        $this->session = $coreSession;
+        $this->state = $state;
         $this->gql = $gql;
         $this->fsRepo = $fsRepo;
+        $this->fsFactory = $fsFactory;
     }
 
     /**
@@ -85,8 +116,48 @@ class Manager extends AbstractHelper {
     }
 
     /**
+     * This method returns if a feature switch is enabled for a user.
+     * The way this is conputed is as follows:
+     * - Get feature switch id
+     * - Set if unset.
+     * - Add switch name as salt to ID and find md5 hash
+     * - Get first 6 digits of MD5 and divide by 0xffffff. Should be between 0 and 1.
+     * - Multiply previous value by 100
+     *   and comprare with rolloutPercentage to decide if in bucket.
+     *
+     * @param string $switchName
+     * @param int $rolloutPercentage
+     * @return bool
+     */
+    private function _isInBucket(string $switchName, int $rolloutPercentage) {
+        $this->session->start();
+        $boltFeatureSwitchId = $this->session->getBoltFeatureSwitchId();
+        if (!$boltFeatureSwitchId) {
+            $boltFeatureSwitchId = uniqid("BFS", true);
+            $this->session->setBoltFeatureSwitchId($boltFeatureSwitchId);
+        }
+        $saltedString = $boltFeatureSwitchId . "-" . $switchName;
+        $hash = md5($saltedString);
+        $hexStr = substr($hash, 0, 6);
+        $decEquivalent = hexdec($hexStr);
+
+        $hexMax = hexdec("0xffffff");
+        $position = $decEquivalent / (float) $hexMax * 100;
+        return $position < $rolloutPercentage;
+    }
+
+    private function _switchFromConst($switchDef) {
+        $switch = null;
+        $switch = $this->fsFactory->create();
+        $switch->setName($switchDef[Definitions::NAME_KEY]);
+        $switch->setValue($switchDef[Definitions::VAL_KEY]);
+        $switch->setDefaultValue($switchDef[Definitions::DEFAULT_VAL_KEY]);
+        $switch->setRolloutPercentage($switchDef[Definitions::ROLLOUT_KEY]);
+        return $switch;
+    }
+
+    /**
      * The returns if the switch is enabled.
-     * TODO(roopakv): Take sessions & rollout percentage into account.
      *
      * @param string $switchName name of the switch
      *
@@ -99,12 +170,29 @@ class Manager extends AbstractHelper {
         if (!$defaultDef) {
             throw new LocalizedException(__("Unknown feature switch"));
         }
+        $switch = null;
         try {
             $switch = $this->fsRepo->getByName($switchName);
-            return $switch->getValue();
         } catch (NoSuchEntityException $e) {
             // Switch is not in DB. Fall back to defaults.
-            return $defaultDef[Definitions::VAL_KEY];
+            $switch = $this->_switchFromConst($defaultDef);
+        }
+
+        if (!$switch) {
+            error_log("none");
+            // Something is really wrong, But we never dont to fail
+            // if this sort of weird case occurs.
+            return false;
+        }
+
+        if ($switch->getRolloutPercentage() == 0) {
+            return $switch->getDefaultValue();
+        } else if ($switch->getRolloutPercentage() == 100) {
+            return $switch->getValue();
+        } else {
+            $isInBucket = $this
+                ->_isInBucket($switchName, $switch->getRolloutPercentage());
+            return $isInBucket ? $switch->getValue() : $switch->getDefaultValue();
         }
     }
 

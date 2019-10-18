@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
 use Bolt\Boltpay\Model\FeatureSwitch;
+use Bolt\Boltpay\Model\FeatureSwitchFactory;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
@@ -28,6 +29,8 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Session\SessionManagerInterface as CoreSession;
+use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
 
 class ManagerTest extends TestCase
@@ -62,13 +65,28 @@ class ManagerTest extends TestCase
         $this->gql = $this->createMock(GQL::class);
         $this->fsRepo = $this->createMock(FeatureSwitchRepository::class);
 
+        $mockSwitch = $this
+            ->getMockBuilder(FeatureSwitch::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $factory = $this->createMock(FeatureSwitchFactory::class);
+        $factory
+            ->method('create')
+            ->willReturn($mockSwitch);
+
+        $session = $this->createMock(CoreSession::class);
+        $state = $this->createMock(State::class);
+
 
         $this->manager = (new ObjectManager($this))->getObject(
             Manager::class,
             [
                 'context' => $this->context,
+                'session' => $session,
+                'state' => $state,
                 'gql' => $this->gql,
                 'fsRepo' => $this->fsRepo,
+                'fsFactory' => $factory
             ]
         );
     }
@@ -236,7 +254,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testIsSwitchEnabled_nothingInDb() {
+    public function testIsSwitchEnabled_nothingInDbNoRollout() {
         $this->fsRepo
             ->expects($this->once())
             ->method('getByName')
@@ -247,9 +265,42 @@ class ManagerTest extends TestCase
         $this->assertEquals($fsVal, false);
     }
 
-    public function testIsSwitchEnabled_TrueValInDb() {
+    public function testIsSwitchEnabled_ValInDbNoRollout() {
+        $fs = $this->createMock(FeatureSwitch::class);
+        $fs->expects($this->once())->method('getDefaultValue')->willReturn(true);
+        $fs->expects($this->once())->method('getRolloutPercentage')->willReturn(0);
+        $this->fsRepo
+            ->expects($this->once())
+            ->method('getByName')
+            ->willReturn($fs);
+
+        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+
+        $this->assertEquals($fsVal, true);
+    }
+
+    public function testIsSwitchEnabled_ValInDbFullRollout() {
         $fs = $this->createMock(FeatureSwitch::class);
         $fs->expects($this->once())->method('getValue')->willReturn(true);
+        $fs->expects($this->exactly(2))
+            ->method('getRolloutPercentage')->willReturn(100);
+
+        $this->fsRepo
+            ->expects($this->once())
+            ->method('getByName')
+            ->willReturn($fs);
+
+        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+
+        $this->assertEquals($fsVal, true);
+    }
+
+    public function testIsSwitchEnabled_ValInDbPartialRollout() {
+        $fs = $this->createMock(FeatureSwitch::class);
+        $fs->expects($this->once())->method('getValue')->willReturn(true);
+        $fs->expects($this->exactly(2))
+            ->method('getRolloutPercentage')->willReturn(100);
+
         $this->fsRepo
             ->expects($this->once())
             ->method('getByName')
@@ -265,4 +316,6 @@ class ManagerTest extends TestCase
         $this->expectExceptionMessage("Unknown feature switch");
         $this->manager->isSwitchEnabled("SECRET_FEATURE_SWITCH");
     }
+
+    // TODO(roopakv): Figure out how to mock globals to test rollout.
 }
