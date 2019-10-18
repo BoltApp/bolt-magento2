@@ -25,9 +25,8 @@ use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
 
 class ManagerTest extends TestCase
@@ -62,13 +61,12 @@ class ManagerTest extends TestCase
         $this->gql = $this->createMock(GQL::class);
         $this->fsRepo = $this->createMock(FeatureSwitchRepository::class);
 
-
         $this->manager = (new ObjectManager($this))->getObject(
             Manager::class,
             [
                 'context' => $this->context,
                 'gql' => $this->gql,
-                'fsRepo' => $this->fsRepo,
+                'fsRepo' => $this->fsRepo
             ]
         );
     }
@@ -234,35 +232,5 @@ class ManagerTest extends TestCase
             ->method('upsertByName');
 
         $this->manager->updateSwitchesFromBolt();
-    }
-
-    public function testIsSwitchEnabled_nothingInDb() {
-        $this->fsRepo
-            ->expects($this->once())
-            ->method('getByName')
-            ->willThrowException(new NoSuchEntityException(__("no found")));
-
-        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
-
-        $this->assertEquals($fsVal, false);
-    }
-
-    public function testIsSwitchEnabled_TrueValInDb() {
-        $fs = $this->createMock(FeatureSwitch::class);
-        $fs->expects($this->once())->method('getValue')->willReturn(true);
-        $this->fsRepo
-            ->expects($this->once())
-            ->method('getByName')
-            ->willReturn($fs);
-
-        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
-
-        $this->assertEquals($fsVal, true);
-    }
-
-    public function testIsSwitchEnabled_throwsIfBadSwitchName() {
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage("Unknown feature switch");
-        $this->manager->isSwitchEnabled("SECRET_FEATURE_SWITCH");
     }
 }

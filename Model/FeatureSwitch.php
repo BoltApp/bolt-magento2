@@ -51,7 +51,7 @@ class FeatureSwitch extends AbstractModel implements \Bolt\Boltpay\Api\Data\Feat
 
     public function getRolloutPercentage()
     {
-        return $this->_getData(self::DEFAULT_VALUE);
+        return $this->_getData(self::ROLLOUT_PERCENTAGE);
     }
 
     public function setRolloutPercentage($rolloutPercentage)
