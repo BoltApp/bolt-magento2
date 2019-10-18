@@ -804,7 +804,7 @@ class Order extends AbstractHelper
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
                 throw new BoltException(
-                    __('Order is in the initial state. Waiting for the hook update. Order #: %1 Quote ID: %2',
+                    __('Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
                         $quote->getReservedOrderId(),
                         $quote->getId()),
                     null,
