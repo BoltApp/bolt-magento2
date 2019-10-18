@@ -32,6 +32,7 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
