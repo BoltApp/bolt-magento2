@@ -794,9 +794,21 @@ class Order extends AbstractHelper
 
             if($order->isCanceled()) {
                 throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment'),
+                    __('Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
                     null,
                     CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
+            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+                throw new BoltException(
+                    __('Order is in the initial state. Waiting for the hook update. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
+                    null,
+                    CreateOrder::E_BOLT_GENERAL_ERROR
                 );
             }
 
