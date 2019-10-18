@@ -21,15 +21,11 @@ namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
 use Bolt\Boltpay\Model\FeatureSwitch;
-use Bolt\Boltpay\Model\FeatureSwitchFactory;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
 
@@ -65,28 +61,12 @@ class ManagerTest extends TestCase
         $this->gql = $this->createMock(GQL::class);
         $this->fsRepo = $this->createMock(FeatureSwitchRepository::class);
 
-        $mockSwitch = $this
-            ->getMockBuilder(FeatureSwitch::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $factory = $this->createMock(FeatureSwitchFactory::class);
-        $factory
-            ->method('create')
-            ->willReturn($mockSwitch);
-
-        $session = $this->createMock(CoreSession::class);
-        $state = $this->createMock(State::class);
-
-
         $this->manager = (new ObjectManager($this))->getObject(
             Manager::class,
             [
                 'context' => $this->context,
-                'session' => $session,
-                'state' => $state,
                 'gql' => $this->gql,
-                'fsRepo' => $this->fsRepo,
-                'fsFactory' => $factory
+                'fsRepo' => $this->fsRepo
             ]
         );
     }
