@@ -321,7 +321,7 @@ class OrderTest extends TestCase
             array('transaction_state', 'cc_payment:pending'),
             array('transaction_reference', '000123'),
             array('real_transaction_id', 'ABCD-1234-XXXX'),
-            array('captures', array(),
+            array('captures', array()),
         );
         $this->paymentMock->expects($this->exactly(4))
             ->method('getAdditionalInformation')
