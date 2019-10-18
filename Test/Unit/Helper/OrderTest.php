@@ -292,9 +292,12 @@ class OrderTest extends TestCase
     public function getTransactionState_happyPath()
     {
         $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
-        $this->paymentMock->method('getId')->willReturn('payment-1');
-        $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
+        // $this->paymentMock->method('getId')->willReturn('payment-1');
+        // $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
         $this->paymentMock->method('getAdditionalInformation')->with('transaction_state')->willReturn('cc_payment:pending');
+        // $this->paymentInfo->method('getAdditionalInformation')
+        //     ->with('transaction_state')
+        //     ->willReturn(true);
         $this->paymentMock->method('getAdditionalInformation')->with('transaction_reference')->willReturn('000123');
         $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
         $this->paymentMock->method('getAdditionalInformation')->with('captures')->willReturn(NULL);
