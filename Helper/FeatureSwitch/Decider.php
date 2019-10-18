@@ -39,7 +39,7 @@ class Decider extends AbstractHelper {
     private $_session;
 
     /**
-     * @var fsRepo
+     * @var FeatureSwitchRepository
      */
     private $_fsRepo;
 
@@ -75,13 +75,13 @@ class Decider extends AbstractHelper {
 
     /**
      * This method returns if a feature switch is enabled for a user.
-     * The way this is conputed is as follows:
+     * The way this is computed is as follows:
      * - Get feature switch id
      * - Set if unset.
      * - Add switch name as salt to ID and find md5 hash
      * - Get first 6 digits of MD5 and divide by 0xffffff. Should be between 0 and 1.
      * - Multiply previous value by 100
-     *   and comprare with rolloutPercentage to decide if in bucket.
+     *   and compare with rolloutPercentage to decide if in bucket.
      *
      * @param string $switchName
      * @param int $rolloutPercentage
@@ -114,7 +114,7 @@ class Decider extends AbstractHelper {
     }
 
     /**
-     * The returns if the switch is enabled.
+     * This returns if the switch is enabled.
      *
      * @param string $switchName name of the switch
      *
@@ -136,8 +136,7 @@ class Decider extends AbstractHelper {
         }
 
         if (!$switch) {
-            error_log("none");
-            // Something is really wrong, But we never dont to fail
+            // Something is really wrong, But we dont want to fail
             // if this sort of weird case occurs.
             return false;
         }
@@ -158,6 +157,6 @@ class Decider extends AbstractHelper {
      ***************************************************/
 
     public function isSampleSwitchEnabled() {
-        return $this->_manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+        return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
     }
 }
