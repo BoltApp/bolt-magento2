@@ -157,6 +157,16 @@ class OrderTest extends TestCase
     private $orderMock;
 
     /**
+     * @var InfoInterface
+     */
+    private $paymentMock;
+
+    /**
+     * @var \stdClass
+     */
+    private $transactionMock;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -273,5 +283,27 @@ class OrderTest extends TestCase
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
         $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID." / ".self::QUOTE_ID);
+    }
+
+    /**
+     * @test
+     */
+    public function getTransactionState_happyPath()
+    {
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $this->paymentMock->method('getId')->willReturn('payment-1');
+        $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
+        $this->paymentMock->method('getAdditionalInformation')->with('transaction_state')->willReturn('cc_payment:pending');
+        $this->paymentMock->method('getAdditionalInformation')->with('transaction_reference')->willReturn('000123');
+        $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        $this->paymentMock->method('getAdditionalInformation')->with('captures')->willReturn(NULL);
+
+        $this->transactionMock = (object) ( array(
+            'type' => "cc_payment",
+            'status' => "authorized",
+            'captures' => NULL,
+        ) );
+        $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
+        $this->assertEquals($state, "cc_payment:authorized");
     }
 }
