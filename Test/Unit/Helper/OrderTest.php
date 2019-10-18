@@ -296,7 +296,7 @@ class OrderTest extends TestCase
             array('transaction_state', 'cc_payment:pending'),
             array('transaction_reference', '000123'),
             array('real_transaction_id', 'ABCD-1234-XXXX'),
-            array('captures', NULL),
+            array('captures', array()),
         );
         $this->paymentMock->expects($this->exactly(4))
             ->method('getAdditionalInformation')
@@ -305,7 +305,7 @@ class OrderTest extends TestCase
         $this->transactionMock = (object) ( array(
             'type' => "cc_payment",
             'status' => "authorized",
-            'captures' => NULL,
+            'captures' => array(),
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:authorized");
@@ -321,7 +321,7 @@ class OrderTest extends TestCase
             array('transaction_state', 'cc_payment:pending'),
             array('transaction_reference', '000123'),
             array('real_transaction_id', 'ABCD-1234-XXXX'),
-            array('captures', NULL),
+            array('captures', array()),
         );
         $this->paymentMock->expects($this->exactly(4))
             ->method('getAdditionalInformation')
@@ -330,7 +330,7 @@ class OrderTest extends TestCase
         $this->transactionMock = (object) ( array(
             'type' => "paypal_payment",
             'status' => "completed",
-            'captures' => NULL,
+            'captures' => array(),
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:completed");
@@ -346,7 +346,7 @@ class OrderTest extends TestCase
             array('transaction_state', NULL),
             array('transaction_reference', NULL),
             array('real_transaction_id', NULL),
-            array('captures', NULL),
+            array('captures', array()),
         );
         $this->paymentMock->expects($this->exactly(4))
             ->method('getAdditionalInformation')
@@ -355,7 +355,7 @@ class OrderTest extends TestCase
         $this->transactionMock = (object) ( array(
             'type' => "apm_payment",
             'status' => "authorized",
-            'captures' => NULL,
+            'captures' => array(),
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:pending");
