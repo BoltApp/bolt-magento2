@@ -346,9 +346,8 @@ class OrderTest extends TestCase
             array('transaction_state', NULL),
             array('transaction_reference', NULL),
             array('real_transaction_id', NULL),
-            array('captures', NULL),
         );
-        $this->paymentMock->expects($this->exactly(4))
+        $this->paymentMock->expects($this->exactly(3))
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));
 
