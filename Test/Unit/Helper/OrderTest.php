@@ -292,15 +292,19 @@ class OrderTest extends TestCase
     public function getTransactionState_happyPath()
     {
         $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
-        // $this->paymentMock->method('getId')->willReturn('payment-1');
-        // $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
-        $this->paymentMock->method('getAdditionalInformation')->with('transaction_state')->willReturn('cc_payment:pending');
-        // $this->paymentInfo->method('getAdditionalInformation')
-        //     ->with('transaction_state')
-        //     ->willReturn(true);
-        $this->paymentMock->method('getAdditionalInformation')->with('transaction_reference')->willReturn('000123');
-        $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
-        $this->paymentMock->method('getAdditionalInformation')->with('captures')->willReturn(NULL);
+        // $this->paymentMock->method('getAdditionalInformation')->with('transaction_state')->willReturn('cc_payment:pending');
+        // $this->paymentMock->method('getAdditionalInformation')->with('transaction_reference')->willReturn('000123');
+        // $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        // $this->paymentMock->method('getAdditionalInformation')->with('captures')->willReturn(NULL);
+        $map = array(
+            array('transaction_state', 'cc_payment:pending'),
+            array('transaction_reference', '000123'),
+            array('real_transaction_id', 'ABCD-1234-XXXX'),
+            array('captures', NULL),
+        );
+        $this->paymentMock->expects($this->exactly(4))
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
 
         $this->transactionMock = (object) ( array(
             'type' => "cc_payment",
