@@ -18,11 +18,15 @@
 namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
+use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
@@ -69,7 +73,7 @@ class ManagerTest extends TestCase
         );
     }
 
-    public function testEmptyResponse() {
+    public function testUpdateSwitchesFromBolt_EmptyResponse() {
         $this->gql
             ->expects($this->once())
             ->method('getFeatureSwitches')
@@ -82,7 +86,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseWithOnlyResponse() {
+    public function testUpdateSwitchesFromBolt_ResponseWithOnlyResponse() {
         $response = new BoltResponse();
         $respObj = array("response" => "ok");
         $response->setData($respObj);
@@ -98,7 +102,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseUptoData() {
+    public function testUpdateSwitchesFromBolt_ResponseUptoData() {
         $response = new BoltResponse();
         $respObj = array("response" => (object)array("data" => "plugin"));
         $response->setData($respObj);
@@ -114,7 +118,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseUptoPlugin() {
+    public function testUpdateSwitchesFromBolt_ResponseUptoPlugin() {
         $response = new BoltResponse();
         $respObj = array(
             "response" => (object)array(
@@ -134,11 +138,12 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseUptoFeatures() {
+    public function testUpdateSwitchesFromBolt_ResponseUptoFeatures() {
         $response = new BoltResponse();
         $respObj = array(
             "response" => (object)array(
-                "data" => (object)array("plugin"=> (object)array("features" => "something"))
+                "data" => (object)array(
+                    "plugin"=> (object)array("features" => "something"))
             )
         );
         $response->setData($respObj);
@@ -154,7 +159,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseWithSwitches() {
+    public function testUpdateSwitchesFromBolt_ResponseWithSwitches() {
         $response = new BoltResponse();
         $respObj = array(
             "response" => (object)array(
@@ -186,7 +191,7 @@ class ManagerTest extends TestCase
         $this->manager->updateSwitchesFromBolt();
     }
 
-    public function testResponseWithMultipleSwitches() {
+    public function testUpdateSwitchesFromBolt_ResponseWithMultipleSwitches() {
         $response = new BoltResponse();
         $respObj = array(
             "response" => (object)array(
@@ -229,5 +234,35 @@ class ManagerTest extends TestCase
             ->method('upsertByName');
 
         $this->manager->updateSwitchesFromBolt();
+    }
+
+    public function testIsSwitchEnabled_nothingInDb() {
+        $this->fsRepo
+            ->expects($this->once())
+            ->method('getByName')
+            ->willThrowException(new NoSuchEntityException(__("no found")));
+
+        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+
+        $this->assertEquals($fsVal, false);
+    }
+
+    public function testIsSwitchEnabled_TrueValInDb() {
+        $fs = $this->createMock(FeatureSwitch::class);
+        $fs->expects($this->once())->method('getValue')->willReturn(true);
+        $this->fsRepo
+            ->expects($this->once())
+            ->method('getByName')
+            ->willReturn($fs);
+
+        $fsVal = $this->manager->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+
+        $this->assertEquals($fsVal, true);
+    }
+
+    public function testIsSwitchEnabled_throwsIfBadSwitchName() {
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage("Unknown feature switch");
+        $this->manager->isSwitchEnabled("SECRET_FEATURE_SWITCH");
     }
 }
