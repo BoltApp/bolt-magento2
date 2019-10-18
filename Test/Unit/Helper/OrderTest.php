@@ -321,7 +321,7 @@ class OrderTest extends TestCase
             array('transaction_state', 'cc_payment:pending'),
             array('transaction_reference', '000123'),
             array('real_transaction_id', 'ABCD-1234-XXXX'),
-            array('captures', "",
+            array('captures', array(),
         );
         $this->paymentMock->expects($this->exactly(4))
             ->method('getAdditionalInformation')
@@ -330,7 +330,7 @@ class OrderTest extends TestCase
         $this->transactionMock = (object) ( array(
             'type' => "paypal_payment",
             'status' => "completed",
-            'captures' => "",
+            'captures' => array(),
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:completed");
@@ -355,7 +355,7 @@ class OrderTest extends TestCase
         $this->transactionMock = (object) ( array(
             'type' => "apm_payment",
             'status' => "authorized",
-            'captures' => "",
+            'captures' => array(),
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:pending");
