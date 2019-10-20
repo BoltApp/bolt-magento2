@@ -33,14 +33,15 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Config;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
@@ -49,6 +50,7 @@ use Bolt\Boltpay\Exception\BoltException;
  * Class OrderTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Order
  */
 class OrderTest extends TestCase
 {
@@ -72,7 +74,7 @@ class OrderTest extends TestCase
     private $regionModel;
 
     /**
-     * @var QuoteManagement
+     * @var MockObject|QuoteManagement
      */
     private $quoteManagement;
 
@@ -122,7 +124,7 @@ class OrderTest extends TestCase
     private $logHelper;
 
     /**
-     * @var Bugsnag
+     * @var MockObject|Bugsnag
      */
     private $bugsnag;
 
@@ -130,11 +132,6 @@ class OrderTest extends TestCase
      * @var CartHelper
      */
     private $cartHelper;
-
-    /**
-     * @var \Magento\Payment\Model\Info
-     */
-    private $quotePaymentInfoInstance = null;
 
     /**
      * @var ResourceConnection
@@ -151,18 +148,26 @@ class OrderTest extends TestCase
     protected $date;
 
     /**
-     * @var PHPUnit_Framework_MockObject_MockObject|OrderHelper
+     * @var MockObject|OrderHelper
      */
     private $currentMock;
 
     /**
-     * @var \PHPUnit\Framework\MockObject\MockObject|Order
+     * @var MockObject|Order
      */
     private $orderMock;
     /**
-     * @var \PHPUnit\Framework\MockObject\MockObject|Config
+     * @var MockObject|Config
      */
     private $orderConfigMock;
+    /**
+     * @var MockObject
+     */
+    private $context;
+    /**
+     * @var MockObject|Quote
+     */
+    private $quoteMock;
 
     /**
      * @inheritdoc
@@ -201,7 +206,9 @@ class OrderTest extends TestCase
             ->setMethods([
                 'getExistingOrder',
                 'deleteOrder',
-                'cancelOrder'
+                'cancelOrder',
+                'hasSamePrice',
+                'orderPostprocess',
             ])
             ->getMock();
     }
@@ -229,6 +236,8 @@ class OrderTest extends TestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
 
+        $this->quoteMock = $this->createMock(Quote::class);
+
         $this->orderMock = $this->createPartialMock(
             Order::class,
             [
@@ -237,7 +246,9 @@ class OrderTest extends TestCase
                 'save',
                 'hold',
                 'setState',
-                'setStatus'
+                'setStatus',
+                'isCanceled',
+                'addStatusHistoryComment',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -251,6 +262,7 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::deleteOrderByIncrementId
      */
     public function deleteOrderByIncrementId_noOrder()
     {
@@ -263,6 +275,7 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::deleteOrderByIncrementId
      */
     public function deleteOrderByIncrementId_invalidState()
     {
@@ -286,6 +299,7 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::deleteOrderByIncrementId
      */
     public function deleteOrderByIncrementId_noError()
     {
@@ -299,6 +313,7 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::tryDeclinedPaymentCancelation
      */
     public function tryDeclinedPaymentCancelation_noOrder()
     {
@@ -319,10 +334,11 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::tryDeclinedPaymentCancelation
      */
     public function tryDeclinedPaymentCancelation_pendingOrder()
     {
-        $state = OrderModel::STATE_PENDING_PAYMENT;
+        $state = Order::STATE_PENDING_PAYMENT;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
@@ -334,10 +350,11 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::tryDeclinedPaymentCancelation
      */
     public function tryDeclinedPaymentCancelation_canceledOrder()
     {
-        $state = OrderModel::STATE_CANCELED;
+        $state = Order::STATE_CANCELED;
         $this->orderMock->expects(static::exactly(2))->method('getState')->willReturn($state);
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
@@ -349,10 +366,11 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::tryDeclinedPaymentCancelation
      */
     public function tryDeclinedPaymentCancelation_completeOrder()
     {
-        $state = OrderModel::STATE_COMPLETE;
+        $state = Order::STATE_COMPLETE;
         $this->orderMock->expects(static::exactly(2))->method('getState')->willReturn($state);
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
@@ -364,53 +382,234 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::setOrderState
      */
     public function setOrderState_holdedOrder()
     {
-        $state = OrderModel::STATE_HOLDED;
-        $prevState = OrderModel::STATE_PENDING_PAYMENT;
+        $state = Order::STATE_HOLDED;
+        $prevState = Order::STATE_PENDING_PAYMENT;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
         $this->orderMock->expects(static::once())->method('hold');
-        $this->orderMock->expects(static::once())->method('setState')->with(OrderModel::STATE_PROCESSING);
+        $this->orderMock->expects(static::once())->method('setState')->with(Order::STATE_PROCESSING);
         $this->orderConfigMock->expects(static::once())->method('getStateDefaultStatus')
-            ->with(OrderModel::STATE_PROCESSING)->willReturn(OrderModel::STATE_PROCESSING);
-        $this->orderMock->expects(static::once())->method('setStatus')->with(OrderModel::STATE_PROCESSING);
+            ->with(Order::STATE_PROCESSING)->willReturn(Order::STATE_PROCESSING);
+        $this->orderMock->expects(static::once())->method('setStatus')->with(Order::STATE_PROCESSING);
         $this->orderMock->expects(static::once())->method('save');
         $this->currentMock->setOrderState($this->orderMock, $state);
     }
 
     /**
      * @test
+     * @covers ::setOrderState
      */
     public function setOrderState_holdedOrderWithException()
     {
-        $state = OrderModel::STATE_HOLDED;
-        $prevState = OrderModel::STATE_PENDING_PAYMENT;
+        $state = Order::STATE_HOLDED;
+        $prevState = Order::STATE_PENDING_PAYMENT;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
         $this->orderMock->expects(static::once())->method('hold')->willThrowException(new \Exception());
         $this->orderMock->expects(static::exactly(2))->method('setState')
-            ->withConsecutive([OrderModel::STATE_PROCESSING], [OrderModel::STATE_HOLDED]);
+            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED]);
         $this->orderConfigMock->expects(static::exactly(2))->method('getStateDefaultStatus')
-            ->withConsecutive([OrderModel::STATE_PROCESSING], [OrderModel::STATE_HOLDED])
+            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED])
             ->willReturnArgument(0);
         $this->orderMock->expects(static::exactly(2))->method('setStatus')
-            ->withConsecutive([OrderModel::STATE_PROCESSING], [OrderModel::STATE_HOLDED]);
+            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED]);
         $this->orderMock->expects(static::once())->method('save');
         $this->currentMock->setOrderState($this->orderMock, $state);
     }
 
     /**
      * @test
+     * @covers ::setOrderState
      */
     public function setOrderState_canceledOrder()
     {
-        $state = OrderModel::STATE_CANCELED;
-        $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
+        $state = Order::STATE_CANCELED;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('hold');
         $this->orderMock->expects(static::never())->method('setState');
         $this->orderMock->expects(static::never())->method('setStatus');
         $this->orderMock->expects(static::once())->method('save');
         $this->currentMock->setOrderState($this->orderMock, $state);
+    }
+
+    /**
+     * @test
+     * @covers ::setOrderState
+     */
+    public function setOrderState_nonSpecialStateOrder()
+    {
+        $state = Order::STATE_PAYMENT_REVIEW;
+        $this->orderConfigMock->expects(static::once())->method('getStateDefaultStatus')
+            ->with($state)->willReturn($state);
+        $this->orderMock->expects(static::never())->method('hold');
+        $this->currentMock->expects(static::never())->method('cancelOrder');
+        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->orderMock->expects(static::once())->method('setState')->with($state);
+        $this->orderMock->expects(static::once())->method('setStatus')->with($state);
+        $this->orderMock->expects(static::once())->method('save');
+        $this->currentMock->setOrderState($this->orderMock, $state);
+    }
+
+    /**
+     * @test
+     * @covers ::processExistingOrder
+     */
+    public function processExistingOrder_noOrder()
+    {
+        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn(false);
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new \stdClass()));
+    }
+
+    /**
+     * @test
+     * @covers ::processExistingOrder
+     */
+    public function processExistingOrder_canceledOrder()
+    {
+        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Order has been canceled due to the previously declined payment. Order #: %s Quote ID: %s',
+                self::INCREMENT_ID,
+                self::QUOTE_ID
+            )
+        );
+        $this->expectExceptionCode(CreateOrder::E_BOLT_REJECTED_ORDER);
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new \stdClass()));
+    }
+
+    /**
+     * @test
+     * @covers ::processExistingOrder
+     */
+    public function processExistingOrder_pendingOrder()
+    {
+        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        $this->orderMock->expects(self::once())->method('isCanceled')
+            ->willReturn(false);
+        $this->orderMock->expects(self::once())->method('getState')
+            ->willReturn(Order::STATE_PENDING_PAYMENT);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Order is in pending payment. Waiting for the hook update. Order #: %s Quote ID: %s',
+                self::INCREMENT_ID,
+                self::QUOTE_ID
+            )
+        );
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new \stdClass()));
+    }
+
+    /**
+     * @test
+     * @covers ::processExistingOrder
+     */
+    public function processExistingOrder_samePriceOrder()
+    {
+        $transaction = new \stdClass();
+        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        $this->orderMock->expects(self::once())->method('isCanceled')
+            ->willReturn(false);
+        $this->orderMock->expects(self::once())->method('getState')
+            ->willReturn(Order::STATE_CANCELED);
+        $this->currentMock->expects(self::once())->method('hasSamePrice')
+            ->with($this->orderMock,$transaction)->willReturn(true);
+
+        self::assertEquals(
+            $this->currentMock->processExistingOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::processExistingOrder
+     */
+    public function processExistingOrder_deleteOrder()
+    {
+        $transaction = new \stdClass();
+        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        $this->orderMock->expects(self::once())->method('isCanceled')
+            ->willReturn(false);
+        $this->orderMock->expects(self::once())->method('getState')
+            ->willReturn(Order::STATE_CANCELED);
+        $this->currentMock->expects(self::once())->method('hasSamePrice')
+            ->with($this->orderMock,$transaction)->willReturn(false);
+        $this->currentMock->expects(self::once())->method('deleteOrder')
+            ->with($this->orderMock);
+        self::assertFalse(
+            $this->currentMock->processExistingOrder($this->quoteMock, $transaction)
+        );
+    }
+
+
+    /**
+     * @test
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_fail()
+    {
+        $transaction = new \stdClass();
+        $this->quoteManagement->expects(self::once())->method('submit')
+            ->with($this->quoteMock)->willReturn(null);
+        $this->bugsnag->expects(self::once())->method('registerCallback');
+        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Quote Submit Error. Order #: %s Parent Quote ID: %s',
+                self::INCREMENT_ID,
+                self::QUOTE_ID
+            )
+        );
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->currentMock->processNewOrder($this->quoteMock, $transaction);
+    }
+
+    /**
+     * @test
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_success()
+    {
+        $transaction = new \stdClass();
+        $this->quoteManagement->expects(self::once())->method('submit')
+            ->with($this->quoteMock)->willReturn($this->orderMock);
+        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
+            ->with('BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook');
+        $this->currentMock->expects(self::once())->method('orderPostprocess')
+            ->with($this->orderMock, $this->quoteMock, $transaction);
+        self::assertEquals(
+            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
     }
 }
