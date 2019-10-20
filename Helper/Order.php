@@ -933,12 +933,8 @@ class Order extends AbstractHelper
 
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
             $this->cancelOrder($order);
-            $order->save();
-            return true;
-        } elseif ($order->getState() === OrderModel::STATE_CANCELED) {
-            return true;
         }
-        return false;
+        return $order->getState() === OrderModel::STATE_CANCELED;
     }
 
     /**
@@ -1387,6 +1383,7 @@ class Order extends AbstractHelper
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
             $this->cancelOrder($order);
+            return;
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
@@ -1405,9 +1402,11 @@ class Order extends AbstractHelper
             $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
         } catch (\Exception $e) {
             // Put the order in "canceled" state even if the previous call fails
+            $this->bugsnag->notifyException($e);
             $order->setState(OrderModel::STATE_CANCELED);
             $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
         }
+        $order->save();
     }
 
     /**

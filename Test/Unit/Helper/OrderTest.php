@@ -339,11 +339,11 @@ class OrderTest extends TestCase
     public function tryDeclinedPaymentCancelation_pendingOrder()
     {
         $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->orderMock->expects(static::exactly(2))->method('getState')
+            ->willReturnOnConsecutiveCalls($state, Order::STATE_CANCELED);
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
         $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
-        $this->orderMock->expects(static::once())->method('save');
 
         self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
     }
