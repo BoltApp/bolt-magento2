@@ -121,6 +121,13 @@ class Discount extends AbstractHelper
     protected $mirasvitStoreCreditConfig;
 
     /**
+     * Mirasvit Rewards Points entry point
+     *
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitRewardsPurchaseHelper;
+
+    /**
      * @var ThirdPartyModuleFactory
      */
     protected $amastyRewardsResourceQuote;
@@ -180,6 +187,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
@@ -209,6 +217,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
+        ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
@@ -234,6 +243,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
+        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
@@ -638,6 +648,24 @@ class Discount extends AbstractHelper
     }
 
     /**
+     * If enabled, gets the Mirasvit Rewards amount used
+     *
+     * @param \Magento\Quote\Model\Quote $quote  The parent quote of this order which contains Rewards points references
+     *
+     * @return float  If enabled, the currency amount used in the order, otherwise 0
+     */
+    public function getMirasvitRewardsAmount($quote)
+    {
+        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
+        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+
+        if (!$mirasvitRewardsPurchaseHelper) { return 0; }
+
+        $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
+        return $miravitRewardsPurchase->getSpendAmount();
+    }
+
+    /**
      * Check whether the Mageplaza Gift Card module is available (installed and enabled)
      * @return bool
      */
@@ -901,5 +929,19 @@ class Discount extends AbstractHelper
         return $this->aheadworksCustomerStoreCreditManagement
                     ->getInstance()
                     ->getCustomerStoreCreditBalance($customerId);
+    }
+
+    /**
+     * Some 3rd party discounts are not stored with the quote / totals. They are held in other tables
+     * and applied to quote temporarily in checkout / customer session via magic set methods.
+     * There is need in API calls (shipping & tax and webhook) to explicitly fetch and set this data
+     * to have quote object in sync with the one used in session.
+     *
+     * @param Quote $quote
+     */
+    public function applyExternalDiscountData($quote) {
+        // Amasty reward points are held in a separate table
+        // and are not assigned to the quote / totals directly out of the customer session.
+        $this->setAmastyRewardPoints($quote);
     }
 }

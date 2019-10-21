@@ -452,7 +452,6 @@ class CartTest extends TestCase
         $product->method('getDescription')
             ->willReturn('Product Description');
         $product->method('getTypeInstance')
-            ->with(true)
             ->willReturnSelf();
         $product->method('getOrderOptions')
             ->withAnyParameters()
@@ -893,6 +892,7 @@ ORDER;
             ->setMethods([
                 'getLastImmutableQuote',
                 'getCalculationAddress',
+                'getQuoteById'
             ])->setConstructorArgs([
                 $this->contextHelper,
                 $this->checkoutSession,
@@ -928,6 +928,9 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $this->getShippingAddress());
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
 
         $quote->method('getTotals')
             ->willReturn([]);
@@ -992,6 +995,13 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $quote->method('getTotals')
             ->willReturn([]);
@@ -1066,6 +1076,12 @@ ORDER;
         $quote->method('getTotals')
             ->willReturn([]);
 
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
@@ -1138,6 +1154,13 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $quote->method('getTotals')
             ->willReturn([]);
@@ -1217,6 +1240,13 @@ ORDER;
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
         $quote->method('getTotals')
             ->willReturn([]);
 
@@ -1289,6 +1319,13 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
@@ -1365,6 +1402,13 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
@@ -1455,6 +1499,13 @@ ORDER;
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
             ->willReturn($quote);
@@ -1538,6 +1589,13 @@ ORDER;
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
             ->willReturn($quote);
@@ -1618,6 +1676,13 @@ ORDER;
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')
             ->willReturn($quote);
@@ -1691,6 +1756,13 @@ ORDER;
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
             ->method('getLastImmutableQuote')

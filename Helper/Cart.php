@@ -50,6 +50,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Boltpay Cart helper
@@ -825,7 +826,8 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id',
+            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
     ) {
         foreach ($parent->getData() as $key => $value) {
             if (in_array($key, $excludeFields)) continue;
@@ -1015,9 +1017,9 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $this->productRepository->get($item->getSku(), false, $storeId);
+                $_product = $item->getProduct();
 
-                $product['reference']    = $_product->getId();
+                $product['reference']    = $item->getProductId();
                 $product['name']         = $item->getName();
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = $this->getRoundAmount($unitPrice);
@@ -1027,7 +1029,7 @@ class Cart extends AbstractHelper
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
-                $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
+                $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
                 if(isset($item_options['attributes_info'])){
                     $properties = [];
                     foreach($item_options['attributes_info'] as $attribute_info){
@@ -1397,6 +1399,7 @@ class Cart extends AbstractHelper
         $paymentOnly
     ) {
         $quote = $this->getLastImmutableQuote();
+        $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);
         /** @var AddressTotal[] */
         $totals = $quote->getTotals();
@@ -1535,6 +1538,28 @@ class Cart extends AbstractHelper
                     $totalAmount -= $roundedAmount;
                 }
             }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Rewards Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
+            $roundedAmount = $this->getRoundAmount($amount);
+
+            $discounts[] = [
+                'description' =>
+                    $this->configHelper->getScopeConfig()->getValue(
+                        'rewards/general/point_unit_name',
+                        ScopeInterface::SCOPE_STORE,
+                        $quote->getStoreId()
+                    ),
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
 

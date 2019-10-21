@@ -30,6 +30,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
@@ -141,6 +142,11 @@ class ShippingMethodsTest extends TestCase
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -236,6 +242,7 @@ class ShippingMethodsTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->ruleFactory = $this->createMock(RuleFactory::class);
+        $this->metricsClient = $this->createMock(MetricsClient::class);
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
             ->setMethods(['notifyException'])
@@ -282,6 +289,7 @@ class ShippingMethodsTest extends TestCase
                 $this->converter,
                 $this->shippingOptionInterfaceFactory,
                 $this->bugsnag,
+                $this->metricsClient,
                 $this->logHelper,
                 $this->errorResponse,
                 $this->response,
@@ -362,6 +370,7 @@ class ShippingMethodsTest extends TestCase
                 $this->converter,
                 $this->shippingOptionInterfaceFactory,
                 $this->bugsnag,
+                $this->metricsClient,
                 $this->logHelper,
                 $this->errorResponse,
                 $this->response,
@@ -612,6 +621,35 @@ class ShippingMethodsTest extends TestCase
     }
 
     /**
+     * @test
+     * @throws \ReflectionException
+     */
+    public function testCouponInvalidForShippingAddress()
+    {
+        $parentQuoteCoupon = 'IGNORED_SHIPPING_ADDRESS_COUPON';
+        $configCoupons = ['BOLT_TEST', 'ignored_shipping_address_coupon'];
+        $immutableQuoteMock = $this->getQuoteMock([]);
+
+        $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
+            ->setMethods(['getIgnoredShippingAddressCoupons'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->configHelper->method('getIgnoredShippingAddressCoupons')->with(null)->willReturn($configCoupons);
+
+        $currentTestObject = $this->getCurrentTestObject();
+
+        $reflection = new \ReflectionClass($currentTestObject);
+        $reflectionProperty = $reflection->getProperty('quote');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($currentTestObject, $immutableQuoteMock);
+
+        $testMethod = new \ReflectionMethod(BoltShippingMethods::class, 'couponInvalidForShippingAddress');
+        $testMethod->setAccessible(true);
+
+        $this->assertTrue($testMethod->invokeArgs($currentTestObject, [$parentQuoteCoupon]));
+    }
+
+    /**
      * Get quote mock with quote items
      *
      * @param $shippingAddress
@@ -750,6 +788,7 @@ class ShippingMethodsTest extends TestCase
             $this->converter,
             $this->shippingOptionInterfaceFactory,
             $this->bugsnag,
+            $this->metricsClient,
             $this->logHelper,
             $this->errorResponse,
             $this->response,

@@ -28,6 +28,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\UrlInterface;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
@@ -55,6 +56,7 @@ class CreateOrder implements CreateOrderInterface
     const E_BOLT_DISCOUNT_CODE_DOES_NOT_EXIST = 2001007;
     const E_BOLT_SHIPPING_EXPIRED = 2001008;
     const E_BOLT_REJECTED_ORDER = 2001010;
+    const E_BOLT_MINIMUM_PRICE_NOT_MET = 2001011;
 
     /**
      * @var HookHelper
@@ -80,6 +82,11 @@ class CreateOrder implements CreateOrderInterface
      * @var Bugsnag
      */
     private $bugsnag;
+
+    /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
 
     /**
      * @var Response
@@ -123,6 +130,7 @@ class CreateOrder implements CreateOrderInterface
      * @param LogHelper              $logHelper
      * @param Request                $request
      * @param Bugsnag                $bugsnag
+     * @param MetricsClient        $metricsClient
      * @param Response               $response
      * @param UrlInterface           $url
      * @param BackendUrl             $backendUrl
@@ -137,6 +145,7 @@ class CreateOrder implements CreateOrderInterface
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         Response $response,
         UrlInterface $url,
         BackendUrl $backendUrl,
@@ -149,6 +158,7 @@ class CreateOrder implements CreateOrderInterface
         $this->logHelper = $logHelper;
         $this->request = $request;
         $this->bugsnag = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->response = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper = $cartHelper;
@@ -171,7 +181,7 @@ class CreateOrder implements CreateOrderInterface
         $currency = null
     ) {
         try {
-
+            $startTime = $this->metricsClient->getCurrentTime();
             $payload = $this->request->getContent();
             $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
             $this->logHelper->addInfoLog($payload);
@@ -211,14 +221,6 @@ class CreateOrder implements CreateOrderInterface
                 $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
             }
 
-            if($createdOrder->isCanceled()){
-                throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment'),
-                    null,
-                    self::E_BOLT_REJECTED_ORDER
-                );
-            }
-
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
@@ -226,8 +228,10 @@ class CreateOrder implements CreateOrderInterface
                 'total'      => $this->cartHelper->getRoundAmount($createdOrder->getGrandTotal()),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
+            $this->metricsClient->processMetric("order_creation.success", 1, "order_creation.latency", $startTime);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse($e->getHttpCode(), [
                 'status' => 'failure',
                 'error'  => [[
@@ -239,6 +243,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error'  => [[
@@ -250,6 +255,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
@@ -261,6 +267,7 @@ class CreateOrder implements CreateOrderInterface
             ]);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("order_creation.failure", 1, "order_creation.latency", $startTime);
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
@@ -413,11 +420,39 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateQuoteData($quote, $transaction)
     {
+        $this->validateMinimumAmount($quote);
         $this->validateCartItems($quote, $transaction);
-
         $this->validateTax($quote, $transaction);
         $this->validateShippingCost($quote, $transaction);
         $this->validateTotalAmount($quote, $transaction);
+    }
+
+    /**
+     * Validate minimum order amount
+     *
+     * @param Quote $quote
+     * @throws BoltException
+     */
+    public function validateMinimumAmount($quote)
+    {
+        if (!$quote->validateMinimumAmount()) {
+            $minAmount = $this->configHelper->getMinimumOrderAmount($quote->getStoreId());
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $minAmount) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'Minimum order amount' => $minAmount,
+                        'Subtotal' => $quote->getSubtotal(),
+                        'Subtotal with discount' => $quote->getSubtotalWithDiscount(),
+                        'Total' => $quote->getGrandTotal(),
+                    ]
+                ]);
+            });
+            throw new BoltException(
+                __('The minimum order amount: %1 has not being met.', $minAmount),
+                null,
+                self::E_BOLT_MINIMUM_PRICE_NOT_MET
+            );
+        }
     }
 
     /**
@@ -529,30 +564,32 @@ class CreateOrder implements CreateOrderInterface
      * @param array     $transactionItems
      * @throws BoltException
      */
-    public function validateItemPrice($itemSku, $itemPrice, $transactionItems)
+    public function validateItemPrice($itemSku, $itemPrice, &$transactionItems)
     {
-        foreach ($transactionItems as $transactionItem) {
+        foreach ($transactionItems as $index => $transactionItem) {
             $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
-            if ($transactionItemSku === $itemSku
-                && abs($itemPrice - $transactionUnitPrice) > OrderHelper::MISMATCH_TOLERANCE
+            if ($transactionItemSku === $itemSku &&
+                abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
             ) {
-                $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
-                    $report->setMetaData([
-                        'Pre Auth' => [
-                            'item.price' => $itemPrice,
-                            'transaction.unit_price' => $transactionUnitPrice,
-                        ]
-                    ]);
-                });
-                throw new BoltException(
-                    __('Price does not match. Item sku: ' . $itemSku),
-                    null,
-                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-                );
+                unset ($transactionItems[$index]);
+                return true;
             }
         }
+        $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
+            $report->setMetaData([
+                'Pre Auth' => [
+                    'item.price' => $itemPrice,
+                    'transaction.unit_price' => $transactionUnitPrice,
+                ]
+            ]);
+        });
+        throw new BoltException(
+            __('Price does not match. Item sku: ' . $itemSku),
+            null,
+            self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+        );
     }
 
     /**
