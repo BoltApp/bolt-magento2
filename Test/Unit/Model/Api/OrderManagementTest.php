@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\OrderManagement;
 use Magento\Framework\Phrase;
+use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
@@ -137,7 +138,7 @@ class OrderManagementTest extends TestCase
 
         $this->quoteMock = $this->createMock(Quote::class);
 
-        $this->orderHelperMock->expects(self::once())->method('getStoreIdByQuoteId')
+        $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
             ->with(self::ORDER_ID)->willReturn(self::STORE_ID);
     }
 
@@ -368,5 +369,87 @@ class OrderManagementTest extends TestCase
             $type,
             self::DISPLAY_ID
         );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     */
+    public function manage_webApiException()
+    {
+        $exception = new WebapiException(__('Precondition Failed'), 6001, 412);
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID)
+            ->willThrowException($exception);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with($exception->getHttpCode());
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'error',
+            'code' => $exception->getCode(),
+            'message' => $exception->getMessage(),
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            null,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     */
+    public function manage_emptyReference()
+    {
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'error',
+            'code' => '6009',
+            'message' => 'Unprocessable Entity: Missing required parameters.',
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
+        $this->currentMock->manage(
+            self::ID,
+            null,
+            self::ORDER_ID,
+            null,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::__construct
+     */
+    public function construct(){
+        $instance = new OrderManagement(
+            $this->hookHelper,
+            $this->orderHelperMock,
+            $this->logHelper,
+            $this->request,
+            $this->bugsnag,
+            $this->metricsClient,
+            $this->response,
+            $this->configHelper
+        );
+        $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
+        $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
+        $this->assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
+        $this->assertAttributeInstanceOf(Request::class, 'request', $instance);
+        $this->assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
+        $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
+        $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
+        $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
     }
 }
