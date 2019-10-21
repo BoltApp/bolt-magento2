@@ -212,7 +212,7 @@ class OrderManagementTest extends TestCase
             $type,
             self::AMOUNT,
             self::CURRENCY,
-            $type,
+            null,
             self::DISPLAY_ID
         );
     }
@@ -245,7 +245,7 @@ class OrderManagementTest extends TestCase
             $type,
             self::AMOUNT,
             self::CURRENCY,
-            $type,
+            null,
             self::DISPLAY_ID
         );
     }
@@ -291,7 +291,7 @@ class OrderManagementTest extends TestCase
             $type,
             self::AMOUNT,
             self::CURRENCY,
-            $type,
+            null,
             self::DISPLAY_ID
         );
     }
@@ -322,7 +322,7 @@ class OrderManagementTest extends TestCase
             $type,
             self::AMOUNT,
             self::CURRENCY,
-            $type,
+            null,
             self::DISPLAY_ID
         );
     }
@@ -366,7 +366,7 @@ class OrderManagementTest extends TestCase
             $type,
             self::AMOUNT,
             self::CURRENCY,
-            $type,
+            null,
             self::DISPLAY_ID
         );
     }
@@ -421,6 +421,39 @@ class OrderManagementTest extends TestCase
             null,
             self::ORDER_ID,
             null,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     */
+    public function manage_pending()
+    {
+        $type = "pending";
+
+        $this->orderHelperMock->expects(self::never())->method('tryDeclinedPaymentCancelation');
+        $this->orderHelperMock->expects(self::never())->method('deleteOrderByIncrementId');
+        $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
+            ->willReturn(self::REQUEST_HEADER_TRACE_ID);
+        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
+            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'message' => 'Order creation / update was successful',
+        ]));
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
             self::AMOUNT,
             self::CURRENCY,
             null,
