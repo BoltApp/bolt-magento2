@@ -431,7 +431,7 @@ class OrderTest extends TestCase
         $this->orderMock->expects(static::never())->method('hold');
         $this->orderMock->expects(static::never())->method('setState');
         $this->orderMock->expects(static::never())->method('setStatus');
-        $this->orderMock->expects(static::once())->method('save');
+        $this->orderMock->expects(static::never())->method('save');
         $this->currentMock->setOrderState($this->orderMock, $state);
     }
 
