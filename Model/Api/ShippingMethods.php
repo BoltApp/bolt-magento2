@@ -31,6 +31,7 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -102,6 +103,11 @@ class ShippingMethods implements ShippingMethodsInterface
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @var LogHelper
      */
     private $logHelper;
@@ -167,6 +173,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
+     * @param MetricsClient                   $metricsClient
      * @param LogHelper                       $logHelper
      * @param BoltErrorResponse               $errorResponse
      * @param Response                        $response
@@ -188,6 +195,7 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingMethodConverter $converter,
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
         Response $response,
@@ -208,6 +216,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->converter = $converter;
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
         $this->response = $response;
@@ -318,9 +327,8 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethods($cart, $shipping_address)
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-//            $this->logHelper->addInfoLog($this->request->getContent());
-
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
@@ -364,13 +372,17 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
+            $this->metricsClient->processMetric("ship_tax.success", 1, "ship_tax.latency", $startTime);
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
@@ -808,7 +820,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
 
         return $parentQuoteCoupon &&
-                in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons) &&
+                in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
                 !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 }

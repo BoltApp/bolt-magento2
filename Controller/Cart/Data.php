@@ -25,6 +25,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
@@ -58,11 +59,17 @@ class Data extends Action
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
      *
      * @codeCoverageIgnore
      */
@@ -71,13 +78,15 @@ class Data extends Action
         JsonFactory $resultJsonFactory,
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        MetricsClient $metricsClient
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
+        $this->metricsClient   = $metricsClient;
     }
 
     /**
@@ -88,6 +97,7 @@ class Data extends Action
      */
     public function execute()
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         $result = $this->resultJsonFactory->create();
 
         try {
@@ -112,8 +122,10 @@ class Data extends Action
 
             if ($response) {
                 $responseData = json_decode(json_encode($response), true);
+                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
             } else {
                 $responseData['cart'] = [];
+                $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
             }
 
             // get immutable quote id stored with cart data
@@ -144,6 +156,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
 
@@ -152,6 +165,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } finally {
             return $result;
         }

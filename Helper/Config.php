@@ -244,6 +244,8 @@ class Config extends AbstractHelper
      */
     const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
 
+    const XML_PATH_CAPTURE_MERCHANT_METRICS = 'payment/boltpay/capture_merchant_metrics';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1094,7 +1096,13 @@ class Config extends AbstractHelper
      */
     public function getIgnoredShippingAddressCoupons($storeId)
     {
-        return (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+        $coupons = (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+
+        $coupons = array_map(function ($coupon) {
+            return strtolower($coupon);
+        }, $coupons);
+
+        return $coupons;
     }
 
     /**
@@ -1142,6 +1150,23 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $store
         );
+    }
+
+    /**
+
+     * Get minimize javascript flag configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function shouldCaptureMetrics($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CAPTURE_MERCHANT_METRICS,
+            ScopeInterface::SCOPE_STORE,
+            $store
+          );
     }
 
     /**

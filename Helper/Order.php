@@ -761,6 +761,9 @@ class Order extends AbstractHelper
 
         $this->applyExternalQuoteData($quote);
 
+        // do not verify inventory, it is already reserved
+        $quote->setInventoryProcessed(true);
+
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
             'checkout_submit_all_after', [
@@ -788,6 +791,15 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+
+            if($order->isCanceled()) {
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment'),
+                    null,
+                    CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             }
@@ -869,6 +881,15 @@ class Order extends AbstractHelper
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($order) {
+                $report->setMetaData([
+                    'DELETE ORDER' => [
+                        'order increment ID' => $order->getIncrementId(),
+                        'order entity ID' => $order->getId(),
+                    ]
+                ]);
+            });
+            $this->bugsnag->notifyException($e);
             $order->delete();
         }
     }
@@ -888,15 +909,11 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
-            throw new BoltException(
-                __(
-                    'Order Delete Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
-                    $incrementId,
-                    $quoteId
-                ),
-                null,
-                CreateOrder::E_BOLT_GENERAL_ERROR
+            $this->bugsnag->notifyError(
+                "Order Delete Error",
+                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $quoteId"
             );
+            return;
         }
 
         $state = $order->getState();
@@ -971,10 +988,6 @@ class Order extends AbstractHelper
         $this->setShippingMethod($quote, $transaction);
         $this->quoteAfterChange($quote);
 
-        $email = @$transaction->order->cart->billing_address->email_address ?:
-            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
-        $this->addCustomerDetails($quote, $email);
-
         // Check if Mageplaza Gift Card data exist and apply it to the parent quote
         $this->discountHelper->applyMageplazaDiscountToQuote($quote);
 
@@ -989,6 +1002,10 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
+
+        $email = @$transaction->order->cart->billing_address->email_address ?:
+            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
+        $this->addCustomerDetails($quote, $email);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
@@ -1641,12 +1658,16 @@ class Order extends AbstractHelper
      */
     private function createOrderInvoice($order, $transactionId, $amount)
     {
-        if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
-            $invoice = $this->invoiceService->prepareInvoice($order);
-        } else {
-            $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+        try {
+            if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+                $invoice = $this->invoiceService->prepareInvoice($order);
+            } else {
+                $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
-
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
         $invoice->setBaseGrandTotal($amount);
