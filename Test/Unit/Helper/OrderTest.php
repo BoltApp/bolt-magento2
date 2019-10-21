@@ -33,6 +33,7 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Payment\Model\InfoInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
@@ -168,6 +169,16 @@ class OrderTest extends TestCase
      * @var MockObject|Quote
      */
     private $quoteMock;
+
+    /**
+     * @var InfoInterface
+     */
+    private $paymentMock;
+
+    /**
+     * @var \stdClass
+     */
+    private $transactionMock;
 
     /**
      * @inheritdoc
@@ -611,5 +622,80 @@ class OrderTest extends TestCase
             $this->currentMock->processNewOrder($this->quoteMock, $transaction),
             $this->orderMock
         );
+    }
+
+    /**
+     * @test
+     */
+    public function getTransactionState_CreditCardAuthorize()
+    {
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $map = array(
+            array('transaction_state', 'cc_payment:pending'),
+            array('transaction_reference', '000123'),
+            array('real_transaction_id', 'ABCD-1234-XXXX'),
+            array('captures', ""),
+        );
+        $this->paymentMock->expects($this->exactly(4))
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
+
+        $this->transactionMock = (object) ( array(
+            'type' => "cc_payment",
+            'status' => "authorized",
+            'captures' => array(),
+        ) );
+        $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
+        $this->assertEquals($state, "cc_payment:authorized");
+    }
+
+    /**
+     * @test
+     */
+    public function getTransactionState_PaypalCompleted()
+    {
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $map = array(
+            array('transaction_state', 'cc_payment:pending'),
+            array('transaction_reference', '000123'),
+            array('real_transaction_id', 'ABCD-1234-XXXX'),
+            array('captures', ""),
+        );
+        $this->paymentMock->expects($this->exactly(4))
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
+
+        $this->transactionMock = (object) ( array(
+            'type' => "paypal_payment",
+            'status' => "completed",
+            'captures' => array(),
+        ) );
+        $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
+        $this->assertEquals($state, "cc_payment:completed");
+    }
+
+    /**
+     * @test
+     */
+    public function getTransactionState_APMInitialAuthorized()
+    {
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $map = array(
+            array('transaction_state', NULL),
+            array('transaction_reference', NULL),
+            array('real_transaction_id', NULL),
+            array('captures', ""),
+        );
+        $this->paymentMock->expects($this->exactly(4))
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
+
+        $this->transactionMock = (object) ( array(
+            'type' => "apm_payment",
+            'status' => "authorized",
+            'captures' => array(),
+        ) );
+        $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
+        $this->assertEquals($state, "cc_payment:pending");
     }
 }
