@@ -203,8 +203,8 @@ class Client extends AbstractHelper
      */
     public function sendLogs($jsonEncodedLogArray) {
         $res = $this->makeGQLCall(
-            constants::SEND_LOGS_QUERY,
-            constants::SEND_LOGS_OPERATION,
+            Constants::SEND_LOGS_QUERY,
+            Constants::SEND_LOGS_OPERATION,
             array(
                 "logs" => $jsonEncodedLogArray,
             )
