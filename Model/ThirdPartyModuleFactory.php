@@ -63,7 +63,7 @@ class ThirdPartyModuleFactory
     }
 
     /**
-     * Check whether the module is available (installed end enabled)
+     * Check whether the module is available (installed and enabled)
      * @return bool
      */
     public function isAvailable()

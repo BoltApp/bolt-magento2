@@ -162,7 +162,7 @@ class Client extends AbstractHelper
                 ]);
             });
         } catch (\Exception $e) {
-            throw new LocalizedException($this->wrapGatewayError($e->getMessage()));
+            throw new LocalizedException(__($e->getMessage()));
         }
 
         if ($responseBody) {

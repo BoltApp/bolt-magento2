@@ -49,7 +49,7 @@
     </route>
     <!--Feature Switches changed hook -->
     <route url="/V1/bolt/boltpay/featureswitches/changed" method="POST">
-        <service class="Bolt\Boltpay\Api\FeatureSwitchesInterface" method="notifyChanged"/>
+        <service class="Bolt\Boltpay\Api\FeatureSwitchesHookInterface" method="notifyChanged"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
