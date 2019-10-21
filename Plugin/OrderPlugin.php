@@ -35,7 +35,7 @@ class OrderPlugin
      */
     public function beforeSetState(Order $subject, $state)
     {
-        if ($subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+        if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$state];
         }
         if ($state === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW) {
@@ -57,7 +57,7 @@ class OrderPlugin
      */
     public function beforeSetStatus(Order $subject, $status)
     {
-        if ($subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+        if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$status];
         }
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
