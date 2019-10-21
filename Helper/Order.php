@@ -794,9 +794,21 @@ class Order extends AbstractHelper
 
             if($order->isCanceled()) {
                 throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment'),
+                    __('Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
                     null,
                     CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
+            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+                throw new BoltException(
+                    __('Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
+                    null,
+                    CreateOrder::E_BOLT_GENERAL_ERROR
                 );
             }
 
@@ -895,16 +907,43 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Try to cancel the order. Covers the case when the payment was declined before authorization (blacklisted cc).
+     * It is called upon rejected_irreversible hook.
+     *
+     * @param $displayId
+     * @return bool
+     * @throws BoltException
+     */
+    public function tryDeclinedPaymentCancelation($displayId)
+    {
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
+        $order = $this->getExistingOrder($incrementId);
+
+        if (!$order) {
+            throw new BoltException(
+                __(
+                    'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
+                    $incrementId,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+
+        if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+            $this->cancelOrder($order);
+        }
+        return $order->getState() === OrderModel::STATE_CANCELED;
+    }
+
+    /**
      * @param $displayId
      * @throws \Exception
      */
     public function deleteOrderByIncrementId($displayId)
     {
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
 
         $order = $this->getExistingOrder($incrementId);
 
@@ -1343,18 +1382,29 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            try {
-                $order->cancel();
-                $order->setState(OrderModel::STATE_CANCELED);
-                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
-            } catch (\Exception $e) {
-                // Put the order in "canceled" state even if the previous call fails
-                $order->setState(OrderModel::STATE_CANCELED);
-                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
-            }
+            $this->cancelOrder($order);
+            return;
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
+        }
+        $order->save();
+    }
+
+    /**
+     * @param OrderModel $order
+     */
+    protected function cancelOrder($order)
+    {
+        try {
+            $order->cancel();
+            $order->setState(OrderModel::STATE_CANCELED);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+        } catch (\Exception $e) {
+            // Put the order in "canceled" state even if the previous call fails
+            $this->bugsnag->notifyException($e);
+            $order->setState(OrderModel::STATE_CANCELED);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
         }
         $order->save();
     }
