@@ -194,4 +194,21 @@ class Client extends AbstractHelper
 
         return $res;
     }
+
+    /**
+     * This method sends the logs passed in to Bolt.
+     *
+     * @param $jsonEncodedLogArray
+     * @throws LocalizedException
+     */
+    public function sendLogs($jsonEncodedLogArray) {
+        $res = $this->makeGQLCall(
+            Constants::SEND_LOGS_QUERY,
+            Constants::SEND_LOGS_OPERATION,
+            array(
+                "logs" => $jsonEncodedLogArray,
+            )
+        );
+        return $res;
+    }
 }
