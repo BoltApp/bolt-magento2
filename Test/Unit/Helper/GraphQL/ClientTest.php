@@ -161,5 +161,54 @@ class ClientTest extends TestCase
 
         $this->graphQLClient->getFeatureSwitches();
     }
+
+    public function testSendLogs_success() {
+        $httpClient = $this->createMock(ZendClient::class);
+        $response = $this->createMock(Response::class);
+
+        $this->zendClientFactory
+            ->method('create')
+            ->willReturn($httpClient);
+
+        $httpClient->method('setRawData')
+            ->willReturn($httpClient);
+
+        $httpClient->method('request')
+            ->willReturn($response);
+
+        $response->method('getBody')
+            ->willReturn('{"data": {"logMerchantLogs": {"isSuccessful": true}}}');
+
+        $this->responseFactory->method('create')->willReturn(new BoltResponse());
+
+        $response = $this->graphQLClient->sendLogs("[{}]");
+        $this->assertEquals($response->getData()["response"]->data->logMerchantLogs->isSuccessful, true);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testSendLogs_fail() {
+        $httpClient = $this->createMock(ZendClient::class);
+        $response = $this->createMock(Response::class);
+
+        $this->zendClientFactory
+            ->method('create')
+            ->willReturn($httpClient);
+
+        $httpClient->method('setRawData')
+            ->willReturn($httpClient);
+
+        $httpClient->method('request')
+            ->willReturn($response);
+
+        $response->method('getBody')
+            ->willReturn('{"errors": [{"message": "no_dice"}]}');
+
+
+        $this->expectExceptionMessage("Something went wrong when talking to Bolt.");
+
+        $this->graphQLClient->sendLogs("[{}]");
+    }
 }
 
