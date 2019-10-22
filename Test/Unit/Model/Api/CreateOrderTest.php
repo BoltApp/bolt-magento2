@@ -36,10 +36,10 @@ use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\CreateOrder;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
  * Class CreateOrderTest
@@ -53,7 +53,7 @@ class CreateOrderTest extends TestCase
     const MINIMUM_ORDER_AMOUNT = 50;
     const ORDER_ID = 123;
     const QUOTE_ID = 457;
-    const IMMPUTABLE_QUOTE_ID = 456;
+    const IMMUTABLE_QUOTE_ID = 456;
     const DISPLAY_ID = "000000123 / 456";
     const CURRENCY = "USD";
     const SUBTOTAL = 70;
@@ -169,14 +169,6 @@ class CreateOrderTest extends TestCase
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->cartHelper->method('getRoundAmount')->willReturnCallback(
-            function ($amount) {
-                return (int)round($amount * 100);
-            }
-        );
-
-        $objectManager = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
 
         $this->quoteMock = $this->createPartialMock(
             Quote::class,
@@ -227,8 +219,19 @@ class CreateOrderTest extends TestCase
                 'getStoreId',
             ]);
         $this->immutableQuoteMock->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->orderMock = $this->createMock(Order::class);
 
+        $this->cartHelper = $this->createMock(CartHelper::class);
+        $this->cartHelper->method('getRoundAmount')->willReturnCallback(
+            function ($amount) {
+                return (int)round($amount * 100);
+            }
+        );
+        $this->cartHelper->method('getQuoteById')->willReturnMap([
+            [self::QUOTE_ID, $this->quoteMock],
+            [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
+        ]);
+
+        $this->orderMock = $this->createMock(Order::class);
 
         $this->request->expects(self::any())->method('getContent')->willReturn($this->getRequestContent());
     }
@@ -283,20 +286,23 @@ class CreateOrderTest extends TestCase
         $this->configHelper->expects(static::once())->method('getMinimumOrderAmount')->with(static::STORE_ID)
             ->willReturn(static::MINIMUM_ORDER_AMOUNT);
         $this->quoteMock->expects(self::once())->method('getSubtotal')->willReturn(self::SUBTOTAL);
-        $this->quoteMock->expects(self::once())->method('getSubtotalWithDiscount')->willReturn(self::SUBTOTAL_WITH_DISCOUNT);
+        $this->quoteMock->expects(self::once())->method('getSubtotalWithDiscount')->willReturn(
+            self::SUBTOTAL_WITH_DISCOUNT
+        );
         $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(self::GRAND_TOTAL);
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'Minimum order amount' => static::MINIMUM_ORDER_AMOUNT,
-                    'Subtotal' => self::SUBTOTAL,
-                    'Subtotal with discount' => self::SUBTOTAL_WITH_DISCOUNT,
-                    'Total' => self::GRAND_TOTAL,
-                ]
-            ]);
-            $fn($mock);
-        });
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'Minimum order amount' => static::MINIMUM_ORDER_AMOUNT,
+                        'Subtotal' => self::SUBTOTAL,
+                        'Subtotal with discount' => self::SUBTOTAL_WITH_DISCOUNT,
+                        'Total' => self::GRAND_TOTAL,
+                    ]
+                ]);
+                $fn($reportMock);
+            });
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_MINIMUM_PRICE_NOT_MET);
         $this->expectExceptionMessage(
@@ -322,16 +328,17 @@ class CreateOrderTest extends TestCase
     public function validateTotalAmount_invalid()
     {
         $this->quoteMock->expects(static::once())->method('getGrandTotal')->willReturn(74.01);
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'quote.total_amount' => 7401,
-                    'transaction.total_amount' => 7400,
-                ]
-            ]);
-            $fn($mock);
-        });
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'quote.total_amount' => 7401,
+                        'transaction.total_amount' => 7400,
+                    ]
+                ]);
+                $fn($reportMock);
+            });
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
         $this->expectExceptionMessage('Total amount does not match.');
@@ -352,14 +359,11 @@ class CreateOrderTest extends TestCase
         $startTime = microtime(true) * 1000;
         $type = 'order.create';
 
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMPUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
         $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
         $this->logHelper->expects(self::exactly(4))->method('addInfoLog')
             ->withConsecutive(
-                ['[-= Pre-Auth CreateOrder =-]'], [$this->getRequestContent()], ['[-= getReceivedUrl =-]'], ['---> ']);
+                ['[-= Pre-Auth CreateOrder =-]'], [$this->getRequestContent()], ['[-= getReceivedUrl =-]'], ['---> ']
+            );
         $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
         $this->orderHelper->expects(self::once())->method('prepareQuote')
             ->with($this->immutableQuoteMock, $this->getTransaction())
@@ -465,10 +469,6 @@ class CreateOrderTest extends TestCase
         $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(74);
         $this->orderHelper->expects(self::once())->method('processNewOrder')
             ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMPUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
 
         $this->currentMock->execute(
             'order.create',
@@ -500,10 +500,7 @@ class CreateOrderTest extends TestCase
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMPUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
+
         $this->currentMock->execute(
             'order.create',
             $this->getOrderTransaction(),
@@ -520,8 +517,13 @@ class CreateOrderTest extends TestCase
         $exception = new \Magento\Framework\Exception\LocalizedException(
             __('The requested Payment Method is not available.')
         );
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID)
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+
+        $this->orderHelper->expects(self::once())
+            ->method('prepareQuote')
+            ->with($this->immutableQuoteMock, $this->getTransaction())
             ->willThrowException($exception);
+
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
@@ -535,10 +537,7 @@ class CreateOrderTest extends TestCase
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMPUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
+
         $this->currentMock->execute(
             'order.create',
             $this->getOrderTransaction(),
@@ -555,8 +554,13 @@ class CreateOrderTest extends TestCase
         $exception = new \Exception(
             __('Other exception.')
         );
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID)
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+
+        $this->orderHelper->expects(self::once())
+            ->method('prepareQuote')
+            ->with($this->immutableQuoteMock, $this->getTransaction())
             ->willThrowException($exception);
+
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
@@ -570,10 +574,7 @@ class CreateOrderTest extends TestCase
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMPUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
+
         $this->currentMock->execute(
             'order.create',
             $this->getOrderTransaction(),
@@ -624,7 +625,7 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::getReceivedUrl
      */
-    public function getReceivedUrl_backend()
+    public function getReceivedUrl_frontend()
     {
         $url = 'baseurl/admin/boltpay/order/receivedurl';
         $this->sessionHelper->expects(self::once())->method('setFormKey')->with($this->quoteMock);
@@ -643,7 +644,7 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::getReceivedUrl
      */
-    public function getReceivedUrl_frontend()
+    public function getReceivedUrl_backend()
     {
         $url = 'baseurl/boltpay/order/receivedurl';
         $this->sessionHelper->expects(self::once())->method('setFormKey')->with($this->quoteMock);
@@ -682,28 +683,26 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::loadQuoteData
      */
-    public function loadQuoteData_false()
+    public function loadQuoteData_exception()
     {
         $quoteId = self::QUOTE_ID;
         $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
             ->willThrowException(new NoSuchEntityException());
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) use ($quoteId) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'ORDER' => [
-                    'pre-auth' => true,
-                    'quoteId' => $quoteId,
-                ]
-            ]);
-            $fn($mock);
-        });
-        $this->expectExceptionObject(
-            new BoltException(
-                __('There is no quote with ID: %1', $quoteId),
-                null,
-                CreateOrder::E_BOLT_GENERAL_ERROR
-            )
-        );
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) use ($quoteId) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'ORDER' => [
+                        'pre-auth' => true,
+                        'quoteId' => $quoteId,
+                    ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->expectExceptionMessage(sprintf('There is no quote with ID: %s', $quoteId));
+
         $this->currentMock->loadQuoteData($quoteId);
     }
 
@@ -715,11 +714,9 @@ class CreateOrderTest extends TestCase
      */
     public function validateCartItems_exception()
     {
-        $this->expectExceptionObject(new BoltException(
-            __('Cart data has changed. SKU: ["24-UB02"]'),
-            null,
-            CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-        ));
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
+        $this->expectExceptionMessage('Cart data has changed. SKU: ["24-UB02"]');
         $this->currentMock->validateCartItems($this->quoteMock, json_decode('{"order":{"cart":{"items":{}}}}'));
     }
 
@@ -745,22 +742,20 @@ class CreateOrderTest extends TestCase
         ];
         $quoteItem->method('getErrorInfos')->willReturn([$errorInfo]);
 
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) use ($errorInfo) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL,
-                    'Error Code' => Data::ERROR_QTY
-                ]
-            ]);
-            $fn($mock);
-        });
-
-        $this->expectExceptionObject(new BoltException(
-            __($message),
-            null,
-            CreateOrder::E_BOLT_ITEM_OUT_OF_INVENTORY
-        ));
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) use ($errorInfo) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL,
+                        'Error Code' => Data::ERROR_QTY
+                    ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_OUT_OF_INVENTORY);
+        $this->expectExceptionMessage($message);
         $this->currentMock->hasItemErrors($quoteItem);
     }
 
@@ -773,26 +768,22 @@ class CreateOrderTest extends TestCase
     public function validateItemPrice_exception()
     {
         $itemSku = self::PRODUCT_SKU;
-        $transactionItems = \json_decode(\json_encode($this->getOrderTransactionItems()));
+        $transactionItems = json_decode(json_encode($this->getOrderTransactionItems()));
 
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'item.price' => 7402,
-                    'transaction.unit_price' => 7400,
-                ]
-            ]);
-            $fn($mock);
-        });
-
-        $this->expectExceptionObject(
-            new BoltException(
-                __('Price does not match. Item sku: ' . $itemSku),
-                null,
-                CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
-            )
-        );
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'item.price' => 7402,
+                        'transaction.unit_price' => 7400,
+                    ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
+        $this->expectExceptionMessage('Price does not match. Item sku: ' . $itemSku);
 
         $this->currentMock->validateItemPrice(
             $itemSku,
@@ -808,28 +799,24 @@ class CreateOrderTest extends TestCase
      */
     public function validateTax_exception()
     {
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'shipping.tax_amount' => 0,
-                    'transaction.tax_amount' => OrderHelper::MISMATCH_TOLERANCE + 1,
-                ]
-            ]);
-            $fn($mock);
-        });
-
-        $this->expectExceptionObject(
-            new BoltException(
-                __('Cart Tax mismatched.'),
-                null,
-                CreateOrder::E_BOLT_GENERAL_ERROR
-            )
-        );
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'shipping.tax_amount' => 0,
+                        'transaction.tax_amount' => OrderHelper::MISMATCH_TOLERANCE + 1,
+                    ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->expectExceptionMessage('Cart Tax mismatched.');
 
         $this->currentMock->validateTax(
             $this->quoteMock,
-            \json_decode(/** @lang JSON */ '{"order":{"cart":{"tax_amount":{"amount":2}}}}')
+            json_decode('{"order":{"cart":{"tax_amount":{"amount":2}}}}')
         );
     }
 
@@ -842,28 +829,26 @@ class CreateOrderTest extends TestCase
     {
         $storeCost = 500;
         $boltCost = 0;
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) use ($boltCost, $storeCost) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'shipping.shipping_amount' => $storeCost,
-                    'transaction.shipping_amount' => $boltCost,
-                ]
-            ]);
-            $fn($mock);
-        });
-
-        $this->expectExceptionObject(
-            new BoltException(
-                __('Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost),
-                null,
-                CreateOrder::E_BOLT_SHIPPING_EXPIRED
-            )
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) use ($boltCost, $storeCost) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'shipping.shipping_amount' => $storeCost,
+                        'transaction.shipping_amount' => $boltCost,
+                        ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
+        $this->expectExceptionMessage(
+            'Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost
         );
 
         $this->currentMock->validateShippingCost(
             $this->quoteMock,
-            \json_decode(/** @lang JSON */ '{}')
+            json_decode('{}')
         );
     }
 
@@ -872,30 +857,46 @@ class CreateOrderTest extends TestCase
      * @covers ::validateShippingCost
      * @covers ::getShippingAmountFromTransaction
      */
-    public function validateShippingCost_free()
+    public function validateShippingCost_virtual()
+    {
+        $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
+
+        $transaction = $this->getTransaction();
+        $transaction->order->cart->shipping_amount->amount = 0;
+
+        $this->currentMock->validateShippingCost(
+            $this->quoteMock,
+            $transaction
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::validateShippingCost
+     * @covers ::getShippingAmountFromTransaction
+     */
+    public function validateShippingCost_virtual_exception()
     {
         $storeCost = 0;
         $boltCost = 500;
 
         $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
 
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(function (callable $fn) use ($boltCost, $storeCost) {
-            $mock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-            $mock->expects(self::once())->method('setMetaData')->with([
-                'Pre Auth' => [
-                    'shipping.shipping_amount' => $storeCost,
-                    'transaction.shipping_amount' => $boltCost,
-                ]
-            ]);
-            $fn($mock);
-        });
-
-        $this->expectExceptionObject(
-            new BoltException(
-                __('Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost),
-                null,
-                CreateOrder::E_BOLT_SHIPPING_EXPIRED
-            )
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $fn) use ($boltCost, $storeCost) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())->method('setMetaData')->with([
+                    'Pre Auth' => [
+                        'shipping.shipping_amount' => $storeCost,
+                        'transaction.shipping_amount' => $boltCost,
+                        ]
+                ]);
+                $fn($reportMock);
+            });
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
+        $this->expectExceptionMessage(
+            'Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost
         );
 
         $this->currentMock->validateShippingCost(

@@ -777,7 +777,7 @@ class DiscountCodeValidationTest extends TestCase
      * @param $parentQuoteId
      * @param $shippingAddress
      * @oaram $couponCode
-     * @return \PHPUnit\Framework\MockObject\MockObject
+     * @return \PHPUnit_Framework_MockObject_MockObject
      * @throws \ReflectionException
      */
     private function getQuoteMock($couponCode, $shippingAddress, $customerId = null, $quoteId = 1001, $parentQuoteId = 1000)

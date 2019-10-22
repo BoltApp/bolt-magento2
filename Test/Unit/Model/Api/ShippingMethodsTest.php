@@ -655,7 +655,7 @@ class ShippingMethodsTest extends TestCase
      * @param $shippingAddress
      * @param $quoteId
      * @param $parentQuoteId
-     * @return \PHPUnit\Framework\MockObject\MockObject
+     * @return \PHPUnit_Framework_MockObject_MockObject
      * @throws \ReflectionException
      */
     private function getQuoteMock($shippingAddress, $quoteId = 1001, $parentQuoteId = 1000)
