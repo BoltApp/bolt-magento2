@@ -721,7 +721,7 @@ class PaymentTest extends TestCase
      * @param $value
      * @throws \ReflectionException
      */
-    protected function setObjectProtectedProperty($object, $property, $value): void
+    protected function setObjectProtectedProperty($object, $property, $value)
     {
         $reflection = new \ReflectionClass($object);
         $reflection_property = $reflection->getProperty($property);
