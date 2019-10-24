@@ -1719,7 +1719,9 @@ class Order extends AbstractHelper
      */
     protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
     {
-        $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
+        if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
+            throw new \Exception( __('Capture amount is invalid'));
+        }
 
         /**
          * Due to grand total sent to Bolt is rounded, the same operation should be used
@@ -1727,12 +1729,14 @@ class Order extends AbstractHelper
          * Rounding operations are applied to each operand in order to avoid cases when the grand total
          * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
          */
-        $isInvalidAmountRange = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
-            + $this->cartHelper->getRoundAmount($captureAmount)
-            > $this->cartHelper->getRoundAmount($order->getGrandTotal());
+        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
+            + $this->cartHelper->getRoundAmount($captureAmount);
+        $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
 
-        if ($isInvalidAmount || $isInvalidAmountRange) {
-            throw new \Exception( __('Capture amount is invalid'));
+        if ($captured > $grandTotal) {
+            throw new \Exception(
+                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+            );
         }
     }
 
