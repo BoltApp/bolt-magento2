@@ -196,7 +196,10 @@ class PaymentTest extends TestCase
      */
     public function cancel()
     {
-        $this->mockApiResponse("merchant/transactions/void", '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/void",
+            '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->currentMock->cancel($this->paymentMock);
     }
 
@@ -205,7 +208,10 @@ class PaymentTest extends TestCase
      */
     public function voidPayment_success()
     {
-        $this->mockApiResponse("merchant/transactions/void", '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/void",
+            '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->void($this->paymentMock);
@@ -218,7 +224,10 @@ class PaymentTest extends TestCase
     {
         $this->expectException(LocalizedException::class);
 
-        $this->mockApiResponse("merchant/transactions/void", '{"status": "error", "message": "Unknown error"}');
+        $this->mockApiResponse(
+            "merchant/transactions/void",
+            '{"status": "error", "message": "Unknown error"}'
+        );
         $this->orderHelper->expects($this->never())->method('updateOrderPayment');
 
         $this->currentMock->void($this->paymentMock);
@@ -259,7 +268,10 @@ class PaymentTest extends TestCase
      */
     public function capturePayment_success()
     {
-        $this->mockApiResponse("merchant/transactions/capture", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/capture",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->capture($this->paymentMock, 100);
@@ -271,7 +283,10 @@ class PaymentTest extends TestCase
     public function capturePayment_success_multicapture()
     {
         // status stays 'authorized' if merchant has auto-capture enabled and some amount remains uncaptured
-        $this->mockApiResponse("merchant/transactions/capture", '{"status": "authorized", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/capture",
+            '{"status": "authorized", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->capture($this->paymentMock, 100);
@@ -284,7 +299,10 @@ class PaymentTest extends TestCase
     {
         $this->expectException(LocalizedException::class);
 
-        $this->mockApiResponse("merchant/transactions/capture", '{"status": "error", "message": "Unknown error"}');
+        $this->mockApiResponse(
+            "merchant/transactions/capture",
+            '{"status": "error", "message": "Unknown error"}'
+        );
         $this->orderHelper->expects($this->never())->method('updateOrderPayment');
 
         $this->currentMock->capture($this->paymentMock, 100);
@@ -333,7 +351,10 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_success()
     {
-        $this->mockApiResponse("merchant/transactions/credit", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->refund($this->paymentMock, 100);
@@ -346,7 +367,10 @@ class PaymentTest extends TestCase
     {
         $this->expectException(LocalizedException::class);
 
-        $this->mockApiResponse("merchant/transactions/credit", '{"status": "error", "message": "Unknown error"}');
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "error", "message": "Unknown error"}'
+        );
         $this->orderHelper->expects($this->never())->method('updateOrderPayment');
 
         $this->currentMock->refund($this->paymentMock, 100);
@@ -408,8 +432,10 @@ class PaymentTest extends TestCase
      */
     public function isAvailable_hasProductRestrictions()
     {
-        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')->willReturn(true);
         $quoteMock = $this->createMock(Quote::class);
+        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')
+            ->with($quoteMock)
+            ->willReturn(true);
         $this->assertFalse($this->currentMock->isAvailable($quoteMock));
     }
 
@@ -418,8 +444,10 @@ class PaymentTest extends TestCase
      */
     public function isAvailable_noProductRestrictions()
     {
-        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')->willReturn(false);
         $quoteMock = $this->createMock(Quote::class);
+        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')
+            ->with($quoteMock)
+            ->willReturn(false);
         $this->currentMock->isAvailable($quoteMock);
     }
 
@@ -429,7 +457,11 @@ class PaymentTest extends TestCase
     public function getTitle_parent()
     {
         $this->scopeConfig->expects($this->once())->method('getValue')
-            ->with('payment/' . $this->currentMock->getCode() . '/title', ScopeInterface::SCOPE_STORE, $this->anything())
+            ->with(
+                'payment/' . $this->currentMock->getCode() . '/title',
+                ScopeInterface::SCOPE_STORE,
+                $this->anything()
+            )
             ->willReturn(self::TITLE);
         $this->assertEquals($this->currentMock->getTitle(), self::TITLE);
     }
@@ -478,7 +510,10 @@ class PaymentTest extends TestCase
      */
     public function acceptPayment_success()
     {
-        $this->mockApiResponse("merchant/transactions/review", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/review",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderMock->expects($this->once())->method('addStatusHistoryComment');
 
         $this->assertTrue($this->currentMock->acceptPayment($this->paymentMock));
@@ -489,9 +524,11 @@ class PaymentTest extends TestCase
      */
     public function acceptPayment_throwExceptionWhenBoltRespondWithError()
     {
-        $this->mockApiResponse("merchant/transactions/review", '{"status": "error", "message": "Unknown error"}');
-
-        $this->assertFalse($this->currentMock->denyPayment($this->paymentMock));
+        $this->mockApiResponse(
+            "merchant/transactions/review",
+            '{"status": "error", "message": "Unknown error"}'
+        );
+        $this->assertFalse($this->currentMock->acceptPayment($this->paymentMock));
     }
 
     /**
@@ -514,7 +551,7 @@ class PaymentTest extends TestCase
      */
     public function reviewPayment_noReference()
     {
-        $this->mockApiResponse("merchant/transactions/review", /** @lang JSON */ '{"reference": null}');
+        $this->mockApiResponse("merchant/transactions/review", '{"reference": null}');
         $this->bugsnag->expects($this->once())->method('notifyException')
             ->with(new LocalizedException(__('Bad review response. Empty transaction reference')));
         $this->assertFalse($this->currentMock->denyPayment($this->paymentMock));
@@ -525,7 +562,10 @@ class PaymentTest extends TestCase
      */
     public function rejectPayment_success()
     {
-        $this->mockApiResponse("merchant/transactions/review", '{"status": "completed", "reference": "ABCD-1234-XXXX"}');
+        $this->mockApiResponse(
+            "merchant/transactions/review",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
         $this->orderMock->expects($this->once())->method('addStatusHistoryComment');
 
         $this->assertTrue($this->currentMock->denyPayment($this->paymentMock));
@@ -536,21 +576,26 @@ class PaymentTest extends TestCase
      */
     public function rejectPayment_throwExceptionWhenBoltRespondWithError()
     {
-        $this->mockApiResponse("merchant/transactions/review", '{"status": "error", "message": "Unknown error"}');
+        $this->mockApiResponse(
+            "merchant/transactions/review",
+            '{"status": "error", "message": "Unknown error"}'
+        );
 
-        $this->assertFalse($this->currentMock->acceptPayment($this->paymentMock));
+        $this->assertFalse($this->currentMock->denyPayment($this->paymentMock));
     }
 
     /**
      * @test
      */
-    public function fetchTransaction()
+    public function fetchTransactionInfo_success()
     {
         $magentoTxnMock = $this->createMock(Transaction::class);
         $magentoTxnMock->method('getAdditionalInformation')->willReturn(array('Reference' => 'ABCD-XXXX-1234'));
         $this->transactionRepository->method('getByTransactionId')->willReturn($magentoTxnMock);
 
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+        $this->metricsClient->expects($this->once())->method('processMetric')
+            ->with("order_fetch.success", 1, "order_fetch.latency", $this->anything());
 
         $this->currentMock->fetchTransactionInfo($this->paymentMock, 'transaction-1');
     }
@@ -558,12 +603,10 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function fetchTransaction_exception()
+    public function fetchTransactionInfo_exception()
     {
         $exception = new \Magento\Framework\Exception\InputException(__('Identifying Fields required'));
 
-        $magentoTxnMock = $this->createMock(Transaction::class);
-        $magentoTxnMock->method('getAdditionalInformation')->willReturn(['Reference' => 'ABCD-XXXX-1234']);
         $this->transactionRepository->method('getByTransactionId')
             ->willThrowException($exception);
 
@@ -597,8 +640,14 @@ class PaymentTest extends TestCase
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->transactionRepository = $this->getMockBuilder(TransactionRepository::class)->disableOriginalConstructor()->setMethods(['getByTransactionId'])->getMock();
-        $this->authSession = $this->getMockBuilder(Session::class)->disableOriginalConstructor()->setMethods(['getUser'])->getMock();
+        $this->transactionRepository = $this->getMockBuilder(TransactionRepository::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getByTransactionId'])
+            ->getMock();
+        $this->authSession = $this->getMockBuilder(Session::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getUser'])
+            ->getMock();
         $this->paymentInfo = $this->createMock(InfoInterface::class);
 
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
@@ -607,9 +656,13 @@ class PaymentTest extends TestCase
 
         $this->orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
         $this->orderMock->method('getId')->willReturn('order-123');
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])->getMockForAbstractClass();
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)
+            ->setMethods(['getId', 'getOrder'])
+            ->getMockForAbstractClass();
         $this->paymentMock->method('getId')->willReturn('payment-1');
-        $this->paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        $this->paymentMock->method('getAdditionalInformation')
+            ->with('real_transaction_id')
+            ->willReturn('ABCD-1234-XXXX');
         $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
     }
 
@@ -651,10 +704,12 @@ class PaymentTest extends TestCase
      * @param string $responseJSON
      */
     private function mockApiResponse($path, $responseJSON) {
-        $this->apiHelper->expects($this->once())->method('buildRequest')->will($this->returnCallback(function($data) use ($path) {
-            $this->assertEquals($path, $data->getDynamicApiUrl());
-            return new Request();
-        }));
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data) use ($path) {
+                    $this->assertEquals($path, $data->getDynamicApiUrl());
+                    return new Request();
+                }));
         $response = new Response();
         $response->setResponse(json_decode($responseJSON));
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
@@ -671,6 +726,6 @@ class PaymentTest extends TestCase
         $reflection = new \ReflectionClass($object);
         $reflection_property = $reflection->getProperty($property);
         $reflection_property->setAccessible(true);
-        $reflection_property->setValue($this->currentMock, $value);
+        $reflection_property->setValue($object, $value);
     }
 }
