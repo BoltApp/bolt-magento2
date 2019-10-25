@@ -33,7 +33,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
  * Class OrderManagementTest
