@@ -145,7 +145,6 @@ class EmailTest extends TestCase
         $this->request = $this->createMock(RequestInterface::class);
 
         //methods
-//        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->cartHelper->method('quoteResourceSave')->willReturn(null);
         $this->context->method('getRequest')->willReturn($this->request);
     }
