@@ -98,7 +98,7 @@ class EmailTest extends TestCase
         return $this->currentMock;
     }
 
-    public function testQuoteDoesNotExist()
+    public function testExecute_quoteDoesNotExist()
     {
         $this->checkoutSession->method('getQuote')->willReturn(null);
         $exception = new LocalizedException(__('Quote does not exist.'));
@@ -108,7 +108,7 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testQuoteIdFails()
+    public function testExecute_noQuoteId()
     {
         $this->quote->method('getId')->willReturn(false);
         $exception = new LocalizedException(__('Quote does not exist.'));
@@ -118,7 +118,7 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testNoEmail()
+    public function testExecute_noEmail()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->request->method('getParam')->willReturn('');
@@ -134,8 +134,7 @@ class EmailTest extends TestCase
      * needs to be mocked. Generally just making sure that if validateEmail comes
      * back false we error handle properly
      */
-
-    public function testInvalidEmail()
+    public function testExecute_invalidEmail()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->request->method('getParam')->willReturn('invalidemail');
@@ -147,13 +146,13 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testOtherException()
+    public function testExecute_notifyException()
     {
         $this->bugsnag->expects($this->once())->method('notifyException');
         $this->currentMock->execute();
     }
 
-    public function testExecuteHappyPath()
+    public function testExecute_happyPath()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->cartHelper->method('validateEmail')->willReturn(true);
