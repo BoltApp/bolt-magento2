@@ -59,7 +59,43 @@ class EmailTest extends TestCase
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
+    }
 
+    private function initRequiredMocks()
+    {
+        //objects needed for constructor
+        $this->context = $this->createMock(Context::class);
+        $this->checkoutSession = $this->createMock(CheckoutSession::class);
+        $this->customerSession = $this->createMock(CustomerSession::class);
+
+        $this->bugsnag = $this->createMock(Bugsnag::class);
+
+        $this->cartHelper = $this->createMock(CartHelper::class);
+
+        //objects needed for method
+        $this->quote = $this->createMock(Quote::class);
+        $this->quote->method('getId')->willReturn('1234');
+
+        $this->request = $this->createMock(RequestInterface::class);
+
+        //methods
+        $this->cartHelper->method('quoteResourceSave')->willReturn(null);
+        $this->context->method('getRequest')->willReturn($this->request);
+    }
+
+    private function initCurrentMock()
+    {
+        $this->currentMock = $this->getMockBuilder(Email::class)
+            ->setConstructorArgs([
+                $this->context,
+                $this->checkoutSession,
+                $this->customerSession,
+                $this->bugsnag,
+                $this->cartHelper
+            ])
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
+        return $this->currentMock;
     }
 
     public function testQuoteDoesNotExist()
@@ -125,42 +161,5 @@ class EmailTest extends TestCase
         $this->checkoutSession->expects($this->once())->method('getQuote');
         $this->cartHelper->expects($this->once())->method('quoteResourceSave');
         $this->currentMock->execute();
-    }
-
-    private function initRequiredMocks()
-    {
-        //objects needed for constructor
-        $this->context = $this->createMock(Context::class);
-        $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->customerSession = $this->createMock(CustomerSession::class);
-
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-
-        $this->cartHelper = $this->createMock(CartHelper::class);
-
-        //objects needed for method
-        $this->quote = $this->createMock(Quote::class);
-        $this->quote->method('getId')->willReturn('1234');
-
-        $this->request = $this->createMock(RequestInterface::class);
-
-        //methods
-        $this->cartHelper->method('quoteResourceSave')->willReturn(null);
-        $this->context->method('getRequest')->willReturn($this->request);
-    }
-
-    private function initCurrentMock()
-    {
-        $this->currentMock = $this->getMockBuilder(Email::class)
-                                    ->setConstructorArgs([
-                                        $this->context,
-                                        $this->checkoutSession,
-                                        $this->customerSession,
-                                        $this->bugsnag,
-                                        $this->cartHelper
-                                    ])
-                                    ->enableProxyingToOriginalMethods()
-                                    ->getMock();
-        return $this->currentMock;
     }
 }
