@@ -62,9 +62,6 @@ class EmailTest extends TestCase
 
     }
 
-    /**
-     * @covers Email::execute
-     */
     public function testQuoteDoesNotExist()
     {
         $this->checkoutSession->method('getQuote')->willReturn(null);
@@ -75,9 +72,6 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    /**
-     * @covers Email::execute
-     */
     public function testQuoteIdFails()
     {
         $this->quote->method('getId')->willReturn(false);
@@ -88,9 +82,6 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    /**
-     * @covers Email::execute
-     */
     public function testNoEmail()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
@@ -106,7 +97,6 @@ class EmailTest extends TestCase
      * This doesn't really seem to test invalid emails as the validateEmail method
      * needs to be mocked. Generally just making sure that if validateEmail comes
      * back false we error handle properly
-     * @covers Email::execute
      */
 
     public function testInvalidEmail()
@@ -127,11 +117,6 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    /**
-     * @test
-     * @covers Email::execute
-     */
-//
     public function testExecuteHappyPath()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
