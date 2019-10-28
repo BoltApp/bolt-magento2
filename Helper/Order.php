@@ -1712,16 +1712,31 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param                                        $captureAmount
+     * @param float          $captureAmount
      *
+     * @return void
      * @throws \Exception
      */
-    protected function validateCaptureAmount(OrderInterface $order, $captureAmount) {
-        $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
-        $isInvalidAmountRange = $order->getTotalInvoiced() + $captureAmount > $order->getGrandTotal();
-
-        if($isInvalidAmount || $isInvalidAmountRange) {
+    protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
+    {
+        if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
             throw new \Exception( __('Capture amount is invalid'));
+        }
+
+        /**
+         * Due to grand total sent to Bolt is rounded, the same operation should be used
+         * when validating captured amount.
+         * Rounding operations are applied to each operand in order to avoid cases when the grand total
+         * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
+         */
+        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
+            + $this->cartHelper->getRoundAmount($captureAmount);
+        $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
+        if ($captured > $grandTotal) {
+            throw new \Exception(
+                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+            );
         }
     }
 
