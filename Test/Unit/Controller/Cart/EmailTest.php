@@ -95,7 +95,6 @@ class EmailTest extends TestCase
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
-        return $this->currentMock;
     }
 
     public function testExecute_quoteDoesNotExist()
