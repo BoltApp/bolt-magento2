@@ -383,8 +383,6 @@ class CartTest extends TestCase
             ->willReturn($addressData['country_code']);
         $billingAddress->method('getEmail')
             ->willReturn($addressData['email']);
-//        $billingAddress->method('getDiscountAmount')
-//            ->willReturn(0);
 
         return $billingAddress;
     }
