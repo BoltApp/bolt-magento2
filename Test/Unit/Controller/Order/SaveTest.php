@@ -150,7 +150,9 @@ class SaveTest extends TestCase
                 $this->configHelper,
                 $this->bugsnagMock,
                 $this->dataObjectFactory
-            ])->getMock();
+            ])
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
         $this->currentMock->method('getRequest')->willReturn(self::REFERENCE);
         return $this->currentMock;
     }
