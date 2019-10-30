@@ -67,6 +67,7 @@ class ReceivedUrl extends Action
     }
 
     /**
+     * @codeCoverageIgnore
      * @return string
      */
     protected function getErrorRedirectUrl()
@@ -75,6 +76,7 @@ class ReceivedUrl extends Action
     }
 
     /**
+     * @codeCoverageIgnore
      * @param Order $order
      * @return string
      */
