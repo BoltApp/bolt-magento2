@@ -135,10 +135,11 @@ class EmailTest extends TestCase
      */
     public function testExecute_invalidEmail()
     {
+        $invalidEmail = 'invalidemail';
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->request->method('getParam')->willReturn('invalidemail');
+        $this->request->method('getParam')->willReturn($invalidemail);
         $this->cartHelper->method('validateEmail')->willReturn(false);
-        $exception = new LocalizedException(__('Invalid email: %1', 'invalidemail'));
+        $exception = new LocalizedException(__('Invalid email: %1', $invalidemail));
         $this->bugsnag->expects($this->once())
                     ->method('notifyException')
                     ->with($this->equalTo($exception));
