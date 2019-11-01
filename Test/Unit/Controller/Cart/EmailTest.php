@@ -137,9 +137,9 @@ class EmailTest extends TestCase
     {
         $invalidEmail = 'invalidemail';
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->request->method('getParam')->willReturn($invalidemail);
+        $this->request->method('getParam')->willReturn($invalidEmail);
         $this->cartHelper->method('validateEmail')->willReturn(false);
-        $exception = new LocalizedException(__('Invalid email: %1', $invalidemail));
+        $exception = new LocalizedException(__('Invalid email: %1', $invalidEmail));
         $this->bugsnag->expects($this->once())
                     ->method('notifyException')
                     ->with($this->equalTo($exception));
