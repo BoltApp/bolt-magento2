@@ -298,4 +298,17 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
+
+    public function testShouldTrackCheckoutFunnel()
+    {
+        $storeId = 0;
+        $this->configHelper->expects($this->any())
+                           ->method('shouldTrackCheckoutFunnel')
+                           ->with($storeId)
+                           ->will($this->returnValue(true));
+
+        $result = $this->block->shouldTrackCheckoutFunnel();
+
+        $this->assertTrue($result, 'shouldTrackCheckoutFunnel() returns true when config is set to true');
+    }
 }
