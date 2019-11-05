@@ -1188,7 +1188,7 @@ class Order extends AbstractHelper
     private function holdOnTotalsMismatch($order, $transaction)
     {
         $boltTotal = $transaction->order->cart->total_amount->amount;
-        $storeTotal = round($order->getGrandTotal() * 100);
+        $storeTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
@@ -1603,8 +1603,8 @@ class Order extends AbstractHelper
         $invoice = null;
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
-            $this->validateCaptureAmount($order, $amount / 100);
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+            $this->validateCaptureAmount($order, $amount);
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount);
         }
 
         if (!$order->getTotalDue()) {
@@ -1645,8 +1645,8 @@ class Order extends AbstractHelper
      * Create an invoice for the order.
      *
      * @param OrderModel $order
-     * @param string $transactionId
-     * @param float $amount
+     * @param string     $transactionId
+     * @param int        $amount
      *
      * @return bool
      * @throws \Exception
@@ -1655,7 +1655,12 @@ class Order extends AbstractHelper
     private function createOrderInvoice($order, $transactionId, $amount)
     {
         try {
-            if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+            $invoicedAmount   = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $amount;
+            $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
+            $amount = $amount / 100;
+
+            if ($invoicedAmount == $grandTotalAmount) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
@@ -1712,7 +1717,7 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param float          $captureAmount
+     * @param int            $captureAmount
      *
      * @return void
      * @throws \Exception
@@ -1729,8 +1734,7 @@ class Order extends AbstractHelper
          * Rounding operations are applied to each operand in order to avoid cases when the grand total
          * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
          */
-        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
-            + $this->cartHelper->getRoundAmount($captureAmount);
+        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $captureAmount;
         $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
 
         if ($captured > $grandTotal) {
