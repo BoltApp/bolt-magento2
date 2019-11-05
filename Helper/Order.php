@@ -1483,9 +1483,6 @@ class Order extends AbstractHelper
         switch ($transactionState) {
 
             case self::TS_ZERO_AMOUNT:
-                $transactionType = Transaction::TYPE_ORDER;
-                break;
-
             case self::TS_PENDING:
                 $transactionType = Transaction::TYPE_ORDER;
                 break;
@@ -1601,6 +1598,9 @@ class Order extends AbstractHelper
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
+        $this->updatePaymentWithCreditCardInfo($payment, $transaction);
+
+        $invoice = null;
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
             $this->validateCaptureAmount($order, $amount / 100);
@@ -1611,7 +1611,7 @@ class Order extends AbstractHelper
             $payment->setShouldCloseParentTransaction(true);
         }
 
-        if ($newCapture && @$invoice) {
+        if ($newCapture && $invoice) {
             $this->_eventManager->dispatch(
                 'sales_order_payment_capture',
                 ['payment' => $payment, 'invoice' => $invoice]
@@ -1816,5 +1816,46 @@ class Order extends AbstractHelper
         $order = $this->cartHelper->getOrderByIncrementId(trim($incrementId));
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+    }
+
+    /**
+     * The Credit Card info does not translate from Quote into Payment instance sometimes.
+     * That's why it is set forcibly.
+     *
+     * @param OrderPaymentInterface $payment
+     * @param $transaction
+     */
+    private function updatePaymentWithCreditCardInfo(OrderPaymentInterface $payment, $transaction)
+    {
+        if (property_exists($transaction, 'from_credit_card') && $transaction->from_credit_card) {
+            if (!$payment->getCcLast4()
+                && property_exists($transaction->from_credit_card, 'last4')
+            ) {
+                $payment->setCcLast4($transaction->from_credit_card->last4);
+            }
+            if (!$payment->getCcType()
+                && property_exists($transaction->from_credit_card, 'network')
+            ) {
+                $payment->setCcType($transaction->from_credit_card->network);
+            }
+            if (!$payment->getCcExpYear()
+                && property_exists($transaction->from_credit_card, 'expiration')
+            ) {
+                $expiration = $transaction->from_credit_card->expiration
+                    ? new DateTime($transaction->from_credit_card->expiration / 1000)
+                    : null;
+                if ($expiration) {
+                    $payment->setCcExpYear($expiration->date('y'));
+                    $payment->setCcExpMonth($expiration->date('m'));
+                }
+            }
+            if (property_exists($transaction->from_credit_card, 'billing_address')) {
+                if (!$payment->getCcOwner()
+                    && property_exists($transaction->from_credit_card->billing_address, 'name')
+                ) {
+                    $payment->setCcOwner($transaction->from_credit_card->billing_address->name);
+                }
+            }
+        }
     }
 }
