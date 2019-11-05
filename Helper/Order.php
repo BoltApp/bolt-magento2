@@ -1735,7 +1735,7 @@ class Order extends AbstractHelper
 
         if ($captured > $grandTotal) {
             throw new \Exception(
-                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+                __('Capture amount is invalid: captured [%1], grand total [%2]', $captured, $grandTotal)
             );
         }
     }
