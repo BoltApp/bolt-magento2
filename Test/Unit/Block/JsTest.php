@@ -85,7 +85,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth'
+            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
+            'shouldTrackCheckoutFunnel'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -297,5 +298,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
+    }
+
+    public function testShouldTrackCheckoutFunnel()
+    {
+        $this->configHelper->expects($this->any())
+                           ->method('shouldTrackCheckoutFunnel')
+                           ->will($this->returnValue(true));
+
+        $result = $this->block->shouldTrackCheckoutFunnel();
+
+        $this->assertTrue($result, 'shouldTrackCheckoutFunnel() returns true when config is set to true');
     }
 }

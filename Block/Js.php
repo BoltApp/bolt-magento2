@@ -439,6 +439,10 @@ class Js extends Template
         return $this->configHelper->getModuleVersion();
     }
 
+    public function shouldTrackCheckoutFunnel() {
+        return $this->configHelper->shouldTrackCheckoutFunnel();
+    }
+
     /**
      * Takes a string containing javascript and removes unneeded characters in
      * order to shrink the code without altering it's functionality.

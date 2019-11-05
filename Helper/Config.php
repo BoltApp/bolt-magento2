@@ -246,6 +246,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_CAPTURE_MERCHANT_METRICS = 'payment/boltpay/capture_merchant_metrics';
 
+    const XML_PATH_TRACK_CHECKOUT_FUNNEL = 'payment/boltpay/track_checkout_funnel';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1181,6 +1183,22 @@ class Config extends AbstractHelper
             'sales/minimum_order/amount',
             ScopeInterface::SCOPE_STORE,
             $storeId
+        );
+    }
+
+    /**
+     * Check if plugin should track the funnel transition in magento's default checkout.
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function shouldTrackCheckoutFunnel($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_ACTIVE,
+            ScopeInterface::SCOPE_STORE,
+            $store
         );
     }
 }
