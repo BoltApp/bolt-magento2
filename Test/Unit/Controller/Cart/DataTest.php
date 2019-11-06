@@ -112,10 +112,10 @@ class DataTest extends TestCase
 
 //        $boltpayOrder = $this->createMock(Response::class);
         $boltpayOrder = $this->getMockBuilder(Response::class)
-            ->setMethods(['getData'])
+            ->setMethods(['getResponse'])
             ->disableOriginalConstructor()
             ->getMock();
-        $boltpayOrder->method('getData')->willReturn($request_data);
+        $boltpayOrder->method('getResponse')->willReturn($request_data);
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('isCheckoutAllowed')->willReturn(true);
         $cartHelper->method('hasProductRestrictions')->willReturn(false);
