@@ -2,6 +2,15 @@
 
 var currentStep = '';
 
+function waitFor(condition, doWhenReady) {
+    var waitForInterval = setInterval(function () {
+        if (condition()) {
+            doWhenReady();
+            clearInterval(waitForInterval);
+        }
+    }, 50);
+}
+
 function trackFunnel(step) {
     if (step === currentStep) {
         // prevent duplicate tracking
@@ -11,13 +20,49 @@ function trackFunnel(step) {
     BoltTrack.recordEvent(step);
 }
 
-trackFunnel("onCheckoutStart");
+function setupListnerForShippingForm() {
+    var requiredFields = jQuery("#shipping-new-address-form .field._required");
+    var inputElements = [];
+    requiredFields.each(function(_, e) {
+        $elm = jQuery(e).find("input,select");
+        inputElements.push($elm);
+        $elm.change(function() {
+           var complete = true;
+           for (var i = 0; i < inputElements.length; i++) {
+               if (!inputElements[i].val() && inputElements[i].attr("name") !== "region") {
+                   complete = false;
+                   break;
+               }
+           }
+           if (complete) {
+               trackFunnel("onShippingAddressComplete")
+           }
+        });
+    });
+}
 
-// TODO: track onShippingAddressComplete when user complete filling in addresses
-// TODO: track onPaymentSubmit when user clicks pay
+function init() {
+    trackFunnel("onCheckoutStart");
 
-window.addEventListener("hashchange", function() {
-   if (location.hash === "#payment") {
-       trackFunnel("onShippingOptionsComplete");
-   }
-});
+    waitFor(
+        function() { return jQuery("#shipping-new-address-form .field._required input,select").length === 9; },
+        setupListnerForShippingForm
+    );
+
+    window.addEventListener("hashchange", function() {
+        if (location.hash === "#payment") {
+            trackFunnel("onShippingOptionsComplete");
+        }
+    });
+
+    // on method can detect checkout button added after this query is executed.
+    jQuery(".page-wrapper").on("click", ".action.primary.checkout", function() {
+        trackFunnel("onPaymentSubmit")
+        return false;
+    });
+}
+
+waitFor(
+    function() { return typeof jQuery != 'undefined'; },
+    init
+);
