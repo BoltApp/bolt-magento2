@@ -33,11 +33,6 @@ class DataTest extends TestCase
     private $context;
 
     /**
-     * @var JsonFactory
-     */
-    private $jsonFactory;
-
-    /**
      * @var MockObject|Cart
      */
 
@@ -77,15 +72,14 @@ class DataTest extends TestCase
     private $requestShippingAddress;
 
     /**
-     * @var Data currentMock
+     * @var MockObject | Response boltpayOrder
      */
-    private $currentMock;
+    private $boltpayOrder;
 
     protected function setUp()
     {
         $this->initResponseData();
         $this->initRequiredMocks();
-        $this->initCurrentMock();
     }
 
     private function initResponseData()
@@ -137,61 +131,27 @@ class DataTest extends TestCase
         $this->request = $this->createMock(RequestInterface::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
 
-        $map = [['payment_only', true], ['place_order_payload', 'this is a string I don\'t know what it should be']];
-        $this->request->method('getParam')->willReturnMap($map);
+        $this->request->method('getParam')->willReturn('placeholder');
         $this->context->method('getRequest')->willReturn($this->request);
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
+        $this->boltpayOrder = $this->getMockBuilder(Response::class)
             ->setMethods(['getResponse'])
             ->disableOriginalConstructor()
             ->getMock();
-        $boltpayOrder->method('getResponse')->willReturn($this->response);
+        $this->boltpayOrder->method('getResponse')->willReturn($this->response);
 
         $this->cartHelper = $this->createMock(Cart::class);
         $this->cartHelper->method('isCheckoutAllowed')->willReturn(true);
         $this->cartHelper->method('hasProductRestrictions')->willReturn(false);
         $this->cartHelper->method('getBoltpayOrder')
             ->withAnyParameters()
-            ->willReturn($boltpayOrder);
+            ->willReturn($this->boltpayOrder);
         $this->cartHelper->method('getHints')->willReturn(self::HINT);
 
         //Does not appear to be used in Data.php but is a part of the constructor
         $this->configHelper = $this->createMock(Config::class);
 
-        //Methods used in Data.php:
-        //notifyException -> returns void
         $this->bugsnag = $this->createMock(Bugsnag::class);
-
-        $this->jsonFactory = $this->getMockBuilder(JsonFactory::class)
-            ->setMethods(['create'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->jsonFactory->method('create')
-            ->willReturnSelf();
-        //JSON factory stuff
-//        $json = $this->createMock(Json::class);
-//        $this->jsonFactory = $this->createMock(JsonFactory::class);
-//        $this->jsonFactory->method('create')->willReturn($json);
-    }
-
-    private function initCurrentMock()
-    {
-        $this->currentMock = $this->getMockBuilder(Data::class)
-            ->setConstructorArgs([
-                $this->context,
-                $this->jsonFactory,
-                $this->cartHelper,
-                $this->configHelper,
-                $this->bugsnag,
-                $this->metricsClient
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
-
-//        $map = [['payment_only', true], ['place_order_payload', 'this is a string I don\'t know what it should be']];
-//        $this->currentMock->method('getRequest')->willReturnMap($map);
-        $this->currentMock->method('getRequest')->willReturn(true);
-        return $this->currentMock;
     }
 
     private function buildJsonMock($expected)
@@ -220,17 +180,17 @@ class DataTest extends TestCase
             'backUrl' => ''
         );
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
+        $this->boltpayOrder = $this->getMockBuilder(Response::class)
             ->setMethods(['getResponse'])
             ->disableOriginalConstructor()
             ->getMock();
-        $boltpayOrder->method('getResponse')->willReturn($this->response);
+        $this->boltpayOrder->method('getResponse')->willReturn($this->response);
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('isCheckoutAllowed')->willReturn(true);
         $cartHelper->method('hasProductRestrictions')->willReturn(false);
         $cartHelper->method('getBoltpayOrder')
             ->withAnyParameters()
-            ->willReturn($boltpayOrder);
+            ->willReturn($this->boltpayOrder);
 
         $jsonFactoryMock = $this->buildJsonMock($expected);
 
