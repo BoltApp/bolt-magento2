@@ -11,7 +11,7 @@ use Magento\Framework\DataObjectFactory;
 /**
  * Class TrackingSaveObserver
  *
- * @package Bolt\Boltpay\Observer\Adminhtml\Sales
+ * @package Bolt\Boltpay\Observer
  */
 class TrackingSaveObserver implements ObserverInterface
 {
