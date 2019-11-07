@@ -25,6 +25,7 @@ class DataTest extends TestCase
     const HINT = 'hint!';
     const ORDER_REFERENCE = 1234;
     const TOKEN = 'token';
+    const EXCEPTION_MESSAGE = 'Test exception message';
 
     /**
      * @var Context
@@ -193,6 +194,23 @@ class DataTest extends TestCase
         return $this->currentMock;
     }
 
+    private function buildJsonMock($expected)
+    {
+        $json = $this->getMockBuilder(Json::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $json->expects($this->at(0))
+            ->method('setData')
+            ->with($expected);
+        $jsonFactoryMock = $this->getMockBuilder(JsonFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $jsonFactoryMock->method('create')
+            ->willReturn($json);
+        return $jsonFactoryMock;
+    }
+
+
     public function testExecute_happyPath()
     {
         $expected = array(
@@ -214,23 +232,9 @@ class DataTest extends TestCase
             ->withAnyParameters()
             ->willReturn($boltpayOrder);
 
-        $json = $this->getMockBuilder(Json::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $objectManagerMock = $this->getMockBuilder(ObjectManagerInterface::class)
-            ->getMock();
-        $objectManagerMock->method('create')->willReturn($json);
+        $jsonFactoryMock = $this->buildJsonMock($expected);
 
-        $jsonFactoryMock = $this->getMockBuilder(JsonFactory::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $jsonFactoryMock->method('create')
-            ->willReturn($json);
-        $json->expects($this->at(0))
-            ->method('setData')
-            ->with($expected);
-
-        $currentMock = new Data(
+        $data = new Data(
             $this->context,
             $jsonFactoryMock,
             $this->cartHelper,
@@ -238,51 +242,119 @@ class DataTest extends TestCase
             $this->bugsnag,
             $this->metricsClient
         );
-        $currentMock->execute();
+        $data->execute();
     }
 
-    public function testProductRestrictions()
+    public function testExecute_HasProductRestrictions()
     {
-        //Override default set in init
-        $this->cartHelper->method('hasProductRestrictions')->willReturn(true);
+        //replace default set in init
+        $cartHelper = $this->createMock(Cart::class);
+        $cartHelper->method('hasProductRestrictions')->willReturn(true);
 
-        /**
-         * should expect JSON similar or equal to
-         * {status: "success", restrict: "true", message: "The cart has products not allowed for Bolt checkout", backUrl: ""}
-         */
-        $expected = '{status: "success", restrict: "true", message: "The cart has products not allowed for Bolt checkout", backUrl: ""}';
+        $expected = array(
+            'status' => 'success',
+            'restrict' => true,
+            'message' => 'The cart has products not allowed for Bolt checkout',
+            'backUrl' => ''
+        );
 
-//        $this->assertEquals($expected, $this->currentMock->execute());
-        //getting the phpunit warnings off my back
-        $this->assertTrue(true);
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $data = new Data(
+            $this->context,
+            $jsonFactoryMock,
+            $cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient
+        );
+        $data->execute();
     }
 
-    public function testDisallowedCheckout()
+    public function testExecute_DisallowedCheckout()
     {
-        //Override default set in init
-        $this->cartHelper->method('isCheckoutAllowed')->willReturn(false);
+        //replace default set in init
+        $cartHelper = $this->createMock(Cart::class);
+        $cartHelper->method('isCheckoutAllowed')->willReturn(false);
 
-        $expected = '{status: "success", restrict: "true", message: "Guest checkout is not allowed.", backUrl: ""}';
+        $expected = array(
+            'status' => 'success',
+            'restrict' => true,
+            'message' => 'Guest checkout is not allowed.',
+            'backUrl' => ''
+        );
 
-//        $this->assertEquals($expected, $this->currentMock->execute());
-        //getting the phpunit warnings off my back
-        $this->assertTrue(true);
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $data = new Data(
+            $this->context,
+            $jsonFactoryMock,
+            $cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient
+        );
+        $data->execute();
     }
 
-    public function testGeneralException()
+    public function testExecute_GeneralException()
     {
         //Make a method throw an exception during execution
-        $exception = new \Exception("Test message");
-        $this->currentMock->method('getRequest')->willThrowException($exception);
-//        $this->bugsnag->expects($this->once())->method('notifyException');
+        $exception = new \Exception(self::EXCEPTION_MESSAGE);
+        $cartHelper = $this->createMock(Cart::class);
+        $cartHelper->method('hasProductRestrictions')->willReturn(false);
+        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
+        $cartHelper->method('getBoltpayOrder')->willThrowException($exception);
+        $this->bugsnag->expects($this->once())->method('notifyException');
 
-        $expected = '{status: "failure", message: "Test message", backUrl: ""}';
+        $expected = array(
+            'status' => 'failure',
+            'message' => self::EXCEPTION_MESSAGE,
+            'backUrl' => '',
+        );
 
-        $this->currentMock->execute();
-//        $this->assertEquals($expected, $this->currentMock->execute());
-        //getting the phpunit warnings off my back
-        $this->assertTrue(true);
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $data = new Data(
+            $this->context,
+            $jsonFactoryMock,
+            $cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient
+        );
+
+        $data->execute();
     }
 
+    public function testExecute_NullResponse()
+    {
+        $expected = array(
+            'status' => 'success',
+            'cart' => array(
+                'orderToken' => '',
+                'cartReference' => ''
+            ),
+            'hints' => null,
+            'backUrl' => ''
+        );
 
+        $cartHelper = $this->createMock(Cart::class);
+        $cartHelper->method('hasProductRestrictions')->willReturn(false);
+        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
+        $cartHelper->method('getBoltpayOrder')->willReturn(null);
+
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $data = new Data(
+            $this->context,
+            $jsonFactoryMock,
+            $cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient
+        );
+
+        $data->execute();
+    }
 }
