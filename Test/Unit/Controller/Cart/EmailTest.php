@@ -12,6 +12,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\TestCase;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 class EmailTest extends TestCase
 {
@@ -21,27 +22,27 @@ class EmailTest extends TestCase
     private $context;
 
     /**
-     * @var CheckoutSession
+     * @var MockObject|CheckoutSession
      */
     private $checkoutSession;
 
     /**
-     * @var CustomerSession
+     * @var MockObject|CustomerSession
      */
     private $customerSession;
 
     /**
-     * @var Bugsnag
+     * @var MockObject|Bugsnag
      */
     private $bugsnag;
 
     /**
-     * @var CartHelper
+     * @var MockObject|CartHelper
      */
     private $cartHelper;
 
     /**
-     * @var Quote quote
+     * @var MockObject|Quote quote
      */
     private $quote;
 
