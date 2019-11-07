@@ -60,10 +60,19 @@ class DataTest extends TestCase
      */
     private $metricsClient;
 
+    /**
+     * @var Object response
+     */
     private $response;
 
+    /**
+     * @var array responseData
+     */
     private $responseData;
 
+    /**
+     * @var array $expectedCart
+     */
     private $expectedCart;
 
     /**
@@ -95,7 +104,7 @@ class DataTest extends TestCase
                         array(
                             0 =>
                                 (object) ( array(
-                                    'shipping_addres' => $this->requestShippingAddress,
+                                    'shipping_address' => $this->requestShippingAddress,
                                     'shipping_method' => 'unknown',
                                     'service'         => 'Flat Rate - Fixed',
                                     'cost'            =>
@@ -117,6 +126,7 @@ class DataTest extends TestCase
             'token' => self::TOKEN
         ) );
 
+        //weird bit of stuff here, copied from the code under test
         $this->responseData = json_decode(json_encode($this->response), true);
 
         $this->expectedCart = array_merge($this->responseData['cart'], [
