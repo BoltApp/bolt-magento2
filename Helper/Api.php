@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bolt magento2 plugin
  *
@@ -61,6 +62,11 @@ class Api extends AbstractHelper
      * Api create order
      */
     const API_CREATE_ORDER = 'merchant/orders';
+
+    /**
+     * Api create tracking
+     */
+    const API_CREATE_TRACKING = 'merchant/track_shipment';
 
     /**
      * Api void transaction
@@ -174,7 +180,7 @@ class Api extends AbstractHelper
      */
     private function isResponseError($response)
     {
-        $arr = (array)$response;
+        $arr = (array) $response;
         return array_key_exists('errors', $arr) || array_key_exists('error_code', $arr);
     }
 
@@ -209,7 +215,7 @@ class Api extends AbstractHelper
             $this->configHelper->getModuleVersion(),
             $requestData,
             $apiKey,
-            (array)$request->getHeaders()
+            (array) $request->getHeaders()
         );
 
         $request->setHeaders($headers);
@@ -291,8 +297,8 @@ class Api extends AbstractHelper
         $requestMethod = empty($requestData->getRequestMethod()) ? 'POST' : $requestData->getRequestMethod();
         $apiUrl        = $this->getFullApiUrl($dynamicApiUrl);
 
-        $headers    = (array)$requestData->getHeaders();
-        $statusOnly = (bool)$requestData->getStatusOnly();
+        $headers    = (array) $requestData->getHeaders();
+        $statusOnly = (bool) $requestData->getStatusOnly();
 
         $request = $this->requestFactory->create();
         $request->setApiData($apiData);
