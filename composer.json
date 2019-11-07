@@ -10,15 +10,22 @@
         "bugsnag/bugsnag": "^3.4"
     },
     "require-dev": {
-        "phpunit/phpunit": "~6.2.0"
+        "phpunit/phpunit": "~6.2.0",
+        "mikey179/vfsstream": "^1.6"
     },
     "type": "magento2-module",
-    "version": "2.0.2.2",
+    "version": "2.0.3",
     "license": "MIT",
     "autoload": {
         "files": [ "registration.php" ],
         "psr-4": {
             "Bolt\\Boltpay\\": ""
         }
-    }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.magento.com/"
+        }
+    ]
 }

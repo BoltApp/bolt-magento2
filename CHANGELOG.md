@@ -74,3 +74,9 @@
 ## [v2.0.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.1) 2019-09-06
  - Added generic ERP support
  - Removed Autocapture from settings
+## [v2.0.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.2) 2019-09-12
+ - Support for Paypal
+## [v2.0.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.3) 2019-10-28
+ - Testing and logging fixes
+ - Beta merchant metrics feature
+ - Various bug fixes

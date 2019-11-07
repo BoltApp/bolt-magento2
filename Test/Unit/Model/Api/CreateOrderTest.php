@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
@@ -69,6 +70,11 @@ class CreateOrderTest extends TestCase
      * @var Bugsnag
      */
     private $bugsnag;
+
+    /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
 
     /**
      * @var Response
@@ -132,6 +138,7 @@ class CreateOrderTest extends TestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->request = $this->createMock(Request::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->response = $this->createMock(Response::class);
         $this->url = $this->createMock(UrlInterface::class);
         $this->backendUrl = $this->createMock(BackendUrl::class);
@@ -152,6 +159,7 @@ class CreateOrderTest extends TestCase
                 $this->logHelper,
                 $this->request,
                 $this->bugsnag,
+                $this->metricsClient,
                 $this->response,
                 $this->url,
                 $this->backendUrl,

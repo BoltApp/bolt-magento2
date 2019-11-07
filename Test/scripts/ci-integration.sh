@@ -6,7 +6,8 @@ set -x
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
-Test/scripts/install_magento_integrations.sh
+sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
+
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
 
@@ -27,8 +28,7 @@ php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGIN
 wget -O ngrok.zip https://bolt-devops.s3-us-west-2.amazonaws.com/testing/ngrok.zip
 unzip ngrok.zip
 ./ngrok authtoken $NGROK_TOKEN
-./ngrok http 80 -hostname=m2-test.integrations.dev.bolt.me &
-NGROK_URL="https://m2-test.integrations.dev.bolt.me/"
+
 
 php bin/magento config:set web/unsecure/base_url "${NGROK_URL}"
 php bin/magento config:set web/secure/base_url "${NGROK_URL}"
@@ -37,24 +37,25 @@ php bin/magento config:set web/secure/base_link_url "${NGROK_URL}"
 php CouponCode.php
 php FreeShipping.php
 
-
-php -dmemory_limit=5G bin/magento setup:upgrade
-
-php -dmemory_limit=5G bin/magento setup:di:compile
-
-php -dmemory_limit=5G bin/magento indexer:reindex
-
-php -dmemory_limit=5G bin/magento setup:static-content:deploy -f
-
-php bin/magento cache:flush
 INC_NUM=$((100*${CIRCLE_BUILD_NUM}))
 mysql -uroot -h 127.0.0.1 -e "USE magento2; ALTER TABLE quote AUTO_INCREMENT=${INC_NUM};"
+
+
+cd ..
+sudo chmod -R 777 magento/
+cd magento
+
+php -dmemory_limit=5G bin/magento setup:upgrade
+php -dmemory_limit=5G bin/magento setup:di:compile
+php bin/magento cache:flush
+
 
 echo "update apache config"
 sudo cp /home/circleci/project/Test/scripts/000-default.conf /etc/apache2/sites-enabled/000-default.conf
 sudo cp /home/circleci/project/Test/scripts/apache2.conf /etc/apache2/sites-enabled/apache2.conf
 
 
+./ngrok http 80 -hostname=$NGROK_HOSTNAME &
 cd ..
 sudo chmod -R 777 /home/circleci/magento/
 sudo a2enmod rewrite
@@ -62,9 +63,10 @@ mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 
-git clone git@github.com:BoltApp/integration-tests.git
+git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
-TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2discount.spec.ts
+TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/discounts/magento2PercentageDiscount.spec.ts
+TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/discounts/magento2ShippingDiscount.spec.ts
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2LoggedInQuickCheckout.spec.ts

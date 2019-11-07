@@ -1,13 +1,11 @@
 version: 2
 jobs:
   integration-php72-magento23:
-    unit-php72-magento23:
     docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
     environment:
         MAGENTO_DIR: magento
     steps:
@@ -130,4 +128,4 @@ workflows:
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22
-#      - integration-php72-magento23 flaky test
+      - integration-php72-magento23

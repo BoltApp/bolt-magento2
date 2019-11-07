@@ -48,3 +48,4 @@ php bin/magento setup:install -q \
     --admin-use-security-key=0 \
     --admin-password="123123q"
 
+composer require --dev "mikey179/vfsstream:^1.6"
