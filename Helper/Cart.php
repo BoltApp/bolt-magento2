@@ -1497,6 +1497,28 @@ class Cart extends AbstractHelper
 
             $diff -= $amount * 100 - $roundedAmount;
             $totalAmount -= $roundedAmount;
+
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process BSS Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if (
+            array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
+            && $this->discountHelper->isBssStoreCreditAllowed()
+        ) {
+            $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
 

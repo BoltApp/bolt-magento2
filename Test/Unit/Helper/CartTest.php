@@ -1393,6 +1393,92 @@ ORDER;
     /**
      * @test
      */
+    public function collectDiscounts_BssStoreCredit()
+    {
+        $appliedDiscount = 10; // $
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isBssStoreCreditAllowed')
+            ->willReturn(true);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getBssStoreCreditAmount')
+            ->withAnyParameters()
+            ->willReturn($appliedDiscount);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
     public function collectDiscounts_Amasty_Giftcard()
     {
 
