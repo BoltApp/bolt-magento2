@@ -8,12 +8,14 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\BoltPay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\Test\Unit\ObjectManagerFactoryTest;
-use Magento\Framework\Controller\Result\JsonFactory as ResultJsonFactory;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Controller\Result\Json;
+use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\TestCase;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 class SaveTest extends TestCase
@@ -21,9 +23,10 @@ class SaveTest extends TestCase
     const ORDER_ID = 1234;
     const QUOTE_ID = 5678;
     const INCREMENT_ID = 1235;
-    const STATUS = "Ready";
-    const REFERENCE = "referenceValue";
-    const URL = "http://url.return.value/";
+    const STATUS = 'Ready';
+    const REFERENCE = 'referenceValue';
+    const URL = 'http://url.return.value/';
+    const ERROR_MESSAGE = 'Error message';
 
     /**
      * @var Save currentMock
@@ -36,12 +39,12 @@ class SaveTest extends TestCase
     private $objectManager;
 
     /**
-     * @var Order orderMock
+     * @var MockObject|Order orderMock
      */
     private $orderMock;
 
     /**
-     * @var Quote quoteMock
+     * @var MockObject|Quote quoteMock
      */
     private $quoteMock;
 
@@ -51,66 +54,36 @@ class SaveTest extends TestCase
     private $bugsnagMock;
 
     /**
-     * @var OrderHelper orderHelper
+     * @var MockObject|OrderHelper orderHelper
      */
     private $orderHelper;
 
     /**
-     * @var Session checkoutSession
+     * @var MockObject|Session checkoutSession
      */
     private $checkoutSession;
 
     /**
-     * @var Config configHelper
+     * @var MockObject|Config configHelper
      */
     private $configHelper;
 
     /**
-     * @var DataObjectFactory dataObjectFactory
+     * @var MockObject|DataObjectFactory dataObjectFactory
      */
     private $dataObjectFactory;
 
     /**
-     * @var Context context
+     * @var MockObject|Context context
      */
     private $context;
-
-    /**
-     * @var ResultJsonFactory jsonFactory
-     */
-    private $resultJsonFactory;
 
     protected function setUp()
     {
         $this->initRequiredMocks();
-        $this->initCurrentMock();
     }
 
-    public function testExecute()
-    {
-        //Verify certain methods are run
-//        $this->currentMock->expects($this->once())->method('replaceQuote');
-//        $this->currentMock->expects($this->once())->method('clearQuoteSession');
-//        $this->currentMock->expects($this->once())->method('clearOrderSession');
-
-        $expected = '{"status": "success", "success_url": "' . self::URL . '"}';
-
-        $this->assertEquals($expected, $this->currentMock->execute());
-
-        //This method is just missing the resultJsonFactory to be able to work;
-
-    }
-
-    public function testExecuteException()
-    {
-        //Bugsnag reporting
-        $this->currentMock->expects($this->once())->method('notifyException');
-
-
-    }
-
-
-    protected function initRequiredMocks()
+    private function initRequiredMocks()
     {
         $this->objectManager =
 
@@ -122,9 +95,6 @@ class SaveTest extends TestCase
         $this->context = $this->createMock(Context::class);
         $this->checkoutSession = $this->createMock(Session::class);
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
-        $this->resultJsonFactory = $this->getMockBuilder(ResultJsonFactory::class)
-            ->disableOriginalConstructor()
-            ->getMock();
 
         //Set up method returns
         $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
@@ -133,28 +103,109 @@ class SaveTest extends TestCase
 
         $this->quoteMock->method('getId')->willReturn(self::QUOTE_ID);
 
-        $this->orderHelper->method('saveUpdateOrder')->willReturn([self::QUOTE_ID, self::ORDER_ID]);
+        $this->orderHelper->method('saveUpdateOrder')->willReturn([$this->quoteMock, $this->orderMock]);
 
         $this->configHelper->method('getSuccessPageRedirect')->willReturn(self::URL);
 
+//        $this->checkoutSession->method('setLastQuoteId')->willReturnSelf();
+
     }
 
-    protected function initCurrentMock()
+    private function buildJsonMock($expected)
     {
-        $this->currentMock = $this->getMockBuilder(Save::class)
+        $json = $this->getmockBuilder(Json::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $json->expects($this->at(0))
+            ->method('setData')
+            ->with($expected);
+        $jsonFactoryMock = $this->getMockBuilder(JsonFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $jsonFactoryMock->method('create')
+            ->willReturn($json);
+        return $jsonFactoryMock;
+    }
+
+    public function testExecute_happyPath()
+    {
+        //Verify certain methods are run
+//        $this->currentMock->expects($this->once())->method('replaceQuote');
+//        $this->currentMock->expects($this->once())->method('clearQuoteSession');
+//        $this->currentMock->expects($this->once())->method('clearOrderSession');
+
+        $expected = array(
+            'status' => 'success',
+            'success_url' => self::URL
+        );
+
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $save = $this->getMockBuilder(Save::class)
+            ->setMethods([
+                'replaceQuote',
+                'clearQuoteSession',
+                'clearOrderSession',
+                'getRequest'
+            ])
             ->setConstructorArgs([
                 $this->context,
-                $this->resultJsonFactory,
+                $jsonFactoryMock,
                 $this->checkoutSession,
                 $this->orderHelper,
                 $this->configHelper,
                 $this->bugsnagMock,
                 $this->dataObjectFactory
             ])
-            ->enableProxyingToOriginalMethods()
+//            ->enableProxyingToOriginalMethods()
             ->getMock();
-        $this->currentMock->method('getRequest')->willReturn(self::REFERENCE);
-        return $this->currentMock;
+
+        $request = $this->createMock(RequestInterface::class);
+
+        $save->method('getRequest')->willReturn($request);
+
+        $save->expects($this->once())->method('replaceQuote');
+        $save->expects($this->once())->method('clearQuoteSession');
+        $save->expects($this->once())->method('clearOrderSession');
+
+        $save->execute();
     }
+
+    public function testExecuteException()
+    {
+        $expected = array(
+            'status' => 'error',
+            'code' => 6009,
+            'message' => self::ERROR_MESSAGE,
+            'reference' => self::REFERENCE
+        );
+
+        $jsonFactoryMock = $this->buildJsonMock($expected);
+
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->any())->method('notifyException');
+
+        $request = $this->createMock(RequestInterface::class);
+
+        $save = $this->getMockBuilder(Save::class)
+            ->setMethods(['getRequest'])
+            ->enableProxyingToOriginalMethods()
+            ->setConstructorArgs([
+                $this->context,
+                $jsonFactoryMock,
+                $this->checkoutSession,
+                $this->orderHelper,
+                $this->configHelper,
+                $this->bugsnagMock,
+                $this->dataObjectFactory
+            ])
+            ->getMock();
+        $save->method('getRequest')->willReturn($request);
+
+        $save->execute();
+    }
+
+
+
 
 }
