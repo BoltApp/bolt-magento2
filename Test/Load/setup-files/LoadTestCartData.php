@@ -22,12 +22,9 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Framework\UrlInterface;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product as Product;
 use Magento\Quote\Model\QuoteFactory as QuoteFactory;
@@ -138,7 +135,7 @@ class LoadTestCartData implements LoadTestCartDataInterface
      *
      * @api
      * @inheritDoc
-     * @see CardDataInterface
+     * @see CartDataInterface
      */
     public function execute(
         $cart = null

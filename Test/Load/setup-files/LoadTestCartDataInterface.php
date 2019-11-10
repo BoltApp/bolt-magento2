@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Api;
 
 /**
- * Create Order interface.
+ * Load Test Cart Data Interface.
  *
  * @api
  */
