@@ -106,16 +106,16 @@ class LoadTestCartData implements LoadTestCartDataInterface
      * @param QuoteFactory              $quoteFactory
      */
     public function __construct(
-                                HookHelper $hookHelper,
-                                CartHelper $cartHelper,
-                                LogHelper $logHelper,
-                                Request $request,
-                                Response $response,
-                                ProductRepository $productRepository,
-                                CheckoutSession $checkoutSession,
-                                CartItemInterfaceFactory $cartItemFactory,
-                                Product $product,
-                                QuoteFactory $quoteFactory
+        HookHelper $hookHelper,
+        CartHelper $cartHelper,
+        LogHelper $logHelper,
+        Request $request,
+        Response $response,
+        ProductRepository $productRepository,
+        CheckoutSession $checkoutSession,
+        CartItemInterfaceFactory $cartItemFactory,
+        Product $product,
+        QuoteFactory $quoteFactory
     )
     {
         $this->product = $product;
@@ -137,9 +137,7 @@ class LoadTestCartData implements LoadTestCartDataInterface
      * @inheritDoc
      * @see CartDataInterface
      */
-    public function execute(
-        $cart = null
-    ) {
+    public function execute($cart = null) {
         try {
             $payload = $this->request->getContent();
 
