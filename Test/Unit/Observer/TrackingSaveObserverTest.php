@@ -25,6 +25,7 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Observer\TrackingSaveObserver as Observer;
+use \PHPUnit\Framework\TestCase;
 
 /**
  * Class TrackingSaveObserverTest
