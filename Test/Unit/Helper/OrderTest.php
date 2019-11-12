@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Sales\Model\Order\Invoice as Invoice;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
@@ -220,6 +221,11 @@ class OrderTest extends TestCase
                 'cancelOrder',
                 'hasSamePrice',
                 'orderPostprocess',
+                'getUnprocessedCapture',
+                'isCaptureHookRequest',
+                'checkPaymentMethod',
+                'getProcessedCaptures',
+                'getProcessedRefunds',
             ])
             ->getMock();
     }
@@ -232,7 +238,13 @@ class OrderTest extends TestCase
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->quoteManagement = $this->createMock(QuoteManagement::class);
         $this->emailSender = $this->createMock(OrderSender::class);
-        $this->invoiceService = $this->createMock(InvoiceService::class);
+        $this->invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            [
+                'prepareInvoice',
+                'prepareInvoiceWithoutItems',
+            ]
+        );
         $this->invoiceSender = $this->createMock(InvoiceSender::class);
         $this->transactionBuilder = $this->createMock(TransactionBuilder::class);
         $this->timezone = $this->createMock(TimezoneInterface::class);
@@ -262,6 +274,10 @@ class OrderTest extends TestCase
                 'canCancel',
                 'registerCancellation',
                 'addStatusHistoryComment',
+                'getTotalInvoiced',
+                'getGrandTotal',
+                'getPayment',
+                'setIsCustomerNotified',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -271,6 +287,24 @@ class OrderTest extends TestCase
             ]
         );
         $this->orderMock->method('getConfig')->willReturn($this->orderConfigMock);
+    }
+    
+    /**
+     * Call protected/private method of a class.
+     *
+     * @param object &$object    Instantiated object that we will run method on.
+     * @param string $methodName Method name to call
+     * @param array  $parameters Array of parameters to pass into method.
+     *
+     * @return mixed Method return.
+     */
+    public function invokeMethod(&$object, $methodName, array $parameters = array())
+    {
+        $reflection = new \ReflectionClass(get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+    
+        return $method->invokeArgs($object, $parameters);
     }
 
     /**
@@ -736,5 +770,35 @@ class OrderTest extends TestCase
         ) );
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:pending");
+    }
+    
+    /**
+     * @test
+     * @covers ::createOrderInvoice
+     */
+    public function createOrderInvoice_amountWithDifferentDecimals() {
+        $totalInvoiced = 0;
+        $amount = 12.64;
+        $grandTotal = 12.6402;
+
+        $invoice = $this->createPartialMock(
+            Invoice::class,
+            [
+                'setRequestedCaptureCase',
+                'setTransactionId',
+                'setBaseGrandTotal',
+                'setGrandTotal',
+                'register',
+                'save',
+            ]
+        );
+        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
+        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
+        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
+        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
+        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+        $this->invoiceService->expects(static::never())->method('prepareInvoiceWithoutItems');
+            
+        $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
     }
 }
