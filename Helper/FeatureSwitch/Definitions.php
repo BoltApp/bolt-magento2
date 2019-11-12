@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bolt magento2 plugin
  *
@@ -25,25 +26,27 @@ namespace Bolt\Boltpay\Helper\FeatureSwitch;
  * Class Definitions
  * @package Bolt\Boltpay\Helper\FeatureSwitch
  */
-class Definitions {
-    const NAME_KEY="name";
-    const VAL_KEY="value";
-    const DEFAULT_VAL_KEY="default_value";
-    const ROLLOUT_KEY="rollout_percentage";
+class Definitions
+{
+  const NAME_KEY = "name";
+  const VAL_KEY = "value";
+  const DEFAULT_VAL_KEY = "default_value";
+  const ROLLOUT_KEY = "rollout_percentage";
 
-    /**
-     * This switch is a sample of how to set up a feature switch.
-     * Every feature switch added here should have a corresponding helper
-     * in Decider.php
-     */
-    const M2_SAMPLE_SWITCH_NAME = "M2_SAMPLE_SWITCH";
+  /**
+   * This switch is a sample of how to set up a feature switch.
+   * Every feature switch added here should have a corresponding helper
+   * in Decider.php
+   */
+  const M2_SAMPLE_SWITCH_NAME = "M2_SAMPLE_SWITCH";
+  const TRACKING_EVENT_OBSERVER_SWITCH = "TRACKING_EVENT_OBSERVER_SWITCH";
 
-    const DEFAULT_SWITCH_VALUES = array(
-        self::M2_SAMPLE_SWITCH_NAME =>  array(
-          self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
-          self::VAL_KEY             => true,
-          self::DEFAULT_VAL_KEY     => false,
-          self::ROLLOUT_KEY         => 0
-      )
-    );
+  const DEFAULT_SWITCH_VALUES = array(
+    self::M2_SAMPLE_SWITCH_NAME =>  array(
+      self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
+      self::VAL_KEY             => true,
+      self::DEFAULT_VAL_KEY     => false,
+      self::ROLLOUT_KEY         => 0
+    )
+  );
 }

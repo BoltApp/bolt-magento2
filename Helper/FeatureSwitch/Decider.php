@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bolt magento2 plugin
  *
@@ -26,7 +27,8 @@ use Magento\Framework\App\State;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 
-class Decider extends AbstractHelper {
+class Decider extends AbstractHelper
+{
     /**
      * @var Manager
      */
@@ -87,7 +89,8 @@ class Decider extends AbstractHelper {
      * @param int $rolloutPercentage
      * @return bool
      */
-    private function _isInBucket(string $switchName, int $rolloutPercentage) {
+    private function _isInBucket(string $switchName, int $rolloutPercentage)
+    {
         $this->_session->start();
         $boltFeatureSwitchId = $this->_session->getBoltFeatureSwitchId();
         if (!$boltFeatureSwitchId) {
@@ -104,7 +107,8 @@ class Decider extends AbstractHelper {
         return $position < $rolloutPercentage;
     }
 
-    private function _switchFromConst($switchDef) {
+    private function _switchFromConst($switchDef)
+    {
         $switch = $this->_fsFactory->create();
         $switch->setName($switchDef[Definitions::NAME_KEY]);
         $switch->setValue($switchDef[Definitions::VAL_KEY]);
@@ -121,7 +125,8 @@ class Decider extends AbstractHelper {
      * @throws LocalizedException
      * @return bool
      */
-    public function isSwitchEnabled($switchName) {
+    public function isSwitchEnabled($switchName)
+    {
         $defaultDef = isset(Definitions::DEFAULT_SWITCH_VALUES[$switchName]) ?
             Definitions::DEFAULT_SWITCH_VALUES[$switchName] : null;
         if (!$defaultDef) {
@@ -156,7 +161,13 @@ class Decider extends AbstractHelper {
      * Switch Helpers below
      ***************************************************/
 
-    public function isSampleSwitchEnabled() {
+    public function isSampleSwitchEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+    }
+
+    public function isTrackingSaveEventsEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::TRACKING_EVENT_OBSERVER_SWITCH);
     }
 }

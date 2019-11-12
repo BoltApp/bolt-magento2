@@ -8,6 +8,8 @@ use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class TrackingSaveObserver
@@ -37,20 +39,37 @@ class TrackingSaveObserver implements ObserverInterface
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @param ConfigHelper      $configHelper
      * @param DataObjectFactory $dataObjectFactory
+     * @param ApiHelper $apiHelper
+     * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
      *
      */
     public function __construct(
         ConfigHelper $configHelper,
         DataObjectFactory $dataObjectFactory,
         ApiHelper $apiHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
+        Decider $decider
     ) {
         $this->configHelper = $configHelper;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->apiHelper = $apiHelper;
         $this->bugsnag = $bugsnag;
+        $this->metricsClient = $metricsClient;
+        $this->decider = $decider;
     }
 
     /**
@@ -58,7 +77,12 @@ class TrackingSaveObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        if (!$this->decider->isTrackingSaveEventsEnabled()) {
+            return;
+        }
+
         try {
+            $startTime = $this->metricsClient->getCurrentTime();
             $tracking = $observer->getEvent()->getTrack();
             $shipment = $tracking->getShipment();
             $order = $shipment->getOrder();
@@ -86,9 +110,16 @@ class TrackingSaveObserver implements ObserverInterface
 
             //Build Request
             $request = $this->apiHelper->buildRequest($requestData);
-            $this->apiHelper->sendRequest($request);
+            $result = $this->apiHelper->sendRequest($request);
+
+            if ($result != 200) {
+                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                return;
+            }
+            $this->metricsClient->processMetric("tracking_creation.success", 1, "tracking_creation.latency", $startTime);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
         }
     }
 }

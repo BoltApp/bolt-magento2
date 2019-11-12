@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
     <event name="sales_order_shipment_track_save_after">
-        <observer name="bolt_track_save_observer" instance="Bolt\Boltpay\Observer\TrackingSaveObserver" />
+        <observer name="boltTrackSaveObserver" instance="Bolt\Boltpay\Observer\TrackingSaveObserver" />
     </event>
 </config>
