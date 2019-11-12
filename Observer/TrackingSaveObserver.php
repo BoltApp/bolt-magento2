@@ -87,12 +87,13 @@ class TrackingSaveObserver implements ObserverInterface
             $shipment = $tracking->getShipment();
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
-            $transactionReference = $payment->getAdditionalInformation('transaction_reference');
 
             // If this is not a bolt payment, ignore it
-            if ($transactionReference == null) {
+            if (!$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
                 return;
             }
+
+            $transactionReference = $payment->getAdditionalInformation('transaction_reference');
 
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {

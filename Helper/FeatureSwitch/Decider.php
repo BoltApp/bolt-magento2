@@ -161,11 +161,17 @@ class Decider extends AbstractHelper
      * Switch Helpers below
      ***************************************************/
 
+    /**
+     * Checks whether the sample feature switch is enabled
+     */
     public function isSampleSwitchEnabled()
     {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
     }
 
+    /**
+     * Checks whether the feature switch for saving/sending tracking data is enabled
+     */
     public function isTrackingSaveEventsEnabled()
     {
         return $this->isSwitchEnabled(Definitions::TRACKING_EVENT_OBSERVER_SWITCH);

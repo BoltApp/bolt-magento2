@@ -21,7 +21,7 @@ namespace Bolt\Boltpay\Helper\FeatureSwitch;
 /**
  * All feature switches are defined here. By default all new switches should be
  * false and not rolled out. These values are only fallbacks for when something
- * isn't defined on the Bolt side. Anything values coming from Bolt take presedence.
+ * isn't defined on the Bolt side. Anything values coming from Bolt take precedence.
  *
  * Class Definitions
  * @package Bolt\Boltpay\Helper\FeatureSwitch
@@ -44,6 +44,12 @@ class Definitions
   const DEFAULT_SWITCH_VALUES = array(
     self::M2_SAMPLE_SWITCH_NAME =>  array(
       self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
+      self::VAL_KEY             => true,
+      self::DEFAULT_VAL_KEY     => false,
+      self::ROLLOUT_KEY         => 0
+    ),
+    self::TRACKING_EVENT_OBSERVER_SWITCH =>  array(
+      self::NAME_KEY            => self::TRACKING_EVENT_OBSERVER_SWITCH,
       self::VAL_KEY             => true,
       self::DEFAULT_VAL_KEY     => false,
       self::ROLLOUT_KEY         => 0
