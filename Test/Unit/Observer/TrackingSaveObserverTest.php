@@ -168,6 +168,12 @@ class TrackingSaveObserverTest extends TestCase
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
+        $map = array(
+            array('transaction_reference', '000123'),
+        );
+        $payment->expects($this->never())
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn('otherpay');
@@ -195,13 +201,13 @@ class TrackingSaveObserverTest extends TestCase
             ->method('getTrack')
             ->willReturn($track);
 
-        $shipmentItem->expects($this->once())
+        $shipmentItem->expects($this->never())
             ->method('getOrderItem')
             ->willReturn($orderItem);
-        $orderItem->expects($this->once())
+        $orderItem->expects($this->never())
             ->method('getProductId')
             ->willReturn(12345);
-        $shipment->expects($this->once())
+        $shipment->expects($this->never())
             ->method('getItemsCollection')
             ->willReturn([$shipmentItem]);
 
@@ -225,19 +231,19 @@ class TrackingSaveObserverTest extends TestCase
         $map = array(
             array('transaction_reference', '000123'),
         );
-        $payment->expects($this->once())
+        $payment->expects($this->never())
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));
-        $payment->expects($this->once())
+        $payment->expects($this->never())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
-        $order->expects($this->once())
+        $order->expects($this->never())
             ->method('getPayment')
             ->willReturn($payment);
-        $shipment->expects($this->once())
+        $shipment->expects($this->never())
             ->method('getOrder')
             ->willReturn($order);
-        $track->expects($this->once())
+        $track->expects($this->never())
             ->method('getShipment')
             ->willReturn($shipment);
 
@@ -248,20 +254,20 @@ class TrackingSaveObserverTest extends TestCase
             ->setMethods(['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->once())
+        $eventObserver->expects($this->never())
             ->method('getEvent')
             ->willReturn($event);
-        $event->expects($this->once())
+        $event->expects($this->never())
             ->method('getTrack')
             ->willReturn($track);
 
-        $shipmentItem->expects($this->once())
+        $shipmentItem->expects($this->never())
             ->method('getOrderItem')
             ->willReturn($orderItem);
-        $orderItem->expects($this->once())
+        $orderItem->expects($this->never())
             ->method('getProductId')
             ->willReturn(12345);
-        $shipment->expects($this->once())
+        $shipment->expects($this->never())
             ->method('getItemsCollection')
             ->willReturn([$shipmentItem]);
 
