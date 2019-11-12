@@ -28,6 +28,7 @@ use Bolt\Boltpay\Observer\TrackingSaveObserver as Observer;
 use \PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\Request;
 
 /**
  * Class TrackingSaveObserverTest
@@ -146,6 +147,7 @@ class TrackingSaveObserverTest extends TestCase
             ->method('getItemsCollection')
             ->willReturn([$shipmentItem]);
 
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
         $this->decider->expects($this->once())->method('isTrackingSaveEventsEnabled')->willReturn(true);
         $this->observer->execute($eventObserver);
