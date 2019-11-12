@@ -155,14 +155,24 @@ class Decider extends AbstractHelper {
      * Switch Helpers below
      ***************************************************/
 
-    public function isSampleSwitchEnabled() {
+    /**
+     * Checks whether the sample feature switch is enabled
+     */
+    public function isSampleSwitchEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
     }
 
+    /**
+     * Checks whether the feature switch for enabling/disabling bolt is enabled
+     */
     public function isBoltEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
     }
 
+    /**
+     * Checks whether the feature switch for logging missing quote failed hook is enabled
+     */
     public function isLogMissingQuoteFailedHooksEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
     }
@@ -175,6 +185,9 @@ class Decider extends AbstractHelper {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
     }
 
+    /**
+     * Checks whether the feature switch for saving/sending tracking data is enabled
+     */
     public function isTrackingSaveEventsEnabled()
     {
         return $this->isSwitchEnabled(Definitions::TRACKING_EVENT_OBSERVER_SWITCH);
