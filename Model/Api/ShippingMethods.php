@@ -445,6 +445,9 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
         }
+        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
+            $data .=$rewardsAmount;
+        }
         return $data;
     }
 

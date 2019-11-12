@@ -1012,5 +1012,42 @@ class Discount extends AbstractHelper
         // Amasty reward points are held in a separate table
         // and are not assigned to the quote / totals directly out of the customer session.
         $this->setAmastyRewardPoints($quote);
+        // Miravist reward points are held in a separate table
+        // and are not assigned to the quote
+        $this->applyMiravistRewardPoint($quote);
+    }
+
+    /**
+     * Copy Miravist Reward Point data from parent quote to immutable quote.
+     * The reward points are fetched from the 3rd party module DB table (mst_rewards_purchase)
+     * and assigned to the parent quote temporarily (they are not persisted in the quote table).
+     * The data needs to be set on the immutable quote before the quote totals are calculated
+     * in the Shipping and Tax call in order to get correct tax
+     *
+     * @param $immutableQuote
+     */
+    public function applyMiravistRewardPoint($immutableQuote)
+    {
+        $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
+        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
+        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+        if (!$mirasvitRewardsPurchaseHelper || !$parentQuoteId) {
+            return;
+        }
+
+        try {
+            $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
+            if(abs($parentPurchase->getSpendAmount()) > 0){
+                $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
+                    ->setSpendPoints($parentPurchase->getSpendPoints())
+                    ->setSpendMinAmount($parentPurchase->getSpendMinAmount())
+                    ->setSpendMaxAmount($parentPurchase->getSpendMaxAmount())
+                    ->setSpendAmount($parentPurchase->getSpendAmount())
+                    ->setBaseSpendAmount($parentPurchase->getBaseSpendAmount())
+                    ->save();
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
     }
 }
