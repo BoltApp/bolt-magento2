@@ -204,8 +204,7 @@ class TrackingSaveObserverTest extends TestCase
             ->willReturn([$shipmentItem]);
 
         $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
-        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
-        $this->decider->expects($this->once())->method('isTrackingSaveEventsEnabled')->willReturn(true);
+        $this->apiHelper->expects($this->never())->method('sendRequest');
         $this->observer->execute($eventObserver);
     }
 }
