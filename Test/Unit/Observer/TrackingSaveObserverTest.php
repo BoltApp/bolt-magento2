@@ -159,8 +159,6 @@ class TrackingSaveObserverTest extends TestCase
     public function testExecuteNoTransactionReference()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
-        $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
-        $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $payment = $this->getMockBuilder(\Magento\Payment\Model\InfoInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
@@ -193,17 +191,7 @@ class TrackingSaveObserverTest extends TestCase
             ->method('getTrack')
             ->willReturn($track);
 
-        $shipmentItem->expects($this->once())
-            ->method('getOrderItem')
-            ->willReturn($orderItem);
-        $orderItem->expects($this->once())
-            ->method('getProductId')
-            ->willReturn(12345);
-        $shipment->expects($this->once())
-            ->method('getItemsCollection')
-            ->willReturn([$shipmentItem]);
-
-        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $this->decider->expects($this->once())->method('isTrackingSaveEventsEnabled')->willReturn(true);
         $this->apiHelper->expects($this->never())->method('sendRequest');
         $this->observer->execute($eventObserver);
     }
