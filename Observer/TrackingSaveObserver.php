@@ -90,7 +90,7 @@ class TrackingSaveObserver implements ObserverInterface
             $transactionReference = $payment->getAdditionalInformation('transaction_reference');
 
             // If this is not a bolt payment, ignore it
-            if (transactionReference == null) {
+            if ($transactionReference == null) {
                 return;
             }
 
