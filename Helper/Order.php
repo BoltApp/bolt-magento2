@@ -1666,7 +1666,7 @@ class Order extends AbstractHelper
     private function createOrderInvoice($order, $transactionId, $amount)
     {
         try {
-            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
+            if (round(($order->getTotalInvoiced() + $amount), 2) == round($order->getGrandTotal(), 2)) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
