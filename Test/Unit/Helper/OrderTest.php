@@ -796,11 +796,9 @@ class OrderTest extends TestCase
         $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
         if($isSame){
             $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
-            $this->invoiceService->expects(static::never())->method('prepareInvoiceWithoutItems');
         }
         else{
             $this->invoiceService->expects(static::once())->method('prepareInvoiceWithoutItems')->willReturn($invoice);
-            $this->invoiceService->expects(static::never())->method('prepareInvoice');
         }        
             
         $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
