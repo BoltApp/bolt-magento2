@@ -775,12 +775,10 @@ class OrderTest extends TestCase
     /**
      * @test
      * @covers ::createOrderInvoice
+     * @dataProvider additionUpdateTransactionStatusProvider
      */
-    public function createOrderInvoice_amountWithDifferentDecimals() {
+    public function createOrderInvoice_amountWithDifferentDecimals($amount, $grandTotal, $isSame) {
         $totalInvoiced = 0;
-        $amount = 12.64;
-        $grandTotal = 12.6402;
-
         $invoice = $this->createPartialMock(
             Invoice::class,
             [
@@ -796,9 +794,31 @@ class OrderTest extends TestCase
         $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
         $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
         $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
-        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
-        $this->invoiceService->expects(static::never())->method('prepareInvoiceWithoutItems');
+        if($isSame){
+            $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+            $this->invoiceService->expects(static::never())->method('prepareInvoiceWithoutItems');
+        }
+        else{
+            $this->invoiceService->expects(static::once())->method('prepareInvoiceWithoutItems')->willReturn($invoice);
+            $this->invoiceService->expects(static::never())->method('prepareInvoice');
+        }        
             
         $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
     }
+    
+    public function additionAmountTotalProvider() {
+		return [
+            [ 12.25, 12.25, true ],
+			[ 12.00, 12.001, true ],
+            [ 12.001, 12.00, true ],
+			[ 12.1225, 12.1234, true ],
+			[ 12.1234, 12.1225, true ],
+            [ 12.13, 12.14, false ],
+            [ 12.14, 12.13, false ],
+            [ 12.123, 12.126, false ],
+            [ 12.126, 12.123, false ],
+			[ 12.1264, 12.1225, false ],
+			[ 12.1225, 12.1264, false ],
+		];
+	}
 }
