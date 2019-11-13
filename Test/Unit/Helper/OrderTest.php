@@ -775,7 +775,7 @@ class OrderTest extends TestCase
     /**
      * @test
      * @covers ::createOrderInvoice
-     * @dataProvider additionUpdateTransactionStatusProvider
+     * @dataProvider additionAmountTotalProvider
      */
     public function createOrderInvoice_amountWithDifferentDecimals($amount, $grandTotal, $isSame) {
         $totalInvoiced = 0;
