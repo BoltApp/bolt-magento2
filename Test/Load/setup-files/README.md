@@ -15,7 +15,7 @@
 	```
 	<!-- Load test web hook -->  
     <route url="/V1/bolt/boltpay/order/cartdata" method="POST">
-        <service class="Bolt\Boltpay\Api\LoadTestCartDataInterface" method="execute"/>  `
+        <service class="Bolt\Boltpay\Api\LoadTestCartDataInterface" method="execute"/>
             <resources> 
                 <resource ref="anonymous" />  
             </resources>
