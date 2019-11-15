@@ -336,7 +336,6 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->quote = $this->getQuoteById($quoteId);
 
             if (!$this->quote) {
-                echo 'ha';
                 $this->throwUnknownQuoteIdException($quoteId);
             }
 
