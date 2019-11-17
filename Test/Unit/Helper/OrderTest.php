@@ -253,7 +253,12 @@ class OrderTest extends TestCase
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->cartHelper = $this->createMock(CartHelper::class);
+        $this->cartHelper = $this->createPartialMock(
+            CartHelper::class,
+            [
+                'getRoundAmount',
+            ]
+        );
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
@@ -790,6 +795,8 @@ class OrderTest extends TestCase
                 'save',
             ]
         );
+        $this->cartHelper->method('getRoundAmount')
+                         ->will($this->returnCallback(function($amount) { return (int)round($amount * 100); }));
         $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
         $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
         $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
@@ -807,16 +814,16 @@ class OrderTest extends TestCase
     public function additionAmountTotalProvider() {
 		return [
             [ 12.25, 12.25, true ],
-			[ 12.00, 12.001, true ],
+            [ 12.00, 12.001, true ],
             [ 12.001, 12.00, true ],
-			[ 12.1225, 12.1234, true ],
-			[ 12.1234, 12.1225, true ],
+            [ 12.1225, 12.1234, true ],
+            [ 12.1234, 12.1225, true ],
             [ 12.13, 12.14, false ],
             [ 12.14, 12.13, false ],
             [ 12.123, 12.126, false ],
             [ 12.126, 12.123, false ],
-			[ 12.1264, 12.1225, false ],
-			[ 12.1225, 12.1264, false ],
+            [ 12.1264, 12.1225, false ],
+            [ 12.1225, 12.1264, false ],
 		];
 	}
 }
