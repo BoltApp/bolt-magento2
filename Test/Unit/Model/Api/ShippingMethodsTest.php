@@ -55,8 +55,12 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  */
 class ShippingMethodsTest extends TestCase
 {
-    const QUOTE_ID = 1001;
+    const PARENT_QUOTE_ID = 1000;
+    const IMMUTABLE_QUOTE_ID = 1001;
+    const INCREMENT_ID = 100050001;
+    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
     const STORE_ID = 1;
+
     /**
      * @var BoltShippingMethods|MockObject
      */
@@ -303,9 +307,8 @@ class ShippingMethodsTest extends TestCase
      */
     public function getShippingMethods_emptyQuote()
     {
-        $quoteId = 1001;
         $cart = [
-            'display_id' => '100050001 / ' . $quoteId
+            'display_id' => self::DISPLAY_ID
         ];
         $shippingAddress = [
             'street_address1' => 'test'
@@ -320,17 +323,18 @@ class ShippingMethodsTest extends TestCase
         $quote->method('isVirtual')
             ->willReturn(false);
 
-        $this->initCurrentMock(['throwUnknownQuoteIdException', 'catchExceptionAndSendError']);
+        $this->initCurrentMock(['throwUnknownQuoteIdException', 'sendErrorResponse']);
 
-        $message = new Phrase('Unprocessable Entity: Unknown quote id: ' . $quoteId);
+        $message = new Phrase('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
+        $exception = new LocalizedException($message);
+
         $this->currentMock->method('throwUnknownQuoteIdException')
-            ->will($this->throwException(new LocalizedException($message)));
-        $this->currentMock->method('catchExceptionAndSendError')
-            ->withAnyParameters()
-            ->will($this->throwException(new LocalizedException($message)));
+            ->willThrowException($exception);
 
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unprocessable Entity: Unknown quote id: ' . $quoteId);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+
+        $this->currentMock->expects(self::once())->method('sendErrorResponse')
+            ->with(6009, "Unprocessable Entity: $message", 422);
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
@@ -343,12 +347,9 @@ class ShippingMethodsTest extends TestCase
      */
     public function getShippingMethods_fullAddressData()
     {
-        $quoteId = 1001;
-        $parentQuoteId = 1000;
-
         $cart = [
-            'display_id'      => '100050001 / ' . $quoteId,
-            'order_reference' => $parentQuoteId
+            'display_id'      => self::DISPLAY_ID,
+            'order_reference' => self::PARENT_QUOTE_ID
         ];
         $shippingAddress = [
             'company'         => "",
@@ -366,7 +367,7 @@ class ShippingMethodsTest extends TestCase
         ];
 
         $quote = $this->getQuoteMock($shippingAddress);
-        $quote->method('getStoreId')->willReturn(1);
+        $quote->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->cartHelper->method('validateEmail')
             ->with($shippingAddress['email'])
@@ -399,24 +400,20 @@ class ShippingMethodsTest extends TestCase
         $this->currentMock->expects(self::once())->method('checkCartItems')->with($cart)->willReturn(null);
 
         $this->currentMock->expects(self::exactly(2))->method('getQuoteById')
-            ->withConsecutive([$quoteId], [$parentQuoteId])->willReturnOnConsecutiveCalls($quote, $quote);
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
+            ->willReturnOnConsecutiveCalls($quote, $quote);
 
-        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
-        $shippingOptionData
-            ->setService('Flat Rate - Fixed')
-            ->setCost(5600)
-            ->setReference('flatrate_flatrate')
-            ->setTaxAmount(0);
+        $shippingOptions = $this->getShippingOptions();
 
         $this->currentMock->method('shippingEstimation')
-            ->willReturn($shippingOptionData);
+            ->willReturn($shippingOptions);
 
         $this->currentMock->expects(self::once())->method('couponInvalidForShippingAddress')
             ->withAnyParameters()->willReturn(false);
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
-        $this->assertEquals($result, $shippingOptionData);
+        $this->assertEquals($shippingOptions, $result);
     }
 
     /**
@@ -424,12 +421,9 @@ class ShippingMethodsTest extends TestCase
      */
     public function getShippingMethods_taxAdjustedAndInvalidCoupon()
     {
-        $quoteId = 1001;
-        $parentQuoteId = 1000;
-
         $cart = [
-            'display_id'      => '100050001 / ' . $quoteId,
-            'order_reference' => $parentQuoteId
+            'display_id'      => self::DISPLAY_ID,
+            'order_reference' => self::PARENT_QUOTE_ID
         ];
         $shippingAddress = [
             'company'         => "",
@@ -447,7 +441,7 @@ class ShippingMethodsTest extends TestCase
         ];
 
         $quote = $this->getQuoteMock($this->shippingAddressMock);
-        $quote->method('getStoreId')->willReturn(1);
+        $quote->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->cartHelper->method('validateEmail')
             ->with($shippingAddress['email'])
@@ -480,31 +474,24 @@ class ShippingMethodsTest extends TestCase
         $this->currentMock->expects(self::once())->method('checkCartItems')->with($cart)->willReturn(null);
 
         $this->currentMock->expects(self::exactly(2))->method('getQuoteById')
-            ->withConsecutive([$quoteId], [$parentQuoteId])->willReturnOnConsecutiveCalls($quote, $quote);
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
+            ->willReturnOnConsecutiveCalls($quote, $quote);
 
-        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
-        $shippingOptionData
-            ->setService('Flat Rate - Fixed')
-            ->setCost(5600)
-            ->setReference('flatrate_flatrate')
-            ->setTaxAmount(0);
-
-        $shippingOptionsData = new \Bolt\Boltpay\Model\Api\Data\ShippingOptions();
-        $shippingOptionsData->setShippingOptions([$shippingOptionData]);
+        $shippingOptions = $this->getShippingOptions();
 
         $this->currentMock->method('shippingEstimation')
-            ->willReturn($shippingOptionsData);
+            ->willReturn($shippingOptions);
 
         $this->currentMock->expects(self::once())->method('couponInvalidForShippingAddress')
             ->withAnyParameters()->willReturn(true);
 
         self::setInaccessibleProperty($this->currentMock, 'taxAdjusted', true);
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($shippingOptionsData) {
+            function (callable $fn) use ($shippingOptions) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())->method('setMetaData')->with(
                     [
-                        'SHIPPING OPTIONS' => [print_r($shippingOptionsData, 1)]
+                        'SHIPPING OPTIONS' => [print_r($shippingOptions, 1)]
                     ]
                 );
                 $fn($reportMock);
@@ -515,7 +502,7 @@ class ShippingMethodsTest extends TestCase
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
-        $this->assertEquals($result, $shippingOptionsData);
+        $this->assertEquals($shippingOptions, $result);
     }
 
     /**
@@ -526,11 +513,9 @@ class ShippingMethodsTest extends TestCase
         $this->initCurrentMock(['preprocessHook', 'getQuoteById'], false);
         $this->currentMock->method('getQuoteById')->willReturn(true);
         $e = new WebapiException(__('Precondition Failed'), 6001, 412);
-        $this->currentMock->method('preprocessHook')->willThrowException(
-            $e
-        );
+        $this->currentMock->method('preprocessHook')->willThrowException($e);
         $this->expectErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
-        $this->assertNull($this->currentMock->getShippingMethods(['display_id' => '100050001 / ' . 1001], []));
+        $this->assertNull($this->currentMock->getShippingMethods(['display_id' => self::DISPLAY_ID], []));
     }
 
     /**
@@ -538,9 +523,8 @@ class ShippingMethodsTest extends TestCase
      */
     public function getShippingMethods_incorrectEmail()
     {
-        $quoteId = 1001;
         $cart = [
-            'display_id' => '100050001 / ' . $quoteId,
+            'display_id' => self::DISPLAY_ID,
             'items'      => [
                 [
                     'sku'      => 'TestProduct',
@@ -565,26 +549,27 @@ class ShippingMethodsTest extends TestCase
 
         $quote = $this->getQuoteMock($shippingAddress);
         $this->cartHelper->method('getQuoteById')
-            ->with($quoteId)
+            ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn($quote);
+
+        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
+            ->with($shippingAddress)
+            ->willReturn($shippingAddress);
 
         $this->cartHelper->method('validateEmail')
             ->with($shippingAddress['email'])
             ->willReturn(false);
 
-        $message = new Phrase('Invalid email: ' . $shippingAddress['email']);
-        $this->response->method('sendResponse')
-            ->withAnyParameters()
-            ->will($this->throwException(new LocalizedException($message)));
+        $this->initCurrentMock(['sendErrorResponse']);
 
-        $this->initCurrentMock();
+        $this->bugsnag->expects(self::once())->method('notifyException');
 
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Invalid email: ' . $shippingAddress['email']);
-
-        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
-            ->with($shippingAddress)
-            ->willReturn($shippingAddress);
+        $this->currentMock->expects(self::once())->method('sendErrorResponse')
+            ->with(
+                BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED,
+                'Invalid email: ' . $shippingAddress['email'],
+                422
+            );
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
@@ -598,11 +583,11 @@ class ShippingMethodsTest extends TestCase
     {
         $this->initCurrentMock();
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage(__('Unknown quote id: %1.', self::QUOTE_ID)->render());
+        $this->expectExceptionMessage(__('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID)->render());
         self::invokeInaccessibleMethod(
             $this->currentMock,
             'throwUnknownQuoteIdException',
-            [self::QUOTE_ID]
+            [self::IMMUTABLE_QUOTE_ID]
         );
     }
 
@@ -684,7 +669,12 @@ class ShippingMethodsTest extends TestCase
             ->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
 
-        $this->setupShippingOptionFactory('Flate Rate - Fixed', 'flatrate_flatrate', 500, 0);
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed',
+            'flatrate_flatrate',
+            500,
+            0
+        );
 
         $quote = $this->getQuoteMock($shippingAddress);
 
@@ -720,7 +710,8 @@ class ShippingMethodsTest extends TestCase
             ->with($email)
             ->willReturn(true);
 
-        $shippingAddress = $this->getShippingAddressMock(5, 0);
+        $shippingDiscountAmount = 10;
+        $shippingAddress = $this->getShippingAddressMock(15, $shippingDiscountAmount);
 
         $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
             ->disableOriginalConstructor()
@@ -731,7 +722,11 @@ class ShippingMethodsTest extends TestCase
             ->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
 
-        $this->setupShippingOptionFactory('Flate Rate - Fixed', 'flatrate_flatrate', 500, 0);
+        $this->setupShippingOptionFactory(
+            "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
+            'flatrate_flatrate',
+            500, 0
+        );
 
         $quote = $this->getQuoteMock($shippingAddress);
 
@@ -771,9 +766,7 @@ class ShippingMethodsTest extends TestCase
         $shippingAddress = $this->getShippingAddressMock(5, 0);
 
         $shippingAddress->expects($this->never())
-            ->method('setCollectShippingRates')
-            ->with(true)
-            ->willReturnSelf();
+            ->method('setCollectShippingRates');
 
         $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
             ->disableOriginalConstructor()
@@ -781,8 +774,7 @@ class ShippingMethodsTest extends TestCase
 
         $shippingRates = [['flatrate' => $addressRate]];
         $shippingAddress->expects($this->never())
-            ->method('getGroupedAllShippingRates')
-            ->willReturn($shippingRates);
+            ->method('getGroupedAllShippingRates');
 
         $quote = $this->getQuoteMock($shippingAddress);
 
@@ -829,11 +821,29 @@ class ShippingMethodsTest extends TestCase
     /**
      * @test
      */
-    public function getShippingOptions_discount()
+    public function shippingEstimation_freeShippingDiscount()
     {
-        $shippingDiscountAmount = 10;
-        $this->initCurrentMock();
-        $shippingAddress = $this->getShippingAddressMock(15, $shippingDiscountAmount);
+        $email = "integration@bolt.com";
+        $shippingAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => $email,
+            'first_name'      => "John",
+            'last_name'       => "McCombs",
+            'locality'        => "Knoxville",
+            'phone'           => "+1 231 231 1234",
+            'postal_code'     => "37921",
+            'region'          => "Tennessee",
+            'street_address1' => "4553 Annalee Way",
+            'street_address2' => "",
+        ];
+
+        $this->cartHelper->method('validateEmail')
+            ->with($email)
+            ->willReturn(true);
+
+        $shippingAddress = $this->getShippingAddressMock(15, 15);
 
         $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
             ->disableOriginalConstructor()
@@ -845,57 +855,19 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
+            "Flate Rate - Fixed [free shipping discount]",
             'flatrate_flatrate',
-            500,
-            0
+            0, 0
         );
 
         $quote = $this->getQuoteMock($shippingAddress);
-        $addressData = [
-            'country_id' => 'US',
-            'postcode'   => '10001',
-            'region'     => 'New York',
-            'city'       => 'New York',
-        ];
 
-        $this->currentMock->getShippingOptions($quote, $addressData);
-    }
-
-    /**
-     * @test
-     */
-    public function getShippingOptions_free()
-    {
-        $shippingDiscountAmount = 10;
+        $this->setUpRuleFactoryMock();
         $this->initCurrentMock();
-        $shippingAddress = $this->getShippingAddressMock(10, $shippingDiscountAmount);
 
-        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $result = $this->currentMock->shippingEstimation($quote, $shippingAddressData);
 
-        $shippingRates = [['flatrate' => $addressRate]];
-        $shippingAddress->expects($this->once())
-            ->method('getGroupedAllShippingRates')
-            ->willReturn($shippingRates);
-
-        $this->setupShippingOptionFactory(
-            'Flate Rate - Fixed [free shipping discount]',
-            'flatrate_flatrate',
-            0,
-            0
-        );
-
-        $quote = $this->getQuoteMock($shippingAddress);
-        $addressData = [
-            'country_id' => 'US',
-            'postcode'   => '10001',
-            'region'     => 'New York',
-            'city'       => 'New York',
-        ];
-
-        $this->currentMock->getShippingOptions($quote, $addressData);
+        $this->assertEquals($this->factoryShippingOptionsMock, $result);
     }
 
     /**
@@ -904,7 +876,7 @@ class ShippingMethodsTest extends TestCase
     public function getShippingOptions_error()
     {
         $this->initCurrentMock(['resetShippingCalculationIfNeeded'], true);
-        $shippingAddress = $this->getShippingAddressMock(0, 10);
+        $shippingAddress = $this->getShippingAddressMock(10, 0);
 
         $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
             ->setMethods(['getErrorMessage'])
@@ -955,32 +927,8 @@ class ShippingMethodsTest extends TestCase
     public function getShippingOptions_couponCode()
     {
         $this->initCurrentMock();
-        $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
-            ->setMethods(
-                [
-                    'addData',
-                    'setCollectShippingRates',
-                    'setShippingMethod',
-                    'getGroupedAllShippingRates',
-                    'getShippingDiscountAmount',
-                    'getShippingAmount',
-                    'save'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $shippingAddress->method('setShippingMethod')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $shippingAddress->method('save')
-            ->willReturnSelf();
-        $shippingAddress->method('setCollectShippingRates')
-            ->with(true)
-            ->willReturnSelf();
-        $shippingAddress->method('getShippingDiscountAmount')
-            ->willReturn('0');
-        $shippingAddress->method('getShippingAmount')
-            ->willReturn('5');
+
+        $shippingAddress = $this->getShippingAddressMock(5, 0);
 
         $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
             ->disableOriginalConstructor()
@@ -991,10 +939,15 @@ class ShippingMethodsTest extends TestCase
             ->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
 
-        $this->setupShippingOptionFactory('Flate Rate - Fixed', 'flatrate_flatrate', 500, 0);
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed',
+            'flatrate_flatrate',
+            500,
+            0
+        );
 
         $quote = $this->getQuoteMock($shippingAddress);
-        self::setInaccessibleProperty($quote, '_data', ['coupon_code' => '123']);
+        $quote->method('getCouponCode')->willReturn(123);
 
         $quote->expects(self::exactly(2))->method('setCouponCode')->withConsecutive([''], ['123'])
             ->willReturnSelf();
@@ -1155,7 +1108,6 @@ class ShippingMethodsTest extends TestCase
             }
         );
 
-
         self::invokeInaccessibleMethod(
             $this->currentMock,
             'checkCartItems',
@@ -1198,8 +1150,11 @@ class ShippingMethodsTest extends TestCase
      * @param  $parentQuoteId
      * @return MockObject
      */
-    private function getQuoteMock($shippingAddress, $quoteId = 1001, $parentQuoteId = 1000)
-    {
+    private function getQuoteMock(
+        $shippingAddress,
+        $quoteId = self::IMMUTABLE_QUOTE_ID,
+        $parentQuoteId = self::PARENT_QUOTE_ID
+    ) {
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
@@ -1213,7 +1168,7 @@ class ShippingMethodsTest extends TestCase
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save'
+            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -1222,9 +1177,6 @@ class ShippingMethodsTest extends TestCase
 
         $quote->method('getId')
             ->willReturn($quoteId);
-        // TODO: need to cover multi-website cases where different store_id
-//        $quote->method('getStoreId')
-//            ->willReturn(null);
         $quote->method('getBoltParentQuoteId')
             ->willReturn($parentQuoteId);
         $quote->method('getSubtotal')
@@ -1366,7 +1318,9 @@ class ShippingMethodsTest extends TestCase
      */
     private static function setInaccessibleProperty($object, $property, $value)
     {
-        $reflection = new \ReflectionClass(($object instanceof MockObject) ? get_parent_class($object) : $object);
+        $reflection = new \ReflectionClass(
+            ($object instanceof MockObject) ? get_parent_class($object) : $object
+        );
         $reflectionProperty = $reflection->getProperty($property);
         $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($object, $value);
@@ -1430,5 +1384,19 @@ class ShippingMethodsTest extends TestCase
         $shippingAddress->method('getShippingAmount')
             ->willReturn($amount);
         return $shippingAddress;
+    }
+
+    private function getShippingOptions()
+    {
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('Flat Rate - Fixed')
+            ->setCost(5600)
+            ->setReference('flatrate_flatrate')
+            ->setTaxAmount(0);
+
+        $shippingOptionsData = new \Bolt\Boltpay\Model\Api\Data\ShippingOptions();
+        $shippingOptionsData->setShippingOptions([$shippingOptionData]);
+        return $shippingOptionsData;
     }
 }
