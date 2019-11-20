@@ -58,5 +58,12 @@
                 </argument>
             </arguments>
         </referenceBlock>
+
+        <referenceContainer name="before.body.end">
+            <block class="Bolt\Boltpay\Block\Js"
+                   name="checkout_funnel.js"
+                   template="Bolt_Boltpay::js/checkout_funnel.js.phtml"
+                   ifconfig="payment/boltpay/track_checkout_funnel" />
+        </referenceContainer>
     </body>
 </page>

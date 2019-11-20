@@ -157,7 +157,13 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
-            if ($type === 'failed_payment') {
+            if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
+                $this->response->setHttpResponseCode(200);
+                $this->response->setBody(json_encode([
+                    'status' => 'success',
+                    'message' => 'Order was canceled due to declined payment: ' . $display_id,
+                ]));
+            } elseif ($type === 'failed_payment') {
                 $this->orderHelper->deleteOrderByIncrementId($display_id);
 
                 $this->response->setHttpResponseCode(200);

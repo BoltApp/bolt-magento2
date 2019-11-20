@@ -173,7 +173,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
-     * @param MetricsClient                 $metricsClient
+     * @param MetricsClient                   $metricsClient
      * @param LogHelper                       $logHelper
      * @param BoltErrorResponse               $errorResponse
      * @param Response                        $response
@@ -444,6 +444,9 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->discountHelper->applyExternalDiscountData($quote);
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
+        }
+        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
+            $data .=$rewardsAmount;
         }
         return $data;
     }

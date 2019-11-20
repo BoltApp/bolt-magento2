@@ -165,6 +165,10 @@
                     <label>Capture Internal Merchant Metrics</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="track_checkout_funnel" translate="label" type="select" sortOrder="290" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Track checkout funnel</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
             </group>
         </section>
     </system>
