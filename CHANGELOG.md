@@ -80,3 +80,10 @@
  - Testing and logging fixes
  - Beta merchant metrics feature
  - Various bug fixes
+## [v2.1.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.1.0) 2019-11-21
+ - Paypal payment support
+ - [Beta] Feature switches
+   - graphQL client for Bolt server communication
+ - BSS store credit support
+ - Improved checkout metricing
+ - Various bug fixes
