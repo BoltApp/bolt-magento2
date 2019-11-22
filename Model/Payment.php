@@ -391,7 +391,8 @@ class Payment extends AbstractMethod
             $capturedData = [
                 'transaction_id' => $realTransactionId,
                 'amount'         => $captureAmount,
-                'currency'       => $order->getOrderCurrencyCode()
+                'currency'       => $order->getOrderCurrencyCode(),
+                'skip_hook_notification' => true
             ];
 
             $storeId = $order->getStoreId();
