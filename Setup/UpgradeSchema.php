@@ -75,6 +75,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupFeatureSwitchTable($setup);
 
+        $this->setUpFeatureBoltCustomerCreditCardsTable($setup);
+
         $setup->endSetup();
     }
 
@@ -127,5 +129,69 @@ class UpgradeSchema implements UpgradeSchemaInterface
             'rollout percentage'
         )->setComment("Bolt feature switch table");
           $setup->getConnection()->createTable($table);
+    }
+
+    private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup){
+        // If the table exists we do nothing. In the future, we can add migrations here based on
+        // current version from context, however for now just move on.
+        // The reason we do upgrade schema instead of install schema is that install schema is triggered *only*
+        // once during install. This makes debugging harder.
+        // However upgrade schema is triggered on every update and we get a chance to make changes as needed.
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_customer_credit_cards');
+
+        if ($tableCreated) {
+            return;
+        }
+
+        // Create table now that we know it doesnt already exist.
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('bolt_customer_credit_cards'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'card_info',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                \Magento\Framework\DB\Ddl\Table::MAX_TEXT_SIZE,
+                ['nullable' => false],
+                'Card Info'
+            )->addColumn(
+                'customer_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => false, 'unsigned' => true, 'nullable' => false, 'primary' => false],
+                'Customer ID'
+            )
+            ->addColumn(
+                'consumer_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                \Magento\Framework\DB\Ddl\Table::DEFAULT_TEXT_SIZE,
+                ['nullable' => false],
+                'Consumer Id'
+            )
+            ->addColumn(
+                'credit_card_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                \Magento\Framework\DB\Ddl\Table::DEFAULT_TEXT_SIZE,
+                ['nullable' => false],
+                'Credit Card ID'
+            )->addForeignKey(
+                $setup->getFkName(
+                    'bolt_customer_credit_cards',
+                    'customer_id',
+                    'customer_entity',
+                    'entity_id'
+                ),
+                'customer_id',
+                $setup->getTable('customer_entity'),
+                'entity_id',
+                \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
+            )
+            ->setComment("Bolt customer credit cards");
+        $setup->getConnection()->createTable($table);
     }
 }
