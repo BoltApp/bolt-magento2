@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
 use Magento\Catalog\Model\Product;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Quote\Model\Quote;
 use \PHPUnit\Framework\TestCase;
 use Magento\Framework\App\Helper\Context as ContextHelper;
@@ -276,27 +277,7 @@ class CartTest extends TestCase
      */
     private function getQuoteMock($billingAddress, $shippingAddress)
     {
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods([
-                'getSku', 'getQty', 'getCalculationPrice', 'getName', 'getIsVirtual',
-                'getProductId', 'getProduct'
-            ])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quoteItem->method('getName')
-            ->willReturn('Test Product');
-        $quoteItem->method('getSku')
-            ->willReturn('TestProduct');
-        $quoteItem->method('getQty')
-            ->willReturn(1);
-        $quoteItem->method('getCalculationPrice')
-            ->willReturn(self::PRODUCT_PRICE);
-        $quoteItem->method('getIsVirtual')
-            ->willReturn(false);
-        $quoteItem->method('getProductId')
-            ->willReturn(self::PRODUCT_ID);
-        $quoteItem->method('getProduct')
-            ->willReturn($this->getProductMock());
+        $quoteItem = $this->getQuoteItemMock();
 
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
@@ -1911,4 +1892,77 @@ ORDER;
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
     }
 
+    /**
+     * @test
+     *      Convert attribute to string if it's a boolean before sending to the Bolt API
+     */
+    public function getCartItems_AttributeInfoValue_Boolean()
+    {
+        $quoteItemOptions = [
+            "attributes_info" => [
+                [
+                    "label" => "Size",
+                    "value" => false
+                ]
+            ]
+        ];
+        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
+            ->setMethods(['getOrderOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
+
+        $productMock = $this->getMockBuilder(Product::class)
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $productMock->method('getDescription')->willReturn('Product Description');
+        $productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+
+        $quoteItemMock = $this->getQuoteItemMock($productMock);
+
+        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems([$quoteItemMock], self::STORE_ID);
+
+        $this->assertCount(1, $products);
+        $this->assertArrayHasKey('properties', $products[0]);
+        $this->assertCount(1, $products[0]['properties']);
+        $this->assertInternalType('string', $products[0]['properties'][0]->value);
+    }
+
+    /**
+     * @param null $product
+     *
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getQuoteItemMock($product = null)
+    {
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods([
+                'getSku',
+                'getQty',
+                'getCalculationPrice',
+                'getName',
+                'getIsVirtual',
+                'getProductId',
+                'getProduct'
+            ])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('getName')
+            ->willReturn('Test Product');
+        $quoteItem->method('getSku')
+            ->willReturn('TestProduct');
+        $quoteItem->method('getQty')
+            ->willReturn(1);
+        $quoteItem->method('getCalculationPrice')
+            ->willReturn(self::PRODUCT_PRICE);
+        $quoteItem->method('getIsVirtual')
+            ->willReturn(false);
+        $quoteItem->method('getProductId')
+            ->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')
+            ->willReturn($product ? $product : $this->getProductMock());
+
+        return $quoteItem;
+    }
 }
