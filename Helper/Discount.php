@@ -49,6 +49,7 @@ class Discount extends AbstractHelper
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
+    const BSS_STORE_CREDIT = 'bss_storecredit';
 
     /**
      * @var ResourceConnection $resource
@@ -143,6 +144,16 @@ class Discount extends AbstractHelper
     protected $aheadworksCustomerStoreCreditManagement;
 
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $bssStoreCreditHelper;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $bssStoreCreditCollection;
+
+    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -194,6 +205,8 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
+     * @param ThirdPartyModuleFactory $bssStoreCreditHelper
+     * @param ThirdPartyModuleFactory $bssStoreCreditCollection
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -223,6 +236,8 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
+        ThirdPartyModuleFactory $bssStoreCreditHelper,
+        ThirdPartyModuleFactory $bssStoreCreditCollection,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -249,6 +264,8 @@ class Discount extends AbstractHelper
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
+        $this->bssStoreCreditHelper = $bssStoreCreditHelper;
+        $this->bssStoreCreditCollection = $bssStoreCreditCollection;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -548,6 +565,58 @@ class Discount extends AbstractHelper
         }
 
         return (float) $result;
+    }
+
+    /**
+     * Check whether the Bss Store Credit module is allowed
+     *
+     * @return int
+     */
+    public function isBssStoreCreditAllowed()
+    {
+        if (!$this->bssStoreCreditHelper->isAvailable()) {
+            return 0;
+        }
+        return $this->bssStoreCreditHelper->getInstance()->getGeneralConfig('active');
+    }
+
+    /**
+     * @param $immutableQuote
+     * @param $parentQuote
+     * @return mixed
+     */
+    public function getBssStoreCreditAmount($immutableQuote, $parentQuote)
+    {
+        try{
+            $bssStoreCreditHelper = $this->bssStoreCreditHelper->getInstance();
+            $isAppliedToShippingAndTax = $bssStoreCreditHelper->getGeneralConfig('used_shipping') || $bssStoreCreditHelper->getGeneralConfig('used_tax');
+
+            $storeCreditAmount = $immutableQuote->getBaseBssStorecreditAmountInput();
+            if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {
+                $storeCreditAmount = $this->getBssStoreCreditBalanceAmount($parentQuote);
+                $parentQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
+                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();;
+            }
+
+            return $storeCreditAmount;
+        }catch (\Exception $exception){
+            $this->bugsnag->notifyException($exception);
+            return 0;
+        }
+    }
+
+    /**
+     * @param $quote
+     * @return float|int
+     */
+    public function getBssStoreCreditBalanceAmount($quote)
+    {
+        $data = $this->bssStoreCreditCollection
+            ->getInstance()
+            ->addFieldToFilter('customer_id', ['in' => $quote->getCustomerId()])
+            ->getData();
+
+        return array_sum(array_column($data, 'balance_amount'));
     }
 
     /**
@@ -943,5 +1012,42 @@ class Discount extends AbstractHelper
         // Amasty reward points are held in a separate table
         // and are not assigned to the quote / totals directly out of the customer session.
         $this->setAmastyRewardPoints($quote);
+        // Miravist reward points are held in a separate table
+        // and are not assigned to the quote
+        $this->applyMiravistRewardPoint($quote);
+    }
+
+    /**
+     * Copy Miravist Reward Point data from parent quote to immutable quote.
+     * The reward points are fetched from the 3rd party module DB table (mst_rewards_purchase)
+     * and assigned to the parent quote temporarily (they are not persisted in the quote table).
+     * The data needs to be set on the immutable quote before the quote totals are calculated
+     * in the Shipping and Tax call in order to get correct tax
+     *
+     * @param $immutableQuote
+     */
+    public function applyMiravistRewardPoint($immutableQuote)
+    {
+        $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
+        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
+        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
+        if (!$mirasvitRewardsPurchaseHelper || !$parentQuoteId) {
+            return;
+        }
+
+        try {
+            $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
+            if(abs($parentPurchase->getSpendAmount()) > 0){
+                $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
+                    ->setSpendPoints($parentPurchase->getSpendPoints())
+                    ->setSpendMinAmount($parentPurchase->getSpendMinAmount())
+                    ->setSpendMaxAmount($parentPurchase->getSpendMaxAmount())
+                    ->setSpendAmount($parentPurchase->getSpendAmount())
+                    ->setBaseSpendAmount($parentPurchase->getBaseSpendAmount())
+                    ->save();
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
     }
 }

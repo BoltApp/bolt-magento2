@@ -1336,8 +1336,19 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            $this->cancelOrder($order);
-            return;
+            if ($order->canCancel()){
+                $this->cancelOrder($order);
+                return;
+            }
+
+            try{
+                // Restock product quantity when the payment is irreversibly rejected
+                $order->registerCancellation('', false);
+            } catch (\Exception $e){
+                // Put the order in "cancelled" state even if the previous call fails
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            }
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
@@ -1655,7 +1666,7 @@ class Order extends AbstractHelper
     private function createOrderInvoice($order, $transactionId, $amount)
     {
         try {
-            if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
