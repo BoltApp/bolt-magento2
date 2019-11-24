@@ -63,8 +63,7 @@
             <block class="Bolt\Boltpay\Block\Js"
                    name="checkout_funnel.js"
                    template="Bolt_Boltpay::js/checkout_funnel.js.phtml"
-                   ifconfig="payment/boltpay/track_checkout_funnel" >
-            </block>
+                   ifconfig="payment/boltpay/track_checkout_funnel" />
         </referenceContainer>
     </body>
 </page>

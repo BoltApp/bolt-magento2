@@ -1,9 +1,5 @@
 <?php
 if (!$block->shouldTrackCheckoutFunnel()) return;
-
-$objectManager =  \Magento\Framework\App\ObjectManager::getInstance();
-$repo = $objectManager->get('\Magento\Framework\View\Asset\Repository');
-
 ?>
 
-<script type="text/javascript" src="<?php echo $repo->getUrl("Bolt_Boltpay::js/track-checkout.js") ?>"></script>
+<script type="text/x-magento-init"> { "*" : { "Bolt_Boltpay/js/track-checkout" : {} } } </script>

@@ -1,5 +1,7 @@
 /* Track checkout funnel transition in magento's default checkout */
 
+// TODO: support logged in user
+
 var currentStep = '';
 
 function waitFor(condition, doWhenReady) {
@@ -35,7 +37,7 @@ function setupListnerForShippingForm() {
                }
            }
            if (complete) {
-               trackFunnel("onShippingAddressComplete")
+               trackFunnel("onShippingAddressComplete");
            }
         });
     });
@@ -62,7 +64,6 @@ function init() {
     });
 }
 
-waitFor(
-    function() { return typeof jQuery != 'undefined'; },
-    init
-);
+require(["jquery"], function(){
+    init();
+});
