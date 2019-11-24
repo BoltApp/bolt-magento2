@@ -47,6 +47,7 @@ function init() {
     trackFunnel("onCheckoutStart");
 
     waitFor(
+        // wait for shipping form to be fully rendered, ie., we have 9 required fields in the page.
         function() { return jQuery("#shipping-new-address-form .field._required input,select").length === 9; },
         setupListnerForShippingForm
     );
