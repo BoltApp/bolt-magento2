@@ -66,5 +66,3 @@ function init() {
 }
 
 require(["jquery"], init);
-    init();
-});
