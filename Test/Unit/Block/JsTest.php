@@ -315,7 +315,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
