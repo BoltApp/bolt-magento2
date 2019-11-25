@@ -24,7 +24,19 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 
-$trackCallbacks = $block->getTrackCallbacks();
+$trackCallbackCode = $block->getTrackCallbacks();
+
+function wrapWithCatch($jsCode, $argName='') {
+echo <<<JavaScript
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}
+JavaScript;
+}
 
 ob_start();
 ?>
@@ -34,6 +46,16 @@ ob_start();
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
     window.boltConfig = <?php echo $block->getSettings(); ?>;
+
+    window.boltConfig.trackCallbacks = {
+        onCheckoutStart: <?php wrapWithCatch($trackCallbackCode['checkout_start']); ?>,
+        onEmailEnter: <?php wrapWithCatch($trackCallbackCode['email_enter'], 'email'); ?>,
+        onShippingDetailsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_details_complete']); ?>,
+        onShippingOptionsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_options_complete']); ?>,
+        onPaymentSubmit: <?php wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
+        onSuccess: <?php wrapWithCatch( $block->getJavascriptSuccess() . $trackCallbackCode['success'], 'data') ?>,
+        onClose: <?php wrapWithCatch($trackCallbackCode['close']); ?>,
+    };
 
     ///////////////////////
     // String.trim Polyfill
@@ -210,61 +232,9 @@ ob_start();
         var customer = customerData.get('customer');
         var shoppingCart = customerData.get('cart');
 
-        var trackCallbacks = {
-            onCheckoutStart: function() {
-                try {
-                    <?php echo $trackCallbacks['checkout_start']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onEmailEnter: function(email) {
-                try {
-                    <?php echo $trackCallbacks['email_enter']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onShippingDetailsComplete: function() {
-                try {
-                    <?php echo $trackCallbacks['shipping_details_complete']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onShippingOptionsComplete: function() {
-                try {
-                    <?php echo $trackCallbacks['shipping_options_complete']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onPaymentSubmit: function() {
-                try {
-                    <?php echo $trackCallbacks['payment_submit']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onSuccess: function() {
-                try {
-                    <?php echo $trackCallbacks['success']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onClose: function() {
-                try {
-                    <?php echo $trackCallbacks['close']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        };
-
         var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>" + " Order reference: " + order_reference;
+                errorMsg = messsage || window.boltConfig.defaultErrorMessage + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -458,6 +428,7 @@ ob_start();
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+        var trackCallbacks = settings.trackCallbacks;
 
         ////////////////////////////////////////////////////////
         // Toggle between Bolt button and magento checkout button
@@ -569,8 +540,7 @@ ob_start();
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;
                         }
-                        <?php echo $block->getJavascriptSuccess(); ?>
-                        trackCallbacks.onSuccess();
+                        trackCallbacks.onSuccess(data);
                     } finally {
                         callback();
                     }
