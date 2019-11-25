@@ -333,6 +333,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
+        $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
     }
 
     /**
