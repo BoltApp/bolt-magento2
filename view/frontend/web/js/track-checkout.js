@@ -9,7 +9,7 @@ function waitFor(condition, doWhenReady) {
         if (condition()) {
             doWhenReady();
         } else {
-            setTimeout(condition, 50);
+            setTimeout(checkCondition, 50);
         }
     };
     checkCondition();
