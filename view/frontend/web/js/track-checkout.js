@@ -65,6 +65,6 @@ function init() {
     });
 }
 
-require(["jquery"], function(){
+require(["jquery"], init);
     init();
 });
