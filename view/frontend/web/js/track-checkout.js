@@ -5,12 +5,14 @@
 var currentStep = '';
 
 function waitFor(condition, doWhenReady) {
-    var waitForInterval = setInterval(function () {
+    var checkCondition = function () {
         if (condition()) {
             doWhenReady();
-            clearInterval(waitForInterval);
+        } else {
+            setTimeout(condition, 50);
         }
-    }, 50);
+    };
+    checkCondition();
 }
 
 function trackFunnel(step) {
