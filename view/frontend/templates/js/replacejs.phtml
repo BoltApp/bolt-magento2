@@ -35,6 +35,62 @@ ob_start();
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
     window.boltConfig = <?php echo $block->getSettings(); ?>;
 
+    var trackCallbacks = {
+        onCheckoutStart: function() {
+            try {
+                <?php echo $trackCallbacks['checkout_start']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onEmailEnter: function(email) {
+            try {
+                <?php echo $trackCallbacks['email_enter']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onShippingDetailsComplete: function() {
+            try {
+                <?php echo $trackCallbacks['shipping_details_complete']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onShippingOptionsComplete: function() {
+            try {
+                <?php echo $trackCallbacks['shipping_options_complete']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onPaymentSubmit: function() {
+            try {
+                <?php echo $trackCallbacks['payment_submit']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onSuccess: function() {
+            try {
+                <?php echo $trackCallbacks['success']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        },
+        onClose: function() {
+            try {
+                <?php echo $trackCallbacks['close']; ?>
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    };
+    var defaultErrorMessage = "<?php echo $block->getBoltPopupErrorMessage() ?>";
+    var successCallback = function(data) {
+        <?php echo $block->getJavascriptSuccess(); ?>
+    };
+
     ///////////////////////
     // String.trim Polyfill
     ///////////////////////
@@ -210,61 +266,9 @@ ob_start();
         var customer = customerData.get('customer');
         var shoppingCart = customerData.get('cart');
 
-        var trackCallbacks = {
-            onCheckoutStart: function() {
-                try {
-                    <?php echo $trackCallbacks['checkout_start']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onEmailEnter: function(email) {
-                try {
-                    <?php echo $trackCallbacks['email_enter']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onShippingDetailsComplete: function() {
-                try {
-                    <?php echo $trackCallbacks['shipping_details_complete']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onShippingOptionsComplete: function() {
-                try {
-                    <?php echo $trackCallbacks['shipping_options_complete']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onPaymentSubmit: function() {
-                try {
-                    <?php echo $trackCallbacks['payment_submit']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onSuccess: function() {
-                try {
-                    <?php echo $trackCallbacks['success']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            },
-            onClose: function() {
-                try {
-                    <?php echo $trackCallbacks['close']; ?>
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        };
-
         var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || "<?php echo $block->getBoltPopupErrorMessage() ?>" + " Order reference: " + order_reference;
+                errorMsg = messsage || defaultErrorMessage + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -569,7 +573,7 @@ ob_start();
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;
                         }
-                        <?php echo $block->getJavascriptSuccess(); ?>
+                        successCallback(data);
                         trackCallbacks.onSuccess();
                     } finally {
                         callback();
