@@ -117,7 +117,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl'])
+            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
