@@ -24,7 +24,19 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 
-$trackCallbacks = $block->getTrackCallbacks();
+$trackCallbackCode = $block->getTrackCallbacks();
+
+function wrapWithCatch($jsCode, $argName='') {
+echo <<<JavaScript
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}
+JavaScript;
+}
 
 ob_start();
 ?>
@@ -36,59 +48,13 @@ ob_start();
     window.boltConfig = <?php echo $block->getSettings(); ?>;
 
     var trackCallbacks = {
-        onCheckoutStart: function() {
-            try {
-                <?php echo $trackCallbacks['checkout_start']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onEmailEnter: function(email) {
-            try {
-                <?php echo $trackCallbacks['email_enter']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onShippingDetailsComplete: function() {
-            try {
-                <?php echo $trackCallbacks['shipping_details_complete']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onShippingOptionsComplete: function() {
-            try {
-                <?php echo $trackCallbacks['shipping_options_complete']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onPaymentSubmit: function() {
-            try {
-                <?php echo $trackCallbacks['payment_submit']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onSuccess: function() {
-            try {
-                <?php echo $trackCallbacks['success']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        },
-        onClose: function() {
-            try {
-                <?php echo $trackCallbacks['close']; ?>
-            } catch (error) {
-                console.error(error);
-            }
-        }
-    };
-    var defaultErrorMessage = "<?php echo $block->getBoltPopupErrorMessage() ?>";
-    var successCallback = function(data) {
-        <?php echo $block->getJavascriptSuccess(); ?>
+        onCheckoutStart: <?php wrapWithCatch($trackCallbackCode['checkout_start']); ?>,
+        onEmailEnter: <?php wrapWithCatch($trackCallbackCode['email_enter'], 'email'); ?>,
+        onShippingDetailsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_details_complete']); ?>,
+        onShippingOptionsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_options_complete']); ?>,
+        onPaymentSubmit: <?php wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
+        onSuccess: <?php wrapWithCatch( $block->getJavascriptSuccess() . $trackCallbackCode['success'], 'data') ?>,
+        onClose: <?php wrapWithCatch($trackCallbackCode['close']); ?>,
     };
 
     ///////////////////////
@@ -268,7 +234,7 @@ ob_start();
 
         var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || defaultErrorMessage + " Order reference: " + order_reference;
+                errorMsg = messsage || window.boltConfig.defaultErrorMessage + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -573,8 +539,7 @@ ob_start();
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;
                         }
-                        successCallback(data);
-                        trackCallbacks.onSuccess();
+                        trackCallbacks.onSuccess(data);
                     } finally {
                         callback();
                     }
