@@ -47,7 +47,7 @@ ob_start();
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
     window.boltConfig = <?php echo $block->getSettings(); ?>;
 
-    var trackCallbacks = {
+    window.boltConfig.trackCallbacks = {
         onCheckoutStart: <?php wrapWithCatch($trackCallbackCode['checkout_start']); ?>,
         onEmailEnter: <?php wrapWithCatch($trackCallbackCode['email_enter'], 'email'); ?>,
         onShippingDetailsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_details_complete']); ?>,
@@ -428,6 +428,7 @@ ob_start();
         var billing_address_selector = '#bolt-billing-address';
         var place_order_payload_id   = 'bolt-place-order-payload';
         var customer_email_selector  = '#checkoutSteps #customer-email';
+        var trackCallbacks = settings.trackCallbacks;
 
         ////////////////////////////////////////////////////////
         // Toggle between Bolt button and magento checkout button
