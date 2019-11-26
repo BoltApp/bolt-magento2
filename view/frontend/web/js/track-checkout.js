@@ -20,8 +20,8 @@ function trackFunnel(step) {
         // prevent duplicate tracking
         return;
     }
-    currentStep = step;
     BoltTrack.recordEvent(step);
+    currentStep = step;
 }
 
 function setupListnerForShippingForm() {
