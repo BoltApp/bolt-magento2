@@ -1033,9 +1033,11 @@ class Cart extends AbstractHelper
                 if(isset($item_options['attributes_info'])){
                     $properties = [];
                     foreach($item_options['attributes_info'] as $attribute_info){
+                        // Convert attribute to string if it's a boolean before sending to the Bolt API
+                        $attributeValue = is_bool($attribute_info['value']) ? var_export($attribute_info['value'], true) : $attribute_info['value'];
                         $properties[] = (object) [
                             "name" => $attribute_info['label'],
-                            "value" => $attribute_info['value']
+                            "value" => $attributeValue
                         ];
                     }
                     $product['properties'] = $properties;
