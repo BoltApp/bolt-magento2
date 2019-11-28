@@ -280,6 +280,26 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
+    public function capturePayment_skipHookNotification(){
+        $this->mockApiResponse(
+            "merchant/transactions/capture",
+            '{"status": "authorized", "reference": "ABCD-1234-XXXX"}'
+        );
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data)  {
+                    $this->assertTrue($data->getApiData()['skip_hook_notification']);
+                    }
+                )
+            );
+        $this->currentMock->capture($this->paymentMock, 100);
+    }
+
+
+    /**
+     * @test
+     */
     public function capturePayment_success_multicapture()
     {
         // status stays 'authorized' if merchant has auto-capture enabled and some amount remains uncaptured
