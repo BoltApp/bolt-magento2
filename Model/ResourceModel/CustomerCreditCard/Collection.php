@@ -31,4 +31,26 @@ class Collection extends AbstractCollection
             'Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'
         );
     }
+
+    /**
+     * @param $customerId
+     * @param $boltConsumerId
+     * @param $boltCreditCardId
+     * @return Collection
+     */
+    public function getCreditCards($customerId, $boltConsumerId, $boltCreditCardId){
+        return $this->addFilter('customer_id', $customerId)
+            ->addFilter('consumer_id', $boltConsumerId)
+            ->addFilter('credit_card_id',$boltCreditCardId);
+    }
+
+    /**
+     * @param $customerId
+     * @param $boltConsumerId
+     * @param $boltCreditCardId
+     * @return bool
+     */
+    public function doesCardExist($customerId, $boltConsumerId, $boltCreditCardId){
+        return $this->getCreditCards($customerId, $boltConsumerId, $boltCreditCardId)->getSize() > 0;
+    }
 }

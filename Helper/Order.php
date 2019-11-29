@@ -54,6 +54,7 @@ use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 
 /**
  * Class Order
@@ -191,6 +192,11 @@ class Order extends AbstractHelper
     protected $customerCreditCardFactory;
 
     /**
+     * @var CustomerCreditCardCollectionFactory
+     */
+    protected $customerCreditCardCollectionFactory;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -209,7 +215,8 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
-     * @param CustomerCreditCardFactory $customerCreditCardsFactory
+     * @param CustomerCreditCardFactory $customerCreditCardFactory
+     * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      *
      * @codeCoverageIgnore
      */
@@ -234,8 +241,10 @@ class Order extends AbstractHelper
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
         DateTime $date,
-        CustomerCreditCardFactory $customerCreditCardFactory
-    ){
+        CustomerCreditCardFactory $customerCreditCardFactory,
+        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+    )
+    {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
@@ -257,6 +266,7 @@ class Order extends AbstractHelper
         $this->discountHelper = $discountHelper;
         $this->date = $date;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
+        $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
     }
 
     /**
@@ -724,6 +734,13 @@ class Order extends AbstractHelper
             $boltCreditCardId = @$boltCreditCard->id;
 
             if (!$customerId || !$boltConsumerId || !$boltCreditCardId) {
+                return false;
+            }
+
+            $doesCardExist = $this->customerCreditCardCollectionFactory->create()
+                            ->doesCardExist($customerId, $boltConsumerId, $boltCreditCardId);
+
+            if ($doesCardExist) {
                 return false;
             }
 

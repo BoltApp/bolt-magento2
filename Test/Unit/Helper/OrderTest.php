@@ -49,6 +49,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Test\Unit\Model\Api\OrderManagementTest;
+use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 
 /**
  * Class OrderTest
@@ -190,6 +191,11 @@ class OrderTest extends TestCase
     private $customerCreditCardFactory;
 
     /**
+     * @var MockObject|CustomerCreditCardCollectionFactory
+     */
+    private $customerCreditCardCollectionFactory;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -222,7 +228,8 @@ class OrderTest extends TestCase
                 $this->sessionHelper,
                 $this->discountHelper,
                 $this->date,
-                $this->customerCreditCardFactory
+                $this->customerCreditCardFactory,
+                $this->customerCreditCardCollectionFactory
             ])
             ->setMethods([
                 'getExistingOrder',
@@ -274,6 +281,10 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory = $this->getMockBuilder(CustomerCreditCardFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['create','setCustomerId','setConsumerId', 'setCreditCardId','setCardInfo','save'])
+            ->getMock();
+
+        $this->customerCreditCardCollectionFactory = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
+            ->setMethods(['create', 'doesCardExist'])
             ->getMock();
 
         $this->quoteMock = $this->getMockBuilder(Quote::class)
@@ -904,6 +915,9 @@ class OrderTest extends TestCase
         $this->cartHelper->expects(static::once())->method('getQuoteById')
             ->willReturn($this->quoteMock);
 
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(false);
+
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
@@ -931,6 +945,9 @@ class OrderTest extends TestCase
         $this->cartHelper->expects(static::once())->method('getQuoteById')
             ->willReturn($this->quoteMock);
 
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(false);
+
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
@@ -939,6 +956,38 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('save')->willThrowException(new \Exception());
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $this->assertFalse($result);
+    }
+
+    /**
+     * @test
+     */
+    public function testSaveCustomerCreditCard_ignoreCreditCardCreationLogicIfCardExists()
+    {
+        $transaction = new \stdClass();
+        @$transaction->from_consumer->id = 1;
+        @$transaction->from_credit_card->id = 1;
+        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+            ->willReturn($transaction);
+        $this->quoteMock->expects(self::once())->method('getCustomerId')
+            ->willReturn(self::CUSTOMER_ID);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')
+            ->willReturn($this->quoteMock);
+
+
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(true);
+
+        $this->customerCreditCardFactory->expects(static::never())->method('create');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCustomerId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setConsumerId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCreditCardId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCardInfo');
+        $this->customerCreditCardFactory->expects(static::never())->method('save');
+
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 }
