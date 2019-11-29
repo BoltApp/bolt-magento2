@@ -4,15 +4,17 @@
 
 var currentStep = '';
 
-function waitFor(condition, doWhenReady) {
-    var checkCondition = function () {
+function waitFor(condition, doWhenReady, pollIntervalMillis) {
+    var defaultPollIntervalMillis = 100;
+    var maxRetryCount = 30;
+    var checkCondition = function (retryCount) {
         if (condition()) {
             doWhenReady();
-        } else {
-            setTimeout(checkCondition, 50);
+        } else if (retryCount < maxRetryCount) {
+            setTimeout(function(){checkCondition(retryCount + 1)}, pollIntervalMillis || defaultPollIntervalMillis);
         }
     };
-    checkCondition();
+    checkCondition(0);
 }
 
 function trackFunnel(step) {
@@ -50,7 +52,7 @@ function init() {
 
     waitFor(
         // wait for shipping form to be fully rendered, ie., we have 9 required fields in the page.
-        function() { return jQuery("#shipping-new-address-form .field._required input,select").length === 9; },
+        function() { return jQuery("#shipping-new-address-form .field._required input,select").length >= 9; },
         setupListnerForShippingForm
     );
 
