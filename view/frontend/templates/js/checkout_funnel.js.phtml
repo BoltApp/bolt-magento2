@@ -2,6 +2,4 @@
 if (!$block->shouldTrackCheckoutFunnel()) return;
 ?>
 
-<script type="text/javascript">
-    // TODO: add logic here
-</script>
+<script type="text/x-magento-init"> { "*" : { "Bolt_Boltpay/js/track-checkout" : {} } } </script>
