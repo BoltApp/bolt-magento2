@@ -53,4 +53,29 @@ class Collection extends AbstractCollection
     public function doesCardExist($customerId, $boltConsumerId, $boltCreditCardId){
         return $this->getCreditCards($customerId, $boltConsumerId, $boltCreditCardId)->getSize() > 0;
     }
+
+    /**
+     * @param $customerId
+     * @return array
+     */
+    public function getCreditCardInfosByCustomerId($customerId)
+    {
+        $customerCreditCardsCollection = $this->addFilter('customer_id', $customerId);
+        $cardInfos = [];
+        foreach ($customerCreditCardsCollection as $customerCreditCard) {
+            $creditCard = [];
+            $creditCard['card_info'] = ($cardInfo = $customerCreditCard->getCardInfo()) ? json_decode($cardInfo, true) : false;
+            if(!@$creditCard['card_info']['display_network'] || !@$creditCard['card_info']['last4']){
+                return [];
+            }
+            $creditCard['customer_id'] = $customerCreditCard->getCustomerId();
+            $creditCard['consumer_id'] = $customerCreditCard->getConsumerId();
+            $creditCard['credit_card_id'] = $customerCreditCard->getCreditCardId();
+            $creditCard['id'] = $customerCreditCard->getId();
+            $cardInfos[] = $creditCard;
+        }
+
+        return $cardInfos;
+
+    }
 }
