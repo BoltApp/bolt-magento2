@@ -47,6 +47,8 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Test\Unit\Model\Api\OrderManagementTest;
 
 /**
  * Class OrderTest
@@ -59,6 +61,7 @@ class OrderTest extends TestCase
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
     const DISPLAY_ID = self::INCREMENT_ID . " / " . self::QUOTE_ID;
+    const CUSTOMER_ID = 1111;
 
     /**
      * @var ApiHelper
@@ -131,7 +134,7 @@ class OrderTest extends TestCase
     private $bugsnag;
 
     /**
-     * @var CartHelper
+     * @var MockObject|CartHelper
      */
     private $cartHelper;
 
@@ -182,6 +185,11 @@ class OrderTest extends TestCase
     private $transactionMock;
 
     /**
+     * @var MockObject|CustomerCreditCardFactory
+     */
+    private $customerCreditCardFactory;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -213,7 +221,8 @@ class OrderTest extends TestCase
                 $this->resourceConnection,
                 $this->sessionHelper,
                 $this->discountHelper,
-                $this->date
+                $this->date,
+                $this->customerCreditCardFactory
             ])
             ->setMethods([
                 'getExistingOrder',
@@ -226,6 +235,7 @@ class OrderTest extends TestCase
                 'checkPaymentMethod',
                 'getProcessedCaptures',
                 'getProcessedRefunds',
+                'fetchTransactionInfo'
             ])
             ->getMock();
     }
@@ -253,18 +263,23 @@ class OrderTest extends TestCase
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->cartHelper = $this->createPartialMock(
-            CartHelper::class,
-            [
-                'getRoundAmount',
-            ]
-        );
+        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getRoundAmount', 'getQuoteById'])
+            ->getMock();
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
+        $this->customerCreditCardFactory = $this->getMockBuilder(CustomerCreditCardFactory::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['create','setCustomerId','setConsumerId', 'setCreditCardId','setCardInfo','save'])
+            ->getMock();
 
-        $this->quoteMock = $this->createMock(Quote::class);
+        $this->quoteMock = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getCustomerId','getReservedOrderId','getId'])
+            ->getMock();
 
         $this->orderMock = $this->createPartialMock(
             Order::class,
@@ -826,4 +841,104 @@ class OrderTest extends TestCase
             [ 12.1225, 12.1264, false ],
 		];
 	}
+
+    /**
+     * @test
+     * @param $data
+     * @dataProvider providerTestSaveCustomerCreditCard_invalidData
+     *
+     */
+    public function testSaveCustomerCreditCard_invalidData($data){
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+            ->willReturn($data['transaction']);
+        $this->quoteMock->expects(static::once())->method('getCustomerId')
+            ->willReturn($data['customer_id']);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')->withAnyParameters()
+            ->willReturn($this->quoteMock);
+
+        $this->customerCreditCardFactory->expects(static::never())->method('create');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCustomerId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setConsumerId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCreditCardId');
+        $this->customerCreditCardFactory->expects(static::never())->method('setCardInfo');
+        $this->customerCreditCardFactory->expects(static::never())->method('save');
+
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $this->assertFalse($result);
+
+    }
+
+    public function providerTestSaveCustomerCreditCard_invalidData(){
+        return [
+            ['data' => [
+                'transaction' => '',
+                'customer_id' => self::CUSTOMER_ID
+                ]
+            ],
+            ['data' => [
+                'transaction' => new \stdClass(),
+                'customer_id' => ''
+                ]
+            ],
+            ['data' => [
+                'transaction' => '',
+                'customer_id' => ''
+                ]
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function testSaveCustomerCreditCard_validData(){
+        $transaction = new \stdClass();
+        @$transaction->from_consumer->id = 1;
+        @$transaction->from_credit_card->id = 1;
+        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+            ->willReturn($transaction);
+        $this->quoteMock->expects(self::once())->method('getCustomerId')
+            ->willReturn(self::CUSTOMER_ID);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')
+            ->willReturn($this->quoteMock);
+
+        $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCreditCardId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCardInfo')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('save')->willReturnSelf();
+
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $this->assertTrue($result);
+    }
+
+    /**
+     * @test
+     */
+    public function testSaveCustomerCreditCard_withException(){
+        $transaction = new \stdClass();
+        @$transaction->from_consumer->id = 1;
+        @$transaction->from_credit_card->id = 1;
+        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+            ->willReturn($transaction);
+        $this->quoteMock->expects(self::once())->method('getCustomerId')
+            ->willReturn(self::CUSTOMER_ID);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')
+            ->willReturn($this->quoteMock);
+
+        $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCreditCardId')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('setCardInfo')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('save')->willThrowException(new \Exception());
+
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $this->assertFalse($result);
+    }
 }

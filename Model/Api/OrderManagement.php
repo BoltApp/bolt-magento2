@@ -157,6 +157,11 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
+
+            if ($type === 'pending') {
+                $this->orderHelper->saveCustomerCreditCard($reference,$storeId);
+            }
+
             if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
                 $this->response->setHttpResponseCode(200);
                 $this->response->setBody(json_encode([

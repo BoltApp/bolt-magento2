@@ -53,6 +53,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 
 /**
  * Class Order
@@ -185,6 +186,11 @@ class Order extends AbstractHelper
     protected $date;
 
     /**
+     * @var CustomerCreditCardFactory
+     */
+    protected $customerCreditCardFactory;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -203,6 +209,7 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
+     * @param CustomerCreditCardFactory $customerCreditCardsFactory
      *
      * @codeCoverageIgnore
      */
@@ -226,8 +233,9 @@ class Order extends AbstractHelper
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        DateTime $date
-    ) {
+        DateTime $date,
+        CustomerCreditCardFactory $customerCreditCardFactory
+    ){
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
@@ -248,6 +256,7 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->customerCreditCardFactory = $customerCreditCardFactory;
     }
 
     /**
@@ -694,6 +703,41 @@ class Order extends AbstractHelper
             // if called from the store controller return quote and order
             // wait for the hook call to update the payment
             return [$quote, $order];
+        }
+    }
+
+    /**
+     * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
+     * @param $reference
+     * @param $storeId
+     * @return bool
+     */
+    public function saveCustomerCreditCard($reference, $storeId)
+    {
+        try {
+            $transaction = $this->fetchTransactionInfo($reference, $storeId);
+            $parentQuote = $this->cartHelper->getQuoteById(@$transaction->order->cart->order_reference);
+
+            $customerId = $parentQuote->getCustomerId();
+            $boltConsumerId = @$transaction->from_consumer->id;
+            $boltCreditCard = @$transaction->from_credit_card;
+            $boltCreditCardId = @$boltCreditCard->id;
+
+            if (!$customerId || !$boltConsumerId || !$boltCreditCardId) {
+                return false;
+            }
+
+            $this->customerCreditCardFactory->create()
+                        ->setCustomerId($customerId)
+                        ->setConsumerId($boltConsumerId)
+                        ->setCreditCardId($boltCreditCardId)
+                        ->setCardInfo(json_encode((array)$boltCreditCard))
+                        ->save();
+
+            return true;
+        } catch (\Exception $exception) {
+            $this->bugsnag->notifyException($exception);
+            return false;
         }
     }
 
