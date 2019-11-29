@@ -518,14 +518,16 @@ class Order extends AbstractHelper
      *
      * @param Quote $immutableQuote
      * @param \stdClass $transaction
-     *
      * @param string|null $boltTraceId
+     *
      * @return AbstractExtensibleModel|OrderInterface|null|object
      * @throws LocalizedException
      * @throws \Exception
      */
     protected function createOrder($immutableQuote, $transaction, $boltTraceId = null)
     {
+        $this->cartHelper->initPriceRuleData($immutableQuote);
+
         // Load and prepare parent quote
         /** @var Quote $quote */
         $quote = $this->prepareQuote($immutableQuote, $transaction);
@@ -551,7 +553,7 @@ class Order extends AbstractHelper
             ));
         }
         if (Hook::$fromBolt) {
-            $order->addStatusHistoryComment(
+            $order->addCommentToStatusHistory(
                 "BOLTPAY INFO :: This order was created via Bolt Webhook<br>Bolt traceId: $boltTraceId"
             );
         }
@@ -1590,8 +1592,8 @@ class Order extends AbstractHelper
 
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
-            $this->validateCaptureAmount($order, $amount / 100);
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+            $this->validateCaptureAmount($order, $amount);
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount);
         }
 
         if (!$order->getTotalDue()) {
@@ -1641,7 +1643,12 @@ class Order extends AbstractHelper
      */
     private function createOrderInvoice($order, $transactionId, $amount)
     {
-        if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+        $capturedAmount = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $amount;
+        $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
+        $amount = $amount / 100;
+
+        if ($capturedAmount === $grandTotalAmount) {
             $invoice = $this->invoiceService->prepareInvoice($order);
         } else {
             $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
@@ -1699,12 +1706,21 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    protected function validateCaptureAmount(OrderInterface $order, $captureAmount) {
-        $isInvalidAmount = !isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0;
-        $isInvalidAmountRange = $order->getTotalInvoiced() + $captureAmount > $order->getGrandTotal();
-
-        if($isInvalidAmount || $isInvalidAmountRange) {
+    protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
+    {
+        if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
             throw new \Exception( __('Capture amount is invalid'));
+        }
+
+        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $captureAmount;
+        $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+
+        if ($captured > $grandTotal) {
+            throw new \Exception(__(
+                'Capture amount is invalid: captured [%1], grand total [%2]',
+                $captured,
+                $grandTotal
+            ));
         }
     }
 
@@ -1716,8 +1732,8 @@ class Order extends AbstractHelper
     protected function isAnAllowedUpdateFromAdminPanel(OrderInterface $order, $transactionState)
     {
         return !Hook::$fromBolt &&
-               in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
-               $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
+            in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
+            $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
     }
 
     /**

@@ -18,6 +18,8 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
+use Magento\Catalog\Model\Product;
+use Magento\Framework\Registry;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -27,6 +29,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
 use Magento\Sales\Api\Data\OrderInterface;
 use Zend_Http_Client_Exception;
@@ -50,6 +53,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
+use Magento\Catalog\Pricing\Price\FinalPrice;
 
 /**
  * Boltpay Cart helper
@@ -75,6 +79,9 @@ class Cart extends AbstractHelper
 
     /** @var CustomerSession */
     private $customerSession;
+
+    /** @var Registry */
+    private $coreRegistry;
 
     /**
      * @var ApiHelper
@@ -210,6 +217,7 @@ class Cart extends AbstractHelper
      * @param ApiHelper         $apiHelper
      * @param ConfigHelper      $configHelper
      * @param CustomerSession   $customerSession
+     * @param Registry          $coreRegistry
      * @param LogHelper         $logHelper
      * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
@@ -236,6 +244,7 @@ class Cart extends AbstractHelper
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
         CustomerSession $customerSession,
+        Registry $coreRegistry,
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory,
@@ -259,6 +268,7 @@ class Cart extends AbstractHelper
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
         $this->customerSession = $customerSession;
+        $this->coreRegistry = $coreRegistry;
         $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
         $this->blockFactory = $blockFactory;
@@ -976,16 +986,29 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Create cart data items array
+     * Returns Item's price
      *
-     * @param \Magento\Quote\Model\Quote\Item[] $items
-     * @param null|int $storeId
-     * @param int $totalAmount
-     * @param int $diff
-     * @return array
+     * @param QuoteItem $item
+     * @return float
      */
-    public function getCartItems($items, $storeId = null, $totalAmount = 0, $diff = 0)
+    private function getUnitPrice($item)
     {
+        return $item->getProduct()->getFinalPrice();
+    }
+
+    /**
+     * Returns product's image URL
+     *
+     * @param Product $product
+     * @param int     $storeId
+     * @return string|null
+     */
+    private function getImageUrl($product, $storeId = null)
+    {
+        if (!$storeId) {
+            $storeId = $product->getStoreId();
+        }
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -998,17 +1021,59 @@ class Cart extends AbstractHelper
         $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        $productImage = null;
+
+        try {
+            $productImage = $imageBlock->getImage($product, 'product_small_image');
+        } catch (\Exception $e) {
+            try {
+                $productImage = $imageBlock->getImage($product, 'product_image');
+            } catch (\Exception $e) {
+                $this->bugsnag->registerCallback(function ($report) use ($product) {
+                    $report->setMetaData([
+                        'ITEM' => $product
+                    ]);
+                });
+                $this->bugsnag->notifyError(
+                    'Item image missing', "SKU: {$product['sku']}, reason: {$e->getMessage()}"
+                );
+            }
+        }
+
+        if ($productImage) {
+            $productImage = $productImage->getImageUrl();
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->stopEnvironmentEmulation();
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        return $productImage;
+    }
+
+    /**
+     * Create cart data items array
+     *
+     * @param QuoteItem[] $items
+     * @param null|int $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     */
+    public function getCartItems($items, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
         $products = array_map(
-            function ($item) use ($imageBlock, &$totalAmount, &$diff, $storeId) {
+            function ($item) use (&$totalAmount, &$diff, $storeId) {
                 $product = [];
 
-                $unitPrice   = $item->getCalculationPrice();
+                $unitPrice = $this->getUnitPrice($item);
+
                 $itemTotalAmount = $unitPrice * $item->getQty();
 
                 $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
 
                 // Aggregate eventual total differences if prices are stored with more than 2 decimal places
-                $diff += $itemTotalAmount * 100 -$roundedTotalAmount;
+                $diff += $itemTotalAmount * 100 - $roundedTotalAmount;
 
                 // Aggregate cart total
                 $totalAmount += $roundedTotalAmount;
@@ -1029,9 +1094,9 @@ class Cart extends AbstractHelper
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
                 $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
-                if(isset($item_options['attributes_info'])){
+                if (isset($item_options['attributes_info'])) {
                     $properties = [];
-                    foreach($item_options['attributes_info'] as $attribute_info){
+                    foreach ($item_options['attributes_info'] as $attribute_info) {
                         $properties[] = (object) [
                             "name" => $attribute_info['label'],
                             "value" => $attribute_info['value']
@@ -1043,31 +1108,17 @@ class Cart extends AbstractHelper
                 // Get product description and image
                 ////////////////////////////////////
                 $product['description'] = strip_tags($_product->getDescription());
-                try {
-                    $productImage = $imageBlock->getImage($_product, 'product_small_image');
-                } catch (\Exception $e) {
-                    try {
-                        $productImage = $imageBlock->getImage($_product, 'product_image');
-                    } catch (\Exception $e) {
-                        $this->bugsnag->registerCallback(function ($report) use ($product) {
-                            $report->setMetaData([
-                                'ITEM' => $product
-                            ]);
-                        });
-                        $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
-                    }
-                }
-                if (@$productImage) {
-                    $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
+
+                $productImage = $this->getImageUrl($_product, $storeId);
+                if ($productImage) {
+                    $product['image_url'] = ltrim($productImage, '/');
                 }
                 ////////////////////////////////////
-                return  $product;
+
+                return $product;
             },
             $items
         );
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        $this->appEmulation->stopEnvironmentEmulation();
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return [$products, $totalAmount, $diff];
     }
@@ -1081,6 +1132,26 @@ class Cart extends AbstractHelper
     protected function getCalculationAddress($quote)
     {
         return $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+    }
+
+    /**
+     * Initialize data for price rules
+     *
+     * @param Quote $quote
+     * @return void
+     */
+    public function initPriceRuleData($quote)
+    {
+        $this->coreRegistry->register(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                    'store_id' => $quote->getStoreId(),
+                    'website_id' => $quote->getStore()->getWebsiteId(),
+                    'customer_group_id' => $quote->getCustomerGroupId()
+                ]
+            )
+        );
     }
 
     /**
@@ -1142,6 +1213,9 @@ class Cart extends AbstractHelper
         }
 
         $this->setLastImmutableQuote($immutableQuote);
+
+        $this->initPriceRuleData($immutableQuote);
+
         $immutableQuote->collectTotals();
 
         // Set order_reference to parent quote id.
@@ -1662,7 +1736,7 @@ class Cart extends AbstractHelper
         }
 
         foreach ($quote->getAllVisibleItems() as $item) {
-            /** @var \Magento\Quote\Model\Quote\Item $item */
+            /** @var QuoteItem $item */
             // call every method on item, if returns true, do restrict
             foreach ($itemRestrictionMethods as $method) {
                 if ($item->$method()) {
