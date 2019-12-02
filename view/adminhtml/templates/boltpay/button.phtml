@@ -10,7 +10,7 @@ $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
     <?php if($customerCreditCardInfos): ?>
         <?php foreach ($customerCreditCardInfos as $customerCreditCardInfo): ?>
         <div>
-            <select name="credit-cards" style="width: 284px; margin: 10px 0 5px;">
+            <select name="bolt-credit-cards" style="width: 284px; margin: 10px 0 5px;">
                 <option value=""><?php echo __('Add New Card') ?></option>
                 <option value="<?php echo $customerCreditCardInfo['id']  ?>"><?php echo 'XXXX'.'-'.$customerCreditCardInfo['card_info']['last4'].' '.$customerCreditCardInfo['card_info']['display_network'] ?></option>
             </select>
@@ -20,5 +20,32 @@ $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
     <input type="hidden" id="bolt-billing-address" value='<?php echo $block->getBillingAddress() ?>' />
     <input type="hidden" id="bolt-place-order-payload" value='<?php echo $block->getPlaceOrderPayload() ?>' />
     <div class="bolt-checkout-button with-cards"></div>
-    <input type="hidden" class="required-entry">
+    <input type="hidden" class="required-entry" id="bolt-required-field">
 </fieldset>
+
+<?php if($customerCreditCardInfos): ?>
+    <script>
+        require(['jquery', 'jquery/ui'], function($){
+            $(document).on('change', 'select[name="bolt-credit-cards"]', function(){
+
+                var $creditCardsValue = $(this).val();
+                var $boltRequiredField = $('#bolt-required-field');
+
+                if($creditCardsValue){
+                    //If the administrator chooses a credit card option, we hide the Bolt checkout button and force them to use the Magento submit order button
+                    $('.bolt-checkout-button.with-cards').hide();
+                    if($boltRequiredField.hasClass('required-entry')){
+                        $boltRequiredField.removeClass('required-entry');
+                    }
+                }else {
+                    //If the administrator chooses the 'Add New Card' option, we show the Bolt checkout button and force them to use the Bolt checkout button
+                    if(!$boltRequiredField.hasClass('required-entry')){
+                        $boltRequiredField.addClass('required-entry');
+                    }
+                    $('.bolt-checkout-button.with-cards').show();
+                    $('.bolt-checkout-button.with-cards div[data-tid="bolt-checkout-button"]').click();
+                }
+            });
+        });
+    </script>
+<?php endif; ?>
