@@ -1242,6 +1242,8 @@ class Cart extends AbstractHelper
                     return [];
                 }
 
+                $this->shipperHqAdminOrderCreateProcess($paymentOnly, $quote);
+
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
@@ -1730,5 +1732,54 @@ class Cart extends AbstractHelper
 
         // no restrictions
         return false;
+    }
+
+    /**
+     * Only for back-office: Dispatch event for ShipperHQ method.
+     * Pre-Auth is OFF for back-office.
+     *
+     * @param bool          $paymentOnly
+     * @param Quote|null    $quote
+     * @return bool
+     */
+    public function shipperHqAdminOrderCreateProcess($paymentOnly, $quote = null)
+    {
+        if (!$paymentOnly || !$quote) {
+            return false;
+        }
+
+        /** @var QuoteAddress $shippingAddress */
+        $shippingAddress = $quote->getShippingAddress();
+        $shippingMethod = $shippingAddress->getShippingMethod();
+
+        if (!$shippingMethod || $shippingMethod !== 'shipperadmin_adminshipping') {
+            return false;
+        }
+
+        /** @var \Magento\Backend\Model\Session\Quote $session */
+        $session = $this->checkoutSession;
+        if (!($session instanceof \Magento\Backend\Model\Session\Quote)) {
+            return false;
+        }
+
+        $orderCreateModel = $this->objectManager->get(\Magento\Sales\Model\AdminOrder\Create::class);
+        /** @var \Magento\Framework\App\Request\Http $request */
+        $request = $this->objectManager->get(\Magento\Framework\App\Request\Http::class);
+
+        $request->setPostValue('order', [
+            'shipping_method' => $shippingMethod,
+            'custom_price' => $shippingAddress->getShippingAmount(),
+            'custom_description' => $shippingAddress->getShippingDescription()
+        ]);
+
+        $eventData = [
+            'order_create_model' => $orderCreateModel,
+            'request_model' => $request,
+            'session' => $session,
+        ];
+
+        $this->_eventManager->dispatch('adminhtml_sales_order_create_process_data_before', $eventData);
+
+        return true;
     }
 }

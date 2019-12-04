@@ -297,7 +297,11 @@ class Order extends AbstractHelper
 
         $shippingMethod = $transaction->order->cart->shipments[0]->reference;
 
-        $shippingAddress->setShippingMethod($shippingMethod)->save();
+        $shippingAddress->setShippingMethod($shippingMethod);
+
+        $this->cartHelper->shipperHqAdminOrderCreateProcess(true, $quote);
+
+        $shippingAddress->save();
     }
 
     /**
