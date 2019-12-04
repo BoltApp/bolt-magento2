@@ -51,6 +51,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\App\Request\Http as RequestHttp;
 
 /**
  * Boltpay Cart helper
@@ -205,29 +206,35 @@ class Cart extends AbstractHelper
     private $orderData;
 
     /**
-     * @param Context           $context
-     * @param CheckoutSession   $checkoutSession
-     * @param ProductRepository $productRepository
-     * @param ApiHelper         $apiHelper
-     * @param ConfigHelper      $configHelper
-     * @param CustomerSession   $customerSession
-     * @param LogHelper         $logHelper
-     * @param Bugsnag           $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
-     * @param BlockFactory      $blockFactory
-     * @param Emulation         $appEmulation
-     * @param QuoteFactory      $quoteFactory
-     * @param TotalsCollector   $totalsCollector
-     * @param QuoteRepository   $quoteRepository
-     * @param OrderRepository   $orderRepository
+     * @var RequestHttp
+     */
+    private $httpRequest;
+
+    /**
+     * @param Context               $context
+     * @param CheckoutSession       $checkoutSession
+     * @param ProductRepository     $productRepository
+     * @param ApiHelper             $apiHelper
+     * @param ConfigHelper          $configHelper
+     * @param CustomerSession       $customerSession
+     * @param LogHelper             $logHelper
+     * @param Bugsnag               $bugsnag
+     * @param DataObjectFactory     $dataObjectFactory
+     * @param BlockFactory          $blockFactory
+     * @param Emulation             $appEmulation
+     * @param QuoteFactory          $quoteFactory
+     * @param TotalsCollector       $totalsCollector
+     * @param QuoteRepository       $quoteRepository
+     * @param OrderRepository       $orderRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param QuoteResource     $quoteResource
-     * @param SessionHelper $sessionHelper
-     * @param CheckoutHelper $checkoutHelper
-     * @param DiscountHelper $discountHelper
-     * @param CacheInterface $cache
-     * @param ResourceConnection $resourceConnection
+     * @param QuoteResource         $quoteResource
+     * @param SessionHelper         $sessionHelper
+     * @param CheckoutHelper        $checkoutHelper
+     * @param DiscountHelper        $discountHelper
+     * @param CacheInterface        $cache
+     * @param ResourceConnection    $resourceConnection
      *
+     * @param RequestHttp           $httpRequest
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -252,7 +259,8 @@ class Cart extends AbstractHelper
         CheckoutHelper $checkoutHelper,
         DiscountHelper $discountHelper,
         CacheInterface $cache,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        RequestHttp $httpRequest
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -276,6 +284,7 @@ class Cart extends AbstractHelper
         $this->discountHelper = $discountHelper;
         $this->cache = $cache;
         $this->resourceConnection = $resourceConnection;
+        $this->httpRequest = $httpRequest;
     }
 
     /**
@@ -1762,9 +1771,8 @@ class Cart extends AbstractHelper
             return false;
         }
 
-        $orderCreateModel = $this->objectManager->get(\Magento\Sales\Model\AdminOrder\Create::class);
-        /** @var \Magento\Framework\App\Request\Http $request */
-        $request = $this->objectManager->get(\Magento\Framework\App\Request\Http::class);
+        /** @var RequestHttp $request */
+        $request = $this->httpRequest;
 
         $request->setPostValue('order', [
             'shipping_method' => $shippingMethod,
@@ -1773,7 +1781,7 @@ class Cart extends AbstractHelper
         ]);
 
         $eventData = [
-            'order_create_model' => $orderCreateModel,
+            'order_create_model' => null,
             'request_model' => $request,
             'session' => $session,
         ];
