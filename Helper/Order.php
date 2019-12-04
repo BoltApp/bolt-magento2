@@ -1289,7 +1289,7 @@ class Order extends AbstractHelper
                 2
             ),
             'Reference' => $transaction->reference,
-            'Amount' => $order->getBaseCurrency()->formatTxt($amount / 100),
+            'Amount' => $order->getOrderCurrency()->formatTxt($amount / 100),
             'Transaction ID' => $transaction->id
         ];
     }
@@ -1594,7 +1594,7 @@ class Order extends AbstractHelper
         ];
 
         // format the price with currency symbol
-        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount / 100);
+        $formattedPrice = $order->getOrderCurrency()->formatTxt($amount / 100);
 
         $message = __(
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
@@ -1776,7 +1776,7 @@ class Order extends AbstractHelper
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
         $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $order->getBaseCurrency()->formatTxt($voidAmount, array()));
+        $message .= ' ' .__('Amount: %1.', $order->getOrderCurrency()->formatTxt($voidAmount));
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
