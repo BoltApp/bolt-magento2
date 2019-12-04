@@ -38,7 +38,7 @@ class CurrencyUtilsTest extends TestCase
 
     public function testPrecisionForUnknown() {
         $this->expectException(\Exception::class);
-        
-        CurrencyUtils::getPrecisionForCurrencyCode("XXX")
+
+        CurrencyUtils::getPrecisionForCurrencyCode("XXX");
     }
 }
