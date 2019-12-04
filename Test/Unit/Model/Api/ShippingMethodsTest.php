@@ -1095,15 +1095,7 @@ class ShippingMethodsTest extends TestCase
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($quote, $cart) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())
-                    ->method('setMetaData')->with(
-                        [
-                            'CART_MISMATCH' => [
-                                'cart_items'  => $cart['items'],
-                                'quote_items' => null,
-                            ]
-                        ]
-                    );
+                $reportMock->expects(self::once())->method('setMetaData');
                 $callback($reportMock);
             }
         );
