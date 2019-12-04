@@ -341,6 +341,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->preprocessHook();
 
+            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
             $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.

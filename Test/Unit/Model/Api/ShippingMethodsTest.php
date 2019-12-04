@@ -31,6 +31,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
+use Magento\Store\Model\Store;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -175,6 +176,11 @@ class ShippingMethodsTest extends TestCase
      * @var \Magento\Quote\Model\Cart\ShippingMethod|MockObject
      */
     private $shipMethodObject;
+
+    /**
+     * @var Store
+     */
+    private $storeMock;
 
     /**
      * @inheritdoc
@@ -402,6 +408,8 @@ class ShippingMethodsTest extends TestCase
         $this->currentMock->expects(self::exactly(2))->method('getQuoteById')
             ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
             ->willReturnOnConsecutiveCalls($quote, $quote);
+
+        $this->storeMock->expects(self::once())->method('setCurrentCurrencyCode')->with("USD");
 
         $shippingOptions = $this->getShippingOptions();
 
@@ -1155,6 +1163,11 @@ class ShippingMethodsTest extends TestCase
         $quoteId = self::IMMUTABLE_QUOTE_ID,
         $parentQuoteId = self::PARENT_QUOTE_ID
     ) {
+        $this->storeMock = $this->getMockBuilder(Store::class)
+            ->setMethods(['setCurrentCurrencyCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
@@ -1168,7 +1181,7 @@ class ShippingMethodsTest extends TestCase
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode'
+            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -1190,11 +1203,13 @@ class ShippingMethodsTest extends TestCase
         $quote->method('getShippingAddress')
             ->willReturn($shippingAddress);
         $quote->method('getQuoteCurrencyCode')
-            ->willReturn('$');
+            ->willReturn('USD');
         $quote->method('collectTotals')
             ->willReturnSelf();
         $quote->method('save')
-            ->willReturnSelf();
+              ->willReturnSelf();
+        $quote->method('getStore')
+              ->willReturn($this->storeMock);
 
         return $quote;
     }
