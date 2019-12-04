@@ -33,12 +33,12 @@ class CurrencyUtilsTest extends TestCase
     }
 
     public function testPrecisionForJPY() {
-        $this->assertEquals(2, CurrencyUtils::getPrecisionForCurrencyCode("JPY"));
+        $this->assertEquals(0, CurrencyUtils::getPrecisionForCurrencyCode("JPY"));
     }
 
     public function testPrecisionForUnknown() {
         $this->expectException(\Exception::class);
-
-        $this->assertEquals(2, CurrencyUtils::getPrecisionForCurrencyCode("XXX"));
+        
+        CurrencyUtils::getPrecisionForCurrencyCode("XXX")
     }
 }
