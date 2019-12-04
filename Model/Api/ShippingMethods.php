@@ -272,7 +272,6 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
-                        'total_delta' => $cartItems['total'] - $quoteItems['total'],
                         'cart_total' => $cartItems['total'],
                         'quote_total' => $quoteItems['total'],
                         'cart_items' => $cart['items'],
