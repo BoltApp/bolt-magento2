@@ -1279,6 +1279,7 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param \stdClass $transaction
      * @param null|int $amount
+     * @return array containing transaction information
      */
     private function formatTransactionData($order, $transaction, $amount)
     {
@@ -1289,7 +1290,7 @@ class Order extends AbstractHelper
                 2
             ),
             'Reference' => $transaction->reference,
-            'Amount' => $order->getOrderCurrency()->formatTxt($amount / 100),
+            'Amount' => $this->formatAmountForDisplay($order, $amount / 100),
             'Transaction ID' => $transaction->id
         ];
     }
@@ -1593,17 +1594,12 @@ class Order extends AbstractHelper
             'refunds' => implode(',', $processedRefunds)
         ];
 
-        // format the price with currency symbol
-        $formattedPrice = $order->getOrderCurrency()->formatTxt($amount / 100);
-
         $message = __(
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
             $this->getBoltTransactionStatus($transactionState),
-            $formattedPrice,
+            $this->formatAmountForDisplay($order, $amount / 100),
             $this->formatReferenceUrl($transaction->reference)
         );
-
-        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
 
         // update order payment instance
         $payment->setParentTransactionId($parentTransactionId);
@@ -1629,6 +1625,7 @@ class Order extends AbstractHelper
             );
         }
 
+        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
         // build a new transaction record and assign it to the order and payment
         /** @var Transaction $payment_transaction */
         $payment_transaction = $this->transactionBuilder->setPayment($payment)
@@ -1776,10 +1773,21 @@ class Order extends AbstractHelper
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
         $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $order->getOrderCurrency()->formatTxt($voidAmount));
+        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
+    }
+
+    // Visible for testing
+    /**
+     * @param OrderModel $order
+     * @param float $amount
+     *
+     * @return string
+     */
+    public function formatAmountForDisplay($order, $amount) {
+        return $order->getOrderCurrency()->formatTxt($amount);
     }
 
     /**
