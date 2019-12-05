@@ -536,7 +536,8 @@ class ShippingMethodsTest extends TestCase
             'items'      => [
                 [
                     'sku'      => 'TestProduct',
-                    'quantity' => '1'
+                    'quantity' => '2',
+                    'total_amount' => '60000'
                 ]
             ]
         ];
@@ -1107,6 +1108,8 @@ class ShippingMethodsTest extends TestCase
                     ->method('setMetaData')->with(
                         [
                             'CART_MISMATCH' => [
+                                'cart_total' => array( 'TestProduct2' => 100 ),
+                                'quote_total' => array('TestProduct' => 60000 ),
                                 'cart_items'  => $cart['items'],
                                 'quote_items' => null,
                             ]
@@ -1125,6 +1128,38 @@ class ShippingMethodsTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     * @covers ::checkCartItems
+     * @doesNotPerformAssertions
+     */
+    public function checkCartItems_noTotalsMismatchForRoundingError()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'items'      => [
+                [
+                    'sku'      => 'TestProduct',
+                    'quantity' => '2',
+                    'total_amount' => 60000 // round(299.995) * 2, not round(299.995 * 2)
+                ]
+            ]
+        ];
+        $this->initCurrentMock();
+        $quote = $this->getQuoteMock([]);
+        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+
+        // no exception expected
+
+        self::invokeInaccessibleMethod(
+            $this->currentMock,
+            'checkCartItems',
+            [
+                $cart
+            ]
+        );
+
+    }
 
     /**
      * @param $errCode
@@ -1175,7 +1210,9 @@ class ShippingMethodsTest extends TestCase
         $quoteItem->method('getSku')
             ->willReturn('TestProduct');
         $quoteItem->method('getQty')
-            ->willReturn(1);
+              ->willReturn(2);
+        $quoteItem->method('getCalculationPrice')
+              ->willReturn(299.995);
 
 
         $quoteMethods = [
