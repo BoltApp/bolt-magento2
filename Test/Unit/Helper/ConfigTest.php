@@ -517,7 +517,7 @@ class ConfigTest extends TestCase
     /**
      * @test
      */
-    public function gtIgnoredShippingAddressCoupons()
+    public function getIgnoredShippingAddressCoupons()
     {
         $configCouponsJson = '{"ignoredShippingAddressCoupons": ["IGNORED_SHIPPING_ADDRESS_COUPON"]}';
 
