@@ -1024,7 +1024,7 @@ class ShippingMethodsTest extends TestCase
      * @test
      * @throws \ReflectionException
      */
-    public function testCouponInvalidForShippingAddress()
+    public function couponInvalidForShippingAddress()
     {
         $parentQuoteCoupon = 'IGNORED_SHIPPING_ADDRESS_COUPON';
         $configCoupons = ['BOLT_TEST', 'ignored_shipping_address_coupon'];

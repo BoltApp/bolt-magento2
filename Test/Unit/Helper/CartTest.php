@@ -610,7 +610,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachingDisabled()
+    public function getBoltpayOrderCachingDisabled()
     {
         $mock = $this->getHelperCartMock();
 
@@ -669,7 +669,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderNotCached()
+    public function getBoltpayOrderNotCached()
     {
         $mock = $this->getHelperCartMock();
 
@@ -732,7 +732,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachedQuoteAvailable()
+    public function getBoltpayOrderCachedQuoteAvailable()
     {
         $mock = $this->getHelperCartMock();
 
@@ -798,7 +798,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachedQuoteNotAvailable()
+    public function getBoltpayOrderCachedQuoteNotAvailable()
     {
         $mock = $this->getHelperCartMock();
 
