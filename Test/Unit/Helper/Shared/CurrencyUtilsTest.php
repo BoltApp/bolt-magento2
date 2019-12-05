@@ -26,19 +26,35 @@ use PHPUnit\Framework\TestCase;
  *
  * @package Bolt\Boltpay\Test\Unit\Helper\Shared
  */
-class CurrencyUtilsTest extends TestCase
-{
-    public function testPrecisionForUSD() {
-        $this->assertEquals(2, CurrencyUtils::getPrecisionForCurrencyCode("USD"));
+class CurrencyUtilsTest extends TestCase {
+    /**
+     * @test
+     * @param code currency code
+     * @param precision expected precision
+     * @dataProvider currencyAndPrecisions
+     * @throws \Exception
+     */
+    public function precisionCurrenciesForKnownCurrency( $code, $precision ) {
+        $this->assertEquals( $precision, CurrencyUtils::getPrecisionForCurrencyCode( $code ) );
     }
 
-    public function testPrecisionForJPY() {
-        $this->assertEquals(0, CurrencyUtils::getPrecisionForCurrencyCode("JPY"));
+    /**
+     * @test
+     * @throws \Exception
+     */
+    public function precisionForUnknown() {
+        $this->expectException( \Exception::class );
+
+        CurrencyUtils::getPrecisionForCurrencyCode( "XXX" );
     }
 
-    public function testPrecisionForUnknown() {
-        $this->expectException(\Exception::class);
 
-        CurrencyUtils::getPrecisionForCurrencyCode("XXX");
+    public function currencyAndPrecisions() {
+        return [
+            [ "USD", 2 ],
+            [ "JPY", 0 ],
+            [ "EUR", 2 ],
+            [ "CAD", 2 ]
+        ];
     }
 }
