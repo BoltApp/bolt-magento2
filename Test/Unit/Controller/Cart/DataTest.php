@@ -180,8 +180,10 @@ class DataTest extends TestCase
         return $jsonFactoryMock;
     }
 
-
-    public function testExecute_happyPath()
+    /**
+     * @test
+     */
+    public function execute_happyPath()
     {
         $expected = array(
             'status' => 'success',
@@ -215,7 +217,10 @@ class DataTest extends TestCase
         $data->execute();
     }
 
-    public function testExecute_HasProductRestrictions()
+    /**
+     * @test
+     */
+    public function execute_HasProductRestrictions()
     {
         //replace default set in init
         $cartHelper = $this->createMock(Cart::class);
@@ -241,7 +246,10 @@ class DataTest extends TestCase
         $data->execute();
     }
 
-    public function testExecute_DisallowedCheckout()
+    /**
+     * @test
+     */
+    public function execute_DisallowedCheckout()
     {
         //replace default set in init
         $cartHelper = $this->createMock(Cart::class);
@@ -267,7 +275,10 @@ class DataTest extends TestCase
         $data->execute();
     }
 
-    public function testExecute_GeneralException()
+    /**
+     * @test
+     */
+    public function execute_GeneralException()
     {
         //Make a method throw an exception during execution
         $exception = new \Exception(self::EXCEPTION_MESSAGE);
@@ -297,7 +308,10 @@ class DataTest extends TestCase
         $data->execute();
     }
 
-    public function testExecute_NullResponse()
+    /**
+     * @test
+     */
+    public function execute_NullResponse()
     {
         $expected = array(
             'status' => 'success',

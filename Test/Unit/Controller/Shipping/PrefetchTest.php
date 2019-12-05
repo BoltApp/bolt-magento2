@@ -104,7 +104,10 @@ class PrefetchTest extends TestCase
 
     }
 
-    public function testExecute_PrefetchFalse()
+    /**
+     * @test
+     */
+    public function execute_PrefetchFalse()
     {
         $this->configHelper->method('getPrefetchShipping')
             ->willReturn(false);
@@ -127,7 +130,10 @@ class PrefetchTest extends TestCase
         $prefetch->execute();
     }
 
-    public function testExecute_noQuote()
+    /**
+     * @test
+     */
+    public function execute_noQuote()
     {
         $this->configHelper->method('getPrefetchShipping')
             ->wilLReturn(true);
@@ -163,7 +169,10 @@ class PrefetchTest extends TestCase
         $prefetch->execute();
     }
 
-    public function testExecute_noGeoLocation()
+    /**
+     * @test
+     */
+    public function execute_noGeoLocation()
     {
         $expected = [
             'country_code' => self::COUNTRY,
@@ -208,7 +217,10 @@ class PrefetchTest extends TestCase
         $prefetch->execute();
     }
 
-    public function testExecute_geoLocation()
+    /**
+     * @test
+     */
+    public function execute_geoLocation()
     {
         $expected = [
             'country_code' => self::COUNTRY_CODE,
@@ -256,7 +268,10 @@ class PrefetchTest extends TestCase
         $prefetch->execute();
     }
 
-    public function testExecute_geoLocationMissingElements()
+    /**
+     * @test
+     */
+    public function execute_geoLocationMissingElements()
     {
         $expected = [
             'country_code' => self::COUNTRY_CODE,
@@ -302,7 +317,10 @@ class PrefetchTest extends TestCase
         $prefetch->execute();
     }
 
-    public function testExecute_storedShippingAddress()
+    /**
+     * @test
+     */
+    public function execute_storedShippingAddress()
     {
         $expected = [
             'country_code' => self::COUNTRY_CODE,

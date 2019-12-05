@@ -50,9 +50,10 @@ class FeatureSwitchRepositoryTest extends TestCase
     }
 
     /**
+     * @test
      * Test that getByName() works as expected.
      */
-    public function testGetByName()
+    public function getByName()
     {
         $foundSwitch = $this
             ->getMockBuilder(FeatureSwitchInterface::class)
@@ -82,9 +83,9 @@ class FeatureSwitchRepositoryTest extends TestCase
     }
 
     /**
-     * Test that upsertByName() works as expected.
+     * @test
      */
-    public function testUpsertByName_switchFound()
+    public function upsertByName_switchFound()
     {
         $foundSwitch = $this
             ->getMockBuilder(FeatureSwitchInterface::class)
@@ -124,9 +125,9 @@ class FeatureSwitchRepositoryTest extends TestCase
     }
 
     /**
-     * Test that upsertByName() works as expected.
+     * @test
      */
-    public function testUpsertByName_switchNotFound()
+    public function upsertByName_switchNotFound()
     {
         $this->mockSwitch
             ->expects($this->exactly(2))
@@ -153,7 +154,10 @@ class FeatureSwitchRepositoryTest extends TestCase
         $this->switchRepo->upsertByName("SOME_SWITCH", true, false, 10);
     }
 
-    public function testSave()
+    /**
+     * @test
+     */
+    public function save()
     {
         $this->mockSwitch
             ->expects($this->once())
@@ -168,7 +172,10 @@ class FeatureSwitchRepositoryTest extends TestCase
         $this->switchRepo->save($this->mockSwitch);
     }
 
-    public function testDelete()
+    /**
+     * @test
+     */
+    public function delete()
     {
         $this->mockSwitch
             ->expects($this->once())

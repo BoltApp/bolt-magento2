@@ -131,9 +131,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrl()
+    public function getTrackJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -144,9 +144,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrlForProductionMode()
+    public function getTrackJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -157,9 +157,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetConnectJsUrl()
+    public function getConnectJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -168,7 +168,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
     }
 
-    public function testGetConnectJsUrlForProductionMode()
+    /**
+     * @test
+     */
+    public function getConnectJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -182,7 +185,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerTestGetCheckoutKey
      */
-    public function testGetCheckoutKey($data)
+    public function getCheckoutKey($data)
     {
         $this->configHelper->expects($this->any())
             ->method('isPaymentOnlyCheckoutEnabled')
@@ -244,7 +247,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerGetReplaceSelectors
      */
-    public function testGetReplaceSelectors($data)
+    public function getReplaceSelectors($data)
     {
         $this->configHelper->expects($this->any())
             ->method('getReplaceSelectors')
@@ -288,9 +291,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetGlobalCSS()
+    public function getGlobalCSS()
     {
         $value = '.replaceable-example-selector1 {
             color: red;
@@ -306,9 +309,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSettings()
+    public function getSettings()
     {
         $result = $this->block->getSettings();
 
@@ -337,9 +340,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsEnabled()
+    public function isEnabled()
     {
         $storeId = 0;
         $this->configHelper->expects($this->any())
@@ -372,18 +375,27 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->willReturn($value);
     }
 
-    public function testGetInitiateCheckoutFalse()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutFalse()
     {
         $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testGetInitiateCheckoutTrue()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutTrue()
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testShouldTrackCheckoutFunnel()
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
     {
         $this->configHelper->expects($this->any())
                            ->method('shouldTrackCheckoutFunnel')
