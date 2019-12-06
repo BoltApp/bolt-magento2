@@ -1355,7 +1355,7 @@ class Cart extends AbstractHelper
      */
     public function getRoundAmount($amount)
     {
-        return (int)round(CurrencyUtils::toMinorWithoutRounding($amount, "USD"));
+        return CurrencyUtils::toMinor($amount, "USD");
     }
 
     /**
