@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
@@ -1183,12 +1184,12 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param \stdClass $transaction
-     * @return bool true if the order was placed on hold, otherwise false
+     * @throws \Exception
      */
     private function holdOnTotalsMismatch($order, $transaction)
     {
         $boltTotal = $transaction->order->cart->total_amount->amount;
-        $storeTotal = round($order->getGrandTotal() * 100);
+        $storeTotal = CurrencyUtils::toMinor($order->getGrandTotal(), "USD");
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
