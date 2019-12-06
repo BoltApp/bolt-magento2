@@ -156,7 +156,10 @@ class DataTest extends TestCase
         return $resultJsonFactory;
     }
 
-    public function testExecute_NoBoltpayOrder()
+    /**
+     * @test
+     */
+    public function execute_NoBoltpayOrder()
     {
         $this->cartHelper->method('getBoltpayOrder')
             ->willReturn(null);
@@ -191,7 +194,10 @@ class DataTest extends TestCase
         $data->execute();
     }
 
-    public function testExecute_HappyPath()
+    /**
+     * @test
+     */
+    public function execute_HappyPath()
     {
         $boltpayOrder = $this->getMockBuilder(Response::class)
             ->setMethods(['getResponse'])
@@ -234,9 +240,10 @@ class DataTest extends TestCase
     }
 
     /**
+     * @test
      * @expectedException \Exception
      */
-    public function testExecute_Exception()
+    public function execute_ThrowsException()
     {
         $exception = new \Exception("This is an exception");
 

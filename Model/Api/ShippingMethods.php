@@ -237,7 +237,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * the quantities and totals are matches separately.
      *
      * @param array $cart cart details
-     * @param Quote $quote
      * @throws LocalizedException
      */
     protected function checkCartItems($cart)
@@ -252,7 +251,7 @@ class ShippingMethods implements ShippingMethodsInterface
         foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
-            $unitPrice = $item->getCalculationPrice();
+            $unitPrice = round($item->getCalculationPrice(), 2);
             @$quoteItems['quantity'][$sku] += $quantity;
             @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
         }
@@ -264,17 +263,19 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
-            $this->bugsnag->registerCallback(function ($report) use ($cart) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
-                list($quoteItems) = $this->cartHelper->getCartItems(
+                list($quoteItemData) = $this->cartHelper->getCartItems(
                     $this->quote->getAllVisibleItems(),
                     $this->quote->getStoreId()
                 );
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
+                        'cart_total' => $cartItems['total'],
+                        'quote_total' => $quoteItems['total'],
                         'cart_items' => $cart['items'],
-                        'quote_items' => $quoteItems,
+                        'quote_items' => $quoteItemData,
                     ]
                 ]);
             });
@@ -341,6 +342,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->preprocessHook();
 
+            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
             $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.

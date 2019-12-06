@@ -31,6 +31,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
+use Magento\Store\Model\Store;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -175,6 +176,11 @@ class ShippingMethodsTest extends TestCase
      * @var \Magento\Quote\Model\Cart\ShippingMethod|MockObject
      */
     private $shipMethodObject;
+
+    /**
+     * @var Store
+     */
+    private $storeMock;
 
     /**
      * @inheritdoc
@@ -403,6 +409,8 @@ class ShippingMethodsTest extends TestCase
             ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
             ->willReturnOnConsecutiveCalls($quote, $quote);
 
+        $this->storeMock->expects(self::once())->method('setCurrentCurrencyCode')->with("USD");
+
         $shippingOptions = $this->getShippingOptions();
 
         $this->currentMock->method('shippingEstimation')
@@ -528,7 +536,8 @@ class ShippingMethodsTest extends TestCase
             'items'      => [
                 [
                     'sku'      => 'TestProduct',
-                    'quantity' => '1'
+                    'quantity' => '2',
+                    'total_amount' => '60000'
                 ]
             ]
         ];
@@ -1016,7 +1025,7 @@ class ShippingMethodsTest extends TestCase
      * @test
      * @throws \ReflectionException
      */
-    public function testCouponInvalidForShippingAddress()
+    public function couponInvalidForShippingAddress()
     {
         $parentQuoteCoupon = 'IGNORED_SHIPPING_ADDRESS_COUPON';
         $configCoupons = ['BOLT_TEST', 'ignored_shipping_address_coupon'];
@@ -1099,6 +1108,8 @@ class ShippingMethodsTest extends TestCase
                     ->method('setMetaData')->with(
                         [
                             'CART_MISMATCH' => [
+                                'cart_total' => array( 'TestProduct2' => 100 ),
+                                'quote_total' => array('TestProduct' => 60000 ),
                                 'cart_items'  => $cart['items'],
                                 'quote_items' => null,
                             ]
@@ -1117,6 +1128,38 @@ class ShippingMethodsTest extends TestCase
         );
     }
 
+    /**
+     * @test
+     * @covers ::checkCartItems
+     * @doesNotPerformAssertions
+     */
+    public function checkCartItems_noTotalsMismatchForRoundingError()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'items'      => [
+                [
+                    'sku'      => 'TestProduct',
+                    'quantity' => '2',
+                    'total_amount' => 60000 // round(299.995) * 2, not round(299.995 * 2)
+                ]
+            ]
+        ];
+        $this->initCurrentMock();
+        $quote = $this->getQuoteMock([]);
+        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+
+        // no exception expected
+
+        self::invokeInaccessibleMethod(
+            $this->currentMock,
+            'checkCartItems',
+            [
+                $cart
+            ]
+        );
+
+    }
 
     /**
      * @param $errCode
@@ -1155,6 +1198,11 @@ class ShippingMethodsTest extends TestCase
         $quoteId = self::IMMUTABLE_QUOTE_ID,
         $parentQuoteId = self::PARENT_QUOTE_ID
     ) {
+        $this->storeMock = $this->getMockBuilder(Store::class)
+            ->setMethods(['setCurrentCurrencyCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
@@ -1162,13 +1210,15 @@ class ShippingMethodsTest extends TestCase
         $quoteItem->method('getSku')
             ->willReturn('TestProduct');
         $quoteItem->method('getQty')
-            ->willReturn(1);
+              ->willReturn(2);
+        $quoteItem->method('getCalculationPrice')
+              ->willReturn(299.995);
 
 
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode'
+            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -1190,11 +1240,13 @@ class ShippingMethodsTest extends TestCase
         $quote->method('getShippingAddress')
             ->willReturn($shippingAddress);
         $quote->method('getQuoteCurrencyCode')
-            ->willReturn('$');
+            ->willReturn('USD');
         $quote->method('collectTotals')
             ->willReturnSelf();
         $quote->method('save')
-            ->willReturnSelf();
+              ->willReturnSelf();
+        $quote->method('getStore')
+              ->willReturn($this->storeMock);
 
         return $quote;
     }

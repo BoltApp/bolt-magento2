@@ -27,7 +27,9 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
 use Magento\Sales\Model\Order\Invoice as Invoice;
+use Magento\Sales\Model\Order as OrderModel;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Directory\Model\Currency;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -776,7 +778,24 @@ class OrderTest extends TestCase
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:pending");
     }
-    
+
+    /**
+     * @test
+     */
+    public function formatAmount()
+    {
+        $magentoOrderMock = $this->createMock(OrderModel::class);
+        $currencyMock = $this->createMock(Currency::class);
+        $currencyMock->expects($this->exactly(1))
+             ->method('formatTxt')
+             ->willReturn("$1.23");
+        $magentoOrderMock->expects($this->exactly(1))
+          ->method('getOrderCurrency')
+          ->willReturn($currencyMock);
+
+        $this->assertEquals("$1.23", $this->currentMock->formatAmountForDisplay($magentoOrderMock, 1.23));
+    }
+
     /**
      * @test
      * @covers ::createOrderInvoice
@@ -810,7 +829,7 @@ class OrderTest extends TestCase
             
         $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
     }
-    
+
     public function additionAmountTotalProvider() {
 		return [
             [ 12.25, 12.25, true ],

@@ -170,7 +170,7 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function testCanReviewPayment()
+    public function canReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
             ->with('transaction_state')
@@ -182,7 +182,7 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function testCannotReviewPayment()
+    public function cannotReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
             ->with('transaction_state')
