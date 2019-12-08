@@ -39,6 +39,7 @@ use Magento\Payment\Model\Method\AbstractMethod;
 use Magento\Payment\Model\Method\Logger;
 use Magento\Sales\Model\Order as ModelOrder;
 use Magento\Sales\Model\Order\Payment\Transaction;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -385,7 +386,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $captureAmount = $amount * 100;
+            $captureAmount = CurrencyUtils::toMinor($amount, "USD");
 
             //Get capture data
             $capturedData = [
@@ -457,7 +458,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $refundAmount = $amount * 100;
+            $refundAmount = CurrencyUtils::toMinor($amount, "USD");
 
             //Get refund data
             $refundData = [
