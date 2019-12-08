@@ -421,9 +421,9 @@ class Order extends AbstractHelper
      */
     private function adjustTaxMismatch($transaction, $order, $quote)
     {
-        $precision = CurrencyUtils::getPrecisionForCurrencyCode("USD");
         $boltTaxAmount = CurrencyUtils::toMajor($transaction->order->cart->tax_amount->amount, "USD");
         $boltTotalAmount = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, "USD");
+        $precision = CurrencyUtils::getPrecisionForCurrencyCode("USD");
         $orderTaxAmount = round($order->getTaxAmount(), $precision);
 
         if ($boltTaxAmount != $orderTaxAmount) {
