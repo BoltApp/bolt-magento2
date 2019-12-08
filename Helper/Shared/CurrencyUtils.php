@@ -205,7 +205,7 @@ class CurrencyUtils {
     }
 
     /**
-     * Convert major currency (eg dollar) to minor currency (eg cents). For currencies that don't have minor unit (eg JPY).
+     * Convert major currency (eg dollar) to minor currency (eg cents). For currencies that don't have minor unit (eg JPY),
      * returns input as is. Result will be rounded to integer.
      * Example:
      *   toMinor(12.34, "USD") -> 1234
@@ -235,5 +235,23 @@ class CurrencyUtils {
     public static function toMinorWithoutRounding($amountInMajor, $currencyCode) {
         $precision = self::getPrecisionForCurrencyCode($currencyCode);
         return $amountInMajor * pow(10, $precision);
+    }
+
+    /**
+     * Convert minor currency amount (eg cents) to major currency (eg dollar). For currencies that don't have minor unit
+     * (eg JPY), returns input as is.
+     * Example:
+     *   toMajor(1234, "USD") -> 12.34
+     *   toMajor(1234, "JPY") -> 1234
+     *
+     * @param float $amountInMinor
+     * @param string $currencyCode 3-digit currency code
+     *
+     * @return integer amount in minor currency
+     * @throws \Exception when unknown currency code is passed
+     */
+    public static function toMajor($amountInMinor, $currencyCode) {
+        $precision = self::getPrecisionForCurrencyCode($currencyCode);
+        return $amountInMinor / pow(10, $precision);
     }
 }
