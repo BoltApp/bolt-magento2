@@ -138,7 +138,7 @@ class Save extends Action
      * @param Quote $quote
      * @return void
      */
-    private function replaceQuote($quote)
+    protected function replaceQuote($quote)
     {
         $this->checkoutSession->replaceQuote($quote);
     }
@@ -150,7 +150,7 @@ class Save extends Action
      *
      * @return void
      */
-    private function clearQuoteSession($quote)
+    protected function clearQuoteSession($quote)
     {
         $this->checkoutSession->setLastQuoteId($quote->getId())
                               ->setLastSuccessQuoteId($quote->getId())
@@ -164,7 +164,7 @@ class Save extends Action
      *
      * @return void
      */
-    private function clearOrderSession($order)
+    protected function clearOrderSession($order)
     {
         $this->checkoutSession->setLastOrderId($order->getId())
                               ->setLastRealOrderId($order->getIncrementId())
