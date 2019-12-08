@@ -680,7 +680,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $diff = CurrencyUtils::toMinorWithoutRounding($cost, "USD") - $roundedCost;
 
-            $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + CurrencyUtils::toMajor($diff, "USD"));
+            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), "USD") + $diff);
 
             if ($discountAmount) {
                 if ($cost == 0) {

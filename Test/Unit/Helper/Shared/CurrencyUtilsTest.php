@@ -96,6 +96,7 @@ class CurrencyUtilsTest extends TestCase {
         return [
             [ "USD", 1234, 12.34 ],
             [ "JPY", 1234, 1234 ],
+            [ "USD", 1234.5, 12.35 ],
         ];
     }
 }

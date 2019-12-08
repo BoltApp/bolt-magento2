@@ -239,19 +239,20 @@ class CurrencyUtils {
 
     /**
      * Convert minor currency amount (eg cents) to major currency (eg dollar). For currencies that don't have minor unit
-     * (eg JPY), returns input as is.
+     * (eg JPY), returns input as is. Result is rounded with currency's precision.
      * Example:
      *   toMajor(1234, "USD") -> 12.34
      *   toMajor(1234, "JPY") -> 1234
+     *   toMajor(1234.5, "USD") -> 12.35
      *
      * @param float $amountInMinor
      * @param string $currencyCode 3-digit currency code
      *
-     * @return integer amount in minor currency
+     * @return float amount in major currency
      * @throws \Exception when unknown currency code is passed
      */
     public static function toMajor($amountInMinor, $currencyCode) {
         $precision = self::getPrecisionForCurrencyCode($currencyCode);
-        return $amountInMinor / pow(10, $precision);
+        return round($amountInMinor / (float) pow(10, $precision), $precision);
     }
 }
