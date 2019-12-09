@@ -117,14 +117,14 @@ class SaveTest extends TestCase
             ->getMock();
 
         //clearQuoteSession
-        $checkoutSession->method('setLastQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
-        $checkoutSession->method('setLastSuccessQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
-        $checkoutSession->method('clearHelperData')->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('setLastQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('setLastSuccessQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('clearHelperData')->willReturnSelf();
 
         //clearOrderSession
-        $checkoutSession->method('setLastOrderId')->with(self::ORDER_ID)->willReturnSelf();
-        $checkoutSession->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
-        $checkoutSession->method('setLastOrderStatus')->with(self::STATUS)->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('setLastOrderId')->with(self::ORDER_ID)->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
+        $checkoutSession->expects($this->once())->method('setLastOrderStatus')->with(self::STATUS)->willReturnSelf();
 
         //replaceQuote
         $checkoutSession->method('replaceQuote')->with($this->quoteMock);
@@ -146,10 +146,6 @@ class SaveTest extends TestCase
                 $this->dataObjectFactory
             ])
             ->getMock();
-
-        $save->expects($this->once())->method('replaceQuote')->with($this->quoteMock);
-        $save->expects($this->once())->method('clearQuoteSession')->with($this->quoteMock);
-        $save->expects($this->once())->method('clearOrderSession')->with($this->orderMock);
 
         $save->method('getRequest')->willReturn($request);
 
