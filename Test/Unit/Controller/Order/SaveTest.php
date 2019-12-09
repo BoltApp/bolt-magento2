@@ -97,8 +97,6 @@ class SaveTest extends TestCase
         $url->method('getUrl')->willReturn(self::SUCCESS_URL);
         $this->context->method('getUrl')->willReturn($url);
 
-        $this->configHelper->method('getSuccessPageRedirect');
-
         $request = $this->createMock(RequestInterface::class);
         $request->method('getParam')->willReturn(self::REFERENCE);
 
