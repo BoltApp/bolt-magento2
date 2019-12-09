@@ -33,6 +33,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Webapi\Rest\Request;
@@ -677,7 +678,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
-            $diff = $cost * 100 - $roundedCost;
+            $diff = CurrencyUtils::toMinorWithoutRounding($cost, "USD") - $roundedCost;
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 

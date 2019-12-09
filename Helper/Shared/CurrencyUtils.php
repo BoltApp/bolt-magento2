@@ -192,9 +192,9 @@ class CurrencyUtils {
      * Returns "precision" of currency. For instance USD has precision of 2 because $1.23 is valid amount white $1.234 is not
      * (there is no such thing as 0.1 cent). Likewise precision of JPY is 0 because there is no 0.1 yen.
      *
-     * @param $code 3-digit ISO currency code
+     * @param string $code 3-digit ISO currency code
      *
-     * @return precision in integer
+     * @return int precision in integer
      * @throws \Exception when unknown currency code is passed
      */
     public static function getPrecisionForCurrencyCode($code) {
@@ -202,5 +202,38 @@ class CurrencyUtils {
             throw new \Exception("unknown currency code: " . $code);
         }
         return CurrencyUtils::currencyToPrecisions[$code];
+    }
+
+    /**
+     * Convert major currency (eg dollar) to minor currency (eg cents). For currencies that don't have minor unit (eg JPY).
+     * returns input as is. Result will be rounded to integer.
+     * Example:
+     *   toMinor(12.34, "USD") -> 1234
+     *   toMinor(1234, "JPY") -> 1234
+     *   toMinor(12.345, "USD") -> 1235
+     *
+     * @param float $amountInMajor
+     * @param string $currencyCode 3-digit currency code
+     *
+     * @return integer amount in minor currency
+     * @throws \Exception when unknown currency code is passed
+     */
+    public static function toMinor($amountInMajor, $currencyCode) {
+        return (int) round(self::toMinorWithoutRounding($amountInMajor, $currencyCode));
+    }
+
+    /**
+     * This function behaves same as toMinor, but without rounding result.
+     * @see CurrencyUtils::toMinor()
+     *
+     * @param float $amountInMajor
+     * @param string $currencyCode 3-digit currency code
+     *
+     * @return float amount in minor currency
+     * @throws \Exception when unknown currency code is passed
+     */
+    public static function toMinorWithoutRounding($amountInMajor, $currencyCode) {
+        $precision = self::getPrecisionForCurrencyCode($currencyCode);
+        return $amountInMajor * pow(10, $precision);
     }
 }

@@ -48,6 +48,21 @@ class CurrencyUtilsTest extends TestCase {
         CurrencyUtils::getPrecisionForCurrencyCode( "XXX" );
     }
 
+    /**
+     * @test
+     * @dataProvider toMinorData
+     */
+    public function toMinor( $code, $amount, $expected, $unused ) {
+        $this->assertEquals( $expected, CurrencyUtils::toMinor( $amount, $code ) );
+    }
+
+    /**
+     * @test
+     * @dataProvider toMinorData
+     */
+    public function toMinorWithoutRounding( $code, $amount, $unused, $expected ) {
+        $this->assertEquals( $expected, CurrencyUtils::toMinorWithoutRounding( $amount, $code ) );
+    }
 
     public function currencyAndPrecisions() {
         return [
@@ -55,6 +70,17 @@ class CurrencyUtilsTest extends TestCase {
             [ "JPY", 0 ],
             [ "EUR", 2 ],
             [ "CAD", 2 ]
+        ];
+    }
+
+    public function toMinorData() {
+        return [
+            // code, amount, toMinor, toMinorWithoutRounding
+            [ "USD", 12.34, 1234, 1234 ],
+            [ "JPY", 1234, 1234, 1234 ],
+            [ "USD", 12.345, 1235, 1234.5 ],
+            [ "JPY", 1234.5, 1235, 1234.5 ],
+            [ "USD", 0, 0, 0 ]
         ];
     }
 }
