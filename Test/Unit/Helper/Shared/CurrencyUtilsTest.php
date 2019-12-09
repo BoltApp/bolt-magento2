@@ -64,6 +64,14 @@ class CurrencyUtilsTest extends TestCase {
         $this->assertEquals( $expected, CurrencyUtils::toMinorWithoutRounding( $amount, $code ) );
     }
 
+    /**
+     * @test
+     * @dataProvider toMajorData
+     */
+    public function toMajor( $code, $amount, $expected ) {
+        $this->assertEquals( $expected, CurrencyUtils::toMajor( $amount, $code ) );
+    }
+
     public function currencyAndPrecisions() {
         return [
             [ "USD", 2 ],
@@ -81,6 +89,14 @@ class CurrencyUtilsTest extends TestCase {
             [ "USD", 12.345, 1235, 1234.5 ],
             [ "JPY", 1234.5, 1235, 1234.5 ],
             [ "USD", 0, 0, 0 ]
+        ];
+    }
+
+    public function toMajorData() {
+        return [
+            [ "USD", 1234, 12.34 ],
+            [ "JPY", 1234, 1234 ],
+            [ "USD", 1234.5, 12.35 ],
         ];
     }
 }

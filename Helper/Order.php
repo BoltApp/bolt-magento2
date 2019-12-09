@@ -417,13 +417,14 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @param OrderModel $order
      * @param Quote $quote
+     * @throws \Exception
      */
     private function adjustTaxMismatch($transaction, $order, $quote)
     {
-        $boltTaxAmount = round($transaction->order->cart->tax_amount->amount / 100, 2);
-        $boltTotalAmount = round($transaction->order->cart->total_amount->amount / 100, 2);
-
-        $orderTaxAmount = round($order->getTaxAmount(), 2);
+        $boltTaxAmount = CurrencyUtils::toMajor($transaction->order->cart->tax_amount->amount, "USD");
+        $boltTotalAmount = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, "USD");
+        $precision = CurrencyUtils::getPrecisionForCurrencyCode("USD");
+        $orderTaxAmount = round($order->getTaxAmount(), $precision);
 
         if ($boltTaxAmount != $orderTaxAmount) {
             $order->setTaxAmount($boltTaxAmount);
@@ -1203,7 +1204,7 @@ class Order extends AbstractHelper
             $comment = __(
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-                $boltTotal / 100,
+                CurrencyUtils::toMajor($boltTotal, "USD"),
                 $order->getGrandTotal(),
                 $this->formatReferenceUrl($transaction->reference)
             );
@@ -1611,8 +1612,8 @@ class Order extends AbstractHelper
 
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
-            $this->validateCaptureAmount($order, $amount / 100);
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+            $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, "USD"));
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, "USD"));
         }
 
         if (!$order->getTotalDue()) {
