@@ -103,8 +103,6 @@ class SaveTest extends TestCase
         $request = $this->createMock(RequestInterface::class);
         $request->method('getParam')->willReturn(self::REFERENCE);
 
-        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
-
         $this->orderHelper->method('saveUpdateOrder')->willReturn([$this->quoteMock, $this->orderMock]);
 
         $checkoutSession = $this->getMockBuilder(Session::class)
