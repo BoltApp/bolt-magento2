@@ -126,4 +126,29 @@ class CustomerCreditCard extends AbstractModel
 
         return $response;
     }
+
+    /**
+     * @return object
+     */
+    public function getCardInfoObject(){
+        $cardInfoArray = json_decode($this->getCardInfo(), true);
+        $cartInfo = $this->dataObjectFactory->create();
+        $cartInfo->setData($cardInfoArray);
+
+        return $cartInfo;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCardType(){
+        return $this->getCardInfoObject()->getData('display_network');
+    }
+
+    /**
+     * @return string
+     */
+    public function getCardLast4Digit(){
+        return ($last4 = $this->getCardInfoObject()->getData('last4')) ? 'XXXX-'.$last4 : '';
+    }
 }

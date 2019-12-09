@@ -38,6 +38,7 @@ class CustomerCreditCardTest extends TestCase
     const ORDER_CURRENCY_CODE = 'USD';
     const CONSUMER_ID = '113';
     const CREDIT_CARD_ID = '114';
+    const CARD_INFO = '{"id":"CAfe9tP97CMXs","last4":"1111","display_network":"Visa"}';
 
     /**
      * @var \Bolt\Boltpay\Model\CustomerCreditCard
@@ -101,7 +102,7 @@ class CustomerCreditCardTest extends TestCase
     {
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey'])
+            ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey','setData'])
             ->getMock();
 
         $this->order = $this->createPartialMock(
@@ -136,7 +137,7 @@ class CustomerCreditCardTest extends TestCase
                 $this->resourceCollection,
                 []
             ])
-            ->setMethods(['_init'])
+            ->setMethods(['_init','getCardInfo','getCardInfoObject'])
             ->getMock();
     }
 
@@ -196,5 +197,136 @@ class CustomerCreditCardTest extends TestCase
         $this->apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
 
         $this->assertTrue($this->mockCustomerCreditCard->recharge($this->order));
+    }
+
+    /**
+     * @test
+     * @param $data
+     * @dataProvider providerGetCardInfoObject
+     */
+    public function getCardInfoObject($data){
+        $mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
+            ->setConstructorArgs([
+                $this->context,
+                $this->registry,
+                $this->configHelper,
+                $this->dataObjectFactory,
+                $this->apiHelper,
+                $this->cartHelper,
+                $this->resource,
+                $this->resourceCollection,
+                []
+            ])
+            ->setMethods(['_init','getCardInfo'])
+            ->getMock();
+
+        $mockCustomerCreditCard->expects(self::once())->method('getCardInfo')->willReturn($data['info']);
+
+        $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->dataObjectFactory->expects(self::once())->method('setData')->will($this->returnCallback(
+            function($result) use ($data)  {
+                $this->assertEquals($data['expected'],$result);
+            }
+        ));
+
+        $mockCustomerCreditCard->getCardInfoObject();
+    }
+
+    public function providerGetCardInfoObject(){
+        return [
+            ['data' =>
+                [
+                    'info' => self::CARD_INFO,
+                    'expected' => [
+                        'id' => 'CAfe9tP97CMXs',
+                        'last4' => '1111',
+                        'display_network' => 'Visa'
+                    ]
+                ]
+            ],
+            ['data' =>
+                [
+                    'info' => '',
+                    'expected' => ''
+                ]
+            ],
+            ['data' =>
+                [
+                    'info' => '{"id":"","last4":"1111","display_network":"Visa"}',
+                    'expected' => [
+                        'id' => '',
+                        'last4' => '1111',
+                        'display_network' => 'Visa'
+                    ]
+                ]
+        ]
+
+        ];
+    }
+
+    /**
+     * @test
+     * @param $data
+     * @dataProvider providerGetCardType
+     */
+    public function getCardType($data){
+        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
+        $result = $this->mockCustomerCreditCard->getCardType();
+        $this->assertEquals($data['expected'],$result);
+    }
+
+    public function providerGetCardType(){
+        return [
+            ['data' =>
+                [
+                    'info' => new \Magento\Framework\DataObject([
+                            'id' => 'CAfe9tP97CMXs',
+                            'last4' => '1111',
+                            'display_network' => 'Visa'
+                    ]),
+                    'expected' => 'Visa'
+                ]
+            ],
+            ['data' =>
+                [
+                    'info' => new \Magento\Framework\DataObject(),
+                    'expected' => ''
+                ]
+            ]
+
+        ];
+    }
+
+    /**
+     * @test
+     * @param $data
+     * @dataProvider providerGetCardLast4Digit
+     */
+    public function getCardLast4Digit($data){
+        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
+        $result = $this->mockCustomerCreditCard->getCardLast4Digit();
+        $this->assertEquals($data['expected'],$result);
+    }
+
+    public function providerGetCardLast4Digit(){
+        return [
+            ['data' =>
+                [
+                    'info' => new \Magento\Framework\DataObject([
+                        'id' => 'CAfe9tP97CMXs',
+                        'last4' => '1111',
+                        'display_network' => 'Visa'
+                    ]),
+                    'expected' => 'XXXX-1111'
+                ]
+            ],
+            ['data' =>
+                [
+                    'info' => new \Magento\Framework\DataObject(),
+                    'expected' => ''
+                ]
+            ]
+
+        ];
     }
 }
