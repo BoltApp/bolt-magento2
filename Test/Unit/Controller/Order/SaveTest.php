@@ -93,7 +93,6 @@ class SaveTest extends TestCase
             ->getMock();
         $jsonFactory->method('create')->willReturn($json);
 
-
         $url = $this->createMock(UrlInterface::class);
         $url->method('getUrl')->willReturn(self::SUCCESS_URL);
         $this->context->method('getUrl')->willReturn($url);
