@@ -16,6 +16,7 @@
  */
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard;
 
+use Magento\Framework\Event\ObserverInterface;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
@@ -35,7 +36,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
 {
     const OTHER_METHOD = "NON_BOLT";
 
-    /** @var \Magento\GiftCard\Observer\GenerateGiftCardAccountsOrder|MockObject  */
+    /** @var ObserverInterface|MockObject  */
     protected $subject;
 
     /** @var Observer|MockObject  */
@@ -67,7 +68,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
         );
 
         $this->subject = $this->createMock(
-            \Magento\GiftCard\Observer\GenerateGiftCardAccountsOrder::class
+            ObserverInterface::class
         );
 
         $this->observer = $observer = $this->createMock(Observer::class);

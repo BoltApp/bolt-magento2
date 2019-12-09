@@ -17,14 +17,15 @@
 namespace Bolt\Boltpay\Plugin\Magento\GiftCard;
 
 use Bolt\Boltpay\Model\Payment as BoltPayment;
+use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
 
 class GenerateGiftCardAccountsOrderPlugin
 {
     public function aroundExecute(
-        \Magento\GiftCard\Observer\GenerateGiftCardAccountsOrder $subject,
+        $subject,
         callable $proceed,
-        \Magento\Framework\Event\Observer $observer
+        Observer $observer
     ) {
         $event = $observer->getEvent();
         /** @var Order $order */
