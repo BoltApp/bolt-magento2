@@ -27,19 +27,8 @@ class SaveTest extends TestCase
     const INCREMENT_ID = 1235;
     const STATUS = "Ready";
     const REFERENCE = "referenceValue";
-    const URL = "http://url.return.value/";
-    const SUCCESS_URL = "updatethisvalue";
+    const SUCCESS_URL = "http://url.return.value/";
     const EXCEPTION_MESSAGE = "Exception Message";
-
-    /**
-     * @var Save currentMock
-     */
-    private $currentMock;
-
-    /**
-     * @var ObjectManager | MockObject
-     */
-    private $objectManager;
 
     /**
      * @var Order | MockObject
@@ -52,7 +41,7 @@ class SaveTest extends TestCase
     private $quoteMock;
 
     /**
-     * @var Bugsnag| MockObject
+     * @var Bugsnag | MockObject
      */
     private $bugsnagMock;
 
@@ -86,21 +75,6 @@ class SaveTest extends TestCase
         $this->initRequiredMocks();
     }
 
-    private function createJson($expected)
-    {
-        $json = $this->getMockBuilder(Json::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $json->expects($this->once())
-            ->method('setData')
-            ->with($expected);
-        $resultJsonFactory = $this->getMockBuilder(ResultJsonFactory::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $resultJsonFactory->method('create')->willReturn($json);
-        return $resultJsonFactory;
-    }
-
     public function testExecute_HappyPath()
     {
         $result = [
@@ -108,7 +82,17 @@ class SaveTest extends TestCase
             'success_url' => self::SUCCESS_URL
         ];
 
-        $jsonFactory = $this->createJson($result);
+        $json = $this->getMockBuilder(Json::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $json->expects($this->once())
+            ->method('setData')
+            ->with($result);
+        $jsonFactory = $this->getMockBuilder(ResultJsonFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $jsonFactory->method('create')->willReturn($json);
+
 
         $url = $this->createMock(UrlInterface::class);
         $url->method('getUrl')->willReturn(self::SUCCESS_URL);
@@ -241,7 +225,7 @@ class SaveTest extends TestCase
 
         $this->quoteMock->method('getId')->willReturn(self::QUOTE_ID);
 
-        $this->configHelper->method('getSuccessPageRedirect')->willReturn(self::URL);
+        $this->configHelper->method('getSuccessPageRedirect')->willReturn(self::SUCCESS_URL);
 
     }
 }
