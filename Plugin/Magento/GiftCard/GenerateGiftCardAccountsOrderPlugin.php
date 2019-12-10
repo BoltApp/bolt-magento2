@@ -30,9 +30,10 @@ class GenerateGiftCardAccountsOrderPlugin
         $event = $observer->getEvent();
         /** @var Order $order */
         $order =  $event->getOrder();
-        if ($order->getPayment()->getMethod() != BoltPayment::METHOD_CODE ||
-            !in_array($order->getStatus(), [Order::STATE_PENDING_PAYMENT, Order::STATE_CANCELED])) {
-            return $proceed($observer);
+        if ($order->getPayment()->getMethod() === BoltPayment::METHOD_CODE &&
+            in_array($order->getStatus(), [Order::STATE_PENDING_PAYMENT, Order::STATE_CANCELED])) {
+            return;
         }
+        return $proceed($observer);
     }
 }

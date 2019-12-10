@@ -104,7 +104,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
         $this->payment->method('getMethod')->willReturn($paymentMethod);
         $this->order->method('getStatus')->willReturn($orderStatus);
 
-        $this->callback->expects($this->$expects())->method('__invoke');
+        $this->callback->expects($this->$expects())->method('__invoke')->with($this->observer);
 
         $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
     }
