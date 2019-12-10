@@ -34,7 +34,9 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  */
 class GenerateGiftCardAccountsOrderPluginTest extends TestCase
 {
-    const OTHER_METHOD = "NON_BOLT";
+    const OTHER_METHOD = 'NON_BOLT';
+    const EXPECTS_NEVER = 'never';
+    const EXPECTS_ONCE = 'once';
 
     /** @var ObserverInterface|MockObject  */
     protected $subject;
@@ -94,46 +96,29 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
 
     /**
      * @test
-     * @dataProvider methodAndStatusProceed
+     * @dataProvider methodStatusExpects
      * @covers ::aroundExecute
      */
-    public function aroundExecute_doProceed($paymentMethod, $orderStatus)
+    public function aroundExecute($paymentMethod, $orderStatus, $expects)
     {
         $this->payment->method('getMethod')->willReturn($paymentMethod);
         $this->order->method('getStatus')->willReturn($orderStatus);
-        $this->callback->expects($this->once())->method('__invoke');
+
+        $this->callback->expects($this->$expects())->method('__invoke');
+
         $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
     }
 
-    public function methodAndStatusProceed()
+    public function methodStatusExpects()
     {
         return [
-            [self::OTHER_METHOD, Order::STATE_PENDING_PAYMENT],
-            [self::OTHER_METHOD, Order::STATE_CANCELED],
-            [self::OTHER_METHOD, Order::STATE_PROCESSING],
-            [BoltPayment::METHOD_CODE, Order::STATE_PROCESSING],
-            [BoltPayment::METHOD_CODE, Order::STATE_NEW]
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider methodAndStatusStop
-     * @covers ::aroundExecute
-     */
-    public function aroundExecute_doNotProceed($paymentMethod, $orderStatus)
-    {
-        $this->payment->method('getMethod')->willReturn($paymentMethod);
-        $this->order->method('getStatus')->willReturn($orderStatus);
-        $this->callback->expects($this->never())->method('__invoke');
-        $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
-    }
-
-    public function methodAndStatusStop()
-    {
-        return [
-            [BoltPayment::METHOD_CODE, Order::STATE_PENDING_PAYMENT],
-            [BoltPayment::METHOD_CODE, Order::STATE_CANCELED]
+            [self::OTHER_METHOD, Order::STATE_PENDING_PAYMENT, self::EXPECTS_ONCE],
+            [self::OTHER_METHOD, Order::STATE_CANCELED, self::EXPECTS_ONCE],
+            [self::OTHER_METHOD, Order::STATE_PROCESSING, self::EXPECTS_ONCE],
+            [BoltPayment::METHOD_CODE, Order::STATE_PROCESSING, self::EXPECTS_ONCE],
+            [BoltPayment::METHOD_CODE, Order::STATE_NEW, self::EXPECTS_ONCE],
+            [BoltPayment::METHOD_CODE, Order::STATE_PENDING_PAYMENT, self::EXPECTS_NEVER],
+            [BoltPayment::METHOD_CODE, Order::STATE_CANCELED, self::EXPECTS_NEVER]
         ];
     }
 }
