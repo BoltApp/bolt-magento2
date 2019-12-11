@@ -1,35 +1,32 @@
 {
-    "name": "boltpay/bolt-magento2",
-    "description": "Bolt payment gateway integration",
-    "require": {
-        "magento/module-sales": "100.*|101.*|102.*",
-        "magento/module-checkout": "100.*|101.*|102.*",
-        "magento/module-payment": "100.*|101.*|102.*",
-        "magento/module-tax": "100.*|101.*|102.*",
-        "magento/framework": "100.*|101.*|102.*",
-        "bugsnag/bugsnag": "^3.4"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "~6.2.0",
-        "mikey179/vfsstream": "^1.6"
-    },
-    "type": "magento2-module",
-<<<<<<< HEAD
-    "version": "2.0.2.2",
-=======
-    "version": "2.1.0",
->>>>>>> branch '2.1.0-fix4nume' of git@github.com:BoltApp/bolt-magento2.git
-    "license": "MIT",
-    "autoload": {
-        "files": [ "registration.php" ],
-        "psr-4": {
-            "Bolt\\Boltpay\\": ""
-        }
-    },
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://repo.magento.com/"
-        }
-    ]
+	"name" : "boltpay/bolt-magento2",
+	"description" : "Bolt payment gateway integration",
+	"require" : {
+		"magento/module-sales" : "100.*|101.*|102.*",
+		"magento/module-checkout" : "100.*|101.*|102.*",
+		"magento/module-payment" : "100.*|101.*|102.*",
+		"magento/module-tax" : "100.*|101.*|102.*",
+		"magento/framework" : "100.*|101.*|102.*",
+		"bugsnag/bugsnag" : "^3.4"
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "~6.2.0",
+		"mikey179/vfsstream" : "^1.6"
+	},
+	"type" : "magento2-module",
+	"version" : "2.1.0",
+	"license" : "MIT",
+	"autoload" : {
+		"files" : [
+			"registration.php"
+		],
+		"psr-4" : {
+			"Bolt\\Boltpay\\" : ""
+		}
+	},
+	"repositories" : [{
+			"type" : "composer",
+			"url" : "https://repo.magento.com/"
+		}
+	]
 }
