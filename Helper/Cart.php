@@ -54,6 +54,8 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
 use Magento\Catalog\Pricing\Price\FinalPrice;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\App\Request\Http as RequestHttp;
 
 /**
  * Boltpay Cart helper
@@ -211,30 +213,35 @@ class Cart extends AbstractHelper
     private $orderData;
 
     /**
-     * @param Context           $context
-     * @param CheckoutSession   $checkoutSession
-     * @param ProductRepository $productRepository
-     * @param ApiHelper         $apiHelper
-     * @param ConfigHelper      $configHelper
-     * @param CustomerSession   $customerSession
-     * @param Registry          $coreRegistry
-     * @param LogHelper         $logHelper
-     * @param Bugsnag           $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
-     * @param BlockFactory      $blockFactory
-     * @param Emulation         $appEmulation
-     * @param QuoteFactory      $quoteFactory
-     * @param TotalsCollector   $totalsCollector
-     * @param QuoteRepository   $quoteRepository
-     * @param OrderRepository   $orderRepository
+     * @var RequestHttp
+     */
+    private $httpRequest;
+
+    /**
+     * @param Context               $context
+     * @param CheckoutSession       $checkoutSession
+     * @param ProductRepository     $productRepository
+     * @param ApiHelper             $apiHelper
+     * @param ConfigHelper          $configHelper
+     * @param CustomerSession       $customerSession
+     * @param LogHelper             $logHelper
+     * @param Bugsnag               $bugsnag
+     * @param DataObjectFactory     $dataObjectFactory
+     * @param BlockFactory          $blockFactory
+     * @param Emulation             $appEmulation
+     * @param QuoteFactory          $quoteFactory
+     * @param TotalsCollector       $totalsCollector
+     * @param QuoteRepository       $quoteRepository
+     * @param OrderRepository       $orderRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param QuoteResource     $quoteResource
-     * @param SessionHelper $sessionHelper
-     * @param CheckoutHelper $checkoutHelper
-     * @param DiscountHelper $discountHelper
-     * @param CacheInterface $cache
-     * @param ResourceConnection $resourceConnection
+     * @param QuoteResource         $quoteResource
+     * @param SessionHelper         $sessionHelper
+     * @param CheckoutHelper        $checkoutHelper
+     * @param DiscountHelper        $discountHelper
+     * @param CacheInterface        $cache
+     * @param ResourceConnection    $resourceConnection
      *
+     * @param RequestHttp           $httpRequest
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -260,7 +267,8 @@ class Cart extends AbstractHelper
         CheckoutHelper $checkoutHelper,
         DiscountHelper $discountHelper,
         CacheInterface $cache,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        RequestHttp $httpRequest
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -285,6 +293,7 @@ class Cart extends AbstractHelper
         $this->discountHelper = $discountHelper;
         $this->cache = $cache;
         $this->resourceConnection = $resourceConnection;
+        $this->httpRequest = $httpRequest;
     }
 
     /**
@@ -1094,7 +1103,7 @@ class Cart extends AbstractHelper
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
                 $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
-                if (isset($item_options['attributes_info'])) {
+                if(isset($item_options['attributes_info'])){
                     $properties = [];
                     foreach ($item_options['attributes_info'] as $attribute_info) {
                         $properties[] = (object) [
@@ -1315,6 +1324,8 @@ class Cart extends AbstractHelper
                     return [];
                 }
 
+                $this->shipperHqAdminOrderCreateProcess($paymentOnly, $quote);
+
                 $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
@@ -1472,6 +1483,7 @@ class Cart extends AbstractHelper
         $paymentOnly
     ) {
         $quote = $this->getLastImmutableQuote();
+        $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);
         /** @var AddressTotal[] */
         $totals = $quote->getTotals();
@@ -1569,6 +1581,28 @@ class Cart extends AbstractHelper
 
             $diff -= $amount * 100 - $roundedAmount;
             $totalAmount -= $roundedAmount;
+
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process BSS Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if (
+            array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
+            && $this->discountHelper->isBssStoreCreditAllowed()
+        ) {
+            $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
 
@@ -1610,6 +1644,28 @@ class Cart extends AbstractHelper
                     $totalAmount -= $roundedAmount;
                 }
             }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Rewards Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
+            $roundedAmount = $this->getRoundAmount($amount);
+
+            $discounts[] = [
+                'description' =>
+                    $this->configHelper->getScopeConfig()->getValue(
+                        'rewards/general/point_unit_name',
+                        ScopeInterface::SCOPE_STORE,
+                        $quote->getStoreId()
+                    ),
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
         }
         /////////////////////////////////////////////////////////////////////////////////
 
@@ -1758,5 +1814,53 @@ class Cart extends AbstractHelper
 
         // no restrictions
         return false;
+    }
+
+    /**
+     * Only for back-office: Dispatch event for ShipperHQ method.
+     * Pre-Auth is OFF for back-office.
+     *
+     * @param bool          $paymentOnly
+     * @param Quote|null    $quote
+     * @return bool
+     */
+    public function shipperHqAdminOrderCreateProcess($paymentOnly, $quote = null)
+    {
+        if (!$paymentOnly || !$quote) {
+            return false;
+        }
+
+        /** @var QuoteAddress $shippingAddress */
+        $shippingAddress = $quote->getShippingAddress();
+        $shippingMethod = $shippingAddress->getShippingMethod();
+
+        if (!$shippingMethod || $shippingMethod !== 'shipperadmin_adminshipping') {
+            return false;
+        }
+
+        /** @var \Magento\Backend\Model\Session\Quote $session */
+        $session = $this->checkoutSession;
+        if (!($session instanceof \Magento\Backend\Model\Session\Quote)) {
+            return false;
+        }
+
+        /** @var RequestHttp $request */
+        $request = $this->httpRequest;
+
+        $request->setPostValue('order', [
+            'shipping_method' => $shippingMethod,
+            'custom_price' => $shippingAddress->getShippingAmount(),
+            'custom_description' => $shippingAddress->getShippingDescription()
+        ]);
+
+        $eventData = [
+            'order_create_model' => null,
+            'request_model' => $request,
+            'session' => $session,
+        ];
+
+        $this->_eventManager->dispatch('adminhtml_sales_order_create_process_data_before', $eventData);
+
+        return true;
     }
 }

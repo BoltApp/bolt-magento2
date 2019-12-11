@@ -5,3 +5,5 @@
 docker-container/magento-cloud
 auth.json
 config.sh
+vendor/
+composer.lock

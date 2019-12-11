@@ -132,6 +132,12 @@ class Order extends AbstractHelper
             self::TS_CANCELED
         ]
     ];
+    const TT_PAYMENT = 'cc_payment';
+    const TT_CREDIT = 'cc_credit';
+    const TT_PAYPAL_PAYMENT = 'paypal_payment';
+    const TT_PAYPAL_REFUND = 'paypal_refund';
+    const TT_APM_PAYMENT = 'apm_payment';
+    const TT_APM_REFUND = 'apm_refund';
 
     /**
      * @var ApiHelper
@@ -340,7 +346,11 @@ class Order extends AbstractHelper
 
         $shippingMethod = $transaction->order->cart->shipments[0]->reference;
 
-        $shippingAddress->setShippingMethod($shippingMethod)->save();
+        $shippingAddress->setShippingMethod($shippingMethod);
+
+        $this->cartHelper->shipperHqAdminOrderCreateProcess(true, $quote);
+
+        $shippingAddress->save();
     }
 
     /**
@@ -793,6 +803,27 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+
+            if($order->isCanceled()) {
+                throw new BoltException(
+                    __('Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
+                    null,
+                    CreateOrder::E_BOLT_REJECTED_ORDER
+                );
+            }
+
+            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+                throw new BoltException(
+                    __('Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
+                        $quote->getReservedOrderId(),
+                        $quote->getId()),
+                    null,
+                    CreateOrder::E_BOLT_GENERAL_ERROR
+                );
+            }
+
             if ($this->hasSamePrice($order, $transaction)) {
                 return $order;
             }
@@ -874,9 +905,48 @@ class Order extends AbstractHelper
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
+            $this->bugsnag->registerCallback(function ($report) use ($order) {
+                $report->setMetaData([
+                    'DELETE ORDER' => [
+                        'order increment ID' => $order->getIncrementId(),
+                        'order entity ID' => $order->getId(),
+                    ]
+                ]);
+            });
             $this->bugsnag->notifyException($e);
             $order->delete();
         }
+    }
+
+    /**
+     * Try to cancel the order. Covers the case when the payment was declined before authorization (blacklisted cc).
+     * It is called upon rejected_irreversible hook.
+     *
+     * @param $displayId
+     * @return bool
+     * @throws BoltException
+     */
+    public function tryDeclinedPaymentCancelation($displayId)
+    {
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
+        $order = $this->getExistingOrder($incrementId);
+
+        if (!$order) {
+            throw new BoltException(
+                __(
+                    'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
+                    $incrementId,
+                    $quoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+
+        if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+            $this->cancelOrder($order);
+        }
+        return $order->getState() === OrderModel::STATE_CANCELED;
     }
 
     /**
@@ -885,11 +955,7 @@ class Order extends AbstractHelper
      */
     public function deleteOrderByIncrementId($displayId)
     {
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
 
         $order = $this->getExistingOrder($incrementId);
 
@@ -973,10 +1039,6 @@ class Order extends AbstractHelper
         $this->setShippingMethod($quote, $transaction);
         $this->quoteAfterChange($quote);
 
-        $email = @$transaction->order->cart->billing_address->email_address ?:
-            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
-        $this->addCustomerDetails($quote, $email);
-
         // Check if Mageplaza Gift Card data exist and apply it to the parent quote
         $this->discountHelper->applyMageplazaDiscountToQuote($quote);
 
@@ -991,6 +1053,10 @@ class Order extends AbstractHelper
                 'cc_type' => @$transaction->from_credit_card->network
             ]
         );
+
+        $email = @$transaction->order->cart->billing_address->email_address ?:
+            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
+        $this->addCustomerDetails($quote, $email);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
@@ -1080,7 +1146,16 @@ class Order extends AbstractHelper
      */
     public function getTransactionState($transaction, $payment, $hookType = null)
     {
-        $transactionState = $transaction->type.":".$transaction->status;
+        $transactionType = $transaction->type;
+        // If it is an apm type, it needs to behave as regular payment/credit.
+        // Since there are previous states saved, it needs to mimic "cc_payment"/"cc_credit"
+        if (in_array($transactionType, [self::TT_PAYPAL_PAYMENT, self::TT_APM_PAYMENT])) {
+            $transactionType = self::TT_PAYMENT;
+        }
+        if (in_array($transactionType, [self::TT_PAYPAL_REFUND, self::TT_APM_REFUND])) {
+            $transactionType = self::TT_CREDIT;
+        }
+        $transactionState = $transactionType.":".$transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
         $transactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -1328,18 +1403,40 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            try {
-                $order->cancel();
-                $order->setState(OrderModel::STATE_CANCELED);
-                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
-            } catch (\Exception $e) {
-                // Put the order in "canceled" state even if the previous call fails
+            if ($order->canCancel()){
+                $this->cancelOrder($order);
+                return;
+            }
+
+            try{
+                // Restock product quantity when the payment is irreversibly rejected
+                $order->registerCancellation('', false);
+            } catch (\Exception $e){
+                // Put the order in "cancelled" state even if the previous call fails
                 $order->setState(OrderModel::STATE_CANCELED);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
             }
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
+        }
+        $order->save();
+    }
+
+    /**
+     * @param OrderModel $order
+     */
+    protected function cancelOrder($order)
+    {
+        try {
+            $order->cancel();
+            $order->setState(OrderModel::STATE_CANCELED);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+        } catch (\Exception $e) {
+            // Put the order in "canceled" state even if the previous call fails
+            $this->bugsnag->notifyException($e);
+            $order->setState(OrderModel::STATE_CANCELED);
+            $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
         }
         $order->save();
     }
@@ -1643,17 +1740,16 @@ class Order extends AbstractHelper
      */
     private function createOrderInvoice($order, $transactionId, $amount)
     {
-        $capturedAmount = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $amount;
-        $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
-
-        $amount = $amount / 100;
-
-        if ($capturedAmount === $grandTotalAmount) {
-            $invoice = $this->invoiceService->prepareInvoice($order);
-        } else {
-            $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+        try {
+            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
+                $invoice = $this->invoiceService->prepareInvoice($order);
+            } else {
+                $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
-
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
         $invoice->setBaseGrandTotal($amount);
@@ -1702,8 +1798,9 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param                                        $captureAmount
+     * @param float          $captureAmount
      *
+     * @return void
      * @throws \Exception
      */
     protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
@@ -1712,15 +1809,20 @@ class Order extends AbstractHelper
             throw new \Exception( __('Capture amount is invalid'));
         }
 
-        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced()) + $captureAmount;
+        /**
+         * Due to grand total sent to Bolt is rounded, the same operation should be used
+         * when validating captured amount.
+         * Rounding operations are applied to each operand in order to avoid cases when the grand total
+         * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
+         */
+        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
+            + $this->cartHelper->getRoundAmount($captureAmount);
         $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
 
         if ($captured > $grandTotal) {
-            throw new \Exception(__(
-                'Capture amount is invalid: captured [%1], grand total [%2]',
-                $captured,
-                $grandTotal
-            ));
+            throw new \Exception(
+                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+            );
         }
     }
 

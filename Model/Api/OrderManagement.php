@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
@@ -61,6 +62,11 @@ class OrderManagement implements OrderManagementInterface
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @var Response
      */
     private $response;
@@ -76,6 +82,7 @@ class OrderManagement implements OrderManagementInterface
      * @param LogHelper $logHelper
      * @param Request $request
      * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
      * @param Response $response
      * @param Config $configHelper
      */
@@ -85,6 +92,7 @@ class OrderManagement implements OrderManagementInterface
         LogHelper $logHelper,
         Request $request,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper
     ) {
@@ -93,6 +101,7 @@ class OrderManagement implements OrderManagementInterface
         $this->logHelper    = $logHelper;
         $this->request      = $request;
         $this->bugsnag      = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->response     = $response;
         $this->configHelper = $configHelper;
     }
@@ -129,6 +138,7 @@ class OrderManagement implements OrderManagementInterface
         $source_transaction_reference = null
     ) {
         try {
+            $startTime = $this->metricsClient->getCurrentTime();
             HookHelper::$fromBolt = true;
 
             $this->logHelper->addInfoLog($this->request->getContent());
@@ -147,7 +157,13 @@ class OrderManagement implements OrderManagementInterface
                     __('Missing required parameters.')
                 );
             }
-            if ($type === 'failed_payment') {
+            if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
+                $this->response->setHttpResponseCode(200);
+                $this->response->setBody(json_encode([
+                    'status' => 'success',
+                    'message' => 'Order was canceled due to declined payment: ' . $display_id,
+                ]));
+            } elseif ($type === 'failed_payment') {
                 $this->orderHelper->deleteOrderByIncrementId($display_id);
 
                 $this->response->setHttpResponseCode(200);
@@ -169,8 +185,10 @@ class OrderManagement implements OrderManagementInterface
                     'message' => 'Order creation / update was successful',
                 ]));
             }
+            $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
             $this->response->setHttpResponseCode($e->getHttpCode());
             $this->response->setBody(json_encode([
                 'status' => 'error',
@@ -179,6 +197,7 @@ class OrderManagement implements OrderManagementInterface
             ]));
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([
                 'status' => 'error',
