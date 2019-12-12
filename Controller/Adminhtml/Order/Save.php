@@ -127,7 +127,7 @@ class Save extends Action
      *
      * @return void
      */
-    protected function clearQuoteSession($quote)
+    private function clearQuoteSession($quote)
     {
         $this->checkoutSession->setLastQuoteId($quote->getId())
                               ->setLastSuccessQuoteId($quote->getId())
@@ -141,7 +141,7 @@ class Save extends Action
      *
      * @return void
      */
-    protected function clearOrderSession($order)
+    private function clearOrderSession($order)
     {
         $this->checkoutSession->setLastOrderId($order->getId())
                               ->setLastRealOrderId($order->getIncrementId())

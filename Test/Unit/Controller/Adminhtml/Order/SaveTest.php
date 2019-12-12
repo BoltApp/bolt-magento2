@@ -76,7 +76,7 @@ class SaveTest extends TestCase
             ['store_id', self::STORE_ID]
         ];
 
-        $expected= ['success_url' => self::URL];
+        $expectedData = ['success_url' => self::URL];
 
         $order = $this->getMockBuilder(OrderInterface::class)
             ->setMethods([
@@ -104,7 +104,7 @@ class SaveTest extends TestCase
         $this->orderHelper->method('saveUpdateOrder')->willReturn([$quote, $order]);
 
         $json = $this->createMock(Json::class);
-        $json->method('setData');
+        $json->expects($this->once())->method('setData')->with($expectedData);
         $this->resultJsonFactory->method('create')->willReturn($json);
 
         $request = $this->createMock(RequestInterface::class);
@@ -123,14 +123,14 @@ class SaveTest extends TestCase
             ->getMock();
 
         //clearQuoteSession
-        $checkout->method('setLastQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
-        $checkout->method('setLastSuccessQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
-        $checkout->method('clearHelperData')->willReturnSelf();
+        $checkout->expects($this->once())->method('setLastQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
+        $checkout->expects($this->once())->method('setLastSuccessQuoteId')->with(self::QUOTE_ID)->willReturnSelf();
+        $checkout->expects($this->once())->method('clearHelperData')->willReturnSelf();
 
         //clearOrderSession
-        $checkout->method('setLastOrderId')->with(self::ORDER_ID)->willReturnSelf();
-        $checkout->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
-        $checkout->method('setLastOrderStatus')->with(self::ORDER_STATUS)->willReturnSelf();
+        $checkout->expects($this->once())->method('setLastOrderId')->with(self::ORDER_ID)->willReturnSelf();
+        $checkout->expects($this->once())->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
+        $checkout->expects($this->once())->method('setLastOrderStatus')->with(self::ORDER_STATUS)->willReturnSelf();
 
         $save = $this->getMockBuilder(Save::class)
             ->setMethods([
@@ -150,8 +150,8 @@ class SaveTest extends TestCase
             ->getMock();
 
         $save->expects($this->exactly(2))->method('getRequest')->willReturn($request);
-        $save->expects($this->once())->method('clearQuoteSession')->with($quote);
-        $save->expects($this->once())->method('clearOrderSession')->with($order);
+        $save->method('clearQuoteSession')->with($quote);
+        $save->method('clearOrderSession')->with($order);
 
         $save->execute();
     }
