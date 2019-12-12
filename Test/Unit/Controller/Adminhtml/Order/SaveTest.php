@@ -69,7 +69,10 @@ class SaveTest extends TestCase
         $this->initRequiredMocks();
     }
 
-    public function testExecute_HappyPath()
+    /**
+     * @test
+     */
+    public function execute_HappyPath()
     {
         $map = [
             ['reference', self::REFERENCE],
@@ -156,7 +159,10 @@ class SaveTest extends TestCase
         $save->execute();
     }
 
-    public function testExecute_Exception()
+    /**
+     * @test
+     */
+    public function execute_Exception()
     {
         $expectedData = [
             'status' => 'error',
