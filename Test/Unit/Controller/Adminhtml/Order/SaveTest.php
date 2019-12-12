@@ -30,7 +30,7 @@ class SaveTest extends TestCase
     const EXCEPTIONMESSAGE = 'ExceptionMessage';
 
     /**
-     * @var Context|MockObject
+     * @var Context | MockObject
      */
     private $context;
 
