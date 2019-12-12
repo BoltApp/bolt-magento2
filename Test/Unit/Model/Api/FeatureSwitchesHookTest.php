@@ -111,7 +111,10 @@ class FeatureSwitchesHookTest extends TestCase
         );
     }
 
-    public function testWorkingUpdateFromBolt() {
+    /**
+     * @test
+     */
+    public function workingUpdateFromBolt() {
         $this->fsManager
             ->expects($this->once())
             ->method('updateSwitchesFromBolt');
@@ -126,7 +129,10 @@ class FeatureSwitchesHookTest extends TestCase
         $this->assertEquals('{"status":"success"}', $this->response->getBody());
     }
 
-    public function testNotWorkingUpdatesFromBolt() {
+    /**
+     * @test
+     */
+    public function notWorkingUpdatesFromBolt() {
         $this->fsManager
             ->expects($this->once())
             ->method('updateSwitchesFromBolt')

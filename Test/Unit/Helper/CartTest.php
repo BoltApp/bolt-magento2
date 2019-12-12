@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
 use Magento\Catalog\Model\Product;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Quote\Model\Quote;
 use \PHPUnit\Framework\TestCase;
 use Magento\Framework\App\Helper\Context as ContextHelper;
@@ -276,27 +277,7 @@ class CartTest extends TestCase
      */
     private function getQuoteMock($billingAddress, $shippingAddress)
     {
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods([
-                'getSku', 'getQty', 'getCalculationPrice', 'getName', 'getIsVirtual',
-                'getProductId', 'getProduct'
-            ])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quoteItem->method('getName')
-            ->willReturn('Test Product');
-        $quoteItem->method('getSku')
-            ->willReturn('TestProduct');
-        $quoteItem->method('getQty')
-            ->willReturn(1);
-        $quoteItem->method('getCalculationPrice')
-            ->willReturn(self::PRODUCT_PRICE);
-        $quoteItem->method('getIsVirtual')
-            ->willReturn(false);
-        $quoteItem->method('getProductId')
-            ->willReturn(self::PRODUCT_ID);
-        $quoteItem->method('getProduct')
-            ->willReturn($this->getProductMock());
+        $quoteItem = $this->getQuoteItemMock();
 
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
@@ -629,7 +610,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachingDisabled()
+    public function getBoltpayOrderCachingDisabled()
     {
         $mock = $this->getHelperCartMock();
 
@@ -688,7 +669,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderNotCached()
+    public function getBoltpayOrderNotCached()
     {
         $mock = $this->getHelperCartMock();
 
@@ -751,7 +732,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachedQuoteAvailable()
+    public function getBoltpayOrderCachedQuoteAvailable()
     {
         $mock = $this->getHelperCartMock();
 
@@ -817,7 +798,7 @@ ORDER;
     /**
      * @test
      */
-    public function testGetBoltpayOrderCachedQuoteNotAvailable()
+    public function getBoltpayOrderCachedQuoteNotAvailable()
     {
         $mock = $this->getHelperCartMock();
 
@@ -1393,6 +1374,92 @@ ORDER;
     /**
      * @test
      */
+    public function collectDiscounts_BssStoreCredit()
+    {
+        $appliedDiscount = 10; // $
+        $mock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')
+            ->willReturn(999999);
+
+        $mock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
+
+        $mock->expects($this->once())
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
+
+        $mock->expects($this->once())
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())
+            ->method('getCouponCode')
+            ->willReturn(false);
+
+        $shippingAddress->expects($this->any())
+            ->method('getDiscountAmount')
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
+
+        $quote->expects($this->once())
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
+
+        $this->discountHelper->expects($this->never())
+            ->method('getAmastyPayForEverything');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getMageplazaGiftCardCodesFromSession');
+
+        $this->discountHelper->expects($this->never())
+            ->method('getUnirgyGiftCertBalanceByCode');
+
+        $quote->expects($this->any())
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
+
+        $this->discountHelper->expects($this->once())
+            ->method('isBssStoreCreditAllowed')
+            ->willReturn(true);
+
+        $this->discountHelper->expects($this->once())
+            ->method('getBssStoreCreditAmount')
+            ->withAnyParameters()
+            ->willReturn($appliedDiscount);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     */
     public function collectDiscounts_Amasty_Giftcard()
     {
 
@@ -1825,4 +1892,77 @@ ORDER;
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
     }
 
+    /**
+     * @test
+     *      Convert attribute to string if it's a boolean before sending to the Bolt API
+     */
+    public function getCartItems_AttributeInfoValue_Boolean()
+    {
+        $quoteItemOptions = [
+            "attributes_info" => [
+                [
+                    "label" => "Size",
+                    "value" => false
+                ]
+            ]
+        ];
+        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
+            ->setMethods(['getOrderOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
+
+        $productMock = $this->getMockBuilder(Product::class)
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $productMock->method('getDescription')->willReturn('Product Description');
+        $productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+
+        $quoteItemMock = $this->getQuoteItemMock($productMock);
+
+        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems([$quoteItemMock], self::STORE_ID);
+
+        $this->assertCount(1, $products);
+        $this->assertArrayHasKey('properties', $products[0]);
+        $this->assertCount(1, $products[0]['properties']);
+        $this->assertInternalType('string', $products[0]['properties'][0]->value);
+    }
+
+    /**
+     * @param null $product
+     *
+     * @return \PHPUnit_Framework_MockObject_MockObject
+     */
+    private function getQuoteItemMock($product = null)
+    {
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods([
+                'getSku',
+                'getQty',
+                'getCalculationPrice',
+                'getName',
+                'getIsVirtual',
+                'getProductId',
+                'getProduct'
+            ])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('getName')
+            ->willReturn('Test Product');
+        $quoteItem->method('getSku')
+            ->willReturn('TestProduct');
+        $quoteItem->method('getQty')
+            ->willReturn(1);
+        $quoteItem->method('getCalculationPrice')
+            ->willReturn(self::PRODUCT_PRICE);
+        $quoteItem->method('getIsVirtual')
+            ->willReturn(false);
+        $quoteItem->method('getProductId')
+            ->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')
+            ->willReturn($product ? $product : $this->getProductMock());
+
+        return $quoteItem;
+    }
 }

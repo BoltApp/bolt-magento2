@@ -26,7 +26,10 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Sales\Model\Order\Invoice as Invoice;
+use Magento\Sales\Model\Order as OrderModel;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Directory\Model\Currency;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -220,6 +223,11 @@ class OrderTest extends TestCase
                 'cancelOrder',
                 'hasSamePrice',
                 'orderPostprocess',
+                'getUnprocessedCapture',
+                'isCaptureHookRequest',
+                'checkPaymentMethod',
+                'getProcessedCaptures',
+                'getProcessedRefunds',
             ])
             ->getMock();
     }
@@ -232,7 +240,13 @@ class OrderTest extends TestCase
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->quoteManagement = $this->createMock(QuoteManagement::class);
         $this->emailSender = $this->createMock(OrderSender::class);
-        $this->invoiceService = $this->createMock(InvoiceService::class);
+        $this->invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            [
+                'prepareInvoice',
+                'prepareInvoiceWithoutItems',
+            ]
+        );
         $this->invoiceSender = $this->createMock(InvoiceSender::class);
         $this->transactionBuilder = $this->createMock(TransactionBuilder::class);
         $this->timezone = $this->createMock(TimezoneInterface::class);
@@ -241,7 +255,12 @@ class OrderTest extends TestCase
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->cartHelper = $this->createMock(CartHelper::class);
+        $this->cartHelper = $this->createPartialMock(
+            CartHelper::class,
+            [
+                'getRoundAmount',
+            ]
+        );
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
@@ -259,7 +278,13 @@ class OrderTest extends TestCase
                 'setState',
                 'setStatus',
                 'isCanceled',
+                'canCancel',
+                'registerCancellation',
                 'addStatusHistoryComment',
+                'getTotalInvoiced',
+                'getGrandTotal',
+                'getPayment',
+                'setIsCustomerNotified',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -269,6 +294,24 @@ class OrderTest extends TestCase
             ]
         );
         $this->orderMock->method('getConfig')->willReturn($this->orderConfigMock);
+    }
+    
+    /**
+     * Call protected/private method of a class.
+     *
+     * @param object &$object    Instantiated object that we will run method on.
+     * @param string $methodName Method name to call
+     * @param array  $parameters Array of parameters to pass into method.
+     *
+     * @return mixed Method return.
+     */
+    public function invokeMethod(&$object, $methodName, array $parameters = array())
+    {
+        $reflection = new \ReflectionClass(get_class($object));
+        $method = $reflection->getMethod($methodName);
+        $method->setAccessible(true);
+    
+        return $method->invokeArgs($object, $parameters);
     }
 
     /**
@@ -438,11 +481,48 @@ class OrderTest extends TestCase
     {
         $state = Order::STATE_CANCELED;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(true);
         $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('hold');
         $this->orderMock->expects(static::never())->method('setState');
         $this->orderMock->expects(static::never())->method('setStatus');
         $this->orderMock->expects(static::never())->method('save');
+        $this->currentMock->setOrderState($this->orderMock, $state);
+    }
+
+    /**
+     * @test
+     * @covers ::setOrderState
+     */
+    public function setOrderState_canceledOrderForRejectedIrreversibleHook()
+    {
+        $state = Order::STATE_CANCELED;
+        $prevState = Order::STATE_PAYMENT_REVIEW;
+        $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
+        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(false);
+        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
+        $this->orderMock->expects(static::once())->method('registerCancellation')->willReturn($this->orderMock);
+        $this->orderMock->expects(static::never())->method('setState');
+        $this->orderMock->expects(static::never())->method('setStatus');
+        $this->orderMock->expects(static::once())->method('save');
+        $this->currentMock->setOrderState($this->orderMock, $state);
+    }
+
+    /**
+     * @test
+     * @covers ::setOrderState
+     */
+    public function setOrderState_canceledOrderForRejectedIrreversibleHookWithException()
+    {
+        $state = Order::STATE_CANCELED;
+        $prevState = Order::STATE_PAYMENT_REVIEW;
+        $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
+        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(false);
+        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
+        $this->orderMock->expects(static::once())->method('registerCancellation')->willThrowException(new \Exception());
+        $this->orderMock->expects(static::once())->method('setState');
+        $this->orderMock->expects(static::once())->method('setStatus');
+        $this->orderMock->expects(static::once())->method('save');
         $this->currentMock->setOrderState($this->orderMock, $state);
     }
 
@@ -698,4 +778,71 @@ class OrderTest extends TestCase
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, NULL);
         $this->assertEquals($state, "cc_payment:pending");
     }
+
+    /**
+     * @test
+     */
+    public function formatAmount()
+    {
+        $magentoOrderMock = $this->createMock(OrderModel::class);
+        $currencyMock = $this->createMock(Currency::class);
+        $currencyMock->expects($this->exactly(1))
+             ->method('formatTxt')
+             ->willReturn("$1.23");
+        $magentoOrderMock->expects($this->exactly(1))
+          ->method('getOrderCurrency')
+          ->willReturn($currencyMock);
+
+        $this->assertEquals("$1.23", $this->currentMock->formatAmountForDisplay($magentoOrderMock, 1.23));
+    }
+
+    /**
+     * @test
+     * @covers ::createOrderInvoice
+     * @dataProvider additionAmountTotalProvider
+     */
+    public function createOrderInvoice_amountWithDifferentDecimals($amount, $grandTotal, $isSame) {
+        $totalInvoiced = 0;
+        $invoice = $this->createPartialMock(
+            Invoice::class,
+            [
+                'setRequestedCaptureCase',
+                'setTransactionId',
+                'setBaseGrandTotal',
+                'setGrandTotal',
+                'register',
+                'save',
+            ]
+        );
+        $this->cartHelper->method('getRoundAmount')
+                         ->will($this->returnCallback(function($amount) { return (int)round($amount * 100); }));
+        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
+        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
+        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
+        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
+        if($isSame){
+            $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+        }
+        else{
+            $this->invoiceService->expects(static::once())->method('prepareInvoiceWithoutItems')->willReturn($invoice);
+        }        
+            
+        $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
+    }
+
+    public function additionAmountTotalProvider() {
+		return [
+            [ 12.25, 12.25, true ],
+            [ 12.00, 12.001, true ],
+            [ 12.001, 12.00, true ],
+            [ 12.1225, 12.1234, true ],
+            [ 12.1234, 12.1225, true ],
+            [ 12.13, 12.14, false ],
+            [ 12.14, 12.13, false ],
+            [ 12.123, 12.126, false ],
+            [ 12.126, 12.123, false ],
+            [ 12.1264, 12.1225, false ],
+            [ 12.1225, 12.1264, false ],
+		];
+	}
 }

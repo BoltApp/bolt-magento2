@@ -33,6 +33,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Webapi\Rest\Request;
@@ -237,7 +238,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * the quantities and totals are matches separately.
      *
      * @param array $cart cart details
-     * @param Quote $quote
      * @throws LocalizedException
      */
     protected function checkCartItems($cart)
@@ -252,7 +252,7 @@ class ShippingMethods implements ShippingMethodsInterface
         foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
-            $unitPrice = $item->getCalculationPrice();
+            $unitPrice = round($item->getCalculationPrice(), 2);
             @$quoteItems['quantity'][$sku] += $quantity;
             @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
         }
@@ -264,17 +264,19 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
-            $this->bugsnag->registerCallback(function ($report) use ($cart) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
-                list($quoteItems) = $this->cartHelper->getCartItems(
+                list($quoteItemData) = $this->cartHelper->getCartItems(
                     $this->quote->getAllVisibleItems(),
                     $this->quote->getStoreId()
                 );
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
+                        'cart_total' => $cartItems['total'],
+                        'quote_total' => $quoteItems['total'],
                         'cart_items' => $cart['items'],
-                        'quote_items' => $quoteItems,
+                        'quote_items' => $quoteItemData,
                     ]
                 ]);
             });
@@ -341,6 +343,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->preprocessHook();
 
+            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
             $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.
@@ -444,6 +447,9 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->discountHelper->applyExternalDiscountData($quote);
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
+        }
+        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
+            $data .=$rewardsAmount;
         }
         return $data;
     }
@@ -672,7 +678,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
-            $diff = $cost * 100 - $roundedCost;
+            $diff = CurrencyUtils::toMinorWithoutRounding($cost, "USD") - $roundedCost;
 
             $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
 

@@ -31,6 +31,7 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-track"
     type="text/javascript"
     src="<?php echo $trackJsUrl; ?>"
+    data-shopping-cart-id="magento2"
     async
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>
@@ -38,6 +39,7 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-connect"
     type="text/javascript"
     src="<?php echo $connectJsUrl; ?>"
+    data-shopping-cart-id="magento2"
     async
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>

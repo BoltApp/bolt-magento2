@@ -102,7 +102,11 @@ class Js extends Template
      */
     public function getCheckoutKey()
     {
-        return $this->configHelper->getAnyPublishableKey();
+        if($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION){
+            return $this->configHelper->getPublishableKeyPayment();
+        }
+
+        return $this->configHelper->getPublishableKeyCheckout();
     }
 
     /**
@@ -112,7 +116,8 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        $subject = trim($this->configHelper->getReplaceSelectors());
+        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
+        $subject = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
 
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
@@ -204,6 +209,7 @@ class Js extends Template
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
             'is_pre_auth'              => $this->getIsPreAuth(),
+            'default_error_message'    => $this->getBoltPopupErrorMessage(),
         ]);
     }
 

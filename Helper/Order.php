@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
@@ -1183,12 +1184,12 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param \stdClass $transaction
-     * @return bool true if the order was placed on hold, otherwise false
+     * @throws \Exception
      */
     private function holdOnTotalsMismatch($order, $transaction)
     {
         $boltTotal = $transaction->order->cart->total_amount->amount;
-        $storeTotal = round($order->getGrandTotal() * 100);
+        $storeTotal = CurrencyUtils::toMinor($order->getGrandTotal(), "USD");
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
@@ -1279,6 +1280,7 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param \stdClass $transaction
      * @param null|int $amount
+     * @return array containing transaction information
      */
     private function formatTransactionData($order, $transaction, $amount)
     {
@@ -1289,7 +1291,7 @@ class Order extends AbstractHelper
                 2
             ),
             'Reference' => $transaction->reference,
-            'Amount' => $order->getBaseCurrency()->formatTxt($amount / 100),
+            'Amount' => $this->formatAmountForDisplay($order, $amount / 100),
             'Transaction ID' => $transaction->id
         ];
     }
@@ -1336,8 +1338,19 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            $this->cancelOrder($order);
-            return;
+            if ($order->canCancel()){
+                $this->cancelOrder($order);
+                return;
+            }
+
+            try{
+                // Restock product quantity when the payment is irreversibly rejected
+                $order->registerCancellation('', false);
+            } catch (\Exception $e){
+                // Put the order in "cancelled" state even if the previous call fails
+                $order->setState(OrderModel::STATE_CANCELED);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
+            }
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
@@ -1480,75 +1493,24 @@ class Order extends AbstractHelper
         $processedCaptures = $this->getProcessedCaptures($payment);
         $processedRefunds = $this->getProcessedRefunds($payment);
 
-        switch ($transactionState) {
-
-            case self::TS_ZERO_AMOUNT:
-                $transactionType = Transaction::TYPE_ORDER;
-                break;
-
-            case self::TS_PENDING:
-                $transactionType = Transaction::TYPE_ORDER;
-                break;
-
-            case self::TS_AUTHORIZED:
-                $transactionType = Transaction::TYPE_AUTH;
-                $transactionId = $transaction->id.'-auth';
-                break;
-
-            case self::TS_CAPTURED:
-                if (!$newCapture) return;
-                $transactionType = Transaction::TYPE_CAPTURE;
-                $transactionId = $transaction->id.'-capture-'.$newCapture->id;
-                $parentTransactionId = $transaction->id.'-auth';
-                break;
-
-            case self::TS_PARTIAL_VOIDED:
-                $authorizationTransaction = $payment->getAuthorizationTransaction();
-                $authorizationTransaction->closeAuthorization();
-                $order->addCommentToStatusHistory($this->getVoidMessage($payment));
-                $order->save();
-                return;
-
-            case self::TS_COMPLETED:
-                if (!$newCapture) return;
-                $transactionType = Transaction::TYPE_CAPTURE;
-                if ($paymentAuthorized) {
-                    $transactionId = $transaction->id.'-capture-'.$newCapture->id;
-                    $parentTransactionId = $transaction->id.'-auth';
-                } else {
-                    $transactionId = $transaction->id.'-payment';
-                }
-                break;
-
-            case self::TS_CANCELED:
-                $transactionType = Transaction::TYPE_VOID;
-                $transactionId = $transaction->id.'-void';
-                $parentTransactionId = $paymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
-                break;
-
-            case self::TS_REJECTED_REVERSIBLE:
-                $transactionType = Transaction::TYPE_ORDER;
-                $transactionId = $transaction->id.'-rejected_reversible';
-                break;
-
-            case self::TS_REJECTED_IRREVERSIBLE:
-                $transactionType = Transaction::TYPE_ORDER;
-                $transactionId = $transaction->id.'-rejected_irreversible';
-                break;
-
-            case self::TS_CREDIT_COMPLETED:
-                if (in_array($transaction->id, $processedRefunds)) return;
-                $transactionType = Transaction::TYPE_REFUND;
-                $transactionId = $transaction->id.'-refund';
-                break;
-
-            default:
-                throw new LocalizedException(__(
-                    'Unhandled transaction state : %1',
-                    $transactionState
-                ));
-                break;
+        $transactionType = $this->getTransactionType(
+            $order,
+            $transaction,
+            $transactionState,
+            $newCapture,
+            $processedRefunds
+        );
+        if ($transactionType === false) {
+            return;
         }
+
+        list($transactionId, $parentTransactionId) = $this->getTransactionIds(
+            $order,
+            $transaction,
+            $transactionState,
+            $newCapture,
+            $paymentAuthorized
+        );
 
         // set order state and status
         $orderState = $this->transactionToOrderState($transactionState);
@@ -1582,17 +1544,12 @@ class Order extends AbstractHelper
             'refunds' => implode(',', $processedRefunds)
         ];
 
-        // format the price with currency symbol
-        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount / 100);
-
         $message = __(
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
             $this->getBoltTransactionStatus($transactionState),
-            $formattedPrice,
+            $this->formatAmountForDisplay($order, $amount / 100),
             $this->formatReferenceUrl($transaction->reference)
         );
-
-        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
 
         // update order payment instance
         $payment->setParentTransactionId($parentTransactionId);
@@ -1618,6 +1575,7 @@ class Order extends AbstractHelper
             );
         }
 
+        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
         // build a new transaction record and assign it to the order and payment
         /** @var Transaction $payment_transaction */
         $payment_transaction = $this->transactionBuilder->setPayment($payment)
@@ -1642,6 +1600,137 @@ class Order extends AbstractHelper
     }
 
     /**
+     * @param OrderModel $order
+     * @param \stdClass $transaction
+     * @param string $transactionState
+     * @param \stdClass $newCapture
+     * @param array $processedRefunds
+     * @return bool|array
+     */
+    private function getTransactionType($order, $transaction, $transactionState, $newCapture, $processedRefunds)
+    {
+        /** @var OrderPaymentInterface $payment */
+        $payment = $order->getPayment();
+
+        switch ($transactionState) {
+            case self::TS_ZERO_AMOUNT:
+            case self::TS_PENDING:
+            case self::TS_REJECTED_REVERSIBLE:
+            case self::TS_REJECTED_IRREVERSIBLE:
+                return Transaction::TYPE_ORDER;
+                break;
+
+            case self::TS_AUTHORIZED:
+                return Transaction::TYPE_AUTH;
+                break;
+
+            case self::TS_CAPTURED:
+            case self::TS_COMPLETED:
+                if (!$newCapture) {
+                    return false;
+                }
+                return Transaction::TYPE_CAPTURE;
+                break;
+
+            case self::TS_PARTIAL_VOIDED:
+                $authorizationTransaction = $payment->getAuthorizationTransaction();
+                $authorizationTransaction->closeAuthorization();
+                $order->addCommentToStatusHistory($this->getVoidMessage($payment));
+                $order->save();
+                return false;
+
+            case self::TS_CANCELED:
+                return Transaction::TYPE_VOID;
+                break;
+
+            case self::TS_CREDIT_COMPLETED:
+                if (in_array($transaction->id, $processedRefunds)) {
+                    return false;
+                }
+                return Transaction::TYPE_REFUND;
+                break;
+
+            default:
+                throw new LocalizedException(__(
+                    'Unhandled transaction state : %1',
+                    $transactionState
+                ));
+                break;
+        }
+
+        return [
+            $transactionType,
+            $transactionId,
+            $parentTransactionId
+        ];
+    }
+
+    /**
+     * @param OrderModel $order
+     * @param \stdClass $transaction
+     * @param string $transactionState
+     * @param \stdClass $newCapture
+     * @param bool $isPaymentAuthorized
+     * @return array
+     */
+    private function getTransactionIds($order, $transaction, $transactionState, $newCapture, $isPaymentAuthorized)
+    {
+        /** @var OrderPaymentInterface $payment */
+        $payment = $order->getPayment();
+
+        $transactionId = $parentTransactionId = null;
+
+        switch ($transactionState) {
+            case self::TS_AUTHORIZED:
+                $transactionId = $transaction->id.'-auth';
+                break;
+
+            case self::TS_CAPTURED:
+                $transactionId = $transaction->id.'-capture-'.$newCapture->id;
+                $parentTransactionId = $transaction->id.'-auth';
+                break;
+
+            case self::TS_COMPLETED:
+                if ($isPaymentAuthorized) {
+                    $transactionId = $transaction->id.'-capture-'.$newCapture->id;
+                    $parentTransactionId = $transaction->id.'-auth';
+                } else {
+                    $transactionId = $transaction->id.'-payment';
+                }
+                break;
+
+            case self::TS_CANCELED:
+                $transactionId = $transaction->id.'-void';
+                $parentTransactionId = $isPaymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
+                break;
+
+            case self::TS_REJECTED_REVERSIBLE:
+                $transactionId = $transaction->id.'-rejected_reversible';
+                break;
+
+            case self::TS_REJECTED_IRREVERSIBLE:
+                $transactionId = $transaction->id.'-rejected_irreversible';
+                break;
+
+            case self::TS_CREDIT_COMPLETED:
+                $transactionId = $transaction->id.'-refund';
+                break;
+
+            default:
+                throw new LocalizedException(__(
+                    'Unhandled transaction state : %1',
+                    $transactionState
+                ));
+                break;
+        }
+
+        return [
+            $transactionId,
+            $parentTransactionId
+        ];
+    }
+
+    /**
      * Create an invoice for the order.
      *
      * @param OrderModel $order
@@ -1655,7 +1744,7 @@ class Order extends AbstractHelper
     private function createOrderInvoice($order, $transactionId, $amount)
     {
         try {
-            if ($order->getTotalInvoiced() + $amount == $order->getGrandTotal()) {
+            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
@@ -1765,10 +1854,21 @@ class Order extends AbstractHelper
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
         $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $order->getBaseCurrency()->formatTxt($voidAmount, array()));
+        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
+    }
+
+    // Visible for testing
+    /**
+     * @param OrderModel $order
+     * @param float $amount
+     *
+     * @return string
+     */
+    public function formatAmountForDisplay($order, $amount) {
+        return $order->getOrderCurrency()->formatTxt($amount);
     }
 
     /**

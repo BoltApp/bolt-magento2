@@ -21,7 +21,7 @@ use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-
+use Magento\Framework\App\Request\Http;
 /**
  * Class JsTest
  *
@@ -41,6 +41,12 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @var \Magento\Framework\View\Element\Template\Context
      */
     protected $contextMock;
+
+    /**
+     * @var Http
+     */
+    private $requestMock;
+
     /**
      * @var \Magento\Checkout\Model\Session
      */
@@ -86,7 +92,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel'
+            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -104,9 +110,14 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
+        $this->requestMock = $this->getMockBuilder(Http::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getFullActionName'])
+            ->getMock();
 
+        $this->contextMock->method('getRequest')->willReturn($this->requestMock);
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl'])
+            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
@@ -120,9 +131,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrl()
+    public function getTrackJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -133,9 +144,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrlForProductionMode()
+    public function getTrackJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -146,9 +157,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetConnectJsUrl()
+    public function getConnectJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -157,7 +168,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
     }
 
-    public function testGetConnectJsUrlForProductionMode()
+    /**
+     * @test
+     */
+    public function getConnectJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -167,48 +181,119 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
+     * @param $data
+     * @dataProvider providerTestGetCheckoutKey
      */
-    public function testGetCheckoutKey()
+    public function getCheckoutKey($data)
     {
-        $storeId = 0;
-        $key = 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TEST';
         $this->configHelper->expects($this->any())
-            ->method('getAnyPublishableKey')
-            ->will($this->returnValue($key));
+            ->method('isPaymentOnlyCheckoutEnabled')
+            ->will($this->returnValue($data['is_payment_only_checkout_enabled']));
+        $this->configHelper->expects($this->any())
+            ->method('getPublishableKeyPayment')
+            ->will($this->returnValue($data['publishable_key_payment']));
+        $this->configHelper->expects($this->any())
+            ->method('getPublishableKeyCheckout')
+            ->will($this->returnValue($data['publishable_key_checkout']));
 
+        $this->requestMock->method('getFullActionName')->willReturn($data['action']);
         $result = $this->block->getCheckoutKey();
+        $this->assertStringStartsWith('pKv_', $result, 'Publishable Key doesn\'t work properly');
+        $this->assertEquals(strlen($data['expected']), strlen($result), 'Publishable Key has an invalid length');
 
-        $this->assertStringStartsWith('pKv_', $result, '"Any Publishable Key" not working properly');
-        $this->assertEquals(strlen($key), strlen($result), '"Any Publishable Key" have invalid length');
+    }
+
+    public function providerTestGetCheckoutKey()
+    {
+        return [
+            ['data' => [
+                'is_payment_only_checkout_enabled' => true,
+                'publishable_key_payment' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishable_key_checkout' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
+                'action' => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'expected' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE'
+                ]
+            ],
+            ['data' => [
+                'is_payment_only_checkout_enabled' => true,
+                'publishable_key_payment' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishable_key_checkout' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
+                'action' => HelperConfig::SHOPPING_CART_PAGE_ACTION,
+                'expected' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE'
+                ]
+            ],
+            ['data' => [
+                'is_payment_only_checkout_enabled' => true,
+                'publishable_key_payment' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishable_key_checkout' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTOTHERPAGES',
+                'action' => 'other_actions',
+                'expected' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTOTHERPAGES'
+                ]
+            ],
+            ['data' => [
+                'is_payment_only_checkout_enabled' => false,
+                'publishable_key_payment' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishable_key_checkout' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTMINICART',
+                'action' => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'expected' => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTMINICART'
+                ]
+            ],
+        ];
     }
 
     /**
-     * @inheritdoc
+     * @test
+     * @param $data
+     * @dataProvider providerGetReplaceSelectors
      */
-    public function testGetReplaceSelectors()
+    public function getReplaceSelectors($data)
     {
-        $value = '.replaceable-example-selector1|append
-.replaceable-example-selector2|prepend,.replaceable-example-selector3';
-
-        $correctResult = [
-            '.replaceable-example-selector1|append .replaceable-example-selector2|prepend',
-            '.replaceable-example-selector3'
-        ];
-
-        $this->configHelper->expects($this->once())
+        $this->configHelper->expects($this->any())
             ->method('getReplaceSelectors')
-            ->will($this->returnValue($value));
+            ->will($this->returnValue($data['value']));
+
+        $this->configHelper->expects($this->any())
+            ->method('isPaymentOnlyCheckoutEnabled')
+            ->will($this->returnValue($data['is_payment_only_checkout_enabled']));
+
+        $this->requestMock->method('getFullActionName')->willReturn($data['action']);
 
         $result = $this->block->getReplaceSelectors();
 
-        $this->assertEquals($correctResult, $result, 'getReplaceSelectors() method: not working properly');
+        $this->assertEquals($data['expected'], $result, 'getReplaceSelectors() method: not working properly');
+    }
+
+    public function providerGetReplaceSelectors(){
+        return [
+            ['data' => [
+                'value' => '.replaceable-example-selector1|append .replaceable-example-selector2|prepend,.replaceable-example-selector3',
+                'is_payment_only_checkout_enabled' => true,
+                'action' => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'expected' => []
+                ]
+            ],
+            ['data' => [
+                'value' => '.replaceable-example-selector1|append .replaceable-example-selector2|prepend,.replaceable-example-selector3',
+                'is_payment_only_checkout_enabled' => true,
+                'action' => 'other_actions',
+                'expected' => ['.replaceable-example-selector1|append .replaceable-example-selector2|prepend', '.replaceable-example-selector3']
+                ]
+            ],
+            ['data' => [
+                'value' => '.replaceable-example-selector1|append .replaceable-example-selector2|prepend,.replaceable-example-selector3',
+                'is_payment_only_checkout_enabled' => false,
+                'action' => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'expected' => ['.replaceable-example-selector1|append .replaceable-example-selector2|prepend', '.replaceable-example-selector3']
+                ]
+            ]
+        ];
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetGlobalCSS()
+    public function getGlobalCSS()
     {
         $value = '.replaceable-example-selector1 {
             color: red;
@@ -224,16 +309,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSettings()
+    public function getSettings()
     {
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -251,12 +336,13 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
+        $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsEnabled()
+    public function isEnabled()
     {
         $storeId = 0;
         $this->configHelper->expects($this->any())
@@ -289,18 +375,27 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->willReturn($value);
     }
 
-    public function testGetInitiateCheckoutFalse()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutFalse()
     {
         $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testGetInitiateCheckoutTrue()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutTrue()
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testShouldTrackCheckoutFunnel()
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
     {
         $this->configHelper->expects($this->any())
                            ->method('shouldTrackCheckoutFunnel')

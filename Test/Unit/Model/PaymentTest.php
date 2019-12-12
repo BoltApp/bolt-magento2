@@ -170,7 +170,7 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function testCanReviewPayment()
+    public function canReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
             ->with('transaction_state')
@@ -182,7 +182,7 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function testCannotReviewPayment()
+    public function cannotReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
             ->with('transaction_state')
@@ -276,6 +276,26 @@ class PaymentTest extends TestCase
 
         $this->currentMock->capture($this->paymentMock, 100);
     }
+
+    /**
+     * @test
+     */
+    public function capturePayment_skipHookNotification(){
+        $this->mockApiResponse(
+            "merchant/transactions/capture",
+            '{"status": "authorized", "reference": "ABCD-1234-XXXX"}'
+        );
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data)  {
+                    $this->assertTrue($data->getApiData()['skip_hook_notification']);
+                    }
+                )
+            );
+        $this->currentMock->capture($this->paymentMock, 100);
+    }
+
 
     /**
      * @test
