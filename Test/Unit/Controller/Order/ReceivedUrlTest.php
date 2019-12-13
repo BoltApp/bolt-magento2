@@ -264,6 +264,9 @@ class ReceivedUrlTest extends TestCase
         );
 
         $receivedUrl->method('getRequest')->willReturn($request);
+        $receivedUrl->expects($this->once())
+            ->method('_redirect')
+            ->with('/');
 
         $receivedUrl->execute();
     }
