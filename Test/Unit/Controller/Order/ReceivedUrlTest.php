@@ -45,6 +45,11 @@ class ReceivedUrlTest extends TestCase
     private $encodedBoltPayload;
 
     /**
+     * @var array
+     */
+    private $defaultRequestMap;
+
+    /**
      * @var Context
      */
     private $context;
@@ -84,13 +89,7 @@ class ReceivedUrlTest extends TestCase
      */
     public function execute_HappyPath()
     {
-        $requestMap = [
-            ['bolt_signature', null, $this->boltSignature],
-            ['bolt_payload', null, $this->encodedBoltPayload],
-            ['store_id', null, self::STORE_ID]
-        ];
-
-        $request = $this->initRequest($requestMap);
+        $request = $this->initRequest($this->defaultRequestMap);
 
         $order = $this->createMock(Order::class);
         $order->method('getId')
@@ -223,13 +222,7 @@ class ReceivedUrlTest extends TestCase
      */
     public function execute_SignatureAndHashUnequal()
     {
-        $requestMap = [
-            ['bolt_signature', null, $this->boltSignature],
-            ['bolt_payload', null, $this->encodedBoltPayload],
-            ['store_id', null, self::STORE_ID]
-        ];
-
-        $request = $this->initRequest($requestMap);
+        $request = $this->initRequest($this->defaultRequestMap);
 
         $messageManager = $this->createMock(ManagerInterface::class);
         $messageManager->method('addErrorMessage');
@@ -284,6 +277,7 @@ class ReceivedUrlTest extends TestCase
     {
         $this->initRequiredMocks();
         $this->initAuthentication();
+        $this->initRequestMap();
     }
 
     private function initRequiredMocks()
@@ -334,6 +328,15 @@ class ReceivedUrlTest extends TestCase
         $this->encodedBoltPayload = base64_encode(self::DECODED_BOLT_PAYLOAD);
         $hashBoltPayloadWithKey = hash_hmac('sha256', $this->encodedBoltPayload, self::SIGNING_SECRET, true);
         $this->boltSignature = base64_encode(base64_encode($hashBoltPayloadWithKey));
+    }
+
+    private function initRequestMap()
+    {
+        $this->defaultRequestMap = [
+            ['bolt_signature', null, $this->boltSignature],
+            ['bolt_payload', null, $this->encodedBoltPayload],
+            ['store_id', null, self::STORE_ID]
+        ];
     }
 
     private function initRequest($requestMap)
