@@ -386,12 +386,10 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $captureAmount = CurrencyUtils::toMinor($amount, "USD");
-
             //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
-                'amount'         => $captureAmount,
+                'amount'         => $this->getCaptureAmount($order, $amount),
                 'currency'       => $order->getOrderCurrencyCode(),
                 'skip_hook_notification' => true
             ];
@@ -427,6 +425,18 @@ class Payment extends AbstractMethod
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("order_capture.failure", 1, "order_capture.latency", $startTime);
             throw $e;
+        }
+    }
+
+    private function getCaptureAmount($order, $amountInStoreCurrency)
+    {
+        $orderCurrency = $order->getOrderCurrencyCode();
+        if ($order->getStoreCurrencyCode() == $orderCurrency) {
+            return CurrencyUtils::toMinor( $amountInStoreCurrency, $orderCurrency );
+        } else {
+            // Magento passes $amount in store currency but not in order currency - we have to grab amount from invoice
+            $latestInvoice = $order->getInvoiceCollection()->getLastItem();
+            return CurrencyUtils::toMinor( $latestInvoice->getGrandTotal(),$orderCurrency );
         }
     }
 
