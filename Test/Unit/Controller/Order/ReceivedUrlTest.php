@@ -11,6 +11,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
@@ -64,7 +65,7 @@ class ReceivedUrlTest extends TestCase
     private $bugsnag;
 
     /**
-     * @var LogHelper
+     * @var LogHelper | MockObject
      */
     private $logHelper;
 
@@ -125,67 +126,91 @@ class ReceivedUrlTest extends TestCase
         $url->method('getUrl')
             ->willReturn(self::REDIRECT_URL);
 
-        $this->cartHelper->expects($this->once())
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->expects($this->once())
             ->method('getOrderByIncrementId')
             ->with(self::INCREMENT_ID)
             ->willReturn($order);
-        $this->cartHelper->expects($this->once())
+        $cartHelper->expects($this->once())
             ->method('getQuoteById')
             ->with(self::QUOTE_ID)
             ->willReturn($quote);
 
+        $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setLastQuoteId',
+                'setLastSuccessQuoteId',
+                'clearHelperData',
+                'setLastOrderId',
+                'setRedirectUrl',
+                'setLastRealOrderId',
+                'setLastOrderStatus'
+            ])
+            ->getMock();
         //clearQuoteSession($quote)
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setLastQuoteId')
             ->with(self::QUOTE_ID)
             ->willReturnSelf();
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setLastSuccessQuoteId')
             ->with(self::QUOTE_ID)
             ->willReturnSelf();
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('clearHelperData')
             ->willReturnSelf();
 
         //clearOrderSession($order, $redirectUrl)
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setLastOrderId')
             ->with(self::ORDER_ID)
             ->willReturnSelf();
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setRedirectUrl')
             ->with(self::REDIRECT_URL)
             ->willReturnSelf();
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setLastRealOrderId')
             ->with(self::INCREMENT_ID)
             ->willReturnSelf();
-        $this->checkoutSession->expects($this->once())
+        $checkoutSession->expects($this->once())
             ->method('setLastOrderStatus')
             ->with(self::ORDER_STATUS)
             ->willReturnSelf();
 
-        $this->configHelper->expects($this->once())
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects($this->once())
             ->method('getSigningSecret')
             ->with(self::STORE_ID)
             ->willReturn(self::SIGNING_SECRET);
-        $this->configHelper->expects($this->once())
+        $configHelper->expects($this->once())
             ->method('getSuccessPageRedirect')
             ->with(self::STORE_ID)
             ->willReturn(self::REDIRECT_URL);
 
-        $this->context->method('getUrl')
+        $context = $this->createMock(Context::class);
+        $context->method('getUrl')
             ->willReturn($url);
 
-        $this->orderHelper->expects($this->once())
+        $orderHelper = $this->createMock(OrderHelper::class);
+        $orderHelper->expects($this->once())
             ->method('formatReferenceUrl')
             ->with(self::TRANSACTION_REFERENCE)
             ->willReturn(self::FORMATTED_REFERENCE_URL);
-        $this->orderHelper->expects($this->once())
+        $orderHelper->expects($this->once())
             ->method('dispatchPostCheckoutEvents')
             ->with($this->equalTo($order), $this->equalTo($quote));
 
-        $receivedUrl = $this->initReceivedUrlMock();
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $this->bugsnag,
+            $this->logHelper,
+            $checkoutSession,
+            $orderHelper
+        );
 
         $receivedUrl->method('getRequest')
             ->willReturn($request);
@@ -196,6 +221,52 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl->execute();
     }
 
+    /**
+     * @test
+     */
+    public function execute_SignatureAndHashUnequal()
+    {
+        $requestMap = [
+            ['bolt_signature', null, $this->boltSignature],
+            ['bolt_payload', null, $this->encodedBoltPayload],
+            ['store_id', null, self::STORE_ID]
+        ];
+
+        $request = $this->createMock(RequestInterface::class);
+        $request->expects($this->exactly(3))
+            ->method('getParam')
+            ->will($this->returnValueMap($requestMap));
+
+        $messageManager = $this->createMock(ManagerInterface::class);
+        $messageManager->method('addErrorMessage');
+
+        $context = $this->createMock(Context::class);
+        $context->method('getMessageManager')
+            ->willReturn($messageManager);
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->method('getSigningSecret')->willReturn('failing hash check!');
+
+        $logMessage = 'bolt_signature and Magento signature are not equal'; //this string is hardcoded into ReceivedUrlTrait.php
+        $logHelper = $this->createMock(LogHelper::class);
+        $logHelper->expects($this->once())
+            ->method('addInfoLog')
+            ->with($logMessage);
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $this->cartHelper,
+            $this->bugsnag,
+            $logHelper,
+            $this->checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')->willReturn($request);
+
+        $receivedUrl->execute();
+    }
 
     public function setUp()
     {
@@ -225,7 +296,7 @@ class ReceivedUrlTest extends TestCase
         $this->orderHelper = $this->createMock(OrderHelper::class);
     }
 
-    private function initReceivedUrlMock()
+    private function initReceivedUrlMock($context, $configHelper, $cartHelper, $bugsnag, $logHelper, $checkoutSession, $orderHelper)
     {
         $receivedUrl = $this->getMockBuilder(ReceivedUrl::class)
             ->setMethods([
@@ -233,13 +304,13 @@ class ReceivedUrlTest extends TestCase
                 '_redirect'
             ])
             ->setConstructorArgs([
-                $this->context,
-                $this->configHelper,
-                $this->cartHelper,
-                $this->bugsnag,
-                $this->logHelper,
-                $this->checkoutSession,
-                $this->orderHelper
+                $context,
+                $configHelper,
+                $cartHelper,
+                $bugsnag,
+                $logHelper,
+                $checkoutSession,
+                $orderHelper
             ])
             ->getMock();
         return $receivedUrl;
