@@ -90,10 +90,7 @@ class ReceivedUrlTest extends TestCase
             ['store_id', null, self::STORE_ID]
         ];
 
-        $request = $this->createMock(RequestInterface::class);
-        $request->expects($this->exactly(3))
-            ->method('getParam')
-            ->will($this->returnValueMap($requestMap));
+        $request = $this->initRequest($requestMap);
 
         $order = $this->createMock(Order::class);
         $order->method('getId')
@@ -232,10 +229,7 @@ class ReceivedUrlTest extends TestCase
             ['store_id', null, self::STORE_ID]
         ];
 
-        $request = $this->createMock(RequestInterface::class);
-        $request->expects($this->exactly(3))
-            ->method('getParam')
-            ->will($this->returnValueMap($requestMap));
+        $request = $this->initRequest($requestMap);
 
         $messageManager = $this->createMock(ManagerInterface::class);
         $messageManager->method('addErrorMessage');
@@ -269,6 +263,21 @@ class ReceivedUrlTest extends TestCase
             ->with('/');
 
         $receivedUrl->execute();
+    }
+
+    /**
+     * @test
+     */
+    public function execute_NoSuchEntityException()
+    {
+        $requestMap = [
+            ['bolt_signature', null, $this->boltSignature],
+            ['bolt_payload', null, $this->encodedBoltPayload],
+            ['store_id', null, self::STORE_ID]
+        ];
+
+        $request = $this->initRequest($requestMap);
+
     }
 
     public function setUp()
@@ -325,5 +334,15 @@ class ReceivedUrlTest extends TestCase
         $this->encodedBoltPayload = base64_encode(self::DECODED_BOLT_PAYLOAD);
         $hashBoltPayloadWithKey = hash_hmac('sha256', $this->encodedBoltPayload, self::SIGNING_SECRET, true);
         $this->boltSignature = base64_encode(base64_encode($hashBoltPayloadWithKey));
+    }
+
+    private function initRequest($requestMap)
+    {
+        $request = $this->createMock(RequestInterface::class);
+        $request->expects($this->exactly(3))
+            ->method('getParam')
+            ->will($this->returnValueMap($requestMap));
+
+        return $request;
     }
 }
