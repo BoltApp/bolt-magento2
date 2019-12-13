@@ -185,21 +185,7 @@ class ReceivedUrlTest extends TestCase
             ->method('dispatchPostCheckoutEvents')
             ->with($this->equalTo($order), $this->equalTo($quote));
 
-        $receivedUrl = $this->getMockBuilder(ReceivedUrl::class)
-            ->setMethods([
-                'getRequest',
-                '_redirect'
-            ])
-            ->setConstructorArgs([
-                $this->context,
-                $this->configHelper,
-                $this->cartHelper,
-                $this->bugsnag,
-                $this->logHelper,
-                $this->checkoutSession,
-                $this->orderHelper
-            ])
-            ->getMock();
+        $receivedUrl = $this->initReceivedUrlMock();
 
         $receivedUrl->method('getRequest')
             ->willReturn($request);
@@ -209,6 +195,7 @@ class ReceivedUrlTest extends TestCase
 
         $receivedUrl->execute();
     }
+
 
     public function setUp()
     {
@@ -236,6 +223,26 @@ class ReceivedUrlTest extends TestCase
             ])
             ->getMock();
         $this->orderHelper = $this->createMock(OrderHelper::class);
+    }
+
+    private function initReceivedUrlMock()
+    {
+        $receivedUrl = $this->getMockBuilder(ReceivedUrl::class)
+            ->setMethods([
+                'getRequest',
+                '_redirect'
+            ])
+            ->setConstructorArgs([
+                $this->context,
+                $this->configHelper,
+                $this->cartHelper,
+                $this->bugsnag,
+                $this->logHelper,
+                $this->checkoutSession,
+                $this->orderHelper
+            ])
+            ->getMock();
+        return $receivedUrl;
     }
 
     //sets up things to pass the check in ReceivedUrlTrait->execute()
