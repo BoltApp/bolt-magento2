@@ -27,15 +27,14 @@ if ($block->shouldDisableBoltCheckout()) return;
 $trackCallbackCode = $block->getTrackCallbacks();
 
 function wrapWithCatch($jsCode, $argName='') {
-echo <<<JavaScript
+echo "
 function($argName) {
     try {
         $jsCode
     } catch (error) {
         console.error(error);
     }
-}
-JavaScript;
+}";
 }
 
 ob_start();
