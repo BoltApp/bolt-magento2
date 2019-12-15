@@ -44,8 +44,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepository;
-use Magento\Setup\Exception;
-use u2flib_server\Error;
 
 /**
  * Class Payment.
