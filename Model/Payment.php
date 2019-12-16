@@ -386,12 +386,10 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $captureAmount = CurrencyUtils::toMinor($amount, "USD");
-
             //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
-                'amount'         => $captureAmount,
+                'amount'         => $this->getCaptureAmount($order, $amount),
                 'currency'       => $order->getOrderCurrencyCode(),
                 'skip_hook_notification' => true
             ];
@@ -430,6 +428,18 @@ class Payment extends AbstractMethod
         }
     }
 
+    private function getCaptureAmount($order, $amountInStoreCurrency)
+    {
+        $orderCurrency = $order->getOrderCurrencyCode();
+        if ($order->getStoreCurrencyCode() == $orderCurrency) {
+            return CurrencyUtils::toMinor( $amountInStoreCurrency, $orderCurrency );
+        } else {
+            // Magento passes $amount in store currency but not in order currency - we have to grab amount from invoice
+            $latestInvoice = $order->getInvoiceCollection()->getLastItem();
+            return CurrencyUtils::toMinor( $latestInvoice->getGrandTotal(),$orderCurrency );
+        }
+    }
+
     /**
      * Refund the amount
      *
@@ -458,13 +468,14 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $refundAmount = CurrencyUtils::toMinor($amount, "USD");
+            $orderCurrency = $order->getOrderCurrencyCode();
+            // $amount argument of refund method is in store currency, we need to get amount from credit memo to get the value in order's currency.
+            $refundAmount = CurrencyUtils::toMinor( $payment->getCreditMemo()->getGrandTotal(), $orderCurrency );
 
-            //Get refund data
             $refundData = [
                 'transaction_id' => $realTransactionId,
                 'amount'         => $refundAmount,
-                'currency'       => $order->getOrderCurrencyCode()
+                'currency'       => $orderCurrency
             ];
 
             $storeId = $order->getStoreId();
