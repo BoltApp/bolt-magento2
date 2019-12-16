@@ -268,7 +268,7 @@ class ReceivedUrlTest extends TestCase
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $exception = new NoSuchEntityException(new Phrase('Test exception message'));
+        $exception = new NoSuchEntityException(new Phrase(self::NO_SUCH_ENTITY_MESSAGE));
 
         $message = $this->createMessageManagerMock();
         $message->expects($this->once())
@@ -304,7 +304,7 @@ class ReceivedUrlTest extends TestCase
             );
         $this->bugsnag->expects($this->once())
             ->method('notifyError')
-            ->with($this->equalTo('NoSuchEntityException: '), $this->equalTo($exception->getMessage()));
+            ->with($this->equalTo('NoSuchEntityException: '), $this->equalTo(self::NO_SUCH_ENTITY_MESSAGE));
 
         $receivedUrl = $this->initReceivedUrlMock(
             $context,
