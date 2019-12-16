@@ -11,10 +11,13 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Phrase;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use PHPUnit\Framework\Constraint\ExceptionMessage;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
@@ -33,6 +36,7 @@ class ReceivedUrlTest extends TestCase
     const REDIRECT_URL = 'https://red.irect.url';
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
+    const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
 
     /**
      * @var string
@@ -65,7 +69,7 @@ class ReceivedUrlTest extends TestCase
     private $cartHelper;
 
     /**
-     * @var Bugsnag
+     * @var Bugsnag | MockObject
      */
     private $bugsnag;
 
@@ -224,8 +228,7 @@ class ReceivedUrlTest extends TestCase
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $messageManager = $this->createMock(ManagerInterface::class);
-        $messageManager->method('addErrorMessage');
+        $messageManager = $this->createMessageManagerMock();
 
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
@@ -263,14 +266,63 @@ class ReceivedUrlTest extends TestCase
      */
     public function execute_NoSuchEntityException()
     {
-        $requestMap = [
-            ['bolt_signature', null, $this->boltSignature],
-            ['bolt_payload', null, $this->encodedBoltPayload],
-            ['store_id', null, self::STORE_ID]
-        ];
+        $request = $this->initRequest($this->defaultRequestMap);
 
-        $request = $this->initRequest($requestMap);
+        $exception = new NoSuchEntityException(new Phrase('Test exception message'));
 
+        $message = $this->createMessageManagerMock();
+        $message->expects($this->once())
+            ->method('addErrorMessage');
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->method('getOrderByIncrementId')
+            ->willThrowException($exception);
+
+        $context = $this->createMock(Context::class);
+        $context->method('getMessageManager')
+            ->willReturn($message);
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects($this->once())
+            ->method('getSigningSecret')
+            ->with(self::STORE_ID)
+            ->willReturn(self::SIGNING_SECRET);
+
+        $this->bugsnag->expects($this->once())
+            ->method('registerCallback')
+            ->willReturnCallback(
+                function (callable $callback) use ($request) {
+                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock->expects($this->once())
+                        ->method('setMetaData')
+                        ->with([
+                            'order_id' => self::INCREMENT_ID,
+                            'store_id' => self::STORE_ID
+                        ]);
+                    $callback($reportMock);
+                }
+            );
+        $this->bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with($this->equalTo('NoSuchEntityException: '), $this->equalTo($exception->getMessage()));
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $this->bugsnag,
+            $this->logHelper,
+            $this->checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')
+            ->willReturn($request);
+        $receivedUrl->expects($this->once())
+            ->method('_redirect')
+            ->with('/');
+
+        $receivedUrl->execute();
     }
 
     public function setUp()
@@ -347,5 +399,13 @@ class ReceivedUrlTest extends TestCase
             ->will($this->returnValueMap($requestMap));
 
         return $request;
+    }
+
+    private function createMessageManagerMock()
+    {
+        $messageManager = $this->createMock(ManagerInterface::class);
+        $messageManager->method('addErrorMessage');
+
+        return $messageManager;
     }
 }
