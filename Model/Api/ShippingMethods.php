@@ -44,7 +44,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
-use Magento\Setup\Exception;
 
 /**
  * Class ShippingMethods
