@@ -119,12 +119,7 @@ class ReceivedUrlTest extends TestCase
         $quote->method('getId')
             ->willReturn(self::QUOTE_ID);
 
-        $url = $this->createMock(UrlInterface::class);
-        $url->expects($this->once())
-            ->method('setScope')
-            ->with(self::STORE_ID);
-        $url->method('getUrl')
-            ->willReturn(self::REDIRECT_URL);
+        $url = $this->createUrlMock();
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
@@ -218,6 +213,114 @@ class ReceivedUrlTest extends TestCase
             ->method('_redirect')
             ->with(self::REDIRECT_URL);
 
+        $receivedUrl->execute();
+    }
+
+    /**
+     * @test
+     */
+    public function execute_IncorrectOrderState()
+    {
+        $request = $this->initRequest($this->defaultRequestMap);
+
+        $order = $this->createMock(Order::class);
+        $order->method('getState')
+            ->wilLReturn(Order::STATE_CLOSED);
+        $order->method('getQuoteId')
+            ->willReturn(self::QUOTE_ID);
+        $order->method('getStoreId')
+            ->willReturn(self::STORE_ID);
+        $order->method('getIncrementId')
+            ->willReturn(self::INCREMENT_ID);
+        $order->method('getStatus')
+            ->willReturn(self::ORDER_STATUS);
+        $order->method('getId')
+            ->willReturn(self::ORDER_ID);
+
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getId')
+            ->willReturn(self::QUOTE_ID);
+
+        $url = $this->createUrlMock();
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->method('getOrderByIncrementId')
+            ->willReturn($order);
+        $cartHelper->method('getQuoteById')
+            ->willReturn($quote);
+
+        $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setLastQuoteId',
+                'setLastSuccessQuoteId',
+                'clearHelperData',
+                'setLastOrderId',
+                'setRedirectUrl',
+                'setLastRealOrderId',
+                'setLastOrderStatus'
+            ])
+            ->getMock();
+
+        //clearQuoteSession
+        $checkoutSession->expects($this->once())
+            ->method('setLastQuoteId')
+            ->with(self::QUOTE_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastSuccessQuoteId')
+            ->with(self::QUOTE_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('clearHelperData')
+            ->willReturnSelf();
+
+        //clearOrderSession
+        $checkoutSession->expects($this->once())
+            ->method('setLastOrderId')
+            ->with(self::ORDER_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setRedirectUrl')
+            ->with(self::REDIRECT_URL)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastRealOrderId')
+            ->with(self::INCREMENT_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastOrderStatus')
+            ->with(self::ORDER_STATUS)
+            ->willReturnSelf();
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->method('getSigningSecret')
+            ->willReturn(self::SIGNING_SECRET);
+
+        $context = $this->createMock(Context::class);
+        $context->method('getUrl')
+            ->willReturn($url);
+
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with(
+                $this->equalTo('Pre-Auth redirect wrong order state'), //Hard-coded string in class
+                $this->equalTo('OrderNo: ' . self::INCREMENT_ID . ', State: ' . ORDER::STATE_CLOSED) //Parameterized string in class
+            );
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $bugsnag,
+            $this->logHelper,
+            $checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')
+            ->willReturn($request);
         $receivedUrl->execute();
     }
 
@@ -407,5 +510,17 @@ class ReceivedUrlTest extends TestCase
         $messageManager->method('addErrorMessage');
 
         return $messageManager;
+    }
+
+    private function createUrlMock()
+    {
+        $url = $this->createMock(UrlInterface::class);
+        $url->expects($this->once())
+            ->method('setScope')
+            ->with(self::STORE_ID);
+        $url->method('getUrl')
+            ->willReturn(self::REDIRECT_URL);
+
+        return $url;
     }
 }
