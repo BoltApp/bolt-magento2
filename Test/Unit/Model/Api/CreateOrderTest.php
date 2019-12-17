@@ -651,7 +651,7 @@ class CreateOrderTest extends TestCase
         $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
             ->withConsecutive(['[-= getReceivedUrl =-]'], ['---> ' . $url]);
         $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
-        $this->backendUrl->expects(self::once())->method('setScope')->with(self::STORE_ID);
+        $this->backendUrl->expects(self::once())->method('setScope')->with(0);
         $this->backendUrl->expects(self::once())->method('getUrl')->with('boltpay/order/receivedurl', [
             '_secure' => true,
             'store_id' => self::STORE_ID

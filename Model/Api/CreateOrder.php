@@ -359,8 +359,14 @@ class CreateOrder implements CreateOrderInterface
 
         $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $storeId = $quote->getStoreId();
-        $urlInterface = $this->isBackOfficeOrder($quote) ? $this->backendUrl : $this->url;
-        $urlInterface->setScope($storeId);
+        if ($this->isBackOfficeOrder($quote)) {
+            $urlInterface = $this->backendUrl;
+            // Set admin scope
+            $urlInterface->setScope(0);
+        } else {
+            $urlInterface = $this->url;
+            $urlInterface->setScope($storeId);
+        }
         $params = [
             '_secure' => true,
             'store_id' => $storeId
