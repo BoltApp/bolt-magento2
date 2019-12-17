@@ -421,9 +421,10 @@ class Order extends AbstractHelper
      */
     private function adjustTaxMismatch($transaction, $order, $quote)
     {
-        $boltTaxAmount = CurrencyUtils::toMajor($transaction->order->cart->tax_amount->amount, "USD");
-        $boltTotalAmount = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, "USD");
-        $precision = CurrencyUtils::getPrecisionForCurrencyCode("USD");
+        $currencyCode = $order->getOrderCurrencyCode();
+        $boltTaxAmount = CurrencyUtils::toMajor($transaction->order->cart->tax_amount->amount, $currencyCode);
+        $boltTotalAmount = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, $currencyCode);
+        $precision = CurrencyUtils::getPrecisionForCurrencyCode($currencyCode);
         $orderTaxAmount = round($order->getTaxAmount(), $precision);
 
         if ($boltTaxAmount != $orderTaxAmount) {
@@ -1189,8 +1190,9 @@ class Order extends AbstractHelper
      */
     private function holdOnTotalsMismatch($order, $transaction)
     {
+        $currencyCode = $order->getOrderCurrencyCode();
         $boltTotal = $transaction->order->cart->total_amount->amount;
-        $storeTotal = CurrencyUtils::toMinor($order->getGrandTotal(), "USD");
+        $storeTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
@@ -1204,7 +1206,7 @@ class Order extends AbstractHelper
             $comment = __(
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-                CurrencyUtils::toMajor($boltTotal, "USD"),
+                CurrencyUtils::toMajor($boltTotal, $currencyCode),
                 $order->getGrandTotal(),
                 $this->formatReferenceUrl($transaction->reference)
             );
@@ -1612,8 +1614,9 @@ class Order extends AbstractHelper
 
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
-            $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, "USD"));
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, "USD"));
+            $currencyCode = $order->getOrderCurrencyCode();
+            $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
         }
 
         if (!$order->getTotalDue()) {
