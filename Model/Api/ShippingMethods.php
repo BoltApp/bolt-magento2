@@ -282,7 +282,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 ]);
             });
             throw new LocalizedException(
-                __('Cart Items data data has changed.')
+                __('Cart Items data has changed.')
             );
         }
     }
