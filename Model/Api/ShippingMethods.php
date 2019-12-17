@@ -254,7 +254,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quantity = round($item->getQty());
             $unitPrice = round($item->getCalculationPrice(), 2);
             @$quoteItems['quantity'][$sku] += $quantity;
-            @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
+            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
         if (!$quoteItems) {
@@ -372,7 +372,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $parentQuote = $this->getQuoteById($cart['order_reference']);
             if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-                $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
+                $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
@@ -622,7 +622,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quote->collectTotals();
 
             $this->totalsCollector->collectAddressTotals($quote, $billingAddress);
-            $taxAmount = $this->cartHelper->getRoundAmount($billingAddress->getTaxAmount());
+            $taxAmount = CurrencyUtils::toMinor($billingAddress->getTaxAmount(), $quote->getQuoteCurrencyCode());
 
             return [
                 $this->shippingOptionInterfaceFactory
@@ -677,7 +677,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
-            $roundedCost = $this->cartHelper->getRoundAmount($cost);
+            $roundedCost = CurrencyUtils::toMinor($cost, $quote->getQuoteCurrencyCode());
 
             $currencyCode = $quote->getQuoteCurrencyCode();
             $diff = CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $roundedCost;

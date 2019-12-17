@@ -2099,7 +2099,7 @@ class DiscountCodeValidationTest extends TestCase
         $quote->method('isVirtual')->willReturn($isVirtual);
         $quote->method('getShippingAddress')->willReturn($shippingAddress);
         $quote->method('getBillingAddress')->willReturn($shippingAddress);
-        $quote->method('getQuoteCurrencyCode')->willReturn('$');
+        $quote->method('getQuoteCurrencyCode')->willReturn('USD');
         $quote->method('collectTotals')->willReturnSelf();
         $quote->method('getItemsCount')->willReturn(1);
         $quote->method('getCustomerId')->willReturn($customerId);
@@ -2204,18 +2204,11 @@ class DiscountCodeValidationTest extends TestCase
                     'getActiveQuoteById',
                     'handleSpecialAddressCases',
                     'validateEmail',
-                    'getRoundAmount',
                     'getCartData'
                 ]
             )
             ->disableOriginalConstructor()
             ->getMock();
-        $this->cartHelper->method('getRoundAmount')
-            ->willReturnCallback(
-                function ($amount) {
-                    return (int)round($amount * 100);
-                }
-            );
 
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
             ->setMethods(['getIgnoredShippingAddressCoupons'])

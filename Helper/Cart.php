@@ -1008,7 +1008,7 @@ class Cart extends AbstractHelper
                 $unitPrice   = $item->getCalculationPrice();
                 $itemTotalAmount = $unitPrice * $item->getQty();
 
-                $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
+                $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
 
                 // Aggregate eventual total differences if prices are stored with more than 2 decimal places
                 $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) -$roundedTotalAmount;
@@ -1024,7 +1024,7 @@ class Cart extends AbstractHelper
                 $product['reference']    = $item->getProductId();
                 $product['name']         = $item->getName();
                 $product['total_amount'] = $roundedTotalAmount;
-                $product['unit_price']   = $this->getRoundAmount($unitPrice);
+                $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
                 $product['sku']          = trim($item->getSku());
                 $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
@@ -1267,14 +1267,14 @@ class Cart extends AbstractHelper
 
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
-                    $rounded_cost = $this->getRoundAmount($cost);
+                    $rounded_cost = CurrencyUtils::toMinor($cost, $currencyCode);
 
                     $diff += CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $rounded_cost;
                     $totalAmount += $rounded_cost;
 
                     $cart['shipments'] = [[
                         'cost' => $rounded_cost,
-                        'tax_amount' => $this->getRoundAmount($address->getShippingTaxAmount()),
+                        'tax_amount' => CurrencyUtils::toMinor($address->getShippingTaxAmount(), $currencyCode),
                         'shipping_address' => $shipAddress,
                         'service' => $shippingAddress->getShippingDescription(),
                         'reference' => $shippingAddress->getShippingMethod(),
@@ -1290,7 +1290,7 @@ class Cart extends AbstractHelper
             }
 
             $storeTaxAmount   = $address->getTaxAmount();
-            $roundedTaxAmount = $this->getRoundAmount($storeTaxAmount);
+            $roundedTaxAmount = CurrencyUtils::toMinor($storeTaxAmount, $currencyCode);
 
             $diff += CurrencyUtils::toMinorWithoutRounding($storeTaxAmount, $currencyCode) - $roundedTaxAmount;
 
@@ -1347,18 +1347,6 @@ class Cart extends AbstractHelper
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;
-    }
-
-    /**
-     * Round amount helper
-     *
-     * @param $amount
-     * @return  int
-     */
-    // TODO remote this method
-    public function getRoundAmount($amount)
-    {
-        return CurrencyUtils::toMinor($amount, "USD");
     }
 
     /**
@@ -1419,7 +1407,7 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if ( ( $amount = abs( $address->getDiscountAmount() ) ) || $address->getCouponCode() ) {
-            $roundedAmount = $this->getRoundAmount($amount);
+            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
@@ -1437,7 +1425,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseCustomerBalance()) {
             if ($paymentOnly && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
-                $roundedAmount = $this->getRoundAmount($amount);
+                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
                     'description' => 'Store Credit',
@@ -1458,7 +1446,7 @@ class Cart extends AbstractHelper
                 $balanceModel->loadByCustomer();
 
                 if ($amount = abs($balanceModel->getAmount())) {
-                    $roundedAmount = $this->getRoundAmount($amount);
+                    $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
                         'description' => 'Store Credit',
@@ -1478,7 +1466,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if ($this->discountHelper->isMirasvitStoreCreditAllowed($quote)){
             $amount = abs($this->discountHelper->getMirasvitStoreCreditAmount($quote, $paymentOnly));
-            $roundedAmount = $this->getRoundAmount($amount);
+            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
@@ -1495,7 +1483,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
             $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
-            $roundedAmount = $this->getRoundAmount($amount);
+            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
@@ -1517,7 +1505,7 @@ class Cart extends AbstractHelper
             && $this->discountHelper->isBssStoreCreditAllowed()
         ) {
             $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
-            $roundedAmount = $this->getRoundAmount($amount);
+            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
@@ -1534,7 +1522,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseRewardPoints()) {
             if ($paymentOnly && $amount = abs($quote->getRewardCurrencyAmount())) {
-                $roundedAmount = $this->getRoundAmount($amount);
+                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
                     'description' => 'Reward Points',
@@ -1555,7 +1543,7 @@ class Cart extends AbstractHelper
                 $rewardModel->loadByCustomer();
 
                 if ($amount = abs($rewardModel->getCurrencyAmount())) {
-                    $roundedAmount = $this->getRoundAmount($amount);
+                    $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
                         'description' => 'Reward Points',
@@ -1574,7 +1562,7 @@ class Cart extends AbstractHelper
         // Process Mirasvit Rewards Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
-            $roundedAmount = $this->getRoundAmount($amount);
+            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
                 'description' =>
@@ -1633,7 +1621,7 @@ class Cart extends AbstractHelper
                 }
 
                 $amount = abs($amount);
-                $roundedAmount = $this->getRoundAmount($amount);
+                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
                     'description' => $description . @$totals[$discount]->getTitle(),

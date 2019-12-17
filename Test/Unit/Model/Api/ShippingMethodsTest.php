@@ -981,10 +981,10 @@ class ShippingMethodsTest extends TestCase
         $this->initCurrentMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['isVirtual', 'getBillingAddress', 'collectTotals'])
+            ->setMethods(['isVirtual', 'getBillingAddress', 'collectTotals', 'getQuoteCurrencyCode'])
             ->disableOriginalConstructor()
             ->getMock();
-
+        $quote->method("getQuoteCurrencyCode")->willReturn("USD");
         $quote->expects(self::once())->method('isVirtual')->willReturn(true);
 
         $billingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
