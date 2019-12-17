@@ -530,4 +530,19 @@ class ConfigTest extends TestCase
 
         $this->assertEquals($expected, $result, 'getIgnoredShippingAddressCoupons() method: not working properly');
     }
+
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
+    {
+        $this->scopeConfig->method('isSetFlag')
+              ->with(BoltConfig::XML_PATH_TRACK_CHECKOUT_FUNNEL)
+              ->willReturn(true);
+
+
+        $result = $this->currentMock->shouldTrackCheckoutFunnel();
+
+        $this->assertTrue($result);
+    }
 }

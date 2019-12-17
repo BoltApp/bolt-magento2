@@ -267,6 +267,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
                 list($quoteItemData) = $this->cartHelper->getCartItems(
+                    $this->quote->getQuoteCurrencyCode(),
                     $this->quote->getAllVisibleItems(),
                     $this->quote->getStoreId()
                 );
@@ -678,9 +679,10 @@ class ShippingMethods implements ShippingMethodsInterface
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = $this->cartHelper->getRoundAmount($cost);
 
-            $diff = CurrencyUtils::toMinorWithoutRounding($cost, "USD") - $roundedCost;
+            $currencyCode = $quote->getQuoteCurrencyCode();
+            $diff = CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $roundedCost;
 
-            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), "USD") + $diff);
+            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), $currencyCode) + $diff);
 
             if ($discountAmount) {
                 if ($cost == 0) {
