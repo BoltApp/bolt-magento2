@@ -144,6 +144,12 @@
                 <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Use Store Credit on Shopping Cart</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <if_module_enabled>Magento_CustomerBalance</if_module_enabled>
+                </field>
+                <field id="reward_points" translate="label" type="select" sortOrder="245" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Reward Points on Shopping Cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <if_module_enabled>Magento_Reward</if_module_enabled>
                 </field>
                 <field id="enable_payment_only_checkout" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Enable Payment Only Checkout</label>
