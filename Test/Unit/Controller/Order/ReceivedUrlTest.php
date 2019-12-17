@@ -11,10 +11,13 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
+use Magento\Framework\Phrase;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use PHPUnit\Framework\Constraint\ExceptionMessage;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
@@ -33,6 +36,7 @@ class ReceivedUrlTest extends TestCase
     const REDIRECT_URL = 'https://red.irect.url';
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
+    const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
 
     /**
      * @var string
@@ -43,6 +47,11 @@ class ReceivedUrlTest extends TestCase
      * @var string
      */
     private $encodedBoltPayload;
+
+    /**
+     * @var array
+     */
+    private $defaultRequestMap;
 
     /**
      * @var Context
@@ -60,7 +69,7 @@ class ReceivedUrlTest extends TestCase
     private $cartHelper;
 
     /**
-     * @var Bugsnag
+     * @var Bugsnag | MockObject
      */
     private $bugsnag;
 
@@ -84,16 +93,7 @@ class ReceivedUrlTest extends TestCase
      */
     public function execute_HappyPath()
     {
-        $requestMap = [
-            ['bolt_signature', null, $this->boltSignature],
-            ['bolt_payload', null, $this->encodedBoltPayload],
-            ['store_id', null, self::STORE_ID]
-        ];
-
-        $request = $this->createMock(RequestInterface::class);
-        $request->expects($this->exactly(3))
-            ->method('getParam')
-            ->will($this->returnValueMap($requestMap));
+        $request = $this->initRequest($this->defaultRequestMap);
 
         $order = $this->createMock(Order::class);
         $order->method('getId')
@@ -226,19 +226,9 @@ class ReceivedUrlTest extends TestCase
      */
     public function execute_SignatureAndHashUnequal()
     {
-        $requestMap = [
-            ['bolt_signature', null, $this->boltSignature],
-            ['bolt_payload', null, $this->encodedBoltPayload],
-            ['store_id', null, self::STORE_ID]
-        ];
+        $request = $this->initRequest($this->defaultRequestMap);
 
-        $request = $this->createMock(RequestInterface::class);
-        $request->expects($this->exactly(3))
-            ->method('getParam')
-            ->will($this->returnValueMap($requestMap));
-
-        $messageManager = $this->createMock(ManagerInterface::class);
-        $messageManager->method('addErrorMessage');
+        $messageManager = $this->createMessageManagerMock();
 
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
@@ -271,10 +261,75 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl->execute();
     }
 
+    /**
+     * @test
+     */
+    public function execute_NoSuchEntityException()
+    {
+        $request = $this->initRequest($this->defaultRequestMap);
+
+        $exception = new NoSuchEntityException(new Phrase(self::NO_SUCH_ENTITY_MESSAGE));
+
+        $message = $this->createMessageManagerMock();
+        $message->expects($this->once())
+            ->method('addErrorMessage');
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->method('getOrderByIncrementId')
+            ->willThrowException($exception);
+
+        $context = $this->createMock(Context::class);
+        $context->method('getMessageManager')
+            ->willReturn($message);
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects($this->once())
+            ->method('getSigningSecret')
+            ->with(self::STORE_ID)
+            ->willReturn(self::SIGNING_SECRET);
+
+        $this->bugsnag->expects($this->once())
+            ->method('registerCallback')
+            ->willReturnCallback(
+                function (callable $callback) use ($request) {
+                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock->expects($this->once())
+                        ->method('setMetaData')
+                        ->with([
+                            'order_id' => self::INCREMENT_ID,
+                            'store_id' => self::STORE_ID
+                        ]);
+                    $callback($reportMock);
+                }
+            );
+        $this->bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with($this->equalTo('NoSuchEntityException: '), $this->equalTo(self::NO_SUCH_ENTITY_MESSAGE));
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $this->bugsnag,
+            $this->logHelper,
+            $this->checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')
+            ->willReturn($request);
+        $receivedUrl->expects($this->once())
+            ->method('_redirect')
+            ->with('/');
+
+        $receivedUrl->execute();
+    }
+
     public function setUp()
     {
         $this->initRequiredMocks();
         $this->initAuthentication();
+        $this->initRequestMap();
     }
 
     private function initRequiredMocks()
@@ -325,5 +380,32 @@ class ReceivedUrlTest extends TestCase
         $this->encodedBoltPayload = base64_encode(self::DECODED_BOLT_PAYLOAD);
         $hashBoltPayloadWithKey = hash_hmac('sha256', $this->encodedBoltPayload, self::SIGNING_SECRET, true);
         $this->boltSignature = base64_encode(base64_encode($hashBoltPayloadWithKey));
+    }
+
+    private function initRequestMap()
+    {
+        $this->defaultRequestMap = [
+            ['bolt_signature', null, $this->boltSignature],
+            ['bolt_payload', null, $this->encodedBoltPayload],
+            ['store_id', null, self::STORE_ID]
+        ];
+    }
+
+    private function initRequest($requestMap)
+    {
+        $request = $this->createMock(RequestInterface::class);
+        $request->expects($this->exactly(3))
+            ->method('getParam')
+            ->will($this->returnValueMap($requestMap));
+
+        return $request;
+    }
+
+    private function createMessageManagerMock()
+    {
+        $messageManager = $this->createMock(ManagerInterface::class);
+        $messageManager->method('addErrorMessage');
+
+        return $messageManager;
     }
 }
