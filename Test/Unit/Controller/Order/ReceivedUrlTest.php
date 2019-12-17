@@ -39,6 +39,7 @@ class ReceivedUrlTest extends TestCase
     const TRANSACTION_REFERENCE = 'transaction_reference';
     const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
     const LOCALIZED_MESSAGE = 'Localized message';
+    const UNEQUAL_MESSAGE = 'bolt_signature and Magento signature are not equal';
 
     /**
      * @var string
@@ -335,6 +336,26 @@ class ReceivedUrlTest extends TestCase
 
         $messageManager = $this->createMessageManagerMock();
 
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
+            ->method('registerCallback')
+            ->wilLReturnCallback(
+                function (callable $callback) use ($request) {
+                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock->expects($this->once())
+                        ->method('setMetaData')
+                        ->with([
+                            'bolt_signature' => $this->boltSignature,
+                            'bolt_payload' => $this->encodedBoltPayload,
+                            'store_id' => self::STORE_ID
+                        ]);
+                    $callback($reportMock);
+                }
+            );
+        $bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with($this->equalTo('OrderReceivedUrl Error'), $this->equalTo(self::UNEQUAL_MESSAGE));
+
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
             ->willReturn($messageManager);
@@ -342,17 +363,16 @@ class ReceivedUrlTest extends TestCase
         $configHelper = $this->createMock(ConfigHelper::class);
         $configHelper->method('getSigningSecret')->willReturn('failing hash check!');
 
-        $logMessage = 'bolt_signature and Magento signature are not equal'; //this string is hardcoded into ReceivedUrlTrait.php
         $logHelper = $this->createMock(LogHelper::class);
         $logHelper->expects($this->once())
             ->method('addInfoLog')
-            ->with($logMessage);
+            ->with(self::UNEQUAL_MESSAGE);
 
         $receivedUrl = $this->initReceivedUrlMock(
             $context,
             $configHelper,
             $this->cartHelper,
-            $this->bugsnag,
+            $bugsnag,
             $logHelper,
             $this->checkoutSession,
             $this->orderHelper
