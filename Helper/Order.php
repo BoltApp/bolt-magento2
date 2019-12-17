@@ -724,6 +724,10 @@ class Order extends AbstractHelper
         // do not verify inventory, it is already reserved
         $quote->setInventoryProcessed(true);
 
+        if ($order->getAppliedRuleIds() === null) {
+            $order->setAppliedRuleIds('');
+        }
+
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
             'checkout_submit_all_after', [
