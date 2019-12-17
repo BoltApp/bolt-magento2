@@ -11,6 +11,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
@@ -37,6 +38,7 @@ class ReceivedUrlTest extends TestCase
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
     const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
+    const LOCALIZED_MESSAGE = 'Localized message';
 
     /**
      * @var string
@@ -391,7 +393,8 @@ class ReceivedUrlTest extends TestCase
             ->with(self::STORE_ID)
             ->willReturn(self::SIGNING_SECRET);
 
-        $this->bugsnag->expects($this->once())
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
             ->method('registerCallback')
             ->willReturnCallback(
                 function (callable $callback) use ($request) {
@@ -405,7 +408,7 @@ class ReceivedUrlTest extends TestCase
                     $callback($reportMock);
                 }
             );
-        $this->bugsnag->expects($this->once())
+        $bugsnag->expects($this->once())
             ->method('notifyError')
             ->with($this->equalTo('NoSuchEntityException: '), $this->equalTo(self::NO_SUCH_ENTITY_MESSAGE));
 
@@ -413,8 +416,76 @@ class ReceivedUrlTest extends TestCase
             $context,
             $configHelper,
             $cartHelper,
-            $this->bugsnag,
+            $bugsnag,
             $this->logHelper,
+            $this->checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')
+            ->willReturn($request);
+        $receivedUrl->expects($this->once())
+            ->method('_redirect')
+            ->with('/');
+
+        $receivedUrl->execute();
+    }
+
+    /**
+     * @test
+     */
+    public function execute_LocalizedException()
+    {
+        $request = $this->initRequest($this->defaultRequestMap);
+
+        $exception = new LocalizedException(new Phrase(self::LOCALIZED_MESSAGE));
+        $logHelper = $this->createMock(LogHelper::class);
+
+        $message = $this->createMessageManagerMock();
+        $message->expects($this->once())
+            ->method('addErrorMessage')
+            ->with('Something went wrong. Please contact the seller.'); //Hardcoded string in class
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->method('getOrderByIncrementId')
+            ->willThrowException($exception);
+
+        $context = $this->createMock(Context::class);
+        $context->method('getMessageManager')
+            ->willReturn($message);
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects($this->once())
+            ->method('getSigningSecret')
+            ->with(self::STORE_ID)
+            ->willReturn(self::SIGNING_SECRET);
+
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
+            ->method('registerCallback')
+            ->willReturnCallback(
+                function (callable $callback) use ($request) {
+                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock->expects($this->once())
+                        ->method('setMetaData')
+                        ->with([
+                            'bolt_signature' => $this->boltSignature,
+                            'bolt_payload' => $this->encodedBoltPayload,
+                            'store_id' => self::STORE_ID
+                        ]);
+                    $callback($reportMock);
+                }
+            );
+        $bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with($this->equalTo('LocalizedException: '), $this->equalTo(self::LOCALIZED_MESSAGE));
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $bugsnag,
+            $logHelper,
             $this->checkoutSession,
             $this->orderHelper
         );
