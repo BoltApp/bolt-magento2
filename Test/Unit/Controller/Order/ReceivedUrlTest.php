@@ -37,7 +37,7 @@ class ReceivedUrlTest extends TestCase
     const REDIRECT_URL = 'https://red.irect.url';
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
-    const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
+    const NO_SUCH_ENTITY_MESSAGE = 'Could not find the order data.';
     const LOCALIZED_MESSAGE = 'Localized message';
     const UNEQUAL_MESSAGE = 'bolt_signature and Magento signature are not equal';
 
@@ -393,15 +393,13 @@ class ReceivedUrlTest extends TestCase
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $exception = new NoSuchEntityException(new Phrase(self::NO_SUCH_ENTITY_MESSAGE));
-
         $message = $this->createMessageManagerMock();
         $message->expects($this->once())
             ->method('addErrorMessage');
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->method('getOrderByIncrementId')
-            ->willThrowException($exception);
+            ->willReturn(null);
 
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
