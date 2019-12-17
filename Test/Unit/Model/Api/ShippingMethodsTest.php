@@ -1099,7 +1099,7 @@ class ShippingMethodsTest extends TestCase
         self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Cart Items data data has changed.');
+        $this->expectExceptionMessage('Cart Items data has changed.');
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($quote, $cart) {
