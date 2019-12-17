@@ -1196,7 +1196,7 @@ class Config extends AbstractHelper
     public function shouldTrackCheckoutFunnel($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_ACTIVE,
+            self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
             ScopeInterface::SCOPE_STORE,
             $store
         );
