@@ -37,8 +37,9 @@ class ReceivedUrlTest extends TestCase
     const REDIRECT_URL = 'https://red.irect.url';
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
-    const NO_SUCH_ENTITY_MESSAGE = 'No such entity message';
+    const NO_SUCH_ENTITY_MESSAGE = 'Could not find the order data.';
     const LOCALIZED_MESSAGE = 'Localized message';
+    const UNEQUAL_MESSAGE = 'bolt_signature and Magento signature are not equal';
 
     /**
      * @var string
@@ -121,12 +122,7 @@ class ReceivedUrlTest extends TestCase
         $quote->method('getId')
             ->willReturn(self::QUOTE_ID);
 
-        $url = $this->createMock(UrlInterface::class);
-        $url->expects($this->once())
-            ->method('setScope')
-            ->with(self::STORE_ID);
-        $url->method('getUrl')
-            ->willReturn(self::REDIRECT_URL);
+        $url = $this->createUrlMock();
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
@@ -226,11 +222,139 @@ class ReceivedUrlTest extends TestCase
     /**
      * @test
      */
+    public function execute_IncorrectOrderState()
+    {
+        $request = $this->initRequest($this->defaultRequestMap);
+
+        $order = $this->createMock(Order::class);
+        $order->method('getState')
+            ->wilLReturn(Order::STATE_CLOSED);
+        $order->method('getQuoteId')
+            ->willReturn(self::QUOTE_ID);
+        $order->method('getStoreId')
+            ->willReturn(self::STORE_ID);
+        $order->method('getIncrementId')
+            ->willReturn(self::INCREMENT_ID);
+        $order->method('getStatus')
+            ->willReturn(self::ORDER_STATUS);
+        $order->method('getId')
+            ->willReturn(self::ORDER_ID);
+
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getId')
+            ->willReturn(self::QUOTE_ID);
+
+        $url = $this->createUrlMock();
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->method('getOrderByIncrementId')
+            ->willReturn($order);
+        $cartHelper->method('getQuoteById')
+            ->willReturn($quote);
+
+        $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'setLastQuoteId',
+                'setLastSuccessQuoteId',
+                'clearHelperData',
+                'setLastOrderId',
+                'setRedirectUrl',
+                'setLastRealOrderId',
+                'setLastOrderStatus'
+            ])
+            ->getMock();
+
+        //clearQuoteSession
+        $checkoutSession->expects($this->once())
+            ->method('setLastQuoteId')
+            ->with(self::QUOTE_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastSuccessQuoteId')
+            ->with(self::QUOTE_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('clearHelperData')
+            ->willReturnSelf();
+
+        //clearOrderSession
+        $checkoutSession->expects($this->once())
+            ->method('setLastOrderId')
+            ->with(self::ORDER_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setRedirectUrl')
+            ->with(self::REDIRECT_URL)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastRealOrderId')
+            ->with(self::INCREMENT_ID)
+            ->willReturnSelf();
+        $checkoutSession->expects($this->once())
+            ->method('setLastOrderStatus')
+            ->with(self::ORDER_STATUS)
+            ->willReturnSelf();
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->method('getSigningSecret')
+            ->willReturn(self::SIGNING_SECRET);
+
+        $context = $this->createMock(Context::class);
+        $context->method('getUrl')
+            ->willReturn($url);
+
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with(
+                $this->equalTo('Pre-Auth redirect wrong order state'), //Hard-coded string in class
+                $this->equalTo('OrderNo: ' . self::INCREMENT_ID . ', State: ' . ORDER::STATE_CLOSED) //Parameterized string in class
+            );
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $bugsnag,
+            $this->logHelper,
+            $checkoutSession,
+            $this->orderHelper
+        );
+
+        $receivedUrl->method('getRequest')
+            ->willReturn($request);
+        $receivedUrl->execute();
+    }
+
+    /**
+     * @test
+     */
     public function execute_SignatureAndHashUnequal()
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
         $messageManager = $this->createMessageManagerMock();
+
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())
+            ->method('registerCallback')
+            ->wilLReturnCallback(
+                function (callable $callback) use ($request) {
+                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock->expects($this->once())
+                        ->method('setMetaData')
+                        ->with([
+                            'bolt_signature' => $this->boltSignature,
+                            'bolt_payload' => $this->encodedBoltPayload,
+                            'store_id' => self::STORE_ID
+                        ]);
+                    $callback($reportMock);
+                }
+            );
+        $bugsnag->expects($this->once())
+            ->method('notifyError')
+            ->with($this->equalTo('OrderReceivedUrl Error'), $this->equalTo(self::UNEQUAL_MESSAGE));
 
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
@@ -239,17 +363,16 @@ class ReceivedUrlTest extends TestCase
         $configHelper = $this->createMock(ConfigHelper::class);
         $configHelper->method('getSigningSecret')->willReturn('failing hash check!');
 
-        $logMessage = 'bolt_signature and Magento signature are not equal'; //this string is hardcoded into ReceivedUrlTrait.php
         $logHelper = $this->createMock(LogHelper::class);
         $logHelper->expects($this->once())
             ->method('addInfoLog')
-            ->with($logMessage);
+            ->with(self::UNEQUAL_MESSAGE);
 
         $receivedUrl = $this->initReceivedUrlMock(
             $context,
             $configHelper,
             $this->cartHelper,
-            $this->bugsnag,
+            $bugsnag,
             $logHelper,
             $this->checkoutSession,
             $this->orderHelper
@@ -270,15 +393,13 @@ class ReceivedUrlTest extends TestCase
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $exception = new NoSuchEntityException(new Phrase(self::NO_SUCH_ENTITY_MESSAGE));
-
         $message = $this->createMessageManagerMock();
         $message->expects($this->once())
             ->method('addErrorMessage');
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->method('getOrderByIncrementId')
-            ->willThrowException($exception);
+            ->willReturn(null);
 
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
@@ -478,5 +599,17 @@ class ReceivedUrlTest extends TestCase
         $messageManager->method('addErrorMessage');
 
         return $messageManager;
+    }
+
+    private function createUrlMock()
+    {
+        $url = $this->createMock(UrlInterface::class);
+        $url->expects($this->once())
+            ->method('setScope')
+            ->with(self::STORE_ID);
+        $url->method('getUrl')
+            ->willReturn(self::REDIRECT_URL);
+
+        return $url;
     }
 }
