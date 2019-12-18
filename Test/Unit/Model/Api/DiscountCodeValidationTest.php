@@ -2204,18 +2204,11 @@ class DiscountCodeValidationTest extends TestCase
                     'getActiveQuoteById',
                     'handleSpecialAddressCases',
                     'validateEmail',
-                    'getRoundAmount',
                     'getCartData'
                 ]
             )
             ->disableOriginalConstructor()
             ->getMock();
-        $this->cartHelper->method('getRoundAmount')
-            ->willReturnCallback(
-                function ($amount) {
-                    return (int)round($amount * 100);
-                }
-            );
 
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
             ->setMethods(['getIgnoredShippingAddressCoupons'])

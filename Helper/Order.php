@@ -830,12 +830,11 @@ class Order extends AbstractHelper
      */
     protected function hasSamePrice($order, $transaction)
     {
-
-        $this->cartHelper->getRoundAmount($order->getTaxAmount());
+        $currencyCode = $order->getOrderCurrencyCode();
         /** @var OrderModel $order */
-        $taxAmount = $this->cartHelper->getRoundAmount($order->getTaxAmount());
-        $shippingAmount = $this->cartHelper->getRoundAmount($order->getShippingAmount());
-        $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+        $taxAmount = CurrencyUtils::toMinor($order->getTaxAmount(), $currencyCode);
+        $shippingAmount = CurrencyUtils::toMinor($order->getShippingAmount(), $currencyCode);
+        $grandTotalAmount = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
@@ -1671,8 +1670,9 @@ class Order extends AbstractHelper
      */
     private function createOrderInvoice($order, $transactionId, $amount)
     {
+        $currencyCode = $order->getOrderCurrencyCode();
         try {
-            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
+            if (CurrencyUtils::toMinor($order->getTotalInvoiced() + $amount, $currencyCode) === CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode)) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
@@ -1740,15 +1740,13 @@ class Order extends AbstractHelper
             throw new \Exception( __('Capture amount is invalid'));
         }
 
-        /**
-         * Due to grand total sent to Bolt is rounded, the same operation should be used
-         * when validating captured amount.
-         * Rounding operations are applied to each operand in order to avoid cases when the grand total
-         * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
-         */
-        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
-            + $this->cartHelper->getRoundAmount($captureAmount);
-        $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+        $currencyCode = $order->getOrderCurrencyCode();
+        // Due to grand total sent to Bolt is rounded, the same operation should be used when validating captured amount.
+        // Rounding operations are applied to each operand in order to avoid cases when the grand total
+        // is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
+        $captured = CurrencyUtils::toMinor($order->getTotalInvoiced(), $currencyCode)
+            + CurrencyUtils::toMinor($captureAmount, $currencyCode);
+        $grandTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         if ($captured > $grandTotal) {
             throw new \Exception(

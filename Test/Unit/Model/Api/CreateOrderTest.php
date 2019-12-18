@@ -183,8 +183,10 @@ class CreateOrderTest extends TestCase
                 'isVirtual',
                 'getShippingAddress',
                 'getBoltIsBackendOrder',
+                'getQuoteCurrencyCode'
             ]);
         $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
 
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods([
@@ -228,11 +230,6 @@ class CreateOrderTest extends TestCase
         $this->immutableQuoteMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->cartHelper->method('getRoundAmount')->willReturnCallback(
-            function ($amount) {
-                return (int)round($amount * 100);
-            }
-        );
         $this->cartHelper->method('getQuoteById')->willReturnMap([
             [self::QUOTE_ID, $this->quoteMock],
             [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],

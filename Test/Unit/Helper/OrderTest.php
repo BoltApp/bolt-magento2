@@ -255,12 +255,7 @@ class OrderTest extends TestCase
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->cartHelper = $this->createPartialMock(
-            CartHelper::class,
-            [
-                'getRoundAmount',
-            ]
-        );
+        $this->cartHelper = $this->createMock(CartHelper::class);
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
@@ -285,6 +280,7 @@ class OrderTest extends TestCase
                 'getGrandTotal',
                 'getPayment',
                 'setIsCustomerNotified',
+                'getOrderCurrencyCode',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -294,6 +290,7 @@ class OrderTest extends TestCase
             ]
         );
         $this->orderMock->method('getConfig')->willReturn($this->orderConfigMock);
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn("USD");
     }
     
     /**
@@ -814,8 +811,6 @@ class OrderTest extends TestCase
                 'save',
             ]
         );
-        $this->cartHelper->method('getRoundAmount')
-                         ->will($this->returnCallback(function($amount) { return (int)round($amount * 100); }));
         $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
         $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
         $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
