@@ -216,8 +216,15 @@ class CreateOrderTest extends TestCase
             [
                 'validateMinimumAmount',
                 'getGrandTotal',
+                'getStore',
                 'getStoreId',
             ]);
+        $storeMock = $this->getMockBuilder(Store::class)
+            ->setMethods(['setCurrentCurrencyCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->immutableQuoteMock->method('getStore')
+              ->willReturn($storeMock);
         $this->immutableQuoteMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->cartHelper = $this->createMock(CartHelper::class);

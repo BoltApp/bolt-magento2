@@ -297,6 +297,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $websiteId = $parentQuote->getStore()->getWebsiteId();
 
             $this->preProcessWebhook($storeId);
+            $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
 
             // get the coupon code
             $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
