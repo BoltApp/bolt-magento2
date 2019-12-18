@@ -207,6 +207,7 @@ class CreateOrder implements CreateOrderInterface
             $immutableQuote = $this->loadQuoteData($quoteId);
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
+            $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
 
             $transaction = json_decode($payload);
 
