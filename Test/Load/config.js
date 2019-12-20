@@ -4,7 +4,7 @@ import crypto from "k6/crypto";
 // values from the store you want to load test
 
 // URL to the store
-export const URL = "http://34.220.243.58";
+export const URL = "http://54.201.96.204";
 
 // Path from URL to the Cart Data Load Test Webhook
 export const CART_PATH = "/rest/V1/bolt/boltpay/order/cartdata";
@@ -18,10 +18,14 @@ export const PREAUTH_PATH = "/rest/V1/bolt/boltpay/order/create";
 // Store's Signing Secret
 const SIGNING_SECRET = "76037c6eeaf7005580f4541e3e5397017e153d5f7ce97ae30656f8a830c4908f";
 
+// Used for profiling the test server
+const BLACKFIRE_HEADER = __ENV.BLACKFIRE_HEADER || ""; 
+
 export function create_header( data ) {
     const hmac = crypto.hmac( 'sha256', SIGNING_SECRET, JSON.stringify( data ), 'base64' );
     return {
         "X-Bolt-Hmac-Sha256": hmac,
-        "Content-Type": "application/json"
+        "Content-Type": "application/json", 
+        "X-Blackfire-Query": BLACKFIRE_HEADER
     };
 }
