@@ -17,13 +17,14 @@ namespace Bolt\Boltpay\Controller\Adminhtml\Cart;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
-use Magento\Framework\App\Action\Action;
-use Magento\Framework\App\Action\Context;
+use Magento\Backend\App\Action;
+use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 
 /**
  * Class Data.
@@ -56,6 +57,11 @@ class Data extends Action
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+    
+    /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
@@ -66,6 +72,7 @@ class Data extends Action
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
      * @param DataObjectFactory $dataObjectFactory
      *
      * @codeCoverageIgnore
@@ -76,6 +83,7 @@ class Data extends Action
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         DataObjectFactory $dataObjectFactory
     ) {
         parent::__construct($context);
@@ -83,6 +91,7 @@ class Data extends Action
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->dataObjectFactory = $dataObjectFactory;
     }
 
@@ -94,16 +103,26 @@ class Data extends Action
      */
     public function execute()
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload, $magentoStoreId);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
+
+            if ($boltpayOrder) {
+                $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
+                $this->metricsClient->processMetric("back_office_order_token.success", 1, "back_office_order_token.latency", $startTime);
+            } else {
+                $this->metricsClient->processMetric("back_office_order_token.failure", 1, "back_office_order_token.latency", $startTime);
+            }
+
+            $storeId = $this->cartHelper->getSessionQuoteStoreId();
+            $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
 
             // format and send the response
             $cart = [
-                'orderToken'  => $boltpayOrder ? $boltpayOrder->getResponse()->token : '',
-                'authcapture' => true
+                'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
             ];
 
             $hints = $this->cartHelper->getHints();
@@ -111,10 +130,14 @@ class Data extends Action
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
             $result->setData('hints', $hints);
+            $result->setData('publishableKey', $publishableKey);
+            $result->setData('storeId', $storeId);
+            $result->setData('isPreAuth', $isPreAuth);
 
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("back_office_order_token.failure", 1, "back_office_order_token.latency", $startTime);
             throw $e;
         }
     }

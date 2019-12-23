@@ -31,6 +31,7 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -40,6 +41,8 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\SalesRule\Model\RuleFactory;
 use Magestore\Storepickup\Helper\Data as StorepickupHelperData;
 
 /**
@@ -101,6 +104,11 @@ class ShippingMethods implements ShippingMethodsInterface
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @var LogHelper
      */
     private $logHelper;
@@ -138,10 +146,21 @@ class ShippingMethods implements ShippingMethodsInterface
     /** @var SessionHelper */
     private $sessionHelper;
 
+    /** @var DiscountHelper */
+    private $discountHelper;
+
     // Totals adjustment threshold
     private $threshold = 1;
 
     private $taxAdjusted = false;
+
+    /** @var Quote */
+    protected $quote;
+
+    /**
+     * @var RuleFactory
+     */
+    private $ruleFactory;
     
     /**
      * @var StorepickupHelperData
@@ -160,6 +179,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
+     * @param MetricsClient                   $metricsClient
      * @param LogHelper                       $logHelper
      * @param BoltErrorResponse               $errorResponse
      * @param Response                        $response
@@ -168,6 +188,8 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param CacheInterface                  $cache
      * @param PriceHelper                     $priceHelper
      * @param SessionHelper                   $sessionHelper
+     * @param DiscountHelper                  $discountHelper
+     * @param RuleFactory                     $ruleFactory
      * @param StorepickupHelperData           $storepickupHelperData
      */
     public function __construct(
@@ -180,6 +202,7 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingMethodConverter $converter,
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
+        MetricsClient $metricsClient,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
         Response $response,
@@ -188,6 +211,8 @@ class ShippingMethods implements ShippingMethodsInterface
         CacheInterface $cache,
         PriceHelper $priceHelper,
         SessionHelper $sessionHelper,
+        DiscountHelper $discountHelper,
+        RuleFactory $ruleFactory,
         StorepickupHelperData $storepickupHelperData
     ) {
         $this->hookHelper = $hookHelper;
@@ -199,6 +224,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->converter = $converter;
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
+        $this->metricsClient = $metricsClient;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
         $this->response = $response;
@@ -207,6 +233,8 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->cache = $cache;
         $this->priceHelper = $priceHelper;
         $this->sessionHelper = $sessionHelper;
+        $this->discountHelper = $discountHelper;
+        $this->ruleFactory = $ruleFactory;
         $this->storepickupHelperData = $storepickupHelperData;
     }
 
@@ -221,7 +249,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param Quote $quote
      * @throws LocalizedException
      */
-    protected function checkCartItems($cart, $quote)
+    protected function checkCartItems($cart)
     {
         $cartItems = [];
         foreach ($cart['items'] as $item) {
@@ -230,7 +258,7 @@ class ShippingMethods implements ShippingMethodsInterface
             @$cartItems['total'][$sku] += $item['total_amount'];
         }
         $quoteItems = [];
-        foreach ($quote->getAllVisibleItems() as $item) {
+        foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
             $unitPrice = $item->getCalculationPrice();
@@ -245,23 +273,12 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
-            $this->bugsnag->registerCallback(function ($report) use ($cart, $quote) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart) {
 
-                $quoteItems = array_map(function ($item) {
-                    $product = [];
-                    $productId = $item->getProductId();
-                    $unitPrice   = $item->getCalculationPrice();
-                    $totalAmount = $unitPrice * $item->getQty();
-                    $roundedTotalAmount = $this->cartHelper->getRoundAmount($totalAmount);
-                    $product['reference']    = $productId;
-                    $product['name']         = $item->getName();
-                    $product['description']  = $item->getDescription();
-                    $product['total_amount'] = $roundedTotalAmount;
-                    $product['unit_price']   = $this->cartHelper->getRoundAmount($unitPrice);
-                    $product['quantity']     = round($item->getQty());
-                    $product['sku']          = trim($item->getSku());
-                    return $product;
-                }, $quote->getAllVisibleItems());
+                list($quoteItems) = $this->cartHelper->getCartItems(
+                    $this->quote->getAllVisibleItems(),
+                    $this->quote->getStoreId()
+                );
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
@@ -319,26 +336,25 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethods($cart, $shipping_address)
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-//            $this->logHelper->addInfoLog($this->request->getContent());
-
-            $this->preprocessHook();
-
             // get immutable quote id stored with transaction
             list(, $quoteId) = explode(' / ', $cart['display_id']);
 
             // Load quote from entity id
-            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $this->quote = $this->getQuoteById($quoteId);
 
-            if (!$quote || !$quote->getId()) {
+            if (!$this->quote) {
                 $this->throwUnknownQuoteIdException($quoteId);
             }
 
-            $this->checkCartItems($cart, $quote);
+            $this->preprocessHook();
+
+            $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.
             // Replace parent quote with immutable quote in checkout session.
-            $this->sessionHelper->loadSession($quote);
+            $this->sessionHelper->loadSession($this->quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
 
@@ -346,7 +362,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $this->validateAddressData($addressData);
             }
 
-            $shippingOptionsModel = $this->shippingEstimation($quote, $addressData);
+            $shippingOptionsModel = $this->shippingEstimation($this->quote, $addressData);
 
             if ($this->taxAdjusted) {
                 $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
@@ -358,20 +374,24 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             /** @var \Magento\Quote\Model\Quote $parentQuote */
-            $parentQuote = $this->cartHelper->getQuoteById($cart['order_reference']);
-            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode(), $quote)){
+            $parentQuote = $this->getQuoteById($cart['order_reference']);
+            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
                 $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
+            $this->metricsClient->processMetric("ship_tax.success", 1, "ship_tax.latency", $startTime);
 
             return $shippingOptionsModel;
         } catch (\Magento\Framework\Webapi\Exception $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
+            $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
@@ -402,15 +422,6 @@ class ShippingMethods implements ShippingMethodsInterface
     }
 
     /**
-     * @param $quote
-     * @throws \Magento\Framework\Exception\SessionException
-     */
-    protected function loadSessionByQuote($quote)
-    {
-        return $this->sessionHelper->loadSession($quote);
-    }
-
-    /**
      * @param $quoteId
      * @return \Magento\Quote\Api\Data\CartInterface
      * @throws \Magento\Framework\Exception\NoSuchEntityException
@@ -426,10 +437,27 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     protected function preprocessHook()
     {
-        $this->hookHelper->setCommonMetaData();
-        $this->hookHelper->setHeaders();
+        $this->hookHelper->preProcessWebhook($this->quote->getStoreId());
+    }
 
-        $this->hookHelper->verifyWebhook();
+    /**
+     * Fetch and apply external quote data, not stored within a quote or totals (third party modules DB tables)
+     * If data is applied it is used as a part of the cache identifier.
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    public function applyExternalQuoteData($quote)
+    {
+        $data = '';
+        $this->discountHelper->applyExternalDiscountData($quote);
+        if ($quote->getAmrewardsPoint()) {
+            $data .= $quote->getAmrewardsPoint();
+        }
+        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
+            $data .=$rewardsAmount;
+        }
+        return $data;
     }
 
     /**
@@ -443,18 +471,20 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function shippingEstimation($quote, $addressData)
     {
+        // Take into account external data applied to quote in thirt party modules
+        $externalData = $this->applyExternalQuoteData($quote);
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
         // applied rules (discounts), region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
-        if ($prefetchShipping = $this->configHelper->getPrefetchShipping()) {
+        if ($prefetchShipping = $this->configHelper->getPrefetchShipping($quote->getStoreId())) {
             // use parent quote id for caching.
             // if everything else matches the cache is used more efficiently this way
             $parentQuoteId = $quote->getBoltParentQuoteId();
 
             $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
                 $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code']. '_'.
-                @$addressData['street_address1'].'_'.@$addressData['street_address2'];
+                @$addressData['street_address1'].'_'.@$addressData['street_address2'].'_'.$externalData;
 
             // include products in cache key
             foreach ($quote->getAllVisibleItems() as $item) {
@@ -467,32 +497,13 @@ class ShippingMethods implements ShippingMethodsInterface
                 $cacheIdentifier .= '_'.$ruleIds;
             }
 
-            // get custom address fields to be included in cache key
-            $prefetchAddressFields = explode(',', $this->configHelper->getPrefetchAddressFields());
-            // trim values and filter out empty strings
-            $prefetchAddressFields = array_filter(array_map('trim', $prefetchAddressFields));
-            // convert to PascalCase
-            $prefetchAddressFields = array_map(
-                function ($el) {
-                    return str_replace('_', '', ucwords($el, '_'));
-                },
-                $prefetchAddressFields
-            );
-
-            $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
-
-            // get the value of each valid field and include it in the cache identifier
-            foreach ($prefetchAddressFields as $key) {
-                $getter = 'get'.$key;
-                $value = $address->$getter();
-                if ($value) {
-                    $cacheIdentifier .= '_'.$value;
-                }
-            }
+            // extend cache identifier with custom address fields
+            $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
 
             $cacheIdentifier = md5($cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
                 return unserialize($serialized);
             }
@@ -568,13 +579,35 @@ class ShippingMethods implements ShippingMethodsInterface
      * Use it carefully only when necesarry.
      *
      * @param \Magento\Quote\Model\Quote\Address $shippingAddress
+     * @param null|int                           $storeId
      */
-    private function resetShippingCalculationIfNeeded($shippingAddress)
+    private function resetShippingCalculationIfNeeded($shippingAddress, $storeId = null)
     {
-        if ($this->configHelper->getResetShippingCalculation()) {
+        if ($this->configHelper->getResetShippingCalculation($storeId)) {
             $shippingAddress->removeAllShippingRates();
             $shippingAddress->setCollectShippingRates(true);
         }
+    }
+
+    /**
+     * @param Quote $quote
+     * @param \Magento\Quote\Model\Quote\Address $shippingAddress
+     * @return array
+     */
+    public function generateShippingMethodArray($quote, $shippingAddress)
+    {
+        $shippingMethodArray = [];
+        $shippingRates = $shippingAddress->getGroupedAllShippingRates();
+
+        $this->resetShippingCalculationIfNeeded($shippingAddress, $quote->getStoreId());
+
+        foreach ($shippingRates as $carrierRates) {
+            foreach ($carrierRates as $rate) {
+                $shippingMethodArray[] = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
+            }
+        }
+
+        return $shippingMethodArray;
     }
 
     /**
@@ -606,48 +639,49 @@ class ShippingMethods implements ShippingMethodsInterface
             ];
         }
 
-        $output = [];
+        $appliedQuoteCouponCode = $quote->getCouponCode();
 
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->addData($addressData);
-
         $shippingAddress->setCollectShippingRates(true);
         $shippingAddress->setShippingMethod(null);
 
         $quote->collectTotals();
-
         $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-        $shippingRates = $shippingAddress->getGroupedAllShippingRates();
 
-        $this->resetShippingCalculationIfNeeded($shippingAddress);
-
-        foreach ($shippingRates as $carrierRates) {
-            foreach ($carrierRates as $rate) {
-                $output[] = $this->converter->modelToDataObject($rate, $quote->getQuoteCurrencyCode());
-            }
-        }
+        $shippingMethodArray = $this->generateShippingMethodArray($quote, $shippingAddress);
 
         $shippingMethods = [];
-
         $errors = [];
         
         // Since we would place the shipping option `YOGIBO SHIPPING TO YOUR ADDRESS` above the in-store pickup options,
         // the we have a temp array to hold the in-store pickup options first.
         $tempShipping = array();
 
-        foreach ($output as $shippingMethod) {
+        foreach ($shippingMethodArray as $shippingMethod) {
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
             $this->resetShippingCalculationIfNeeded($shippingAddress);
 
             $shippingAddress->setShippingMethod($method);
-            // In order to get correct shipping discounts the following method must be called twice.
-            // Being a bug in Magento, or a bug in the tested store version, shipping discounts
-            // are not collected the first time the method is called.
-            // There was one loop step delay in applying discount to shipping options when method was called once.
+            // Since some types of coupon only work with specific shipping options,
+            // for each shipping option, it need to recalculate the shipping discount amount
+            if( ! empty($appliedQuoteCouponCode) ){
+                $shippingAddress->setCollectShippingRates(true)
+                                ->collectShippingRates()->save();
+                $quote->setCouponCode('')->collectTotals()->save();
+                $quote->setCouponCode($appliedQuoteCouponCode)->collectTotals()->save();
+            }
+
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-            $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+            if($this->doesDiscountApplyToShipping($quote)){
+                // In order to get correct shipping discounts the following method must be called twice.
+                // Being a bug in Magento, or a bug in the tested store version, shipping discounts
+                // are not collected the first time the method is called.
+                // There was one loop step delay in applying discount to shipping options when method was called once.
+                $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+            }
 
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
@@ -704,7 +738,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
                 continue;
             }
-
+            
             if($method == 'storepickup_storepickup'){
                 $liststore = $this->storepickupHelperData->getListStoreJson();
                 $liststore = \Zend_Json::decode( $liststore );
@@ -725,15 +759,16 @@ class ShippingMethods implements ShippingMethodsInterface
                             ->setReference($method)
                             ->setTaxAmount($taxAmount);
             }
+            
         }
-
+        
         if( ! empty( $tempShipping ) ){
             ksort( $tempShipping );
             foreach($tempShipping as $key=>$store){
                 $shippingMethods[] = $store;
             }    
         }
-        
+
         $shippingAddress->setShippingMethod(null)->save();
 
         if ($errors) {
@@ -756,7 +791,8 @@ class ShippingMethods implements ShippingMethodsInterface
                         'address' => $addressData,
                         'immutable quote ID' => $quote->getId(),
                         'parent quote ID' => $quote->getBoltParentQuoteId(),
-                        'order increment ID' => $quote->getReservedOrderId()
+                        'order increment ID' => $quote->getReservedOrderId(),
+                        'Store Id'  => $quote->getStoreId()
                     ]
                 ]);
             });
@@ -769,6 +805,28 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         return $shippingMethods;
+    }
+
+    /**
+     * @param $quote
+     * @return bool
+     */
+    protected function doesDiscountApplyToShipping($quote){
+        $appliedRuleIds = $quote->getAppliedRuleIds();
+        if ($appliedRuleIds) {
+            foreach (explode(',', $appliedRuleIds) as $appliedRuleId) {
+                try{
+                    $rule = $this->ruleFactory->create()->load($appliedRuleId);
+                    if ($rule->getApplyToShipping()) {
+                        return true;
+                    }
+                }catch (\Throwable $exception){
+                    $this->bugsnag->notifyException($exception);
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -792,17 +850,15 @@ class ShippingMethods implements ShippingMethodsInterface
      * point Bolt has already applied the discount, the discount amount is added back to the shipping.
      *
      * @param $parentQuoteCoupon
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
      * @return bool
      */
     protected function couponInvalidForShippingAddress(
-        $parentQuoteCoupon,
-        \Magento\Quote\Api\Data\CartInterface $quote
+        $parentQuoteCoupon
     ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons();
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
 
         return $parentQuoteCoupon &&
-               !$quote->getCouponCode() &&
-               in_array($parentQuoteCoupon, $ignoredShippingAddressCoupons);
+                in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
+                !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 }

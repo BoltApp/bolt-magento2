@@ -23,7 +23,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleResource;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\App\Helper\Context as ContextHelper;
+use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\Request\Http as Request;
 
 /**
@@ -59,9 +59,9 @@ class ConfigTest extends TestCase
     private $currentMock;
 
     /**
-     * @var ContextHelper
+     * @var Context
      */
-    private $contextHelper;
+    private $context;
 
     /**
      * @var Request
@@ -73,7 +73,7 @@ class ConfigTest extends TestCase
      */
     public function setUp()
     {
-        $this->contextHelper = $this->createMock(ContextHelper::class);
+        $this->context = $this->createMock(Context::class);
         $this->encryptor = $this->createMock(EncryptorInterface::class);
         $this->moduleResource = $this->createMock(ModuleResource::class);
 
@@ -90,7 +90,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -177,7 +177,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -207,7 +207,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -237,7 +237,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -265,7 +265,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -358,18 +358,6 @@ class ConfigTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function testGetAutomaticCaptureMode()
-    {
-        $this->scopeConfig->method('isSetFlag')
-            ->with(BoltConfig::XML_PATH_AUTOMATIC_CAPTURE_MODE)
-            ->will($this->returnValue(false));
-
-        $this->assertFalse($this->currentMock->getAutomaticCaptureMode(), 'getAutomaticCaptureMode() method: not working properly');
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function testGetPrefetchShipping()
     {
         $this->scopeConfig->method('isSetFlag')
@@ -422,7 +410,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -450,7 +438,7 @@ class ConfigTest extends TestCase
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
-                    $this->contextHelper,
+                    $this->context,
                     $this->encryptor,
                     $this->moduleResource,
                     $this->productMetadata,
@@ -524,5 +512,22 @@ class ConfigTest extends TestCase
         $result = $this->currentMock->getScopeConfig();
 
         $this->assertInstanceOf(ScopeConfigInterface::class, $result, 'getScopeConfig() method: not working properly');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function testGetIgnoredShippingAddressCoupons()
+    {
+        $configCouponsJson = '{"ignoredShippingAddressCoupons": ["IGNORED_SHIPPING_ADDRESS_COUPON"]}';
+
+        $this->scopeConfig->method('getValue')
+                ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG)
+                ->will($this->returnValue($configCouponsJson));
+
+        $result = $this->currentMock->getIgnoredShippingAddressCoupons(null);
+        $expected = ['ignored_shipping_address_coupon'];
+
+        $this->assertEquals($expected, $result, 'getIgnoredShippingAddressCoupons() method: not working properly');
     }
 }

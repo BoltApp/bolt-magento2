@@ -20,9 +20,11 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Backend\Model\Session\Quote as BackendSessionQuote;
+use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Magento\Quote\Model\Quote\Validator\MinimumOrderAmount\ValidationMessage as MoaValidationMessage;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -44,11 +46,21 @@ class Js extends Template
      */
     private $cartHelper;
 
+     /** @var Bugsnag  Bug logging interface*/
+    private $bugsnag;
+    
+    /**
+     * @var MoaValidationMessage
+     */
+    private $moaValidationMessage;
+
     /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
+     * @param Bugsnag         $bugsnag
+     * @param MoaValidationMessage $moaValidationMessage
      * @param array           $data
      */
     public function __construct(
@@ -56,22 +68,16 @@ class Js extends Template
         Config $configHelper,
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
+        Bugsnag $bugsnag,
+        MoaValidationMessage $moaValidationMessage,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
-    }
-
-    /**
-     * Check if guest checkout is allowed
-     *
-     * @return bool
-     */
-    public function isCheckoutAllowed()
-    {
-        return $this->cartHelper->isCheckoutAllowed();
+        $this->bugsnag = $bugsnag;
+        $this->moaValidationMessage = $moaValidationMessage;
     }
 
     /**
@@ -81,9 +87,7 @@ class Js extends Template
      */
     public function getTrackJsUrl()
     {
-        $storeId = $this->getMagentoStoreId();
-        //Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
+        $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/track.js';
     }
@@ -95,9 +99,7 @@ class Js extends Template
      */
     public function getConnectJsUrl()
     {
-        $storeId = $this->getMagentoStoreId();
-        //Get cdn url
-        $cdnUrl = $this->configHelper->getCdnUrl($storeId);
+        $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/connect.js';
     }
@@ -109,9 +111,11 @@ class Js extends Template
      */
     public function getCheckoutKey()
     {
-        $storeId = $this->getMagentoStoreId();
+        if($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION){
+            return $this->configHelper->getPublishableKeyPayment();
+        }
 
-        return $this->configHelper->getAnyPublishableKey($storeId);
+        return $this->configHelper->getPublishableKeyCheckout();
     }
 
     /**
@@ -121,8 +125,8 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        $storeId = $this->getMagentoStoreId();
-        $subject = trim($this->configHelper->getReplaceSelectors($storeId));
+        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
+        $subject = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
 
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
@@ -134,8 +138,7 @@ class Js extends Template
      */
     public function getTotalsChangeSelectors()
     {
-        $storeId = $this->getMagentoStoreId();
-        $subject = trim($this->configHelper->getTotalsChangeSelectors($storeId));
+        $subject = trim($this->configHelper->getTotalsChangeSelectors());
 
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
@@ -147,9 +150,7 @@ class Js extends Template
      */
     public function getAdditionalCheckoutButtonClass()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return trim($this->configHelper->getAdditionalCheckoutButtonClass($storeId));
+        return trim($this->configHelper->getAdditionalCheckoutButtonClass());
     }
 
     /**
@@ -159,9 +160,7 @@ class Js extends Template
      */
     public function getGlobalCSS()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getGlobalCSS($storeId);
+        return $this->configHelper->getGlobalCSS();
     }
 
     /**
@@ -171,9 +170,7 @@ class Js extends Template
      */
     public function getJavascriptSuccess()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getJavascriptSuccess($storeId);
+        return $this->configHelper->getJavascriptSuccess();
     }
 
     /**
@@ -204,24 +201,24 @@ class Js extends Template
      */
     public function getSettings()
     {
-        $storeId = $this->getMagentoStoreId();
-
         return json_encode([
             'connect_url'              => $this->getConnectJsUrl(),
-            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment($storeId),
-            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout($storeId),
-            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice($storeId),
+            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
+            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
+            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping($storeId),
+            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
+            'is_pre_auth'              => $this->getIsPreAuth(),
+            'minimum_amount_rule_message'  => $this->getMinimumAmountRuleMessage(),
         ]);
     }
 
@@ -231,8 +228,7 @@ class Js extends Template
      */
     public function isEnabled()
     {
-        $storeId = $this->getMagentoStoreId();
-
+        $storeId = $this->getStoreId();
         return $this->configHelper->isActive($storeId);
     }
 
@@ -242,7 +238,7 @@ class Js extends Template
      */
     private function getQuoteIsVirtual()
     {
-        $quote = $this->checkoutSession->getQuote();
+        $quote = $this->getQuoteFromCheckoutSession();
         return $quote ? $quote->isVirtual() : false;
     }
 
@@ -251,7 +247,8 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
-        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?: ( $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' );
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?:
+                         $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' ;
         return __('Your payment was successful and we\'re now processing your order.' .
         'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
@@ -277,9 +274,7 @@ class Js extends Template
      */
     protected function getOnCheckoutStart()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnCheckoutStart($storeId);
+        return $this->configHelper->getOnCheckoutStart();
     }
 
     /**
@@ -295,9 +290,7 @@ class Js extends Template
      */
     protected function getOnShippingDetailsComplete()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnShippingDetailsComplete($storeId);
+        return $this->configHelper->getOnShippingDetailsComplete();
     }
 
     /**
@@ -305,9 +298,7 @@ class Js extends Template
      */
     protected function getOnShippingOptionsComplete()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnShippingOptionsComplete($storeId);
+        return $this->configHelper->getOnShippingOptionsComplete();
     }
 
     /**
@@ -315,9 +306,7 @@ class Js extends Template
      */
     protected function getOnPaymentSubmit()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnPaymentSubmit($storeId);
+        return $this->configHelper->getOnPaymentSubmit();
     }
 
     /**
@@ -325,9 +314,7 @@ class Js extends Template
      */
     protected function getOnSuccess()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnSuccess($storeId);
+        return $this->configHelper->getOnSuccess();
     }
 
     /**
@@ -335,9 +322,7 @@ class Js extends Template
      */
     protected function getOnClose()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getOnClose($storeId);
+        return $this->configHelper->getOnClose();
     }
 
     /**
@@ -347,10 +332,19 @@ class Js extends Template
      */
     private function getToggleCheckout()
     {
-        $storeId = $this->getMagentoStoreId();
-        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
-
+        $toggleCheckout = $this->configHelper->getToggleCheckout();
         return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
+    }
+
+    /**
+     * Get Is Pre-Auth configuration
+     *
+     * @return bool
+     */
+    private function getIsPreAuth()
+    {
+        $storeId = $this->getStoreId();
+        return $this->configHelper->getIsPreAuth($storeId);
     }
 
     /**
@@ -361,9 +355,7 @@ class Js extends Template
      */
     private function getPageBlacklist()
     {
-        $storeId = $this->getMagentoStoreId();
-
-        return $this->configHelper->getPageBlacklist($storeId);
+        return $this->configHelper->getPageBlacklist();
     }
 
     /**
@@ -375,9 +367,7 @@ class Js extends Template
      */
     private function getPageWhitelist()
     {
-        $storeId = $this->getMagentoStoreId();
-        $values =  $this->configHelper->getPageWhitelist($storeId);
-
+        $values =  $this->configHelper->getPageWhitelist();
         return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
     }
 
@@ -398,18 +388,16 @@ class Js extends Template
             return true;
         }
 
-        $storeId = $this->getMagentoStoreId();
-
         // If minicart is supported (allowing Bolt on every page)
         // and no IP whitelist is defined there are no additional restrictions.
-        if ($this->configHelper->getMinicartSupport($storeId) && !$this->configHelper->getIPWhitelistArray($storeId)) {
+        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
             return false;
         }
 
         // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
         // If IP whitelist is defined, the Bolt checkout functionality
         // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
-        return ! in_array($currentPage, $this->getPageWhitelist($storeId));
+        return ! in_array($currentPage, $this->getPageWhitelist());
     }
 
     /**
@@ -440,15 +428,68 @@ class Js extends Template
      *
      * @return int
      */
-    public function getMagentoStoreId()
+    public function getStoreId()
     {
-        if ($this->checkoutSession instanceof BackendSessionQuote) {
-            $quote = $this->checkoutSession;
-        } else {
-            $quote = $this->checkoutSession->getQuote();
-        }
+        /** @var Quote $quote */
+        $quote = $this->getQuoteFromCheckoutSession();
 
-        return (int) (($quote && $quote->getStoreId()) ?
-            $quote->getStoreId() : 0);
+        return  $quote && $quote->getStoreId() ? $quote->getStoreId() : null;
+    }
+
+    /**
+     * @return Quote
+     */
+    protected function getQuoteFromCheckoutSession()
+    {
+        return $this->checkoutSession->getQuote();
+    }
+
+    /**
+     * Get plugin version
+     *
+     * @return string|false Plugin version string or false if the module is missing or there is a DB connection problem
+     */
+    public function getModuleVersion()
+    {
+        return $this->configHelper->getModuleVersion();
+    }
+
+    public function shouldTrackCheckoutFunnel() {
+        return $this->configHelper->shouldTrackCheckoutFunnel();
+    }
+
+    /**
+     * Takes a string containing javascript and removes unneeded characters in
+     * order to shrink the code without altering it's functionality.
+     *
+     * @param string $js
+     * @return string
+     * @throws \Exception
+     */
+    public function minifyJs($js)
+    {
+        if ($this->configHelper->shouldMinifyJavascript()) {
+            try {
+                return \JShrink\Minifier::minify($js);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+                return $js;
+            }
+        } else {
+            return $js;
+        }
+    }
+    
+    /**
+     * Get MinimumOrderAmount message text.
+     *
+     * @return string
+     * @throws \Zend_Currency_Exception
+     */
+    private function getMinimumAmountRuleMessage()
+    {
+        $minimumAmountMessage = $this->moaValidationMessage->getMessage();
+
+        return $minimumAmountMessage->getText();
     }
 }

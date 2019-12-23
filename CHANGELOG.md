@@ -64,3 +64,26 @@
  - Fix to support multi-stores with no default api key
 ## [v1.1.13](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.13) 2019-04-26
  - Various bug fixes
+## [v1.1.14](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.14) 2019-05-28
+ - Various bug fixes
+## [v1.1.15](https://github.com/BoltApp/bolt-magento2/releases/tag/1.1.15) 2019-06-12
+ - Fixes for multi-store backend support.
+ - Option to toggle emulated session in api calls
+## [v2.0.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.0) 2019-07-02
+ - Introducing pre-authorized order creation
+## [v2.0.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.1) 2019-09-06
+ - Added generic ERP support
+ - Removed Autocapture from settings
+## [v2.0.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.2) 2019-09-12
+ - Support for Paypal
+## [v2.0.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.0.3) 2019-10-28
+ - Testing and logging fixes
+ - Beta merchant metrics feature
+ - Various bug fixes
+## [v2.1.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.1.0) 2019-11-21
+ - Paypal payment support
+ - [Beta] Feature switches
+   - graphQL client for Bolt server communication
+ - BSS store credit support
+ - Improved checkout metricing
+ - Various bug fixes

@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
-use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -27,6 +27,8 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
+use Magento\Sales\Api\Data\OrderInterface;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
@@ -44,6 +46,11 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Framework\App\CacheInterface;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Sales\Model\Order;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Boltpay Cart helper
@@ -55,6 +62,14 @@ class Cart extends AbstractHelper
 {
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
+    const BOLT_ORDER_TAG = 'Bolt_Order';
+    const BOLT_ORDER_CACHE_LIFETIME = 3600; // one hour
+
+    /** @var CacheInterface */
+    private $cache;
+
+    /** @var CartInterface */
+    private $lastImmutableQuote = null;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -68,9 +83,9 @@ class Cart extends AbstractHelper
     private $apiHelper;
 
     /**
-     * @var ProductFactory
+     * @var ProductRepository
      */
-    private $productFactory;
+    private $productRepository;
 
     /**
      * @var ConfigHelper
@@ -166,17 +181,33 @@ class Cart extends AbstractHelper
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
-        Discount::GIFT_VOUCHER => ''
+        Discount::GIFT_VOUCHER => '',
+        Discount::MAGEPLAZA_GIFTCARD => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
-    // Totals adjustment treshold
-    private $treshold = 0.01;
+    // Totals adjustment threshold
+    private $threshold = 0.01;
+
+    /**
+     * @var array
+     */
+    private $quotes = [];
+
+    /**
+     * @var ResourceConnection $resource
+     */
+    private $resourceConnection;
+
+    /**
+     * @var Order[]
+     */
+    private $orderData;
 
     /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
-     * @param ProductFactory    $productFactory
+     * @param ProductRepository $productRepository
      * @param ApiHelper         $apiHelper
      * @param ConfigHelper      $configHelper
      * @param CustomerSession   $customerSession
@@ -194,13 +225,15 @@ class Cart extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param CheckoutHelper $checkoutHelper
      * @param DiscountHelper $discountHelper
+     * @param CacheInterface $cache
+     * @param ResourceConnection $resourceConnection
      *
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
         CheckoutSession $checkoutSession,
-        ProductFactory $productFactory,
+        ProductRepository $productRepository,
         ApiHelper $apiHelper,
         ConfigHelper $configHelper,
         CustomerSession $customerSession,
@@ -217,11 +250,13 @@ class Cart extends AbstractHelper
         QuoteResource $quoteResource,
         SessionHelper $sessionHelper,
         CheckoutHelper $checkoutHelper,
-        DiscountHelper $discountHelper
+        DiscountHelper $discountHelper,
+        CacheInterface $cache,
+        ResourceConnection $resourceConnection
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
-        $this->productFactory = $productFactory;
+        $this->productRepository = $productRepository;
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
         $this->customerSession = $customerSession;
@@ -239,6 +274,8 @@ class Cart extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
         $this->discountHelper = $discountHelper;
+        $this->cache = $cache;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -254,18 +291,34 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws NoSuchEntityException
+     * @return \Magento\Quote\Model\Quote|false
      */
     public function getQuoteById($quoteId)
     {
-        return $this->quoteRepository->get($quoteId);
+        if (!isset($this->quotes[$quoteId])) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('main_table.entity_id', $quoteId)->create();
+
+            $collection = $this->quoteRepository
+                ->getList($searchCriteria)
+                ->getItems();
+
+            $quote = reset($collection);
+
+            if ($quote === false) {
+                return false;
+            }
+
+            $this->quotes[$quoteId] = $quote;
+        }
+
+        return $this->quotes[$quoteId];
     }
 
     /**
      * Load Quote by id if active
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return CartInterface
      * @throws NoSuchEntityException
      */
     public function getActiveQuoteById($quoteId)
@@ -275,21 +328,31 @@ class Cart extends AbstractHelper
 
     /**
      * Load Order by increment id
-     * @param $incrementId
-     * @return \Magento\Sales\Api\Data\OrderInterface|mixed
+     *
+     * @param string $incrementId
+     * @param bool   $forceLoad - use it if needed to load data without cache.
+     *
+     * @return OrderInterface|false
      */
-    public function getOrderByIncrementId($incrementId)
+    public function getOrderByIncrementId($incrementId, $forceLoad = false)
     {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('increment_id', $incrementId, 'eq')->create();
-        $collection = $this->orderRepository->getList($searchCriteria)->getItems();
-        return reset($collection);
+        if ($forceLoad || !isset($this->orderData[$incrementId])) {
+            $searchCriteria = $this->searchCriteriaBuilder
+                ->addFilter('increment_id', $incrementId, 'eq')
+                ->create();
+            $collection = $this->orderRepository
+                ->getList($searchCriteria)
+                ->getItems();
+
+            $this->orderData[$incrementId] = reset($collection);
+        }
+        return $this->orderData[$incrementId];
     }
 
     /**
      * Save quote via repository
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      */
     public function saveQuote($quote)
     {
@@ -297,45 +360,118 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Delete quote via repository
+     *
+     * @param CartInterface $quote
+     */
+    public function deleteQuote($quote)
+    {
+        $this->quoteRepository->delete($quote);
+    }
+
+    /**
      * Save quote via resource model
      *
-     * @param \Magento\Quote\Api\Data\CartInterface $quote
+     * @param CartInterface $quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     public function quoteResourceSave($quote)
     {
         $this->quoteResource->save($quote);
-
     }
 
     /**
-     * Create order on bolt
+     * Get Bolt Order Caching flag configuration
      *
-     * @param bool   $paymentOnly              flag that represents the type of checkout
-     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
-     *                                         i.e. billing address to be saved with the order
+     * @param null|int    $storeId             The ID of the Magento store
+     * @return bool
+     */
+    protected function isBoltOrderCachingEnabled($storeId)
+    {
+        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
+    }
+
+    /**
+     * Load data from Magento cache
      *
-     * @param int    $storeId
-     * @return Response|void
+     * @param string $identifier
+     * @param bool $unserialize
+     * @return bool|mixed|string
+     */
+    protected function loadFromCache($identifier, $unserialize = true)
+    {
+        $cached = $this->cache->load($identifier);
+        if (!$cached) return false;
+        return $unserialize ? unserialize($cached) : $cached;
+    }
+
+    /**
+     * Save data to Magento cache
+     *
+     * @param mixed $data
+     * @param string $identifier
+     * @param int $lifeTime
+     * @param bool $serialize
+     * @param array $tags
+     */
+    protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
+    {
+        $data = $serialize ? serialize($data) : $data;
+        $this->cache->save($data, $identifier, $tags, $lifeTime);
+    }
+
+    /**
+     * Last created immutable quote setter
+     *
+     * @param $quote
+     */
+    protected function setLastImmutableQuote($quote)
+    {
+        $this->lastImmutableQuote = $quote;
+    }
+
+    /**
+     * Last created immutable quote getter
+     *
+     * @return CartInterface
+     */
+    protected function getLastImmutableQuote()
+    {
+        return $this->lastImmutableQuote;
+    }
+
+    /**
+     * Cache the session id for the quote
+     *
+     * @param int|string $qouoteId
+     */
+    protected function saveCartSession($qouoteId)
+    {
+        $this->sessionHelper->saveSession($qouoteId, $this->checkoutSession);
+    }
+
+    /**
+     * Get store id from the session quote
+     *
+     * @return int
+     */
+    public function getSessionQuoteStoreId()
+    {
+        $sessionQuote = $this->checkoutSession->getQuote();
+        return $sessionQuote && $sessionQuote->getStoreId() ? $sessionQuote->getStoreId() : null;
+    }
+
+    /**
+     * Call Bolt Ceate Order API
+     *
+     * @param array $cart
+     * @param int $storeId
+     * @return Response|int
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = 0)
+    protected function boltCreateOrder($cart, $storeId = null)
     {
-        //Get cart data
-        $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
-        if (!$cart) {
-            return;
-        }
-
-        // cache the session id
-        $this->sessionHelper->saveSession($cart['order_reference'], $this->checkoutSession);
-
-        // If storeId was missed through request, then try to get it from the session quote.
-        if (!$storeId && $this->checkoutSession->getQuote()) {
-            $storeId = $this->checkoutSession->getQuote()->getStoreId();
-        }
-
         $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
@@ -346,20 +482,221 @@ class Cart extends AbstractHelper
 
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData);
-        $result  = $this->apiHelper->sendRequest($request);
-        return $result;
+        $boltOrder  = $this->apiHelper->sendRequest($request);
+
+        $boltOrder->setStoreId($storeId);
+
+        return $boltOrder;
+    }
+
+    /**
+     * Get the hash of the cart to be used as cache identifier
+     *
+     * @param array $cart
+     * @return string
+     */
+    protected function getCartCacheIdentifier($cart)
+    {
+        // display_id is always different for every new cart / immutable quote
+        // unset it in the cache identifier so the rest of the data can be matched
+        unset ($cart['display_id']);
+        $identifier  = json_encode($cart);
+        // extend cache identifier with custom address fields
+        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($this->getLastImmutableQuote());
+
+        return md5($identifier);
+    }
+
+    /**
+     * Get array of custom address field names converted to PascalCase
+     * used to build method names (i.e. getters)
+     *
+     * @param int $storeId
+     * @return array
+     */
+    protected function getCustomAddressFieldsPascalCaseArray($storeId)
+    {
+        // get custom address fields from config
+        $customAddressFields = explode(
+            ',', $this->configHelper->getPrefetchAddressFields($storeId)
+        );
+        // trim values and filter out empty strings
+        $customAddressFields = array_filter(array_map('trim', $customAddressFields));
+        // convert to PascalCase
+        $customAddressFields = array_map(
+            function ($el) {
+                return str_replace('_', '', ucwords($el, '_'));
+            },
+            $customAddressFields
+        );
+
+        return $customAddressFields;
+    }
+
+    /**
+     * Create cache identifier string from custom address fields
+     *
+     * @param Quote $quote
+     * @return string
+     */
+    public function convertCustomAddressFieldsToCacheIdentifier($quote)
+    {
+        $customAddressFields = $this->getCustomAddressFieldsPascalCaseArray($quote->getStoreId());
+        $address = $this->getCalculationAddress($quote);
+
+        $cacheIdentifier = "";
+
+        // get the value of each valid field and include it in the cache identifier
+        foreach ($customAddressFields as $key) {
+            $hasField = 'has'.$key;
+            $getValue = 'get'.$key;
+            if ($address->$hasField()) {
+                $cacheIdentifier .= '_'.$address->$getValue();
+            }
+        }
+
+        return $cacheIdentifier;
+    }
+
+    /**
+     * Get the id of the quote Bolt order was created for
+     *
+     * @param Response $boltOrder
+     * @return mixed
+     */
+    protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
+    {
+        $response = $boltOrder ? $boltOrder->getResponse() : null;
+        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        return $immutableQuoteId;
+    }
+
+    /**
+     * Check if the quote is noot deleted
+     *
+     * @param int|string $quoteId
+     * @return bool
+     * @throws NoSuchEntityException
+     */
+    protected function isQuoteAvailable($quoteId)
+    {
+        return (bool)$this->getQuoteById($quoteId);
+    }
+
+    /**
+     * Update quote updated_at column
+     *
+     * @param int|string $quoteId
+     */
+    protected function updateQuoteTimestamp($quoteId)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        $connection->beginTransaction();
+        try {
+            // get table name with prefix
+            $tableName = $this->resourceConnection->getTableName('quote');
+
+            $sql = "UPDATE {$tableName} SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id";
+            $bind = [
+                'entity_id' => $quoteId
+            ];
+
+            $connection->query($sql, $bind);
+
+            $connection->commit();
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $connection->rollBack();
+            $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Clear external data applied to immutable quote (third party modules DB tables)
+     *
+     * @param Quote $quote
+     */
+    protected function clearExternalData($quote)
+    {
+        $this->discountHelper->clearAmastyGiftCard($quote);
+        $this->discountHelper->clearAmastyRewardPoints($quote);
+    }
+
+    /**
+     * Create order on bolt
+     *
+     * @param bool   $paymentOnly              flag that represents the type of checkout
+     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
+     *                                         i.e. billing address to be saved with the order
+     * @param null|int    $storeId             The ID of the Magento store
+     *
+     * @return Response|void
+     * @throws LocalizedException
+     * @throws Zend_Http_Client_Exception
+     */
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = null)
+    {
+        //Get cart data
+        $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
+        if (!$cart) {
+            return;
+        }
+
+        // If storeId was missed through request, then try to get it from the session quote.
+        if ($storeId === null) {
+            $storeId = $this->getSessionQuoteStoreId();
+        }
+
+        // Try fetching data from cache
+        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
+
+            $cacheIdentifier = $this->getCartCacheIdentifier($cart);
+
+            if ($boltOrder = $this->loadFromCache($cacheIdentifier)) {
+
+                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder);
+
+                // found in cache, check if the old immutable quote is still there
+                if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
+                    // update old immutable quote updated_at timestamp,
+                    $this->updateQuoteTimestamp($immutableQuoteId);
+                    // clear external data applied to immutable quote (third party modules DB tables)
+                    $this->clearExternalData($this->getLastImmutableQuote());
+                    // delete the last quote and return cached order
+                    $this->deleteQuote($this->getLastImmutableQuote());
+                    return $boltOrder;
+                }
+            }
+        }
+
+        // cache the session id
+        $this->saveCartSession($cart['order_reference']);
+
+        $boltOrder = $this->boltCreateOrder($cart, $storeId);
+
+        // cache Bolt order
+        if ($isBoltOrderCachingEnabled) {
+            $this->saveToCache(
+                $boltOrder,
+                $cacheIdentifier,
+                [self::BOLT_ORDER_TAG],
+                self::BOLT_ORDER_CACHE_LIFETIME
+            );
+        }
+
+        return $boltOrder;
     }
 
     /**
      * Sign a payload using the Bolt endpoint
      *
-     * @param array $signRequest  payload to sign
+     * @param array     $signRequest payload to sign
+     * @param null|int  $storeId
      *
      * @return Response|int
      */
-    private function getSignResponse($signRequest)
+    private function getSignResponse($signRequest, $storeId = null)
     {
-        $apiKey = $this->configHelper->getApiKey();
+        $apiKey = $this->configHelper->getApiKey($storeId);
 
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -418,6 +755,11 @@ class Cart extends AbstractHelper
                 'country'      => $address->getCountryId(),
             ];
 
+            // Skip pre-fill for Apple Pay related data.
+            if ($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111') {
+                return;
+            }
+
             foreach ($prefill as $name => $value) {
                 if (empty($value)) {
                     unset($prefill[$name]);
@@ -435,12 +777,14 @@ class Cart extends AbstractHelper
             $signRequest = [
                 'merchant_user_id' => $customer->getId(),
             ];
-            $signResponse = $this->getSignResponse($signRequest)->getResponse();
+            $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
 
             if ($signResponse) {
-                $hints['merchant_user_id'] = $signResponse->merchant_user_id;
-                $hints['signature'] = $signResponse->signature;
-                $hints['nonce'] = $signResponse->nonce;
+                $hints['signed_merchant_user_id'] = [
+                    "merchant_user_id" => $signResponse->merchant_user_id,
+                    "signature"        => $signResponse->signature,
+                    "nonce"            => $signResponse->nonce,
+                ];
             }
 
             if ($quote->isVirtual()) {
@@ -482,10 +826,10 @@ class Cart extends AbstractHelper
         $child,
         $save = true,
         $emailFields = ['customer_email', 'email'],
-        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id']
+        $excludeFields = ['entity_id', 'address_id', 'reserved_order_id',
+            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
     ) {
         foreach ($parent->getData() as $key => $value) {
-
             if (in_array($key, $excludeFields)) continue;
             if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
 
@@ -506,7 +850,9 @@ class Cart extends AbstractHelper
     {
         // Skip the replication if source and destination point to the same quote
         // E.g. delayed Save Order - immutable quote is cleared by cron and we use the parent instead
-        if ($source->getId() == $destination->getId()) return;
+        if ($source->getId() === $destination->getId()) {
+            return;
+        }
 
         $destinationId = $destination->getId();
         $destinationActive = (bool)$destination->getIsActive();
@@ -530,6 +876,9 @@ class Cart extends AbstractHelper
 
         // If Amasty Gif Cart Extension is present clone applied gift cards
         $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
+
+        // If Amasty Reward Points extension is present clone applied reward points
+        $this->discountHelper->setAmastyRewardPoints($source, $destination);
     }
 
     /**
@@ -565,15 +914,21 @@ class Cart extends AbstractHelper
      * so it can be replicated to immutable quote in replicateQuoteData.
      *
      * @param Quote $quote
+     * @return Quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      * @throws \Zend_Validate_Exception
      */
     protected function createImmutableQuote($quote)
     {
+        // assign origin session type flag to the parent quote
+        // to be replicated to the immutable quote with the other data
+        $quote->setBoltIsBackendOrder( (int) $this->isBackendSession() );
+
         if (!$quote->getBoltParentQuoteId()) {
             $quote->setBoltParentQuoteId($quote->getId());
             $this->quoteResourceSave($quote);
         }
+
         /** @var Quote $immutableQuote */
         $immutableQuote = $this->quoteFactory->create();
 
@@ -612,6 +967,124 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Check the session type.
+     *
+     * @return bool
+     */
+    private function isBackendSession()
+    {
+        return $this->checkoutSession instanceof \Magento\Backend\Model\Session\Quote;
+    }
+
+    /**
+     * Create cart data items array
+     *
+     * @param \Magento\Quote\Model\Quote\Item[] $items
+     * @param null|int $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     */
+    public function getCartItems($items, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->startEnvironmentEmulation(
+            $storeId,
+            \Magento\Framework\App\Area::AREA_FRONTEND,
+            true
+        );
+        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
+        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        $products = array_map(
+            function ($item) use ($imageBlock, &$totalAmount, &$diff, $storeId) {
+                $product = [];
+
+                $unitPrice   = $item->getCalculationPrice();
+                $itemTotalAmount = $unitPrice * $item->getQty();
+
+                $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
+
+                // Aggregate eventual total differences if prices are stored with more than 2 decimal places
+                $diff += $itemTotalAmount * 100 -$roundedTotalAmount;
+
+                // Aggregate cart total
+                $totalAmount += $roundedTotalAmount;
+
+                ////////////////////////////////////
+                // Load item product object
+                ////////////////////////////////////
+                $_product = $item->getProduct();
+
+                $product['reference']    = $item->getProductId();
+                $product['name']         = $item->getName();
+                $product['total_amount'] = $roundedTotalAmount;
+                $product['unit_price']   = $this->getRoundAmount($unitPrice);
+                $product['quantity']     = round($item->getQty());
+                $product['sku']          = trim($item->getSku());
+                $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
+                ///////////////////////////////////////////
+                // Get item attributes / product properties
+                ///////////////////////////////////////////
+                $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
+                if(isset($item_options['attributes_info'])){
+                    $properties = [];
+                    foreach($item_options['attributes_info'] as $attribute_info){
+                        $properties[] = (object) [
+                            "name" => $attribute_info['label'],
+                            "value" => $attribute_info['value']
+                        ];
+                    }
+                    $product['properties'] = $properties;
+                }
+                ////////////////////////////////////
+                // Get product description and image
+                ////////////////////////////////////
+                $product['description'] = strip_tags($_product->getDescription());
+                try {
+                    $productImage = $imageBlock->getImage($_product, 'product_small_image');
+                } catch (\Exception $e) {
+                    try {
+                        $productImage = $imageBlock->getImage($_product, 'product_image');
+                    } catch (\Exception $e) {
+                        $this->bugsnag->registerCallback(function ($report) use ($product) {
+                            $report->setMetaData([
+                                'ITEM' => $product
+                            ]);
+                        });
+                        $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
+                    }
+                }
+                if (@$productImage) {
+                    $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
+                }
+                ////////////////////////////////////
+                return  $product;
+            },
+            $items
+        );
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $this->appEmulation->stopEnvironmentEmulation();
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        return [$products, $totalAmount, $diff];
+    }
+
+    /**
+     * Get the address for totals calculation based on the quote physical / virtual type
+     *
+     * @param Quote $quote
+     * @return QuoteAddress
+     */
+    protected function getCalculationAddress($quote)
+    {
+        return $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -630,16 +1103,10 @@ class Cart extends AbstractHelper
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
-        try {
-            /** @var Quote $quote */
-            $quote = $immutableQuote ?
-                $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
-                $this->checkoutSession->getQuote();
-        } catch (NoSuchEntityException $e) {
-            // getActiveQuoteById(): Order has already been processed and parent quote inactive / deleted.
-            $this->bugsnag->notifyException($e);
-            $quote = null;
-        }
+        /** @var Quote $quote */
+        $quote = $immutableQuote ?
+            $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
+            $this->checkoutSession->getQuote();
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
@@ -675,10 +1142,8 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
+        $this->setLastImmutableQuote($immutableQuote);
         $immutableQuote->collectTotals();
-        $totals = $immutableQuote->getTotals();
-
-        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
 
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way
@@ -691,84 +1156,7 @@ class Cart extends AbstractHelper
         //Currency
         $cart['currency'] = $immutableQuote->getQuoteCurrencyCode();
 
-        $totalAmount = 0;
-        $diff = 0;
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        $this->appEmulation->startEnvironmentEmulation(
-            $immutableQuote->getStoreId(),
-            \Magento\Framework\App\Area::AREA_FRONTEND,
-            true
-        );
-        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
-        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
-
-        foreach ($items as $item) {
-            $product = [];
-            $productId = $item->getProductId();
-
-            $unitPrice   = $item->getCalculationPrice();
-            $itemTotalAmount = $unitPrice * $item->getQty();
-
-            $roundedTotalAmount = $this->getRoundAmount($itemTotalAmount);
-
-            // Aggregate eventual total differences if prices are stored with more than 2 decimal places
-            $diff += $itemTotalAmount * 100 -$roundedTotalAmount;
-
-            // Aggregate cart total
-            $totalAmount += $roundedTotalAmount;
-
-            $product['reference']    = $productId;
-            $product['name']         = $item->getName();
-            $product['total_amount'] = $roundedTotalAmount;
-            $product['unit_price']   = $this->getRoundAmount($unitPrice);
-            $product['quantity']     = round($item->getQty());
-            $product['sku']          = trim($item->getSku());
-            $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
-
-            ////////////////////////////////////
-            // Get product description and image
-            ////////////////////////////////////
-            /**
-             * @var \Magento\Catalog\Model\Product
-             */
-            $_product = $this->productFactory->create()->load($productId);
-            $item_options = $item->getProduct()->getTypeInstance(true)->getOrderOptions($item->getProduct());
-            if(isset($item_options['attributes_info'])){
-                $properties = array();
-                foreach($item_options['attributes_info'] as $attribute_info){
-                    $properties[] = (object) array( "name" => $attribute_info['label'], "value" => $attribute_info['value'] );
-                }
-                $product['properties'] = $properties;
-            }
-            $product['description'] = strip_tags($_product->getDescription());
-            try {
-                $productImage = $imageBlock->getImage($_product, 'product_small_image');
-            } catch (\Exception $e) {
-                try {
-                    $productImage = $imageBlock->getImage($_product, 'product_image');
-                } catch (\Exception $e) {
-                    $this->bugsnag->registerCallback(function ($report) use ($product) {
-                        $report->setMetaData([
-                            'ITEM' => $product
-                        ]);
-                    });
-                    $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
-                }
-            }
-            if (@$productImage) {
-                $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
-            }
-            ////////////////////////////////////
-
-            //Add product to items array
-            $cart['items'][] = $product;
-        }
-
-        $this->appEmulation->stopEnvironmentEmulation();
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($items, $immutableQuote->getStoreId());
 
         // Email field is mandatory for saving the address.
         // For back-office orders (payment only) we need to get it from the store.
@@ -822,7 +1210,7 @@ class Cart extends AbstractHelper
             $cart['billing_address'] = $cartBillingAddress;
         }
 
-        $address = $immutableQuote->isVirtual() ? $billingAddress : $shippingAddress;
+        $address = $this->getCalculationAddress($immutableQuote);
 
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
@@ -914,158 +1302,10 @@ class Cart extends AbstractHelper
         $diff = 0;
 
         // add discount data
-        $cart['discounts'] = [];
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process store integral discounts and coupons
-        /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = @$address->getDiscountAmount()) {
-            $amount         = abs($amount);
-            $roundedAmount = $this->getRoundAmount($amount);
-
-            $cart['discounts'][] = [
-                'description' => trim(__('Discount ') . $address->getDiscountDescription()),
-                'amount'      => $roundedAmount,
-            ];
-
-            $diff -= $amount * 100 - $roundedAmount;
-            $totalAmount -= $roundedAmount;
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process Store Credit
-        /////////////////////////////////////////////////////////////////////////////////
-        if ($immutableQuote->getUseCustomerBalance()) {
-            if ($paymentOnly && $amount = abs($immutableQuote->getCustomerBalanceAmountUsed())) {
-                $roundedAmount = $this->getRoundAmount($amount);
-
-                $cart['discounts'][] = [
-                    'description' => 'Store Credit',
-                    'amount'      => $roundedAmount,
-                ];
-
-                $diff -= $amount * 100 - $roundedAmount;
-                $totalAmount -= $roundedAmount;
-            } else {
-                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-                $balanceModel = $objectManager->create('Magento\CustomerBalance\Model\Balance');
-
-                $balanceModel->setCustomer(
-                    $this->customerSession->getCustomer()
-                )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
-                );
-                $balanceModel->loadByCustomer();
-
-                if ($amount = abs($balanceModel->getAmount())) {
-                    $roundedAmount = $this->getRoundAmount($amount);
-
-                    $cart['discounts'][] = [
-                        'description' => 'Store Credit',
-                        'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
-                    ];
-
-                    $totalAmount -= $roundedAmount;
-                }
-            }
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process Reward Points
-        /////////////////////////////////////////////////////////////////////////////////
-        if ($immutableQuote->getUseRewardPoints()) {
-            if ($paymentOnly && $amount = abs($immutableQuote->getRewardCurrencyAmount())) {
-                $roundedAmount = $this->getRoundAmount($amount);
-
-                $cart['discounts'][] = [
-                    'description' => 'Reward Points',
-                    'amount'      => $roundedAmount,
-                ];
-
-                $diff -= $amount * 100 - $roundedAmount;
-                $totalAmount -= $roundedAmount;
-            } else {
-                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-                $rewardModel = $objectManager->create('Magento\Reward\Model\Reward');
-
-                $rewardModel->setCustomer(
-                    $this->customerSession->getCustomer()
-                )->setWebsiteId(
-                    $this->checkoutSession->getQuote()->getStore()->getWebsiteId()
-                );
-                $rewardModel->loadByCustomer();
-
-                if ($amount = abs($rewardModel->getCurrencyAmount())) {
-                    $roundedAmount = $this->getRoundAmount($amount);
-
-                    $cart['discounts'][] = [
-                        'description' => 'Reward Points',
-                        'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
-                    ];
-
-                    $totalAmount -= $roundedAmount;
-                }
-            }
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process other discounts, stored in totals array
-        /////////////////////////////////////////////////////////////////////////////////
-        foreach ($this->discountTypes as $discount => $description) {
-
-            if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
-                ///////////////////////////////////////////////////////////////////////////
-                // If Amasty gift cards can be used for shipping and tax (PayForEverything)
-                // accumulate all the applied gift cards balance as discount amount. If the
-                // final discounts sum is greater than the cart total amount ($totalAmount < 0)
-                // the "fixed_amount" type is added below.
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount ==  Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
-
-                    $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
-                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
-                }
-                ///////////////////////////////////////////////////////////////////////////
-
-                ///////////////////////////////////////////////////////////////////////////
-                /// Was added a proper Unirgy_Giftcert Amount to the discount.
-                /// The GiftCert accumulate correct balance only after each collectTotals.
-                ///  The Unirgy_Giftcert add the only discount which covers only product price.
-                ///  We should get the whole balance at first of the Giftcert.
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::UNIRGY_GIFT_CERT && $immutableQuote->getData('giftcert_code')) {
-                    $gcCode = $immutableQuote->getData('giftcert_code');
-                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
-                    if ($giftCertBalance > 0) {
-                        $amount = $giftCertBalance;
-                    }
-                }
-
-                $amount = abs($amount);
-                $roundedAmount = $this->getRoundAmount($amount);
-
-                $cart['discounts'][] = [
-                    'description' => $description . @$totals[$discount]->getTitle(),
-                    'amount'      => $roundedAmount,
-                ];
-
-                if ($discount == Discount::GIFT_VOUCHER) {
-                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
-                    // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
-                    $cart['discounts'][0]['amount'] -= $roundedAmount;
-                } else {
-                    $diff -= $amount * 100 - $roundedAmount;
-                    $totalAmount -= $roundedAmount;
-                }
-            }
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
+        list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (
+            $totalAmount, $diff, $paymentOnly
+        );
+        $cart['discounts'] = $discounts;
         /////////////////////////////////////////////////////////////////////////////////
         // Add fixed amount type to all discounts if total amount is negative
         // and set total to 0. Otherwise add calculated diff to cart total.
@@ -1085,7 +1325,7 @@ class Cart extends AbstractHelper
         $cart['total_amount'] = $totalAmount;
         $cart['tax_amount']   = $taxAmount;
 
-        if (abs($diff) >= $this->treshold) {
+        if (abs($diff) >= $this->threshold) {
             $this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
                 $report->setMetaData([
                     'TOTALS_DIFF' => [
@@ -1097,6 +1337,8 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
+        $this->sessionHelper->cacheFormKey($immutableQuote);
+
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;
@@ -1105,11 +1347,12 @@ class Cart extends AbstractHelper
     /**
      * Round amount helper
      *
+     * @param $amount
      * @return  int
      */
     public function getRoundAmount($amount)
     {
-        return round($amount * 100);
+        return (int)round($amount * 100);
     }
 
     /**
@@ -1128,6 +1371,280 @@ class Cart extends AbstractHelper
         ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
 
         return \Zend_Validate::is($email, $emailClass);
+    }
+
+    /**
+     * Get website_id from the session quote store
+     *
+     * @return string|int|null
+     */
+    protected function getWebsiteId()
+    {
+        return $this->checkoutSession->getQuote()->getStore()->getWebsiteId();
+    }
+
+    /**
+     * Collect various type of discounts and add them to cart
+     *
+     * @param int $totalAmount
+     * @param float $diff
+     * @param AddressTotal[] $totals
+     * @param bool $paymentOnly
+     * @return array
+     * @throws NoSuchEntityException
+     */
+    public function collectDiscounts (
+        $totalAmount,
+        $diff,
+        $paymentOnly
+    ) {
+        $quote = $this->getLastImmutableQuote();
+        $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
+        $address = $this->getCalculationAddress($quote);
+        /** @var AddressTotal[] */
+        $totals = $quote->getTotals();
+        $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
+        $discounts = [];
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process store integral discounts and coupons.
+        // For some types of applied coupon, the discount amount could be zero before
+        // selecting specific shipping option, so the conditional statement should also
+        // check if getCouponCode is not null
+        /////////////////////////////////////////////////////////////////////////////////
+        if ( ( $amount = abs( $address->getDiscountAmount() ) ) || $address->getCouponCode() ) {
+            $roundedAmount = $this->getRoundAmount($amount);
+
+            $discounts[] = [
+                'description' => trim(__('Discount ') . $address->getDiscountDescription()),
+                'amount'      => $roundedAmount,
+                'reference'   => $address->getCouponCode()
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($quote->getUseCustomerBalance()) {
+            if ($paymentOnly && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
+                $roundedAmount = $this->getRoundAmount($amount);
+
+                $discounts[] = [
+                    'description' => 'Store Credit',
+                    'amount'      => $roundedAmount,
+                ];
+
+                $diff -= $amount * 100 - $roundedAmount;
+                $totalAmount -= $roundedAmount;
+            } else {
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $balanceModel = $objectManager->create('Magento\CustomerBalance\Model\Balance');
+
+                $balanceModel->setCustomer(
+                    $this->customerSession->getCustomer()
+                )->setWebsiteId(
+                    $this->getWebsiteId()
+                );
+                $balanceModel->loadByCustomer();
+
+                if ($amount = abs($balanceModel->getAmount())) {
+                    $roundedAmount = $this->getRoundAmount($amount);
+
+                    $discounts[] = [
+                        'description' => 'Store Credit',
+                        'amount'      => $roundedAmount,
+                        'type'        => 'fixed_amount',
+                    ];
+
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($this->discountHelper->isMirasvitStoreCreditAllowed($quote)){
+            $amount = abs($this->discountHelper->getMirasvitStoreCreditAmount($quote, $paymentOnly));
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Aheadworks Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
+            $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+
+        }
+
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process BSS Store Credit
+        /////////////////////////////////////////////////////////////////////////////////
+        if (
+            array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
+            && $this->discountHelper->isBssStoreCreditAllowed()
+        ) {
+            $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
+            $roundedAmount = $this->getRoundAmount($amount);
+            $discounts[] = [
+                'description' => 'Store Credit',
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Reward Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($quote->getUseRewardPoints()) {
+            if ($paymentOnly && $amount = abs($quote->getRewardCurrencyAmount())) {
+                $roundedAmount = $this->getRoundAmount($amount);
+
+                $discounts[] = [
+                    'description' => 'Reward Points',
+                    'amount'      => $roundedAmount,
+                ];
+
+                $diff -= $amount * 100 - $roundedAmount;
+                $totalAmount -= $roundedAmount;
+            } else {
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $rewardModel = $objectManager->create('Magento\Reward\Model\Reward');
+
+                $rewardModel->setCustomer(
+                    $this->customerSession->getCustomer()
+                )->setWebsiteId(
+                    $this->getWebsiteId()
+                );
+                $rewardModel->loadByCustomer();
+
+                if ($amount = abs($rewardModel->getCurrencyAmount())) {
+                    $roundedAmount = $this->getRoundAmount($amount);
+
+                    $discounts[] = [
+                        'description' => 'Reward Points',
+                        'amount'      => $roundedAmount,
+                        'type'        => 'fixed_amount',
+                    ];
+
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process Mirasvit Rewards Points
+        /////////////////////////////////////////////////////////////////////////////////
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
+            $roundedAmount = $this->getRoundAmount($amount);
+
+            $discounts[] = [
+                'description' =>
+                    $this->configHelper->getScopeConfig()->getValue(
+                        'rewards/general/point_unit_name',
+                        ScopeInterface::SCOPE_STORE,
+                        $quote->getStoreId()
+                    ),
+                'amount'      => $roundedAmount,
+                'type'        => 'fixed_amount',
+            ];
+
+            $diff -= $amount * 100 - $roundedAmount;
+            $totalAmount -= $roundedAmount;
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////
+        // Process other discounts, stored in totals array
+        /////////////////////////////////////////////////////////////////////////////////
+        foreach ($this->discountTypes as $discount => $description)
+        {
+            if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                ///////////////////////////////////////////////////////////////////////////
+                // If Amasty gift cards can be used for shipping and tax (PayForEverything)
+                // accumulate all the applied gift cards balance as discount amount. If the
+                // final discounts sum is greater than the cart total amount ($totalAmount < 0)
+                // the "fixed_amount" type is added below.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
+                    $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
+                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
+                }
+                ///////////////////////////////////////////////////////////////////////////
+
+                ///////////////////////////////////////////////////////////////////////////
+                // Change giftcards balance as discount amount to giftcard balances to the discount amount
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodesFromSession();
+                    $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
+                }
+
+                ///////////////////////////////////////////////////////////////////////////
+                /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                /// The GiftCert accumulate correct balance only after each collectTotals.
+                ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                ///  We should get the whole balance at first of the Giftcert.
+                ///////////////////////////////////////////////////////////////////////////
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    $gcCode = $quote->getData('giftcert_code');
+                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
+                    if ($giftCertBalance > 0) {
+                        $amount = $giftCertBalance;
+                    }
+                }
+
+                $amount = abs($amount);
+                $roundedAmount = $this->getRoundAmount($amount);
+
+                $discounts[] = [
+                    'description' => $description . @$totals[$discount]->getTitle(),
+                    'amount'      => $roundedAmount,
+                ];
+
+                if ($discount == Discount::GIFT_VOUCHER) {
+                    // the amount is added to adress discount included above, $address->getDiscountAmount(),
+                    // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
+                    $discounts[0]['amount'] -= $roundedAmount;
+                } else {
+                    $diff -= $amount * 100 - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
+            }
+        }
+        /////////////////////////////////////////////////////////////////////////////////
+        return [$discounts, $totalAmount, $diff];
     }
 
     /**
@@ -1163,12 +1680,18 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
+     * @param null|int   $storeId
+     *
      * @return bool
+     * @throws NoSuchEntityException
      */
     public function hasProductRestrictions($quote = null)
     {
+        /** @var Quote $quote */
+        $quote = $quote ?: $this->checkoutSession->getQuote();
+        $storeId = $quote->getStoreId();
 
-        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        $toggleCheckout = $this->configHelper->getToggleCheckout($storeId);
 
         if (!$toggleCheckout || !$toggleCheckout->active) {
             return false;
@@ -1184,9 +1707,8 @@ class Cart extends AbstractHelper
             return false;
         }
 
-        /** @var Quote $quote */
-        $quote = $quote ?: $this->checkoutSession->getQuote();
         foreach ($quote->getAllVisibleItems() as $item) {
+            /** @var \Magento\Quote\Model\Quote\Item $item */
             // call every method on item, if returns true, do restrict
             foreach ($itemRestrictionMethods as $method) {
                 if ($item->$method()) {
@@ -1196,7 +1718,7 @@ class Cart extends AbstractHelper
             // Non empty check to avoid unnecessary model load
             if ($productRestrictionMethods) {
                 // get item product
-                $product = $this->productFactory->create()->load($item->getProductId());
+                $product = $this->productRepository->get($item->getSku(), false, $storeId);
                 // call every method on product, if returns true, do restrict
                 foreach ($productRestrictionMethods as $method) {
                     if ($product->$method()) {
@@ -1208,5 +1730,17 @@ class Cart extends AbstractHelper
 
         // no restrictions
         return false;
+    }
+    
+    /**
+     * Get is valid Minimum Order Amount value for the cart.
+     *
+     * @return bool
+     */
+    public function hasValidMinimumOrderAmountForCart()
+    {
+        $quote = $this->checkoutSession->getQuote();
+        
+        return ($quote && $quote->validateMinimumAmount());
     }
 }

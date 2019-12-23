@@ -56,9 +56,12 @@ class Success extends Template
     /**
      * Success constructor.
      *
-     * @param ProductMetadataInterface $productMetadata
-     * @param Context                  $context
-     * @param array                    $data
+     * @param ProductMetadataInterface   $productMetadata
+     * @param CheckoutSession            $checkoutSession
+     * @param OrderFactory               $orderFactory
+     * @param StorepickupStoreCollection $storepickupStoreCollection
+     * @param Context                    $context
+     * @param array                      $data
      */
     public function __construct(
         ProductMetadataInterface $productMetadata,
@@ -83,6 +86,16 @@ class Success extends Template
     {
         // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
         return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'));
+    }
+
+    /**
+     * Get magento version
+     *
+     * @return string
+     */
+    private function getMagentoVersion()
+    {
+        return $this->productMetadata->getVersion();
     }
     
     // Customization
@@ -118,15 +131,5 @@ class Success extends Template
     public function getStoreCollection()
     {
         return $this->storepickupStoreCollection->create();
-    }
-
-    /**
-     * Get magento version
-     *
-     * @return string
-     */
-    private function getMagentoVersion()
-    {
-        return $this->productMetadata->getVersion();
     }
 }

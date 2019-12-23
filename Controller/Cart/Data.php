@@ -25,6 +25,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Exception\BoltException;
 
 /**
@@ -58,11 +59,17 @@ class Data extends Action
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
      *
      * @codeCoverageIgnore
      */
@@ -71,13 +78,15 @@ class Data extends Action
         JsonFactory $resultJsonFactory,
         CartHelper $cartHelper,
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        MetricsClient $metricsClient
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
+        $this->metricsClient   = $metricsClient;
     }
 
     /**
@@ -88,6 +97,7 @@ class Data extends Action
      */
     public function execute()
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         $result = $this->resultJsonFactory->create();
 
         try {
@@ -98,31 +108,47 @@ class Data extends Action
             if (!$this->cartHelper->isCheckoutAllowed()) {
                 throw new BoltException(__('Guest checkout is not allowed.'));
             }
+            
+            if (!$this->cartHelper->hasValidMinimumOrderAmountForCart()) {
+                return $result->setData([
+                    'status' => 'success',
+                    'cart' => [],
+                    'hints' => [],
+                    'is_not_valid_minimum_amount' => true,
+                    'backUrl' => '',
+                ]);
+            }
 
             // flag to determinate the type of checkout / data sent to Bolt
             $payment_only = $this->getRequest()->getParam('payment_only');
             // additional data collected from the (one page checkout) page,
             // i.e. billing address to be saved with the order
             $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            $magentoStoreId = $this->getRequest()->getParam('store_id');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload, $magentoStoreId);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
 
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
 
+            if ($response) {
+                $responseData = json_decode(json_encode($response), true);
+                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
+            } else {
+                $responseData['cart'] = [];
+                $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
+            }
+
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $response->cart->display_id) : [null, ''];
+            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
 
-            $cart = (array)@$response->cart + [
-                'orderToken' => $response ? $response->token : '',
-                'authcapture' => $this->configHelper->getAutomaticCaptureMode(),
+            $cart = array_merge($responseData['cart'], [
+                'orderToken'    => $response ? $responseData['token'] : '',
                 'cartReference' => $cartReference,
-            ];
+            ]);
 
-            if (isset($cart['currency']) && $cart['currency']->currency) {
+            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
                 // cart data validation requirement
-                $cart['currency']->currency_code = $cart['currency']->currency;
+                $cart['currency']['currency_code'] = $cart['currency']['currency'];
             }
 
             $hints = $this->cartHelper->getHints($cartReference, 'cart');
@@ -140,6 +166,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
 
@@ -148,6 +175,7 @@ class Data extends Action
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
+            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
         } finally {
             return $result;
         }

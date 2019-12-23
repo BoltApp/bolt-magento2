@@ -27,7 +27,6 @@
                 <checkout_type>payment_only_checkout</checkout_type>
                 <sandbox_mode>1</sandbox_mode>
                 <debug>0</debug>
-                <automatic_capture_mode>0</automatic_capture_mode>
                 <allowspecific>0</allowspecific>
                 <order_status>new</order_status>
                 <currency>USD</currency>
@@ -53,6 +52,12 @@ tr.shipping.totals td.amount span.price,
                 <minicart_support>1</minicart_support>
                 <store_credit>0</store_credit>
                 <enable_payment_only_checkout>0</enable_payment_only_checkout>
+                <bolt_order_caching>1</bolt_order_caching>
+                <api_emulate_session>1</api_emulate_session>
+                <should_minify_javascript>1</should_minify_javascript>
+                <capture_merchant_metrics>0</capture_merchant_metrics>
+                <is_pre_auth>0</is_pre_auth>
+                <track_checkout_funnel>0</track_checkout_funnel>
             </boltpay>
         </payment>
     </default>

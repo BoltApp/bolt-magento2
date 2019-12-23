@@ -1,2 +1,9 @@
 .DS_Store
 .idea/
+
+# magento container files
+docker-container/magento-cloud
+auth.json
+config.sh
+vendor/
+composer.lock

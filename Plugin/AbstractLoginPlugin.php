@@ -81,7 +81,7 @@ abstract class AbstractLoginPlugin
     /**
      * @return bool
      */
-    final protected function isCustomerLoggedIn()
+    protected function isCustomerLoggedIn()
     {
         return $this->customerSession->isLoggedIn();
     }
@@ -89,7 +89,7 @@ abstract class AbstractLoginPlugin
     /**
      * @return bool
      */
-    final protected function hasCart()
+    protected function hasCart()
     {
         return $this->checkoutSession->hasQuote() && count($this->checkoutSession->getQuote()->getAllVisibleItems()) > 0;
     }
@@ -97,7 +97,7 @@ abstract class AbstractLoginPlugin
     /**
      * @return bool
      */
-    final protected function shouldRedirectToCartPage()
+    protected function shouldRedirectToCartPage()
     {
         return $this->isCustomerLoggedIn() && $this->hasCart();
     }
@@ -105,7 +105,7 @@ abstract class AbstractLoginPlugin
     /**
      * @return void
      */
-    final protected function setBoltInitiateCheckout()
+    protected function setBoltInitiateCheckout()
     {
         $this->checkoutSession->setBoltInitiateCheckout(true);
     }
@@ -114,7 +114,7 @@ abstract class AbstractLoginPlugin
      * @param \Exception $e
      * @return void
      */
-    final protected function notifyException($e)
+    protected function notifyException($e)
     {
         $this->bugsnag->notifyException($e);
     }
