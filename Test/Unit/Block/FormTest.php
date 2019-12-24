@@ -68,6 +68,11 @@ class FormTest extends \PHPUnit\Framework\TestCase
     private $addressMock;
 
     /**
+     * @var \Bolt\Boltpay\Model\CustomerCreditCard
+     */
+    private $mockCustomerCreditCard;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -98,7 +103,11 @@ class FormTest extends \PHPUnit\Framework\TestCase
 
         $this->sessionManager->method('getQuote')->willReturn($this->quoteMock);
         $this->customerCreditCardCollectionFactoryMock = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
-            ->setMethods(['create', 'getCreditCardInfosByCustomerId'])
+            ->setMethods(['create', 'getCreditCardInfosByCustomerId','addFilter'])
+            ->getMock();
+        $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getCardInfo','getCustomerId','getConsumerId','getCreditCardId','getId'])
             ->getMock();
     }
 
@@ -119,36 +128,36 @@ class FormTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
+     * @param $data
+     * @dataProvider providerGetCustomerCreditCardInfo
      */
-    public function getCustomerCreditCardInfo_withCustomer()
-    {
-        $this->addressMock->expects(self::once())->method('getCustomerId')->willReturn(11111);
+    public function getCustomerCreditCardInfo($data){
+        $this->addressMock->expects(self::once())->method('getCustomerId')->willReturn($data['customer_id']);
         $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($this->addressMock);
         $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);
 
-        $this->customerCreditCardCollectionFactoryMock->expects(static::once())->method('create')->willReturnSelf();
-        $this->customerCreditCardCollectionFactoryMock->expects(static::once())
-            ->method('getCreditCardInfosByCustomerId')
-            ->withAnyParameters()
-            ->willReturnSelf();
-
-        $this->block->getCustomerCreditCardInfo();
-    }
-
-    /**
-     * @test
-     */
-    public function getCustomerCreditCardInfo_withGuestCustomer(){
-        $this->addressMock->expects(self::once())->method('getCustomerId')->willReturn(null);
-        $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($this->addressMock);
-        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);
-
-        $this->customerCreditCardCollectionFactoryMock->expects(static::never())->method('create');
-         $this->customerCreditCardCollectionFactoryMock->expects(static::never())
-            ->method('getCreditCardInfosByCustomerId')
-            ->withAnyParameters();
+        $this->customerCreditCardCollectionFactoryMock->expects(static::any())->method('create')->willReturnSelf();;
+        $this->customerCreditCardCollectionFactoryMock->expects(static::any())
+                ->method('getCreditCardInfosByCustomerId')
+                ->with($data['customer_id'])
+                ->willReturn([new \Magento\Framework\DataObject()]);
 
         $result = $this->block->getCustomerCreditCardInfo();
-        $this->assertFalse($result);
+        $this->assertEquals($data['expected'],$result);
+    }
+
+    public function providerGetCustomerCreditCardInfo(){
+        return [
+            ['data' => [
+                'customer_id' => '1111',
+                'expected' => [new \Magento\Framework\DataObject()],
+                ]
+            ],
+            ['data' => [
+                'customer_id' => '',
+                'expected' => false,
+                ]
+            ],
+        ];
     }
 }
