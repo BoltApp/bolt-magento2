@@ -307,7 +307,8 @@ class Order extends AbstractHelper
         if(strpos($shippingMethod,'storepickup_storepickup') !== false){
             $shippingMethod_array = explode("+",$shippingMethod);
             $shippingMethod = $shippingMethod_array[0];
-            $storepickup_session = array('store_id' => $shippingMethod_array[1]);
+            $store_id = isset($shippingMethod_array[1]) ? $shippingMethod_array[1] : $quote->getStoreId();
+            $storepickup_session = array('store_id' => $store_id);
             $this->checkoutSession->setData('storepickup_session',$storepickup_session);
         }
 
