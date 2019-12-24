@@ -39,6 +39,8 @@ class CustomerCreditCardTest extends TestCase
     const CONSUMER_ID = '113';
     const CREDIT_CARD_ID = '114';
     const CARD_INFO = '{"id":"CAfe9tP97CMXs","last4":"1111","display_network":"Visa"}';
+    const ENTITY_ID = '1';
+    const CUSTOMER_ID = '1111';
 
     /**
      * @var \Bolt\Boltpay\Model\CustomerCreditCard
@@ -137,7 +139,7 @@ class CustomerCreditCardTest extends TestCase
                 $this->resourceCollection,
                 []
             ])
-            ->setMethods(['_init','getCardInfo','getCardInfoObject'])
+            ->setMethods(['_init','getCardInfo', 'getCardInfoObject','getId', 'setCustomerId','setConsumerId', 'setCreditCardId','setCardInfo', 'save'])
             ->getMock();
     }
 
@@ -217,7 +219,7 @@ class CustomerCreditCardTest extends TestCase
                 $this->resourceCollection,
                 []
             ])
-            ->setMethods(['_init','getCardInfo'])
+            ->setMethods(['_init','getCardInfo','getId'])
             ->getMock();
 
         $mockCustomerCreditCard->expects(self::once())->method('getCardInfo')->willReturn($data['info']);
@@ -328,5 +330,27 @@ class CustomerCreditCardTest extends TestCase
             ]
 
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getIdentities(){
+        $this->mockCustomerCreditCard->expects(self::once())->method('getId')->willReturn(self::ENTITY_ID);
+        $result = $this->mockCustomerCreditCard->getIdentities();
+        $this->assertEquals(['bolt_customer_credit_cards_1'], $result);
+    }
+
+    /**
+     * @test
+     */
+    public function saveCreditCard(){
+        $this->mockCustomerCreditCard->expects(self::once())->method('setCustomerId')->willReturnSelf();
+        $this->mockCustomerCreditCard->expects(self::once())->method('setConsumerId')->willReturnSelf();
+        $this->mockCustomerCreditCard->expects(self::once())->method('setCreditCardId')->willReturnSelf();
+        $this->mockCustomerCreditCard->expects(self::once())->method('setCardInfo')->willReturnSelf();
+        $this->mockCustomerCreditCard->expects(self::once())->method('save')->willReturn($this->mockCustomerCreditCard);
+        $result = $this->mockCustomerCreditCard->saveCreditCard(self::CUSTOMER_ID,self::CONSUMER_ID, self::CREDIT_CARD_ID,self::CARD_INFO);
+        $this->assertEquals($this->mockCustomerCreditCard, $result);
     }
 }

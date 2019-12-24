@@ -28,8 +28,12 @@ use Magento\Framework\Exception\LocalizedException;
  * Class CustomerCreditCard
  * @package Bolt\Boltpay\Model
  */
-class CustomerCreditCard extends AbstractModel
+class CustomerCreditCard extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
+    const CACHE_TAG = 'bolt_customer_credit_cards';
+
+    protected $_cacheTag = self::CACHE_TAG;
+
     /**
      * @var ConfigHelper
      */
@@ -85,6 +89,14 @@ class CustomerCreditCard extends AbstractModel
     protected function _construct()
     {
         $this->_init('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard');
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function getIdentities()
+    {
+        return [self::CACHE_TAG . '_' . $this->getId()];
     }
 
     /**
@@ -150,5 +162,22 @@ class CustomerCreditCard extends AbstractModel
      */
     public function getCardLast4Digit(){
         return ($last4 = $this->getCardInfoObject()->getData('last4')) ? 'XXXX-'.$last4 : '';
+    }
+
+    /**
+     * @param $customerId
+     * @param $boltConsumerId
+     * @param $boltCreditCardId
+     * @param $cardInfo
+     * @return $this
+     */
+    public function saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $cardInfo){
+        $this->setCustomerId($customerId)
+            ->setConsumerId($boltConsumerId)
+            ->setCreditCardId($boltCreditCardId)
+            ->setCardInfo(json_encode((array)$cardInfo))
+            ->save();
+
+        return $this;
     }
 }
