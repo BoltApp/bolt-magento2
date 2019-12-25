@@ -36,7 +36,7 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
      */
     public function _prepareColumns()
     {
-        $this->block->expects(self::exactly(3))
+        $this->block->expects(self::exactly(4))
             ->method('addColumn')
             ->withAnyParameters()
             ->willReturnSelf();

@@ -114,6 +114,17 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
             ]
         );
 
+        $this->addColumn(
+            'action',
+            [
+                'header' => __('Action'),
+                'index' => 'delete_action',
+                'renderer' => DeleteAction::class,
+                'header_css_class' => 'col-actions',
+                'column_css_class' => 'col-actions'
+            ]
+        );
+
         return parent::_prepareColumns();
     }
 
