@@ -444,6 +444,21 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             
             // Validate Minimum Order Amount
             if (!$immutableQuote->validateMinimumAmount()) {
+                // Remove coupon if validation fails
+                $this->setCouponCode($parentQuote, '');
+                $address = $parentQuote->isVirtual() ?
+                    $parentQuote->getBillingAddress() :
+                    $parentQuote->getShippingAddress();
+                $this->totalsCollector->collectAddressTotals($parentQuote, $address);
+                // Remove coupon if validation fails
+                $this->setCouponCode($immutableQuote, '');
+                $address = $parentQuote->isVirtual() ?
+                    $immutableQuote->getBillingAddress() :
+                    $immutableQuote->getShippingAddress();
+                $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                // IMPORTANT
+                $this->quoteRepositoryForUnirgyGiftCert->save($parentQuote->collectTotals());
+                
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_MINIMUM_CART_AMOUNT_REQUIRED,
                     $this->getMinimumAmountRuleMessage(),
