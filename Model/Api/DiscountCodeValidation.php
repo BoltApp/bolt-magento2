@@ -443,7 +443,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
             
             // Validate Minimum Order Amount
-            /*if (!$immutableQuote->validateMinimumAmount()) {
+            if (!$immutableQuote->validateMinimumAmount()) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_MINIMUM_CART_AMOUNT_REQUIRED,
                     $this->getMinimumAmountRuleMessage(),
@@ -451,7 +451,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 );
 
                 return false;
-            }*/
+            }
 
             $this->sendSuccessResponse($result, $immutableQuote);
         } catch (WebApiException $e) {
