@@ -745,11 +745,7 @@ class Order extends AbstractHelper
             }
 
             $this->customerCreditCardFactory->create()
-                        ->setCustomerId($customerId)
-                        ->setConsumerId($boltConsumerId)
-                        ->setCreditCardId($boltCreditCardId)
-                        ->setCardInfo(json_encode((array)$boltCreditCard))
-                        ->save();
+                ->saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $boltCreditCard);
 
             return true;
         } catch (\Exception $exception) {

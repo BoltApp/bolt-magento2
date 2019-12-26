@@ -280,7 +280,7 @@ class OrderTest extends TestCase
         $this->date = $this->createMock(DateTime::class);
         $this->customerCreditCardFactory = $this->getMockBuilder(CustomerCreditCardFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create','setCustomerId','setConsumerId', 'setCreditCardId','setCardInfo','save'])
+            ->setMethods(['create','saveCreditCard'])
             ->getMock();
 
         $this->customerCreditCardCollectionFactory = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
@@ -868,11 +868,7 @@ class OrderTest extends TestCase
             ->willReturn($this->quoteMock);
 
         $this->customerCreditCardFactory->expects(static::never())->method('create');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCustomerId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setConsumerId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCreditCardId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCardInfo');
-        $this->customerCreditCardFactory->expects(static::never())->method('save');
+        $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
@@ -919,11 +915,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(false);
 
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCreditCardId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCardInfo')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('save')->willReturnSelf();
+        $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
@@ -949,11 +941,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(false);
 
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCustomerId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setConsumerId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCreditCardId')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('setCardInfo')->willReturnSelf();
-        $this->customerCreditCardFactory->expects(static::once())->method('save')->willThrowException(new \Exception());
+        $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willThrowException(new \Exception());
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
@@ -981,11 +969,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardCollectionFactory->expects(self::once())->method('doesCardExist')->willReturn(true);
 
         $this->customerCreditCardFactory->expects(static::never())->method('create');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCustomerId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setConsumerId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCreditCardId');
-        $this->customerCreditCardFactory->expects(static::never())->method('setCardInfo');
-        $this->customerCreditCardFactory->expects(static::never())->method('save');
+        $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
