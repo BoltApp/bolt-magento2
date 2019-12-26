@@ -73,64 +73,15 @@ class CollectionTest extends TestCase
     /**
      * @test
      */
-    public function getCreditCardInfosByCustomerId_withValidData(){
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
-        $this->mockCustomerCreditCard->expects(self::once())->method('getConsumerId')->willReturn(self::CONSUMER_ID);
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCreditCardId')->willReturn(self::CREDIT_CARD_ID);
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfo')->willReturn(self::CARD_INFO);
-        $this->mockCustomerCreditCard->expects(self::once())->method('getId')->willReturn(self::ID);
-
+    /**
+     * @test
+     */
+    public function getCreditCardInfosByCustomerId(){
         $this->mockCustomerCreditCardCollection->expects($this->once())->method('addFilter')
             ->with('customer_id', self::CUSTOMER_ID)
             ->willReturn([$this->mockCustomerCreditCard]);
 
-        $expected[] = [
-            'card_info'=>[
-                'display_network'=> 'Visa',
-                'last4' => '1111'
-            ],
-            'consumer_id'=> self::CONSUMER_ID,
-            'credit_card_id'=> self::CREDIT_CARD_ID,
-            'customer_id'=> self::CUSTOMER_ID,
-            'id'=> self::ID
-        ];
-
         $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals($expected,$result);
-    }
-
-    /**
-     * @test
-     */
-    public function getCreditCardInfosByCustomerId_withNonExistedCustomerId(){
-        $this->mockCustomerCreditCardCollection
-            ->expects(self::once())
-            ->method('addFilter')
-            ->with('customer_id', self::CUSTOMER_ID)
-            ->willReturn([]);
-
-        $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals([],$result);
-    }
-
-    /**
-     * @test
-     */
-    public function getCreditCardInfosByCustomerId_withInvalidCardInfo(){
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfo')->willReturn(null);
-
-        $this->mockCustomerCreditCard->expects(self::never())->method('getCustomerId');
-        $this->mockCustomerCreditCard->expects(self::never())->method('getConsumerId');
-        $this->mockCustomerCreditCard->expects(self::never())->method('getCreditCardId');
-        $this->mockCustomerCreditCard->expects(self::never())->method('getId');
-
-        $this->mockCustomerCreditCardCollection
-            ->expects(self::once())
-            ->method('addFilter')
-            ->with('customer_id', self::CUSTOMER_ID)
-            ->willReturn([$this->mockCustomerCreditCard]);
-
-        $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals([],$result);
+        $this->assertEquals([$this->mockCustomerCreditCard],$result);
     }
 }
