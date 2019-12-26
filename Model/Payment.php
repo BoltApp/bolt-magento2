@@ -286,7 +286,10 @@ class Payment extends AbstractMethod
             }
 
             //Get transaction data
-            $transactionData = ['transaction_id' => $transactionId];
+            $transactionData = [
+                'transaction_id' => $transactionId,
+                'skip_hook_notification' => true
+            ];
             $storeId = $payment->getOrder()->getStoreId();
             $apiKey = $this->configHelper->getApiKey($storeId);
 
@@ -475,7 +478,8 @@ class Payment extends AbstractMethod
             $refundData = [
                 'transaction_id' => $realTransactionId,
                 'amount'         => $refundAmount,
-                'currency'       => $orderCurrency
+                'currency'       => $orderCurrency,
+                'skip_hook_notification' => true
             ];
 
             $storeId = $order->getStoreId();
