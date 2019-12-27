@@ -52,6 +52,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Quote\Api\CartManagementInterface;
 
 /**
  * Boltpay Cart helper
@@ -206,6 +207,11 @@ class Cart extends AbstractHelper
     private $orderData;
 
     /**
+     * @var CartManagementInterface
+     */
+    private $quoteManagement;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -228,6 +234,7 @@ class Cart extends AbstractHelper
      * @param DiscountHelper $discountHelper
      * @param CacheInterface $cache
      * @param ResourceConnection $resourceConnection
+     * @param CartManagementInterface $quoteManagement
      *
      * @codeCoverageIgnore
      */
@@ -253,7 +260,8 @@ class Cart extends AbstractHelper
         CheckoutHelper $checkoutHelper,
         DiscountHelper $discountHelper,
         CacheInterface $cache,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        CartManagementInterface $quoteManagement
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -277,6 +285,7 @@ class Cart extends AbstractHelper
         $this->discountHelper = $discountHelper;
         $this->cache = $cache;
         $this->resourceConnection = $resourceConnection;
+        $this->quoteManagement = $quoteManagement;
     }
 
     /**
@@ -1746,5 +1755,34 @@ class Cart extends AbstractHelper
 
         // no restrictions
         return false;
+    }
+
+    /**
+     * Create cart by item [reference,quantity]
+     * TODO: add support for logged in users
+     * TODO: add support for foreign currencies
+     * TODO: add support for multistore
+     *
+     * @param arrat $item
+     *
+     * @return array cart_data in bolt format
+     * @throws \Exception
+     */
+    public function createCartByItem($item)
+    {
+        $quoteId = $this->quoteManagement->createEmptyCart();
+        $quote = $this->quoteFactory->create()->load($quoteId);
+
+        //add item in quote
+        $product = $this->productRepository->getbyId($item['reference']);
+        $quote->addProduct($product, $item['quantity']);
+
+        $quote->reserveOrderId();
+        $quote->collectTotals()->save();
+
+        $cart_data = $this->getCartData(false,'',$quote);
+        $cart_data['order_reference'] = $quote->getId();
+
+        return $cart_data;
     }
 }
