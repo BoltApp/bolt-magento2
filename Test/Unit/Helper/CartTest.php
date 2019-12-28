@@ -1921,7 +1921,7 @@ ORDER;
         $this->assertArrayHasKey('properties', $products[0]);
         $this->assertCount(1, $products[0]['properties']);
         $this->assertInternalType('string', $products[0]['properties'][0]->value);
-        $this->assertEquals("S", $products[0]["color"]);
+        $this->assertEquals("S", $products[0]["size "]);
     }
 
     /**
