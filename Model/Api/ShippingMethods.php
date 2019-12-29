@@ -333,7 +333,13 @@ class ShippingMethods implements ShippingMethodsInterface
         $startTime = $this->metricsClient->getCurrentTime();
         try {
             // get immutable quote id stored with transaction
-            list(, $quoteId) = explode(' / ', $cart['display_id']);
+            if (!$cart['display_id']) {
+                // Due bolt server issue display_id isn't saved when order created via remote_order_create
+                // TODO: Remove this code when issue is fixed https://app.asana.com/0/951157735838091/1155187242723681/f
+                $quoteId = $cart['order_reference'];
+            } else {
+                list(, $quoteId) = explode(' / ', $cart['display_id']);
+            }
 
             // Load quote from entity id
             $this->quote = $this->getQuoteById($quoteId);
