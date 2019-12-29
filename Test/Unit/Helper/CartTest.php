@@ -1892,11 +1892,17 @@ ORDER;
      */
     public function getCartItems_AttributeInfoValue_Boolean()
     {
+        $color = "Blue";
+        $size = "S";
         $quoteItemOptions = [
             "attributes_info" => [
                 [
                     "label" => "Size",
-                    "value" => "S"
+                    "value" => $size
+                ],
+                [
+                    "label" => "Color",
+                    "value" => $color
                 ]
             ]
         ];
@@ -1919,9 +1925,10 @@ ORDER;
 
         $this->assertCount(1, $products);
         $this->assertArrayHasKey('properties', $products[0]);
-        $this->assertCount(1, $products[0]['properties']);
+        $this->assertCount(2, $products[0]['properties']);
         $this->assertInternalType('string', $products[0]['properties'][0]->value);
-        $this->assertEquals("S", $products[0]["size"]);
+        $this->assertEquals($size, $products[0]["size"]);
+        $this->assertEquals($color, $products[0]["color"]);
     }
 
     /**
