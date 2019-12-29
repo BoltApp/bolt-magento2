@@ -1039,8 +1039,8 @@ class Cart extends AbstractHelper
                         $attributeValue = is_bool($attribute_info['value']) ? var_export($attribute_info['value'], true) : $attribute_info['value'];
                         $attributeLabel = $attribute_info['label'];
                         $properties[] = (object) [
-                            "name" => $attributeLabel,
-                            "value" => $attributeValue
+                            'name' => $attributeLabel,
+                            'value' => $attributeValue
                         ];
                         if (strcasecmp($attributeLabel, 'color') == 0) {
                             $product['color'] = $attributeValue;

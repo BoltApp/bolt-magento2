@@ -1892,17 +1892,17 @@ ORDER;
      */
     public function getCartItems_AttributeInfoValue_Boolean()
     {
-        $color = "Blue";
-        $size = "S";
+        $color = 'Blue';
+        $size = 'S';
         $quoteItemOptions = [
-            "attributes_info" => [
+            'attributes_info' => [
                 [
-                    "label" => "Size",
-                    "value" => $size
+                    'label' => 'Size',
+                    'value' => $size
                 ],
                 [
-                    "label" => "Color",
-                    "value" => $color
+                    'label' => 'Color',
+                    'value' => $color
                 ]
             ]
         ];
@@ -1921,14 +1921,14 @@ ORDER;
 
         $quoteItemMock = $this->getQuoteItemMock($productMock);
 
-        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems("USD", [$quoteItemMock], self::STORE_ID);
+        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems('USD', [$quoteItemMock], self::STORE_ID);
 
         $this->assertCount(1, $products);
         $this->assertArrayHasKey('properties', $products[0]);
         $this->assertCount(2, $products[0]['properties']);
         $this->assertInternalType('string', $products[0]['properties'][0]->value);
-        $this->assertEquals($size, $products[0]["size"]);
-        $this->assertEquals($color, $products[0]["color"]);
+        $this->assertEquals($size, $products[0]['size']);
+        $this->assertEquals($color, $products[0]['color']);
     }
 
     /**
