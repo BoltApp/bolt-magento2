@@ -1042,12 +1042,12 @@ class Cart extends AbstractHelper
                             "name" => $attributeLabel,
                             "value" => $attributeValue
                         ];
-                        if (strcasecmp($attributeLabel, "color") == 0) {
-                            $product["color"] = $attributeValue;
+                        if (strcasecmp($attributeLabel, 'color') == 0) {
+                            $product['color'] = $attributeValue;
                         }
 
-                        if (strcasecmp($attributeLabel, "size") == 0) {
-                            $product["size"] = $attributeValue;
+                        if (strcasecmp($attributeLabel, 'size') == 0) {
+                            $product['size'] = $attributeValue;
                         }
                     }
                     $product['properties'] = $properties;
