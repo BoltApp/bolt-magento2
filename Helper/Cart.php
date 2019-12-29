@@ -1231,7 +1231,16 @@ class Cart extends AbstractHelper
 
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $quote) {
-                    $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
+                    $shippingMethod = $quote->getShippingAddress()->getShippingMethod();
+                    if(strpos($shippingMethod,'storepickup_storepickup') !== false){
+                        $store_id = $quote->getStoreId();
+                        $storepickup_session = array('store_id' => $store_id);
+                        $this->checkoutSession->setData('storepickup_session',$storepickup_session);
+                        $address->setShippingMethod($shippingMethod)->save();
+                    }
+                    else{
+                        $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
+                    }                    
                 }
 
                 if (!$address->getShippingMethod()) {
