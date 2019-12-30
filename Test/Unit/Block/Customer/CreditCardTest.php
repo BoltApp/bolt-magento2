@@ -22,6 +22,7 @@ use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Framework\App\Request\Http;
 use Magento\Customer\Model\Session;
+use Magento\Framework\Data\Form\FormKey;
 
 
 /**
@@ -34,6 +35,7 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
     const CUSTOMER_ID = '11111';
     const PAGE_SIZE = '1';
     const CURRENT_PAGE = '1';
+    const FORM_KEY = 'KSQ27m2S1oBVJecR';
 
     /**
      * @var CreditCard
@@ -60,6 +62,8 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
      */
     private $requestMock;
 
+    private $formKeyMock;
+
     /**
      * @inheritdoc
      */
@@ -72,6 +76,10 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
     private function initRequiredMocks()
     {
         $this->contextMock = $this->createMock(Context::class);
+        $this->formKeyMock = $this->getMockBuilder(FormKey::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getFormKey'])
+            ->getMock();
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getParam'])
@@ -95,7 +103,8 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
                 [
                     $this->contextMock,
                     $this->collectionFactoryMock,
-                    $this->customerSessionMock
+                    $this->customerSessionMock,
+                    $this->formKeyMock
                 ]
             )->getMock();
     }
@@ -122,4 +131,12 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
         $this->assertSame($this->collectionFactoryMock, $this->block->getCreditCardCollection());
     }
 
+    /**
+     * @test
+     */
+    public function getFormKey()
+    {
+        $this->formKeyMock->expects(self::once())->method('getFormKey')->willReturn(self::FORM_KEY);
+        $this->assertEquals(self::FORM_KEY, $this->block->getFormKey());
+    }
 }

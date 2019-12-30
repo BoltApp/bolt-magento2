@@ -21,6 +21,7 @@ use Magento\Framework\View\Element\Template;
 use Magento\Theme\Block\Html\Pager;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Customer\Model\Session;
+use Magento\Framework\Data\Form\FormKey;
 
 /**
  * Class CreditCard
@@ -40,6 +41,11 @@ class CreditCard extends Template
      */
     protected $customerSession;
 
+    /**
+     * @var FormKey
+     */
+    protected $formKey;
+
     protected $_creditCardCollection;
 
     /**
@@ -47,15 +53,18 @@ class CreditCard extends Template
      * @param Template\Context $context
      * @param CollectionFactory $collectionFactory
      * @param Session $customerSession
+     * @param FormKey $formKey
      * @param array $data
      */
     public function __construct(
         Template\Context $context,
         CollectionFactory $collectionFactory,
         Session $customerSession,
+        FormKey $formKey,
         array $data = []
     )
     {
+        $this->formKey = $formKey;
         $this->collectionFactory = $collectionFactory;
         $this->customerSession = $customerSession;
         parent::__construct($context, $data);
@@ -110,4 +119,10 @@ class CreditCard extends Template
         return $collection;
     }
 
+    /**
+     * @return string
+     */
+    public function getFormKey(){
+        return $this->formKey->getFormKey();
+    }
 }
