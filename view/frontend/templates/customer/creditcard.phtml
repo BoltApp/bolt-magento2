@@ -1,0 +1,47 @@
+<?php /** @var  $block \Bolt\Boltpay\Block\Customer\CreditCard */?>
+
+<?php
+$creditCards = $block->getCreditCardCollection();
+?>
+<div class="block">
+    <div class="block-content">
+        <div class="table-wrapper">
+            <table  class="data table">
+                <thead>
+                <tr>
+                    <th scope="col" class="col transaction">
+                        <?php /* @noEscape */ echo __('Credit Card Id'); ?>
+                    </th>
+                    <th scope="col" class="col transaction">
+                        <?php /* @noEscape */ echo __('Credit Card Type'); ?>
+                    </th>
+                    <th scope="col" class="col transaction">
+                        <?php /* @noEscape */ echo __('Credit Card Last 4 Digit'); ?>
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php if (!empty($creditCards)) : ?>
+                    <?php foreach ($creditCards as $creditCard) : ?>
+                        <tr>
+                            <td data-th="<?php /* @noEscape */ echo $block->escapeHtml(__('Credit Card ID')); ?>"
+                                class="col actions">
+                                <?php /* @noEscape */ echo $creditCard->getCreditCardId(); ?>
+                            </td>
+                            <td data-th="<?php /* @noEscape */ echo $block->escapeHtml(__('Credit Card Type')); ?>"
+                                class="col actions">
+                                <?php /* @noEscape */ echo $creditCard->getCardType(); ?>
+                            </td>
+                            <td data-th="<?php /* @noEscape */ echo $block->escapeHtml(__('Credit Card Last 4 Digit')); ?>"
+                                class="col actions">
+                                <?php /* @noEscape */ echo $creditCard->getCardLast4Digit(); ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php /* @noEscape */ echo $block->getPagerHtml(); ?>
+</div>
