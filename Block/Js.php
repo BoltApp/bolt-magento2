@@ -417,7 +417,7 @@ class Js extends Template
      */
     public function shouldDisableBoltCheckout()
     {
-        if (!$this->$this->featureSwitches->isBoltEnabled()) {
+        if (!$this->featureSwitches->isBoltEnabled()) {
             return true;
         }
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
