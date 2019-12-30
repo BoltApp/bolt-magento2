@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -48,6 +49,9 @@ class Js extends Template
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
+    /** @var Decider */
+    private $featureSwitches;
+
     /**
      * @param Context         $context
      * @param Config          $configHelper
@@ -62,6 +66,7 @@ class Js extends Template
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
+        Decider $featureSwitches,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -69,6 +74,7 @@ class Js extends Template
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -411,6 +417,9 @@ class Js extends Template
      */
     public function shouldDisableBoltCheckout()
     {
+        if (!$this->$this->featureSwitches->isBoltEnabled()) {
+            return true;
+        }
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
     }
 

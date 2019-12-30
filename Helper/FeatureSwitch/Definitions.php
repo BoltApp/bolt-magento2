@@ -38,12 +38,24 @@ class Definitions {
      */
     const M2_SAMPLE_SWITCH_NAME = "M2_SAMPLE_SWITCH";
 
+    /**
+     * Whether bolt is enabled. This will be used for slow rollout / controlling bolt
+     * from the backend.
+     */
+    const M2_BOLT_ENABLED = "M2_BOLT_ENABLED";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
           self::VAL_KEY             => true,
           self::DEFAULT_VAL_KEY     => false,
           self::ROLLOUT_KEY         => 0
-      )
+        ),
+        self::M2_BOLT_ENABLED =>  array(
+          self::NAME_KEY            => self::M2_BOLT_ENABLED,
+          self::VAL_KEY             => true,
+          self::DEFAULT_VAL_KEY     => false,
+          self::ROLLOUT_KEY         => 100
+        )
     );
 }
