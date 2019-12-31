@@ -151,6 +151,21 @@ class Config extends AbstractHelper
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
 
     /**
+     * Path for custom API server, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_API = 'payment/boltpay/custom_api';
+
+    /**
+     * Path for custom merchant dash, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_MERCHANT_DASH = 'payment/boltpay/custom_merchant_dash';
+
+    /**
+     * Path for custom merchant dash, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_CDN = 'payment/boltpay/custom_cdn';
+
+    /**
      * Bolt sandbox url
      */
     const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
@@ -308,7 +323,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::API_URL_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         } else {
             return self::API_URL_PRODUCTION;
         }
@@ -325,7 +340,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::MERCHANT_DASH_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
         } else {
             return self::MERCHANT_DASH_PRODUCTION;
         }
@@ -342,7 +357,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::CDN_URL_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         } else {
             return self::CDN_URL_PRODUCTION;
         }
@@ -653,6 +668,15 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $store
         );
+    }
+
+    public function getCustomURLValueOrDefault($path, $default)
+    {
+        $storedValue = $this->getScopeConfig()->getValue($path);
+        if ($storedValue == "") {
+            return $default;
+        }
+        return $storedValue;
     }
 
     /**

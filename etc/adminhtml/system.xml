@@ -175,6 +175,15 @@
                     <label>Track checkout funnel</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="custom_api" translate="label" type="text" sortOrder="291" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom API</label>
+                </field>
+                <field id="custom_merchant_dash" translate="label" type="text" sortOrder="292" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom Merchant Dash</label>
+                </field>
+                <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom CDN</label>
+                </field>
             </group>
         </section>
     </system>
