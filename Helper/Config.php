@@ -253,6 +253,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_TRACK_CHECKOUT_FUNNEL = 'payment/boltpay/track_checkout_funnel';
 
+    const XML_PATH_MINIMUM_ORDER_AMOUNT = 'sales/minimum_order/amount';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1201,7 +1203,7 @@ class Config extends AbstractHelper
     public function getMinimumOrderAmount($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
-            'sales/minimum_order/amount',
+            self::XML_PATH_MINIMUM_ORDER_AMOUNT,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
