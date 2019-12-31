@@ -673,10 +673,7 @@ class Config extends AbstractHelper
     public function getCustomURLValueOrDefault($path, $default)
     {
         $storedValue = $this->getScopeConfig()->getValue($path);
-        if ($storedValue == "") {
-            return $default;
-        }
-        return $storedValue;
+        return !empty($storedValue) ? $storedValue : $default;
     }
 
     /**
