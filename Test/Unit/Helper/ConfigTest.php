@@ -464,7 +464,7 @@ class ConfigTest extends TestCase
     /**
      * @test
      */
-    public function testGetScopeConfig()
+    public function getScopeConfig()
     {
         $this->initCurrentMock([], true, true);
         $this->assertNull($this->currentMock->getScopeConfig());
