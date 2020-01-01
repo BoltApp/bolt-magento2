@@ -34,6 +34,7 @@ use Magento\Sales\Model\Order;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class OrderManagementTest
@@ -110,6 +111,11 @@ class OrderManagementTest extends TestCase
     private $requestContent;
 
     /**
+     * @var cartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -140,6 +146,7 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
             ->with(self::ORDER_ID)->willReturn(self::STORE_ID);
+        $this->cartHelper = $this->createMock(CartHelper::class);
     }
 
     private function initCurrentMock()
@@ -153,7 +160,8 @@ class OrderManagementTest extends TestCase
                 $this->bugsnag,
                 $this->metricsClient,
                 $this->response,
-                $this->configHelper
+                $this->configHelper,
+                $this->cartHelper,
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
@@ -474,7 +482,8 @@ class OrderManagementTest extends TestCase
             $this->bugsnag,
             $this->metricsClient,
             $this->response,
-            $this->configHelper
+            $this->configHelper,
+            $this->cartHelper
         );
         $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);

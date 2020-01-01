@@ -48,6 +48,7 @@ use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Quote\Model\Quote\Address\Total;
+use Magento\Quote\Api\CartManagementInterface;
 
 /**
  * Class ConfigTest
@@ -89,6 +90,8 @@ class CartTest extends TestCase
     private $cache;
     private $resourceConnection;
     private $quoteAddressTotal;
+    /** @var CartManagementInterface */
+    private $quoteManagement;
 
     /**
      * @inheritdoc
@@ -152,6 +155,7 @@ class CartTest extends TestCase
             ->setMethods(['getValue', 'setValue', 'getTitle'])
             ->disableOriginalConstructor()
             ->getMock();
+        $this->quoteManagement = $this->createMock(CartManagementInterface::class);
     }
 
     /**
@@ -223,7 +227,8 @@ class CartTest extends TestCase
             $this->checkoutHelper,
             $this->discountHelper,
             $this->cache,
-            $this->resourceConnection
+            $this->resourceConnection,
+            $this->quoteManagement
         );
 
         $paymentOnly = false;
@@ -888,7 +893,8 @@ ORDER;
                 $this->checkoutHelper,
                 $this->discountHelper,
                 $this->cache,
-                $this->resourceConnection
+                $this->resourceConnection,
+                $this->quoteManagement
             ])->getMock();
     }
 
