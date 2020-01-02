@@ -28,9 +28,7 @@ use Magento\Framework\App\Request\Http as Request;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
- * Class ConfigTest
- *
- * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
 class ConfigTest extends TestCase
 {
@@ -74,13 +72,18 @@ class ConfigTest extends TestCase
      */
     public function setUp()
     {
-        $this->context = $this->createMock(Context::class);
         $this->encryptor = $this->createMock(EncryptorInterface::class);
         $this->moduleResource = $this->createMock(ModuleResource::class);
 
         $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
             ->disableOriginalConstructor()
             ->getMock();
+
+        $this->context = $this->getMockBuilder(Context::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getScopeConfig'])
+            ->getMock();
+        $this->context->method('getScopeConfig')->willReturn($this->scopeConfig);
 
         $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
         $this->request = $this->createMock(Request::class);
@@ -463,11 +466,13 @@ class ConfigTest extends TestCase
 
     /**
      * @test
+     *
+     * @covers ::getScopeConfig
      */
     public function getScopeConfig()
     {
         $this->initCurrentMock([], true, true);
-        $this->assertNull($this->currentMock->getScopeConfig());
+        $this->assertSame($this->scopeConfig, $this->currentMock->getScopeConfig());
     }
 
     /**
