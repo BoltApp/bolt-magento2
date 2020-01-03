@@ -101,7 +101,7 @@ class OrderManagement implements OrderManagementInterface
         MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper,
-	    CartHelper $cartHelper
+        CartHelper $cartHelper
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
