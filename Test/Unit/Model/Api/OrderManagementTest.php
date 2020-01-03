@@ -174,6 +174,7 @@ class OrderManagementTest extends TestCase
     /**
      * @test
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_common()
     {
@@ -204,6 +205,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_success()
     {
@@ -233,6 +235,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_fail()
     {
@@ -266,6 +269,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_exception()
     {
@@ -312,6 +316,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_success()
     {
@@ -343,6 +348,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_exception()
     {
@@ -387,6 +393,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_webApiException()
     {
@@ -417,6 +424,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_emptyReference()
     {
@@ -444,6 +452,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_pending()
     {
@@ -502,6 +511,7 @@ class OrderManagementTest extends TestCase
     /**
      * @test
      * @covers ::manage
+     * @covers ::handleCartCreateApiCall
      */
     public function manage_cartCreate()
     {
