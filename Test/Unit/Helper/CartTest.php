@@ -864,14 +864,16 @@ ORDER;
     /**
      * @return BoltHelperCart
      */
-    protected function getCurrentMock()
+    protected function getCurrentMock($methods = array())
     {
+        $methods = array_merge([
+            'getLastImmutableQuote',
+            'getCalculationAddress',
+            'getQuoteById'
+        ], $methods);
         return $this->getMockBuilder(BoltHelperCart::class)
-            ->setMethods([
-                'getLastImmutableQuote',
-                'getCalculationAddress',
-                'getQuoteById'
-            ])->setConstructorArgs([
+            ->setMethods($methods)
+            ->setConstructorArgs([
                 $this->contextHelper,
                 $this->checkoutSession,
                 $this->productRepository,
@@ -1973,4 +1975,99 @@ ORDER;
 
         return $quoteItem;
     }
+
+    /**
+     * @test
+     */
+    public function createCartByItem() {
+        $item = array(
+            'reference'=>SELF::PRODUCT_ID,
+            'quantity'=>1
+        );
+
+        $this->quoteManagement = $this->getMockForAbstractClass(
+            \Magento\Quote\Api\CartManagementInterface::class,
+            [],
+            '',
+            false,
+            true,
+            true,
+            ['createEmptyCart']
+        );
+        $this->quoteManagement->expects($this->once())
+            ->method('createEmptyCart')
+            ->willReturn(SELF::QUOTE_ID);
+
+        $product = $this->getMockBuilder(Product::class)
+            //->setMethods($quoteMethods)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $quote = $this->getMockBuilder(Quote::class)
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote->expects($this->once())
+            ->method('addProduct')
+            ->with($product,1);
+        $quote->expects($this->once())
+            ->method('reserveOrderId');
+        $quote->expects($this->once())
+            ->method('collectTotals')
+            ->willReturnSelf();
+        $quote->expects($this->once())
+            ->method('save');
+        $quote->expects($this->once())
+            ->method('getId')
+            ->willReturn(SELF::QUOTE_ID);
+
+        $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
+            ->setMethods(['create','load'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->quoteFactory->method('create')
+            ->withAnyParameters()
+            ->willReturnSelf();
+        $this->quoteFactory->method('load')
+            ->with(SELF::QUOTE_ID)
+            ->willReturn($quote);
+
+        $this->productRepository = $this->getMockBuilder(ProductRepository::class)
+            ->setMethods(['getbyId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->productRepository->method('getbyId')
+            ->with(SELF::PRODUCT_ID)
+            ->willReturn($product);
+
+        $cart_mock = $this->getCurrentMock(['getCartData']);
+        $cart_data = [
+            'order_reference' => NULL,
+            'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
+            'currency' => 'USD',
+            'items' => [
+                [ 'reference' => SELF::PRODUCT_ID,
+                    'name' => 'Affirm Water Bottle ',
+                    'total_amount' => SELF::PRODUCT_PRICE,
+                    'unit_price' => SELF::PRODUCT_PRICE,
+                    'quantity' => 1,
+                    'sku' => SELF::PRODUCT_SKU,
+                    'type' => 'physical',
+                    'description' => 'Product description',
+                ],
+            ],
+            'discounts' => [],
+            'total_amount' => SELF::PRODUCT_PRICE,
+            'tax_amount' => 0,
+        ];
+
+        $cart_mock->expects($this->once())
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($cart_data);
+        $cart_data['order_reference'] = SELF::QUOTE_ID;
+
+        $this->assertEquals($cart_data,$cart_mock->createCartByItem($item));
+    }
+
 }

@@ -145,7 +145,11 @@ class OrderManagementTest extends TestCase
         $this->quoteMock = $this->createMock(Quote::class);
 
         $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
-            ->with(self::ORDER_ID)->willReturn(self::STORE_ID);
+            ->will(self::returnValueMap([
+                [self::ORDER_ID,self::STORE_ID],
+                [null,null]
+            ]));
+
         $this->cartHelper = $this->createMock(CartHelper::class);
     }
 
@@ -493,5 +497,94 @@ class OrderManagementTest extends TestCase
         $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
         $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
         $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+    }
+
+    /**
+     * @test
+     * @covers ::manage
+     */
+    public function manage_cartCreate()
+    {
+        $type = "cart.create";
+
+        $startTime = microtime(true) * 1000;
+        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
+
+        $request = [
+            'type' => 'cart.create',
+            'items' =>
+                [
+                    [
+                        'reference' => '20102',
+                        'name' => 'Product name',
+                        'description' => NULL,
+                        'options' => NULL,
+                        'total_amount' => 100,
+                        'unit_price' => 100,
+                        'tax_amount' => 0,
+                        'quantity' => 1,
+                        'uom' => NULL,
+                        'upc' => NULL,
+                        'sku' => NULL,
+                        'isbn' => NULL,
+                        'brand' => NULL,
+                        'manufacturer' => NULL,
+                        'category' => NULL,
+                        'tags' => NULL,
+                        'properties' => NULL,
+                        'color' => NULL,
+                        'size' => NULL,
+                        'weight' => NULL,
+                        'weight_unit' => NULL,
+                        'image_url' => NULL,
+                        'details_url' => NULL,
+                        'tax_code' => NULL,
+                        'type' => 'unknown'
+                    ]
+                ],
+            'currency' => 'USD',
+            'metadata' => NULL,
+        ];
+        $cart = [
+            'order_reference' => '1001',
+            'display_id' => '100010001 / 1001',
+            'currency' => 'USD',
+            'items' => [ [
+                            'reference' => '20102',
+                            'name' => 'Product name',
+                            'total_amount' => 100,
+                            'unit_price' => 100,
+                            'quantity' => 100,
+                            'sku' => 'TestProduct',
+                            'type' => 'physical',
+                            'description' => ''
+                        ] ],
+            'discounts' => [],
+            'total_amount' => 100,
+            'tax_amount' => 0,
+        ];
+
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with(self::anything(), 1, 'webhooks.latency', $startTime);
+        $this->request->expects(self::once())->method('getBodyParams')->willReturn($request);
+        $this->cartHelper->expects(self::once())->method('createCartByItem')->with($request['items'][0])->willReturn($cart);
+        $this->response->expects(self::once())->method('sendResponse');
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'cart' => $cart,
+        ]));
+
+        $this->currentMock->manage(
+            null,
+            null,
+            null,
+            $type,
+            null,
+            null,
+            null,
+            null
+        );
     }
 }
