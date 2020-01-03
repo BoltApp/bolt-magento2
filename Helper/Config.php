@@ -225,6 +225,11 @@ class Config extends AbstractHelper
     const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
 
     /**
+     * Use Reward Points on Shopping Cart configuration path
+     */
+    const XML_PATH_REWARD_POINTS = 'payment/boltpay/reward_points';
+
+    /**
      * Payment Only Checkout Enabled configuration path
      */
     const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
@@ -1072,6 +1077,22 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Use Reward Points on Shopping Cart configuration
+     *
+     * @param  int|string|Store $store
+     *
+     * @return bool
+     */
+    public function useRewardPointsConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_REWARD_POINTS,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
      * Get Payment Only Checkout Enabled configuration
      *
      * @param int|string|Store $store
@@ -1196,7 +1217,7 @@ class Config extends AbstractHelper
     public function shouldTrackCheckoutFunnel($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_ACTIVE,
+            self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
             ScopeInterface::SCOPE_STORE,
             $store
         );

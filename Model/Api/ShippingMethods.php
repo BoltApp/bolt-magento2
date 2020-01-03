@@ -33,6 +33,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Webapi\Rest\Request;
@@ -237,7 +238,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * the quantities and totals are matches separately.
      *
      * @param array $cart cart details
-     * @param Quote $quote
      * @throws LocalizedException
      */
     protected function checkCartItems($cart)
@@ -252,9 +252,9 @@ class ShippingMethods implements ShippingMethodsInterface
         foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
-            $unitPrice = $item->getCalculationPrice();
+            $unitPrice = round($item->getCalculationPrice(), 2);
             @$quoteItems['quantity'][$sku] += $quantity;
-            @$quoteItems['total'][$sku] += $this->cartHelper->getRoundAmount($unitPrice * $quantity);
+            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
         if (!$quoteItems) {
@@ -264,22 +264,25 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if ($cartItems['quantity'] != $quoteItems['quantity'] || $cartItems['total'] != $quoteItems['total']) {
-            $this->bugsnag->registerCallback(function ($report) use ($cart) {
+            $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
-                list($quoteItems) = $this->cartHelper->getCartItems(
+                list($quoteItemData) = $this->cartHelper->getCartItems(
+                    $this->quote->getQuoteCurrencyCode(),
                     $this->quote->getAllVisibleItems(),
                     $this->quote->getStoreId()
                 );
 
                 $report->setMetaData([
                     'CART_MISMATCH' => [
+                        'cart_total' => $cartItems['total'],
+                        'quote_total' => $quoteItems['total'],
                         'cart_items' => $cart['items'],
-                        'quote_items' => $quoteItems,
+                        'quote_items' => $quoteItemData,
                     ]
                 ]);
             });
             throw new LocalizedException(
-                __('Cart Items data data has changed.')
+                __('Cart Items data has changed.')
             );
         }
     }
@@ -341,6 +344,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->preprocessHook();
 
+            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
             $this->checkCartItems($cart);
 
             // Load logged in customer checkout and customer sessions from cached session id.
@@ -368,7 +372,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $parentQuote = $this->getQuoteById($cart['order_reference']);
             if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())){
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-                $additionalAmount = abs($this->cartHelper->getRoundAmount($address->getDiscountAmount()));
+                $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
 
                 $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
             }
@@ -618,7 +622,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quote->collectTotals();
 
             $this->totalsCollector->collectAddressTotals($quote, $billingAddress);
-            $taxAmount = $this->cartHelper->getRoundAmount($billingAddress->getTaxAmount());
+            $taxAmount = CurrencyUtils::toMinor($billingAddress->getTaxAmount(), $quote->getQuoteCurrencyCode());
 
             return [
                 $this->shippingOptionInterfaceFactory
@@ -673,11 +677,12 @@ class ShippingMethods implements ShippingMethodsInterface
             $discountAmount = $shippingAddress->getShippingDiscountAmount();
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
-            $roundedCost = $this->cartHelper->getRoundAmount($cost);
+            $roundedCost = CurrencyUtils::toMinor($cost, $quote->getQuoteCurrencyCode());
 
-            $diff = $cost * 100 - $roundedCost;
+            $currencyCode = $quote->getQuoteCurrencyCode();
+            $diff = CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $roundedCost;
 
-            $taxAmount = $this->cartHelper->getRoundAmount($shippingAddress->getTaxAmount() + $diff / 100);
+            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), $currencyCode) + $diff);
 
             if ($discountAmount) {
                 if ($cost == 0) {

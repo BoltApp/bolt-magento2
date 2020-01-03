@@ -104,9 +104,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetStoreVersion()
+    public function getStoreVersion()
     {
         $magentoVersion = '2.2.3';
 
@@ -120,9 +120,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetGlobalCSS()
+    public function getGlobalCSS()
     {
         $value = '.replaceable-example-selector1 {
             color: black;
@@ -137,9 +137,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsDebugModeOn()
+    public function isDebugModeOn()
     {
         $this->currentMock->expects($this->once())->method('isDebugModeOn')
             ->will($this->returnValue(true));
@@ -148,9 +148,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetPublishableKeyCheckout()
+    public function getPublishableKeyCheckout()
     {
         $configValue = '0:2:m8z7GPChWNjJPrvLPgFSGE5j0bZ7XiK9:O0zw8cQQlmS/NFDVrjP/CebewQRKEpAqKF+QyCXIJuai8ep4ziQKs/mzBktyEmv5b2uXRcTr3l+Hv7N1ADx0oJfEC6L/R0pg04j1mi4jcjFs9RxZ1t4UVpwYl8cguYP1';
         $this->scopeConfig->method('getValue')
@@ -166,9 +166,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetAnyPublishableKey()
+    public function getAnyPublishableKey()
     {
         $decryptedKey = 'pKv_p0zR1E1I.Y0jBkEIjgggR.4e1911f1d15511cd7548c1953f2479b2689f2e5a20188c5d7f666c1149136300';
 
@@ -195,9 +195,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetAnyPublishableKeyIfCheckoutKeyIsEmpty()
+    public function getAnyPublishableKeyIfCheckoutKeyIsEmpty()
     {
         $decryptedCheckoutKey = '';
         $decryptedPaymentKey = 'pKv_pOzR4ElI.iCXN0f1DX7j6.43dd17e5a78fda11a854839561458f522b847094d19b621e08187426c335b201';
@@ -228,9 +228,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetCdnUrl()
+    public function getCdnUrl()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
             ->setMethods(['isSandboxModeSet'])
@@ -256,9 +256,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetCdnUrlInProductionMode()
+    public function getCdnUrlInProductionMode()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
             ->setMethods(['isSandboxModeSet'])
@@ -284,9 +284,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetPublishableKeyPayment()
+    public function getPublishableKeyPayment()
     {
         $configValue = '0:2:97N0zWAd4aTmvu2C0L8uGhlI6jvfTvnS:B6v46SD8Xyy3we00mLMwNqd7GxJGkuLGGbHv/3sWaIzB7PS5DcP8tIeQSlL9/tT+mHMk+VwsLZG+AjAxDum3LCaqjVojrdKNQUZA/5QRfa7bYxIT0hDy7tybpXXXX//Y';
         $this->scopeConfig->method('getValue')
@@ -302,9 +302,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsActive()
+    public function isActive()
     {
         $this->scopeConfig->method('isSetFlag')
             ->with(BoltConfig::XML_PATH_ACTIVE)
@@ -317,9 +317,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetReplaceSelectors()
+    public function getReplaceSelectors()
     {
         $value = 'button#top-cart-btn-checkout, button[data-role=proceed-to-checkout]|prepend';
 
@@ -331,9 +331,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSuccessPageRedirect()
+    public function getSuccessPageRedirect()
     {
         $value = 'checkout/onepage/success';
         $this->scopeConfig->method('getValue')
@@ -344,9 +344,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsSandboxModeSet()
+    public function isSandboxModeSet()
     {
         $this->scopeConfig->method('isSetFlag')
             ->with(BoltConfig::XML_PATH_SANDBOX_MODE)
@@ -356,9 +356,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetPrefetchShipping()
+    public function getPrefetchShipping()
     {
         $this->scopeConfig->method('isSetFlag')
             ->with(BoltConfig::XML_PATH_PREFETCH_SHIPPING)
@@ -368,9 +368,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetModuleVersion()
+    public function getModuleVersion()
     {
         $moduleVersion = '1.0.10';
         $this->moduleResource->method('getDataVersion')
@@ -383,9 +383,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSigningSecret()
+    public function getSigningSecret()
     {
         $configValue = '0:2:97N0zWAd4aTmvu2C0L8uGhlI6jvfTvnS:B6v46SD8Xyy4157mLMwNqd7GxJGkuL\LKSmv3sWaIzB7PS5DcP8tIeQSlL9/tY+mHOk+VwsAAG+0jaxDum3LCAqjV0jrdKNQUZA/5QRfa7bYxIT0hDy7tybpXXXX//Y';
         $this->scopeConfig->method('getValue')
@@ -401,9 +401,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetApiUrl()
+    public function getApiUrl()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
             ->setMethods(['isSandboxModeSet'])
@@ -429,9 +429,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetApiUrlInProductionMode()
+    public function getApiUrlInProductionMode()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
             ->setMethods(['isSandboxModeSet'])
@@ -457,9 +457,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetApiKey()
+    public function getApiKey()
     {
         $configValue = '0:2:zWKTWcrt1CUe1PzR1h73oa8PNgknv2dV:ZaCiGOAwUsUSt76s49kji8Je9ybOK0MFlS774xtr+xh4YrdMQaIW5s8yP/8M4/U0KBY/VbplggggSCojP8uGcg==';
         $this->scopeConfig->method('getValue')
@@ -475,9 +475,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetjavascriptSuccess()
+    public function getjavascriptSuccess()
     {
         $configValue = "(function() { alert('Test: get js success'); })";
         $this->scopeConfig->method('getValue')
@@ -490,9 +490,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetAdditionalJS()
+    public function getAdditionalJS()
     {
         $configValue = "(function() { alert('Test: get additional js'); })";
         $this->scopeConfig->method('getValue')
@@ -505,9 +505,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetScopeConfig()
+    public function getScopeConfig()
     {
         $result = $this->currentMock->getScopeConfig();
 
@@ -515,9 +515,9 @@ class ConfigTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetIgnoredShippingAddressCoupons()
+    public function getIgnoredShippingAddressCoupons()
     {
         $configCouponsJson = '{"ignoredShippingAddressCoupons": ["IGNORED_SHIPPING_ADDRESS_COUPON"]}';
 
@@ -529,5 +529,20 @@ class ConfigTest extends TestCase
         $expected = ['ignored_shipping_address_coupon'];
 
         $this->assertEquals($expected, $result, 'getIgnoredShippingAddressCoupons() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
+    {
+        $this->scopeConfig->method('isSetFlag')
+              ->with(BoltConfig::XML_PATH_TRACK_CHECKOUT_FUNNEL)
+              ->willReturn(true);
+
+
+        $result = $this->currentMock->shouldTrackCheckoutFunnel();
+
+        $this->assertTrue($result);
     }
 }

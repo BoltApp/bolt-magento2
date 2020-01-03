@@ -117,7 +117,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl'])
+            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
@@ -131,9 +131,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrl()
+    public function getTrackJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -144,9 +144,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrlForProductionMode()
+    public function getTrackJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -157,9 +157,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetConnectJsUrl()
+    public function getConnectJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -168,7 +168,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
     }
 
-    public function testGetConnectJsUrlForProductionMode()
+    /**
+     * @test
+     */
+    public function getConnectJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -182,7 +185,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerTestGetCheckoutKey
      */
-    public function testGetCheckoutKey($data)
+    public function getCheckoutKey($data)
     {
         $this->configHelper->expects($this->any())
             ->method('isPaymentOnlyCheckoutEnabled')
@@ -244,7 +247,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerGetReplaceSelectors
      */
-    public function testGetReplaceSelectors($data)
+    public function getReplaceSelectors($data)
     {
         $this->configHelper->expects($this->any())
             ->method('getReplaceSelectors')
@@ -288,9 +291,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetGlobalCSS()
+    public function getGlobalCSS()
     {
         $value = '.replaceable-example-selector1 {
             color: red;
@@ -306,16 +309,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSettings()
+    public function getSettings()
     {
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -333,12 +336,13 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
+        $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsEnabled()
+    public function isEnabled()
     {
         $storeId = 0;
         $this->configHelper->expects($this->any())
@@ -371,18 +375,27 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->willReturn($value);
     }
 
-    public function testGetInitiateCheckoutFalse()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutFalse()
     {
         $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testGetInitiateCheckoutTrue()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutTrue()
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testShouldTrackCheckoutFunnel()
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
     {
         $this->configHelper->expects($this->any())
                            ->method('shouldTrackCheckoutFunnel')

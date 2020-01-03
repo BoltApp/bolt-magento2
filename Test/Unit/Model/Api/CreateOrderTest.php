@@ -183,8 +183,10 @@ class CreateOrderTest extends TestCase
                 'isVirtual',
                 'getShippingAddress',
                 'getBoltIsBackendOrder',
+                'getQuoteCurrencyCode'
             ]);
         $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
 
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods([
@@ -216,16 +218,18 @@ class CreateOrderTest extends TestCase
             [
                 'validateMinimumAmount',
                 'getGrandTotal',
+                'getStore',
                 'getStoreId',
             ]);
+        $storeMock = $this->getMockBuilder(Store::class)
+            ->setMethods(['setCurrentCurrencyCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->immutableQuoteMock->method('getStore')
+              ->willReturn($storeMock);
         $this->immutableQuoteMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->cartHelper->method('getRoundAmount')->willReturnCallback(
-            function ($amount) {
-                return (int)round($amount * 100);
-            }
-        );
         $this->cartHelper->method('getQuoteById')->willReturnMap([
             [self::QUOTE_ID, $this->quoteMock],
             [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
@@ -651,7 +655,7 @@ class CreateOrderTest extends TestCase
         $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
             ->withConsecutive(['[-= getReceivedUrl =-]'], ['---> ' . $url]);
         $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
-        $this->backendUrl->expects(self::once())->method('setScope')->with(self::STORE_ID);
+        $this->backendUrl->expects(self::once())->method('setScope')->with(0);
         $this->backendUrl->expects(self::once())->method('getUrl')->with('boltpay/order/receivedurl', [
             '_secure' => true,
             'store_id' => self::STORE_ID
