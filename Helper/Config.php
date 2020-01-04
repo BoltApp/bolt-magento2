@@ -132,6 +132,12 @@ class Config extends AbstractHelper
     const CREATE_ORDER_ACTION = 'boltpay/cart/data';
 
     /**
+     * Get hints
+     */
+    const GET_HINTS_ACTION = 'boltpay/cart/hints';
+
+
+    /**
      * Prefetch Shipping
      */
     const SHIPPING_PREFETCH_ACTION = 'boltpay/shipping/prefetch';
