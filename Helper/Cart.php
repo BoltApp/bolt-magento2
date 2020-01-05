@@ -53,6 +53,9 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Quote\Api\CartManagementInterface;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Framework\Webapi\Exception as WebapiException;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 
 /**
  * Boltpay Cart helper
@@ -162,6 +165,16 @@ class Cart extends AbstractHelper
      */
     private $discountHelper;
 
+    /**
+     * @var HookHelper
+     */
+    private $hookHelper;
+
+    /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -235,6 +248,8 @@ class Cart extends AbstractHelper
      * @param CacheInterface $cache
      * @param ResourceConnection $resourceConnection
      * @param CartManagementInterface $quoteManagement
+     * @param HookHelper $hookHelper
+     * @param CustomerRepository $customerRepository
      *
      * @codeCoverageIgnore
      */
@@ -261,7 +276,9 @@ class Cart extends AbstractHelper
         DiscountHelper $discountHelper,
         CacheInterface $cache,
         ResourceConnection $resourceConnection,
-        CartManagementInterface $quoteManagement
+        CartManagementInterface $quoteManagement,
+        HookHelper $hookHelper,
+        CustomerRepository $customerRepository
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -286,6 +303,8 @@ class Cart extends AbstractHelper
         $this->cache = $cache;
         $this->resourceConnection = $resourceConnection;
         $this->quoteManagement = $quoteManagement;
+        $this->hookHelper = $hookHelper;
+        $this->customerRepository = $customerRepository;
     }
 
     /**
@@ -816,6 +835,9 @@ class Cart extends AbstractHelper
             }
 
             $hints['prefill']['email'] = $customer->getEmail();
+            if ($checkoutType=='product') {
+                $hints['metadata']['encrypted_user_id'] = $this->getEncodeUserId();
+            }
         }
 
         // Quote shipping / billing address.
@@ -833,6 +855,23 @@ class Cart extends AbstractHelper
         }
 
         return $hints;
+    }
+
+    /**
+     *  Generate JSON data contains user_id and signature
+     *  It used for PPC (product page checkout)
+     *
+     */
+    private function getEncodeUserId()
+    {
+        $user_id = $this->customerSession->getCustomer()->getId();
+        $result = array(
+            'user_id'   => $user_id,
+            'timestamp' => time()
+        );
+        $result['signature'] = $this->hookHelper->computeSignature( json_encode( $result ) );
+
+        return json_encode( $result );
     }
 
     /**
@@ -1772,22 +1811,27 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Create cart by item [reference,quantity]
+     * Create cart by request
      * TODO: add support for logged in users
      * TODO: add support for foreign currencies
      * TODO: add support for multistore
      *
-     * @param arrat $item
+     * @param array $request
      *
      * @return array cart_data in bolt format
      * @throws \Exception
      */
-    public function createCartByItem($item)
+    public function createCartByRequest($request)
     {
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
 
-        //add item in quote
+        if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
+            $this->setQuoteIdByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
+        }
+
+        //add item to quote
+        $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
         $quote->addProduct($product, $item['quantity']);
 
@@ -1806,5 +1850,33 @@ class Cart extends AbstractHelper
         $cart_data['order_reference'] = $quote->getId();
 
         return $cart_data;
+    }
+
+    private function setQuoteIdByEncryptedUserId($quote, $encrypted_user_id)
+    {
+        $metadata = json_decode( $encrypted_user_id );
+        if ( ! $metadata || ! isset( $metadata->user_id ) || ! isset( $metadata->timestamp ) || ! isset( $metadata->signature ) ) {
+            throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
+        }
+
+        $payload = array(
+            'user_id'   => $metadata->user_id,
+            'timestamp' => $metadata->timestamp
+        );
+
+        if ( !$this->hookHelper->verifySignature( json_encode( $payload ), $metadata->signature ) ) {
+            throw new WebapiException(__('Incorrect signature'), 6306, 422);
+        }
+
+        if ( time() - $metadata->timestamp > 3600 ) {
+            throw new WebapiException(__('Outdated encrypted_user_id'), 6306, 422);
+        }
+
+        try {
+            $customer = $this->customerRepository->getById($metadata->user_id);
+        } catch (\Exception $e) {
+            throw new WebapiException(__('Incorrect user_id'), 6306, 422);
+        }
+        $quote->assignCustomer($customer); // Assign quote to Customer
     }
 }
