@@ -48,6 +48,9 @@ use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Quote\Model\Quote\Address\Total;
+use Magento\Framework\DataObject;
+use Bolt\Boltpay\Model\Request;
+use Magento\Customer\Model\Customer;
 
 /**
  * Class ConfigTest
@@ -1966,5 +1969,63 @@ ORDER;
             ->willReturn($product ? $product : $this->getProductMock());
 
         return $quoteItem;
+    }
+
+    /**
+     * @test
+     */
+    public function getHints_for_logged_in_user_and_checkout_type_cart() {
+        $cartReference = 1;
+        $userId = 1;
+        $checkoutType = 'cart';
+        $shippingAddress = $this->getShippingAddress();
+        $signResponse = [
+            'merchant_user_id' => (string)$userId,
+            'signature' => 'A+P9eXitTEukVr8v0Fop2Dp5mzvQED3SD8w/sMBvAxc=',
+            'nonce' => '15e70158b9348902001e8d0ed21c18a1'
+        ];
+
+        $this->customerSession->method('isLoggedIn')->willReturn(true);
+        $customer = $this->getMockBuilder(Customer::class)
+            ->setMethods(['getID','getDefaultShippingAddress'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $customer->method('getId')->willReturn($userId);
+        $customer->method('getDefaultShippingAddress')->willReturn($shippingAddress);
+        $this->customerSession->method('getCustomer')->willReturn($customer);
+
+        $currentMock = $this->getCurrentMock();
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+        $currentMock->expects($this->once())
+            ->method('getQuoteById')
+            ->willReturn($quote);
+
+        $request = $this->createMock(Request::class);
+        $this->apiHelper->method('buildRequest')->willReturn($request);
+        $response = $this->getMockBuilder(Response::class)
+            ->setMethods(['getResponse'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $response->method('getResponse')
+            ->willReturn((object)$signResponse);
+        $this->apiHelper->method('sendRequest')->with($request)->willReturn($response);
+
+        $requestData = $this->createMock(DataObject::class);
+        $this->dataObjectFactory->method('create')->willReturn($requestData);
+
+        $result = $currentMock->getHints($cartReference, $checkoutType);
+        $expected_result =
+           [ 'prefill' => [
+               'firstName' => 'IntegrationBolt',
+               'lastName' => 'BoltTest',
+               'email' => 'integration@bolt.com',
+               'phone' => '132 231 1234',
+               'addressLine1' => '228 7th Avenue',
+               'city' => 'New York',
+               'state' => 'New York',
+               'zip' => '10011',
+               'country' => 'US',
+           ] ] + $signResponse;
+        $this->assertEquals($expected_result,$result);
     }
 }
