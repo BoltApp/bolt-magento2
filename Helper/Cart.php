@@ -781,11 +781,9 @@ class Cart extends AbstractHelper
             $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
 
             if ($signResponse) {
-                $hints['signed_merchant_user_id'] = [
-                    "merchant_user_id" => $signResponse->merchant_user_id,
-                    "signature"        => $signResponse->signature,
-                    "nonce"            => $signResponse->nonce,
-                ];
+                $hints['merchant_user_id'] = $signResponse->merchant_user_id;
+                $hints['signature']        = $signResponse->signature;
+                $hints['nonce']            = $signResponse->nonce;
             }
 
             if ($quote->isVirtual()) {
