@@ -49,6 +49,11 @@ use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Quote\Model\Quote\Address\Total;
 use Magento\Quote\Api\CartManagementInterface;
+use Magento\Framework\DataObject;
+use Bolt\Boltpay\Model\Request;
+use Magento\Customer\Model\Customer;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 
 /**
  * Class ConfigTest
@@ -92,6 +97,8 @@ class CartTest extends TestCase
     private $quoteAddressTotal;
     /** @var CartManagementInterface */
     private $quoteManagement;
+    private $hookHelper;
+    private $customerRepository;
 
     /**
      * @inheritdoc
@@ -156,6 +163,8 @@ class CartTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->quoteManagement = $this->createMock(CartManagementInterface::class);
+        $this->hookHelper = $this->createMock(HookHelper::class);
+        $this->customerRepository = $this->createMock(CustomerRepository::class);
     }
 
     /**
@@ -228,7 +237,9 @@ class CartTest extends TestCase
             $this->discountHelper,
             $this->cache,
             $this->resourceConnection,
-            $this->quoteManagement
+            $this->quoteManagement,
+            $this->hookHelper,
+            $this->customerRepository
         );
 
         $paymentOnly = false;
@@ -896,7 +907,9 @@ ORDER;
                 $this->discountHelper,
                 $this->cache,
                 $this->resourceConnection,
-                $this->quoteManagement
+                $this->quoteManagement,
+                $this->hookHelper,
+                $this->customerRepository
             ])->getMock();
     }
 
@@ -1979,11 +1992,11 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByItem() {
-        $item = array(
+    public function createCartByRequest() {
+        $request = ['items'=>[0=>[
             'reference'=>SELF::PRODUCT_ID,
             'quantity'=>1
-        );
+        ]]];
 
         $this->quoteManagement = $this->getMockForAbstractClass(
             \Magento\Quote\Api\CartManagementInterface::class,
@@ -2075,7 +2088,7 @@ ORDER;
             ->willReturn($cart_data);
         $cart_data['order_reference'] = SELF::QUOTE_ID;
 
-        $this->assertEquals($cart_data,$cart_mock->createCartByItem($item));
+        $this->assertEquals($cart_data,$cart_mock->createCartByRequest($request));
     }
 
 }

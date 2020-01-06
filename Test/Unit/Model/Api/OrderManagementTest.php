@@ -578,7 +578,7 @@ class OrderManagementTest extends TestCase
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with(self::anything(), 1, 'webhooks.latency', $startTime);
         $this->request->expects(self::once())->method('getBodyParams')->willReturn($request);
-        $this->cartHelper->expects(self::once())->method('createCartByItem')->with($request['items'][0])->willReturn($cart);
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($request)->willReturn($cart);
         $this->response->expects(self::once())->method('sendResponse');
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
