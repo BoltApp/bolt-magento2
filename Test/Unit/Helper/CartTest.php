@@ -54,6 +54,7 @@ use Bolt\Boltpay\Model\Request;
 use Magento\Customer\Model\Customer;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Framework\Webapi\Exception as WebapiException;
 
 /**
  * Class ConfigTest
@@ -1989,15 +1990,79 @@ ORDER;
         return $quoteItem;
     }
 
-    /**
-     * @test
-     */
-    public function createCartByRequest() {
-        $request = ['items'=>[0=>[
-            'reference'=>SELF::PRODUCT_ID,
-            'quantity'=>1
-        ]]];
+    private function createCartByRequest_GetExpectedCartData() {
+        return [
+            'order_reference' => NULL,
+            'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
+            'currency' => 'USD',
+            'items' => [
+                [ 'reference' => SELF::PRODUCT_ID,
+                    'name' => 'Affirm Water Bottle ',
+                    'total_amount' => SELF::PRODUCT_PRICE,
+                    'unit_price' => SELF::PRODUCT_PRICE,
+                    'quantity' => 1,
+                    'sku' => SELF::PRODUCT_SKU,
+                    'type' => 'physical',
+                    'description' => 'Product description',
+                ],
+            ],
+            'discounts' => [],
+            'total_amount' => SELF::PRODUCT_PRICE,
+            'tax_amount' => 0,
+        ];
+    }
 
+    private function createCartByRequest_GetBaseRequest() {
+        return [
+            'type' => 'cart.create',
+            'items' =>
+                [
+                    [
+                        'reference' => SELF::PRODUCT_ID,
+                        'name' => 'Product name',
+                        'description' => NULL,
+                        'options' => NULL,
+                        'total_amount' => SELF::PRODUCT_PRICE,
+                        'unit_price' => SELF::PRODUCT_PRICE,
+                        'tax_amount' => 0,
+                        'quantity' => 1,
+                        'uom' => NULL,
+                        'upc' => NULL,
+                        'sku' => NULL,
+                        'isbn' => NULL,
+                        'brand' => NULL,
+                        'manufacturer' => NULL,
+                        'category' => NULL,
+                        'tags' => NULL,
+                        'properties' => NULL,
+                        'color' => NULL,
+                        'size' => NULL,
+                        'weight' => NULL,
+                        'weight_unit' => NULL,
+                        'image_url' => NULL,
+                        'details_url' => NULL,
+                        'tax_code' => NULL,
+                        'type' => 'unknown'
+                    ]
+                ],
+            'currency' => 'USD',
+            'metadata' => NULL,
+        ];
+    }
+    private function onceOrAny($isSuccessfulCase) {
+        if ($isSuccessfulCase) {
+            return $this->once();
+        } else {
+            return $this->any();
+        }
+    }
+
+    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true) {
+        if ($isSuccessfulCase) {
+            $expects = $this->once();
+        } else {
+            $expects = $this->any();
+        }
         $this->quoteManagement = $this->getMockForAbstractClass(
             \Magento\Quote\Api\CartManagementInterface::class,
             [],
@@ -2012,33 +2077,32 @@ ORDER;
             ->willReturn(SELF::QUOTE_ID);
 
         $product = $this->getMockBuilder(Product::class)
-            //->setMethods($quoteMethods)
             ->disableOriginalConstructor()
             ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId'])
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer'])
             ->disableOriginalConstructor()
             ->getMock();
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
             ->with($product,1);
 
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('reserveOrderId');
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('getReservedOrderId')
             ->willReturn(self::ORDER_ID);
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setBoltReservedOrderId')
             ->with(self::ORDER_ID);
 
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('collectTotals')
             ->willReturnSelf();
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('save');
-        $quote->expects($this->once())
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('getId')
             ->willReturn(SELF::QUOTE_ID);
 
@@ -2060,35 +2124,155 @@ ORDER;
         $this->productRepository->method('getbyId')
             ->with(SELF::PRODUCT_ID)
             ->willReturn($product);
+        return $quote;
+    }
 
-        $cart_mock = $this->getCurrentMock(['getCartData']);
-        $cart_data = [
-            'order_reference' => NULL,
-            'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
-            'currency' => 'USD',
-            'items' => [
-                [ 'reference' => SELF::PRODUCT_ID,
-                    'name' => 'Affirm Water Bottle ',
-                    'total_amount' => SELF::PRODUCT_PRICE,
-                    'unit_price' => SELF::PRODUCT_PRICE,
-                    'quantity' => 1,
-                    'sku' => SELF::PRODUCT_SKU,
-                    'type' => 'physical',
-                    'description' => 'Product description',
-                ],
-            ],
-            'discounts' => [],
-            'total_amount' => SELF::PRODUCT_PRICE,
-            'tax_amount' => 0,
-        ];
+    /**
+     * @test
+     */
+    public function createCartByRequest_GuestUser() {
+        $request = $this->createCartByRequest_GetBaseRequest();
 
-        $cart_mock->expects($this->once())
+        $quote = $this->createCartByRequest_CreateQuoteMock();
+
+        $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects($this->once())
             ->method('getCartData')
             ->with(false,'',$quote)
-            ->willReturn($cart_data);
-        $cart_data['order_reference'] = SELF::QUOTE_ID;
+            ->willReturn($expectedCartData);
+        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
-        $this->assertEquals($cart_data,$cart_mock->createCartByRequest($request));
+        $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
+
+    private function createCartByRequest_TuneMocksForSignature($expected_payload) {
+        $this->hookHelper->method('verifySignature')
+            ->will($this->returnCallback(function($payload, $hmac_header) use ($expected_payload) {
+                return $payload==json_encode( $expected_payload ) && $hmac_header == 'correct_signature';
+            }));
+    }
+
+    private function createCartByRequest_CreateCustomerMock() {
+        $customer = $this->createMock(\Magento\Customer\Api\Data\CustomerInterface::class);
+        $this->customerRepository->method('getById')
+            ->will($this->returnCallback(function($user_id) use ($customer) {
+                if ($user_id<>1) {
+                    throw new \Exception;
+                }
+                return $customer;
+            }));
+        return $customer;
+    }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_LoggedInUser() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
+        $this->createCartByRequest_TuneMocksForSignature($payload);
+        $customer = $this->createCartByRequest_CreateCustomerMock();
+
+        $quote = $this->createCartByRequest_CreateQuoteMock();
+        $quote->expects($this->once())->method('assignCustomer')->with($customer);
+
+        $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects($this->once())
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
+        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
+
+        $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_LoggedInUser_IncorrectEncryptedUserID() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
+        $this->createCartByRequest_TuneMocksForSignature($payload);
+        $customer = $this->createCartByRequest_CreateCustomerMock();
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(false);
+
+        try{
+            $this->getCurrentMock()->createCartByRequest($request);
+            $this->fail("Expected exception not thrown");
+        }catch(WebapiException $e){
+            $this->assertEquals(6306, $e->getCode());
+            $this->assertEquals("Incorrect encrypted_user_id", $e->getMessage());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_LoggedInUser_IncorrectSignature() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'incorrect_signature']);
+        $this->createCartByRequest_TuneMocksForSignature($payload);
+        $customer = $this->createCartByRequest_CreateCustomerMock();
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(false);
+
+        try{
+            $this->getCurrentMock()->createCartByRequest($request);
+            $this->fail("Expected exception not thrown");
+        }catch(WebapiException $e){
+            $this->assertEquals(6306, $e->getCode());
+            $this->assertEquals("Incorrect signature", $e->getMessage());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_LoggedInUser_OutdatedEnctyptedUserId() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()-3600-1];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
+        $this->createCartByRequest_TuneMocksForSignature($payload);
+        $customer = $this->createCartByRequest_CreateCustomerMock();
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(false);
+
+        try{
+            $this->getCurrentMock()->createCartByRequest($request);
+            $this->fail("Expected exception not thrown");
+        }catch(WebapiException $e){
+            $this->assertEquals(6306, $e->getCode());
+            $this->assertEquals("Outdated encrypted_user_id", $e->getMessage());
+        }
+    }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_LoggedInUser_WrongUserId() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>2, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
+        $this->createCartByRequest_TuneMocksForSignature($payload);
+        $customer = $this->createCartByRequest_CreateCustomerMock();
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(false);
+
+        try{
+            $this->getCurrentMock()->createCartByRequest($request);
+            $this->fail("Expected exception not thrown");
+        }catch(WebapiException $e){
+            $this->assertEquals(6306, $e->getCode());
+            $this->assertEquals("Incorrect user_id", $e->getMessage());
+        }
     }
 
 }
