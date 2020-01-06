@@ -1037,10 +1037,18 @@ class Cart extends AbstractHelper
                     foreach($item_options['attributes_info'] as $attribute_info){
                         // Convert attribute to string if it's a boolean before sending to the Bolt API
                         $attributeValue = is_bool($attribute_info['value']) ? var_export($attribute_info['value'], true) : $attribute_info['value'];
+                        $attributeLabel = $attribute_info['label'];
                         $properties[] = (object) [
-                            "name" => $attribute_info['label'],
-                            "value" => $attributeValue
+                            'name' => $attributeLabel,
+                            'value' => $attributeValue
                         ];
+                        if (strcasecmp($attributeLabel, 'color') == 0) {
+                            $product['color'] = $attributeValue;
+                        }
+
+                        if (strcasecmp($attributeLabel, 'size') == 0) {
+                            $product['size'] = $attributeValue;
+                        }
                     }
                     $product['properties'] = $properties;
                 }
@@ -1048,11 +1056,24 @@ class Cart extends AbstractHelper
                 // Get product description and image
                 ////////////////////////////////////
                 $product['description'] = strip_tags($_product->getDescription());
+                $variantProductToGetImage = $_product;
+
+                // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    $productImage = $imageBlock->getImage($_product, 'product_small_image');
+                    $variantProductToGetImage = $this->productRepository->get($item->getSku(), false, $storeId);
+                } catch (\Exception $e) {
+                    $this->bugsnag->registerCallback(function ($report) use ($product) {
+                        $report->setMetaData([
+                            'ITEM' => $product
+                        ]);
+                    });
+                    $this->bugsnag->notifyError('Could not retrieve product from repository', "SKU: {$product['sku']}");
+                }
+                try {
+                    $productImage = $imageBlock->getImage($variantProductToGetImage, 'product_small_image');
                 } catch (\Exception $e) {
                     try {
-                        $productImage = $imageBlock->getImage($_product, 'product_image');
+                        $productImage = $imageBlock->getImage($variantProductToGetImage, 'product_image');
                     } catch (\Exception $e) {
                         $this->bugsnag->registerCallback(function ($report) use ($product) {
                             $report->setMetaData([
