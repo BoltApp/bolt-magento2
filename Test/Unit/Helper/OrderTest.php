@@ -292,24 +292,6 @@ class OrderTest extends TestCase
         $this->orderMock->method('getConfig')->willReturn($this->orderConfigMock);
         $this->orderMock->method('getOrderCurrencyCode')->willReturn("USD");
     }
-    
-    /**
-     * Call protected/private method of a class.
-     *
-     * @param object &$object    Instantiated object that we will run method on.
-     * @param string $methodName Method name to call
-     * @param array  $parameters Array of parameters to pass into method.
-     *
-     * @return mixed Method return.
-     */
-    public function invokeMethod(&$object, $methodName, array $parameters = array())
-    {
-        $reflection = new \ReflectionClass(get_class($object));
-        $method = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
-    
-        return $method->invokeArgs($object, $parameters);
-    }
 
     /**
      * @test
@@ -820,9 +802,9 @@ class OrderTest extends TestCase
         }
         else{
             $this->invoiceService->expects(static::once())->method('prepareInvoiceWithoutItems')->willReturn($invoice);
-        }        
-            
-        $this->invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
+        }
+
+        TestHelper::invokeMethod($this->currentMock, 'createOrderInvoice', array($this->orderMock, 'ABCD-1234-XXXX', $amount));
     }
 
     public function additionAmountTotalProvider() {

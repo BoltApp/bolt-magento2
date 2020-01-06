@@ -104,13 +104,13 @@ class Session extends AbstractHelper
     /**
      * Cache the session id for the quote
      *
-     * @param int|string $qouoteId
+     * @param int|string $quoteId
      * @param mixed $checkoutSession
      */
-    public function saveSession($qouoteId, $checkoutSession)
+    public function saveSession($quoteId, $checkoutSession)
     {
         // cache the session id by (parent) quote id
-        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $qouoteId;
+        $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quoteId;
         $sessionData = [
             "sessionType" => $checkoutSession instanceof \Magento\Checkout\Model\Session ? "frontend" : "admin",
             "sessionID"   => $checkoutSession->getSessionId()
