@@ -233,7 +233,7 @@ class ConfigTest extends TestCase
     public function getCdnUrl()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
-            ->setMethods(['isSandboxModeSet'])
+            ->setMethods(['isSandboxModeSet', 'getScopeConfig'])
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -249,10 +249,50 @@ class ConfigTest extends TestCase
         $mock->method('isSandboxModeSet')
             ->will($this->returnValue(true));
 
+        $mock->method('getScopeConfig')
+            ->will($this->returnValue($this->scopeConfig));
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
+            ->will($this->returnValue(""));
+
 
         $result = $mock->getCdnUrl();
 
         $this->assertEquals(BoltConfig::CDN_URL_SANDBOX, $result, 'getCdnUrl() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function getCdnUrl_devModeSet()
+    {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet', 'getScopeConfig'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata,
+                    $this->request
+                ]
+            )
+            ->getMock();
+
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(true));
+
+        $mock->method('getScopeConfig')
+            ->will($this->returnValue($this->scopeConfig));
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
+            ->will($this->returnValue("https://cdn.something"));
+
+
+        $result = $mock->getCdnUrl();
+
+        $this->assertEquals("https://cdn.something", $result, 'getCdnUrl() method: not working properly');
     }
 
     /**
@@ -406,7 +446,7 @@ class ConfigTest extends TestCase
     public function getApiUrl()
     {
         $mock = $this->getMockBuilder(BoltConfig::class)
-            ->setMethods(['isSandboxModeSet'])
+            ->setMethods(['isSandboxModeSet', 'getScopeConfig'])
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -422,10 +462,50 @@ class ConfigTest extends TestCase
         $mock->method('isSandboxModeSet')
             ->will($this->returnValue(true));
 
+        $mock->method('getScopeConfig')
+            ->will($this->returnValue($this->scopeConfig));
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_API)
+            ->will($this->returnValue(""));
+
 
         $result = $mock->getApiUrl();
 
         $this->assertEquals(BoltConfig::API_URL_SANDBOX, $result, 'getApiUrl() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function getApiUrl_devMode()
+    {
+        $mock = $this->getMockBuilder(BoltConfig::class)
+            ->setMethods(['isSandboxModeSet', 'getScopeConfig'])
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->encryptor,
+                    $this->moduleResource,
+                    $this->productMetadata,
+                    $this->request
+                ]
+            )
+            ->getMock();
+
+        $mock->method('isSandboxModeSet')
+            ->will($this->returnValue(true));
+
+        $mock->method('getScopeConfig')
+            ->will($this->returnValue($this->scopeConfig));
+        $this->scopeConfig->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_API)
+            ->will($this->returnValue("https://api.something"));
+
+
+        $result = $mock->getApiUrl();
+
+        $this->assertEquals("https://api.something", $result, 'getApiUrl() method: not working properly');
     }
 
     /**
