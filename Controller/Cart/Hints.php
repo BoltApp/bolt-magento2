@@ -69,7 +69,7 @@ class Hints extends Action
     {
         try {
             $result = $this->resultJsonFactory->create();
-            $hints = $this->cartHelper->getHints(null, 'cart');
+            $hints = $this->cartHelper->getHints(null, 'product');
             $result->setData([
                 'hints' => $hints
             ]);

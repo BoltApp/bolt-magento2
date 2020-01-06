@@ -84,7 +84,7 @@ class HintsTest extends TestCase
         ];
         $expected = ['hints'=>$hints];
         $this->cartHelper->method('getHints')
-            ->with(null,'cart')->willReturn($hints);
+            ->with(null,'product')->willReturn($hints);
 
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()
