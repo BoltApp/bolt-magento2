@@ -59,6 +59,7 @@ class Js extends Template
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag;
      * @param array           $data
+     * @param Decider         $featureSwitches
      */
     public function __construct(
         Context $context,

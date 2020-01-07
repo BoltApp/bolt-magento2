@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Request\Http;
 /**
  * Class JsTest
@@ -70,6 +71,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
     private $magentoQuote;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -92,7 +98,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled'
+            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
+            'getMinicartSupport', 'getIPWhitelistArray'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -110,6 +117,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
+        $this->decider = $this->createMock(Decider::class);
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getFullActionName'])
@@ -124,7 +132,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
-                    $this->bugsnagHelperMock
+                    $this->bugsnagHelperMock,
+                    $this->decider
                 ]
             )
             ->getMock();
@@ -394,6 +403,30 @@ class JsTest extends \PHPUnit\Framework\TestCase
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOff()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(false);
+        $this->assertTrue($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOn()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(true);
+        $this->configHelper->method('isActive')->willReturn(true);
+        $this->configHelper->method('isIPRestricted')->willReturn(false);
+        $this->requestMock->method('getFullActionName')->willReturn('unrestrictedPage');
+        $this->configHelper->method('getPageBlacklist')->willReturn(array('anotherPage', 'restrictedPage'));
+        $this->configHelper->method('getMinicartSupport')->willReturn(true);
+        $this->configHelper->method('getIPWhitelistArray')->willReturn(array());
+        $this->assertFalse($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
     }
 
     /**
