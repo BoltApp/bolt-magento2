@@ -62,6 +62,13 @@ class JsProductPage extends Js {
         return $this->_product;
     }
 
+    /**
+     * Get maximum available quantity of product
+     * It used to show a warning if user tries to buy more then product quantity
+     * @return int -1 if we no need to control the rest of product,
+     *              0 if product is out of stock
+     *              positive value otherwise
+     */
     public function getProductQty()
     {
         $stockItem = $this->getProduct()->getExtensionAttributes()->getStockItem();
