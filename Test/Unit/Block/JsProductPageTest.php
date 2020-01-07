@@ -101,7 +101,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled'
+            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -138,16 +138,6 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         $this->productViewMock->method('getProduct')
             ->willReturn($this->product);
 
-        $this->scopeConfigMock = $this->getMockForAbstractClass(
-            \Magento\Framework\App\Config\ScopeConfigInterface::class,
-            [],
-            '',
-            false,
-            true,
-            true,
-            ['isSetFlag']
-        );
-
         $this->block = $this->getMockBuilder(BlockJsProductPage::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
@@ -157,8 +147,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
-                    $this->productViewMock,
-                    $this->scopeConfigMock
+                    $this->productViewMock
                 ]
             )
             ->getMock();
@@ -236,10 +225,9 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
      * @test
      * @dataProvider providerIsGuestCheckoutAllowed
      */
-    public function isGuestCheckoutAllowed($flag,$expected_result)
+    public function isGuestCheckoutAllowed($flag, $expected_result)
     {
-        $this->scopeConfigMock->method('isSetFlag')
-            ->with('checkout/options/guest_checkout','store')
+        $this->configHelper->method('isGuestCheckoutAllowed')
             ->willReturn($flag);
         $result = $this->block->isGuestCheckoutAllowed();
         $this->assertEquals($expected_result, $result);

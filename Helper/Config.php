@@ -1269,4 +1269,18 @@ class Config extends AbstractHelper
             $store
         );
     }
+
+
+    /**
+     * Check if guest checkout is allowed
+     *
+     * @return boolean
+     */
+    public function isGuestCheckoutAllowed()
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+    }
 }

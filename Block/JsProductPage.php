@@ -25,9 +25,6 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Catalog\Block\Product\View as ProductView;
-use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Store\Model\ScopeInterface;
-
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -41,11 +38,6 @@ class JsProductPage extends Js {
      */
     private $_product;
 
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
-
     public function __construct(
         Context $context,
         Config $configHelper,
@@ -53,11 +45,9 @@ class JsProductPage extends Js {
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         ProductView $productView,
-        ScopeConfigInterface $scopeConfig,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
-        $this->scopeConfig = $scopeConfig;
 
         parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag,$data);
     }
@@ -99,11 +89,13 @@ class JsProductPage extends Js {
         return false;
     }
 
+    /**
+     * Check if guest checkout is allowed
+     *
+     * @return int 1 if guest checkout is allowed, 0 if not
+     */
     public function isGuestCheckoutAllowed()
     {
-        return (int)$this->scopeConfig->isSetFlag(
-            \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return (int)$this->configHelper->isGuestCheckoutAllowed();
     }
 }
