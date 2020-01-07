@@ -32,6 +32,46 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  */
 class ConfigTest extends TestCase
 {
+    const KEY_ENCRYPTED = 'KeyValue_Encripted';
+    const KEY_DECRYPTED = 'KeyValue_Decrypted';
+    const TEST_IP = [
+        '111.111.111.111',
+        '222.222.222.222',
+        '123.123.123.123'
+    ];
+    const ADDITIONAL_CONFIG = <<<JSON
+{
+    "amastyGiftCard": {
+        "payForEverything": true
+    },
+    "adjustTaxMismatch": false,
+    "toggleCheckout": {
+        "active": true,
+        "magentoButtons": [
+            "#top-cart-btn-checkout",
+            "button[data-role=proceed-to-checkout]"
+        ],
+        "showElementsOnLoad": [
+            ".checkout-methods-items",
+            ".block-minicart .block-content > .actions > .primary"
+        ],
+        "productRestrictionMethods": [
+            "getSubscriptionActive"
+        ],
+        "itemRestrictionMethods": [
+            "getIsSubscription"
+        ]
+    },
+    "pageFilters": {
+        "whitelist": ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
+        "blacklist": ["cms_index_index"]
+    },
+    "ignoredShippingAddressCoupons": [
+        "IGNORED_SHIPPING_ADDRESS_COUPON"
+    ]
+}
+JSON;
+
     /**
      * @var EncryptorInterface
      */
@@ -168,24 +208,39 @@ class ConfigTest extends TestCase
 
     /**
      * @test
+     * @dataProvider getEncryptedKeyProvider
      */
-    public function getPublishableKeyCheckout()
+    public function getEncryptedKey($path, $method)
     {
-        $configValue = '0:2:m8z7GPChWNjJPrvLPgFSGE5j0bZ7XiK9:O0zw8cQQlmS/NFDVrjP/CebewQRKEpAqKF+QyCXIJuai8ep4ziQKs/mzBktyEmv5b2uXRcTr3l+Hv7N1ADx0oJfEC6L/R0pg04j1mi4jcjFs9RxZ1t4UVpwYl8cguYP1';
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT)
-            ->willReturn($configValue);
+            ->with($path)
+            ->willReturn(self::KEY_ENCRYPTED);
 
-        $decryptedKey = 'pKv_p0zR1E1I.Y0jBkEIjgggR.4e1911f1d15511cd7548c1953f2479b2689f2e5a20188c5d7f666c1149136300';
         $this->encryptor
             ->expects(self::once())
             ->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
+            ->with(self::KEY_ENCRYPTED)
+            ->willReturn(self::KEY_DECRYPTED);
 
-        $this->assertEquals($decryptedKey, $this->currentMock->getPublishableKeyCheckout(), 'getPublishableKeyCheckout() method: not working properly');
+        $this->assertEquals(
+            self::KEY_DECRYPTED,
+            $this->currentMock->$method(),
+            "$method() method: not working properly"
+        );
+    }
+
+    public function getEncryptedKeyProvider()
+    {
+        return [
+            [BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, 'getPublishableKeyCheckout'],
+            [BoltConfig::XML_PATH_PUBLISHABLE_KEY_PAYMENT, 'getPublishableKeyPayment'],
+            [BoltConfig::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, 'getPublishableKeyBackOffice'],
+            [BoltConfig::XML_PATH_SIGNING_SECRET, 'getSigningSecret'],
+            [BoltConfig::XML_PATH_API_KEY, 'getApiKey'],
+            [BoltConfig::XML_PATH_GEOLOCATION_API_KEY, 'getGeolocationApiKey']
+        ];
     }
 
     /**
@@ -193,18 +248,18 @@ class ConfigTest extends TestCase
      */
     public function getAnyPublishableKey()
     {
-        $decryptedKey = 'pKv_p0zR1E1I.Y0jBkEIjgggR.4e1911f1d15511cd7548c1953f2479b2689f2e5a20188c5d7f666c1149136300';
-
         $this->initCurrentMock(['getPublishableKeyCheckout'], true);
 
         $this->currentMock
             ->expects(self::once())
             ->method('getPublishableKeyCheckout')
-            ->willReturn($decryptedKey);
+            ->willReturn(self::KEY_DECRYPTED);
 
-        $result = $this->currentMock->getAnyPublishableKey();
-
-        $this->assertEquals($decryptedKey, $result, 'getAnyPublishableKey() method: not working properly');
+        $this->assertEquals(
+            self::KEY_DECRYPTED,
+            $this->currentMock->getAnyPublishableKey(),
+            'getAnyPublishableKey() method: not working properly'
+        );
     }
 
     /**
@@ -212,20 +267,23 @@ class ConfigTest extends TestCase
      */
     public function getAnyPublishableKeyIfCheckoutKeyIsEmpty()
     {
-        $decryptedCheckoutKey = '';
-        $decryptedPaymentKey = 'pKv_pOzR4ElI.iCXN0f1DX7j6.43dd17e5a78fda11a854839561458f522b847094d19b621e08187426c335b201';
-
         $this->initCurrentMock(['getPublishableKeyCheckout', 'getPublishableKeyPayment'], true);
 
-        $this->currentMock->method('getPublishableKeyCheckout')
-            ->willReturn($decryptedCheckoutKey);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getPublishableKeyCheckout')
+            ->willReturn('');
 
-        $this->currentMock->method('getPublishableKeyPayment')
-            ->willReturn($decryptedPaymentKey);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getPublishableKeyPayment')
+            ->willReturn(self::KEY_DECRYPTED);
 
-        $result = $this->currentMock->getAnyPublishableKey();
-
-        $this->assertEquals($decryptedPaymentKey, $result, 'getAnyPublishableKey() method: not working properly');
+        $this->assertEquals(
+            self::KEY_DECRYPTED,
+            $this->currentMock->getAnyPublishableKey(),
+            'getAnyPublishableKey() method: not working properly'
+        );
     }
 
     /**
@@ -263,50 +321,6 @@ class ConfigTest extends TestCase
     /**
      * @test
      */
-    public function getPublishableKeyPayment()
-    {
-        $configValue = '0:2:97N0zWAd4aTmvu2C0L8uGhlI6jvfTvnS:B6v46SD8Xyy3we00mLMwNqd7GxJGkuLGGbHv/3sWaIzB7PS5DcP8tIeQSlL9/tT+mHMk+VwsLZG+AjAxDum3LCaqjVojrdKNQUZA/5QRfa7bYxIT0hDy7tybpXXXX//Y';
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_PAYMENT)
-            ->willReturn($configValue);
-
-        $decryptedKey = 'pKv_pOzR4ElI.iCXN0f1DX7j6.43dd17e5a78fda11a854839561458f522b847094d19b621e08187426c335b201';
-        $this->encryptor
-            ->expects(self::once())
-            ->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
-
-        $this->assertEquals($decryptedKey, $this->currentMock->getPublishableKeyPayment(), 'getPublishableKeyPayment() method: not working properly');
-    }
-
-    /**
-     * @test
-     */
-    public function getPublishableKeyBackOffice()
-    {
-        $configValue = '0:2:97N0zWAd4aTmvu2C0L8uGhlI6jvfTvnS:B6v46SD8Xyy3we00mLMwNqd7GxJGkuLGGbHv/3sWaIzB7PS5DcP8tIeQSlL9/tT+mHMk+VwsLZG+AjAxDum3LCaqjVojrdKNQUZA/5QRfa7bYxIT0hDy7tybpXXXX//Y';
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE)
-            ->willReturn($configValue);
-
-        $decryptedKey = 'pKv_pOzR4ElI.iCXN0f1DX7j6.43dd17e5a78fda11a854839561458f522b847094d19b621e08187426c335b201';
-        $this->encryptor
-            ->expects(self::once())
-            ->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
-
-        $this->assertEquals($decryptedKey, $this->currentMock->getPublishableKeyBackOffice(), 'getPublishableKeyPayment() method: not working properly');
-    }
-
-    /**
-     * @test
-     */
     public function getModuleVersion()
     {
         $moduleVersion = '1.0.10';
@@ -321,27 +335,6 @@ class ConfigTest extends TestCase
         $this->assertEquals($moduleVersion, $result, 'getModuleVersion() method: not working properly');
     }
 
-    /**
-     * @test
-     */
-    public function getSigningSecret()
-    {
-        $configValue = '0:2:97N0zWAd4aTmvu2C0L8uGhlI6jvfTvnS:B6v46SD8Xyy4157mLMwNqd7GxJGkuL\LKSmv3sWaIzB7PS5DcP8tIeQSlL9/tY+mHOk+VwsAAG+0jaxDum3LCAqjV0jrdKNQUZA/5QRfa7bYxIT0hDy7tybpXXXX//Y';
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_SIGNING_SECRET)
-            ->willReturn($configValue);
-
-        $decryptedKey = '114faae6a9e0893697dd3fc1ad2afdaafa63a5689bd6a954343e8f4c6275da76';
-        $this->encryptor
-            ->expects(self::once())
-            ->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
-
-        $this->assertEquals($decryptedKey, $this->currentMock->getSigningSecret(), 'getSigningSecret() method: not working properly');
-    }
 
     /**
      * @test
@@ -368,24 +361,6 @@ class ConfigTest extends TestCase
 
         $result = $this->currentMock->getApiUrl();
         $this->assertEquals(BoltConfig::API_URL_PRODUCTION, $result, 'getApiUrl() method: not working properly');
-    }
-
-    /**
-     * @test
-     */
-    public function getApiKey()
-    {
-        $configValue = '0:2:zWKTWcrt1CUe1PzR1h73oa8PNgknv2dV:ZaCiGOAwUsUSt76s49kji8Je9ybOK0MFlS774xtr+xh4YrdMQaIW5s8yP/8M4/U0KBY/VbplggggSCojP8uGcg==';
-        $this->scopeConfig->method('getValue')
-            ->with(BoltConfig::XML_PATH_API_KEY)
-            ->willReturn($configValue);
-
-        $decryptedKey = '60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b';
-        $this->encryptor->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
-
-        $this->assertEquals($decryptedKey, $this->currentMock->getApiKey(), 'getApiKey() method: not working properly');
     }
 
     /**
@@ -478,32 +453,11 @@ class ConfigTest extends TestCase
     /**
      * @test
      */
-    public function getGeolocationApiKey() {
-        $configValue = '0:2:zWKTWcrt1CUe1PzR1h73oa8PNgknv2dV:ZaCiGOAwUsUSt76s49kji8Je9ybOK0MFlS774xtr+xh4YrdMQaIW5s8yP/8M4/U0KBY/VbplggggSCojP8uGcg==';
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_GEOLOCATION_API_KEY)
-            ->willReturn($configValue);
-        $decryptedKey = '60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b';
-        $this->encryptor
-            ->expects(self::once())
-            ->method('decrypt')
-            ->with($configValue)
-            ->willReturn($decryptedKey);
-        $this->assertEquals($decryptedKey, $this->currentMock->getGeolocationApiKey(), 'getGeolocationApiKey() method: not working properly');
-    }
-
-    /**
-     * @test
-     */
     public function getIgnoredShippingAddressCoupons()
     {
-        $configCouponsJson = '{"ignoredShippingAddressCoupons": ["IGNORED_SHIPPING_ADDRESS_COUPON"]}';
-
         $this->scopeConfig->method('getValue')
                 ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG)
-                ->willReturn($configCouponsJson);
+                ->willReturn(self::ADDITIONAL_CONFIG);
 
         $result = $this->currentMock->getIgnoredShippingAddressCoupons(null);
         $expected = ['ignored_shipping_address_coupon'];
@@ -518,9 +472,8 @@ class ConfigTest extends TestCase
     {
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
         $this->setInaccessibleProperty($this->currentMock, '_request', $request);
-        $ip = '123.123.123.123';
-        $request->method('getServer')->with('HTTP_CLIENT_IP', false)->willReturn($ip);
-        $this->assertEquals($ip, $this->currentMock->getClientIp());
+        $request->method('getServer')->with('HTTP_CLIENT_IP', false)->willReturn(self::TEST_IP[2]);
+        $this->assertEquals(self::TEST_IP[2], $this->currentMock->getClientIp());
     }
 
     /**
@@ -539,7 +492,7 @@ class ConfigTest extends TestCase
      */
     public function getIPWhitelistConfig()
     {
-        $expected = '111.111.111.111,222.222.222.222';
+        $expected = self::TEST_IP[0].','.self::TEST_IP[1];
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
@@ -554,8 +507,8 @@ class ConfigTest extends TestCase
      */
     public function getIPWhitelistArray()
     {
-        $getIPWhitelistConfig = ' , 111.111.111.111 , 222.222.222.222 , ';
-        $expected = ['111.111.111.111', '222.222.222.222'];
+        $getIPWhitelistConfig = ' , '.self::TEST_IP[0].' , '.self::TEST_IP[1].' , ';
+        $expected = [self::TEST_IP[0], self::TEST_IP[1]];
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
@@ -594,8 +547,9 @@ class ConfigTest extends TestCase
     public function isIPRestrictedProvider()
     {
         return [
-            ['123.123.123.123', ['123.123.123.123'], false],
-            ['111.111.111.111', ['222.222.222.222', '123.123.123.123'], true],
+            [self::TEST_IP[2], [], false],
+            [self::TEST_IP[2], [self::TEST_IP[2]], false],
+            [self::TEST_IP[0], [self::TEST_IP[1], self::TEST_IP[2]], true],
         ];
     }
 
@@ -604,12 +558,11 @@ class ConfigTest extends TestCase
      */
     public function getAmastyGiftCardConfig()
     {
-        $aditionalConfig = '{"amastyGiftCard": {"payForEverything": true}}';
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($aditionalConfig);
+            ->willReturn(self::ADDITIONAL_CONFIG);
         $amastyGiftCardConfig = $this->currentMock->getAmastyGiftCardConfig();
         $this->assertTrue($amastyGiftCardConfig->payForEverything);
     }
@@ -619,12 +572,11 @@ class ConfigTest extends TestCase
      */
     public function shouldAdjustTaxMismatch()
     {
-        $aditionalConfig = '{"adjustTaxMismatch": false}';
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($aditionalConfig);
+            ->willReturn(self::ADDITIONAL_CONFIG);
         $adjustTaxMismatch = $this->currentMock->shouldAdjustTaxMismatch();
         $this->assertFalse($adjustTaxMismatch);
     }
@@ -634,31 +586,11 @@ class ConfigTest extends TestCase
      */
     public function getToggleCheckout()
     {
-        $aditionalConfig = '
-        {
-            "toggleCheckout": {
-                "active": true,
-                "magentoButtons": [
-                    "#top-cart-btn-checkout",
-                    "button[data-role=proceed-to-checkout]"
-                ],
-                "showElementsOnLoad": [
-                    ".checkout-methods-items",
-                    ".block-minicart .block-content > .actions > .primary"
-                ],
-                "productRestrictionMethods": [
-                    "getSubscriptionActive"
-                ],
-                "itemRestrictionMethods": [
-                    "getIsSubscription"
-                ]
-            }
-        }';
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($aditionalConfig);
+            ->willReturn(self::ADDITIONAL_CONFIG);
         $toggleCheckout = $this->currentMock->getToggleCheckout();
         $this->assertTrue($toggleCheckout->active);
         $this->assertArraySimilar(
@@ -669,13 +601,7 @@ class ConfigTest extends TestCase
 
     private function getPageFilters($aditionalConfig = null)
     {
-        $aditionalConfig = $aditionalConfig ?: '
-        {
-            "pageFilters": {
-                "whitelist": ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
-                "blacklist": ["cms_index_index"]
-            }
-        }';
+        $aditionalConfig = $aditionalConfig ?: self::ADDITIONAL_CONFIG;
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
