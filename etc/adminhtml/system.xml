@@ -58,6 +58,10 @@
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     <comment><![CDATA[Yes - order gets created in the store prior to transaction authorization<br />No - transaction has to be authorized before order is created in the store]]></comment>
                 </field>
+                <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>(BETA) Enable product page checkout</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="geolocation_api_key" translate="label" type="obscure" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Geolocation API Key</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
@@ -174,6 +178,15 @@
                 <field id="track_checkout_funnel" translate="label" type="select" sortOrder="290" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Track checkout funnel</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="custom_api" translate="label" type="text" sortOrder="291" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom API</label>
+                </field>
+                <field id="custom_merchant_dash" translate="label" type="text" sortOrder="292" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom Merchant Dash</label>
+                </field>
+                <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <label>Custom CDN</label>
                 </field>
             </group>
         </section>

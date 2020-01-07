@@ -177,7 +177,7 @@ JSON;
      */
     public function getMerchantDashboardUrl($sandboxFlag, $expected)
     {
-        $this->initCurrentMock(['isSandboxModeSet'],true, false);
+        $this->initCurrentMock(['isSandboxModeSet']);
         $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn($sandboxFlag);
         $this->assertEquals($expected, $this->currentMock->getMerchantDashboardUrl());
     }
@@ -248,7 +248,7 @@ JSON;
      */
     public function getAnyPublishableKey()
     {
-        $this->initCurrentMock(['getPublishableKeyCheckout'], true);
+        $this->initCurrentMock(['getPublishableKeyCheckout']);
 
         $this->currentMock
             ->expects(self::once())
@@ -267,7 +267,7 @@ JSON;
      */
     public function getAnyPublishableKeyIfCheckoutKeyIsEmpty()
     {
-        $this->initCurrentMock(['getPublishableKeyCheckout', 'getPublishableKeyPayment'], true);
+        $this->initCurrentMock(['getPublishableKeyCheckout', 'getPublishableKeyPayment']);
 
         $this->currentMock
             ->expects(self::once())
@@ -291,15 +291,55 @@ JSON;
      */
     public function getCdnUrl()
     {
-        $this->initCurrentMock(['isSandboxModeSet'], true);
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+
         $this->currentMock
             ->expects(self::once())
             ->method('isSandboxModeSet')
             ->willReturn(true);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
+            ->willReturn("");
 
-        $result = $this->currentMock->getCdnUrl();
+        $this->assertEquals(
+            BoltConfig::CDN_URL_SANDBOX,
+            $this->currentMock->getCdnUrl(),
+            'getCdnUrl() method: not working properly'
+        );
+    }
 
-        $this->assertEquals(BoltConfig::CDN_URL_SANDBOX, $result, 'getCdnUrl() method: not working properly');
+    /**
+     * @test
+     */
+    public function getCdnUrl_devModeSet()
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
+            ->willReturn(true);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
+            ->willReturn("https://cdn.something");
+
+        $this->assertEquals(
+            "https://cdn.something",
+            $this->currentMock->getCdnUrl(),
+            'getCdnUrl() method: not working properly'
+        );
     }
 
     /**
@@ -307,15 +347,17 @@ JSON;
      */
     public function getCdnUrlInProductionMode()
     {
-        $this->initCurrentMock(['isSandboxModeSet'], true);
+        $this->initCurrentMock(['isSandboxModeSet']);
         $this->currentMock
             ->expects(self::once())
             ->method('isSandboxModeSet')
             ->willReturn(false);
 
-        $result = $this->currentMock->getCdnUrl();
-
-        $this->assertEquals(BoltConfig::CDN_URL_PRODUCTION, $result, 'getCdnUrl() method: not working properly');
+        $this->assertEquals(
+            BoltConfig::CDN_URL_PRODUCTION,
+            $this->currentMock->getCdnUrl(),
+            'getCdnUrl() method: not working properly'
+        );
     }
 
     /**
@@ -341,13 +383,28 @@ JSON;
      */
     public function getApiUrl()
     {
-        $this->initCurrentMock(['isSandboxModeSet'],true, false);
-        $this->currentMock->method('isSandboxModeSet')
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
             ->willReturn(true);
 
-        $result = $this->currentMock->getApiUrl();
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_API)
+            ->willReturn("");
 
-        $this->assertEquals(BoltConfig::API_URL_SANDBOX, $result, 'getApiUrl() method: not working properly');
+        $this->assertEquals(
+            BoltConfig::API_URL_SANDBOX,
+            $this->currentMock->getApiUrl(),
+            'getApiUrl() method: not working properly'
+        );
     }
 
     /**
@@ -355,12 +412,46 @@ JSON;
      */
     public function getApiUrlInProductionMode()
     {
-        $this->initCurrentMock(['isSandboxModeSet'],true, false);
-        $this->currentMock->method('isSandboxModeSet')
+        $this->initCurrentMock(['isSandboxModeSet']);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
             ->willReturn(false);
 
-        $result = $this->currentMock->getApiUrl();
-        $this->assertEquals(BoltConfig::API_URL_PRODUCTION, $result, 'getApiUrl() method: not working properly');
+        $this->assertEquals(
+            BoltConfig::API_URL_PRODUCTION,
+            $this->currentMock->getApiUrl(),
+            'getApiUrl() method: not working properly'
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function getApiUrl_devMode()
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
+            ->willReturn(true);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_API)
+            ->willReturn("https://api.something");
+
+        $this->assertEquals(
+            "https://api.something",
+            $this->currentMock->getApiUrl(),
+            'getApiUrl() method: not working properly'
+        );
     }
 
     /**
@@ -442,6 +533,21 @@ JSON;
     /**
      * @test
      *
+     */
+    public function testGetProductPageCheckoutFlag()
+    {
+        $this->scopeConfig->method('isSetFlag')
+                          ->with(BoltConfig::XML_PATH_PRODUCT_PAGE_CHECKOUT)
+                          ->will($this->returnValue(false));
+
+        $this->assertFalse(
+            $this->currentMock->getProductPageCheckoutFlag(),
+            'getProductPageCheckoutFlag() method: not working properly'
+        );
+    }
+
+    /**
+     * @test
      * @covers ::getScopeConfig
      */
     public function getScopeConfig()

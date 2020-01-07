@@ -101,6 +101,12 @@ class Config extends AbstractHelper
     const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
 
     /**
+     * Enable product page checkout
+     */
+    const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
+
+
+    /**
      * Prefetch shipping
      */
     const XML_PATH_PREFETCH_SHIPPING = 'payment/boltpay/prefetch_shipping';
@@ -149,6 +155,21 @@ class Config extends AbstractHelper
      * Path for sandbox mode
      */
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
+
+    /**
+     * Path for custom API server, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_API = 'payment/boltpay/custom_api';
+
+    /**
+     * Path for custom merchant dash, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_MERCHANT_DASH = 'payment/boltpay/custom_merchant_dash';
+
+    /**
+     * Path for custom merchant dash, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_CDN = 'payment/boltpay/custom_cdn';
 
     /**
      * Bolt sandbox url
@@ -310,7 +331,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::API_URL_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         } else {
             return self::API_URL_PRODUCTION;
         }
@@ -327,7 +348,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::MERCHANT_DASH_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
         } else {
             return self::MERCHANT_DASH_PRODUCTION;
         }
@@ -344,7 +365,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return self::CDN_URL_SANDBOX;
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         } else {
             return self::CDN_URL_PRODUCTION;
         }
@@ -576,6 +597,22 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Product page checkout flag from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function getProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
      * Get Prefetch Shipping and Tax config
      *
      * @param int|string|Store $store
@@ -655,6 +692,12 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $store
         );
+    }
+
+    public function getCustomURLValueOrDefault($path, $default)
+    {
+        $storedValue = $this->getScopeConfig()->getValue($path);
+        return !empty($storedValue) ? $storedValue : $default;
     }
 
     /**

@@ -88,7 +88,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $methods = [
-            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
+            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey', 'getCustomURLValueOrDefault',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
@@ -365,6 +365,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->expects($this->any())
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
+
+        $this->configHelper
+            ->method('getCustomURLValueOrDefault')
+            ->will($this->returnArgument(1));
     }
 
     public function setBoltInitiateCheckout($value = true)
