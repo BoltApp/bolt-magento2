@@ -29,6 +29,9 @@ use Magento\Framework\App\Request\Http;
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
+    // Number of settings in method getSettings()
+    const SETTINGS_NUMBER = 18;
+
     /**
      * @var HelperConfig
      */
@@ -318,7 +321,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(18, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(SELF::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
