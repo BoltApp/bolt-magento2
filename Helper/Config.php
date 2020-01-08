@@ -288,7 +288,7 @@ class Config extends AbstractHelper
         self::SUCCESS_PAGE_ACTION
     ];
 
-    public static $supportableProductTypes = [
+    public static $supportableProductTypesForProductPageCheckout = [
         \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
         \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
     ];

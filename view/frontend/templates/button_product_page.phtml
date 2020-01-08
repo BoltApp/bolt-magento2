@@ -216,7 +216,7 @@ $trackCallbacks = $block->getTrackCallbacks();
 
                     //check if we have inventory on stock
                     if ( (max_qty>=0) && $qty && (Number($qty.val()) > max_qty)) {
-                        window.alert("Please correct the quantity. The most you may purchase is " + max_qty + ".");
+                        window.alert("The requested qty is not available");
                         return false;
                     }
 

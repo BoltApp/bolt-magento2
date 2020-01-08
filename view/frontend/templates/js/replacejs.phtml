@@ -27,7 +27,7 @@ if ($block->shouldDisableBoltCheckout()) return;
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartPage()) return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) return;
 
 $trackCallbackCode = $block->getTrackCallbacks();
 

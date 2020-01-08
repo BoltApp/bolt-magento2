@@ -64,8 +64,8 @@ class JsProductPage extends Js {
 
     /**
      * Get maximum available quantity of product
-     * It used to show a warning if user tries to buy more then product quantity
-     * @return int -1 if we no need to control the rest of product,
+     * It is used to show a warning if user tries to buy more then product quantity
+     * @return int -1 Ignore product quantity levels
      *              0 if product is out of stock
      *              positive value otherwise
      */
@@ -90,7 +90,7 @@ class JsProductPage extends Js {
      */
     public function isSupportableType()
     {
-        if (in_array($this->_product->getTypeId(), Config::$supportableProductTypes)) {
+        if (in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout)) {
             return true;
         }
         return false;
