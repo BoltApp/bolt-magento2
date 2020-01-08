@@ -621,7 +621,7 @@ JSON;
             ->with(BoltConfig::XML_PATH_IP_WHITELIST, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
             ->willReturn($getIPWhitelistConfig);
         $result = array_values($this->currentMock->getIPWhitelistArray());
-        $this->assertArraySimilar($expected, $result);
+        $this->assertEquals($expected, $result);
     }
 
     /**
@@ -699,7 +699,7 @@ JSON;
             ->willReturn(self::ADDITIONAL_CONFIG);
         $toggleCheckout = $this->currentMock->getToggleCheckout();
         $this->assertTrue($toggleCheckout->active);
-        $this->assertArraySimilar(
+        $this->assertEquals(
             ["#top-cart-btn-checkout", "button[data-role=proceed-to-checkout]"],
             $toggleCheckout->magentoButtons
         );
@@ -722,7 +722,7 @@ JSON;
     {
         $this->getPageFilters();
         $pageWhitelist = $this->currentMock->getPageWhitelist();
-        $this->assertArraySimilar(
+        $this->assertEquals(
             ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
             $pageWhitelist
         );
@@ -735,7 +735,7 @@ JSON;
     {
         $this->getPageFilters('{"pageFilters": {}}');
         $pageWhitelist = $this->currentMock->getPageWhitelist();
-        $this->assertArraySimilar(
+        $this->assertEquals(
             [],
             $pageWhitelist
         );
@@ -748,7 +748,7 @@ JSON;
     {
         $this->getPageFilters();
         $pageBlacklist = $this->currentMock->getPageBlacklist();
-        $this->assertArraySimilar(
+        $this->assertEquals(
             ["cms_index_index"],
             $pageBlacklist
         );
@@ -786,26 +786,5 @@ JSON;
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
-    }
-
-    /**
-     * Asserts that two associative arrays are similar.
-     *
-     * Both arrays must have the same indexes with identical values
-     * without respect to key ordering
-     *
-     * @param array $expected
-     * @param array $array
-     */
-    protected function assertArraySimilar(array $expected, array $array)
-    {
-        $this->assertEquals([], array_diff_key($array, $expected));
-        foreach ($expected as $key => $value) {
-            if (is_array($value)) {
-                $this->assertArraySimilar($value, $array[$key]);
-            } else {
-                $this->assertContains($value, $array);
-            }
-        }
     }
 }
