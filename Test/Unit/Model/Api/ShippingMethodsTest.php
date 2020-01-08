@@ -350,6 +350,7 @@ class ShippingMethodsTest extends TestCase
 
     /**
      * @test
+     * @dataProvider getShippingMethods_cart_dataProvider
      */
     public function getShippingMethods_fullAddressData()
     {
@@ -422,6 +423,22 @@ class ShippingMethodsTest extends TestCase
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
         $this->assertEquals($shippingOptions, $result);
+    }
+
+    public function getShippingMethods_cart_dataProvider() {
+        return [
+            // common case
+            [[
+                'display_id'      => self::DISPLAY_ID,
+                'order_reference' => self::PARENT_QUOTE_ID
+            ]],
+            // product page checkout case
+            [[
+                // common case
+                'display_id'      => null,
+                'order_reference' => self::IMMUTABLE_QUOTE_ID
+            ]]
+        ];
     }
 
     /**
