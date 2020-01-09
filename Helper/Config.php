@@ -290,6 +290,10 @@ class Config extends AbstractHelper
         self::SUCCESS_PAGE_ACTION
     ];
 
+    public static $supportableProductTypesForProductPageCheckout = [
+        \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
+        \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
+    ];
     /**
      * @var ResourceInterface
      */
@@ -1265,6 +1269,20 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
             ScopeInterface::SCOPE_STORE,
             $store
+        );
+    }
+
+
+    /**
+     * Check if guest checkout is allowed
+     *
+     * @return boolean
+     */
+    public function isGuestCheckoutAllowed()
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
 }

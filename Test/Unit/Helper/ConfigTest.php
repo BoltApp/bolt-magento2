@@ -787,4 +787,24 @@ JSON;
 
         return $method->invokeArgs($object, $parameters);
     }
+
+    /**
+     * @test
+     * @dataProvider providerTrueAndFalse
+     */
+    public function isGuestCheckoutAllowed($boolean_value)
+    {
+        $this->scopeConfig->method('isSetFlag')
+            ->with('checkout/options/guest_checkout','store')
+            ->willReturn($boolean_value);
+        $result = $this->currentMock->isGuestCheckoutAllowed();
+        $this->assertEquals($boolean_value, $result);
+    }
+
+    public function providerTrueAndFalse() {
+        return [
+            [true],
+            [false],
+        ];
+    }
 }
