@@ -2004,14 +2004,22 @@ ORDER;
             ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId'])
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote->expects($this->once())
             ->method('addProduct')
             ->with($product,1);
+
         $quote->expects($this->once())
             ->method('reserveOrderId');
+        $quote->expects($this->once())
+            ->method('getReservedOrderId')
+            ->willReturn(self::ORDER_ID);
+        $quote->expects($this->once())
+            ->method('setBoltReservedOrderId')
+            ->with(self::ORDER_ID);
+
         $quote->expects($this->once())
             ->method('collectTotals')
             ->willReturnSelf();
