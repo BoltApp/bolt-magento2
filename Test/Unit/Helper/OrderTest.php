@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
@@ -822,4 +823,41 @@ class OrderTest extends TestCase
             [ 12.1225, 12.1264, false ],
 		];
 	}
+
+    /**
+     * @test
+     * @covers ::verifyOrderCreationHookType
+     * @dataProvider verifyOrderCreationHookTypeProvider
+     */
+	public function verifyOrderCreationHookType($hookFromBolt, $hookType, $expectException = false)
+    {
+        Hook::$fromBolt = $hookFromBolt;
+        if ( $expectException ) {
+            $this->expectException(BoltException::class);
+            $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_REJECTED_ORDER);
+            $this->expectExceptionMessage(
+                sprintf(
+                    'Order creation is forbidden from hook of type: %s',
+                    $hookType
+                )
+            );
+        }
+        $this->assertNull($this->currentMock->verifyOrderCreationHookType($hookType));
+    }
+
+    public function verifyOrderCreationHookTypeProvider()
+    {
+        return [
+            [true, OrderHelper::HT_PENDING],
+            [true, OrderHelper::HT_PAYMENT],
+            [true, 'void', true],
+            [true, null, true],
+            [true, '', true],
+            [false, OrderHelper::HT_PENDING],
+            [false, OrderHelper::HT_PAYMENT],
+            [false, 'void', true],
+            [false, null],
+            [false, '', true]
+        ];
+    }
 }

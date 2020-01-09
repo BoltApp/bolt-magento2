@@ -91,6 +91,11 @@ class Order extends AbstractHelper
     const TT_APM_PAYMENT = 'apm_payment';
     const TT_APM_REFUND = 'apm_refund';
 
+    // hook types
+    const HT_PENDING = 'pending';
+    const HT_PAYMENT = 'payment';
+    const VALID_HOOKS_FOR_ORDER_CREATION = [self::HT_PENDING, self::HT_PAYMENT];
+
     /**
      * @var ApiHelper
      */
@@ -610,6 +615,26 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Check if the hook is valid for creating a missing order.
+     * Throw an exception otherwise.
+     *
+     * @param string|null $hookType
+     * @throws BoltException
+     */
+    public function verifyOrderCreationHookType($hookType)
+    {
+        if ( ( Hook::$fromBolt || isset ( $hookType ) )
+            && ! in_array ( $hookType, static::VALID_HOOKS_FOR_ORDER_CREATION )
+        ) {
+            throw new BoltException (
+                __( 'Order creation is forbidden from hook of type: %1', $hookType ),
+                null,
+                CreateOrder::E_BOLT_REJECTED_ORDER
+            );
+        }
+    }
+
+    /**
      * Save/create the order (checkout, orphaned transaction),
      * Update order payment / transaction data (checkout, web hooks)
      *
@@ -668,6 +693,7 @@ class Order extends AbstractHelper
             if (!$quote) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
+            $this->verifyOrderCreationHookType($hookType);
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
         }
 
