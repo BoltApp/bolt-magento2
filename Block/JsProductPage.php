@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Checkout\Helper\Data;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
@@ -45,11 +46,12 @@ class JsProductPage extends Js {
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         ProductView $productView,
+        Decider $featureSwitches,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
 
-        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag,$data);
+        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
     }
 
     /**
