@@ -641,8 +641,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $immutableQuote->getShippingAddress();
         $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
-        $storeId = $parentQuote->getStoreId();
-        $discountLabel = $rule->getStoreLabel($storeId) ?: $rule->getDescription();
+        $discountLabels = $rule->getStoreLabels();
+        $discountLabel = $discountLabels[0] ?: $rule->getDescription();
 
         $result = [
             'status'          => 'success',
