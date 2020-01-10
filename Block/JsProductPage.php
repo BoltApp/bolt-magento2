@@ -51,7 +51,7 @@ class JsProductPage extends Js {
     ) {
         $this->_product = $productView->getProduct();
 
-        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag,$data, $featureSwitches);
+        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
     }
 
     /**
