@@ -641,11 +641,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $immutableQuote->getShippingAddress();
         $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
+        $storeId = $parentQuote->getStoreId();
+        $discountLabel = $rule->getStoreLabel($storeId) ?: $rule->getDescription();
+
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs($this->cartHelper->getRoundAmount($address->getDiscountAmount())),
-            'description'     => trim(__('Discount ') . $rule->getStoreLabel()),
+            'description'     => trim(__('Discount ') . $discountLabel),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
 
