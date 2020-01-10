@@ -31,6 +31,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
 /**
  * Class SessionTest
