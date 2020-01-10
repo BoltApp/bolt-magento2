@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\JsProductPage as BlockJsProductPage;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Request\Http;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
@@ -77,6 +78,11 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     private $scopeConfigMock;
 
     private $product;
+
+    /**
+     * @var Decider
+     */
+    private $decider;
 
     /**
      * @inheritdoc
@@ -137,6 +143,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $this->productViewMock->method('getProduct')
             ->willReturn($this->product);
+        $this->decider = $this->createMock(Decider::class);
 
         $this->block = $this->getMockBuilder(BlockJsProductPage::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
@@ -147,7 +154,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
-                    $this->productViewMock
+                    $this->productViewMock,
+                    $this->decider
                 ]
             )
             ->getMock();
