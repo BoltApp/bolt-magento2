@@ -91,10 +91,7 @@ class Order extends AbstractHelper
     const TT_APM_PAYMENT = 'apm_payment';
     const TT_APM_REFUND = 'apm_refund';
 
-    // hook types
-    const HT_PENDING = 'pending';
-    const HT_PAYMENT = 'payment';
-    const VALID_HOOKS_FOR_ORDER_CREATION = [self::HT_PENDING, self::HT_PAYMENT];
+    const VALID_HOOKS_FOR_ORDER_CREATION = [Hook::HT_PENDING, Hook::HT_PAYMENT];
 
     /**
      * @var ApiHelper

@@ -848,14 +848,14 @@ class OrderTest extends TestCase
     public function verifyOrderCreationHookTypeProvider()
     {
         return [
-            [true, OrderHelper::HT_PENDING],
-            [true, OrderHelper::HT_PAYMENT],
-            [true, 'void', true],
+            [true, Hook::HT_PENDING],
+            [true, Hook::HT_PAYMENT],
+            [true, Hook::HT_VOID, true],
             [true, null, true],
             [true, '', true],
-            [false, OrderHelper::HT_PENDING],
-            [false, OrderHelper::HT_PAYMENT],
-            [false, 'void', true],
+            [false, Hook::HT_PENDING],
+            [false, Hook::HT_PAYMENT],
+            [false, Hook::HT_VOID, true],
             [false, null],
             [false, '', true]
         ];
