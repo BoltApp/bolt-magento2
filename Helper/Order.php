@@ -1001,8 +1001,14 @@ class Order extends AbstractHelper
     public function prepareQuote($immutableQuote, $transaction)
     {
         /** @var Quote $quote */
-        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
-        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+        $boltParentQuoteId = $immutableQuote->getBoltParentQuoteId();
+        if ($boltParentQuoteId) {
+            $quote = $this->cartHelper->getQuoteById($boltParentQuoteId);
+            $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+        } else {
+            // In Product page checkout case we created quote ourselves so we can change it and no need to work with quote copy
+            $quote = $immutableQuote;
+        }
         $this->quoteAfterChange($quote);
 
         // Load logged in customer checkout and customer sessions from cached session id.

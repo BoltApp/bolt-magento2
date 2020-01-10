@@ -159,4 +159,8 @@ class Decider extends AbstractHelper {
     public function isSampleSwitchEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
     }
+
+    public function isBoltEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
+    }
 }
