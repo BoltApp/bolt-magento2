@@ -62,8 +62,9 @@ class Hints extends Action
     }
 
     /**
-     * @return void
-     * @throws Exception
+     * Get hints for Product page checkout
+     *
+     * @return Json
      */
     public function execute()
     {
