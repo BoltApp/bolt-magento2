@@ -132,6 +132,12 @@ class Config extends AbstractHelper
     const CREATE_ORDER_ACTION = 'boltpay/cart/data';
 
     /**
+     * Get hints
+     */
+    const GET_HINTS_ACTION = 'boltpay/cart/hints';
+
+
+    /**
      * Prefetch Shipping
      */
     const SHIPPING_PREFETCH_ACTION = 'boltpay/shipping/prefetch';
@@ -273,6 +279,8 @@ class Config extends AbstractHelper
     const XML_PATH_CAPTURE_MERCHANT_METRICS = 'payment/boltpay/capture_merchant_metrics';
 
     const XML_PATH_TRACK_CHECKOUT_FUNNEL = 'payment/boltpay/track_checkout_funnel';
+
+    const XML_PATH_MINIMUM_ORDER_AMOUNT = 'sales/minimum_order/amount';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -1248,7 +1256,7 @@ class Config extends AbstractHelper
     public function getMinimumOrderAmount($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
-            'sales/minimum_order/amount',
+            self::XML_PATH_MINIMUM_ORDER_AMOUNT,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );

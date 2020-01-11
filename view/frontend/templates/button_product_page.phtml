@@ -256,7 +256,21 @@ $trackCallbacks = $block->getTrackCallbacks();
 
                 var buttonClass = "bolt-product-checkout-button";
                 var hints = {prefill:{}};
-                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass})
+
+                // We need to receive hints from server
+                // meanwhile initiate Bolt without hints to have button early
+                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
+                customerData.init();
+                if ( customer().firstname ) {
+                    ajaxPost(
+                        settings.get_hints_url,
+                        {},
+                        function(result){
+                            BoltCheckout.configureProductCheckout(cart, result.hints, callbacks, {checkoutButtonClassName: buttonClass});
+                        }
+                    );
+                }
+
             }
 
             if (

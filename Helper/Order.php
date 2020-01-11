@@ -289,7 +289,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setShippingMethod($quote, $transaction)
+    protected function setShippingMethod($quote, $transaction)
     {
         if ($quote->isVirtual()) {
             return;
@@ -311,7 +311,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setAddress($quoteAddress, $address)
+    protected function setAddress($quoteAddress, $address)
     {
         $address = $this->cartHelper->handleSpecialAddressCases($address);
 
@@ -354,7 +354,7 @@ class Order extends AbstractHelper
      * @return void
      * @throws \Exception
      */
-    private function setShippingAddress($quote, $transaction)
+    protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
         if ($address) {
@@ -370,7 +370,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setBillingAddress($quote, $transaction)
+    protected function setBillingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->billing_address;
         if ($address) {
@@ -585,13 +585,12 @@ class Order extends AbstractHelper
         // get table name with prefix
         $tableName = $this->resourceConnection->getTableName('quote');
 
-        $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
-            'entity_id' => $quote->getBoltParentQuoteId()
+            'bolt_parent_quote_id = ?' => $quote->getBoltParentQuoteId(),
+            'entity_id != ?' => $quote->getBoltParentQuoteId()
         ];
 
-        $connection->query($sql, $bind);
+        $connection->delete($tableName, $bind);
     }
 
     /**
@@ -1341,11 +1340,13 @@ class Order extends AbstractHelper
     private function getUnprocessedCapture($payment, $transaction)
     {
         $processedCaptures = $this->getProcessedCaptures($payment);
-        return @end(array_filter(
+        return @end(
+            array_filter(
                 $transaction->captures,
-                function($capture) use ($processedCaptures) {
+                function ($capture) use ($processedCaptures) {
                     return !in_array($capture->id, $processedCaptures) && $capture->status == 'succeeded';
-                })
+                }
+            )
         );
     }
 
@@ -1697,7 +1698,7 @@ class Order extends AbstractHelper
      * @throws \Exception
      * @throws LocalizedException
      */
-    private function createOrderInvoice($order, $transactionId, $amount)
+    protected function createOrderInvoice($order, $transactionId, $amount)
     {
         $currencyCode = $order->getOrderCurrencyCode();
         try {
@@ -1779,7 +1780,7 @@ class Order extends AbstractHelper
 
         if ($captured > $grandTotal) {
             throw new \Exception(
-                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+                __('Capture amount is invalid: captured [%1], grand total [%2]', $captured, $grandTotal)
             );
         }
     }

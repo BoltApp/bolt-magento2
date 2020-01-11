@@ -727,7 +727,7 @@ class Cart extends AbstractHelper
      * Get the hints data for checkout
      *
      * @param string $cartReference            (immutable) quote id
-     * @param string $checkoutType             'cart' | 'admin' Default to `admin`
+     * @param string $checkoutType             'cart' | 'admin' | 'product' Default to `admin`
      *
      * @return array
      * @throws NoSuchEntityException
@@ -735,9 +735,14 @@ class Cart extends AbstractHelper
     public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
-        $quote = $cartReference ?
-            $this->getQuoteById($cartReference) :
-            $this->checkoutSession->getQuote();
+        if ($checkoutType<>'product') {
+            $quote = $cartReference ?
+                $this->getQuoteById($cartReference) :
+                $this->checkoutSession->getQuote();
+        } else {
+            // For product page checkout we dont't have any Quote object
+            $quote = null;
+        }
 
         $hints = ['prefill' => []];
 
@@ -755,7 +760,7 @@ class Cart extends AbstractHelper
             $prefill = [
                 'firstName'    => $address->getFirstname(),
                 'lastName'     => $address->getLastname(),
-                'email'        => $address->getEmail() ?: $quote->getCustomerEmail(),
+                'email'        => $address->getEmail(),
                 'phone'        => $address->getTelephone(),
                 'addressLine1' => $address->getStreetLine(1),
                 'addressLine2' => $address->getStreetLine(2),
@@ -764,6 +769,9 @@ class Cart extends AbstractHelper
                 'zip'          => $address->getPostcode(),
                 'country'      => $address->getCountryId(),
             ];
+            if (!$prefill['email'] && $quote) {
+                $prefill['email'] = $quote->getCustomerEmail();
+            }
 
             // Skip pre-fill for Apple Pay related data.
             if ($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111') {
@@ -787,7 +795,10 @@ class Cart extends AbstractHelper
             $signRequest = [
                 'merchant_user_id' => $customer->getId(),
             ];
-            $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
+            $signResponse = $this->getSignResponse(
+                $signRequest,
+                $quote ? $quote->getStoreId() : null
+            )->getResponse();
 
             if ($signResponse) {
                 $hints['signed_merchant_user_id'] = [
@@ -797,9 +808,10 @@ class Cart extends AbstractHelper
                 ];
             }
 
-            if ($quote->isVirtual()) {
+            if ($quote && $quote->isVirtual()) {
                 $prefillHints($customer->getDefaultBillingAddress());
             } else {
+                // TODO: use billing address for checkout on product page and virtual products
                 $prefillHints($customer->getDefaultShippingAddress());
             }
 
@@ -808,10 +820,12 @@ class Cart extends AbstractHelper
 
         // Quote shipping / billing address.
         // If assigned it takes precedence over logged in user default address.
-        if ($quote->isVirtual()) {
-            $prefillHints($quote->getBillingAddress());
-        } else {
-            $prefillHints($quote->getShippingAddress());
+        if ($quote) {
+            if ($quote->isVirtual()) {
+                $prefillHints($quote->getBillingAddress());
+            } else {
+                $prefillHints($quote->getShippingAddress());
+            }
         }
 
         if ($checkoutType === 'admin') {

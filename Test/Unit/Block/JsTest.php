@@ -30,6 +30,9 @@ use Magento\Framework\App\Request\Http;
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
+    // Number of settings in method getSettings()
+    const SETTINGS_NUMBER = 18;
+
     /**
      * @var HelperConfig
      */
@@ -327,7 +330,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(SELF::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -336,6 +339,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
         $this->assertArrayHasKey('create_order_url', $array, $message . 'create_order_url');
         $this->assertArrayHasKey('save_order_url', $array, $message . 'save_order_url');
+        $this->assertArrayHasKey('get_hints_url', $array, $message . 'get_hints_url');
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
