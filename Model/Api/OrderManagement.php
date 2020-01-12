@@ -190,6 +190,26 @@ class OrderManagement implements OrderManagementInterface
     }
 
     /**
+     * Handle custom checkboxes if request has them
+     *
+     * @param string $displayId
+     */
+    private function handleCheckboxes($displayId) {
+        $request = $this->request->getBodyParams();
+        if (!isset($request['checkboxes']) || !$request['checkboxes']) {
+            return;
+        }
+        $comment = '';
+        foreach ($request['checkboxes'] as $checkbox) {
+            $comment .= '<br>'.$checkbox['text'].': '.($checkbox['value'] ? 'Yes' : 'No');
+        }
+        if ($comment) {
+            $commentPrefix = 'BOLTPAY INFO :: checkboxes';
+            $this->orderHelper->addCommentToStatusHistoryIfNotExists($displayId, $commentPrefix.$comment, $commentPrefix);
+        }
+    }
+
+    /**
      * Save or Update magento Order by data from hook
      *
      * @param $reference
@@ -205,6 +225,8 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
+        $this->handleCheckboxes($display_id);
+
         if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([

@@ -1934,4 +1934,28 @@ class Order extends AbstractHelper
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }
+
+    /**
+     * Add comment to status history if order doesn't have similar comment
+     *
+     * @param string $displayId Display id. Method find order by it
+     * @param string $comment comment we need to add
+     * @param string $searchPhrase We don't add comment if order already has any comment with this phrase
+     */
+    public function addCommentToStatusHistoryIfNotExists($displayId, $comment, $searchPhrase)
+    {
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
+        $order = $this->getExistingOrder($incrementId);
+        if (!$order) {
+            return;
+        }
+
+        foreach ($order->getAllStatusHistory() as $orderComment) {
+            if (strpos($orderComment->getComment(), $searchPhrase) !== false) {
+                return;
+            }
+        }
+        $order->addCommentToStatusHistory($comment);
+        $order->save();
+    }
 }
