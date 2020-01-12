@@ -200,12 +200,19 @@ class OrderManagement implements OrderManagementInterface
             return;
         }
         $comment = '';
+        $needSubscribe = false;
         foreach ($request['checkboxes'] as $checkbox) {
+            if ($checkbox['category'] == 'NEWSLETTER') {
+                $needSubscribe = true;
+            }
             $comment .= '<br>'.$checkbox['text'].': '.($checkbox['value'] ? 'Yes' : 'No');
         }
         if ($comment) {
             $commentPrefix = 'BOLTPAY INFO :: checkboxes';
             $this->orderHelper->addCommentToStatusHistoryIfNotExists($displayId, $commentPrefix.$comment, $commentPrefix);
+        }
+        if ($needSubscribe) {
+            $this->orderHelper->subscribeForNewsletter($displayId);
         }
     }
 

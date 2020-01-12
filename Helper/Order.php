@@ -53,7 +53,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Newsletter\Model\SubscriberFactory;
 
 /**
  * Class Order
@@ -187,6 +188,12 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
+
+    /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -206,6 +213,7 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
+     * @param SubscriberFactory $subscriberFactory
      *
      * @codeCoverageIgnore
      */
@@ -229,7 +237,8 @@ class Order extends AbstractHelper
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        DateTime $date
+        DateTime $date,
+        SubscriberFactory $subscriberFactory
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -251,6 +260,7 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->subscriberFactory = $subscriberFactory;
     }
 
     /**
@@ -1957,5 +1967,29 @@ class Order extends AbstractHelper
         }
         $order->addCommentToStatusHistory($comment);
         $order->save();
+    }
+
+    /**
+     * Subscribe for newsletters
+     * - Find order by displayId
+     * - If order for logged in user subscribe by userId
+     * - If order for guest user subscribe by email
+     *
+     * @param $displayId
+     */
+    public function subscribeForNewsletter($displayId) {
+        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
+        $order = $this->getExistingOrder($incrementId);
+        if (!$order) {
+            return;
+        }
+        $customerId = $order->getCustomerId();
+        if ($customerId) {
+            $this->subscriberFactory->create()->subscribeCustomerById($customerId);
+        } else {
+            $email = $order->getBillingAddress()->getEmail();
+            $this->subscriberFactory->create()->subscribe($email);
+
+        }
     }
 }
