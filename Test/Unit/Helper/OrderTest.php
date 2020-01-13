@@ -75,6 +75,7 @@ use Zend_Validate_Exception;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\Request as BoltRequest;
 use Bolt\Boltpay\Model\ResponseFactory;
+use Magento\Newsletter\Model\SubscriberFactory;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -196,6 +197,9 @@ class OrderTest extends TestCase
     /** @var MockObject|ResponseFactory */
     private $responseFactory;
 
+    /** @var MockObject|SubscriberFactory */
+    private $subscriberFactory;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -258,7 +262,8 @@ class OrderTest extends TestCase
                     $this->resourceConnection,
                     $this->sessionHelper,
                     $this->discountHelper,
-                    $this->date
+                    $this->date,
+                    $this->subscriberFactory
                 ]
             )
             ->setMethods($methods);
@@ -304,6 +309,7 @@ class OrderTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
+        $this->subscriberFactory = $this->createMock(SubscriberFactory::class);
 
         $this->quoteMock = $this->createMock(Quote::class);
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
