@@ -1637,8 +1637,14 @@ class OrderTest extends TestCase
         TestHelper::invokeMethod($this->currentMock, 'quoteAfterChange', [$this->quoteMock]);
     }
 
+    public function trueAndFalseDataProvider()
+    {
+        return [[true],[false]];
+    }
+
     /**
      * @test
+     * @dataProvider trueAndFalseDataProvider
      *
      * @covers ::prepareQuote
      * @covers ::setQuotePaymentInfoData
@@ -1653,7 +1659,7 @@ class OrderTest extends TestCase
      * @throws SessionException
      * @throws Zend_Validate_Exception
      */
-    public function prepareQuote()
+    public function prepareQuote($isProductPage)
     {
         $this->initCurrentMock(
             [
@@ -1682,25 +1688,32 @@ class OrderTest extends TestCase
                 ]
             )
         );
-
+        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getReservedOrderId', 'getId'];
         /** @var MockObject|Quote $immutableQuote */
-        $immutableQuote = $this->createPartialMock(Quote::class, ['getId', 'getBoltParentQuoteId']);
-        $immutableQuote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(self::QUOTE_ID);
-        $immutableQuote->expects(self::once())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $immutableQuote = $this->createPartialMock(Quote::class, $quoteMockMethodsList);
+        $immutableQuote->expects(self::any())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
 
-        /** @var MockObject|Quote $parentQuote */
-        $parentQuote = $this->createPartialMock(
-            Quote::class,
-            ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getReservedOrderId', 'getId']
-        );
-        $parentQuote->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
+        if ($isProductPage) {
+            // immutableQuote the same object as parentQuote
+            $immutableQuote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(null);
+            /** @var MockObject|Quote $parentQuote */
+            $parentQuote = $immutableQuote;
+            $bugsnagParentQuoteId = self::IMMUTABLE_QUOTE_ID;
+        } else {
+            // we have two Quotes: parent and immutable
+            $immutableQuote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(self::QUOTE_ID);
+            $parentQuote = $this->createPartialMock(Quote::class, $quoteMockMethodsList);
+            $parentQuote->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
+            $bugsnagParentQuoteId = self::QUOTE_ID;
+
+            $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
+                ->willReturn($parentQuote);
+            $this->cartHelper->expects(static::once())->method('replicateQuoteData')
+                ->willReturn($immutableQuote, $parentQuote);
+        }
 
         $this->currentMock->expects(self::exactly(4))->method('quoteAfterChange')->with($parentQuote);
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
-            ->willReturn($parentQuote);
-        $this->cartHelper->expects(static::once())->method('replicateQuoteData')
-            ->willReturn($immutableQuote, $parentQuote);
         $this->sessionHelper->expects(static::once())->method('loadSession')->with($parentQuote);
         $this->currentMock->expects(self::once())->method('setShippingAddress')->with($parentQuote, $transaction);
         $this->currentMock->expects(self::once())->method('setBillingAddress')->with($parentQuote, $transaction);
@@ -1734,13 +1747,13 @@ class OrderTest extends TestCase
         $parentQuote->expects(self::once())->method('getReservedOrderId')->willReturn(self::ORDER_ID);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
+            function ($callback) use ($bugsnagParentQuoteId) {
                 $report = $this->createMock(Report::class);
                 $report->expects(self::once())->method('setMetaData')->with(
                     [
                         'CREATE ORDER' => [
                             'order increment ID' => self::ORDER_ID,
-                            'parent quote ID'    => self::QUOTE_ID,
+                            'parent quote ID'    => $bugsnagParentQuoteId,
                             'immutable quote ID' => self::IMMUTABLE_QUOTE_ID
                         ]
                     ]
