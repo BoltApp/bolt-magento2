@@ -3307,4 +3307,40 @@ class OrderTest extends TestCase
 
         TestHelper::invokeMethod($this->currentMock, 'setShippingAddress', [$quote, $transaction]);
     }
+
+    /**
+     * @test
+     * @covers ::verifyOrderCreationHookType
+     * @dataProvider verifyOrderCreationHookTypeProvider
+     */
+    public function verifyOrderCreationHookType($hookFromBolt, $hookType, $expectException = false)
+    {
+        Hook::$fromBolt = $hookFromBolt;
+        if ( $expectException ) {
+            $this->expectException(BoltException::class);
+            $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_REJECTED_ORDER);
+            $this->expectExceptionMessage(
+                sprintf(
+                    'Order creation is forbidden from hook of type: %s',
+                    $hookType
+                )
+            );
+        }
+        $this->assertNull($this->currentMock->verifyOrderCreationHookType($hookType));
+    }
+    public function verifyOrderCreationHookTypeProvider()
+    {
+        return [
+            [true, Hook::HT_PENDING],
+            [true, Hook::HT_PAYMENT],
+            [true, Hook::HT_VOID, true],
+            [true, null, true],
+            [true, '', true],
+            [false, Hook::HT_PENDING],
+            [false, Hook::HT_PAYMENT],
+            [false, Hook::HT_VOID, true],
+            [false, null],
+            [false, '', true]
+        ];
+    }
 }

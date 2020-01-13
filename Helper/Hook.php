@@ -39,6 +39,17 @@ class Hook extends AbstractHelper
 
     const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
+    // hook types
+    const HT_PENDING = 'pending';
+    const HT_PAYMENT = 'payment';
+    const HT_VOID = 'void';
+    const HT_CREDIT = 'credit';
+    const HT_CAPTURE = 'capture';
+    const HT_AUTH = 'auth';
+    const HT_REJECTED_REVERSIBLE = 'rejected_reversible';
+    const HT_REJECTED_IRREVERSIBLE = 'rejected_irreversible';
+    const HT_FAILED_PAYMENT = 'failed_payment';
+
     /**
      * @var ConfigHelper
      */
