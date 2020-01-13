@@ -253,8 +253,7 @@ class OrderManagement implements OrderManagementInterface
             );
         }
 
-        $item = $request['items'][0];
-        $cart = $this->cartHelper->createCartByItem($item);
+        $cart = $this->cartHelper->createCartByRequest($request);
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',
