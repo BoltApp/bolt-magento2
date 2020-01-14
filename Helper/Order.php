@@ -707,7 +707,17 @@ class Order extends AbstractHelper
         // if not create the order
         if (!$order || !$order->getId()) {
             if (!$quote) {
-                throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
+                $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId));
+                if (Hook::$fromBolt && in_array($transaction->status, [Payment::TRANSACTION_AUTHORIZED, Payment::TRANSACTION_CANCELLED])) {
+                    if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
+                        $this->voidTransactionOnBolt($transaction->id, $storeId);
+                    }
+                    $this->bugsnag->notifyException($exception);
+                    return $this;
+                }
+
+                throw $exception;
+
             }
             $this->verifyOrderCreationHookType($hookType);
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
@@ -740,6 +750,44 @@ class Order extends AbstractHelper
             // wait for the hook call to update the payment
             return [$quote, $order];
         }
+    }
+
+    /**
+     * @param $transactionId
+     * @param $storeId
+     * @return $this
+     * @throws LocalizedException
+     * @throws Zend_Http_Client_Exception
+     */
+    public function voidTransactionOnBolt($transactionId, $storeId){
+        //Get transaction data
+        $transactionData = [
+            'transaction_id' => $transactionId,
+            'skip_hook_notification' => true
+        ];
+        $apiKey = $this->configHelper->getApiKey($storeId);
+
+        //Request Data
+        $requestData = $this->dataObjectFactory->create();
+        $requestData->setApiData($transactionData);
+        $requestData->setDynamicApiUrl(ApiHelper::API_VOID_TRANSACTION);
+        $requestData->setApiKey($apiKey);
+        //Build Request
+        $request = $this->apiHelper->buildRequest($requestData);
+        $result = $this->apiHelper->sendRequest($request);
+        $response = $result->getResponse();
+
+        if (empty($response)) {
+            throw new LocalizedException(
+                __('Bad void response from boltpay')
+            );
+        }
+
+        if (@$response->status != 'cancelled') {
+            throw new LocalizedException(__('Payment void error.'));
+        }
+
+        return $this;
     }
 
     /**

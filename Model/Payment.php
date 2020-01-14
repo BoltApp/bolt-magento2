@@ -55,6 +55,7 @@ class Payment extends AbstractMethod
 {
     const TRANSACTION_AUTHORIZED = 'authorized';
     const TRANSACTION_COMPLETED = 'completed';
+    const TRANSACTION_CANCELLED = 'cancelled';
 
     const METHOD_CODE = 'boltpay';
 
