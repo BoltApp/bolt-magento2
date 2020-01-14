@@ -4,7 +4,7 @@
     <body>
         <referenceBlock name="page.main.title">
             <action method="setPageTitle">
-                <argument name="title" xsi:type="string" translate="true">My Bolt Credit Cards</argument>
+                <argument name="title" xsi:type="string" translate="true">Credit Cards</argument>
             </action>
         </referenceBlock>
         <referenceContainer name="content">

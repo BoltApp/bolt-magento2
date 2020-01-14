@@ -7,7 +7,7 @@
                    name="customer-account-navigation-creditcard">
                 <arguments>
                     <argument name="path" xsi:type="string">boltpay/customer/creditcard</argument>
-                    <argument name="label" xsi:type="string" translate="true">My Bolt Credit Cards</argument>
+                    <argument name="label" xsi:type="string" translate="true">Credit Cards</argument>
                 </arguments>
             </block>
         </referenceBlock>
