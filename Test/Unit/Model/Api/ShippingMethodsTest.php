@@ -392,14 +392,16 @@ class ShippingMethodsTest extends TestCase
         $this->configHelper->method('getStoreVersion')->willReturn('2.3.3');
 
         $methods = ['sendErrorResponse', 'checkCartItems', 'getQuoteById',
-            'shippingEstimation', 'preprocessHook', 'couponInvalidForShippingAddress'
+            'shippingEstimation', 'couponInvalidForShippingAddress'
         ];
 
         $this->sessionHelper->expects(self::once())->method('loadSession')->willReturn(null);
 
         $this->initCurrentMock($methods, false);
 
-        $this->currentMock->expects(self::once())->method('preprocessHook')->willReturn(null);
+        $this->hookHelper->method('preProcessWebhook')
+            ->withAnyParameters()
+            ->willReturnSelf();
         $this->currentMock->expects(self::once())->method('checkCartItems')->with($cart)->willReturn(null);
 
         $this->currentMock->expects(self::exactly(2))->method('getQuoteById')
@@ -418,6 +420,7 @@ class ShippingMethodsTest extends TestCase
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
+        $this->assertTrue(HookHelper::$fromBolt);
         $this->assertEquals($shippingOptions, $result);
     }
 

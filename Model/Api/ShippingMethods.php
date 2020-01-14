@@ -438,6 +438,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     protected function preprocessHook()
     {
+        HookHelper::$fromBolt = true;
         $this->hookHelper->preProcessWebhook($this->quote->getStoreId());
     }
 
