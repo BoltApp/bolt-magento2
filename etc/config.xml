@@ -26,7 +26,11 @@
                 <title>Bolt Pay</title>
                 <checkout_type>payment_only_checkout</checkout_type>
                 <sandbox_mode>1</sandbox_mode>
+                <custom_api></custom_api>
+                <custom_merchant_dash></custom_merchant_dash>
+                <custom_cdn></custom_cdn>
                 <debug>0</debug>
+                <product_page_checkout>0</product_page_checkout>
                 <allowspecific>0</allowspecific>
                 <order_status>new</order_status>
                 <currency>USD</currency>
@@ -51,6 +55,7 @@ tr.shipping.totals td.amount span.price,
                 <reset_shipping_calculation>0</reset_shipping_calculation>
                 <minicart_support>1</minicart_support>
                 <store_credit>0</store_credit>
+                <reward_points>0</reward_points>
                 <enable_payment_only_checkout>0</enable_payment_only_checkout>
                 <bolt_order_caching>1</bolt_order_caching>
                 <api_emulate_session>1</api_emulate_session>

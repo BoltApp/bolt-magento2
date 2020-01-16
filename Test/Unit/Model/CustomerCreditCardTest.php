@@ -41,6 +41,7 @@ class CustomerCreditCardTest extends TestCase
     const CARD_INFO = '{"id":"CAfe9tP97CMXs","last4":"1111","display_network":"Visa"}';
     const ENTITY_ID = '1';
     const CUSTOMER_ID = '1111';
+    const INCREMENT_ID = '1111';
 
     /**
      * @var \Bolt\Boltpay\Model\CustomerCreditCard
@@ -112,7 +113,8 @@ class CustomerCreditCardTest extends TestCase
             [
                 'getQuoteId',
                 'getOrderCurrencyCode',
-                'getGrandTotal'
+                'getGrandTotal',
+                'getIncrementId'
             ]
         );
         $this->boltRequest = $this->createMock(BoltRequest::class);
@@ -164,7 +166,8 @@ class CustomerCreditCardTest extends TestCase
     public function recharge_withException(){
         $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
 
-        $this->order->expects(self::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
+        $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
+        $this->order->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
         $this->order->expects(self::once())->method('getGrandTotal')->willReturn(self::QUOTE_GRAND_TOTAL);
         $this->order->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::ORDER_CURRENCY_CODE);
 
@@ -187,7 +190,8 @@ class CustomerCreditCardTest extends TestCase
     public function recharge(){
         $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
 
-        $this->order->expects(self::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
+        $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
+        $this->order->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
         $this->order->expects(self::once())->method('getGrandTotal')->willReturn(self::QUOTE_GRAND_TOTAL);
         $this->order->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::ORDER_CURRENCY_CODE);
 

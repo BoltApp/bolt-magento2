@@ -1,0 +1,292 @@
+<?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
+/**
+ * Product page Bolt Checkout button
+ *
+ * @var $block \Bolt\Boltpay\Block\JsProductPage
+ */
+if ($block->shouldDisableBoltCheckout()) return;
+
+if (!$block->isSupportableType()) return;
+
+$trackCallbacks = $block->getTrackCallbacks();
+
+?>
+    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>
+    <script>
+        // Store the configuration parameters passed from the php block
+        // in the global object. Used in this file and on the payment page
+        // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
+        window.boltConfig = <?php echo $block->getSettings(); ?>;
+        require([
+            'jquery',
+            'Magento_Customer/js/model/authentication-popup',
+            'Magento_Customer/js/customer-data',
+            'mage/validation/validation',
+            'mage/cookies'
+        ], function ($, authenticationPopup, customerData) {
+            var customer = customerData.get('customer');
+            var shoppingCart = customerData.get('cart');
+            var $qty = jQuery('#qty');
+            var max_qty = <?= $block->getProductQty(); ?>;
+            var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
+
+            /**
+             * Pure javascript ajax POST request function
+             *
+             * param string     url                 The request url
+             * param array      params              The URL query string parameters
+             * param callable   callback            The callback function to pass the response data to
+             *
+             * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
+             */
+            var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
+                var xhr;
+                if (typeof async === 'undefined') async = true;
+                if (typeof headers === 'undefined') {
+                    headers = {'Content-Type': 'application/x-www-form-urlencoded'};
+                }
+                xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
+                if (typeof onSuccess === 'function') {
+                    xhr.onload = function () {
+                        var result;
+                        if (xhr.responseType === 'json') {
+                            result = xhr.response;
+                        } else {
+                            result = JSON.parse(xhr.responseText);
+                        }
+                        onSuccess(result);
+                    };
+                }
+                if (typeof onError === 'function') {
+                    xhr.onerror = onError;
+                }
+                xhr.open('POST', url, async);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                for (var header in headers) {
+                    if (headers.hasOwnProperty(header)) {
+                        xhr.setRequestHeader(header, headers[header]);
+                    }
+                }
+                xhr.send(params);
+                return xhr;
+            };
+
+            var settings = window.boltConfig;
+
+            var trackCallbacks = {
+                onCheckoutStart: function() {
+                    try {
+                        <?php echo $trackCallbacks['checkout_start']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onEmailEnter: function(email) {
+                    try {
+                        <?php echo $trackCallbacks['email_enter']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onShippingDetailsComplete: function() {
+                    try {
+                        <?php echo $trackCallbacks['shipping_details_complete']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onShippingOptionsComplete: function() {
+                    try {
+                        <?php echo $trackCallbacks['shipping_options_complete']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onPaymentSubmit: function() {
+                    try {
+                        <?php echo $trackCallbacks['payment_submit']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onSuccess: function() {
+                    try {
+                        <?php echo $trackCallbacks['success']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                },
+                onClose: function() {
+                    try {
+                        <?php echo $trackCallbacks['close']; ?>
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+            };
+            // On multiple checkout open/close actions the success event remains registered
+            // resulting in making the success call multiple times. This variable stores
+            // the last request to be aborted before new one is sent.
+            var save_request;
+
+            var callbacks = {
+
+                close: function () {
+                    popUpOpen = false;
+                    trackCallbacks.onClose();
+
+                    if (callbacks.success_url) {
+                        // redirect on success order save
+                        location.href = callbacks.success_url;
+                    }
+                },
+
+                onCheckoutStart: function() {
+                    trackCallbacks.onCheckoutStart();
+                },
+
+                onShippingDetailsComplete: function() {
+                    trackCallbacks.onShippingDetailsComplete();
+                },
+
+                onShippingOptionsComplete: function() {
+                    trackCallbacks.onShippingOptionsComplete();
+                },
+
+                onPaymentSubmit: function() {
+                    trackCallbacks.onPaymentSubmit();
+                },
+
+                success: function (transaction, callback) {
+                    // abort previously sent save order request.
+                    if (save_request) save_request.abort();
+                    // get thr transaction reference
+                    var parameters = 'reference='+transaction.reference;
+                    // update order ajax request callback
+                    // sets the success order page redirect url from received data
+                    // and calls the final Bolt defined callback
+                    var onSuccess = function(data){
+                        if (data.status !== 'success') {
+                            if (data.message) {
+                                showBoltErrorMessage();
+                                // pretend order creation was success...
+                                // we need to call this; otherwise bolt modal show infinte spinner.
+                                callback();
+                            }
+
+                            return false;
+                        }
+                        try {
+                            <?php echo $block->getjavascriptSuccess(); ?>
+                            callbacks.success_url = data.success_url;
+
+                            trackCallbacks.onSuccess();
+                        } finally {
+                            callback();
+                        }
+                    };
+                    // ajax call to the update order transaction data endpoint.
+                    // passes the bolt transaction reference
+                    save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
+                },
+
+                check: function () {
+                    /**
+                     * On Bolt button click check if guest checkout is allowed.
+                     * Display login popup to guest customers if it is not. The
+                     * Magento customerData and authenticationPopup objects are
+                     * used.
+                     */
+
+                    //check if we have inventory on stock
+                    if ( (max_qty>=0) && $qty && (Number($qty.val()) > max_qty)) {
+                        window.alert("The requested qty is not available");
+                        return false;
+                    }
+
+                    // check if login is required
+                    if ( !customer().firstname && !isGuestCheckoutAllowed) {
+                        // if authentication is required for checkout set a cookie
+                        // for auto opening Bolt checkout after login
+                        authenticationPopup.showModal();
+                        return false;
+                    }
+                    return true;
+                },
+
+                onEmailEnter: function(email) {
+                    trackCallbacks.onEmailEnter(email);
+                    if (callbacks.email !== email) {
+                        ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email));
+                        callbacks.email = email;
+                    }
+                }
+            };
+
+            function setupProductPage() {
+                var quantity = 1;
+                if ($qty) {
+                    quantity = Number($qty.val());
+                }
+                var cart = {
+                    currency: "USD",
+                    items: [{
+                        reference: '<?= $block->getProduct()->getId() ?>',
+                        price: <?= (int) $block->getProduct()->getFinalPrice() ?>,
+                        name: '<?= $block->getProduct()->getName() ?>',
+                        quantity: quantity,
+                    }]
+                };
+
+                var buttonClass = "bolt-product-checkout-button";
+                var hints = {prefill:{}};
+
+                // We need to receive hints from server
+                // meanwhile initiate Bolt without hints to have button early
+                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
+                customerData.init();
+                if ( customer().firstname ) {
+                    ajaxPost(
+                        settings.get_hints_url,
+                        {},
+                        function(result){
+                            BoltCheckout.configureProductCheckout(cart, result.hints, callbacks, {checkoutButtonClassName: buttonClass});
+                        }
+                    );
+                }
+
+            }
+
+            if (
+                (document && document.readyState !== "loading") ||
+                (window && window.document && window.document.readyState !== "loading")
+            ) {
+                setupProductPage();
+            } else {
+                document.addEventListener("DOMContentLoaded", setupProductPage);
+            }
+            jQuery(document).ready(function () {
+                jQuery('#qty').on('change',
+                    function () {
+                        setupProductPage();
+                    }
+                );
+            });
+        });
+    </script>

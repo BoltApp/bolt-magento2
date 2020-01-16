@@ -98,7 +98,10 @@ class EmailTest extends TestCase
             ->getMock();
     }
 
-    public function testExecute_quoteDoesNotExist()
+    /**
+     * @test
+     */
+    public function execute_quoteDoesNotExist()
     {
         $this->checkoutSession->method('getQuote')->willReturn(null);
         $exception = new LocalizedException(__('Quote does not exist.'));
@@ -108,7 +111,10 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testExecute_noQuoteId()
+    /**
+     * @test
+     */
+    public function execute_noQuoteId()
     {
         $this->quote->method('getId')->willReturn(false);
         $exception = new LocalizedException(__('Quote does not exist.'));
@@ -118,7 +124,10 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testExecute_noEmail()
+    /**
+     * @test
+     */
+    public function execute_noEmail()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->request->method('getParam')->willReturn('');
@@ -130,11 +139,12 @@ class EmailTest extends TestCase
     }
 
     /**
-     * This doesn't really seem to test invalid emails as the validateEmail method
-     * needs to be mocked. Generally just making sure that if validateEmail comes
-     * back false we error handle properly
+     * @test
      */
-    public function testExecute_invalidEmail()
+    // Note: This doesn't really seem to test invalid emails as the validateEmail method
+    // needs to be mocked. Generally just making sure that if validateEmail comes
+    // back false we error handle properly
+    public function execute_invalidEmail()
     {
         $invalidEmail = 'invalidemail';
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
@@ -147,13 +157,19 @@ class EmailTest extends TestCase
         $this->currentMock->execute();
     }
 
-    public function testExecute_notifyException()
+    /**
+     * @test
+     */
+    public function execute_notifyException()
     {
         $this->bugsnag->expects($this->once())->method('notifyException');
         $this->currentMock->execute();
     }
 
-    public function testExecute_happyPath()
+    /**
+     * @test
+     */
+    public function execute_happyPath()
     {
         $this->checkoutSession->method('getQuote')->willReturn($this->quote);
         $this->cartHelper->method('validateEmail')->willReturn(true);

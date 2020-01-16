@@ -23,7 +23,7 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Framework\Exception\LocalizedException;
-
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 /**
  * Class CustomerCreditCard
  * @package Bolt\Boltpay\Model
@@ -108,7 +108,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
     public function recharge(OrderModel $order)
     {
         $apiKey = $this->configHelper->getApiKey();
-
+        $orderCurrency = $order->getOrderCurrencyCode();
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData(
@@ -116,9 +116,10 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
                 'consumer_id' => $this->getConsumerId(),
                 'credit_card_id' => $this->getCreditCardId(),
                 'cart' => [
+                    "display_id" =>  $order->getIncrementId()  .'/ '.$order->getQuoteId(),
                     'order_reference' => $order->getQuoteId(),
-                    'total_amount' => $this->cartHelper->getRoundAmount($order->getGrandTotal()),
-                    'currency' => $order->getOrderCurrencyCode()
+                    'total_amount' => CurrencyUtils::toMinor($order->getGrandTotal(), $orderCurrency),
+                    'currency' => $orderCurrency
                 ]
             ]
         );

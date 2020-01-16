@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
@@ -91,6 +92,8 @@ class Order extends AbstractHelper
     const TT_PAYPAL_REFUND = 'paypal_refund';
     const TT_APM_PAYMENT = 'apm_payment';
     const TT_APM_REFUND = 'apm_refund';
+
+    const VALID_HOOKS_FOR_ORDER_CREATION = [Hook::HT_PENDING, Hook::HT_PAYMENT];
 
     /**
      * @var ApiHelper
@@ -305,7 +308,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setShippingMethod($quote, $transaction)
+    protected function setShippingMethod($quote, $transaction)
     {
         if ($quote->isVirtual()) {
             return;
@@ -327,7 +330,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setAddress($quoteAddress, $address)
+    protected function setAddress($quoteAddress, $address)
     {
         $address = $this->cartHelper->handleSpecialAddressCases($address);
 
@@ -370,7 +373,7 @@ class Order extends AbstractHelper
      * @return void
      * @throws \Exception
      */
-    private function setShippingAddress($quote, $transaction)
+    protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
         if ($address) {
@@ -386,7 +389,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    private function setBillingAddress($quote, $transaction)
+    protected function setBillingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->billing_address;
         if ($address) {
@@ -435,13 +438,15 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @param OrderModel $order
      * @param Quote $quote
+     * @throws \Exception
      */
     private function adjustTaxMismatch($transaction, $order, $quote)
     {
-        $boltTaxAmount = round($transaction->order->cart->tax_amount->amount / 100, 2);
-        $boltTotalAmount = round($transaction->order->cart->total_amount->amount / 100, 2);
-
-        $orderTaxAmount = round($order->getTaxAmount(), 2);
+        $currencyCode = $order->getOrderCurrencyCode();
+        $boltTaxAmount = CurrencyUtils::toMajor($transaction->order->cart->tax_amount->amount, $currencyCode);
+        $boltTotalAmount = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, $currencyCode);
+        $precision = CurrencyUtils::getPrecisionForCurrencyCode($currencyCode);
+        $orderTaxAmount = round($order->getTaxAmount(), $precision);
 
         if ($boltTaxAmount != $orderTaxAmount) {
             $order->setTaxAmount($boltTaxAmount);
@@ -599,13 +604,12 @@ class Order extends AbstractHelper
         // get table name with prefix
         $tableName = $this->resourceConnection->getTableName('quote');
 
-        $sql = "DELETE FROM {$tableName} WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id";
         $bind = [
-            'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
-            'entity_id' => $quote->getBoltParentQuoteId()
+            'bolt_parent_quote_id = ?' => $quote->getBoltParentQuoteId(),
+            'entity_id != ?' => $quote->getBoltParentQuoteId()
         ];
 
-        $connection->query($sql, $bind);
+        $connection->delete($tableName, $bind);
     }
 
     /**
@@ -623,6 +627,26 @@ class Order extends AbstractHelper
             "BOLTPAY INFO :: This order was approved by Bolt"
         );
         $order->save();
+    }
+
+    /**
+     * Check if the hook is valid for creating a missing order.
+     * Throw an exception otherwise.
+     *
+     * @param string|null $hookType
+     * @throws BoltException
+     */
+    public function verifyOrderCreationHookType($hookType)
+    {
+        if ( ( Hook::$fromBolt || isset ( $hookType ) )
+            && ! in_array ( $hookType, static::VALID_HOOKS_FOR_ORDER_CREATION )
+        ) {
+            throw new BoltException (
+                __( 'Order creation is forbidden from hook of type: %1', $hookType ),
+                null,
+                CreateOrder::E_BOLT_REJECTED_ORDER
+            );
+        }
     }
 
     /**
@@ -684,6 +708,7 @@ class Order extends AbstractHelper
             if (!$quote) {
                 throw new LocalizedException(__('Unknown quote id: %1', $quoteId));
             }
+            $this->verifyOrderCreationHookType($hookType);
             $order = $this->createOrder($quote, $transaction, $boltTraceId);
         }
 
@@ -777,6 +802,10 @@ class Order extends AbstractHelper
 
         // do not verify inventory, it is already reserved
         $quote->setInventoryProcessed(true);
+
+        if ($order->getAppliedRuleIds() === null) {
+            $order->setAppliedRuleIds('');
+        }
 
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
@@ -880,12 +909,11 @@ class Order extends AbstractHelper
      */
     protected function hasSamePrice($order, $transaction)
     {
-
-        $this->cartHelper->getRoundAmount($order->getTaxAmount());
+        $currencyCode = $order->getOrderCurrencyCode();
         /** @var OrderModel $order */
-        $taxAmount = $this->cartHelper->getRoundAmount($order->getTaxAmount());
-        $shippingAmount = $this->cartHelper->getRoundAmount($order->getShippingAmount());
-        $grandTotalAmount = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+        $taxAmount = CurrencyUtils::toMinor($order->getTaxAmount(), $currencyCode);
+        $shippingAmount = CurrencyUtils::toMinor($order->getShippingAmount(), $currencyCode);
+        $grandTotalAmount = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
@@ -1026,8 +1054,14 @@ class Order extends AbstractHelper
     public function prepareQuote($immutableQuote, $transaction)
     {
         /** @var Quote $quote */
-        $quote = $this->cartHelper->getQuoteById($immutableQuote->getBoltParentQuoteId());
-        $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+        $boltParentQuoteId = $immutableQuote->getBoltParentQuoteId();
+        if ($boltParentQuoteId) {
+            $quote = $this->cartHelper->getQuoteById($boltParentQuoteId);
+            $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+        } else {
+            // In Product page checkout case we created quote ourselves so we can change it and no need to work with quote copy
+            $quote = $immutableQuote;
+        }
         $this->quoteAfterChange($quote);
 
         // Load logged in customer checkout and customer sessions from cached session id.
@@ -1240,12 +1274,13 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param \stdClass $transaction
-     * @return bool true if the order was placed on hold, otherwise false
+     * @throws \Exception
      */
     private function holdOnTotalsMismatch($order, $transaction)
     {
+        $currencyCode = $order->getOrderCurrencyCode();
         $boltTotal = $transaction->order->cart->total_amount->amount;
-        $storeTotal = round($order->getGrandTotal() * 100);
+        $storeTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         // Stop if no mismatch
         if ($boltTotal == $storeTotal) {
@@ -1259,7 +1294,7 @@ class Order extends AbstractHelper
             $comment = __(
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
-                $boltTotal / 100,
+                CurrencyUtils::toMajor($boltTotal, $currencyCode),
                 $order->getGrandTotal(),
                 $this->formatReferenceUrl($transaction->reference)
             );
@@ -1336,6 +1371,7 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param \stdClass $transaction
      * @param null|int $amount
+     * @return array containing transaction information
      */
     private function formatTransactionData($order, $transaction, $amount)
     {
@@ -1346,7 +1382,7 @@ class Order extends AbstractHelper
                 2
             ),
             'Reference' => $transaction->reference,
-            'Amount' => $order->getBaseCurrency()->formatTxt($amount / 100),
+            'Amount' => $this->formatAmountForDisplay($order, $amount / 100),
             'Transaction ID' => $transaction->id
         ];
     }
@@ -1361,11 +1397,13 @@ class Order extends AbstractHelper
     private function getUnprocessedCapture($payment, $transaction)
     {
         $processedCaptures = $this->getProcessedCaptures($payment);
-        return @end(array_filter(
+        return @end(
+            array_filter(
                 $transaction->captures,
-                function($capture) use ($processedCaptures) {
+                function ($capture) use ($processedCaptures) {
                     return !in_array($capture->id, $processedCaptures) && $capture->status == 'succeeded';
-                })
+                }
+            )
         );
     }
 
@@ -1650,17 +1688,12 @@ class Order extends AbstractHelper
             'refunds' => implode(',', $processedRefunds)
         ];
 
-        // format the price with currency symbol
-        $formattedPrice = $order->getBaseCurrency()->formatTxt($amount / 100);
-
         $message = __(
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
             $this->getBoltTransactionStatus($transactionState),
-            $formattedPrice,
+            $this->formatAmountForDisplay($order, $amount / 100),
             $this->formatReferenceUrl($transaction->reference)
         );
-
-        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
 
         // update order payment instance
         $payment->setParentTransactionId($parentTransactionId);
@@ -1671,8 +1704,9 @@ class Order extends AbstractHelper
 
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
-            $this->validateCaptureAmount($order, $amount / 100);
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, $amount / 100);
+            $currencyCode = $order->getOrderCurrencyCode();
+            $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
+            $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
         }
 
         if (!$order->getTotalDue()) {
@@ -1686,6 +1720,7 @@ class Order extends AbstractHelper
             );
         }
 
+        $transactionData = $this->formatTransactionData($order, $transaction, $amount);
         // build a new transaction record and assign it to the order and payment
         /** @var Transaction $payment_transaction */
         $payment_transaction = $this->transactionBuilder->setPayment($payment)
@@ -1720,10 +1755,11 @@ class Order extends AbstractHelper
      * @throws \Exception
      * @throws LocalizedException
      */
-    private function createOrderInvoice($order, $transactionId, $amount)
+    protected function createOrderInvoice($order, $transactionId, $amount)
     {
+        $currencyCode = $order->getOrderCurrencyCode();
         try {
-            if ($this->cartHelper->getRoundAmount($order->getTotalInvoiced() + $amount) === $this->cartHelper->getRoundAmount($order->getGrandTotal())) {
+            if (CurrencyUtils::toMinor($order->getTotalInvoiced() + $amount, $currencyCode) === CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode)) {
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
@@ -1791,19 +1827,17 @@ class Order extends AbstractHelper
             throw new \Exception( __('Capture amount is invalid'));
         }
 
-        /**
-         * Due to grand total sent to Bolt is rounded, the same operation should be used
-         * when validating captured amount.
-         * Rounding operations are applied to each operand in order to avoid cases when the grand total
-         * is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
-         */
-        $captured = $this->cartHelper->getRoundAmount($order->getTotalInvoiced())
-            + $this->cartHelper->getRoundAmount($captureAmount);
-        $grandTotal = $this->cartHelper->getRoundAmount($order->getGrandTotal());
+        $currencyCode = $order->getOrderCurrencyCode();
+        // Due to grand total sent to Bolt is rounded, the same operation should be used when validating captured amount.
+        // Rounding operations are applied to each operand in order to avoid cases when the grand total
+        // is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
+        $captured = CurrencyUtils::toMinor($order->getTotalInvoiced(), $currencyCode)
+            + CurrencyUtils::toMinor($captureAmount, $currencyCode);
+        $grandTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         if ($captured > $grandTotal) {
             throw new \Exception(
-                __('Capture amount is invalid: captured [%s], grand total [%s]', $captured, $grandTotal)
+                __('Capture amount is invalid: captured [%1], grand total [%2]', $captured, $grandTotal)
             );
         }
     }
@@ -1833,10 +1867,21 @@ class Order extends AbstractHelper
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
         $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $order->getBaseCurrency()->formatTxt($voidAmount, array()));
+        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
         $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
+    }
+
+    // Visible for testing
+    /**
+     * @param OrderModel $order
+     * @param float $amount
+     *
+     * @return string
+     */
+    public function formatAmountForDisplay($order, $amount) {
+        return $order->getOrderCurrency()->formatTxt($amount);
     }
 
     /**

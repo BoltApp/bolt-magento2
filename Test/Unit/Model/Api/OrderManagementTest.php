@@ -34,6 +34,7 @@ use Magento\Sales\Model\Order;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class OrderManagementTest
@@ -110,6 +111,11 @@ class OrderManagementTest extends TestCase
     private $requestContent;
 
     /**
+     * @var cartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -139,7 +145,12 @@ class OrderManagementTest extends TestCase
         $this->quoteMock = $this->createMock(Quote::class);
 
         $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
-            ->with(self::ORDER_ID)->willReturn(self::STORE_ID);
+            ->will(self::returnValueMap([
+                [self::ORDER_ID,self::STORE_ID],
+                [null,null]
+            ]));
+
+        $this->cartHelper = $this->createMock(CartHelper::class);
     }
 
     private function initCurrentMock()
@@ -153,7 +164,8 @@ class OrderManagementTest extends TestCase
                 $this->bugsnag,
                 $this->metricsClient,
                 $this->response,
-                $this->configHelper
+                $this->configHelper,
+                $this->cartHelper,
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
@@ -162,6 +174,7 @@ class OrderManagementTest extends TestCase
     /**
      * @test
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_common()
     {
@@ -192,6 +205,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_success()
     {
@@ -221,6 +235,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_fail()
     {
@@ -254,6 +269,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_exception()
     {
@@ -300,6 +316,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_success()
     {
@@ -331,6 +348,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_exception()
     {
@@ -375,6 +393,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_webApiException()
     {
@@ -405,6 +424,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_emptyReference()
     {
@@ -432,6 +452,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_pending()
     {
@@ -474,7 +495,8 @@ class OrderManagementTest extends TestCase
             $this->bugsnag,
             $this->metricsClient,
             $this->response,
-            $this->configHelper
+            $this->configHelper,
+            $this->cartHelper
         );
         $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
@@ -484,6 +506,96 @@ class OrderManagementTest extends TestCase
         $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
         $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
         $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+    }
+
+    /**
+     * @test
+     * @covers ::manage
+     * @covers ::handleCartCreateApiCall
+     */
+    public function manage_cartCreate()
+    {
+        $type = "cart.create";
+
+        $startTime = microtime(true) * 1000;
+        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
+
+        $request = [
+            'type' => 'cart.create',
+            'items' =>
+                [
+                    [
+                        'reference' => '20102',
+                        'name' => 'Product name',
+                        'description' => NULL,
+                        'options' => NULL,
+                        'total_amount' => 100,
+                        'unit_price' => 100,
+                        'tax_amount' => 0,
+                        'quantity' => 1,
+                        'uom' => NULL,
+                        'upc' => NULL,
+                        'sku' => NULL,
+                        'isbn' => NULL,
+                        'brand' => NULL,
+                        'manufacturer' => NULL,
+                        'category' => NULL,
+                        'tags' => NULL,
+                        'properties' => NULL,
+                        'color' => NULL,
+                        'size' => NULL,
+                        'weight' => NULL,
+                        'weight_unit' => NULL,
+                        'image_url' => NULL,
+                        'details_url' => NULL,
+                        'tax_code' => NULL,
+                        'type' => 'unknown'
+                    ]
+                ],
+            'currency' => 'USD',
+            'metadata' => NULL,
+        ];
+        $cart = [
+            'order_reference' => '1001',
+            'display_id' => '100010001 / 1001',
+            'currency' => 'USD',
+            'items' => [ [
+                            'reference' => '20102',
+                            'name' => 'Product name',
+                            'total_amount' => 100,
+                            'unit_price' => 100,
+                            'quantity' => 100,
+                            'sku' => 'TestProduct',
+                            'type' => 'physical',
+                            'description' => ''
+                        ] ],
+            'discounts' => [],
+            'total_amount' => 100,
+            'tax_amount' => 0,
+        ];
+
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with(self::anything(), 1, 'webhooks.latency', $startTime);
+        $this->request->expects(self::once())->method('getBodyParams')->willReturn($request);
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($request)->willReturn($cart);
+        $this->response->expects(self::once())->method('sendResponse');
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'cart' => $cart,
+        ]));
+
+        $this->currentMock->manage(
+            null,
+            null,
+            null,
+            $type,
+            null,
+            null,
+            null,
+            null
+        );
     }
 
     /**

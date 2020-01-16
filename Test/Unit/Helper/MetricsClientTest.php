@@ -180,9 +180,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testFormatCountMetric()
+    public function formatCountMetric()
     {
         $data = [
             'value' => $this->countValue,
@@ -197,9 +197,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testAddMetricLatency()
+    public function addMetricLatency()
     {
         $data = [
             'value' => $this->latencyValue,
@@ -214,9 +214,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testValidWaitForFile()
+    public function validWaitForFile()
     {
         $structure = [
             'test' => [
@@ -250,13 +250,12 @@ class MetricsClientTest extends TestCase
 
         $this->assertNotNull( $outputFile);
         fclose($outputFile);
-
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testInValidWaitForFile()
+    public function inValidWaitForFile()
     {
         $structure = [
             'test' => [
@@ -294,9 +293,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testEmptyWaitForFile()
+    public function emptyWaitForFile()
     {
         $structure = [
             'test' => []
@@ -333,9 +332,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testValidWriteMetricToFile()
+    public function validWriteMetricToFile()
     {
         $structure = [
             'test' => []
@@ -360,10 +359,8 @@ class MetricsClientTest extends TestCase
         $this->currentMock->method('getCurrentTime')
             ->will($this->returnValue($this->timeStamp));
 
-
         $this->currentMock->method('waitForFile')
             ->will($this->returnValue($workingFile));
-
 
         $this->currentMock->writeMetricToFile($testMetric);
 
@@ -375,9 +372,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testNoFileWriteMetricToFile()
+    public function noFileWriteMetricToFile()
     {
         $structure = [
             'test' => []
@@ -414,9 +411,9 @@ class MetricsClientTest extends TestCase
 
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testValidProcessCountMetric()
+    public function validProcessCountMetric()
     {
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -432,7 +429,10 @@ class MetricsClientTest extends TestCase
         $this->currentMock->processCountMetric($this->countKey, $this->countValue);
     }
 
-    public function testValidProcessLatencyMetric()
+    /**
+     * @test
+     */
+    public function validProcessLatencyMetric()
     {
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -449,9 +449,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testFlagOffProcessCountMetric()
+    public function flagOffProcessCountMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
@@ -465,9 +465,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testFlagOffProcessLatencyMetric()
+    public function flagOffProcessLatencyMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(false));
@@ -481,9 +481,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostValidMetrics()
+    public function postValidMetrics()
     {
 
         $structure = [
@@ -525,9 +525,46 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostNoCacheBatchMetrics()
+    public function postMetrics_noWorkingFile()
+    {
+
+        $structure = [
+            'test' => [
+                'valid.json' => $this->fileInput,
+            ]
+        ];
+
+        $root = vfsStream::setup('root',null,$structure);
+
+        $workingFile = fopen($root->url() . '/test/valid.json', "a+");
+
+        $this->initPostMetrics();
+
+        $this->currentMock->method('getFilePath')
+            ->will($this->returnValue($root->url() . '/test/valid.json'));
+
+        $this->currentMock->method('setClient')
+            ->will($this->returnValue( $this->guzzleClient));
+
+        $this->configHelper->expects($this->once())
+            ->method('shouldCaptureMetrics')
+            ->will($this->returnValue(true));
+
+        $this->configHelper->expects($this->never())
+            ->method('getApiKey');
+
+        $this->currentMock->method('waitForFile')
+            ->willReturn(null);
+
+        $this->assertNull($this->currentMock->postMetrics());
+    }
+
+    /**
+     * @test
+     */
+    public function postNoCacheBatchMetrics()
     {
 
         $structure = [
@@ -570,9 +607,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostOldBatchMetrics()
+    public function postOldBatchMetrics()
     {
 
         $structure = [
@@ -615,9 +652,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostRecentBatchMetrics()
+    public function postRecentBatchMetrics()
     {
 
         $structure = [
@@ -656,9 +693,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostInValidMetrics()
+    public function postInValidMetrics()
     {
         $unSuccessfulEndpoint = new MockHandler([
             new Response(422, ['Content-Length' => 0])
@@ -705,9 +742,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testPostMetricsBadEndpoint()
+    public function postMetricsBadEndpoint()
     {
 
         $invalidEndpoint = new MockHandler([
@@ -755,9 +792,9 @@ class MetricsClientTest extends TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testFlagOffPostMetrics()
+    public function flagOffPostMetrics()
     {
         $this->initPostMetrics();
 
@@ -776,9 +813,148 @@ class MetricsClientTest extends TestCase
         $this->assertNull($this->currentMock->postMetrics());
     }
 
+    /**
+     * @test
+     */
+    public function getFilePath()
+    {
+        $filePath = self::invokeInaccessibleMethod($this->currentMock, 'getFilePath');
+        $this->assertTrue(strpos($filePath, '/var/log/bolt_metrics.json') !== false);
+    }
+
+    /**
+     * @test
+     */
+    public function loadFromCache_notCached()
+    {
+        $this->cache
+            ->expects(self::once())
+            ->method('load')
+            ->with(MetricsClient::METRICS_TIMESTAMP_ID)
+            ->willReturn(null);
+        $this->assertFalse(
+            self::invokeInaccessibleMethod(
+                $this->currentMock,
+                'loadFromCache',
+                [MetricsClient::METRICS_TIMESTAMP_ID]
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function loadFromCache_cached_decode()
+    {
+        $cachedValue = '{"key":"value"}';
+        $this->cache
+            ->expects(self::once())
+            ->method('load')
+            ->with(MetricsClient::METRICS_TIMESTAMP_ID)
+            ->willReturn($cachedValue);
+        $this->assertEquals(
+            json_decode($cachedValue),
+            self::invokeInaccessibleMethod(
+                $this->currentMock,
+                'loadFromCache',
+                [MetricsClient::METRICS_TIMESTAMP_ID]
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function loadFromCache_cached_noDecode()
+    {
+        $cachedValue = '{"key":"value"}';
+        $this->cache
+            ->expects(self::once())
+            ->method('load')
+            ->with(MetricsClient::METRICS_TIMESTAMP_ID)
+            ->willReturn($cachedValue);
+        $this->assertEquals(
+            $cachedValue,
+            self::invokeInaccessibleMethod(
+                $this->currentMock,
+                'loadFromCache',
+                [MetricsClient::METRICS_TIMESTAMP_ID, false]
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function processMetric()
+    {
+        $methods = ['processCountMetric', 'processLatencyMetric', 'postMetrics'];
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
+            ->setMethods($methods)
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->configHelper,
+                    $this->directoryList,
+                    $this->storeManager,
+                    $this->bugsnag,
+                    $this->logHelper,
+                    $this->cache
+                ]
+            )
+            ->getMock();
+        $this->currentMock
+            ->expects(self::once())
+            ->method('processCountMetric')
+            ->with($this->countKey, $this->countValue);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('processLatencyMetric')
+            ->with($this->latencyKey,$this->latencyValue);
+        $this->currentMock->expects(self::once())->method('postMetrics');
+
+        $this->currentMock->processMetric($this->countKey, $this->countValue,$this->latencyKey,$this->latencyValue);
+    }
+
+    /**
+     * @test
+     */
+    public function setClient()
+    {
+        $result = self::invokeInaccessibleMethod(
+            $this->currentMock,
+            'setClient'
+        );
+        $this->assertTrue($result instanceof \GuzzleHttp\Client);
+    }
+
+    /**
+     * @test
+     */
+    public function getCurrentTime()
+    {
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->configHelper,
+                    $this->directoryList,
+                    $this->storeManager,
+                    $this->bugsnag,
+                    $this->logHelper,
+                    $this->cache
+                ]
+            )
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
+
+        $time = $this->currentMock->getCurrentTime();
+        $this->assertGreaterThan($this->timeStamp, $time);
+    }
 
     private function initWriteMetricToFile() {
-        $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'getCurrentTime'];
+        $methods = ['getFilePath', 'waitForFile', 'getCurrentTime'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
             ->enableOriginalConstructor()
@@ -832,5 +1008,27 @@ class MetricsClientTest extends TestCase
                 ]
             )
             ->getMock();
+    }
+
+    /**
+     * Invoke a private / protected method of an object.
+     *
+     * @param  object      $object
+     * @param  string      $method
+     * @param  array       $args
+     * @param  string|null $class
+     * @return mixed
+     * @throws \ReflectionException
+     */
+    private static function invokeInaccessibleMethod($object, $method, $args = [], $class = null)
+    {
+        if (is_null($class)) {
+            $class = $object;
+        }
+
+        $method = new \ReflectionMethod($class, $method);
+        $method->setAccessible(true);
+
+        return $method->invokeArgs($object, $args);
     }
 }

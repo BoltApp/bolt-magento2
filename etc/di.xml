@@ -266,4 +266,10 @@
     <type name="Magento\Sales\Model\Order">
         <plugin name="Bolt_Boltpay_Order_Plugin" type="Bolt\Boltpay\Plugin\OrderPlugin" sortOrder="1" />
     </type>
+
+    <type name="Magento\GiftCard\Observer\GenerateGiftCardAccountsOrder">
+        <plugin name="BoltBoltpayGenerateGiftCardAccountsOrder"
+                type="Bolt\Boltpay\Plugin\Magento\GiftCard\GenerateGiftCardAccountsOrderPlugin"
+                sortOrder="1"/>
+    </type>
 </config>
