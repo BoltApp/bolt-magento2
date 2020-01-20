@@ -207,46 +207,6 @@ require([
     ////////////////////////////////
 
     /**
-     * Pure javascript ajax POST request function
-     *
-     * param string     url                 The request url
-     * param array      params              The URL query string parameters
-     * param callable   callback            The callback function to pass the response data to
-     *
-     * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
-     */
-    var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
-        var xhr;
-        if (typeof async === 'undefined') async = true;
-        if (typeof headers === 'undefined') {
-            headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-        }
-        xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-        xhr.onload = function () {
-            var result;
-
-            if (xhr.responseType === 'json') {
-                result = xhr.response;
-            } else {
-                result = JSON.parse(xhr.responseText);
-            }
-            onSuccess(result);
-        };
-        if (typeof onError === 'function') {
-            xhr.onerror = onError;
-        }
-        xhr.open('POST', url, async);
-        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-        for (var header in headers) {
-            if (headers.hasOwnProperty(header)) {
-                xhr.setRequestHeader(header, headers[header]);
-            }
-        }
-        xhr.send(params);
-        return xhr;
-    };
-
-    /**
      * Get the current page checkout type.
      * This function should be extended for Magento checkout extensions.
      *
@@ -413,7 +373,8 @@ require([
             };
             // ajax call to the update order transaction data endpoint.
             // passes the bolt transaction reference
-            save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
+            save_request = $.post(settings.save_order_url, parameters)
+                            .done(onSuccess);
         },
 
         // the Bolt order is created right after the checkout button is clicked
@@ -492,7 +453,9 @@ require([
             create_request = null;
         };
         // send create order request
-        create_request = ajaxPost(settings.create_order_url, params, onSuccess, onError);
+        create_request = $.post(settings.create_order_url, params)
+                          .done(onSuccess)
+                          .fail(onError);
     };
     /////////////////////////////////////////////////////
 
