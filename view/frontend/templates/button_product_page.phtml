@@ -185,7 +185,6 @@ if (!$block->isSupportableType()) return;
                 // We need to receive hints from server
                 // meanwhile initiate Bolt without hints to have button early
                 BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
-                customerData.init();
                 if ( customer().firstname ) {
                     $.post(
                         settings.get_hints_url,
