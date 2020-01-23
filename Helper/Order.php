@@ -574,23 +574,24 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Delete redundant immutable quotes.
+     * Delete redundant immutable quotes and redundant parent (session) quote
+     * Only the converted immutable quote is preserved
      *
-     * @param Quote $quote
+     * @param Quote $convertedQuote  The non-session quote that was converted to an order
      */
-    private function deleteRedundantQuotes($quote)
+    private function deleteRedundantQuotes($convertedQuote)
     {
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
-        $tableName = $this->resourceConnection->getTableName('quote');
+        $fromQuoteTable = $this->resourceConnection->getTableName('quote');
 
-        $bind = [
-            'bolt_parent_quote_id = ?' => $quote->getBoltParentQuoteId(),
-            'entity_id != ?' => $quote->getBoltParentQuoteId()
+        $redundantQuotes = [
+            'bolt_parent_quote_id = ?' => $convertedQuote->getBoltParentQuoteId(), # session quote also uses same id
+            'entity_id != ?' => $convertedQuote->getId()
         ];
 
-        $connection->delete($tableName, $bind);
+        $connection->delete($fromQuoteTable, $redundantQuotes);
     }
 
     /**
@@ -706,7 +707,7 @@ class Order extends AbstractHelper
             // clear reward points applied to immutable quotes
             $this->discountHelper->deleteRedundantAmastyRewardPoints($quote);
 
-            // Delete redundant cloned quotes
+            // Delete redundant cloned quotes along with the now redundant session quote
             $this->deleteRedundantQuotes($quote);
         }
 
@@ -734,17 +735,18 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param Quote $quote
+     * @param Quote $immutableQuote
      */
-    public function dispatchPostCheckoutEvents($order, $quote) {
+    public function dispatchPostCheckoutEvents($order, $immutableQuote) {
+
         // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
         // as a flag to determine if the events were dispatched
-        if (! $quote->getBoltReservedOrderId()) return; // already dispatched
+        if (! $immutableQuote->getBoltReservedOrderId()) return; // already dispatched
 
-        $this->applyExternalQuoteData($quote);
+        $this->applyExternalQuoteData($immutableQuote);
 
         // do not verify inventory, it is already reserved
-        $quote->setInventoryProcessed(true);
+        $immutableQuote->setInventoryProcessed(true);
 
         if ($order->getAppliedRuleIds() === null) {
             $order->setAppliedRuleIds('');
@@ -754,13 +756,20 @@ class Order extends AbstractHelper
         $this->_eventManager->dispatch(
             'checkout_submit_all_after', [
                 'order' => $order,
-                'quote' => $quote
+                'quote' => $immutableQuote
             ]
         );
 
+        // Because we used the true session quote for order save, the order's quote ID does not match the
+        // immutable quote that we will keep for historical purposes.  Here we reassign the quote ID to
+        // the ID of the same quote copy that we have passed to the post checkout events.  We do this after
+        // the events have processed to respect any third party code that is perhaps hard-coded to expect
+        // the session quote value in this field.
+        $order->setQuoteId($immutableQuote->getId())->save();
+
         // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
-        $quote->setBoltReservedOrderId(null);
-        $this->cartHelper->quoteResourceSave($quote);
+        $immutableQuote->setBoltReservedOrderId(null);
+        $this->cartHelper->quoteResourceSave($immutableQuote);
     }
 
     /**
