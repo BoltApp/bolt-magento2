@@ -223,6 +223,27 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
+    public function voidPayment_skipHookNotification()
+    {
+        $this->mockApiResponse(
+            "merchant/transactions/void",
+            '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'
+        );
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data)  {
+                    $this->assertTrue($data->getApiData()['skip_hook_notification']);
+                }
+            )
+        );
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->void($this->paymentMock);
+    }
+
+    /**
+     * @test
+     */
     public function voidPayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->expectException(LocalizedException::class);
@@ -421,6 +442,27 @@ class PaymentTest extends TestCase
             '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->refund($this->paymentMock, 100);
+    }
+
+    /**
+     * @test
+     */
+    public function refundPayment_skipHookNotification(){
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data)  {
+                    $this->assertTrue($data->getApiData()['skip_hook_notification']);
+                }
+            )
+        );
 
         $this->currentMock->refund($this->paymentMock, 100);
     }

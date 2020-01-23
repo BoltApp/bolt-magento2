@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Request\Http;
 /**
  * Class JsTest
@@ -29,6 +30,9 @@ use Magento\Framework\App\Request\Http;
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
+    // Number of settings in method getSettings()
+    const SETTINGS_NUMBER = 18;
+
     /**
      * @var HelperConfig
      */
@@ -70,6 +74,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
     private $magentoQuote;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -88,11 +97,12 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $methods = [
-            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
+            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey', 'getCustomURLValueOrDefault',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled'
+            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
+            'getMinicartSupport', 'getIPWhitelistArray'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -110,6 +120,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
+        $this->decider = $this->createMock(Decider::class);
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getFullActionName'])
@@ -124,7 +135,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
-                    $this->bugsnagHelperMock
+                    $this->bugsnagHelperMock,
+                    $this->decider
                 ]
             )
             ->getMock();
@@ -318,7 +330,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(17, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(SELF::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -327,6 +339,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
         $this->assertArrayHasKey('create_order_url', $array, $message . 'create_order_url');
         $this->assertArrayHasKey('save_order_url', $array, $message . 'save_order_url');
+        $this->assertArrayHasKey('get_hints_url', $array, $message . 'get_hints_url');
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
@@ -365,6 +378,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->expects($this->any())
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
+
+        $this->configHelper
+            ->method('getCustomURLValueOrDefault')
+            ->will($this->returnArgument(1));
     }
 
     public function setBoltInitiateCheckout($value = true)
@@ -390,6 +407,30 @@ class JsTest extends \PHPUnit\Framework\TestCase
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOff()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(false);
+        $this->assertTrue($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOn()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(true);
+        $this->configHelper->method('isActive')->willReturn(true);
+        $this->configHelper->method('isIPRestricted')->willReturn(false);
+        $this->requestMock->method('getFullActionName')->willReturn('unrestrictedPage');
+        $this->configHelper->method('getPageBlacklist')->willReturn(array('anotherPage', 'restrictedPage'));
+        $this->configHelper->method('getMinicartSupport')->willReturn(true);
+        $this->configHelper->method('getIPWhitelistArray')->willReturn(array());
+        $this->assertFalse($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
     }
 
     /**

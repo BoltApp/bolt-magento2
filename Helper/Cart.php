@@ -52,6 +52,10 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\Order;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Quote\Api\CartManagementInterface;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Framework\Webapi\Exception as WebapiException;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 
 /**
  * Boltpay Cart helper
@@ -161,6 +165,16 @@ class Cart extends AbstractHelper
      */
     private $discountHelper;
 
+    /**
+     * @var HookHelper
+     */
+    private $hookHelper;
+
+    /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -206,6 +220,11 @@ class Cart extends AbstractHelper
     private $orderData;
 
     /**
+     * @var CartManagementInterface
+     */
+    private $quoteManagement;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -228,6 +247,9 @@ class Cart extends AbstractHelper
      * @param DiscountHelper $discountHelper
      * @param CacheInterface $cache
      * @param ResourceConnection $resourceConnection
+     * @param CartManagementInterface $quoteManagement
+     * @param HookHelper $hookHelper
+     * @param CustomerRepository $customerRepository
      *
      * @codeCoverageIgnore
      */
@@ -253,7 +275,10 @@ class Cart extends AbstractHelper
         CheckoutHelper $checkoutHelper,
         DiscountHelper $discountHelper,
         CacheInterface $cache,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        CartManagementInterface $quoteManagement,
+        HookHelper $hookHelper,
+        CustomerRepository $customerRepository
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -277,6 +302,9 @@ class Cart extends AbstractHelper
         $this->discountHelper = $discountHelper;
         $this->cache = $cache;
         $this->resourceConnection = $resourceConnection;
+        $this->quoteManagement = $quoteManagement;
+        $this->hookHelper = $hookHelper;
+        $this->customerRepository = $customerRepository;
     }
 
     /**
@@ -718,7 +746,7 @@ class Cart extends AbstractHelper
      * Get the hints data for checkout
      *
      * @param string $cartReference            (immutable) quote id
-     * @param string $checkoutType             'cart' | 'admin' Default to `admin`
+     * @param string $checkoutType             'cart' | 'admin' | 'product' Default to `admin`
      *
      * @return array
      * @throws NoSuchEntityException
@@ -726,9 +754,14 @@ class Cart extends AbstractHelper
     public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
-        $quote = $cartReference ?
-            $this->getQuoteById($cartReference) :
-            $this->checkoutSession->getQuote();
+        if ($checkoutType<>'product') {
+            $quote = $cartReference ?
+                $this->getQuoteById($cartReference) :
+                $this->checkoutSession->getQuote();
+        } else {
+            // For product page checkout we dont't have any Quote object
+            $quote = null;
+        }
 
         $hints = ['prefill' => []];
 
@@ -746,7 +779,7 @@ class Cart extends AbstractHelper
             $prefill = [
                 'firstName'    => $address->getFirstname(),
                 'lastName'     => $address->getLastname(),
-                'email'        => $address->getEmail() ?: $quote->getCustomerEmail(),
+                'email'        => $address->getEmail(),
                 'phone'        => $address->getTelephone(),
                 'addressLine1' => $address->getStreetLine(1),
                 'addressLine2' => $address->getStreetLine(2),
@@ -755,6 +788,9 @@ class Cart extends AbstractHelper
                 'zip'          => $address->getPostcode(),
                 'country'      => $address->getCountryId(),
             ];
+            if (!$prefill['email'] && $quote) {
+                $prefill['email'] = $quote->getCustomerEmail();
+            }
 
             // Skip pre-fill for Apple Pay related data.
             if ($prefill['email'] == 'fake@email.com' || $prefill['phone'] == '1111111111') {
@@ -778,7 +814,10 @@ class Cart extends AbstractHelper
             $signRequest = [
                 'merchant_user_id' => $customer->getId(),
             ];
-            $signResponse = $this->getSignResponse($signRequest, $quote->getStoreId())->getResponse();
+            $signResponse = $this->getSignResponse(
+                $signRequest,
+                $quote ? $quote->getStoreId() : null
+            )->getResponse();
 
             if ($signResponse) {
                 $hints['signed_merchant_user_id'] = [
@@ -788,21 +827,27 @@ class Cart extends AbstractHelper
                 ];
             }
 
-            if ($quote->isVirtual()) {
+            if ($quote && $quote->isVirtual()) {
                 $prefillHints($customer->getDefaultBillingAddress());
             } else {
+                // TODO: use billing address for checkout on product page and virtual products
                 $prefillHints($customer->getDefaultShippingAddress());
             }
 
             $hints['prefill']['email'] = $customer->getEmail();
+            if ($checkoutType=='product') {
+                $hints['metadata']['encrypted_user_id'] = $this->getEncodeUserId();
+            }
         }
 
         // Quote shipping / billing address.
         // If assigned it takes precedence over logged in user default address.
-        if ($quote->isVirtual()) {
-            $prefillHints($quote->getBillingAddress());
-        } else {
-            $prefillHints($quote->getShippingAddress());
+        if ($quote) {
+            if ($quote->isVirtual()) {
+                $prefillHints($quote->getBillingAddress());
+            } else {
+                $prefillHints($quote->getShippingAddress());
+            }
         }
 
         if ($checkoutType === 'admin') {
@@ -810,6 +855,23 @@ class Cart extends AbstractHelper
         }
 
         return $hints;
+    }
+
+    /**
+     *  Generate JSON data contains user_id and signature
+     *  It used for PPC (product page checkout)
+     *
+     */
+    private function getEncodeUserId()
+    {
+        $user_id = $this->customerSession->getCustomer()->getId();
+        $result = array(
+            'user_id'   => $user_id,
+            'timestamp' => time()
+        );
+        $result['signature'] = $this->hookHelper->computeSignature( json_encode( $result ) );
+
+        return json_encode( $result );
     }
 
     /**
@@ -1746,5 +1808,80 @@ class Cart extends AbstractHelper
 
         // no restrictions
         return false;
+    }
+
+    /**
+     * Create cart by request
+     * TODO: add support for foreign currencies
+     * TODO: add support for multistore
+     *
+     * @param array $request
+     *
+     * @return array cart_data in bolt format
+     * @throws \Exception
+     */
+    public function createCartByRequest($request)
+    {
+        $quoteId = $this->quoteManagement->createEmptyCart();
+        $quote = $this->quoteFactory->create()->load($quoteId);
+
+        if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
+            $this->assignQuoteCustomerByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
+        }
+
+        //add item to quote
+        $item = $request['items'][0];
+        $product = $this->productRepository->getbyId($item['reference']);
+        $quote->addProduct($product, $item['quantity']);
+
+        $quote->reserveOrderId();
+
+        // We use boltReservedOrderId for two purposes:
+        // - to have in subsidiary Quote the same orderId as in immutableQuote
+        // - to make work in dispatchPostCheckoutEvents only once
+        // Second purpose is actual for Product page checkout
+        // so we need to set boltReservedOrderId
+        $quote->setBoltReservedOrderId($quote->getReservedOrderId());
+
+        $quote->collectTotals()->save();
+
+        $cart_data = $this->getCartData(false,'',$quote);
+        $cart_data['order_reference'] = $quote->getId();
+
+        return $cart_data;
+    }
+
+    /**
+     * Assign customer to Quote by encrypted user id
+     *
+     * @param Quote $quote
+     * @param string $encrypted_user_id string generated by self::getEncodeUserId
+     */
+    private function assignQuoteCustomerByEncryptedUserId($quote, $encrypted_user_id)
+    {
+        $metadata = json_decode( $encrypted_user_id );
+        if ( ! $metadata || ! isset( $metadata->user_id ) || ! isset( $metadata->timestamp ) || ! isset( $metadata->signature ) ) {
+            throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
+        }
+
+        $payload = array(
+            'user_id'   => $metadata->user_id,
+            'timestamp' => $metadata->timestamp
+        );
+
+        if ( !$this->hookHelper->verifySignature( json_encode( $payload ), $metadata->signature ) ) {
+            throw new WebapiException(__('Incorrect signature'), 6306, 422);
+        }
+
+        if ( time() - $metadata->timestamp > 3600 ) {
+            throw new WebapiException(__('Outdated encrypted_user_id'), 6306, 422);
+        }
+
+        try {
+            $customer = $this->customerRepository->getById($metadata->user_id);
+        } catch (\Exception $e) {
+            throw new WebapiException(__('Incorrect user_id'), 6306, 422);
+        }
+        $quote->assignCustomer($customer); // Assign quote to Customer
     }
 }

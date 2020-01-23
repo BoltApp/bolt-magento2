@@ -17,8 +17,7 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Bolt\Boltpay\Helper\Logger;
-use Bolt\Boltpay\Logger\Logger as BoltLoger;
+use Bolt\Boltpay\Logger\Logger as BoltLogger;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -32,7 +31,7 @@ use Magento\Framework\App\Helper\Context;
 class Log extends AbstractHelper
 {
     /**
-     * @var Logger
+     * @var BoltLogger
      */
     private $boltLogger;
 
@@ -43,13 +42,13 @@ class Log extends AbstractHelper
 
     /**
      * @param Context $context
-     * @param BoltLoger $boltLogger
+     * @param BoltLogger $boltLogger
      * @param ConfigHelper $configHelper
      * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
-        BoltLoger $boltLogger,
+        BoltLogger $boltLogger,
         ConfigHelper $configHelper
     ) {
         parent::__construct($context);
