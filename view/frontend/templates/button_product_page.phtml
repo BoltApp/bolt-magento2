@@ -151,6 +151,10 @@ if (!$block->isSupportableType()) return;
                         authenticationPopup.showModal();
                         return false;
                     }
+
+                    if (!hints) {
+                        return false;
+                    }
                     return true;
                 },
 
@@ -179,8 +183,6 @@ if (!$block->isSupportableType()) return;
                     }]
                 };
 
-                var buttonClass = "bolt-product-checkout-button";
-
                 BoltCheckout.configureProductCheckout(
                     cart,
                     hints,
@@ -189,6 +191,7 @@ if (!$block->isSupportableType()) return;
                 );
             };
 
+            var buttonClass = "bolt-product-checkout-button";
             var hints;
 
             // wait for the hints to load
@@ -203,5 +206,8 @@ if (!$block->isSupportableType()) return;
                     setupProductPage();
                     $('#qty').on('change', setupProductPage);
                 });
+
+            // early button display, not active untill hints are received
+            BoltCheckout.configureProductCheckout({},{}, callbacks, {checkoutButtonClassName: buttonClass});
         });
     </script>
