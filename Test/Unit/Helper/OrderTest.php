@@ -1065,12 +1065,13 @@ class OrderTest extends TestCase
      */
     public function dispatchPostCheckoutEvents()
     {
-        list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(true);
-        $quoteMock->expects(self::once())->method('setInventoryProcessed')->with(true);
+        list($orderMock, $immutableQuoteMock) = $this->dispatchPostCheckoutEventsSetUp();
+        $immutableQuoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(true);
+        $immutableQuoteMock->expects(self::once())->method('setInventoryProcessed')->with(true);
 
         $orderMock->expects(self::once())->method('getAppliedRuleIds')->willReturn(null);
         $orderMock->expects(self::once())->method('setAppliedRuleIds')->with('');
+        $orderMock->expects(self::once())->method('setQuoteId')->with($immutableQuoteMock->getId())->willReturnSelf();
 
         $this->logHelper->expects(self::once())->method('addInfoLog')->with('[-= dispatchPostCheckoutEvents =-]');
         $this->eventManager->expects(self::once())->method('dispatch')
@@ -1078,14 +1079,14 @@ class OrderTest extends TestCase
                 'checkout_submit_all_after',
                 [
                     'order' => $orderMock,
-                    'quote' => $quoteMock
+                    'quote' => $immutableQuoteMock
                 ]
             );
 
-        $quoteMock->expects(self::once())->method('setBoltReservedOrderId')->with(null);
-        $this->cartHelper->expects(self::once())->method('quoteResourceSave')->with($quoteMock);
+        $immutableQuoteMock->expects(self::once())->method('setBoltReservedOrderId')->with(null);
+        $this->cartHelper->expects(self::once())->method('quoteResourceSave')->with($immutableQuoteMock);
 
-        $this->currentMock->dispatchPostCheckoutEvents($orderMock, $quoteMock);
+        $this->currentMock->dispatchPostCheckoutEvents($orderMock, $immutableQuoteMock);
     }
 
     /**

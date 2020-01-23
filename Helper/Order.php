@@ -760,10 +760,11 @@ class Order extends AbstractHelper
             ]
         );
 
-        // Because we used the true session quote for order save, the order's quote ID does not match the
-        // immutable quote that we will keep for historical purposes.  Here we reassign the quote ID to
-        // the ID of the same quote copy that we have passed to the post checkout events.  We do this after
-        // the events have processed to respect any third party code that is perhaps hard-coded to expect
+        // Because we used the true session quote for order save, the order's quote ID
+        // does not match the immutable quote that we will keep for historical purposes.
+        // Here we reassign the quote ID to the ID of the same quote copy that we have
+        // passed to the post checkout events.  We do this after the events have processed
+        // to respect any third party code that is perhaps hard-coded to expect
         // the session quote value in this field.
         $order->setQuoteId($immutableQuote->getId())->save();
 
