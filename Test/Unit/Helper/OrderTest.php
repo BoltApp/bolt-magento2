@@ -1474,7 +1474,7 @@ class OrderTest extends TestCase
             sprintf(
                 'Order Cancelation Error. Order does not exist. Order #: %s Immutable Quote ID: %s',
                 self::INCREMENT_ID,
-                self::PARENT_QUOTE_ID
+                self::IMMUTABLE_QUOTE_ID
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
@@ -1575,7 +1575,7 @@ class OrderTest extends TestCase
                 'Order Delete Error. Order is in invalid state. Order #: %s State: %s Immutable Quote ID: %s',
                 self::INCREMENT_ID,
                 $state,
-                self::PARENT_QUOTE_ID
+                self::IMMUTABLE_QUOTE_ID
             )
         );
         $this->currentMock->expects(static::never())->method('deleteOrder');
