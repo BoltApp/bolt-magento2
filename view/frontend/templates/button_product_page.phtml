@@ -31,11 +31,10 @@ if (!$block->isSupportableType()) return;
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
             'mage/validation/validation',
-            'mage/cookies'
+            'mage/cookies',
+            'domReady!'
         ], function ($, authenticationPopup, customerData) {
             var customer = customerData.get('customer');
-            var shoppingCart = customerData.get('cart');
-            var $qty = jQuery('#qty');
             var max_qty = <?= $block->getProductQty(); ?>;
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
 
@@ -140,7 +139,7 @@ if (!$block->isSupportableType()) return;
                      */
 
                     //check if we have inventory on stock
-                    if ( (max_qty>=0) && $qty && (Number($qty.val()) > max_qty)) {
+                    if ( max_qty >= 0 && getQty() > max_qty ) {
                         window.alert("The requested qty is not available");
                         return false;
                     }
@@ -164,52 +163,45 @@ if (!$block->isSupportableType()) return;
                 }
             };
 
-            function setupProductPage() {
-                var quantity = 1;
-                if ($qty) {
-                    quantity = Number($qty.val());
-                }
+            var getQty = function() {
+                var quantity = Number($('#qty').val());
+                return quantity > 0 ? quantity : 1;
+            };
+
+            var setupProductPage = function () {
                 var cart = {
                     currency: "USD",
                     items: [{
                         reference: '<?= $block->getProduct()->getId() ?>',
                         price: <?= (int) $block->getProduct()->getFinalPrice() ?>,
                         name: '<?= $block->getProduct()->getName() ?>',
-                        quantity: quantity,
+                        quantity: getQty(),
                     }]
                 };
 
                 var buttonClass = "bolt-product-checkout-button";
-                var hints = {prefill:{}};
 
-                // We need to receive hints from server
-                // meanwhile initiate Bolt without hints to have button early
-                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
-                if ( customer().firstname ) {
-                    $.post(
-                        settings.get_hints_url,
-                        function(result) {
-                            BoltCheckout.configureProductCheckout(cart, result.hints, callbacks, {checkoutButtonClassName: buttonClass});
-                        }
-                    );
-                }
-
-            }
-
-            if (
-                (document && document.readyState !== "loading") ||
-                (window && window.document && window.document.readyState !== "loading")
-            ) {
-                setupProductPage();
-            } else {
-                document.addEventListener("DOMContentLoaded", setupProductPage);
-            }
-            jQuery(document).ready(function () {
-                jQuery('#qty').on('change',
-                    function () {
-                        setupProductPage();
-                    }
+                BoltCheckout.configureProductCheckout(
+                    cart,
+                    hints,
+                    callbacks,
+                    {checkoutButtonClassName: buttonClass}
                 );
-            });
+            };
+
+            var hints;
+
+            // wait for the hints to load
+            // the viable way to assign user to order
+            // TODO: pass store id this way as well
+            $.get(settings.get_hints_url)
+                .done(function(data) {
+                    hints = data.hints;
+                }).fail(function() {
+                    hints = {prefill:{}};
+                }).always(function() {
+                    setupProductPage();
+                    $('#qty').on('change', setupProductPage);
+                });
         });
     </script>
