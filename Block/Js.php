@@ -428,10 +428,7 @@ class Js extends Template
      */
     public function getStoreId()
     {
-        /** @var Quote $quote */
-        $quote = $this->getQuoteFromCheckoutSession();
-
-        return  $quote && $quote->getStoreId() ? $quote->getStoreId() : null;
+        return $this->_storeManager->getStore()->getId();
     }
 
     /**

@@ -176,27 +176,20 @@ if (!$block->isSupportableType()) return;
                 var cart = {
                     currency: "USD",
                     items: [{
-                        reference: '<?= $block->getProduct()->getId() ?>',
-                        price: <?= (int) $block->getProduct()->getFinalPrice() ?>,
-                        name: '<?= $block->getProduct()->getName() ?>',
+                        reference: '<?= $block->getProduct()->getId(); ?>',
+                        price: <?= (int) $block->getProduct()->getFinalPrice(); ?>,
+                        name: '<?= $block->getProduct()->getName(); ?>',
                         quantity: getQty(),
+                        options: '<?= $block->getStoreId(); ?>'
                     }]
                 };
-
-                BoltCheckout.configureProductCheckout(
-                    cart,
-                    hints,
-                    callbacks,
-                    {checkoutButtonClassName: buttonClass}
-                );
+                BoltCheckout.configureProductCheckout(cart, hints, callbacks);
             };
 
-            var buttonClass = "bolt-product-checkout-button";
             var hints;
 
             // wait for the hints to load
             // the viable way to assign user to order
-            // TODO: pass store id this way as well
             $.get(settings.get_hints_url)
                 .done(function(data) {
                     hints = data.hints;
@@ -208,6 +201,6 @@ if (!$block->isSupportableType()) return;
                 });
 
             // early button display, not active untill hints are received
-            BoltCheckout.configureProductCheckout({},{}, callbacks, {checkoutButtonClassName: buttonClass});
+            BoltCheckout.configureProductCheckout({},{}, callbacks);
         });
     </script>
