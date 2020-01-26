@@ -422,7 +422,7 @@ class Js extends Template
     }
 
     /**
-     * If we have multi-website, we need current quote store_id
+     * If we have multi-website, we need current store_id
      *
      * @return int
      */

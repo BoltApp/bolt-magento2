@@ -881,7 +881,8 @@ class OrderTest extends TestCase
                 'createOrder',
                 'resetOrderState',
                 'dispatchPostCheckoutEvents',
-                'updateOrderPayment'
+                'updateOrderPayment',
+                'getOrderByQuoteId'
             ],
             false
         );
@@ -909,10 +910,11 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @dataProvider trueAndFalseDataProvider
      *
      * @covers ::saveUpdateOrder
      */
-    public function saveUpdateOrder()
+    public function saveUpdateOrder($getOrderByParentQuoteID)
     {
         $this->saveUpdateOrderSetUp();
 
@@ -935,8 +937,15 @@ class OrderTest extends TestCase
             }
         );
 
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        if ($getOrderByParentQuoteID) {
+            $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+                ->with(self::INCREMENT_ID)->willReturn(null);
+            $this->currentMock->expects(self::once())->method('getOrderByQuoteId')
+                ->with(self::QUOTE_ID)->willReturn($this->orderMock);
+        } else {
+            $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+                ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+        }
         $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::once())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
         $this->discountHelper->expects(self::once())->method('deleteRedundantAmastyGiftCards')->with($this->quoteMock);
@@ -982,6 +991,8 @@ class OrderTest extends TestCase
 
         $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
             ->with(self::INCREMENT_ID)->willReturn(null);
+        $this->currentMock->expects(self::once())->method('getOrderByQuoteId')
+            ->with(self::QUOTE_ID)->willReturn(null);
         $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
 
@@ -1011,6 +1022,8 @@ class OrderTest extends TestCase
 
         $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
             ->with(self::INCREMENT_ID)->willReturn(null);
+        $this->currentMock->expects(self::once())->method('getOrderByQuoteId')
+            ->with(self::QUOTE_ID)->willReturn(null);
 
         $this->currentMock->expects(self::once())->method('createOrder')
             ->with($this->quoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($this->orderMock);
@@ -3355,5 +3368,27 @@ class OrderTest extends TestCase
             [false, null],
             [false, '', true]
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getOrderByQuoteId()
+    {
+        $quoteId = self::QUOTE_ID;
+
+        $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
+
+        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
+        $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
+
+        $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $collection = [$orderInterface, $orderInterface2];
+        $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
+        $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
+
+        $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
+        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
     }
 }
