@@ -232,6 +232,17 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
+        if ($type === 'failed_payment') {
+            $this->orderHelper->deleteOrderByIncrementId($display_id);
+
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'message' => 'Order was deleted: ' . $display_id,
+            ]));
+            return;
+        }
+
         $this->handleCheckboxes($display_id);
 
         if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
@@ -240,28 +251,20 @@ class OrderManagement implements OrderManagementInterface
                 'status' => 'success',
                 'message' => 'Order was canceled due to declined payment: ' . $display_id,
             ]));
-        } elseif ($type === 'failed_payment') {
-            $this->orderHelper->deleteOrderByIncrementId($display_id);
-
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order was deleted: ' . $display_id,
-            ]));
-        } else {
-            $this->orderHelper->saveUpdateOrder(
-                $reference,
-                $storeId,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                $type
-            );
-
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order creation / update was successful',
-            ]));
+            return;
         }
+
+        $this->orderHelper->saveUpdateOrder(
+            $reference,
+            $storeId,
+            $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+            $type
+        );
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'message' => 'Order creation / update was successful',
+        ]));
     }
 
     /**
