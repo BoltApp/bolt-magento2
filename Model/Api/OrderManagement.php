@@ -194,7 +194,7 @@ class OrderManagement implements OrderManagementInterface
      *
      * @param string $displayId
      */
-    private function handleCheckboxes($displayId) {
+    public function handleCheckboxes($displayId) {
         $request = $this->request->getBodyParams();
         if (!isset($request['checkboxes']) || !$request['checkboxes']) {
             return;

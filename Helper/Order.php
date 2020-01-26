@@ -1984,12 +1984,16 @@ class Order extends AbstractHelper
             return;
         }
         $customerId = $order->getCustomerId();
-        if ($customerId) {
-            $this->subscriberFactory->create()->subscribeCustomerById($customerId);
-        } else {
-            $email = $order->getBillingAddress()->getEmail();
-            $this->subscriberFactory->create()->subscribe($email);
-
+        try {
+            if ($customerId) {
+                $this->subscriberFactory->create()->subscribeCustomerById($customerId);
+            } else {
+                $email = $order->getBillingAddress()->getEmail();
+                $this->subscriberFactory->create()->subscribe($email);
+            }
+        } catch (\Exception $e) {
+            // We are here if we are unable to send confirmation email, for example don't have transport
+            $this->bugsnag->notifyException($e);
         }
     }
 }
