@@ -106,6 +106,7 @@ class OrderTest extends TestCase
         'random_empty_field'         => '',
         'another_random_empty_field' => [],
     ];
+    const USER_ID = 1;
 
     /** @var MockObject|ApiHelper */
     private $apiHelper;
@@ -352,7 +353,10 @@ class OrderTest extends TestCase
                 'setBaseGrandTotal',
                 'setGrandTotal',
                 'getOrderCurrency',
-                'getQuoteId'
+                'getQuoteId',
+                'getAllStatusHistory',
+                'getCustomerId',
+                'getBillingAddress'
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -3433,4 +3437,87 @@ class OrderTest extends TestCase
         ];
     }
 
+    /**
+     * @test
+     * @dataProvider addCommentToStatusHistoryIfNotExistsDataProvider
+     *
+     * @covers ::addCommentToStatusHistoryIfNotExists
+     */
+    public function addCommentToStatusHistoryIfNotExists($searchPhrase, $isAddComment)
+    {
+        $displayId = self::DISPLAY_ID;
+        $comment = 'Text comment with search phrase';
+
+        $this->initCurrentMock(['getDataFromDisplayID', 'getExistingOrder']);
+
+        $this->currentMock->method('getDataFromDisplayID')->with($displayId)->willReturn(array(self::INCREMENT_ID, null));
+        $this->currentMock->method('getExistingOrder')->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+
+        $orderStatusHistory = $this->createMock(\Magento\Sales\Api\Data\OrderStatusHistoryInterface::class);
+        $orderStatusHistory->method('getComment')->willReturn('Text without search_phrase');
+        $orderStatusHistory2 = $this->createMock(\Magento\Sales\Api\Data\OrderStatusHistoryInterface::class);
+        $orderStatusHistory2->method('getComment')->willReturn('Text with search phrase');
+
+        $this->orderMock->method('getAllStatusHistory')->willReturn([$orderStatusHistory, $orderStatusHistory2]);
+
+        if ($isAddComment) {
+            $this->orderMock->expects($this->once())->method('addCommentToStatusHistory')->with($comment);
+            $this->orderMock->expects($this->once())->method('save');
+        } else {
+            $this->orderMock->expects($this->never())->method('addCommentToStatusHistory')->with($comment);
+            $this->orderMock->expects($this->never())->method('save');
+        }
+        $this->currentMock->addCommentToStatusHistoryIfNotExists($displayId, $comment, $searchPhrase);
+    }
+
+    public function addCommentToStatusHistoryIfNotExistsDataProvider() {
+        return [
+            ['search phrase', false],
+            ['another search phrase', true],
+        ];
+    }
+
+    private function subscribeForNewsletter_setup()
+    {
+        $this->initCurrentMock(['getDataFromDisplayID', 'getExistingOrder']);
+        $this->currentMock->method('getDataFromDisplayID')->with(self::DISPLAY_ID)->willReturn(array(self::INCREMENT_ID, null));
+        $this->currentMock->method('getExistingOrder')->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+
+        $this->subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
+        $this->subscriberFactory->method('create')->willReturn($this->subscriber);
+    }
+
+    /**
+     * @test
+     * @covers ::subscribeForNewsletter
+     */
+    public function subscribeForNewsletter_guestUser()
+    {
+        $email = SELF::ADDRESS_DATA['email_address'];
+        $this->subscribeForNewsletter_setup();
+        $this->orderMock->method('getCustomerId')->willReturn(null);
+
+        $addressMock = $this->createMock(Address::class);
+        $addressMock->method('getEmail')->willReturn($email);
+        $this->orderMock->method('getBillingAddress')->willReturn($addressMock);
+
+        $this->subscriber->expects($this->once())->method('subscribe')->with($email);
+
+        $this->currentMock->subscribeForNewsletter(self::DISPLAY_ID);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::subscribeForNewsletter
+     */
+    public function subscribeForNewsletter_loggedInUser()
+    {
+        $this->subscribeForNewsletter_setup();
+        $this->orderMock->method('getCustomerId')->willReturn(self::USER_ID);
+
+        $this->subscriber->expects($this->once())->method('subscribeCustomerById')->with(self::USER_ID);
+
+        $this->currentMock->subscribeForNewsletter(self::DISPLAY_ID);
+    }
 }
