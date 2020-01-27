@@ -45,6 +45,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 use Magento\Quote\Model\Quote;
@@ -63,8 +64,8 @@ use Magento\Quote\Model\Quote\TotalsCollector;
  */
 class DiscountCodeValidationTest extends TestCase
 {
-    const PARENT_QUOTE_ID = 1000;
-    const IMMUTABLE_QUOTE_ID = 1001;
+    const PARENT_QUOTE_ID = "1000";
+    const IMMUTABLE_QUOTE_ID = "1001";
     const INCREMENT_ID = 100050001;
     const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
     const RULE_ID = 6;
@@ -151,6 +152,11 @@ class DiscountCodeValidationTest extends TestCase
     private $discountHelper;
 
     /**
+     * @var MockObject|OrderHelper
+     */
+    private $orderHelper;
+
+    /**
      * @var MockObject|Bugsnag
      */
     private $bugsnag;
@@ -229,6 +235,7 @@ class DiscountCodeValidationTest extends TestCase
      * @var MockObject|Rule\Customer
      */
     private $ruleCustomerMock;
+
 
     /**
      * @inheritdoc
@@ -355,27 +362,27 @@ class DiscountCodeValidationTest extends TestCase
         $this->shippingAddressMock->method('getGroupedAllShippingRates')
             ->willReturn([['flatrate' => $addressRate]]);
 
-        $this->cartHelper->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::PARENT_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
-
-        $this->cartHelper->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::IMMUTABLE_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
+            )],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $result = $this->currentMock->validate();
 
@@ -457,27 +464,27 @@ class DiscountCodeValidationTest extends TestCase
         $shippingRates = [['flatrate' => $addressRate]];
         $this->shippingAddressMock->method('getGroupedAllShippingRates')->willReturn($shippingRates);
 
-        $this->cartHelper->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::PARENT_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
-
-        $this->cartHelper->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::IMMUTABLE_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
+            )],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $this->cartHelper->method('handleSpecialAddressCases')
             ->willReturn((object)$request_shipping_addr);
@@ -577,27 +584,27 @@ class DiscountCodeValidationTest extends TestCase
         $this->shippingAddressMock->method('getGroupedAllShippingRates')
             ->willReturn($shippingRates);
 
-        $this->cartHelper->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::PARENT_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
-
-        $this->cartHelper->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->getQuoteMock(
                 $couponCode,
                 null,
                 null,
                 false,
                 self::IMMUTABLE_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
+            )],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_CODE_INVALID,
@@ -644,7 +651,7 @@ class DiscountCodeValidationTest extends TestCase
         $exception = new NoSuchEntityException();
 
         $this->request->expects(self::atLeastOnce())->method('getContent')->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')->with(self::PARENT_QUOTE_ID)
+        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::PARENT_QUOTE_ID)
             ->willThrowException($exception);
 
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
@@ -693,7 +700,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn($this->getQuoteMock(
                 '',
@@ -728,7 +735,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn($this->getQuoteMock(
                 '',
@@ -770,7 +777,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn($this->getQuoteMock(
                 '',
@@ -788,7 +795,7 @@ class DiscountCodeValidationTest extends TestCase
             ]
         );
 
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+        $this->orderHelper->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn(true);
 
         $this->expectErrorResponse(
@@ -815,16 +822,21 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
+
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
                 '',
                 null,
                 null,
                 false,
                 self::PARENT_QUOTE_ID,
                 self::PARENT_QUOTE_ID
-            ));
+            )],
+            [self::IMMUTABLE_QUOTE_ID, false],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $this->configureCouponMockMethods([
                 'loadByCode' => [
@@ -832,9 +844,6 @@ class DiscountCodeValidationTest extends TestCase
                 ]
             ]
         );
-
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(false);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
@@ -860,16 +869,6 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->getQuoteMock(
-                '',
-                null,
-                null,
-                false,
-                self::PARENT_QUOTE_ID,
-                self::PARENT_QUOTE_ID
-            ));
 
         $this->configureCouponMockMethods([
                 'loadByCode' => [
@@ -879,8 +878,21 @@ class DiscountCodeValidationTest extends TestCase
         );
 
         $this->immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(0);
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($this->immutableQuoteMock);
+
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
+                '',
+                null,
+                null,
+                false,
+                self::PARENT_QUOTE_ID,
+                self::PARENT_QUOTE_ID
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
@@ -941,10 +953,14 @@ class DiscountCodeValidationTest extends TestCase
 
         $immutableQuoteMock = $this->getQuoteMock(self::COUPON_CODE);
 
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($immutableQuoteMock);
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $parentQuoteMock],
+            [self::IMMUTABLE_QUOTE_ID, $immutableQuoteMock],
+        ];
+
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
+
         $this->ruleMock->expects(self::once())->method('getSimpleAction')->willReturn('cart_fixed');
 
         $this->configureCouponMockMethods([
@@ -1011,10 +1027,12 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($immutableQuoteMock);
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $parentQuoteMock],
+            [self::IMMUTABLE_QUOTE_ID, $immutableQuoteMock],
+        ];
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
 
         $this->moduleGiftCardAccountMock->method('getInstance')->willReturnSelf();
 
@@ -1054,19 +1072,21 @@ class DiscountCodeValidationTest extends TestCase
         ];
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)
-            ->willReturn(
-                $this->getQuoteMock(
-                    self::COUPON_CODE,
-                    null,
-                    null ,
-                    false,
-                    self::PARENT_QUOTE_ID,
-                    self::PARENT_QUOTE_ID
-                ));
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($this->immutableQuoteMock);
+
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
+                self::COUPON_CODE,
+                null,
+                null ,
+                false,
+                self::PARENT_QUOTE_ID,
+                self::PARENT_QUOTE_ID
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
+        ];
+        $this->cartHelper->method('getQuoteById')
+            ->will($this->returnValueMap($getQuoteByIdMap));
+
 
         $this->moduleGiftCardAccountMock->method('getInstance')->willReturnSelf();
 
@@ -1102,7 +1122,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn(
                 $this->getQuoteMock(
@@ -1135,7 +1155,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn($this->getQuoteMock(
                 '',
@@ -2199,9 +2219,7 @@ class DiscountCodeValidationTest extends TestCase
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods(
                 [
-                    'getOrderByIncrementId',
                     'getQuoteById',
-                    'getActiveQuoteById',
                     'handleSpecialAddressCases',
                     'validateEmail',
                     'getCartData'
@@ -2216,6 +2234,15 @@ class DiscountCodeValidationTest extends TestCase
             ->getMock();
 
         $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(
+                [
+                    'getExistingOrder',
+                ]
+            )
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -2356,7 +2383,8 @@ class DiscountCodeValidationTest extends TestCase
                     $this->hookHelper,
                     $this->discountHelper,
                     $this->regionModel,
-                    $this->totalsCollector
+                    $this->totalsCollector,
+                    $this->orderHelper
                 ]
             )->getMock();
     }
