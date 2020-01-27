@@ -54,6 +54,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Sales\Model\Order\CreditmemoFactory;
+use Magento\Sales\Api\CreditmemoManagementInterface;
 
 /**
  * Class Order
@@ -187,6 +189,12 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
+    /** @var CreditmemoFactory */
+    protected $creditmemoFactory;
+
+    /** @var CreditmemoManagementInterface  */
+    protected $creditmemoManagement;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -206,7 +214,8 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
-     *
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param CreditmemoManagementInterface $creditmemoManagement
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -229,8 +238,11 @@ class Order extends AbstractHelper
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        DateTime $date
-    ) {
+        DateTime $date,
+        CreditmemoFactory $creditmemoFactory,
+        CreditmemoManagementInterface $creditmemoManagement
+    )
+    {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
@@ -251,6 +263,8 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->creditmemoFactory = $creditmemoFactory;
+        $this->creditmemoManagement = $creditmemoManagement;
     }
 
     /**
@@ -1518,9 +1532,7 @@ class Order extends AbstractHelper
             self::TS_CANCELED => OrderModel::STATE_CANCELED,
             self::TS_REJECTED_REVERSIBLE => OrderModel::STATE_PAYMENT_REVIEW,
             self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
-            // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
-            // If called from Bolt merchant dashboard there is no enough info to sync the totals
-            self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+            self::TS_CREDIT_COMPLETED => OrderModel::STATE_PROCESSING
         ][$transactionState];
     }
 
@@ -1659,7 +1671,8 @@ class Order extends AbstractHelper
             case self::TS_CREDIT_COMPLETED:
                 if (in_array($transaction->id, $processedRefunds)) return;
                 $transactionType = Transaction::TYPE_REFUND;
-                $transactionId = $transaction->id.'-refund';
+                $transactionId = $transaction->id . '-refund';
+                $this->createCreditMemoForHookRequest($order, $transaction);
                 break;
 
             default:
@@ -1805,6 +1818,61 @@ class Order extends AbstractHelper
         )->setIsCustomerNotified(true)->save();
 
         return $invoice;
+    }
+
+    /**
+     * @param OrderModel $order
+     * @param $transaction
+     * @throws \Exception
+     */
+    public function createCreditMemoForHookRequest(OrderModel $order, $transaction)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();;
+        $refundAmount = CurrencyUtils::toMajor($transaction->amount->amount, $currencyCode);
+        $this->validateRefundAmount($order, $refundAmount);
+
+        $boltTotal = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, $currencyCode);
+        $adjustment = [];
+        if ($refundAmount < $boltTotal) {
+
+            $adjustment = [
+                'adjustment_positive' => $refundAmount,
+                'shipping_amount' => 0
+            ];
+
+            foreach ($order->getAllItems() as $item){
+                $adjustment['qtys'][$item->getId()] = 0;
+            }
+        }
+
+        $creditMemo = $this->creditmemoFactory->createByOrder($order, $adjustment);
+
+        $creditMemo->setAutomaticallyCreated(true)
+                    ->addComment(__('The credit memo has been created automatically.'));
+
+        $this->creditmemoManagement->refund($creditMemo, true);
+    }
+
+    /**
+     * @param OrderModel $order
+     * @param $refundAmount
+     * @throws \Exception
+     */
+    protected function validateRefundAmount(OrderModel $order, $refundAmount)
+    {
+        if (!isset($refundAmount) || !is_numeric($refundAmount) || $refundAmount < 0) {
+            throw new \Exception(__('Refund amount is invalid'));
+        }
+
+        $totalRefunded = $order->getTotalRefunded() ?: 0;
+        $totalPaid = $order->getTotalPaid();
+        $availableRefund = CurrencyUtils::toMinor($totalPaid - $totalRefunded, $order->getOrderCurrencyCode());
+
+        if ($availableRefund < $refundAmount) {
+            throw new \Exception(
+                __('Refund amount is invalid: refund amount [%1], available refund [%2]', $refundAmount, $availableRefund)
+            );
+        }
     }
 
     /**
