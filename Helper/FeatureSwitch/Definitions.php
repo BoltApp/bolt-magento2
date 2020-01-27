@@ -50,6 +50,12 @@ class Definitions {
      */
     const M2_LOG_MISSING_QUOTE_FAILED_HOOKS = "M2_LOG_MISSING_QUOTE_FAILED_HOOKS";
 
+    /**
+     * Enable creating credit memo for webhook
+     *
+     */
+    const M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED = "M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -68,6 +74,12 @@ class Definitions {
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
+        ),
+        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED =>  array(
+            self::NAME_KEY            => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
         )
     );
 }

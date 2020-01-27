@@ -83,6 +83,10 @@ use Bolt\Boltpay\Helper\CheckboxesHandler;
 use Bolt\Boltpay\Test\Unit\Model\Api\OrderManagementTest;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
+use Magento\Sales\Model\Order\CreditmemoFactory;
+use Magento\Sales\Api\CreditmemoManagementInterface;
+use \Magento\Sales\Model\Order\Creditmemo;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
  */
@@ -229,6 +233,12 @@ class OrderTest extends TestCase
      */
     private $customerCreditCardCollectionFactory;
 
+    /** @var MockObject|CreditmemoFactory */
+    private $creditmemoFactory;
+
+    /** @var MockObject|CreditmemoManagementInterface */
+    private $creditmemoManagement;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -248,6 +258,7 @@ class OrderTest extends TestCase
                 'checkPaymentMethod',
                 'getProcessedCaptures',
                 'getProcessedRefunds',
+                'getTotalRefunded'
             ]
         );
     }
@@ -297,7 +308,9 @@ class OrderTest extends TestCase
                     $this->featureSwitches,
                     $this->checkboxesHandler,
                     $this->customerCreditCardFactory,
-                    $this->customerCreditCardCollectionFactory
+                    $this->customerCreditCardCollectionFactory,
+                    $this->creditmemoFactory,
+                    $this->creditmemoManagement
                 ]
             )
             ->setMethods($methods);
@@ -418,7 +431,8 @@ class OrderTest extends TestCase
                 'getQuoteId',
                 'getAllStatusHistory',
                 'getCustomerId',
-                'getBillingAddress'
+                'getBillingAddress',
+                'getTotalRefunded'
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -432,7 +446,9 @@ class OrderTest extends TestCase
 
         $this->context->method('getEventManager')->willReturn($this->eventManager);
         $this->resourceConnection->method('getConnection')->willReturn($this->connection);
-        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled']);
+        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled','isCreatingCreditMemoFromWebHookEnabled']);
+        $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
+        $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class, ['refund']);
     }
 
     /**
@@ -2764,10 +2780,12 @@ class OrderTest extends TestCase
      * @param string $transactionState
      * @param string $orderState
      * @param bool   $isHookFromBolt
+     * @param bool   $isCreatingCreditMemoFromWebHookEnabled
      */
-    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false)
+    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false)
     {
         Hook::$fromBolt = $isHookFromBolt;
+        $this->featureSwitches->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn($isCreatingCreditMemoFromWebHookEnabled);
         static::assertEquals($orderState, $this->currentMock->transactionToOrderState($transactionState));
     }
 
@@ -2785,8 +2803,9 @@ class OrderTest extends TestCase
             [OrderHelper::TS_CANCELED, OrderModel::STATE_CANCELED],
             [OrderHelper::TS_REJECTED_REVERSIBLE, OrderModel::STATE_PAYMENT_REVIEW],
             [OrderHelper::TS_REJECTED_IRREVERSIBLE, OrderModel::STATE_CANCELED],
-            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_HOLDED, true],
-            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, false],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, true, true],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, false, true],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_HOLDED, true, false],
         ];
     }
 
@@ -2817,7 +2836,7 @@ class OrderTest extends TestCase
                     'id'        => self::TRANSACTION_ID,
                     'reference' => self::REFERENCE_ID,
                     'amount'    => [
-                        'amount' => 1
+                        'amount' => 10
                     ],
                     'date'      => microtime(true) * 1000,
                     'captures'  => [
@@ -2825,6 +2844,13 @@ class OrderTest extends TestCase
                             'id'     => 123123123,
                             'status' => 'succeeded',
                             'amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
                                 'amount' => 10
                             ]
                         ]
@@ -2975,6 +3001,18 @@ class OrderTest extends TestCase
         $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
             ->withConsecutive(['transaction_state'])
             ->willReturnOnConsecutiveCalls('');
+        if ($transactionState == OrderHelper::TS_CREDIT_COMPLETED) {
+            $this->featureSwitches->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
+            $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+            $this->orderMock->method('getTotalRefunded')->willReturn(0);
+            $this->orderMock->method('getTotalPaid')->willReturn(1);
+
+            $creditMemoMock = $this->createPartialMock(Creditmemo::class,['setAutomaticallyCreated','addComment']);
+            $this->creditmemoFactory->expects(self::once())->method('createByOrder')->with($this->orderMock, [])->willReturn($creditMemoMock);
+            $creditMemoMock->expects(self::once())->method('setAutomaticallyCreated')->with(true)->willReturnSelf();
+            $creditMemoMock->expects(self::once())->method('addComment')->with(__('The credit memo has been created automatically.'))->willReturnSelf();
+            $this->creditmemoManagement->expects(self::once())->method('refund')->with($creditMemoMock, true)->willReturnSelf();
+        }
 
         $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
         $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
@@ -3803,5 +3841,44 @@ class OrderTest extends TestCase
 
         $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
+    }
+
+    /**
+     * @test
+     * @param $refundAmount
+     * @dataProvider refundAmount_Provider
+     * @throws ReflectionException
+     */
+    public function validateRefundAmount_withInvalidRefundAmount($refundAmount)
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Refund amount is invalid');
+        TestHelper::invokeMethod($this->currentMock, 'validateRefundAmount', [$this->orderMock, $refundAmount]);
+    }
+
+    public function refundAmount_Provider()
+    {
+        return [
+            ['refundAmount' => -1],
+            ['refundAmount' => 'is_string'],
+            ['refundAmount' => null]
+        ];
+    }
+
+    /**
+     * @test
+     * @throws ReflectionException
+     */
+    public function validateRefundAmount_withRefundAmountIsMoreThanAvailableRefund()
+    {
+        $refundAmount = 1000;
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->orderMock->method('getTotalRefunded')->willReturn(10);
+        $this->orderMock->method('getTotalPaid')->willReturn(15);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Refund amount is invalid: refund amount [1000], available refund [500]');
+
+        TestHelper::invokeMethod($this->currentMock, 'validateRefundAmount', [$this->orderMock, $refundAmount]);
     }
 }
