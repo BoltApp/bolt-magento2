@@ -44,6 +44,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Discount Code Validation class
@@ -161,6 +162,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $totalsCollector;
 
     /**
+     * @var OrderHelper
+     */
+    protected $orderHelper;
+
+    /**
      * DiscountCodeValidation constructor.
      *
      * @param Request                 $request
@@ -185,6 +191,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param DiscountHelper          $discountHelper
      * @param RegionModel             $regionModel
      * @param TotalsCollector         $totalsCollector
+     * @param OrderHelper             $orderHelper
      */
     public function __construct(
         Request $request,
@@ -208,7 +215,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         HookHelper $hookHelper,
         DiscountHelper $discountHelper,
         RegionModel $regionModel,
-        TotalsCollector $totalsCollector
+        TotalsCollector $totalsCollector,
+        OrderHelper $orderHelper
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -232,6 +240,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->discountHelper = $discountHelper;
         $this->regionModel = $regionModel;
         $this->totalsCollector = $totalsCollector;
+        $this->orderHelper = $orderHelper;
     }
 
     /**
@@ -251,7 +260,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 // check if the cart / quote exists and it is active
                 try {
                     /** @var Quote $parentQuote */
-                    $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+                    $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
 
                     // get parent quote id, order increment id and child quote id
                     // the latter two are transmitted as display_id field, separated by " / "
@@ -260,6 +269,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         2,
                         null
                     );
+
+                    if (!$immutableQuoteId && $incrementId) {
+                        $immutableQuoteId = $parentQuoteId;
+                    }
 
                     // check if cart identification data is sent
                     if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
@@ -353,13 +366,12 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // check if the order has already been created
-            if ($this->cartHelper->getOrderByIncrementId($incrementId)) {
+            if ($this->orderHelper->getExistingOrder($incrementId)) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                     sprintf('The order #%s has already been created.', $incrementId),
                     422
                 );
-
                 return false;
             }
 

@@ -192,7 +192,7 @@ trait ReceivedUrlTrait
      */
     private function getOrderByIncrementId($incrementId)
     {
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
+        $order = $this->orderHelper->getExistingOrder($incrementId);
 
         if (!$order) {
             throw new NoSuchEntityException(
