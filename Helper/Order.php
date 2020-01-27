@@ -985,9 +985,9 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true) ?:
-            // bypass missing increment id in PPC transaction data - themporary fix.
+            // bypass missing increment id in PPC transaction data - temporary fix.
             // TODO: remove
-            $this->getOrderByQuoteId($orderIncrementId);;
+            $this->getOrderByQuoteId($orderIncrementId);
     }
 
     /**
