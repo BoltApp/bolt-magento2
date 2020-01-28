@@ -259,9 +259,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
                 // check if the cart / quote exists and it is active
                 try {
-                    /** @var Quote $parentQuote */
-                    $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-
                     // get parent quote id, order increment id and child quote id
                     // the latter two are transmitted as display_id field, separated by " / "
                     list($incrementId, $immutableQuoteId) = array_pad(
@@ -270,8 +267,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                         null
                     );
 
-                    if (!$immutableQuoteId && $incrementId) {
+                    if (!$immutableQuoteId) {
                         $immutableQuoteId = $parentQuoteId;
+                    }
+
+                    /** @var Quote $parentQuote */
+                    If ($immutableQuoteId == $parentQuoteId) {
+                        // Product Page Checkout - quotes are created as inactive
+                        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+                    } else {
+                        $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
                     }
 
                     // check if cart identification data is sent
