@@ -702,7 +702,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId) ?: $this->getOrderByQuoteId($parentQuoteId);
+        $order = $this->getExistingOrder($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -981,10 +981,13 @@ class Order extends AbstractHelper
      * @param $orderIncrementId
      * @return OrderModel|false
      */
-    protected function getExistingOrder($orderIncrementId)
+    public function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true) ?:
+            // bypass missing increment id in PPC transaction data - temporary fix.
+            // TODO: remove
+            $this->getOrderByQuoteId($orderIncrementId);
     }
 
     /**
@@ -1889,7 +1892,7 @@ class Order extends AbstractHelper
         if (empty($incrementId)) {
             return null;
         }
-        $order = $this->cartHelper->getOrderByIncrementId(trim($incrementId));
+        $order = $this->getExistingOrder(trim($incrementId));
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }
