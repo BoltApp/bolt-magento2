@@ -33,7 +33,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\View\Element\BlockFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
@@ -79,7 +79,7 @@ class CartTest extends TestCase
     private $customerSession;
     private $logHelper;
     private $bugsnag;
-    private $blockFactory;
+    private $imageHelperFactory;
     private $productRepository;
     private $appEmulation;
     private $dataObjectFactory;
@@ -126,18 +126,13 @@ class CartTest extends TestCase
             ->setMethods(['notifyError', 'notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->blockFactory = $this->getMockBuilder(BlockFactory::class)
-            ->setMethods(['createBlock', 'getImage', 'getImageUrl'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->blockFactory->method('createBlock')
-            ->with('Magento\Catalog\Block\Product\ListProduct')
-            ->willReturnSelf();
-        $this->blockFactory->method('getImage')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $this->blockFactory->method('getImageUrl')
-            ->willReturn('no-image');
+
+        $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
+        $imageHelper->method('init')->willReturnSelf();
+        $imageHelper->method('getUrl')->willReturn('no-image');
+
+        $this->imageHelperFactory = $this->createMock(ImageFactory::class);
+        $this->imageHelperFactory->method('create')->willReturn($imageHelper);
 
         $this->appEmulation = $this->getMockBuilder(Emulation::class)
             ->setMethods(['stopEnvironmentEmulation', 'startEnvironmentEmulation'])
@@ -225,7 +220,7 @@ class CartTest extends TestCase
             $this->logHelper,
             $this->bugsnag,
             $this->dataObjectFactory,
-            $this->blockFactory,
+            $this->imageHelperFactory,
             $this->appEmulation,
             $this->quoteFactory,
             $this->totalsCollector,
@@ -895,7 +890,7 @@ ORDER;
                 $this->logHelper,
                 $this->bugsnag,
                 $this->dataObjectFactory,
-                $this->blockFactory,
+                $this->imageHelperFactory,
                 $this->appEmulation,
                 $this->quoteFactory,
                 $this->totalsCollector,
