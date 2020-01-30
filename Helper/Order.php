@@ -631,6 +631,25 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Load Order by quote id
+     *
+     * @param string $incrementId
+     *
+     * @return OrderInterface|false
+     */
+    public function getOrderByQuoteId($quoteId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('quote_id', $quoteId, 'eq')
+            ->create();
+        $collection = $this->orderRepository
+            ->getList($searchCriteria)
+            ->getItems();
+
+        return reset($collection);
+    }
+
+    /**
      * Save/create the order (checkout, orphaned transaction),
      * Update order payment / transaction data (checkout, web hooks)
      *
@@ -668,6 +687,7 @@ class Order extends AbstractHelper
         // prevent failure and log event to bugsnag.
         ///////////////////////////////////////////////////////////////
         $quote = $this->cartHelper->getQuoteById($quoteId);
+
         if (!$quote) {
             $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
                 $report->setMetaData([
@@ -682,7 +702,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
+        $order = $this->getExistingOrder($incrementId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -961,10 +981,13 @@ class Order extends AbstractHelper
      * @param $orderIncrementId
      * @return OrderModel|false
      */
-    protected function getExistingOrder($orderIncrementId)
+    public function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true) ?:
+            // bypass missing increment id in PPC transaction data - temporary fix.
+            // TODO: remove
+            $this->getOrderByQuoteId($orderIncrementId);
     }
 
     /**
@@ -1869,7 +1892,7 @@ class Order extends AbstractHelper
         if (empty($incrementId)) {
             return null;
         }
-        $order = $this->cartHelper->getOrderByIncrementId(trim($incrementId));
+        $order = $this->getExistingOrder(trim($incrementId));
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }

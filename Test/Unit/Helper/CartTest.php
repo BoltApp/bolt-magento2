@@ -1992,7 +1992,7 @@ ORDER;
 
     private function createCartByRequest_GetExpectedCartData() {
         return [
-            'order_reference' => NULL,
+            'order_reference' => SELF::QUOTE_ID,
             'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
             'currency' => 'USD',
             'items' => [
@@ -2021,7 +2021,7 @@ ORDER;
                         'reference' => SELF::PRODUCT_ID,
                         'name' => 'Product name',
                         'description' => NULL,
-                        'options' => NULL,
+                        'options' => SELF::STORE_ID,
                         'total_amount' => SELF::PRODUCT_PRICE,
                         'unit_price' => SELF::PRODUCT_PRICE,
                         'tax_amount' => 0,
@@ -2081,13 +2081,18 @@ ORDER;
             ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer'])
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer','setBoltParentQuoteId','setIsActive','setStoreId'])
             ->disableOriginalConstructor()
             ->getMock();
+        $quote->expects($this->once())
+            ->method('setBoltParentQuoteId')
+            ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
             ->with($product,1);
-
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setStoreId')
+            ->with(self::STORE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('reserveOrderId');
         $quote->expects($this->onceOrAny($isSuccessfulCase))
@@ -2096,15 +2101,14 @@ ORDER;
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setBoltReservedOrderId')
             ->with(self::ORDER_ID);
-
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setIsActive')
+            ->with(false);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('collectTotals')
             ->willReturnSelf();
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('save');
-        $quote->expects($this->onceOrAny($isSuccessfulCase))
-            ->method('getId')
-            ->willReturn(SELF::QUOTE_ID);
 
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
             ->setMethods(['create','load'])
@@ -2142,7 +2146,6 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -2186,7 +2189,6 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }

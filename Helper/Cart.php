@@ -754,7 +754,7 @@ class Cart extends AbstractHelper
     public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
-        if ($checkoutType<>'product') {
+        if ($checkoutType != 'product') {
             $quote = $cartReference ?
                 $this->getQuoteById($cartReference) :
                 $this->checkoutSession->getQuote();
@@ -1825,6 +1825,8 @@ class Cart extends AbstractHelper
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
 
+        $quote->setBoltParentQuoteId($quoteId);
+
         if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
             $this->assignQuoteCustomerByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
         }
@@ -1833,6 +1835,11 @@ class Cart extends AbstractHelper
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
         $quote->addProduct($product, $item['quantity']);
+
+        $storeId = @$item['options'];
+        if ($storeId) {
+            $quote->setStoreId($storeId);
+        }
 
         $quote->reserveOrderId();
 
@@ -1843,10 +1850,10 @@ class Cart extends AbstractHelper
         // so we need to set boltReservedOrderId
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
 
+        $quote->setIsActive(false);
         $quote->collectTotals()->save();
 
-        $cart_data = $this->getCartData(false,'',$quote);
-        $cart_data['order_reference'] = $quote->getId();
+        $cart_data = $this->getCartData(false,'', $quote);
 
         return $cart_data;
     }

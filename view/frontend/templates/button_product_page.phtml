@@ -23,82 +23,24 @@
 if ($block->shouldDisableBoltCheckout()) return;
 
 if (!$block->isSupportableType()) return;
-
-$trackCallbacks = $block->getTrackCallbacks();
-
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>
     <script>
-        // Store the configuration parameters passed from the php block
-        // in the global object. Used in this file and on the payment page
-        // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-        window.boltConfig = <?php echo $block->getSettings(); ?>;
         require([
             'jquery',
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
             'mage/validation/validation',
-            'mage/cookies'
+            'mage/cookies',
+            'domReady!'
         ], function ($, authenticationPopup, customerData) {
             var customer = customerData.get('customer');
-            var shoppingCart = customerData.get('cart');
-            var $qty = jQuery('#qty');
             var max_qty = <?= $block->getProductQty(); ?>;
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
 
             var settings = window.boltConfig;
+            var trackCallbacks = settings.trackCallbacks;
 
-            var trackCallbacks = {
-                onCheckoutStart: function() {
-                    try {
-                        <?php echo $trackCallbacks['checkout_start']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onEmailEnter: function(email) {
-                    try {
-                        <?php echo $trackCallbacks['email_enter']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onShippingDetailsComplete: function() {
-                    try {
-                        <?php echo $trackCallbacks['shipping_details_complete']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onShippingOptionsComplete: function() {
-                    try {
-                        <?php echo $trackCallbacks['shipping_options_complete']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onPaymentSubmit: function() {
-                    try {
-                        <?php echo $trackCallbacks['payment_submit']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onSuccess: function() {
-                    try {
-                        <?php echo $trackCallbacks['success']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onClose: function() {
-                    try {
-                        <?php echo $trackCallbacks['close']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                }
-            };
             // On multiple checkout open/close actions the success event remains registered
             // resulting in making the success call multiple times. This variable stores
             // the last request to be aborted before new one is sent.
@@ -197,7 +139,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                      */
 
                     //check if we have inventory on stock
-                    if ( (max_qty>=0) && $qty && (Number($qty.val()) > max_qty)) {
+                    if ( max_qty >= 0 && getQty() > max_qty ) {
                         window.alert("The requested qty is not available");
                         return false;
                     }
@@ -207,6 +149,10 @@ $trackCallbacks = $block->getTrackCallbacks();
                         // if authentication is required for checkout set a cookie
                         // for auto opening Bolt checkout after login
                         authenticationPopup.showModal();
+                        return false;
+                    }
+
+                    if (!hints) {
                         return false;
                     }
                     return true;
@@ -221,53 +167,40 @@ $trackCallbacks = $block->getTrackCallbacks();
                 }
             };
 
-            function setupProductPage() {
-                var quantity = 1;
-                if ($qty) {
-                    quantity = Number($qty.val());
-                }
+            var getQty = function() {
+                var quantity = Number($('#qty').val());
+                return quantity > 0 ? quantity : 1;
+            };
+
+            var setupProductPage = function () {
                 var cart = {
                     currency: "USD",
                     items: [{
-                        reference: '<?= $block->getProduct()->getId() ?>',
-                        price: <?= (int) $block->getProduct()->getFinalPrice() ?>,
-                        name: '<?= $block->getProduct()->getName() ?>',
-                        quantity: quantity,
+                        reference: '<?= $block->getProduct()->getId(); ?>',
+                        price: <?= (int) $block->getProduct()->getFinalPrice(); ?>,
+                        name: '<?= $block->getProduct()->getName(); ?>',
+                        quantity: getQty(),
+                        options: '<?= $block->getStoreId(); ?>'
                     }]
                 };
+                BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+            };
 
-                var buttonClass = "bolt-product-checkout-button";
-                var hints = {prefill:{}};
+            var hints;
 
-                // We need to receive hints from server
-                // meanwhile initiate Bolt without hints to have button early
-                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
-                customerData.init();
-                if ( customer().firstname ) {
-                    $.post(
-                        settings.get_hints_url,
-                        function(result) {
-                            BoltCheckout.configureProductCheckout(cart, result.hints, callbacks, {checkoutButtonClassName: buttonClass});
-                        }
-                    );
-                }
+            // wait for the hints to load
+            // the viable way to assign user to order
+            $.get(settings.get_hints_url)
+                .done(function(data) {
+                    hints = data.hints;
+                }).fail(function() {
+                    hints = {prefill:{}};
+                }).always(function() {
+                    setupProductPage();
+                    $('#qty').on('change', setupProductPage);
+                });
 
-            }
-
-            if (
-                (document && document.readyState !== "loading") ||
-                (window && window.document && window.document.readyState !== "loading")
-            ) {
-                setupProductPage();
-            } else {
-                document.addEventListener("DOMContentLoaded", setupProductPage);
-            }
-            jQuery(document).ready(function () {
-                jQuery('#qty').on('change',
-                    function () {
-                        setupProductPage();
-                    }
-                );
-            });
+            // early button display, not active untill hints are received
+            BoltCheckout.configureProductCheckout({},{}, callbacks);
         });
     </script>

@@ -32,6 +32,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
     const SETTINGS_NUMBER = 18;
+    const STORE_ID = 1;
 
     /**
      * @var HelperConfig
@@ -121,12 +122,19 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
         $this->decider = $this->createMock(Decider::class);
+
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getFullActionName'])
             ->getMock();
-
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
+
+        $store = $this->getMockForAbstractClass(\Magento\Store\Api\Data\StoreInterface::class);
+        $store->method('getId')->willReturn(self::STORE_ID);
+        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
+
         $this->block = $this->getMockBuilder(BlockJs::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
@@ -357,7 +365,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function isEnabled()
     {
-        $storeId = 0;
+        $storeId = self::STORE_ID;
         $this->configHelper->expects($this->any())
             ->method('isActive')
             ->with($storeId)
