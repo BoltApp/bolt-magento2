@@ -126,10 +126,6 @@ class ReceivedUrlTest extends TestCase
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
-            ->method('getOrderByIncrementId')
-            ->with(self::INCREMENT_ID)
-            ->willReturn($order);
-        $cartHelper->expects($this->once())
             ->method('getQuoteById')
             ->with(self::QUOTE_ID)
             ->willReturn($quote);
@@ -193,6 +189,10 @@ class ReceivedUrlTest extends TestCase
 
         $orderHelper = $this->createMock(OrderHelper::class);
         $orderHelper->expects($this->once())
+            ->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)
+            ->willReturn($order);
+        $orderHelper->expects($this->once())
             ->method('formatReferenceUrl')
             ->with(self::TRANSACTION_REFERENCE)
             ->willReturn(self::FORMATTED_REFERENCE_URL);
@@ -247,8 +247,6 @@ class ReceivedUrlTest extends TestCase
         $url = $this->createUrlMock();
 
         $cartHelper = $this->createMock(CartHelper::class);
-        $cartHelper->method('getOrderByIncrementId')
-            ->willReturn($order);
         $cartHelper->method('getQuoteById')
             ->willReturn($quote);
 
@@ -300,6 +298,10 @@ class ReceivedUrlTest extends TestCase
         $configHelper->method('getSigningSecret')
             ->willReturn(self::SIGNING_SECRET);
 
+        $orderHelper = $this->createMock(OrderHelper::class);
+        $orderHelper->method('getExistingOrder')
+            ->willReturn($order);
+
         $context = $this->createMock(Context::class);
         $context->method('getUrl')
             ->willReturn($url);
@@ -319,7 +321,7 @@ class ReceivedUrlTest extends TestCase
             $bugsnag,
             $this->logHelper,
             $checkoutSession,
-            $this->orderHelper
+            $orderHelper
         );
 
         $receivedUrl->method('getRequest')
@@ -397,10 +399,6 @@ class ReceivedUrlTest extends TestCase
         $message->expects($this->once())
             ->method('addErrorMessage');
 
-        $cartHelper = $this->createMock(CartHelper::class);
-        $cartHelper->method('getOrderByIncrementId')
-            ->willReturn(null);
-
         $context = $this->createMock(Context::class);
         $context->method('getMessageManager')
             ->willReturn($message);
@@ -410,6 +408,10 @@ class ReceivedUrlTest extends TestCase
             ->method('getSigningSecret')
             ->with(self::STORE_ID)
             ->willReturn(self::SIGNING_SECRET);
+
+        $orderHelper = $this->createMock(OrderHelper::class);
+        $orderHelper->method('getExistingOrder')
+            ->willReturn(null);
 
         $bugsnag = $this->createMock(Bugsnag::class);
         $bugsnag->expects($this->once())
@@ -433,11 +435,11 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl = $this->initReceivedUrlMock(
             $context,
             $configHelper,
-            $cartHelper,
+            $this->cartHelper,
             $bugsnag,
             $this->logHelper,
             $this->checkoutSession,
-            $this->orderHelper
+            $orderHelper
         );
 
         $receivedUrl->method('getRequest')
@@ -464,8 +466,8 @@ class ReceivedUrlTest extends TestCase
             ->method('addErrorMessage')
             ->with('Something went wrong. Please contact the seller.'); //Hardcoded string in class
 
-        $cartHelper = $this->createMock(CartHelper::class);
-        $cartHelper->method('getOrderByIncrementId')
+        $orderHelper = $this->createMock(OrderHelper::class);
+        $orderHelper->method('getExistingOrder')
             ->willThrowException($exception);
 
         $context = $this->createMock(Context::class);
@@ -501,11 +503,11 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl = $this->initReceivedUrlMock(
             $context,
             $configHelper,
-            $cartHelper,
+            $this->cartHelper,
             $bugsnag,
             $logHelper,
             $this->checkoutSession,
-            $this->orderHelper
+            $orderHelper
         );
 
         $receivedUrl->method('getRequest')

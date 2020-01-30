@@ -122,8 +122,7 @@ class Decider extends AbstractHelper {
      * @return bool
      */
     public function isSwitchEnabled($switchName) {
-        $defaultDef = isset(Definitions::DEFAULT_SWITCH_VALUES[$switchName]) ?
-            Definitions::DEFAULT_SWITCH_VALUES[$switchName] : null;
+        $defaultDef = @Definitions::DEFAULT_SWITCH_VALUES[$switchName];
         if (!$defaultDef) {
             throw new LocalizedException(__("Unknown feature switch"));
         }
