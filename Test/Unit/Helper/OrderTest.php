@@ -73,6 +73,8 @@ use stdClass;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Model\Request as BoltRequest;
+use Bolt\Boltpay\Model\ResponseFactory;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -188,6 +190,12 @@ class OrderTest extends TestCase
     /** @var MockObject|Mysql */
     private $connection;
 
+    /** @var MockObject|BoltRequest */
+    private $boltRequest;
+
+    /** @var MockObject|ResponseFactory */
+    private $responseFactory;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -288,7 +296,6 @@ class OrderTest extends TestCase
         $this->timezone = $this->createMock(TimezoneInterface::class);
         $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
         $this->orderRepository = $this->createMock(OrderRepository::class);
-        $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
@@ -299,6 +306,13 @@ class OrderTest extends TestCase
         $this->date = $this->createMock(DateTime::class);
 
         $this->quoteMock = $this->createMock(Quote::class);
+        $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey'])
+            ->getMock();
+
+        $this->responseFactory = $this->createPartialMock(ResponseFactory::class,['getResponse']);
+        $this->boltRequest = $this->createMock(BoltRequest::class);
 
         $this->orderMock = $this->createPartialMock(
             Order::class,
@@ -3400,4 +3414,56 @@ class OrderTest extends TestCase
         $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
         $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
     }
+
+    /**
+     * @test
+     * @param $data
+     * @dataProvider voidTransactionOnBolt_dataProvider
+     * @throws LocalizedException
+     * @throws Zend_Http_Client_Exception
+     */
+    public function voidTransactionOnBolt($data){
+        $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
+        $this->responseFactory->expects(self::once())->method('getResponse')->willReturn(json_decode($data['response']));
+
+        $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->dataObjectFactory->expects(self::once())->method('setDynamicApiUrl')->with(ApiHelper::API_VOID_TRANSACTION)->willReturnSelf();
+        $this->dataObjectFactory->expects(self::once())->method('setApiKey')->willReturnSelf();
+
+        $this->apiHelper->expects(self::once())->method('buildRequest')
+            ->with($this->dataObjectFactory)->willReturn($this->boltRequest);
+        $this->apiHelper->expects(self::once())->method('sendRequest')
+            ->withAnyParameters()->willReturn($this->responseFactory);
+
+        if($data['exception']){
+            $this->expectException(LocalizedException::class);
+            $this->expectExceptionMessage($data['exception_message']);
+        }
+
+        $this->currentMock->voidTransactionOnBolt(self::TRANSACTION_ID, self::STORE_ID);
+    }
+
+    public function voidTransactionOnBolt_dataProvider(){
+        return [
+            ['data' => [
+                'response' => '{"status": "completed", "reference": "ABCD-1234-XXXX"}',
+                'exception_message' => 'Payment void error',
+                'exception' => true,
+                ]
+            ],
+            ['data' => [
+                'response' => '',
+                'exception_message' => 'Bad void response from boltpay',
+                'exception' => true,
+                ]
+            ],
+            ['data' => [
+                'response' => '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}',
+                'exception_message' => 'Bad void response from boltpay',
+                'exception' => false,
+                ]
+            ]
+        ];
+    }
+
 }
