@@ -3386,11 +3386,9 @@ class OrderTest extends TestCase
      */
     public function getOrderByQuoteId()
     {
-        $quoteId = self::QUOTE_ID;
-
         $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
 
-        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
+        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', self::PARENT_QUOTE_ID, 'eq')->willReturnSelf();
         $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
 
         $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
@@ -3400,6 +3398,6 @@ class OrderTest extends TestCase
         $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
 
         $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
-        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
+        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId(self::PARENT_QUOTE_ID));
     }
 }
