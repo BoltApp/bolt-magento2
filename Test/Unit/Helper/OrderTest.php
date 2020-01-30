@@ -219,7 +219,7 @@ class OrderTest extends TestCase
                 'isCaptureHookRequest',
                 'checkPaymentMethod',
                 'getProcessedCaptures',
-                'getProcessedRefunds'
+                'getProcessedRefunds',
             ]
         );
     }
@@ -644,10 +644,8 @@ class OrderTest extends TestCase
      */
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
-        $this->initCurrentMock([]);
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
-            ->with(self::INCREMENT_ID, true)->willReturn($this->orderMock);
-
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
         $this->bugsnag->expects(self::once())->method('notifyError')
             ->with('Duplicate Order Creation Attempt', null);
 
@@ -668,9 +666,8 @@ class OrderTest extends TestCase
      */
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
-        $this->initCurrentMock([]);
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
-            ->with(self::INCREMENT_ID, true)->willReturn(false);
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn(false);
 
         $this->bugsnag->expects(self::never())->method('notifyError');
 
@@ -922,7 +919,8 @@ class OrderTest extends TestCase
                 'createOrder',
                 'resetOrderState',
                 'dispatchPostCheckoutEvents',
-                'updateOrderPayment'
+                'updateOrderPayment',
+                'getExistingOrder'
             ],
             false
         );
@@ -976,7 +974,7 @@ class OrderTest extends TestCase
             }
         );
 
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::once())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
@@ -1021,7 +1019,7 @@ class OrderTest extends TestCase
             }
         );
 
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn(null);
         $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
@@ -1050,7 +1048,7 @@ class OrderTest extends TestCase
 
         $this->bugsnag->expects(self::never())->method('registerCallback');
 
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn(null);
 
         $this->currentMock->expects(self::once())->method('createOrder')
@@ -1649,6 +1647,30 @@ class OrderTest extends TestCase
     public function getExistingOrder()
     {
         $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')->with(self::INCREMENT_ID, true)
+            ->willReturn($this->orderMock);
+        static::assertSame(
+            $this->orderMock,
+            TestHelper::invokeMethod($this->currentMock, 'getExistingOrder', [self::INCREMENT_ID])
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getExistingOrder
+     *
+     * @throws ReflectionException
+     */
+    public function getExistingOrder_byQuoteId()
+    {
+        $this->initCurrentMock(
+            [
+                'getOrderByQuoteId',
+            ]
+        );
+        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')->with(self::INCREMENT_ID, true)
+            ->willReturn(false);
+        $this->currentMock->expects(self::once())->method('getOrderByQuoteId')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
         static::assertSame(
             $this->orderMock,
@@ -3299,7 +3321,7 @@ class OrderTest extends TestCase
     {
         $orderMock = $this->createPartialMock(Order::class, ['getStoreId']);
         $orderMock->expects(static::exactly(2))->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->cartHelper->expects(static::once())->method('getOrderByIncrementId')
+        $this->currentMock->expects(static::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn($orderMock);
         static::assertEquals(self::STORE_ID, $this->currentMock->getOrderStoreIdByDisplayId(self::DISPLAY_ID));
     }
@@ -3396,6 +3418,28 @@ class OrderTest extends TestCase
             [false, null],
             [false, '', true]
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getOrderByQuoteId()
+    {
+        $quoteId = self::QUOTE_ID;
+
+        $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
+
+        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
+        $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
+
+        $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $collection = [$orderInterface, $orderInterface2];
+        $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
+        $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
+
+        $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
+        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
     }
 
     /**

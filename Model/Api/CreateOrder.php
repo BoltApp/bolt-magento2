@@ -624,7 +624,7 @@ class CreateOrder implements CreateOrderInterface
             throw new BoltException(
                 __('Cart Tax mismatched.'),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_CART_HAS_EXPIRED
             );
         }
     }
@@ -689,7 +689,7 @@ class CreateOrder implements CreateOrderInterface
             throw new BoltException(
                 __('Total amount does not match.'),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_CART_HAS_EXPIRED
             );
         }
     }

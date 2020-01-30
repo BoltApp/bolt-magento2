@@ -23,123 +23,24 @@
 if ($block->shouldDisableBoltCheckout()) return;
 
 if (!$block->isSupportableType()) return;
-
-$trackCallbacks = $block->getTrackCallbacks();
-
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>
     <script>
-        // Store the configuration parameters passed from the php block
-        // in the global object. Used in this file and on the payment page
-        // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-        window.boltConfig = <?php echo $block->getSettings(); ?>;
         require([
             'jquery',
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
             'mage/validation/validation',
-            'mage/cookies'
+            'mage/cookies',
+            'domReady!'
         ], function ($, authenticationPopup, customerData) {
             var customer = customerData.get('customer');
-            var shoppingCart = customerData.get('cart');
-            var $qty = jQuery('#qty');
             var max_qty = <?= $block->getProductQty(); ?>;
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
 
-            /**
-             * Pure javascript ajax POST request function
-             *
-             * param string     url                 The request url
-             * param array      params              The URL query string parameters
-             * param callable   callback            The callback function to pass the response data to
-             *
-             * return XMLHttpRequest|ActiveXObject('Microsoft.XMLHTTP')
-             */
-            var ajaxPost = function(url, params, onSuccess, onError, async, headers) {
-                var xhr;
-                if (typeof async === 'undefined') async = true;
-                if (typeof headers === 'undefined') {
-                    headers = {'Content-Type': 'application/x-www-form-urlencoded'};
-                }
-                xhr = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject('Microsoft.XMLHTTP');
-                if (typeof onSuccess === 'function') {
-                    xhr.onload = function () {
-                        var result;
-                        if (xhr.responseType === 'json') {
-                            result = xhr.response;
-                        } else {
-                            result = JSON.parse(xhr.responseText);
-                        }
-                        onSuccess(result);
-                    };
-                }
-                if (typeof onError === 'function') {
-                    xhr.onerror = onError;
-                }
-                xhr.open('POST', url, async);
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                for (var header in headers) {
-                    if (headers.hasOwnProperty(header)) {
-                        xhr.setRequestHeader(header, headers[header]);
-                    }
-                }
-                xhr.send(params);
-                return xhr;
-            };
-
             var settings = window.boltConfig;
+            var trackCallbacks = settings.trackCallbacks;
 
-            var trackCallbacks = {
-                onCheckoutStart: function() {
-                    try {
-                        <?php echo $trackCallbacks['checkout_start']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onEmailEnter: function(email) {
-                    try {
-                        <?php echo $trackCallbacks['email_enter']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onShippingDetailsComplete: function() {
-                    try {
-                        <?php echo $trackCallbacks['shipping_details_complete']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onShippingOptionsComplete: function() {
-                    try {
-                        <?php echo $trackCallbacks['shipping_options_complete']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onPaymentSubmit: function() {
-                    try {
-                        <?php echo $trackCallbacks['payment_submit']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onSuccess: function() {
-                    try {
-                        <?php echo $trackCallbacks['success']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                },
-                onClose: function() {
-                    try {
-                        <?php echo $trackCallbacks['close']; ?>
-                    } catch (error) {
-                        console.error(error);
-                    }
-                }
-            };
             // On multiple checkout open/close actions the success event remains registered
             // resulting in making the success call multiple times. This variable stores
             // the last request to be aborted before new one is sent.
@@ -174,36 +75,59 @@ $trackCallbacks = $block->getTrackCallbacks();
                 },
 
                 success: function (transaction, callback) {
+                    /**
+                     * Success transaction handler.
+                     * Sets the success url for the non-preauth flow.
+                     * Calls additional javascript if defined in configuration.
+                     * Triggers on success track event handler.
+                     * Finally, calls the callback function
+                     * that finishes the checkout modal operation.
+                     *
+                     * param object data    response from the non-preauth order/save controller, optional
+                     * return void
+                     */
+                    var processSuccess = function (data) {
+                        try {
+                            if (typeof data !== 'undefined') {
+                                callbacks.success_url = data.success_url;
+                            }
+                            trackCallbacks.onSuccess(data);
+                        } finally {
+                            callback();
+                        }
+                    };
+
+                    if (settings.is_pre_auth) {
+                        processSuccess();
+                        return;
+                    }
+
                     // abort previously sent save order request.
                     if (save_request) save_request.abort();
                     // get thr transaction reference
-                    var parameters = 'reference='+transaction.reference;
+                    var parameters = [];
+                    parameters.push('form_key=' + $('[name="form_key"]').val());
+                    parameters.push('reference=' + transaction.reference);
+                    parameters = parameters.join('&');
                     // update order ajax request callback
                     // sets the success order page redirect url from received data
                     // and calls the final Bolt defined callback
                     var onSuccess = function(data){
                         if (data.status !== 'success') {
                             if (data.message) {
-                                showBoltErrorMessage();
+                                showBoltErrorMessage('', data.reference);
                                 // pretend order creation was success...
                                 // we need to call this; otherwise bolt modal show infinte spinner.
                                 callback();
                             }
-
-                            return false;
+                            return;
                         }
-                        try {
-                            <?php echo $block->getjavascriptSuccess(); ?>
-                            callbacks.success_url = data.success_url;
-
-                            trackCallbacks.onSuccess();
-                        } finally {
-                            callback();
-                        }
+                        processSuccess(data);
                     };
                     // ajax call to the update order transaction data endpoint.
                     // passes the bolt transaction reference
-                    save_request = ajaxPost(settings.save_order_url, parameters, onSuccess);
+                    save_request = $.post(settings.save_order_url, parameters)
+                                    .done(onSuccess);
                 },
 
                 check: function () {
@@ -215,7 +139,7 @@ $trackCallbacks = $block->getTrackCallbacks();
                      */
 
                     //check if we have inventory on stock
-                    if ( (max_qty>=0) && $qty && (Number($qty.val()) > max_qty)) {
+                    if ( max_qty >= 0 && getQty() > max_qty ) {
                         window.alert("The requested qty is not available");
                         return false;
                     }
@@ -227,66 +151,56 @@ $trackCallbacks = $block->getTrackCallbacks();
                         authenticationPopup.showModal();
                         return false;
                     }
+
+                    if (!hints) {
+                        return false;
+                    }
                     return true;
                 },
 
                 onEmailEnter: function(email) {
                     trackCallbacks.onEmailEnter(email);
                     if (callbacks.email !== email) {
-                        ajaxPost(settings.save_email_url, 'email='+encodeURIComponent(email));
+                        $.post(settings.save_email_url, 'email='+encodeURIComponent(email));
                         callbacks.email = email;
                     }
                 }
             };
 
-            function setupProductPage() {
-                var quantity = 1;
-                if ($qty) {
-                    quantity = Number($qty.val());
-                }
+            var getQty = function() {
+                var quantity = Number($('#qty').val());
+                return quantity > 0 ? quantity : 1;
+            };
+
+            var setupProductPage = function () {
                 var cart = {
                     currency: "USD",
                     items: [{
-                        reference: '<?= $block->getProduct()->getId() ?>',
-                        price: <?= (int) $block->getProduct()->getFinalPrice() ?>,
-                        name: '<?= $block->getProduct()->getName() ?>',
-                        quantity: quantity,
+                        reference: '<?= $block->getProduct()->getId(); ?>',
+                        price: <?= (int) $block->getProduct()->getFinalPrice(); ?>,
+                        name: '<?= $block->getProduct()->getName(); ?>',
+                        quantity: getQty(),
+                        options: '<?= $block->getStoreId(); ?>'
                     }]
                 };
+                BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+            };
 
-                var buttonClass = "bolt-product-checkout-button";
-                var hints = {prefill:{}};
+            var hints;
 
-                // We need to receive hints from server
-                // meanwhile initiate Bolt without hints to have button early
-                BoltCheckout.configureProductCheckout(cart, hints, callbacks, {checkoutButtonClassName: buttonClass});
-                customerData.init();
-                if ( customer().firstname ) {
-                    ajaxPost(
-                        settings.get_hints_url,
-                        {},
-                        function(result){
-                            BoltCheckout.configureProductCheckout(cart, result.hints, callbacks, {checkoutButtonClassName: buttonClass});
-                        }
-                    );
-                }
+            // wait for the hints to load
+            // the viable way to assign user to order
+            $.get(settings.get_hints_url)
+                .done(function(data) {
+                    hints = data.hints;
+                }).fail(function() {
+                    hints = {prefill:{}};
+                }).always(function() {
+                    setupProductPage();
+                    $('#qty').on('change', setupProductPage);
+                });
 
-            }
-
-            if (
-                (document && document.readyState !== "loading") ||
-                (window && window.document && window.document.readyState !== "loading")
-            ) {
-                setupProductPage();
-            } else {
-                document.addEventListener("DOMContentLoaded", setupProductPage);
-            }
-            jQuery(document).ready(function () {
-                jQuery('#qty').on('change',
-                    function () {
-                        setupProductPage();
-                    }
-                );
-            });
+            // early button display, not active untill hints are received
+            BoltCheckout.configureProductCheckout({},{}, callbacks);
         });
     </script>

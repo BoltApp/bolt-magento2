@@ -33,7 +33,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\View\Element\BlockFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
@@ -79,7 +79,7 @@ class CartTest extends TestCase
     private $customerSession;
     private $logHelper;
     private $bugsnag;
-    private $blockFactory;
+    private $imageHelperFactory;
     private $productRepository;
     private $appEmulation;
     private $dataObjectFactory;
@@ -126,18 +126,13 @@ class CartTest extends TestCase
             ->setMethods(['notifyError', 'notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->blockFactory = $this->getMockBuilder(BlockFactory::class)
-            ->setMethods(['createBlock', 'getImage', 'getImageUrl'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->blockFactory->method('createBlock')
-            ->with('Magento\Catalog\Block\Product\ListProduct')
-            ->willReturnSelf();
-        $this->blockFactory->method('getImage')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $this->blockFactory->method('getImageUrl')
-            ->willReturn('no-image');
+
+        $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
+        $imageHelper->method('init')->willReturnSelf();
+        $imageHelper->method('getUrl')->willReturn('no-image');
+
+        $this->imageHelperFactory = $this->createMock(ImageFactory::class);
+        $this->imageHelperFactory->method('create')->willReturn($imageHelper);
 
         $this->appEmulation = $this->getMockBuilder(Emulation::class)
             ->setMethods(['stopEnvironmentEmulation', 'startEnvironmentEmulation'])
@@ -225,7 +220,7 @@ class CartTest extends TestCase
             $this->logHelper,
             $this->bugsnag,
             $this->dataObjectFactory,
-            $this->blockFactory,
+            $this->imageHelperFactory,
             $this->appEmulation,
             $this->quoteFactory,
             $this->totalsCollector,
@@ -895,7 +890,7 @@ ORDER;
                 $this->logHelper,
                 $this->bugsnag,
                 $this->dataObjectFactory,
-                $this->blockFactory,
+                $this->imageHelperFactory,
                 $this->appEmulation,
                 $this->quoteFactory,
                 $this->totalsCollector,
@@ -1992,7 +1987,7 @@ ORDER;
 
     private function createCartByRequest_GetExpectedCartData() {
         return [
-            'order_reference' => NULL,
+            'order_reference' => SELF::QUOTE_ID,
             'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
             'currency' => 'USD',
             'items' => [
@@ -2021,7 +2016,7 @@ ORDER;
                         'reference' => SELF::PRODUCT_ID,
                         'name' => 'Product name',
                         'description' => NULL,
-                        'options' => NULL,
+                        'options' => SELF::STORE_ID,
                         'total_amount' => SELF::PRODUCT_PRICE,
                         'unit_price' => SELF::PRODUCT_PRICE,
                         'tax_amount' => 0,
@@ -2081,13 +2076,18 @@ ORDER;
             ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer'])
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer','setBoltParentQuoteId','setIsActive','setStoreId'])
             ->disableOriginalConstructor()
             ->getMock();
+        $quote->expects($this->once())
+            ->method('setBoltParentQuoteId')
+            ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
             ->with($product,1);
-
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setStoreId')
+            ->with(self::STORE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('reserveOrderId');
         $quote->expects($this->onceOrAny($isSuccessfulCase))
@@ -2096,15 +2096,14 @@ ORDER;
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setBoltReservedOrderId')
             ->with(self::ORDER_ID);
-
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setIsActive')
+            ->with(false);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('collectTotals')
             ->willReturnSelf();
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('save');
-        $quote->expects($this->onceOrAny($isSuccessfulCase))
-            ->method('getId')
-            ->willReturn(SELF::QUOTE_ID);
 
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
             ->setMethods(['create','load'])
@@ -2142,7 +2141,6 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -2186,7 +2184,6 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
