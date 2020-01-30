@@ -344,7 +344,7 @@ class CreateOrderTest extends TestCase
                 $fn($reportMock);
             });
         $this->expectException(BoltException::class);
-        $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Total amount does not match.');
         $this->currentMock->validateTotalAmount($this->quoteMock, $this->getTransaction());
     }
@@ -815,7 +815,7 @@ class CreateOrderTest extends TestCase
                 $fn($reportMock);
             });
         $this->expectException(BoltException::class);
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Cart Tax mismatched.');
 
         $this->currentMock->validateTax(
