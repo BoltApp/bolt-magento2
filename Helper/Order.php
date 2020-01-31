@@ -54,6 +54,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Bolt\Boltpay\Model\ResourceModel\Log\CollectionFactory as LogCollectionFactory;
+use Bolt\Boltpay\Model\LogFactory;
 
 /**
  * Class Order
@@ -187,6 +189,12 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
+   /** @var LogCollectionFactory  */
+    protected $logCollectionFactory;
+
+    /** @var LogFactory\ */
+    protected $logFactory;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -206,6 +214,8 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
+     * @param LogCollectionFactory $logCollectionFactory
+     * @param LogFactory $logFactory
      *
      * @codeCoverageIgnore
      */
@@ -229,7 +239,9 @@ class Order extends AbstractHelper
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        DateTime $date
+        DateTime $date,
+        LogCollectionFactory $logCollectionFactory,
+        LogFactory $logFactory
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -251,6 +263,8 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->logCollectionFactory = $logCollectionFactory;
+        $this->logFactory = $logFactory;
     }
 
     /**
@@ -712,12 +726,29 @@ class Order extends AbstractHelper
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
                         $this->voidTransactionOnBolt($transaction->id, $storeId);
                     }
-                    $this->bugsnag->notifyException($exception);
-                    return $this;
+
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
+                ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                    /** @var \Bolt\Boltpay\Model\Log $logFactory */
+                    $logFactory = $this->logFactory->create();
+                    /** @var \Bolt\Boltpay\Model\ResourceModel\Log\Collection $logCollectionFactory */
+                    $logCollectionFactory = $this->logCollectionFactory->create();
+                    if ($log = $logCollectionFactory->getLogByTransactionId($transaction->id, $hookType)) {
+                        $numberOfMissingQuoteFailedHooks = $log->getNumberOfMissingQuoteFailedHooks();
+                        if ($numberOfMissingQuoteFailedHooks > 10) {
+                            return $this;
+                        }
+
+                        $logFactory->incrementAttemptCount($log->getId(), $numberOfMissingQuoteFailedHooks);
+                    } else {
+                        $logFactory->recordAttempt($transaction->id, $hookType);
+                    };
                 }
 
                 throw $exception;
-
             }
             $this->verifyOrderCreationHookType($hookType);
             $order = $this->createOrder($quote, $transaction, $boltTraceId);

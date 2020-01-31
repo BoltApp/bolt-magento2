@@ -75,6 +75,8 @@ use Zend_Validate_Exception;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\Request as BoltRequest;
 use Bolt\Boltpay\Model\ResponseFactory;
+use Bolt\Boltpay\Model\ResourceModel\Log\CollectionFactory as LogCollectionFactory;
+use Bolt\Boltpay\Model\LogFactory;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -196,6 +198,12 @@ class OrderTest extends TestCase
     /** @var MockObject|ResponseFactory */
     private $responseFactory;
 
+    /** @var LogCollectionFactory\ */
+    private $logCollectionFactory;
+
+    /** @var LogFactory\ */
+    private $logFactory;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -258,7 +266,9 @@ class OrderTest extends TestCase
                     $this->resourceConnection,
                     $this->sessionHelper,
                     $this->discountHelper,
-                    $this->date
+                    $this->date,
+                    $this->logCollectionFactory,
+                    $this->logFactory
                 ]
             )
             ->setMethods($methods);
@@ -313,7 +323,8 @@ class OrderTest extends TestCase
 
         $this->responseFactory = $this->createPartialMock(ResponseFactory::class,['getResponse']);
         $this->boltRequest = $this->createMock(BoltRequest::class);
-
+        $this->logCollectionFactory = $this->createPartialMock(LogCollectionFactory::class,['create','getLogByTransactionId']);
+        $this->logFactory = $this->createPartialMock(LogFactory::class, ['getNumberOfMissingQuoteFailedHooks','incrementAttemptCount','recordAttempt','create','getId']);
         $this->orderMock = $this->createPartialMock(
             Order::class,
             [
@@ -907,7 +918,9 @@ class OrderTest extends TestCase
                             'display_id'      => self::DISPLAY_ID,
                             'total_amount'    => ['amount' => 100]
                         ]
-                    ]
+                    ],
+                    'status' => 'cancelled',
+                    'id' => '111'
                 ]
             )
         );
@@ -999,6 +1012,104 @@ class OrderTest extends TestCase
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+
+        $this->currentMock->saveUpdateOrder(
+            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+        );
+    }
+
+    private function saveUpdateOrder_noOrder_noQuote_SetUp()
+    {
+        $this->saveUpdateOrderSetUp();
+
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
+            ->with(self::QUOTE_ID)->willReturn(null);
+
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function ($callback) {
+                $report = $this->createMock(Report::class);
+                $report->expects(self::once())->method('setMetaData')->with(
+                    [
+                        'ORDER' => [
+                            'incrementId'     => self::INCREMENT_ID,
+                            'quoteId'         => self::QUOTE_ID,
+                            'Magento StoreId' => self::STORE_ID
+                        ]
+                    ]
+                );
+                $callback($report);
+            }
+        );
+
+        $this->currentMock->expects(self::once())->method('getExistingOrder')
+            ->with(self::INCREMENT_ID)->willReturn(null);
+        $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
+        $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
+
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_recordAttempt_throwException()
+    {
+        Hook::$fromBolt = true;
+        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
+
+        $this->logFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn(false);
+        $this->logFactory->expects(self::once())->method('recordAttempt')->willReturnSelf();
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+        $this->currentMock->saveUpdateOrder(
+            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_incrementAttemptCount_throwException()
+    {
+        Hook::$fromBolt = true;
+        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
+
+        $this->logFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn($this->logFactory);
+        $this->logFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(4);
+        $this->logFactory->expects(self::once())->method('getId')->willReturn(1);
+        $this->logFactory->expects(self::once())->method('incrementAttemptCount')->willReturnSelf();
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+        $this->currentMock->saveUpdateOrder(
+            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_returnThis()
+    {
+        Hook::$fromBolt = true;
+        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
+
+        $this->logFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->logCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn($this->logFactory);
+        $this->logFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(11);
+        $this->logFactory->expects(self::never())->method('incrementAttemptCount')->willReturnSelf();
+        $this->logFactory->expects(self::never())->method('recordAttempt')->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
