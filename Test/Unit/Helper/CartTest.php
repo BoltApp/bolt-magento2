@@ -2016,7 +2016,7 @@ ORDER;
                         'reference' => SELF::PRODUCT_ID,
                         'name' => 'Product name',
                         'description' => NULL,
-                        'options' => SELF::STORE_ID,
+                        'options' => json_encode(['storeId'=>SELF::STORE_ID]),
                         'total_amount' => SELF::PRODUCT_PRICE,
                         'unit_price' => SELF::PRODUCT_PRICE,
                         'tax_amount' => 0,
@@ -2084,7 +2084,10 @@ ORDER;
             ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
-            ->with($product,1);
+            ->with(
+                $product,
+                new \Magento\Framework\DataObject(['qty'=>1])
+            );
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setStoreId')
             ->with(self::STORE_ID);
