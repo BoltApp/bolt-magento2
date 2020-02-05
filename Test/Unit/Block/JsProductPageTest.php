@@ -172,42 +172,6 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
-     * @dataProvider providerGetProductQty
-     */
-    public function getProductQty($getManageStock, $getIsInStock, $getQty, $expected_result)
-    {
-        $stockItem = $this->getMockForAbstractClass(
-            \Magento\CatalogInventory\Api\Data\StockItemInterface::class,
-            [],
-            '',
-            false,
-            true,
-            true,
-            ['getManageStock', 'getIsInStock', 'getQty']
-        );
-        $stockItem->method('getManageStock')->willReturn($getManageStock);
-        $stockItem->method('getIsInStock')->willReturn($getIsInStock);
-        $stockItem->method('getQty')->willReturn($getQty);
-
-        $this->product->method('getExtensionAttributes')->willReturnSelf();
-        $this->product->method('getStockItem')->willReturn($stockItem);
-
-        $result = $this->block->getProductQty();
-        $this->assertEquals($expected_result, $result);
-    }
-
-    public function providerGetProductQty()
-    {
-        return [
-            [false, true, 1, -1],
-            [true, false, 1, 0],
-            [true, true, 1, 1],
-            [true, true, 5, 5],
-        ];
-    }
-
-    /**
-     * @test
      * @dataProvider providerIsSupportableType
      */
     public function isSupportableType($typeId, $expected_result)

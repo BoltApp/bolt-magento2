@@ -35,7 +35,6 @@ if (!$block->isSupportableType()) return;
             'domReady!'
         ], function ($, authenticationPopup, customerData) {
             var customer = customerData.get('customer');
-            var max_qty = <?= $block->getProductQty(); ?>;
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
 
             var settings = window.boltConfig;
@@ -137,12 +136,6 @@ if (!$block->isSupportableType()) return;
                      * Magento customerData and authenticationPopup objects are
                      * used.
                      */
-
-                    //check if we have inventory on stock
-                    if ( max_qty >= 0 && getQty() > max_qty ) {
-                        window.alert("The requested qty is not available");
-                        return false;
-                    }
 
                     // check if login is required
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
