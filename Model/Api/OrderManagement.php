@@ -28,6 +28,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\CheckboxesHandler;
 
 /**
  * Class OrderManagement
@@ -83,6 +84,11 @@ class OrderManagement implements OrderManagementInterface
     private $cartHelper;
 
     /**
+     * @var CheckboxesHandler
+     */
+    private $checkboxesHandler;
+
+    /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
      * @param LogHelper $logHelper
@@ -101,7 +107,8 @@ class OrderManagement implements OrderManagementInterface
         MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        CheckboxesHandler $checkboxesHandler
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -112,6 +119,7 @@ class OrderManagement implements OrderManagementInterface
         $this->response     = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper   = $cartHelper;
+        $this->checkboxesHandler = $checkboxesHandler;
     }
 
     /**
@@ -199,21 +207,7 @@ class OrderManagement implements OrderManagementInterface
         if (!isset($request['checkboxes']) || !$request['checkboxes']) {
             return;
         }
-        $comment = '';
-        $needSubscribe = false;
-        foreach ($request['checkboxes'] as $checkbox) {
-            if ($checkbox['category'] == 'NEWSLETTER') {
-                $needSubscribe = true;
-            }
-            $comment .= '<br>'.$checkbox['text'].': '.($checkbox['value'] ? 'Yes' : 'No');
-        }
-        if ($comment) {
-            $commentPrefix = 'BOLTPAY INFO :: checkboxes';
-            $this->orderHelper->addCommentToStatusHistoryIfNotExists($displayId, $commentPrefix.$comment, $commentPrefix);
-        }
-        if ($needSubscribe) {
-            $this->orderHelper->subscribeForNewsletter($displayId);
-        }
+        $this->checkboxesHandler->handle($displayId, $request['checkboxes']);
     }
 
     /**
