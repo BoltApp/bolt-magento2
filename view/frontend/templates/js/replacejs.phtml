@@ -640,7 +640,7 @@ ob_start();
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
-        var createOrder = function () {
+        var createOrder = async function () {
 
             // skip if there is already an ongoing request
             if (createRequest) return;
@@ -694,7 +694,7 @@ ob_start();
             }
             params = params.join('&');
 
-            var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
+            let promisedCart = await new Promise(function (resolve, reject) {
 
                 createRequest = true;
 
@@ -760,7 +760,9 @@ ob_start();
                         createRequest = false;
                     })
 
-            }), hints, callbacks);
+            });
+
+            var BC = await BoltCheckout.configure(promisedCart, hints, callbacks);
         };
         /////////////////////////////////////////////////////
 
