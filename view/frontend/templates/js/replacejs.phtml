@@ -218,6 +218,32 @@ ob_start();
     }());
     ////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////
+    // Wait for an object to be defined and execute a callback
+    ////////////////////////////////////////////////////////////////////////
+    ! function() {
+        window.whenDefined = function(property, callback) {
+            var prop = '_'+property;
+            if (window[property]) {
+                callback();
+            } else {
+                Object.defineProperty(window, property, {
+                    configurable: true,
+                    enumerable: true,
+                    writeable: true,
+                    get: function() {
+                        return this[prop];
+                    },
+                    set: function(value) {
+                        this[prop] = value;
+                        callback();
+                    }
+                });
+            }
+        };
+    }();
+    ////////////////////////////////////////////////////////////////////////
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -588,6 +614,8 @@ ob_start();
                     }
                 }
 
+                if (!cart.orderToken) return false;
+
                 popUpOpen = true;
                 return true;
             },
@@ -640,7 +668,12 @@ ob_start();
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
+        var allowAutoOpen = true;
         var createOrder = function () {
+            if (!window.BoltCheckout) {
+                whenDefined('BoltCheckout', createOrder);
+                return;
+            }
 
             // skip if there is already an ongoing request
             if (createRequest) return;
@@ -745,9 +778,9 @@ ob_start();
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
-                        if (initiateCheckout) {
+                        if (initiateCheckout && allowAutoOpen) {
                             BC.open();
-                            initiateCheckout = false;
+                            allowAutoOpen = false;
                         }
 
                         // prefetch Shipping and Tax for multi-step checkout
@@ -938,18 +971,15 @@ ob_start();
         ///////////////////////////////////////////////////////////
         var old_hints;
         var configureHints = function() {
-
             // wait 3 seconds for the field(s) to be fully filled,
             // do not react on every keypress
             setTimeout(
-
                 function() {
-
                     var new_hints = JSON.stringify(hints);
-
                     if (old_hints !== new_hints) {
-
-                        BoltCheckout.configure(cart, hints, callbacks);
+                        whenDefined('BoltCheckout', function () {
+                            BoltCheckout.configure(cart, hints, callbacks);
+                        });
                         old_hints = new_hints;
                     }
                 },
@@ -1060,6 +1090,9 @@ ob_start();
         // popup when button is clicked.
         ////////////////////////////////////////////////////
         createOrder();
+        whenDefined('BoltCheckout', function () {
+            BoltCheckout.configure(cart, hints, callbacks);
+        });
         ////////////////////////////////////////////////////
     });
 
