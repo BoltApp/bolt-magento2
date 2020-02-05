@@ -87,7 +87,7 @@
  - BSS store credit support
  - Improved checkout metricing
  - Various bug fixes
-## [v2.2.0](httpsL//github.com/BoltApp/bolt-magento2/releases/tag/2.2.0) 2020-02-05
+## [v2.2.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.2.0) 2020-02-05
  - [Beta] Simple Product Page Checkout
  - Staged Rollout
  - Some M2 2.3.4 compat. fixes
