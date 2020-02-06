@@ -20,12 +20,15 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceBlock name="head.additional">
-            <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
+            <block class="Bolt\Boltpay\Block\Js" name="bolttrack" template="Bolt_Boltpay::js/track.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>
-        <referenceBlock name="after.body.start">
+        <referenceContainer name="after.body.start">
             <block class="Bolt\Boltpay\Block\Js" name="bolt_popup" template="Bolt_Boltpay::popup.phtml" />
-        </referenceBlock>
+        </referenceContainer>
+        <referenceContainer name="before.body.end">
+            <block class="Bolt\Boltpay\Block\Js" name="boltconnect" template="Bolt_Boltpay::js/connect.phtml"/>
+        </referenceContainer>
     </body>
 </page>
