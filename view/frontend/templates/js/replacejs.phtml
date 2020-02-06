@@ -940,20 +940,13 @@ ob_start();
         ///////////////////////////////////////////////////////////
         var old_hints;
         var configureHints = function() {
-            // wait 1 second for the field(s) to be fully filled,
-            // do not react on every keypress
-            setTimeout(
-                function() {
-                    var new_hints = JSON.stringify(hints);
-                    if (old_hints !== new_hints) {
-                        whenDefined(cart, 'orderToken', function () {
-                            BoltCheckout.configure(cart, hints, callbacks);
-                        });
-                        old_hints = new_hints;
-                    }
-                },
-                1000
-            );
+            var new_hints = JSON.stringify(hints);
+            if (old_hints !== new_hints) {
+                whenDefined(cart, 'orderToken', function () {
+                    BoltCheckout.configure(cart, hints, callbacks);
+                });
+                old_hints = new_hints;
+            }
         };
         ///////////////////////////////////////////////////////////
 
