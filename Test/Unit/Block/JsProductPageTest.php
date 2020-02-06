@@ -195,6 +195,29 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
+     * @dataProvider providerIsConfigurable
+     */
+    public function isConfigurable($typeId, $expected_result)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isConfigurable();
+        $this->assertEquals($expected_result, $result);
+    }
+
+    public function providerIsConfigurable()
+    {
+        return [
+            ['simple', false],
+            ['grouped', false],
+            ['configurable', true],
+            ['virtual', false],
+            ['bundle', false],
+            ['downloadable', false]
+        ];
+    }
+
+    /**
+     * @test
      * @dataProvider providerIsGuestCheckoutAllowed
      */
     public function isGuestCheckoutAllowed($flag, $expected_result)
