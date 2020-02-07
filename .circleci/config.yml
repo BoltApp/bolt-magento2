@@ -43,6 +43,7 @@ commands:
                 name: << parameters.php_version >> << parameters.m2_version >> Unit
                 command: |
                   mkdir ./artifacts
+                  export COMPOSER_MEMORY_LIMIT=3G
                   export TEST_ENV=<< parameters.php_version >>
                   MAGENTO_VERSION=<< parameters.m2_version >> Test/scripts/ci-unit.sh
       - save_cache:
