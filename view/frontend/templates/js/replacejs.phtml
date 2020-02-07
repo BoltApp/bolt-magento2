@@ -641,6 +641,16 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
+
+        // barrier is externally-resolved promise
+        var barrier = function() {
+            var resolveHolder;
+            var promise = new Promise(function(resolve){
+                resolveHolder = resolve;
+            });
+            return { promise, resolve: function(t){resolveHolder(t)}};
+        }
+
         var createOrder = function () {
             if (!window.BoltCheckout) {
                 whenDefined(window, 'BoltCheckout', createOrder);
@@ -699,6 +709,8 @@ ob_start();
             }
             params = params.join('&');
 
+            var hintBarrier = barrier();
+
             cart = new Promise(function (resolve, reject) {
 
                 createRequest = true;
@@ -714,21 +726,25 @@ ob_start();
                         // Stop if Bolt checkout is restricted
                         if (boltRestricted) {
                             if (popUpOpen) reject(new Error(data.message));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
                         if (data.status !== 'success') {
                             reject(new Error(data.message || 'Network request failed'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
                         if (!data.cart) {
                             reject(new Error('The cart info is missing.'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
-                        // the cart is empty, exit gracefully without an error
                         if (!data.cart.orderToken) {
+                            reject(new Error('The cart is empty.'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
@@ -739,9 +755,7 @@ ob_start();
                         //////////////////////////
 
                         resolve(data.cart);
-                        // Ensure bolt checkout is configured with the hints updated from the response
-                        // TODO: Pass hints as a promise and load separately from cart
-                        BoltCheckout.configure(cart, hints, callbacks);
+                        hintBarrier.resolve(hints);
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
@@ -762,7 +776,7 @@ ob_start();
 
             });
 
-            var BC = BoltCheckout.configure(cart, hints, callbacks);
+            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
         };
         /////////////////////////////////////////////////////
 
