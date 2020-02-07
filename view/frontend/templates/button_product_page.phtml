@@ -151,7 +151,7 @@ if (!$block->isSupportableType()) return;
                         return false;
                     }
 
-                    var validator = jQuery( '#product_addtocart_form' ).validate();
+                    var validator = $( '#product_addtocart_form' ).validate();
                     if ( !validator.checkForm() ) {
                         validator.showErrors();
                         return false;
