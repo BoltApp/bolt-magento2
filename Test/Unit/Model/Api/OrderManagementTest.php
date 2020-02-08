@@ -508,19 +508,11 @@ class OrderManagementTest extends TestCase
         $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
     }
 
-    /**
-     * @test
-     * @covers ::manage
-     * @covers ::handleCartCreateApiCall
-     */
-    public function manage_cartCreate()
-    {
-        $type = "cart.create";
+    private function manage_cartCreate_basicAssertion(){
+        $this->startTime = microtime(true) * 1000;
+        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($this->startTime);
 
-        $startTime = microtime(true) * 1000;
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-
-        $request = [
+        $this->requestArray = [
             'type' => 'cart.create',
             'items' =>
                 [
@@ -555,30 +547,40 @@ class OrderManagementTest extends TestCase
             'currency' => 'USD',
             'metadata' => NULL,
         ];
+
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
+        $this->request->expects(self::once())->method('getBodyParams')->willReturn($this->requestArray);
+    }
+
+    /**
+     * @test
+     * @covers ::manage
+     * @covers ::handleCartCreateApiCall
+     */
+    public function manage_cartCreate()
+    {
+        $this->manage_cartCreate_basicAssertion();
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.success', 1, 'webhooks.latency', $this->startTime);
         $cart = [
             'order_reference' => '1001',
             'display_id' => '100010001 / 1001',
             'currency' => 'USD',
             'items' => [ [
-                            'reference' => '20102',
-                            'name' => 'Product name',
-                            'total_amount' => 100,
-                            'unit_price' => 100,
-                            'quantity' => 100,
-                            'sku' => 'TestProduct',
-                            'type' => 'physical',
-                            'description' => ''
-                        ] ],
+                'reference' => '20102',
+                'name' => 'Product name',
+                'total_amount' => 100,
+                'unit_price' => 100,
+                'quantity' => 100,
+                'sku' => 'TestProduct',
+                'type' => 'physical',
+                'description' => ''
+            ] ],
             'discounts' => [],
             'total_amount' => 100,
             'tax_amount' => 0,
         ];
-
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(self::anything(), 1, 'webhooks.latency', $startTime);
-        $this->request->expects(self::once())->method('getBodyParams')->willReturn($request);
-        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($request)->willReturn($cart);
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willReturn($cart);
         $this->response->expects(self::once())->method('sendResponse');
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
@@ -590,11 +592,53 @@ class OrderManagementTest extends TestCase
             null,
             null,
             null,
-            $type,
+            'cart.create',
             null,
             null,
             null,
             null
         );
+    }
+
+    /**
+     * @test
+     * @dataProvider manage_cartCreate_error_dataProvider
+     * @covers ::manage
+     * @covers ::handleCartCreateApiCall
+     */
+    public function manage_cartCreate_error($exception,$error_code,$error_message)
+    {
+        $this->manage_cartCreate_basicAssertion();
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, 'webhooks.latency', $this->startTime);
+
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willThrowException($exception);
+        $this->response->expects(self::once())->method('sendResponse');
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'error',
+            'code' => $error_code,
+            'message' =>$error_message
+        ]));
+
+        $this->currentMock->manage(
+            null,
+            null,
+            null,
+            'cart.create',
+            null,
+            null,
+            null,
+            null
+        );
+
+    }
+
+    public function manage_cartCreate_error_dataProvider() {
+        return [
+            [new \Exception('The requested qty is not available',0), '6303', 'The requested qty is not available'],
+            [new \Exception('Product that you are trying to add is not available.',0), '6301', 'Product that you are trying to add is not available.'],
+            [new \Exception('Another error',0), '6009', 'Unprocessable Entity: Another error'],
+        ];
     }
 }

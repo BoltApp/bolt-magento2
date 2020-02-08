@@ -179,10 +179,17 @@ class OrderManagement implements OrderManagementInterface
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
             $this->response->setHttpResponseCode(422);
+            $error_code = $e->getCode();
+            if (($error_code != 6301 && $error_code != 6303)) {
+                $error_code = 6009;
+                $error_message = 'Unprocessable Entity: ' . $e->getMessage();
+            } else {
+                $error_message = $e->getMessage();
+            }
             $this->response->setBody(json_encode([
                 'status' => 'error',
-                'code' => '6009',
-                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
+                'code' => (string)$error_code,
+                'message' => $error_message,
             ]));
         } finally {
             $this->response->sendResponse();
@@ -253,11 +260,24 @@ class OrderManagement implements OrderManagementInterface
             );
         }
 
-        $cart = $this->cartHelper->createCartByRequest($request);
-        $this->response->setHttpResponseCode(200);
-        $this->response->setBody(json_encode([
-            'status' => 'success',
-            'cart' => $cart,
-        ]));
+        try {
+            $cart = $this->cartHelper->createCartByRequest($request);
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'cart' => $cart,
+            ]));
+        } catch (\Exception $e) {
+            $error_message = $e->getMessage();
+            error_log($e->getCode());
+            error_log($e->getMessage());
+            if ($error_message == 'The requested qty is not available') {
+                throw new \Exception($error_message, 6303);
+            } else if ($error_message == 'Product that you are trying to add is not available.') {
+                throw new \Exception($error_message, 6301);
+            } else {
+                throw($e);
+            }
+        }
     }
 }
