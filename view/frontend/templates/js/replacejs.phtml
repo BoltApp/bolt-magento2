@@ -218,6 +218,29 @@ ob_start();
     }());
     ////////////////////////////////////////////////////////////////////////
 
+    // Wait for an object to be defined and execute a callback when it is
+    ! function() {
+        window.whenDefined = function(obj, property, callback) {
+            var prop = '_'+property;
+            if (obj[property]) {
+                callback();
+            } else {
+                Object.defineProperty(obj, property, {
+                    configurable: true,
+                    enumerable: true,
+                    writeable: true,
+                    get: function() {
+                        return this[prop];
+                    },
+                    set: function(value) {
+                        this[prop] = value;
+                        callback();
+                    }
+                });
+            }
+        };
+    }();
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -825,6 +848,7 @@ ob_start();
         // process the button when available on the page
         ////////////////////////////////////////////////
         onElementReady(bolt_button_selector, function(element) {
+            element.classList.remove("disabled");
             checkout_buttons = true;
             processButtons();
         });

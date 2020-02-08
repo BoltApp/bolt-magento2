@@ -25,42 +25,23 @@ if ($block->shouldDisableBoltCheckout()) return;
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) return;
 
 $trackJsUrl   = $block->getTrackJsUrl();
+$connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey  = $block->getCheckoutKey();
 ?>
-<script>
-    console.log("Bolt M2 Version: <?=$this->getModuleVersion()?>");
-    // Wait for an object to be defined and execute a callback when it is
-    ! function() {
-        window.whenDefined = function(obj, property, callback) {
-            var prop = '_'+property;
-            if (obj[property]) {
-                callback();
-            } else {
-                Object.defineProperty(obj, property, {
-                    configurable: true,
-                    enumerable: true,
-                    writeable: true,
-                    get: function() {
-                        return this[prop];
-                    },
-                    set: function(value) {
-                        this[prop] = value;
-                        callback();
-                    }
-                });
-            }
-        };
-    }();
-    // prevent checkout opening until the main javascript loads and reconfigures it
-    whenDefined(window, 'BoltCheckout', function(){
-        BoltCheckout.configure(null, null, {check: function(){return false;}});
-    });
-</script>
+<script>console.log("Bolt M2 Version: <?=$this->getModuleVersion()?>");</script>
 <script
     id="bolt-track"
     type="text/javascript"
     src="<?php echo $trackJsUrl; ?>"
     data-shopping-cart-id="magento2"
-    async
+    defer
+    data-publishable-key="<?php echo $checkoutKey; ?>">
+</script>
+<script
+    id="bolt-connect"
+    type="text/javascript"
+    src="<?php echo $connectJsUrl; ?>"
+    data-shopping-cart-id="magento2"
+    defer
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>
