@@ -174,7 +174,7 @@ if (!$block->isSupportableType()) return;
 
             var setupProductPage = function () {
                 var cart = {
-                    currency: "USD",
+                    currency: "<?= $block->getStoreCurrencyCode(); ?>",
                     items: [{
                         reference: '<?= $block->getProduct()->getId(); ?>',
                         price: <?= (int) $block->getProduct()->getFinalPrice(); ?>,

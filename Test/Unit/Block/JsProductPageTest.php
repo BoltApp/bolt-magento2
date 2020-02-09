@@ -33,6 +33,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class JsProductPageTest extends \PHPUnit\Framework\TestCase
 {
+    const CURRENCY_CODE = 'USD';
+
     /**
      * @var HelperConfig
      */
@@ -131,6 +133,12 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
+
+        $store = $this->createMock(\Magento\Store\Model\Store::class);
+        $store->method('getCurrentCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
 
         $this->product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
@@ -246,5 +254,13 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             [true,1],
             [false,0],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getStoreCurrencyCode() {
+        $result = $this->block->getStoreCurrencyCode();
+        $this->assertEquals(self::CURRENCY_CODE, $result);
     }
 }

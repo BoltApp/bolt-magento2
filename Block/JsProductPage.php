@@ -107,4 +107,9 @@ class JsProductPage extends Js {
     {
         return (int)$this->configHelper->isGuestCheckoutAllowed();
     }
+
+    public function getStoreCurrencyCode()
+    {
+        return $this->_storeManager->getStore()->getCurrentCurrencyCode();
+    }
 }
