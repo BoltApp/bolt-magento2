@@ -433,7 +433,7 @@ class ShippingMethodsTest extends TestCase
             ],self::PARENT_QUOTE_ID],
             // product page checkout case
             [[
-                'display_id'      => null,
+                'display_id'      => self::DISPLAY_ID,
                 'order_reference' => self::IMMUTABLE_QUOTE_ID
             ],self::IMMUTABLE_QUOTE_ID]
         ];

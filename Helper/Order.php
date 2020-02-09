@@ -1032,10 +1032,7 @@ class Order extends AbstractHelper
     public function getExistingOrder($orderIncrementId)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true) ?:
-            // bypass missing increment id in PPC transaction data - temporary fix.
-            // TODO: remove
-            $this->getOrderByQuoteId($orderIncrementId);
+        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
     }
 
     /**

@@ -1630,30 +1630,6 @@ class OrderTest extends TestCase
     /**
      * @test
      *
-     * @covers ::getExistingOrder
-     *
-     * @throws ReflectionException
-     */
-    public function getExistingOrder_byQuoteId()
-    {
-        $this->initCurrentMock(
-            [
-                'getOrderByQuoteId',
-            ]
-        );
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')->with(self::INCREMENT_ID, true)
-            ->willReturn(false);
-        $this->currentMock->expects(self::once())->method('getOrderByQuoteId')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        static::assertSame(
-            $this->orderMock,
-            TestHelper::invokeMethod($this->currentMock, 'getExistingOrder', [self::INCREMENT_ID])
-        );
-    }
-
-    /**
-     * @test
-     *
      * @covers ::quoteAfterChange
      *
      * @throws ReflectionException
