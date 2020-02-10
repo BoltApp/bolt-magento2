@@ -23,10 +23,6 @@
 if ($block->shouldDisableBoltCheckout()) return;
 ?>
 <style>
-    /* Fit checkout button in containter */
-    .bolt-checkout-button {
-        max-width: 100%;
-    }
     /**************************************************************
      * Standard checkout Bolt payment radio and button
      * Can be overridden from Global CSS
@@ -35,11 +31,6 @@ if ($block->shouldDisableBoltCheckout()) return;
         padding: 8px;
         border: 1px solid #cccccc;
         width:200px;
-    }
-    .bolt-checkout-button.disabled {
-        opacity: 0.5;
-        cursor: default;
-        pointer-events: none;
     }
     /***************************************************************/
     <?php echo $block->getGlobalCSS(); ?>
