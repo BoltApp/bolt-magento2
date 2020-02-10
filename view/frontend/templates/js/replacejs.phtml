@@ -1061,14 +1061,10 @@ ob_start();
         ////////////////////////////////////////////////////
         createOrder();
         ////////////////////////////////////////////////////
+        <?php echo $block->getAdditionalJavascript(); ?>
     });
-
-    <?php echo $block->getAdditionalJavascript(); ?>
 </script>
 <?php
 $js = ob_get_clean();
-
 echo $block->minifyJs($js);
-
 ?>
-
