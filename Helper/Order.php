@@ -1040,11 +1040,21 @@ class Order extends AbstractHelper
     protected function quoteAfterChange($quote)
     {
         $quote->setUpdatedAt($this->date->gmtDate());
+        // If it's PPC quote make it temporary active
+        // for third party plugins work
+        $is_quote_active = $quote->getIsActive();
+        if (!$is_quote_active) {
+            $quote->setIsActive(true);
+        }
         $this->_eventManager->dispatch(
             'sales_quote_save_after', [
                 'quote' => $quote
             ]
         );
+        if (!$is_quote_active) {
+            $quote->setIsActive(false);
+        }
+
     }
 
     /**
