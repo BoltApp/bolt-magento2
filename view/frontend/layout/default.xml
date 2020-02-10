@@ -24,8 +24,8 @@
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>
-        <referenceContainer name="after.body.start">
+        <referenceBlock name="after.body.start">
             <block class="Bolt\Boltpay\Block\Js" name="bolt_popup" template="Bolt_Boltpay::popup.phtml" />
-        </referenceContainer>
+        </referenceBlock>
     </body>
 </page>

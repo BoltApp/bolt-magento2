@@ -848,7 +848,6 @@ ob_start();
         // process the button when available on the page
         ////////////////////////////////////////////////
         onElementReady(bolt_button_selector, function(element) {
-            element.classList.remove("disabled");
             checkout_buttons = true;
             processButtons();
         });
