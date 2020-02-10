@@ -218,6 +218,15 @@ ob_start();
     }());
     ////////////////////////////////////////////////////////////////////////
 
+    // barrier is externally-resolved promise
+    var boltBarrier = function() {
+        var resolveHolder;
+        var promise = new Promise(function(resolve){
+            resolveHolder = resolve;
+        });
+        return { promise, resolve: function(t){resolveHolder(t)}};
+    };
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -641,15 +650,6 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
 
-        // barrier is externally-resolved promise
-        var barrier = function() {
-            var resolveHolder;
-            var promise = new Promise(function(resolve){
-                resolveHolder = resolve;
-            });
-            return { promise, resolve: function(t){resolveHolder(t)}};
-        }
-
         var createOrder = function () {
 
             // skip if there is already an ongoing request
@@ -704,7 +704,7 @@ ob_start();
             }
             params = params.join('&');
 
-            var hintBarrier = barrier();
+            var hintBarrier = boltBarrier();
 
             cart = new Promise(function (resolve, reject) {
 
