@@ -222,27 +222,26 @@ ob_start();
     // Wait for an object to be defined and
     // execute a callback when it becomes available
     ////////////////////////////////////////////////////////////////////////
-    ! function() {
-        window.whenDefined = function(obj, property, callback) {
+    window.whenDefined = function(obj, property, callback) {
+        if (obj[property]) {
+            callback();
+        } else {
             var prop = '_'+property;
-            if (obj[property]) {
-                callback();
-            } else {
-                Object.defineProperty(obj, property, {
-                    configurable: true,
-                    enumerable: true,
-                    writeable: true,
-                    get: function() {
-                        return this[prop];
-                    },
-                    set: function(value) {
-                        this[prop] = value;
-                        callback();
-                    }
-                });
-            }
-        };
-    }();
+            Object.defineProperty(obj, property, {
+                configurable: true,
+                enumerable: true,
+                writeable: true,
+                get: function() {
+                    return this[prop];
+                },
+                // calls callback when variable is set
+                set: function(value) {
+                    this[prop] = value;
+                    callback();
+                }
+            });
+        }
+    };
     ////////////////////////////////////////////////////////////////////////
 
     ////////////////////////////////////////////////////
