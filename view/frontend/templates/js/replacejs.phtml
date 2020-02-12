@@ -227,6 +227,32 @@ ob_start();
         return { promise, resolve: function(t){resolveHolder(t)}};
     };
 
+    ////////////////////////////////////////////////////////////////////////
+    // Wait for an object to be defined and
+    // execute a callback when it becomes available
+    ////////////////////////////////////////////////////////////////////////
+    window.whenDefined = function(obj, property, callback) {
+        if (obj[property]) {
+            callback();
+        } else {
+            var prop = '_'+property;
+            Object.defineProperty(obj, property, {
+                configurable: true,
+                enumerable: true,
+                writeable: true,
+                get: function() {
+                    return this[prop];
+                },
+                // calls callback when variable is set
+                set: function(value) {
+                    this[prop] = value;
+                    callback();
+                }
+            });
+        }
+    };
+    ////////////////////////////////////////////////////////////////////////
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -651,6 +677,12 @@ ob_start();
         var createRequest = false;
         var allowAutoOpen = true;
         var createOrder = function () {
+            // Check if BoltCheckout is defined (connect.js executed).
+            // If not, postpone processing until it is
+            if (!window.BoltCheckout) {
+                whenDefined(window, 'BoltCheckout', createOrder);
+                return;
+            }
 
             // skip if there is already an ongoing request
             if (createRequest) return;
@@ -948,23 +980,17 @@ ob_start();
         ///////////////////////////////////////////////////////////
         var old_hints;
         var configureHints = function() {
-
-            // wait 3 seconds for the field(s) to be fully filled,
-            // do not react on every keypress
-            setTimeout(
-
-                function() {
-
-                    var new_hints = JSON.stringify(hints);
-
-                    if (old_hints !== new_hints) {
-
-                        BoltCheckout.configure(cart, hints, callbacks);
-                        old_hints = new_hints;
-                    }
-                },
-                3000
-            );
+            // Check if cart exists (orderToken received).
+            // Othervise, do not update hints until it becomes available.
+            if (!cart.orderToken) {
+                whenDefined(cart, 'orderToken', configureHints);
+                return;
+            }
+            var new_hints = JSON.stringify(hints);
+            if (old_hints !== new_hints) {
+                BoltCheckout.configure(cart, hints, callbacks);
+                old_hints = new_hints;
+            }
         };
         ///////////////////////////////////////////////////////////
 
@@ -1071,14 +1097,10 @@ ob_start();
         ////////////////////////////////////////////////////
         createOrder();
         ////////////////////////////////////////////////////
+        <?php echo $block->getAdditionalJavascript(); ?>
     });
-
-    <?php echo $block->getAdditionalJavascript(); ?>
 </script>
 <?php
 $js = ob_get_clean();
-
 echo $block->minifyJs($js);
-
 ?>
-
