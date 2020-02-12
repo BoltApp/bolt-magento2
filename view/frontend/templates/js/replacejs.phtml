@@ -649,7 +649,7 @@ ob_start();
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
-
+        var allowAutoOpen = true;
         var createOrder = function () {
 
             // skip if there is already an ongoing request
@@ -754,9 +754,9 @@ ob_start();
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
-                        if (initiateCheckout) {
+                        if (initiateCheckout && allowAutoOpen) {
                             BC.open();
-                            initiateCheckout = false;
+                            allowAutoOpen = false;
                         }
 
                         // prefetch Shipping and Tax for multi-step checkout
