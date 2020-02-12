@@ -50,7 +50,7 @@ class ClearQuote
 
     /**
      * @param CheckoutSession $subject
-     * @return CheckoutSession
+     * @return null Return null because method clearQuote have no arguments
      * @throws \Exception
      */
     public function beforeClearQuote(CheckoutSession $subject)
@@ -60,9 +60,9 @@ class ClearQuote
         $this->quote_to_restore = null;
         $current_quote_id = $subject->getQuote()->getId();
         $order_quote_id = $subject->getLastSuccessQuoteId();
-        if (!$current_quote_id || !$order_quote_id && $current_quote_id == $order_quote_id) {
+        if (!$current_quote_id || !$order_quote_id || $current_quote_id == $order_quote_id) {
             // In PPC checkout quote should be different then quote tied to order just created
-            return $subject;
+            return null;
         }
 
         // Although check above is enough, double check that we are in Bolt PPC process
@@ -70,12 +70,12 @@ class ClearQuote
         if (!$quote || $quote->getBoltParentQuoteId() != $order_quote_id) {
             // BoltParentQuoteId should be set (sign of Bolt)
             // and should be the same as quoteID (sign of PPC)
-            return $subject;
+            return null;
         }
 
         $this->quote_to_restore = $subject->getQuote();
 
-        return $subject;
+        return null;
     }
 
     /**
