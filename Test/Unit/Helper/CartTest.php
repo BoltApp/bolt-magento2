@@ -958,7 +958,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1029,7 +1029,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1109,7 +1109,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1192,7 +1192,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1274,7 +1274,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1351,7 +1351,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1435,7 +1435,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1520,7 +1520,7 @@ ORDER;
             ->method('getAheadworksStoreCredit');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1622,7 +1622,7 @@ ORDER;
         $mageplazaGiftCode = "12345";
 
         $this->discountHelper->expects($this->once())
-            ->method('getMageplazaGiftCardCodesFromSession')
+            ->method('getMageplazaGiftCardCodes')
             ->willReturn($mageplazaGiftCode);
 
         $this->discountHelper->expects($this->once())

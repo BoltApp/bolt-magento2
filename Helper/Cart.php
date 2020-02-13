@@ -1684,7 +1684,7 @@ class Cart extends AbstractHelper
                 // Change giftcards balance as discount amount to giftcard balances to the discount amount
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
-                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodesFromSession();
+                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
                     $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
                 }
 
