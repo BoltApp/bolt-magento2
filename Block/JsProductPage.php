@@ -65,27 +65,6 @@ class JsProductPage extends Js {
     }
 
     /**
-     * Get maximum available quantity of product
-     * It is used to show a warning if user tries to buy more then product quantity
-     * @return int -1 Ignore product quantity levels
-     *              0 if product is out of stock
-     *              positive value otherwise
-     */
-    public function getProductQty()
-    {
-        $stockItem = $this->getProduct()->getExtensionAttributes()->getStockItem();
-        if (!$stockItem->getManageStock()) {
-            return -1;
-        } elseif (!$stockItem->getIsInStock()) {
-            // Although we shouldn't show the bolt button if product is out of stock,
-            // it's better to have this check
-            return 0;
-        } else {
-            return $stockItem->getQty();
-        }
-    }
-
-    /**
      * Check if we support product page checkout for type of current product
      *
      * @return boolean
