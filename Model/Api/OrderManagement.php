@@ -172,9 +172,8 @@ class OrderManagement implements OrderManagementInterface
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
             $this->response->setHttpResponseCode(422);
             $this->response->setBody(json_encode([
-                'status' => 'error',
-                'code' => $e->getCode(),
-                'message' => $e->getMessage(),
+                'status' => 'failure',
+                'error' => ['code' => $e->getCode(), 'message' => $e->getMessage()],
             ]));
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
