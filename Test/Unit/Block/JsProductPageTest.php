@@ -33,6 +33,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class JsProductPageTest extends \PHPUnit\Framework\TestCase
 {
+    const CURRENCY_CODE = 'USD';
+
     /**
      * @var HelperConfig
      */
@@ -132,6 +134,12 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
 
+        $store = $this->createMock(\Magento\Store\Model\Store::class);
+        $store->method('getCurrentCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
+
         $this->product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId'])
@@ -186,8 +194,31 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         return [
             ['simple', true],
             ['grouped', false],
-            ['configurable', false],
+            ['configurable', true],
             ['virtual', true],
+            ['bundle', false],
+            ['downloadable', false]
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsConfigurable
+     */
+    public function isConfigurable($typeId, $expected_result)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isConfigurable();
+        $this->assertEquals($expected_result, $result);
+    }
+
+    public function providerIsConfigurable()
+    {
+        return [
+            ['simple', false],
+            ['grouped', false],
+            ['configurable', true],
+            ['virtual', false],
             ['bundle', false],
             ['downloadable', false]
         ];
@@ -210,5 +241,13 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             [true,1],
             [false,0],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getStoreCurrencyCode() {
+        $result = $this->block->getStoreCurrencyCode();
+        $this->assertEquals(self::CURRENCY_CODE, $result);
     }
 }
