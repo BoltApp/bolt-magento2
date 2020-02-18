@@ -149,9 +149,14 @@ class CheckboxesHandlerTest extends TestCase
      * @covers ::handle
      */
     public function handle($checkboxes, $comment, $needSubscribe) {
-        //$this->initCurrentMock(['subscribeForNewsletter'],true,true);
         $this->initCurrentMock(['subscribeForNewsletter']);
-        $this->orderMock = $this->createMock(Order::class);
+        $this->orderMock = $this->createPartialMock(
+            Order::class,
+            [
+                'save',
+                'addCommentToStatusHistory'
+            ]
+        );
 
         if ($comment) {
             $commentPrefix = 'BOLTPAY INFO :: checkboxes';
