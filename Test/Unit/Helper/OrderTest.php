@@ -345,7 +345,8 @@ class OrderTest extends TestCase
                 'setTaxAmount',
                 'setBaseGrandTotal',
                 'setGrandTotal',
-                'getOrderCurrency'
+                'getOrderCurrency',
+                'getQuoteId'
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -1600,7 +1601,12 @@ class OrderTest extends TestCase
             ->willReturn($this->orderMock);
         $state = Order::STATE_PENDING_PAYMENT;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
+        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::QUOTE_ID)
+            ->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
+        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
         $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
     }
 
