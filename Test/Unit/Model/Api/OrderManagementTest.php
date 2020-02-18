@@ -55,6 +55,7 @@ class OrderManagementTest extends TestCase
     const REQUEST_HEADER_TRACE_ID = 'aaaabbbbcccc';
     const TYPE = 'pending';
     const STATUS = 'pending';
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
 
     /**
      * @var MockObject|HookHelper
@@ -466,8 +467,14 @@ class OrderManagementTest extends TestCase
         $this->orderHelperMock->expects(self::never())->method('deleteOrderByIncrementId');
         $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
             ->willReturn(self::REQUEST_HEADER_TRACE_ID);
-        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
-            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type);
+        $this->request->expects(self::once())->method('getBodyParams')
+            ->willReturn(self::HOOK_PAYLOAD);
+        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')->with(
+            self::REFERENCE,
+            self::STORE_ID,
+            self::REQUEST_HEADER_TRACE_ID,
+            $type,
+            self::HOOK_PAYLOAD);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',

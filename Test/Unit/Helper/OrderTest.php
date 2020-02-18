@@ -107,6 +107,8 @@ class OrderTest extends TestCase
         'another_random_empty_field' => [],
     ];
     const USER_ID = 1;
+    const HOOK_TYPE_PENDING = 'pending';
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
 
     /** @var MockObject|ApiHelper */
     private $apiHelper;
@@ -957,10 +959,13 @@ class OrderTest extends TestCase
             $this->quoteMock
         );
 
+        $this->checkboxesHandler->expects(self::once())->method('handle')->
+            with($this->orderMock,self::HOOK_PAYLOAD['checkboxes']);
+
         static::assertEquals(
             [$this->quoteMock, $this->orderMock],
             $this->currentMock->saveUpdateOrder(
-                self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+                self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID, self::HOOK_TYPE_PENDING, self::HOOK_PAYLOAD
             )
         );
     }
