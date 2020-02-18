@@ -998,14 +998,14 @@ class Order extends AbstractHelper
      */
     public function deleteOrderByIncrementId($displayId)
     {
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
+        list($incrementId, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
 
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
             $this->bugsnag->notifyError(
                 "Order Delete Error",
-                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $quoteId"
+                "Order does not exist. Order #: $incrementId, Immutable Quote ID: $immutableQuoteId"
             );
             return;
         }
@@ -1017,14 +1017,20 @@ class Order extends AbstractHelper
                     'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
                     $incrementId,
                     $state,
-                    $quoteId
+                    $immutableQuoteId
                 ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
         }
 
+        $parentQuoteId = $order->getQuoteId();
         $this->deleteOrder($order);
+        // reactivate session quote - the condiotion excludes PPC quotes
+        if ($parentQuoteId != $immutableQuoteId) {
+            $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+            $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
+        }
     }
 
     /**
