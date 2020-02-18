@@ -1812,7 +1812,6 @@ class Cart extends AbstractHelper
     /**
      * Create cart by request
      * TODO: add support for foreign currencies
-     * TODO: add support for multistore
      *
      * @param array $request
      *
@@ -1833,12 +1832,16 @@ class Cart extends AbstractHelper
         //add item to quote
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
-        $quote->addProduct($product, $item['quantity']);
-
-        $storeId = @$item['options'];
-        if ($storeId) {
-            $quote->setStoreId($storeId);
+        $options = json_decode($item['options'],true);
+        if (isset($options['storeId']) && $options['storeId']) {
+            $quote->setStoreId($options['storeId']);
         }
+        unset($options['storeId']);
+        unset($options['form_key']);
+        $options['qty'] = $item['quantity'];
+        $options = new \Magento\Framework\DataObject($options);
+
+        $quote->addProduct($product, $options);
 
         $quote->reserveOrderId();
 

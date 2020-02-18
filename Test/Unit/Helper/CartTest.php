@@ -71,6 +71,7 @@ class CartTest extends TestCase
     const STORE_ID = 1;
     const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
     const PRODUCT_SKU = 'TestProduct';
+    const SUPER_ATTRIBUTE = ["93" => "57", "136" => "383"];
 
     private $contextHelper;
     private $checkoutSession;
@@ -2016,7 +2017,7 @@ ORDER;
                         'reference' => SELF::PRODUCT_ID,
                         'name' => 'Product name',
                         'description' => NULL,
-                        'options' => SELF::STORE_ID,
+                        'options' => json_encode(['storeId'=>SELF::STORE_ID]),
                         'total_amount' => SELF::PRODUCT_PRICE,
                         'unit_price' => SELF::PRODUCT_PRICE,
                         'tax_amount' => 0,
@@ -2052,7 +2053,10 @@ ORDER;
         }
     }
 
-    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true) {
+    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true, $options = null) {
+        if (is_null($options)) {
+            $options = ['qty'=>1];
+        }
         if ($isSuccessfulCase) {
             $expects = $this->once();
         } else {
@@ -2084,7 +2088,10 @@ ORDER;
             ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
-            ->with($product,1);
+            ->with(
+                $product,
+                new \Magento\Framework\DataObject($options)
+            );
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setStoreId')
             ->with(self::STORE_ID);
@@ -2129,7 +2136,7 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_GuestUser() {
+    public function createCartByRequest_GuestUser_SimpleProduct() {
         $request = $this->createCartByRequest_GetBaseRequest();
 
         $quote = $this->createCartByRequest_CreateQuoteMock();
@@ -2144,6 +2151,44 @@ ORDER;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_GuestUser_ConfigurableProduct() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $request['items'][0]['options'] = json_encode([
+            "product" => SELF::PRODUCT_ID,
+            "selected_configurable_option" => "",
+            "item" => SELF::PRODUCT_ID,
+            "related_product" => "",
+            "form_key" => "8xaF8eKXVaiRVM53",
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => "1",
+            'storeId' => SELF::STORE_ID], JSON_FORCE_OBJECT);
+
+        $options = [
+            "product" => SELF::PRODUCT_ID,
+            "selected_configurable_option" => "",
+            "related_product" => "",
+            "item" => SELF::PRODUCT_ID,
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => 1
+        ];
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(true, $options);
+
+        $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects($this->once())
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
+
+        $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
+
 
     private function createCartByRequest_TuneMocksForSignature($expected_payload) {
         $this->hookHelper->method('verifySignature')

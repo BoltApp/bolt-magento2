@@ -78,6 +78,16 @@ class JsProductPage extends Js {
     }
 
     /**
+     * Check if current product has type configurable
+     *
+     * @return boolean
+     */
+    public function isConfigurable()
+    {
+        return $this->_product->getTypeId() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE;
+    }
+
+    /**
      * Check if guest checkout is allowed
      *
      * @return int 1 if guest checkout is allowed, 0 if not
