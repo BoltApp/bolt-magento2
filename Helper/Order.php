@@ -548,29 +548,21 @@ class Order extends AbstractHelper
     }
 
     /**
-     * Assign data to the quote payment info instance
+     * Assign data to the order payment instance
      *
-     * @param Quote $quote
-     * @param array $data
+     * @param OrderPaymentInterface $payment
+     * @param \stdClass $transaction
      * @return void
      */
-    private function setQuotePaymentInfoData($quote, $data)
+    protected function setOrderPaymentInfoData($payment, $transaction)
     {
-        foreach ($data as $key => $value) {
-            $this->getQuotePaymentInfoInstance($quote)->setData($key, $value)->save();
+        if (empty($payment->getCcLast4()) && ! empty($transaction->from_credit_card->last4)) {
+            $payment->setCcLast4($transaction->from_credit_card->last4);
         }
-    }
-
-    /**
-     * Returns quote payment info object
-     *
-     * @param Quote $quote
-     * @return \Magento\Payment\Model\Info
-     */
-    private function getQuotePaymentInfoInstance($quote)
-    {
-        return $this->quotePaymentInfoInstance ?:
-            $this->quotePaymentInfoInstance = $quote->getPayment()->getMethodInstance()->getInfoInstance();
+        if (empty($payment->getCcType()) && ! empty($transaction->from_credit_card->network)) {
+            $payment->setCcType($transaction->from_credit_card->network);
+        }
+        $payment->save();
     }
 
     /**
@@ -1093,15 +1085,6 @@ class Order extends AbstractHelper
 
         $this->setPaymentMethod($quote);
         $this->quoteAfterChange($quote);
-
-        // assign credit card info to the payment info instance
-        $this->setQuotePaymentInfoData(
-            $quote,
-            [
-                'cc_last_4' => @$transaction->from_credit_card->last4,
-                'cc_type' => @$transaction->from_credit_card->network
-            ]
-        );
 
         $email = @$transaction->order->cart->billing_address->email_address ?:
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
@@ -1701,6 +1684,8 @@ class Order extends AbstractHelper
         $payment->setLastTransId($transactionId);
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
+
+        $this->setOrderPaymentInfoData($payment, $transaction);
 
         // set order state and status
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {

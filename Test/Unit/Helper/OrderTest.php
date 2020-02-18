@@ -1677,8 +1677,6 @@ class OrderTest extends TestCase
      * @dataProvider trueAndFalseDataProvider
      *
      * @covers ::prepareQuote
-     * @covers ::setQuotePaymentInfoData
-     * @covers ::getQuotePaymentInfoInstance
      * @covers ::addCustomerDetails
      * @covers ::setPaymentMethod
      *
@@ -1693,7 +1691,6 @@ class OrderTest extends TestCase
     {
         $this->initCurrentMock(
             [
-                'setQuotePaymentInfoData',
                 'addCustomerDetails',
                 'quoteAfterChange',
                 'setShippingAddress',
@@ -1754,23 +1751,11 @@ class OrderTest extends TestCase
         $parentQuote->expects(self::once())->method('setPaymentMethod')->with(Payment::METHOD_CODE);
 
         $quotePayment = $this->createMock(Quote\Payment::class);
-        $methodInstance = $this->createMock(Payment::class);
-        $infoInstance = $this->createPartialMock(
-            Info::class,
-            ['setData', 'save']
-        );
-
-        $methodInstance->expects(self::atLeastOnce())->method('getInfoInstance')->willReturn($infoInstance);
-        $quotePayment->expects(self::atLeastOnce())->method('getMethodInstance')->willReturn($methodInstance);
 
         $parentQuote->expects(self::atLeastOnce())->method('getPayment')->willReturn($quotePayment);
 
         $quotePayment->expects(self::once())->method('importData')->with(['method' => Payment::METHOD_CODE])
             ->willReturnSelf();
-
-        $infoInstance->expects(self::exactly(2))->method('setData')
-            ->withConsecutive(['cc_last_4', 1111], ['cc_type', 'visa'])->willReturnSelf();
-        $infoInstance->expects(self::exactly(2))->method('save');
 
         $quotePayment->expects(self::once())->method('save');
 
