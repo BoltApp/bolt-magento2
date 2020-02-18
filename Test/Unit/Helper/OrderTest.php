@@ -84,7 +84,7 @@ class OrderTest extends TestCase
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
-    const DISPLAY_ID = self::INCREMENT_ID . " / " . self::QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID . " / " . self::IMMUTABLE_QUOTE_ID;
     const REFERENCE_ID = '1123123123';
     const STORE_ID = 1;
     const API_KEY = 'aaaabbbbcccc';
@@ -915,7 +915,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
         $this->currentMock->expects(self::once())->method('getDataFromDisplayID')
-            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, null]);
+            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID]);
         return $transaction;
     }
 
@@ -928,24 +928,15 @@ class OrderTest extends TestCase
     {
         $this->saveUpdateOrderSetUp();
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $immutablequoteMock = $this->createMock(Quote::class);
 
-        $this->bugsnag->expects(self::never())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'ORDER' => [
-                            'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::QUOTE_ID,
-                            'Magento StoreId' => self::STORE_ID
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
-        );
+        $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
+            ->willReturnMap([
+                [self::IMMUTABLE_QUOTE_ID, $immutablequoteMock],
+                [self::QUOTE_ID, $this->quoteMock]
+            ]);
+
+        $this->bugsnag->expects(self::never())->method('registerCallback');
 
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
@@ -974,7 +965,7 @@ class OrderTest extends TestCase
         $this->saveUpdateOrderSetUp();
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn(null);
+            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) {
@@ -983,7 +974,7 @@ class OrderTest extends TestCase
                     [
                         'ORDER' => [
                             'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::QUOTE_ID,
+                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
                             'Magento StoreId' => self::STORE_ID
                         ]
                     ]
@@ -998,7 +989,7 @@ class OrderTest extends TestCase
         $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
 
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
 
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
@@ -1016,8 +1007,13 @@ class OrderTest extends TestCase
         Hook::$fromBolt = true;
         $transaction = $this->saveUpdateOrderSetUp();
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $immutablequoteMock = $this->createMock(Quote::class);
+
+        $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
+            ->willReturnMap([
+                [self::IMMUTABLE_QUOTE_ID, $immutablequoteMock],
+                [self::QUOTE_ID, $this->quoteMock]
+            ]);
 
         $this->bugsnag->expects(self::never())->method('registerCallback');
 
@@ -1025,7 +1021,7 @@ class OrderTest extends TestCase
             ->with(self::INCREMENT_ID)->willReturn(null);
 
         $this->currentMock->expects(self::once())->method('createOrder')
-            ->with($this->quoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($this->orderMock);
+            ->with($immutablequoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($this->orderMock);
 
         $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::atLeastOnce())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
@@ -1485,7 +1481,7 @@ class OrderTest extends TestCase
             sprintf(
                 'Order Cancelation Error. Order does not exist. Order #: %s Immutable Quote ID: %s',
                 self::INCREMENT_ID,
-                self::QUOTE_ID
+                self::IMMUTABLE_QUOTE_ID
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
@@ -1586,7 +1582,7 @@ class OrderTest extends TestCase
                 'Order Delete Error. Order is in invalid state. Order #: %s State: %s Immutable Quote ID: %s',
                 self::INCREMENT_ID,
                 $state,
-                self::QUOTE_ID
+                self::IMMUTABLE_QUOTE_ID
             )
         );
         $this->currentMock->expects(static::never())->method('deleteOrder');

@@ -686,9 +686,9 @@ class Order extends AbstractHelper
         // hook the quote might have been cleared, resulting in error.
         // prevent failure and log event to bugsnag.
         ///////////////////////////////////////////////////////////////
-        $quote = $this->cartHelper->getQuoteById($quoteId);
+        $immutableQuote = $this->cartHelper->getQuoteById($quoteId);
 
-        if (!$quote) {
+        if (!$immutableQuote) {
             $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
                 $report->setMetaData([
                     'ORDER' => [
@@ -706,7 +706,7 @@ class Order extends AbstractHelper
 
         // if not create the order
         if (!$order || !$order->getId()) {
-            if (!$quote) {
+            if (!$immutableQuote) {
                 $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId));
                 if (Hook::$fromBolt && in_array($transaction->status, [Payment::TRANSACTION_AUTHORIZED, Payment::TRANSACTION_CANCELLED])) {
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
@@ -720,24 +720,26 @@ class Order extends AbstractHelper
 
             }
             $this->verifyOrderCreationHookType($hookType);
-            $order = $this->createOrder($quote, $transaction, $boltTraceId);
+            $order = $this->createOrder($immutableQuote, $transaction, $boltTraceId);
         }
 
-        if ($quote) {
+        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+
+        if ($parentQuote) {
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
                 $this->resetOrderState($order);
             }
-            $this->dispatchPostCheckoutEvents($order, $quote);
+            $this->dispatchPostCheckoutEvents($order, $parentQuote);
             // If Amasty Gif Cart Extension is present
             // clear gift carts applied to immutable quotes
-            $this->discountHelper->deleteRedundantAmastyGiftCards($quote);
+            $this->discountHelper->deleteRedundantAmastyGiftCards($parentQuote);
 
             // If Amasty Reward Points Extension is present
             // clear reward points applied to immutable quotes
-            $this->discountHelper->deleteRedundantAmastyRewardPoints($quote);
+            $this->discountHelper->deleteRedundantAmastyRewardPoints($parentQuote);
 
             // Delete redundant cloned quotes
-            $this->deleteRedundantQuotes($quote);
+            $this->deleteRedundantQuotes($parentQuote);
         }
 
         if (Hook::$fromBolt) {
@@ -748,7 +750,7 @@ class Order extends AbstractHelper
         } else {
             // if called from the store controller return quote and order
             // wait for the hook call to update the payment
-            return [$quote, $order];
+            return [$parentQuote, $order];
         }
     }
 
