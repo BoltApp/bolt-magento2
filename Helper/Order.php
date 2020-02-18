@@ -54,7 +54,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Newsletter\Model\SubscriberFactory;
 
 /**
  * Class Order
@@ -188,11 +187,10 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
-
     /**
-     * @var SubscriberFactory
+     * @var CheckboxesHandler
      */
-    private $subscriberFactory;
+    private $checkboxesHandler;
 
     /**
      * @param Context $context
@@ -214,6 +212,7 @@ class Order extends AbstractHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
      * @param SubscriberFactory $subscriberFactory
+     * @param CheckboxesHandler $checkboxesHandler
      *
      * @codeCoverageIgnore
      */
@@ -238,7 +237,7 @@ class Order extends AbstractHelper
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
         DateTime $date,
-        SubscriberFactory $subscriberFactory
+        CheckboxesHandler $checkboxesHandler
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -260,7 +259,7 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
-        $this->subscriberFactory = $subscriberFactory;
+        $this->checkboxesHandler = $checkboxesHandler;
     }
 
     /**
@@ -656,15 +655,16 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference Bolt transaction reference
-     * @param null   $boltTraceId
-     * @param null   $hookType
      * @param null|int   $storeId
+     * @param null|string   $boltTraceId
+     * @param null|string   $hookType
+     * @param null|array   $hookPayload
      *
      * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null)
+    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null, $hookPayload = null)
     {
         $transaction = $this->fetchTransactionInfo($reference, $storeId);
 
@@ -743,7 +743,7 @@ class Order extends AbstractHelper
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
-            $this->updateOrderPayment($order, $transaction, null, $hookType);
+            $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
         } else {
@@ -1526,12 +1526,13 @@ class Order extends AbstractHelper
      * @param null|\stdClass $transaction
      * @param null|string $reference
      * @param null $hookType
+     * @param null|array   $hookPayload
      *
      * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null)
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null, $hookPayload = null)
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
@@ -1700,8 +1701,12 @@ class Order extends AbstractHelper
 
         $this->setOrderPaymentInfoData($payment, $transaction);
 
-        // set order state and status
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+            // handle checkboxes
+            if (isset($hookPayload['checkboxes']) && $hookPayload['checkboxes']) {
+                $this->checkboxesHandler->handle($order, $hookPayload['checkboxes']);
+            }
+            // set order state and status
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState);
@@ -1943,57 +1948,5 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder(trim($incrementId));
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
-    }
-
-    /**
-     * Add comment to status history if order doesn't have similar comment
-     *
-     * @param string $displayId Display id. Method find order by it
-     * @param string $comment comment we need to add
-     * @param string $searchPhrase We don't add comment if order already has any comment with this phrase
-     */
-    public function addCommentToStatusHistoryIfNotExists($displayId, $comment, $searchPhrase)
-    {
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
-        $order = $this->getExistingOrder($incrementId);
-        if (!$order) {
-            return;
-        }
-
-        foreach ($order->getAllStatusHistory() as $orderComment) {
-            if (strpos($orderComment->getComment(), $searchPhrase) !== false) {
-                return;
-            }
-        }
-        $order->addCommentToStatusHistory($comment);
-        $order->save();
-    }
-
-    /**
-     * Subscribe for newsletters
-     * - Find order by displayId
-     * - If order for logged in user subscribe by userId
-     * - If order for guest user subscribe by email
-     *
-     * @param $displayId
-     */
-    public function subscribeForNewsletter($displayId) {
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
-        $order = $this->getExistingOrder($incrementId);
-        if (!$order) {
-            return;
-        }
-        $customerId = $order->getCustomerId();
-        try {
-            if ($customerId) {
-                $this->subscriberFactory->create()->subscribeCustomerById($customerId);
-            } else {
-                $email = $order->getBillingAddress()->getEmail();
-                $this->subscriberFactory->create()->subscribe($email);
-            }
-        } catch (\Exception $e) {
-            // We are here if we are unable to send confirmation email, for example don't have transport
-            $this->bugsnag->notifyException($e);
-        }
     }
 }

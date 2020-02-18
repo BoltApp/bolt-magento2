@@ -28,7 +28,6 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Helper\CheckboxesHandler;
 
 /**
  * Class OrderManagement
@@ -82,12 +81,6 @@ class OrderManagement implements OrderManagementInterface
      * @var CartHelper
      */
     private $cartHelper;
-
-    /**
-     * @var CheckboxesHandler
-     */
-    private $checkboxesHandler;
-
     /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
@@ -107,8 +100,7 @@ class OrderManagement implements OrderManagementInterface
         MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper,
-        CartHelper $cartHelper,
-        CheckboxesHandler $checkboxesHandler
+        CartHelper $cartHelper
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -119,7 +111,6 @@ class OrderManagement implements OrderManagementInterface
         $this->response     = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper   = $cartHelper;
-        $this->checkboxesHandler = $checkboxesHandler;
     }
 
     /**
@@ -198,19 +189,6 @@ class OrderManagement implements OrderManagementInterface
     }
 
     /**
-     * Handle custom checkboxes if request has them
-     *
-     * @param string $displayId
-     */
-    public function handleCheckboxes($displayId) {
-        $request = $this->request->getBodyParams();
-        if (!isset($request['checkboxes']) || !$request['checkboxes']) {
-            return;
-        }
-        $this->checkboxesHandler->handle($displayId, $request['checkboxes']);
-    }
-
-    /**
      * Save or Update magento Order by data from hook
      *
      * @param $reference
@@ -237,8 +215,6 @@ class OrderManagement implements OrderManagementInterface
             return;
         }
 
-        $this->handleCheckboxes($display_id);
-
         if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
@@ -252,7 +228,8 @@ class OrderManagement implements OrderManagementInterface
             $reference,
             $storeId,
             $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-            $type
+            $type,
+            $this->request->getBodyParams()
         );
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
