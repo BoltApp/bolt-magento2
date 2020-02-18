@@ -726,9 +726,6 @@ class Order extends AbstractHelper
         $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
 
         if ($parentQuote) {
-            if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-                $this->resetOrderState($order);
-            }
             $this->dispatchPostCheckoutEvents($order, $parentQuote);
             // If Amasty Gif Cart Extension is present
             // clear gift carts applied to immutable quotes
@@ -1672,19 +1669,6 @@ class Order extends AbstractHelper
                 break;
         }
 
-        // set order state and status
-        $orderState = $this->transactionToOrderState($transactionState);
-        $this->setOrderState($order, $orderState);
-
-        // Send order confirmation email to customer.
-        if ( ! $order->getEmailSent() ) {
-            try {
-                $this->emailSender->send($order);
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-            }
-        }
-
         // format the last transaction data for storing within the order payment record instance
 
         if ($newCapture) {
@@ -1717,6 +1701,22 @@ class Order extends AbstractHelper
         $payment->setLastTransId($transactionId);
         $payment->setAdditionalInformation($paymentData);
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
+
+        // set order state and status
+        if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+            $this->resetOrderState($order);
+        }
+        $orderState = $this->transactionToOrderState($transactionState);
+        $this->setOrderState($order, $orderState);
+
+        // Send order confirmation email to customer.
+        if ( ! $order->getEmailSent() ) {
+            try {
+                $this->emailSender->send($order);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }
+        }
 
         // We will create an invoice if we have zero amount or new capture.
         if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
@@ -1804,7 +1804,7 @@ class Order extends AbstractHelper
         //Add notification comment to order
         $order->addStatusHistoryComment(
             __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
-        )->setIsCustomerNotified(true)->save();
+        )->setIsCustomerNotified(true);
 
         return $invoice;
     }

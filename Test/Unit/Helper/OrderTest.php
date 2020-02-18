@@ -941,7 +941,6 @@ class OrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::once())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
         $this->discountHelper->expects(self::once())->method('deleteRedundantAmastyGiftCards')->with($this->quoteMock);
         $this->discountHelper->expects(self::once())->method('deleteRedundantAmastyRewardPoints')->with(
             $this->quoteMock
@@ -1024,7 +1023,6 @@ class OrderTest extends TestCase
             ->with($immutablequoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($this->orderMock);
 
         $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::atLeastOnce())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
         $this->orderMock->expects(self::atLeastOnce())->method('getGrandTotal')->willReturn(1);
         $this->currentMock->expects(self::once())->method('updateOrderPayment')
             ->with($this->orderMock, $transaction, null, $type = 'pending')->willReturn($this->orderMock);
