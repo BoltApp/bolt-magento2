@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -166,6 +167,15 @@ class OrderManagement implements OrderManagementInterface
                 $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'error',
+                'code' => $e->getCode(),
+                'message' => $e->getMessage(),
+            ]));
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
@@ -179,17 +189,10 @@ class OrderManagement implements OrderManagementInterface
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
             $this->response->setHttpResponseCode(422);
-            $error_code = $e->getCode();
-            if (($error_code != 6301 && $error_code != 6303)) {
-                $error_code = 6009;
-                $error_message = 'Unprocessable Entity: ' . $e->getMessage();
-            } else {
-                $error_message = $e->getMessage();
-            }
             $this->response->setBody(json_encode([
                 'status' => 'error',
-                'code' => (string)$error_code,
-                'message' => $error_message,
+                'code' => '6009',
+                'message' => 'Unprocessable Entity: ' . $e->getMessage(),
             ]));
         } finally {
             $this->response->sendResponse();
@@ -260,24 +263,11 @@ class OrderManagement implements OrderManagementInterface
             );
         }
 
-        try {
-            $cart = $this->cartHelper->createCartByRequest($request);
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'cart' => $cart,
-            ]));
-        } catch (\Exception $e) {
-            $error_message = $e->getMessage();
-            error_log($e->getCode());
-            error_log($e->getMessage());
-            if ($error_message == 'The requested qty is not available') {
-                throw new \Exception($error_message, 6303);
-            } else if ($error_message == 'Product that you are trying to add is not available.') {
-                throw new \Exception($error_message, 6301);
-            } else {
-                throw($e);
-            }
-        }
+        $cart = $this->cartHelper->createCartByRequest($request);
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'cart' => $cart,
+        ]));
     }
 }

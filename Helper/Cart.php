@@ -56,6 +56,8 @@ use Magento\Quote\Api\CartManagementInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 
 /**
  * Boltpay Cart helper
@@ -1832,6 +1834,7 @@ class Cart extends AbstractHelper
         //add item to quote
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
+
         $options = json_decode($item['options'],true);
         if (isset($options['storeId']) && $options['storeId']) {
             $quote->setStoreId($options['storeId']);
@@ -1841,7 +1844,28 @@ class Cart extends AbstractHelper
         $options['qty'] = $item['quantity'];
         $options = new \Magento\Framework\DataObject($options);
 
-        $quote->addProduct($product, $options);
+        try {
+            $quote->addProduct($product, $options);
+        } catch (\Exception $e) {
+            $error_message = $e->getMessage();
+            if ($error_message == 'Product that you are trying to add is not available.') {
+                throw new BoltException(
+                    __($error_message),
+                    null,
+                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                );
+            } else {
+                throw new BoltException(
+                    __('The requested qty is not available'),
+                    null,
+                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                );
+            }
+        };
+        $storeId = @$item['options'];
+        if ($storeId) {
+            $quote->setStoreId($storeId);
+        }
 
         $quote->reserveOrderId();
 
