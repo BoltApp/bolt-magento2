@@ -893,6 +893,13 @@ ob_start();
                         if (!position) {
                             $(element).hide();
                         }
+                        // if the replacement takes place after BoltCheckout.configure call
+                        // call it again to set up the button. Skip if BoltCheckout is not available,
+                        // ie. connect.js not loaded / executed yet,
+                        // the button will be processed after connect.js loads.
+                        if (window.BoltCheckout) {
+                            BoltCheckout.configure(cart, hints, callbacks);
+                        }
                     });
                     /////////////////////////////////////////////////////
                 }(selector);
