@@ -121,7 +121,7 @@ class OrderManagementTest extends TestCase
     protected function setUp()
     {
         $this->initRequiredMocks();
-        $this->initCurrentMock(['handleCheckboxes']);
+        $this->initCurrentMock([]);
 
         $this->requestContent = json_encode(
             [
@@ -192,7 +192,6 @@ class OrderManagementTest extends TestCase
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with(self::anything(), 1, 'webhooks.latency', $startTime);
         $this->response->expects(self::once())->method('sendResponse');
-        $this->currentMock->expects(self::once())->method('handleCheckboxes')->with(self::DISPLAY_ID);
 
         $this->currentMock->manage(
             self::ID,
@@ -223,7 +222,6 @@ class OrderManagementTest extends TestCase
             'status' => 'success',
             'message' => 'Order was canceled due to declined payment: ' . self::DISPLAY_ID,
         ]));
-        $this->currentMock->expects(self::once())->method('handleCheckboxes')->with(self::DISPLAY_ID);
 
         $this->currentMock->manage(
             self::ID,
@@ -258,7 +256,6 @@ class OrderManagementTest extends TestCase
             'status' => 'success',
             'message' => 'Order creation / update was successful',
         ]));
-        $this->currentMock->expects(self::once())->method('handleCheckboxes')->with(self::DISPLAY_ID);
 
         $this->currentMock->manage(
             self::ID,
@@ -306,7 +303,6 @@ class OrderManagementTest extends TestCase
             'code' => '6009',
             'message' => 'Unprocessable Entity: ' . $exception->getMessage(),
         ]));
-        $this->currentMock->expects(self::once())->method('handleCheckboxes')->with(self::DISPLAY_ID);
 
         $this->currentMock->manage(
             self::ID,
@@ -477,7 +473,6 @@ class OrderManagementTest extends TestCase
             'status' => 'success',
             'message' => 'Order creation / update was successful',
         ]));
-        $this->currentMock->expects(self::once())->method('handleCheckboxes')->with(self::DISPLAY_ID);
 
         $this->currentMock->manage(
             self::ID,
@@ -605,43 +600,5 @@ class OrderManagementTest extends TestCase
             null,
             null
         );
-    }
-
-    /**
-     * @test
-     * @dataProvider handleCheckboxesDataProvider
-     * @covers ::handleCheckboxes
-     */
-    public function handleCheckboxes($checkboxes, $comment, $needSubscribe) {
-        $this->initCurrentMock([]);
-        $request = ['checkboxes'=>$checkboxes];
-        $this->request->method('getBodyParams')->willReturn($request);
-
-        if ($comment) {
-            $commentPrefix = 'BOLTPAY INFO :: checkboxes';
-            $this->orderHelperMock->expects($this->once())->method('addCommentToStatusHistoryIfNotExists')
-            ->with(self::DISPLAY_ID, $commentPrefix.$comment, $commentPrefix);
-        } else {
-            $this->orderHelperMock->expects($this->never())->method('addCommentToStatusHistoryIfNotExists');
-        }
-        if ($needSubscribe) {
-            $this->orderHelperMock->expects($this->once())->method('subscribeForNewsletter')
-            ->with(self::DISPLAY_ID);
-        } else {
-            $this->orderHelperMock->expects($this->never())->method('subscribeForNewsletter');
-        }
-        $this->currentMock->handleCheckboxes(self::DISPLAY_ID);
-    }
-    public function handleCheckboxesDataProvider() {
-        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true];
-        $comment1 = '<br>Subscribe for our newsletter: Yes';
-        $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false];
-        $comment2 = '<br>Gift: No';
-        return [
-            [[], '', false],
-            [[$checkbox1], $comment1, true],
-            [[$checkbox2], $comment2, false],
-            [[$checkbox1,$checkbox2], $comment1.$comment2, true],
-        ];
     }
 }
