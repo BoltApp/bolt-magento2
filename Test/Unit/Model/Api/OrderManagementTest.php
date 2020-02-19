@@ -616,9 +616,8 @@ class OrderManagementTest extends TestCase
         $this->response->expects(self::once())->method('sendResponse');
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => $error_code,
-            'message' =>$error_message
+            'status' => 'failure',
+            'error' => ['code' => $error_code, 'message' => $error_message],
         ]));
 
         $this->currentMock->manage(
@@ -636,9 +635,8 @@ class OrderManagementTest extends TestCase
 
     public function manage_cartCreate_error_dataProvider() {
         return [
-            [new \Exception('The requested qty is not available',0), '6303', 'The requested qty is not available'],
-            [new \Exception('Product that you are trying to add is not available.',0), '6301', 'Product that you are trying to add is not available.'],
-            [new \Exception('Another error',0), '6009', 'Unprocessable Entity: Another error'],
+            [new BoltException(__('The requested qty is not available'),null,6303), 6303, 'The requested qty is not available'],
+            [new BoltException(__('Product that you are trying to add is not available.'),null,6301), 6301, 'Product that you are trying to add is not available.'],
         ];
     }
 }
