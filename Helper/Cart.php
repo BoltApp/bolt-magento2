@@ -1862,10 +1862,6 @@ class Cart extends AbstractHelper
                 );
             }
         };
-        $storeId = @$item['options'];
-        if ($storeId) {
-            $quote->setStoreId($storeId);
-        }
 
         $quote->reserveOrderId();
 
