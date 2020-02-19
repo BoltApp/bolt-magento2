@@ -77,6 +77,7 @@ use Bolt\Boltpay\Model\Request as BoltRequest;
 use Bolt\Boltpay\Model\ResponseFactory;
 use Bolt\Boltpay\Model\ResourceModel\Log\CollectionFactory as LogCollectionFactory;
 use Bolt\Boltpay\Model\LogFactory;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -204,6 +205,9 @@ class OrderTest extends TestCase
     /** @var LogFactory\ */
     private $logFactory;
 
+    /** @var Decider */
+    private $featureSwitches;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -268,7 +272,8 @@ class OrderTest extends TestCase
                     $this->discountHelper,
                     $this->date,
                     $this->logCollectionFactory,
-                    $this->logFactory
+                    $this->logFactory,
+                    $this->featureSwitches
                 ]
             )
             ->setMethods($methods);
@@ -370,6 +375,7 @@ class OrderTest extends TestCase
 
         $this->context->method('getEventManager')->willReturn($this->eventManager);
         $this->resourceConnection->method('getConnection')->willReturn($this->connection);
+        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled']);
     }
 
     /**
@@ -1062,6 +1068,7 @@ class OrderTest extends TestCase
         $this->logCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
         $this->logCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn(false);
         $this->logFactory->expects(self::once())->method('recordAttempt')->willReturnSelf();
+        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
@@ -1086,6 +1093,7 @@ class OrderTest extends TestCase
         $this->logFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(4);
         $this->logFactory->expects(self::once())->method('getId')->willReturn(1);
         $this->logFactory->expects(self::once())->method('incrementAttemptCount')->willReturnSelf();
+        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
@@ -1109,7 +1117,27 @@ class OrderTest extends TestCase
         $this->logCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn($this->logFactory);
         $this->logFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(11);
         $this->logFactory->expects(self::never())->method('incrementAttemptCount')->willReturnSelf();
+        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
+
         $this->logFactory->expects(self::never())->method('recordAttempt')->willReturnSelf();
+
+        $this->currentMock->saveUpdateOrder(
+            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_isAllowingLogMissingQuoteFailedHooksDisabled_returnThis()
+    {
+        Hook::$fromBolt = true;
+        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
+        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(false);
+
+        $this->logFactory->expects(self::never())->method('create')->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID

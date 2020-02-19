@@ -56,6 +56,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
 use Bolt\Boltpay\Model\ResourceModel\Log\CollectionFactory as LogCollectionFactory;
 use Bolt\Boltpay\Model\LogFactory;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class Order
@@ -195,6 +196,9 @@ class Order extends AbstractHelper
     /** @var LogFactory\ */
     protected $logFactory;
 
+    /** @var Decider */
+    private $featureSwitches;
+
     /**
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -216,7 +220,7 @@ class Order extends AbstractHelper
      * @param DateTime $date
      * @param LogCollectionFactory $logCollectionFactory
      * @param LogFactory $logFactory
-     *
+     * @param Decider $featureSwitches
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -241,7 +245,8 @@ class Order extends AbstractHelper
         DiscountHelper $discountHelper,
         DateTime $date,
         LogCollectionFactory $logCollectionFactory,
-        LogFactory $logFactory
+        LogFactory $logFactory,
+        Decider $featureSwitches
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -265,6 +270,7 @@ class Order extends AbstractHelper
         $this->date = $date;
         $this->logCollectionFactory = $logCollectionFactory;
         $this->logFactory = $logFactory;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -731,6 +737,10 @@ class Order extends AbstractHelper
                 //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
                 ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                    if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
+                        return $this;
+                    }
 
                     /** @var \Bolt\Boltpay\Model\Log $logFactory */
                     $logFactory = $this->logFactory->create();
