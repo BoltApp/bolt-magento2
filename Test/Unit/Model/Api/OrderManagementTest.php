@@ -295,9 +295,11 @@ class OrderManagementTest extends TestCase
             ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => '6009',
-            'message' => 'Unprocessable Entity: ' . $exception->getMessage(),
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
         ]));
 
         $this->currentMock->manage(
@@ -370,9 +372,11 @@ class OrderManagementTest extends TestCase
             ->with(self::DISPLAY_ID)->willThrowException($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => '6009',
-            'message' => 'Unprocessable Entity: ' . $exception->getMessage(),
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
