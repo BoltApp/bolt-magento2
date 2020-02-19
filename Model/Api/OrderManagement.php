@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -166,6 +167,14 @@ class OrderManagement implements OrderManagementInterface
                 $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'failure',
+                'error' => ['code' => $e->getCode(), 'message' => $e->getMessage()],
+            ]));
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
