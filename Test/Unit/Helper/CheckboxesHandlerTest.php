@@ -111,7 +111,7 @@ class CheckboxesHandlerTest extends TestCase
 
     /**
      * @test
-     * @covers ::subscribeForNewsletter
+     * @covers ::subscribeToNewsletter
      */
     public function subscribeForNewsletter_guestUser()
     {
@@ -130,7 +130,7 @@ class CheckboxesHandlerTest extends TestCase
     /**
      * @test
      *
-     * @covers ::subscribeForNewsletter
+     * @covers ::subscribeToNewsletter
      */
     public function subscribeForNewsletter_loggedInUser()
     {

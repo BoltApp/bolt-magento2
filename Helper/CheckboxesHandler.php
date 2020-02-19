@@ -31,6 +31,7 @@ class CheckboxesHandler extends AbstractHelper
 {
     const CATEGORY_NEWSLETTER = 'NEWSLETTER';
     const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: checkboxes';
+    const FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER = 'subscribe_to_platform_newsletter';
 
     /**
      * @var SubscriberFactory
@@ -69,7 +70,8 @@ class CheckboxesHandler extends AbstractHelper
         $comment = '';
         $needSubscribe = false;
         foreach ($checkboxes as $checkbox) {
-            if ($checkbox['category'] == self::CATEGORY_NEWSLETTER && $checkbox['value']) {
+            if ($checkbox['category'] == self::CATEGORY_NEWSLETTER && $checkbox['value']
+                && $checkbox['features'] && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $checkbox['features'])){
                 $needSubscribe = true;
             }
             $comment .= '<br>' . $checkbox['text'] . ': ' . ($checkbox['value'] ? 'Yes' : 'No');
@@ -79,7 +81,7 @@ class CheckboxesHandler extends AbstractHelper
             $order->save();
         }
         if ($needSubscribe) {
-            $this->subscribeForNewsletter($order);
+            $this->subscribeToNewsletter($order);
         }
     }
 
@@ -90,7 +92,7 @@ class CheckboxesHandler extends AbstractHelper
      *
      * @param OrderModel $order
      */
-    public function subscribeForNewsletter($order) {
+    public function subscribeToNewsletter($order) {
         $customerId = $order->getCustomerId();
         try {
             if ($customerId) {
