@@ -82,7 +82,6 @@ class OrderManagement implements OrderManagementInterface
      * @var CartHelper
      */
     private $cartHelper;
-
     /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
@@ -214,13 +213,7 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
-        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order was canceled due to declined payment: ' . $display_id,
-            ]));
-        } elseif ($type === 'failed_payment') {
+        if ($type === 'failed_payment') {
             $this->orderHelper->deleteOrderByIncrementId($display_id);
 
             $this->response->setHttpResponseCode(200);
@@ -228,20 +221,30 @@ class OrderManagement implements OrderManagementInterface
                 'status' => 'success',
                 'message' => 'Order was deleted: ' . $display_id,
             ]));
-        } else {
-            $this->orderHelper->saveUpdateOrder(
-                $reference,
-                $storeId,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                $type
-            );
+            return;
+        }
 
+        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
                 'status' => 'success',
-                'message' => 'Order creation / update was successful',
+                'message' => 'Order was canceled due to declined payment: ' . $display_id,
             ]));
+            return;
         }
+
+        $this->orderHelper->saveUpdateOrder(
+            $reference,
+            $storeId,
+            $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+            $type,
+            $this->request->getBodyParams()
+        );
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'message' => 'Order creation / update was successful',
+        ]));
     }
 
     /**

@@ -53,7 +53,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 
 /**
  * Class Order
@@ -188,6 +188,11 @@ class Order extends AbstractHelper
     protected $date;
 
     /**
+     * @var CheckboxesHandler
+     */
+    private $checkboxesHandler;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -206,6 +211,8 @@ class Order extends AbstractHelper
      * @param SessionHelper $sessionHelper
      * @param DiscountHelper $discountHelper
      * @param DateTime $date
+     * @param SubscriberFactory $subscriberFactory
+     * @param CheckboxesHandler $checkboxesHandler
      *
      * @codeCoverageIgnore
      */
@@ -229,7 +236,8 @@ class Order extends AbstractHelper
         ResourceConnection $resourceConnection,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        DateTime $date
+        DateTime $date,
+        CheckboxesHandler $checkboxesHandler
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -251,6 +259,7 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->checkboxesHandler = $checkboxesHandler;
     }
 
     /**
@@ -646,15 +655,16 @@ class Order extends AbstractHelper
      * Update order payment / transaction data (checkout, web hooks)
      *
      * @param string $reference Bolt transaction reference
-     * @param null   $boltTraceId
-     * @param null   $hookType
      * @param null|int   $storeId
+     * @param null|string   $boltTraceId
+     * @param null|string   $hookType
+     * @param null|array   $hookPayload
      *
      * @return array|mixed
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null)
+    public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null, $hookPayload = null)
     {
         $transaction = $this->fetchTransactionInfo($reference, $storeId);
 
@@ -733,7 +743,7 @@ class Order extends AbstractHelper
 
         if (Hook::$fromBolt) {
             // if called from hook update order payment transactions
-            $this->updateOrderPayment($order, $transaction, null, $hookType);
+            $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
         } else {
@@ -1526,12 +1536,13 @@ class Order extends AbstractHelper
      * @param null|\stdClass $transaction
      * @param null|string $reference
      * @param null $hookType
+     * @param null|array   $hookPayload
      *
      * @throws \Exception
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null)
+    public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null, $hookPayload = null)
     {
         // Fetch transaction info if transaction is not passed as a parameter
         if ($reference && !$transaction) {
@@ -1700,8 +1711,12 @@ class Order extends AbstractHelper
 
         $this->setOrderPaymentInfoData($payment, $transaction);
 
-        // set order state and status
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
+            // handle checkboxes
+            if (isset($hookPayload['checkboxes']) && $hookPayload['checkboxes']) {
+                $this->checkboxesHandler->handle($order, $hookPayload['checkboxes']);
+            }
+            // set order state and status
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState);

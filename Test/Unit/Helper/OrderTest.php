@@ -75,6 +75,7 @@ use Zend_Validate_Exception;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\Request as BoltRequest;
 use Bolt\Boltpay\Model\ResponseFactory;
+use Bolt\Boltpay\Helper\CheckboxesHandler;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -105,6 +106,9 @@ class OrderTest extends TestCase
         'random_empty_field'         => '',
         'another_random_empty_field' => [],
     ];
+    const USER_ID = 1;
+    const HOOK_TYPE_PENDING = 'pending';
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
 
     /** @var MockObject|ApiHelper */
     private $apiHelper;
@@ -196,6 +200,9 @@ class OrderTest extends TestCase
     /** @var MockObject|ResponseFactory */
     private $responseFactory;
 
+    /** @var MockObject|CheckboxesHandler */
+    private $checkboxesHandler;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -258,7 +265,8 @@ class OrderTest extends TestCase
                     $this->resourceConnection,
                     $this->sessionHelper,
                     $this->discountHelper,
-                    $this->date
+                    $this->date,
+                    $this->checkboxesHandler
                 ]
             )
             ->setMethods($methods);
@@ -304,6 +312,7 @@ class OrderTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
+        $this->checkboxesHandler = $this->createMock(CheckboxesHandler::class);
 
         $this->quoteMock = $this->createMock(Quote::class);
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
@@ -346,7 +355,10 @@ class OrderTest extends TestCase
                 'setBaseGrandTotal',
                 'setGrandTotal',
                 'getOrderCurrency',
-                'getQuoteId'
+                'getQuoteId',
+                'getAllStatusHistory',
+                'getCustomerId',
+                'getBillingAddress'
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -950,7 +962,7 @@ class OrderTest extends TestCase
         static::assertEquals(
             [$this->quoteMock, $this->orderMock],
             $this->currentMock->saveUpdateOrder(
-                self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+                self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID, self::HOOK_TYPE_PENDING, self::HOOK_PAYLOAD
             )
         );
     }
@@ -2698,6 +2710,39 @@ class OrderTest extends TestCase
      *
      * @covers ::updateOrderPayment
      */
+    public function updateOrderPayment_handleCheckboxes()
+    {
+        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
+        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
+            ->withConsecutive(['transaction_state'])
+            ->willReturnOnConsecutiveCalls('');
+
+        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->with(self::TRANSACTION_ID . '-auth')
+            ->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+
+        $this->transactionBuilder->expects(self::once())->method('build')
+            ->with(TransactionInterface::TYPE_AUTH)->willThrowException(new Exception(''));
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('');
+
+        $this->orderMock->expects(self::any())->method('getState')
+            ->willReturn('pending_payment');
+        $this->checkboxesHandler->expects(self::once())->method('handle')
+            ->with($this->orderMock, SELF::HOOK_PAYLOAD['checkboxes']);
+
+        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, SELF::HOOK_PAYLOAD);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::updateOrderPayment
+     */
     public function updateOrderPayment_rejectedIrreversible()
     {
         list($transaction, $paymentMock) =
@@ -3452,5 +3497,4 @@ class OrderTest extends TestCase
             ]
         ];
     }
-
 }
