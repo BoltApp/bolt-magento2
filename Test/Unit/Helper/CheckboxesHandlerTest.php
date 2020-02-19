@@ -101,7 +101,7 @@ class CheckboxesHandlerTest extends TestCase
         $this->currentMock = $builder->getMock();
     }
 
-    private function subscribeForNewsletter_setup()
+    private function subscribeToNewsletter_setup()
     {
         $this->initCurrentMock([],true,true);
         $this->orderMock = $this->createMock(Order::class);
@@ -113,9 +113,9 @@ class CheckboxesHandlerTest extends TestCase
      * @test
      * @covers ::subscribeToNewsletter
      */
-    public function subscribeForNewsletter_guestUser()
+    public function subscribeToNewsletter_guestUser()
     {
-        $this->subscribeForNewsletter_setup();
+        $this->subscribeToNewsletter_setup();
         $this->orderMock->expects(self::once())->method('getCustomerId')->willReturn(null);
 
         $addressMock = $this->createMock(Address::class);
@@ -124,7 +124,7 @@ class CheckboxesHandlerTest extends TestCase
 
         $this->subscriber->expects($this->once())->method('subscribe')->with(SELF::EMAIL);
 
-        $this->currentMock->subscribeForNewsletter($this->orderMock);
+        $this->currentMock->subscribeToNewsletter($this->orderMock);
     }
 
     /**
@@ -132,14 +132,14 @@ class CheckboxesHandlerTest extends TestCase
      *
      * @covers ::subscribeToNewsletter
      */
-    public function subscribeForNewsletter_loggedInUser()
+    public function subscribeToNewsletter_loggedInUser()
     {
-        $this->subscribeForNewsletter_setup();
+        $this->subscribeToNewsletter_setup();
         $this->orderMock->method('getCustomerId')->willReturn(self::USER_ID);
 
         $this->subscriber->expects($this->once())->method('subscribeCustomerById')->with(self::USER_ID);
 
-        $this->currentMock->subscribeForNewsletter($this->orderMock);
+        $this->currentMock->subscribeToNewsletter($this->orderMock);
     }
 
 
@@ -149,7 +149,7 @@ class CheckboxesHandlerTest extends TestCase
      * @covers ::handle
      */
     public function handle($checkboxes, $comment, $needSubscribe) {
-        $this->initCurrentMock(['subscribeForNewsletter']);
+        $this->initCurrentMock(['subscribeToNewsletter']);
         $this->orderMock = $this->createPartialMock(
             Order::class,
             [
@@ -168,26 +168,28 @@ class CheckboxesHandlerTest extends TestCase
             $this->orderMock->expects($this->never())->method('save');
         }
         if ($needSubscribe) {
-            $this->currentMock->expects($this->once())->method('subscribeForNewsletter')
+            $this->currentMock->expects($this->once())->method('subscribeToNewsletter')
                 ->with($this->orderMock);
         } else {
-            $this->currentMock->expects($this->never())->method('subscribeForNewsletter');
+            $this->currentMock->expects($this->never())->method('subscribeToNewsletter');
         }
         $this->currentMock->handle($this->orderMock,$checkboxes);
     }
 
     public function handleCheckboxesDataProvider() {
-        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true];
+        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true,'features'=>['unknown']];
         $comment1 = '<br>Subscribe for our newsletter: Yes';
         $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false];
         $comment2 = '<br>Gift: No';
+        $checkbox3 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true,'features'=>['subscribe_to_platform_newsletter']];
+        $comment3 = '<br>Subscribe for our newsletter: Yes';
         return [
             [[], '', false],
-            [[$checkbox1], $comment1, true],
+            [[$checkbox1], $comment1, false],
             [[$checkbox2], $comment2, false],
-            [[$checkbox1,$checkbox2], $comment1.$comment2, true],
+            [[$checkbox3], $comment3, true],
+            [[$checkbox1,$checkbox2], $comment1.$comment2, false],
+            [[$checkbox1,$checkbox3], $comment1.$comment3, true],
         ];
     }
-
-
 }

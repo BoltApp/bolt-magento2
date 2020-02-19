@@ -959,9 +959,6 @@ class OrderTest extends TestCase
             $this->quoteMock
         );
 
-        $this->checkboxesHandler->expects(self::once())->method('handle')->
-            with($this->orderMock,self::HOOK_PAYLOAD['checkboxes']);
-
         static::assertEquals(
             [$this->quoteMock, $this->orderMock],
             $this->currentMock->saveUpdateOrder(
@@ -2680,6 +2677,39 @@ class OrderTest extends TestCase
             );
 
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::updateOrderPayment
+     */
+    public function updateOrderPayment_handleCheckboxes()
+    {
+        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
+        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
+            ->withConsecutive(['transaction_state'])
+            ->willReturnOnConsecutiveCalls('');
+
+        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->with(self::TRANSACTION_ID . '-auth')
+            ->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+
+        $this->transactionBuilder->expects(self::once())->method('build')
+            ->with(TransactionInterface::TYPE_AUTH)->willThrowException(new Exception(''));
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('');
+
+        $this->orderMock->expects(self::any())->method('getState')
+            ->willReturn('pending_payment');
+        $this->checkboxesHandler->expects(self::once())->method('handle')
+            ->with($this->orderMock, SELF::HOOK_PAYLOAD['checkboxes']);
+
+        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, SELF::HOOK_PAYLOAD);
     }
 
     /**
