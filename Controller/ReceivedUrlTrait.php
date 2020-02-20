@@ -91,7 +91,7 @@ trait ReceivedUrlTrait
                             'Bolt transaction: %1',
                             $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
                         )
-                    );
+                    )->save();
                 } else {
                     $this->bugsnag->notifyError(
                         "Pre-Auth redirect wrong order state",
