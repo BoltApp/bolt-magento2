@@ -740,7 +740,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->getExistingOrder($incrementId);
+        $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -1133,12 +1133,19 @@ class Order extends AbstractHelper
 
     /**
      * @param $orderIncrementId
-     * @return OrderModel|false
+     * @param null $parentQuoteId
+     * @return false|OrderInterface|OrderModel
      */
-    public function getExistingOrder($orderIncrementId)
+    public function getExistingOrder($orderIncrementId, $parentQuoteId = null)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+        $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+
+        if ($parentQuoteId && (!$order || !$order->getId())) {
+            $order = $this->getOrderByQuoteId($parentQuoteId);
+        }
+
+        return $order;
     }
 
     /**
