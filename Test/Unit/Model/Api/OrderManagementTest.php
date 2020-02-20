@@ -654,4 +654,24 @@ class OrderManagementTest extends TestCase
             [new BoltException(__('Product that you are trying to add is not available.'),null,6301), 6301, 'Product that you are trying to add is not available.'],
         ];
     }
+
+    /**
+     * @test
+     */
+    public function testSaveCustomerCreditCardWhenPendingHookIsSentToMagento(){
+        $type = "pending";
+        $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
+            ->with(self::REFERENCE,self::STORE_ID)->willReturnSelf();
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
 }

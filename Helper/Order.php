@@ -57,6 +57,8 @@ use \Magento\Framework\Stdlib\DateTime\DateTime;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 
 /**
  * Class Order
@@ -205,6 +207,16 @@ class Order extends AbstractHelper
     private $checkboxesHandler;
 
     /**
+     * @var CustomerCreditCardFactory
+     */
+    protected $customerCreditCardFactory;
+
+    /**
+     * @var CustomerCreditCardCollectionFactory
+     */
+    protected $customerCreditCardCollectionFactory;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -253,8 +265,11 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler
-    ) {
+        CheckboxesHandler $checkboxesHandler,
+        CustomerCreditCardFactory $customerCreditCardFactory,
+        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+    )
+    {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
@@ -279,6 +294,8 @@ class Order extends AbstractHelper
         $this->webhookLogFactory = $webhookLogFactory;
         $this->featureSwitches = $featureSwitches;
         $this->checkboxesHandler = $checkboxesHandler;
+        $this->customerCreditCardFactory = $customerCreditCardFactory;
+        $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
     }
 
     /**
@@ -746,7 +763,7 @@ class Order extends AbstractHelper
 
                     /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
                     $webhookLogCollection = $this->webhookLogCollectionFactory->create();
-                    
+
                     if ($webhookLog = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
                         $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
@@ -833,6 +850,44 @@ class Order extends AbstractHelper
         }
 
         return $this;
+    }
+
+    /**
+     * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
+     * @param $reference
+     * @param $storeId
+     * @return bool
+     */
+    public function saveCustomerCreditCard($reference, $storeId)
+    {
+        try {
+            $transaction = $this->fetchTransactionInfo($reference, $storeId);
+            $parentQuote = $this->cartHelper->getQuoteById(@$transaction->order->cart->order_reference);
+
+            $customerId = $parentQuote->getCustomerId();
+            $boltConsumerId = @$transaction->from_consumer->id;
+            $boltCreditCard = @$transaction->from_credit_card;
+            $boltCreditCardId = @$boltCreditCard->id;
+
+            if (!$customerId || !$boltConsumerId || !$boltCreditCardId) {
+                return false;
+            }
+
+            $doesCardExist = $this->customerCreditCardCollectionFactory->create()
+                            ->doesCardExist($customerId, $boltConsumerId, $boltCreditCardId);
+
+            if ($doesCardExist) {
+                return false;
+            }
+
+            $this->customerCreditCardFactory->create()
+                ->saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $boltCreditCard);
+
+            return true;
+        } catch (\Exception $exception) {
+            $this->bugsnag->notifyException($exception);
+            return false;
+        }
     }
 
     /**
