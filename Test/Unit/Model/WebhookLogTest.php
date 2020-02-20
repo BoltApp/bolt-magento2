@@ -25,7 +25,7 @@ class WebhookLogTest extends TestCase
 {
     const TRANSACTION_ID = '1111';
     const HOOK_TYPE = 'pending';
-    const NUMBER_OF_MISSING_QUOTE_FAILED_HOOKS = 1;
+
     /**
      * @var \Bolt\Boltpay\Model\WebhookLog
      */
@@ -75,6 +75,6 @@ class WebhookLogTest extends TestCase
         $this->webhookLogMock->expects($this->once())->method('load')->with(self::TRANSACTION_ID)->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('setNumberOfMissingQuoteFailedHooks')->with(2)->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('save')->willReturnSelf();
-        $this->webhookLogMock->incrementAttemptCount(self::TRANSACTION_ID, self::NUMBER_OF_MISSING_QUOTE_FAILED_HOOKS);
+        $this->webhookLogMock->incrementAttemptCount();
     }
 }

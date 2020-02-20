@@ -22,7 +22,7 @@ use \Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 class WebhookLog extends AbstractDb
 {
     /**
-     * Post Abstract Resource Constructor
+     * WebhookLog Resource initialization
      * @return void
      */
     protected function _construct()

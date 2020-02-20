@@ -747,13 +747,14 @@ class Order extends AbstractHelper
                     $webhookLog = $this->webhookLogFactory->create();
                     /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
                     $webhookLogCollection = $this->webhookLogCollectionFactory->create();
-                    if ($log = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
-                        $numberOfMissingQuoteFailedHooks = $log->getNumberOfMissingQuoteFailedHooks();
+                    
+                    if ($webhookLog = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
+                        $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
                             return $this;
                         }
 
-                        $webhookLog->incrementAttemptCount($log->getId(), $numberOfMissingQuoteFailedHooks);
+                        $webhookLog->incrementAttemptCount();
                     } else {
                         $webhookLog->recordAttempt($transaction->id, $hookType);
                     };
