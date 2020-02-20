@@ -93,3 +93,8 @@
  - Some M2 2.3.4 compat. fixes
  - Multicurrency improvements
  - Various bug fixes
+## [v2.3.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.3.0) 2020-02-20
+ - Custom checkboxes
+ - Re-order feature for logged-in customers
+ - Product page checkout improvements
+ - Various bug fixes
