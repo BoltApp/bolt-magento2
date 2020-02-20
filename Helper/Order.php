@@ -53,7 +53,10 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Magento\Framework\Stdlib\DateTime\DateTime;
+use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
+use Bolt\Boltpay\Model\WebhookLogFactory;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class Order
@@ -187,6 +190,15 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
+   /** @var WebhookLogCollectionFactory  */
+    protected $webhookLogCollectionFactory;
+
+    /** @var WebhookLogFactory */
+    protected $webhookLogFactory;
+
+    /** @var Decider */
+    private $featureSwitches;
+
     /**
      * @var CheckboxesHandler
      */
@@ -201,18 +213,19 @@ class Order extends AbstractHelper
      * @param OrderSender $emailSender
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
-     * @param TransactionBuilder $transactionBuilder
-     * @param TimezoneInterface $timezone
-     * @param DataObjectFactory $dataObjectFactory
-     * @param LogHelper $logHelper
-     * @param Bugsnag $bugsnag
-     * @param CartHelper $cartHelper
-     * @param ResourceConnection $resourceConnection
-     * @param SessionHelper $sessionHelper
-     * @param DiscountHelper $discountHelper
-     * @param DateTime $date
-     * @param SubscriberFactory $subscriberFactory
-     * @param CheckboxesHandler $checkboxesHandler
+     * @param TransactionBuilder          $transactionBuilder
+     * @param TimezoneInterface           $timezone
+     * @param DataObjectFactory           $dataObjectFactory
+     * @param LogHelper                   $logHelper
+     * @param Bugsnag                     $bugsnag
+     * @param CartHelper                  $cartHelper
+     * @param ResourceConnection          $resourceConnection
+     * @param SessionHelper               $sessionHelper
+     * @param DiscountHelper              $discountHelper
+     * @param DateTime                    $date
+     * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
+     * @param WebhookLogFactory           $webhookLogFactory
+     * @param Decider                     $featureSwitches
      *
      * @codeCoverageIgnore
      */
@@ -237,6 +250,9 @@ class Order extends AbstractHelper
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
         DateTime $date,
+        WebhookLogCollectionFactory $webhookLogCollectionFactory,
+        WebhookLogFactory $webhookLogFactory,
+        Decider $featureSwitches,
         CheckboxesHandler $checkboxesHandler
     ) {
         parent::__construct($context);
@@ -259,6 +275,9 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
+        $this->webhookLogCollectionFactory = $webhookLogCollectionFactory;
+        $this->webhookLogFactory = $webhookLogFactory;
+        $this->featureSwitches = $featureSwitches;
         $this->checkboxesHandler = $checkboxesHandler;
     }
 
@@ -714,12 +733,37 @@ class Order extends AbstractHelper
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
                         $this->voidTransactionOnBolt($transaction->id, $storeId);
                     }
-                    $this->bugsnag->notifyException($exception);
-                    return $this;
+
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
+                ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+                    if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
+                        $this->bugsnag->notifyException($exception);
+                        return $this;
+                    }
+
+                    /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
+                    $webhookLogCollection = $this->webhookLogCollectionFactory->create();
+                    
+                    if ($webhookLog = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
+                        $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
+                        if ($numberOfMissingQuoteFailedHooks > 10) {
+                            $this->bugsnag->notifyException($exception);
+                            return $this;
+                        }
+
+                        $webhookLog->incrementAttemptCount();
+                    } else {
+                        /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
+                        $webhookLog = $this->webhookLogFactory->create();
+
+                        $webhookLog->recordAttempt($transaction->id, $hookType);
+                    };
                 }
 
                 throw $exception;
-
             }
             $this->verifyOrderCreationHookType($hookType);
             $order = $this->createOrder($immutableQuote, $transaction, $boltTraceId);

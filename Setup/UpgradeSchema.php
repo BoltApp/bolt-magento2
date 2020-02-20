@@ -75,6 +75,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupFeatureSwitchTable($setup);
 
+        $this->setupWebhookLogTable($setup);
+
         $setup->endSetup();
     }
 
@@ -127,5 +129,44 @@ class UpgradeSchema implements UpgradeSchemaInterface
             'rollout percentage'
         )->setComment("Bolt feature switch table");
           $setup->getConnection()->createTable($table);
+    }
+
+    private function setupWebhookLogTable($setup){
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
+        if ($tableCreated) {
+            return;
+        }
+
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('bolt_webhook_log'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'transaction_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'transaction id'
+            )->addColumn(
+                'hook_type',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Hook type'
+            )
+            ->addColumn(
+                'number_of_missing_quote_failed_hooks',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'number of the missing quote failed hooks'
+            )->setComment("Bolt Webhook Log table");
+
+        $setup->getConnection()->createTable($table);
     }
 }
