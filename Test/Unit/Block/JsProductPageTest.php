@@ -33,6 +33,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class JsProductPageTest extends \PHPUnit\Framework\TestCase
 {
+    const CURRENCY_CODE = 'USD';
+
     /**
      * @var HelperConfig
      */
@@ -132,6 +134,12 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
 
+        $store = $this->createMock(\Magento\Store\Model\Store::class);
+        $store->method('getCurrentCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
+
         $this->product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId'])
@@ -172,42 +180,6 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
-     * @dataProvider providerGetProductQty
-     */
-    public function getProductQty($getManageStock, $getIsInStock, $getQty, $expected_result)
-    {
-        $stockItem = $this->getMockForAbstractClass(
-            \Magento\CatalogInventory\Api\Data\StockItemInterface::class,
-            [],
-            '',
-            false,
-            true,
-            true,
-            ['getManageStock', 'getIsInStock', 'getQty']
-        );
-        $stockItem->method('getManageStock')->willReturn($getManageStock);
-        $stockItem->method('getIsInStock')->willReturn($getIsInStock);
-        $stockItem->method('getQty')->willReturn($getQty);
-
-        $this->product->method('getExtensionAttributes')->willReturnSelf();
-        $this->product->method('getStockItem')->willReturn($stockItem);
-
-        $result = $this->block->getProductQty();
-        $this->assertEquals($expected_result, $result);
-    }
-
-    public function providerGetProductQty()
-    {
-        return [
-            [false, true, 1, -1],
-            [true, false, 1, 0],
-            [true, true, 1, 1],
-            [true, true, 5, 5],
-        ];
-    }
-
-    /**
-     * @test
      * @dataProvider providerIsSupportableType
      */
     public function isSupportableType($typeId, $expected_result)
@@ -222,8 +194,31 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         return [
             ['simple', true],
             ['grouped', false],
-            ['configurable', false],
+            ['configurable', true],
             ['virtual', true],
+            ['bundle', false],
+            ['downloadable', false]
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsConfigurable
+     */
+    public function isConfigurable($typeId, $expected_result)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isConfigurable();
+        $this->assertEquals($expected_result, $result);
+    }
+
+    public function providerIsConfigurable()
+    {
+        return [
+            ['simple', false],
+            ['grouped', false],
+            ['configurable', true],
+            ['virtual', false],
             ['bundle', false],
             ['downloadable', false]
         ];
@@ -246,5 +241,13 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             [true,1],
             [false,0],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function getStoreCurrencyCode() {
+        $result = $this->block->getStoreCurrencyCode();
+        $this->assertEquals(self::CURRENCY_CODE, $result);
     }
 }

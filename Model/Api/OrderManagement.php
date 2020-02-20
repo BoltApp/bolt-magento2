@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -81,7 +82,6 @@ class OrderManagement implements OrderManagementInterface
      * @var CartHelper
      */
     private $cartHelper;
-
     /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
@@ -166,6 +166,14 @@ class OrderManagement implements OrderManagementInterface
                 $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'failure',
+                'error' => ['code' => $e->getCode(), 'message' => $e->getMessage()],
+            ]));
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
@@ -205,13 +213,7 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
-        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order was canceled due to declined payment: ' . $display_id,
-            ]));
-        } elseif ($type === 'failed_payment') {
+        if ($type === 'failed_payment') {
             $this->orderHelper->deleteOrderByIncrementId($display_id);
 
             $this->response->setHttpResponseCode(200);
@@ -219,20 +221,30 @@ class OrderManagement implements OrderManagementInterface
                 'status' => 'success',
                 'message' => 'Order was deleted: ' . $display_id,
             ]));
-        } else {
-            $this->orderHelper->saveUpdateOrder(
-                $reference,
-                $storeId,
-                $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                $type
-            );
+            return;
+        }
 
+        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode([
                 'status' => 'success',
-                'message' => 'Order creation / update was successful',
+                'message' => 'Order was canceled due to declined payment: ' . $display_id,
             ]));
+            return;
         }
+
+        $this->orderHelper->saveUpdateOrder(
+            $reference,
+            $storeId,
+            $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+            $type,
+            $this->request->getBodyParams()
+        );
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'message' => 'Order creation / update was successful',
+        ]));
     }
 
     /**

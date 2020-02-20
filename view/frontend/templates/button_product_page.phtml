@@ -34,9 +34,10 @@ if (!$block->isSupportableType()) return;
             'mage/cookies',
             'domReady!'
         ], function ($, authenticationPopup, customerData) {
+
             var customer = customerData.get('customer');
-            var max_qty = <?= $block->getProductQty(); ?>;
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
+            var itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -138,12 +139,6 @@ if (!$block->isSupportableType()) return;
                      * used.
                      */
 
-                    //check if we have inventory on stock
-                    if ( max_qty >= 0 && getQty() > max_qty ) {
-                        window.alert("The requested qty is not available");
-                        return false;
-                    }
-
                     // check if login is required
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
@@ -155,6 +150,14 @@ if (!$block->isSupportableType()) return;
                     if (!hints) {
                         return false;
                     }
+
+                    var validator = $( '#product_addtocart_form' ).validate();
+                    if ( !validator.checkForm() ) {
+                        validator.showErrors();
+                        return false;
+                    }
+                    validator.showErrors();
+
                     return true;
                 },
 
@@ -173,14 +176,28 @@ if (!$block->isSupportableType()) return;
             };
 
             var setupProductPage = function () {
+                var options = {};
+                formData = new FormData(document.getElementById("product_addtocart_form"));
+                formData.forEach(function(value, key){
+                    matchResult = key.match(/super_attribute\[(\d+)\]/);
+                    if (matchResult) {
+                        if (!('super_attribute' in options)) {
+                            options['super_attribute'] = {};
+                        }
+                        options['super_attribute'][matchResult[1]] = value;
+                    } else {
+                        options[key] = value;
+                    }
+                });
+                options['storeId'] = '<?= $block->getStoreId(); ?>';
                 var cart = {
-                    currency: "USD",
+                    currency: "<?= $block->getStoreCurrencyCode(); ?>",
                     items: [{
                         reference: '<?= $block->getProduct()->getId(); ?>',
-                        price: <?= (int) $block->getProduct()->getFinalPrice(); ?>,
+                        price: itemPrice,
                         name: '<?= $block->getProduct()->getName(); ?>',
                         quantity: getQty(),
-                        options: '<?= $block->getStoreId(); ?>'
+                        options: JSON.stringify(options)
                     }]
                 };
                 BoltCheckout.configureProductCheckout(cart, hints, callbacks);
@@ -202,5 +219,14 @@ if (!$block->isSupportableType()) return;
 
             // early button display, not active untill hints are received
             BoltCheckout.configureProductCheckout({},{}, callbacks);
+
+            <?php if ($block->isConfigurable()): ?>
+            $(document).on( 'updatePrice', function (event, data) {
+                var priceDelta = data.prices.finalPrice.amount;
+                itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                setupProductPage();
+            });
+            <?php endif; ?>
+
         });
     </script>

@@ -99,22 +99,18 @@ class ComponentSwitcherProcessorTest extends TestCase
         ];
         $result = $this->currentMock->process($jsLayout);
         $blockTotalsChildren = $result['components']['block-totals']['children'];
-        self::assertEquals(
-            $useStoreCreditConfig,
-            !$blockTotalsChildren['storeCredit']['componentDisabled']
-        );
-        self::assertEquals(
-            $useStoreCreditConfig,
-            !$blockTotalsChildren['storeCredit']['config']['componentDisabled']
-        );
-        self::assertEquals(
-            $useRewardPointsConfig,
-            !$blockTotalsChildren['rewardPoints']['componentDisabled']
-        );
-        self::assertEquals(
-            $useRewardPointsConfig,
-            !$blockTotalsChildren['rewardPoints']['config']['componentDisabled']
-        );
+
+        if ($useStoreCreditConfig) {
+            self::assertArrayHasKey('storeCredit', $blockTotalsChildren);
+        } else {
+            self::assertArrayNotHasKey('storeCredit', $blockTotalsChildren);
+        }
+
+        if ($useRewardPointsConfig) {
+            self::assertArrayHasKey('rewardPoints', $blockTotalsChildren);
+        } else {
+            self::assertArrayNotHasKey('rewardPoints', $blockTotalsChildren);
+        }
     }
 
     /**
