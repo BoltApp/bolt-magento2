@@ -64,7 +64,8 @@ class Success extends Template
     public function isAllowInvalidateQuote()
     {
         // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
-        return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'));
+        return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'))
+            || (bool) (version_compare($this->getMagentoVersion(), '2.3.4', '>='));
     }
 
     /**

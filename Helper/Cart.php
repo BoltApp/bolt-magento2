@@ -56,6 +56,8 @@ use Magento\Quote\Api\CartManagementInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 
 /**
  * Boltpay Cart helper
@@ -1684,7 +1686,7 @@ class Cart extends AbstractHelper
                 // Change giftcards balance as discount amount to giftcard balances to the discount amount
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
-                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodesFromSession();
+                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
                     $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
                 }
 
@@ -1812,7 +1814,6 @@ class Cart extends AbstractHelper
     /**
      * Create cart by request
      * TODO: add support for foreign currencies
-     * TODO: add support for multistore
      *
      * @param array $request
      *
@@ -1833,12 +1834,34 @@ class Cart extends AbstractHelper
         //add item to quote
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
-        $quote->addProduct($product, $item['quantity']);
 
-        $storeId = @$item['options'];
-        if ($storeId) {
-            $quote->setStoreId($storeId);
+        $options = json_decode($item['options'],true);
+        if (isset($options['storeId']) && $options['storeId']) {
+            $quote->setStoreId($options['storeId']);
         }
+        unset($options['storeId']);
+        unset($options['form_key']);
+        $options['qty'] = $item['quantity'];
+        $options = new \Magento\Framework\DataObject($options);
+
+        try {
+            $quote->addProduct($product, $options);
+        } catch (\Exception $e) {
+            $error_message = $e->getMessage();
+            if ($error_message == 'Product that you are trying to add is not available.') {
+                throw new BoltException(
+                    __($error_message),
+                    null,
+                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                );
+            } else {
+                throw new BoltException(
+                    __('The requested qty is not available'),
+                    null,
+                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                );
+            }
+        };
 
         $quote->reserveOrderId();
 

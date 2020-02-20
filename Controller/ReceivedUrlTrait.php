@@ -92,7 +92,6 @@ trait ReceivedUrlTrait
                             $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
                         )
                     );
-                    $this->orderHelper->resetOrderState($order);
                 } else {
                     $this->bugsnag->notifyError(
                         "Pre-Auth redirect wrong order state",

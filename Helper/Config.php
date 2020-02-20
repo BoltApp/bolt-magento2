@@ -299,6 +299,7 @@ class Config extends AbstractHelper
     public static $supportableProductTypesForProductPageCheckout = [
         \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
         \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
+        \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
     ];
     /**
      * @var ResourceInterface
