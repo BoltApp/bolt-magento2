@@ -33,6 +33,20 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!-- Shipping hook -->
+    <route url="/V1/bolt/boltpay/shipping" method="POST">
+        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getShippingMethodsWithoutTax"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+    <!-- Tax hook -->
+    <route url="/V1/bolt/boltpay/tax" method="POST">
+        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getTax"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
     <!-- Discount Code Validation hook -->
     <route url="/V1/bolt/boltpay/discount/validate" method="POST">
         <service class="Bolt\Boltpay\Api\DiscountCodeValidationInterface" method="validate"/>
