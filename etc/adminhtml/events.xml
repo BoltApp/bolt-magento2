@@ -3,4 +3,7 @@
     <event name="adminhtml_sales_order_create_process_data">
         <observer name="bolt_legacy_admin_order_create_fix" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\OrderCreateProcessDataObserver" />
     </event>
+    <event name="sales_order_place_before">
+        <observer name="recharge_customer_if_an_existing_Bolt_credit_card_is_used" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer" />
+    </event>
 </config>

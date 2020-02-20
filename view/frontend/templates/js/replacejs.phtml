@@ -273,7 +273,7 @@ ob_start();
 
         var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || window.boltConfig.defaultErrorMessage + " Order reference: " + order_reference;
+                errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -562,19 +562,23 @@ ob_start();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showBoltErrorMessage('', data.reference);
-                            // pretend order creation was success...
-                            // we need to call this; otherwise bolt modal show infinte spinner.
-                            callback();
+                            showError();
                         }
                         return;
                     }
                     processSuccess(data);
                 };
+                var showError = function() {
+                    showBoltErrorMessage('', transaction.reference);
+                    // pretend order creation was success...
+                    // we need to call this; otherwise bolt modal show infinte spinner.
+                    callback();
+                };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
                 save_request = $.post(settings.save_order_url, parameters)
-                                .done(onSuccess);
+                                .done(onSuccess)
+                                .fail(showError);
             },
 
             check: function () {
@@ -888,6 +892,13 @@ ob_start();
                         // if no position is specified remove the selector element
                         if (!position) {
                             $(element).hide();
+                        }
+                        // if the replacement takes place after BoltCheckout.configure call
+                        // call it again to set up the button. Skip if BoltCheckout is not available,
+                        // ie. connect.js not loaded / executed yet,
+                        // the button will be processed after connect.js loads.
+                        if (window.BoltCheckout) {
+                            BoltCheckout.configure(cart, hints, callbacks);
                         }
                     });
                     /////////////////////////////////////////////////////

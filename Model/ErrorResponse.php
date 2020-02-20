@@ -34,6 +34,9 @@ class ErrorResponse
     const ERR_ITEMS_NOT_ELIGIBLE           = 6207;
     const ERR_SERVICE                      = 6001;
 
+    const ERR_PPC_OUT_OF_STOCK = 6301;
+    const ERR_PPC_INVALID_QUANTITY = 6303;
+
     /**
      * @param       $errCode
      * @param       $message

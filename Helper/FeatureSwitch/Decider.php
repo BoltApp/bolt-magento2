@@ -162,4 +162,8 @@ class Decider extends AbstractHelper {
     public function isBoltEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
     }
+
+    public function isLogMissingQuoteFailedHooksEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
+    }
 }
