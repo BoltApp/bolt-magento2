@@ -22,6 +22,9 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 
+// return if PPC option is disabled or we aren't on product page
+if (!$block->isBoltProductPage()) return;
+
 if (!$block->isSupportableType()) return;
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>
