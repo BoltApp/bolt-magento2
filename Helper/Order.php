@@ -740,22 +740,25 @@ class Order extends AbstractHelper
                 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                     if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
+                        $this->bugsnag->notifyException($exception);
                         return $this;
                     }
 
-                    /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
-                    $webhookLog = $this->webhookLogFactory->create();
                     /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
                     $webhookLogCollection = $this->webhookLogCollectionFactory->create();
                     
                     if ($webhookLog = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
                         $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
+                            $this->bugsnag->notifyException($exception);
                             return $this;
                         }
 
                         $webhookLog->incrementAttemptCount();
                     } else {
+                        /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
+                        $webhookLog = $this->webhookLogFactory->create();
+
                         $webhookLog->recordAttempt($transaction->id, $hookType);
                     };
                 }

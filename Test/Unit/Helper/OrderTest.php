@@ -337,7 +337,7 @@ class OrderTest extends TestCase
 
         $this->responseFactory = $this->createPartialMock(ResponseFactory::class,['getResponse']);
         $this->boltRequest = $this->createMock(BoltRequest::class);
-        $this->webhookLogCollectionFactory = $this->createPartialMock(WebhookLogCollectionFactory::class,['create','getLogByTransactionId']);
+        $this->webhookLogCollectionFactory = $this->createPartialMock(WebhookLogCollectionFactory::class,['create','getWebhookLogByTransactionId']);
         $this->webhookLogFactory = $this->createPartialMock(WebhookLogFactory::class, ['getNumberOfMissingQuoteFailedHooks','incrementAttemptCount','recordAttempt','create','getId']);
         $this->orderMock = $this->createPartialMock(
             Order::class,
@@ -1032,7 +1032,7 @@ class OrderTest extends TestCase
         $this->saveUpdateOrderSetUp();
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn(null);
+            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) {
@@ -1041,7 +1041,7 @@ class OrderTest extends TestCase
                     [
                         'ORDER' => [
                             'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::QUOTE_ID,
+                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
                             'Magento StoreId' => self::STORE_ID
                         ]
                     ]
@@ -1069,12 +1069,12 @@ class OrderTest extends TestCase
 
         $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
         $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn(false);
+        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn(false);
         $this->webhookLogFactory->expects(self::once())->method('recordAttempt')->willReturnSelf();
         $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
 
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
         );
@@ -1090,16 +1090,14 @@ class OrderTest extends TestCase
         Hook::$fromBolt = true;
         $this->saveUpdateOrder_noOrder_noQuote_SetUp();
 
-        $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
         $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn($this->webhookLogFactory);
+        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn($this->webhookLogFactory);
         $this->webhookLogFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(4);
-        $this->webhookLogFactory->expects(self::once())->method('getId')->willReturn(1);
         $this->webhookLogFactory->expects(self::once())->method('incrementAttemptCount')->willReturnSelf();
         $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
 
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::QUOTE_ID);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
         );
@@ -1115,9 +1113,9 @@ class OrderTest extends TestCase
         Hook::$fromBolt = true;
         $this->saveUpdateOrder_noOrder_noQuote_SetUp();
 
-        $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->webhookLogFactory->expects(self::never())->method('create')->willReturnSelf();
         $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getLogByTransactionId')->willReturn($this->webhookLogFactory);
+        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn($this->webhookLogFactory);
         $this->webhookLogFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(11);
         $this->webhookLogFactory->expects(self::never())->method('incrementAttemptCount')->willReturnSelf();
         $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);

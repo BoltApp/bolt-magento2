@@ -38,7 +38,7 @@ class WebhookLogTest extends TestCase
     {
         $this->webhookLogMock = $this->getMockBuilder(WebhookLog::class)
             ->disableOriginalConstructor()
-            ->setMethods(['_init', 'setTransactionId', 'setHookType', 'setNumberOfMissingQuoteFailedHooks', 'save', 'load'])
+            ->setMethods(['_init', 'setTransactionId', 'setHookType', 'getNumberOfMissingQuoteFailedHooks', 'setNumberOfMissingQuoteFailedHooks', 'save', 'load'])
             ->getMock();
     }
 
@@ -72,7 +72,7 @@ class WebhookLogTest extends TestCase
      */
     public function incrementAttemptCount()
     {
-        $this->webhookLogMock->expects($this->once())->method('load')->with(self::TRANSACTION_ID)->willReturnSelf();
+        $this->webhookLogMock->expects($this->once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(1);
         $this->webhookLogMock->expects($this->once())->method('setNumberOfMissingQuoteFailedHooks')->with(2)->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('save')->willReturnSelf();
         $this->webhookLogMock->incrementAttemptCount();
