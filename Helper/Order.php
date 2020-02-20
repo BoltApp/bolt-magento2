@@ -54,8 +54,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
-use Bolt\Boltpay\Model\ResourceModel\Log\CollectionFactory as LogCollectionFactory;
-use Bolt\Boltpay\Model\LogFactory;
+use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
+use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
@@ -190,11 +190,11 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
-   /** @var LogCollectionFactory  */
-    protected $logCollectionFactory;
+   /** @var WebhookLogCollectionFactory  */
+    protected $webhookLogCollectionFactory;
 
-    /** @var LogFactory\ */
-    protected $logFactory;
+    /** @var WebhookLogFactory */
+    protected $webhookLogFactory;
 
     /** @var Decider */
     private $featureSwitches;
@@ -208,19 +208,20 @@ class Order extends AbstractHelper
      * @param OrderSender $emailSender
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
-     * @param TransactionBuilder $transactionBuilder
-     * @param TimezoneInterface $timezone
-     * @param DataObjectFactory $dataObjectFactory
-     * @param LogHelper $logHelper
-     * @param Bugsnag $bugsnag
-     * @param CartHelper $cartHelper
-     * @param ResourceConnection $resourceConnection
-     * @param SessionHelper $sessionHelper
-     * @param DiscountHelper $discountHelper
-     * @param DateTime $date
-     * @param LogCollectionFactory $logCollectionFactory
-     * @param LogFactory $logFactory
-     * @param Decider $featureSwitches
+     * @param TransactionBuilder          $transactionBuilder
+     * @param TimezoneInterface           $timezone
+     * @param DataObjectFactory           $dataObjectFactory
+     * @param LogHelper                   $logHelper
+     * @param Bugsnag                     $bugsnag
+     * @param CartHelper                  $cartHelper
+     * @param ResourceConnection          $resourceConnection
+     * @param SessionHelper               $sessionHelper
+     * @param DiscountHelper              $discountHelper
+     * @param DateTime                    $date
+     * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
+     * @param WebhookLogFactory           $webhookLogFactory
+     * @param Decider                     $featureSwitches
+     *
      * @codeCoverageIgnore
      */
     public function __construct(
@@ -244,8 +245,8 @@ class Order extends AbstractHelper
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
         DateTime $date,
-        LogCollectionFactory $logCollectionFactory,
-        LogFactory $logFactory,
+        WebhookLogCollectionFactory $webhookLogCollectionFactory,
+        WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches
     ) {
         parent::__construct($context);
@@ -268,8 +269,8 @@ class Order extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->date = $date;
-        $this->logCollectionFactory = $logCollectionFactory;
-        $this->logFactory = $logFactory;
+        $this->webhookLogCollectionFactory = $webhookLogCollectionFactory;
+        $this->webhookLogFactory = $webhookLogFactory;
         $this->featureSwitches = $featureSwitches;
     }
 
@@ -742,19 +743,19 @@ class Order extends AbstractHelper
                         return $this;
                     }
 
-                    /** @var \Bolt\Boltpay\Model\Log $logFactory */
-                    $logFactory = $this->logFactory->create();
-                    /** @var \Bolt\Boltpay\Model\ResourceModel\Log\Collection $logCollectionFactory */
-                    $logCollectionFactory = $this->logCollectionFactory->create();
-                    if ($log = $logCollectionFactory->getLogByTransactionId($transaction->id, $hookType)) {
+                    /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
+                    $webhookLog = $this->webhookLogFactory->create();
+                    /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
+                    $webhookLogCollection = $this->webhookLogCollectionFactory->create();
+                    if ($log = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
                         $numberOfMissingQuoteFailedHooks = $log->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
                             return $this;
                         }
 
-                        $logFactory->incrementAttemptCount($log->getId(), $numberOfMissingQuoteFailedHooks);
+                        $webhookLog->incrementAttemptCount($log->getId(), $numberOfMissingQuoteFailedHooks);
                     } else {
-                        $logFactory->recordAttempt($transaction->id, $hookType);
+                        $webhookLog->recordAttempt($transaction->id, $hookType);
                     };
                 }
 

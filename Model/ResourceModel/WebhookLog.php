@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Model\ResourceModel;
 
 use \Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
-class Log extends AbstractDb
+class WebhookLog extends AbstractDb
 {
     /**
      * Post Abstract Resource Constructor

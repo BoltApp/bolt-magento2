@@ -75,7 +75,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupFeatureSwitchTable($setup);
 
-        $this->setupLogTable($setup);
+        $this->setupWebhookLogTable($setup);
 
         $setup->endSetup();
     }
@@ -131,7 +131,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
           $setup->getConnection()->createTable($table);
     }
 
-    private function setupLogTable($setup){
+    private function setupWebhookLogTable($setup){
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
         if ($tableCreated) {
             return;
@@ -165,7 +165,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 null,
                 ['nullable' => false, 'default' => '0'],
                 'number of the missing quote failed hooks'
-            )->setComment("Bolt WeebHook Log table");
+            )->setComment("Bolt Webhook Log table");
 
         $setup->getConnection()->createTable($table);
     }

@@ -20,10 +20,10 @@ namespace Bolt\Boltpay\Model;
 use Magento\Framework\Model\AbstractModel;
 
 /**
- * Class Log
+ * Class WebhookLog
  * @package Bolt\Boltpay\Model
  */
-class Log extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
     const CACHE_TAG = 'bolt_webhook_log';
 
@@ -31,7 +31,7 @@ class Log extends AbstractModel implements \Magento\Framework\DataObject\Identit
 
     protected function _construct()
     {
-        $this->_init('Bolt\Boltpay\Model\ResourceModel\Log');
+        $this->_init('Bolt\Boltpay\Model\ResourceModel\WebhookLog');
     }
 
     /**

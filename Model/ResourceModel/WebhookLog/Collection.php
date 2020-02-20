@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Model\ResourceModel\Log;
+namespace Bolt\Boltpay\Model\ResourceModel\WebhookLog;
 
 use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
@@ -28,8 +28,8 @@ class Collection extends AbstractCollection
     protected function _construct()
     {
         $this->_init(
-            'Bolt\Boltpay\Model\Log',
-            'Bolt\Boltpay\Model\ResourceModel\Log'
+            'Bolt\Boltpay\Model\WebhookLog',
+            'Bolt\Boltpay\Model\ResourceModel\WebhookLog'
         );
     }
 
@@ -38,12 +38,12 @@ class Collection extends AbstractCollection
      * @param $hookType
      * @return bool|\Magento\Framework\DataObject
      */
-    public function getLogByTransactionId($transactionId, $hookType)
+    public function getWebhookLogByTransactionId($transactionId, $hookType)
     {
-        $logCollection = $this->addFilter('transaction_id', $transactionId)
+        $webhookLogCollection = $this->addFilter('transaction_id', $transactionId)
             ->addFilter('hook_type', $hookType);
-        if ($logCollection->getSize() > 0) {
-            return $logCollection->getFirstItem();
+        if ($webhookLogCollection->getSize() > 0) {
+            return $webhookLogCollection->getFirstItem();
         }
 
         return false;

@@ -17,23 +17,23 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
-use Bolt\Boltpay\Model\ResourceModel\Log;
+use Bolt\Boltpay\Model\ResourceModel\WebhookLog;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 
-class LogTest extends TestCase
+class WebhookLogTest extends TestCase
 {
     /**
-     * @var \Bolt\Boltpay\Model\ResourceModel\Log
+     * @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog
      */
-    private $logMock;
+    private $wehookLogMock;
 
     /**
      * Setup for CustomerCreditCardTest Class
      */
     public function setUp()
     {
-        $this->logMock = $this->getMockBuilder(Log::class)
+        $this->wehookLogMock = $this->getMockBuilder(WebhookLog::class)
             ->disableOriginalConstructor()
             ->setMethods(['_init'])
             ->getMock();
@@ -44,10 +44,10 @@ class LogTest extends TestCase
      */
     public function testConstruct()
     {
-        $this->logMock->expects($this->once())->method('_init')
+        $this->wehookLogMock->expects($this->once())->method('_init')
             ->with('bolt_webhook_log', 'id')
             ->willReturnSelf();
 
-        TestHelper::invokeMethod($this->logMock, '_construct');
+        TestHelper::invokeMethod($this->wehookLogMock, '_construct');
     }
 }
