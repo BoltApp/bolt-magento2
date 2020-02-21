@@ -154,12 +154,16 @@ if (!$block->isSupportableType()) return;
                         return false;
                     }
 
-                    var validator = $( '#product_addtocart_form' ).validate();
-                    if ( !validator.checkForm() ) {
-                        validator.showErrors();
+                    // wait for validation module init
+                    try {
+                        $('#product_addtocart_form').validation('isValid');
+                    } catch (e) {
                         return false;
                     }
-                    validator.showErrors();
+                    // validate form and show error messages
+                    if ( ! $('#product_addtocart_form').validate().form()) {
+                        return false;
+                    }
 
                     return true;
                 },
@@ -203,7 +207,10 @@ if (!$block->isSupportableType()) return;
                         options: JSON.stringify(options)
                     }]
                 };
-                BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+                // if connect.js is not loaded postpone until it is
+                whenDefined(window, 'BoltCheckout', function(){
+                    BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+                });
             };
 
             var hints;
@@ -221,7 +228,10 @@ if (!$block->isSupportableType()) return;
                 });
 
             // early button display, not active untill hints are received
-            BoltCheckout.configureProductCheckout({},{}, callbacks);
+            // do not run if connect.js is not loaded yet
+            if (window.BoltCheckout) {
+                BoltCheckout.configureProductCheckout({},{}, callbacks);
+            }
 
             <?php if ($block->isConfigurable()): ?>
             $(document).on( 'updatePrice', function (event, data) {
