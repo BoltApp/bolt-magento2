@@ -107,7 +107,11 @@ class ReceivedUrlTest extends TestCase
             ->willReturn(Order::STATE_PENDING_PAYMENT); //this is specifically for happy path
         $order->expects($this->once())
             ->method('addStatusHistoryComment')
-            ->with('Bolt transaction: ' . self::FORMATTED_REFERENCE_URL);
+            ->with('Bolt transaction: ' . self::FORMATTED_REFERENCE_URL)
+            ->willReturnSelf();
+        $order->expects($this->once())
+            ->method('save')
+            ->willReturnSelf();
         $order->expects($this->once())
             ->method('getStoreId')
             ->willReturn(self::STORE_ID);
