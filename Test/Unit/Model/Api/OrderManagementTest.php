@@ -404,6 +404,85 @@ class OrderManagementTest extends TestCase
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
+    public function manage_failed_success()
+    {
+        $type = "failed";
+
+        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::DISPLAY_ID);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'message' => 'Order was deleted: ' . self::DISPLAY_ID,
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.success', 1, "webhooks.latency", self::anything());
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function manage_failed_exception()
+    {
+        $type = "failed";
+        $exception = new BoltException(
+            new Phrase(
+                'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                [
+                    self::ORDER_ID,
+                    Order::STATE_PROCESSING,
+                    self::QUOTE_ID
+                ]
+            ),
+            null,
+            CreateOrder::E_BOLT_GENERAL_ERROR
+        );
+
+        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::DISPLAY_ID)->willThrowException($exception);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
     public function manage_webApiException()
     {
         $exception = new WebapiException(__('Precondition Failed'), 6001, 412);
