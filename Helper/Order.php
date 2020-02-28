@@ -1151,8 +1151,8 @@ class Order extends AbstractHelper
         $quote->setUpdatedAt($this->date->gmtDate());
         // If it's PPC quote make it temporary active
         // for third party plugins work
-        $is_quote_active = $quote->getIsActive();
-        if (!$is_quote_active) {
+        $isQuoteActive = $quote->getIsActive();
+        if (!$isQuoteActive) {
             $quote->setIsActive(true);
         }
         $this->_eventManager->dispatch(
@@ -1160,7 +1160,7 @@ class Order extends AbstractHelper
                 'quote' => $quote
             ]
         );
-        if (!$is_quote_active) {
+        if (!$isQuoteActive) {
             $quote->setIsActive(false);
         }
 
