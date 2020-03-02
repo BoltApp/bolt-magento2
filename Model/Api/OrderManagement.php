@@ -217,7 +217,7 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
-        if ($type === 'failed_payment') {
+        if ($type === 'failed_payment' || $type === 'failed') {
             $this->orderHelper->deleteOrderByIncrementId($display_id);
 
             $this->response->setHttpResponseCode(200);
