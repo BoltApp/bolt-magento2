@@ -24,6 +24,7 @@ use Magento\Backend\Model\Session\Quote as BackendQuote;
 use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Magento\Quote\Model\Quote\Address;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class FormTest
@@ -73,6 +74,11 @@ class FormTest extends \PHPUnit\Framework\TestCase
     private $mockCustomerCreditCard;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitch;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -105,9 +111,10 @@ class FormTest extends \PHPUnit\Framework\TestCase
         $this->customerCreditCardCollectionFactoryMock = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
             ->setMethods(['create', 'getCreditCardInfosByCustomerId','addFilter'])
             ->getMock();
-        $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
+
+        $this->featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getCardInfo','getCustomerId','getConsumerId','getCreditCardId','getId'])
+            ->setMethods(['isAdminReorderForLoggedInCustomerFeatureEnabled'])
             ->getMock();
     }
 
@@ -120,7 +127,8 @@ class FormTest extends \PHPUnit\Framework\TestCase
                     $this->contextMock,
                     $this->configHelperMock,
                     $this->sessionManager,
-                    $this->customerCreditCardCollectionFactoryMock
+                    $this->customerCreditCardCollectionFactoryMock,
+                    $this->featureSwitch
                 ]
             )
             ->getMock();
@@ -159,5 +167,13 @@ class FormTest extends \PHPUnit\Framework\TestCase
                 ]
             ],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled(){
+        $this->featureSwitch->expects(static::once())->method('isAdminReorderForLoggedInCustomerFeatureEnabled')->willReturn(true);
+        $this->assertTrue($this->block->isAdminReorderForLoggedInCustomerFeatureEnabled());
     }
 }

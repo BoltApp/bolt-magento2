@@ -4,10 +4,11 @@
  */
 $code = $block->escapeHtml($block->getMethodCode());
 $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
+$isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLoggedInCustomerFeatureEnabled();
 ?>
 
 <fieldset class="admin__fieldset payment-method" id="payment_form_<?php /* @noEscape */ echo $code; ?>" style="display:none">
-    <?php if($customerCreditCardInfos): ?>
+    <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
         <div>
             <select name="bolt-credit-cards" style="width: 284px; margin: 10px 0 5px;">
                 <option value=""><?php echo __('Add New Card') ?></option>
@@ -23,7 +24,7 @@ $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
     <input type="hidden" class="required-entry" id="bolt-required-field">
 </fieldset>
 
-<?php if($customerCreditCardInfos): ?>
+<?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
     <script>
         require(['jquery', 'jquery/ui'], function($){
             $(document).on('change', 'select[name="bolt-credit-cards"]', function(){
