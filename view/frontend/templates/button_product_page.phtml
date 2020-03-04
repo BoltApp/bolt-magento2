@@ -225,6 +225,7 @@ if (!$block->isSupportableType()) return;
                 }).always(function() {
                     setupProductPage();
                     $('#qty').on('change', setupProductPage);
+                    $(document).trigger('ppc-hints-set');
                 });
 
             // early button display, not active untill hints are received
