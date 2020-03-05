@@ -40,13 +40,13 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-    <!-- Tax hook -->
-    <route url="/V1/bolt/boltpay/tax" method="POST">
-        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getTax"/>
-        <resources>
-            <resource ref="anonymous" />
-        </resources>
-    </route>
+<!--    &lt;!&ndash; Tax hook &ndash;&gt;-->
+<!--    <route url="/V1/bolt/boltpay/tax" method="POST">-->
+<!--        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getTax"/>-->
+<!--        <resources>-->
+<!--            <resource ref="anonymous" />-->
+<!--        </resources>-->
+<!--    </route>-->
     <!-- Discount Code Validation hook -->
     <route url="/V1/bolt/boltpay/discount/validate" method="POST">
         <service class="Bolt\Boltpay\Api\DiscountCodeValidationInterface" method="validate"/>

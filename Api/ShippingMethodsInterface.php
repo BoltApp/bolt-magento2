@@ -45,14 +45,14 @@ interface ShippingMethodsInterface
      */
     public function getShippingMethodsWithoutTax($cart, $shipping_address);
 
-    /**
-     * Get tax for a given shipping option.
-     *
-     * @api
-     * @param mixed $cart cart details
-     * @param mixed $shipping_address shipping address
-     * @param mixed $shipping_option selected shipping option
-     * @return \Bolt\Boltpay\Api\Data\ShippingOptionsInterface
-     */
-    public function getTax($cart, $shipping_address, $shipping_option);
+//    /**
+//     * Get tax for a given shipping option.
+//     *
+//     * @api
+//     * @param mixed $cart cart details
+//     * @param mixed $shipping_address shipping address
+//     * @param mixed $shipping_option selected shipping option
+//     * @return \Bolt\Boltpay\Api\Data\ShippingOptionsInterface
+//     */
+//    public function getTax($cart, $shipping_address, $shipping_option);
 }
