@@ -141,7 +141,6 @@ if (!$block->isSupportableType()) return;
                      * Magento customerData and authenticationPopup objects are
                      * used.
                      */
-
                     // check if login is required
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
@@ -149,11 +148,6 @@ if (!$block->isSupportableType()) return;
                         authenticationPopup.showModal();
                         return false;
                     }
-
-                    if (!hints) {
-                        return false;
-                    }
-
                     // wait for validation module init
                     try {
                         $('#product_addtocart_form').validation('isValid');
@@ -164,7 +158,6 @@ if (!$block->isSupportableType()) return;
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
-
                     return true;
                 },
 
@@ -181,6 +174,8 @@ if (!$block->isSupportableType()) return;
                 var quantity = Number($('#qty').val());
                 return quantity > 0 ? quantity : 1;
             };
+
+            var hints;
 
             var setupProductPage = function () {
                 var options = {};
@@ -207,31 +202,35 @@ if (!$block->isSupportableType()) return;
                         options: JSON.stringify(options)
                     }]
                 };
+
+                var hintsPromise = new Promise(function (resolve, reject) {
+                    if (hints) {
+                        resolve(hints);
+                        return;
+                    }
+                    $.get(settings.get_hints_url)
+                        .done(function(data) {
+                            hints = data.hints;
+                        })
+                        .fail(function() {
+                            hints = {prefill:{}};
+                        })
+                        .always(function() {
+                            resolve(hints);
+                            // disapatch event when required data is ready
+                            $(document).trigger('ppc-hints-set');
+                            return;
+                        });
+                });
+
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
-                    BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+                    BoltCheckout.configureProductCheckout(cart, hintsPromise, callbacks);
                 });
             };
 
-            var hints;
-
-            // wait for the hints to load
-            // the viable way to assign user to order
-            $.get(settings.get_hints_url)
-                .done(function(data) {
-                    hints = data.hints;
-                }).fail(function() {
-                    hints = {prefill:{}};
-                }).always(function() {
-                    setupProductPage();
-                    $('#qty').on('change', setupProductPage);
-                });
-
-            // early button display, not active untill hints are received
-            // do not run if connect.js is not loaded yet
-            if (window.BoltCheckout) {
-                BoltCheckout.configureProductCheckout({},{}, callbacks);
-            }
+            setupProductPage();
+            $('#qty').on('change', setupProductPage);
 
             <?php if ($block->isConfigurable()): ?>
             $(document).on( 'updatePrice', function (event, data) {
