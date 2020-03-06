@@ -11,12 +11,15 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Block\Customer;
 
+use Bolt\Boltpay\Block\BlockTrait;
+use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\View\Element\Template;
 use Magento\Theme\Block\Html\Pager;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
@@ -29,6 +32,8 @@ use Magento\Framework\Data\Form\FormKey;
  */
 class CreditCard extends Template
 {
+    use BlockTrait;
+
     const CURRENT_PAGE = 1;
     const PAGE_SIZE = 10;
     /**
@@ -54,6 +59,8 @@ class CreditCard extends Template
      * @param CollectionFactory $collectionFactory
      * @param Session $customerSession
      * @param FormKey $formKey
+     * @param Config $configHelper
+     * @param Decider $featureSwitches
      * @param array $data
      */
     public function __construct(
@@ -61,12 +68,16 @@ class CreditCard extends Template
         CollectionFactory $collectionFactory,
         Session $customerSession,
         FormKey $formKey,
+        Config $configHelper,
+        Decider $featureSwitches,
         array $data = []
     )
     {
         $this->formKey = $formKey;
         $this->collectionFactory = $collectionFactory;
         $this->customerSession = $customerSession;
+        $this->configHelper = $configHelper;
+        $this->featureSwitches = $featureSwitches;
         parent::__construct($context, $data);
     }
 

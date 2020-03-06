@@ -33,6 +33,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     // Number of settings in method getSettings()
     const SETTINGS_NUMBER = 18;
     const STORE_ID = 1;
+    const CONFIG_API_KEY = 'test_api_key';
+    const CONFIG_SIGNING_SECRET = 'test_signing_secret';
+    const CONFIG_PUBLISHABLE_KEY = 'test_publishable_key';
 
     /**
      * @var HelperConfig
@@ -77,7 +80,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
     /**
      * @var Decider
      */
-    private $decider;
+    protected $deciderMock;
 
     /**
      * @inheritdoc
@@ -103,7 +106,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
-            'getMinicartSupport', 'getIPWhitelistArray'
+            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -121,7 +124,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
-        $this->decider = $this->createMock(Decider::class);
+        $this->deciderMock = $this->createMock(Decider::class);
 
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
@@ -136,7 +139,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->contextMock->method('getStoreManager')->willReturn($storeManager);
 
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
+            ->setMethods(['getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
@@ -144,7 +147,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
-                    $this->decider
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -422,7 +425,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function shouldDisableBoltCheckout_featureSwitchOff()
     {
-        $this->decider->method('isBoltEnabled')->willReturn(false);
+        $this->deciderMock->method('isBoltEnabled')->willReturn(false);
         $this->assertTrue($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
     }
 
@@ -431,13 +434,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function shouldDisableBoltCheckout_featureSwitchOn()
     {
-        $this->decider->method('isBoltEnabled')->willReturn(true);
+        $this->deciderMock->method('isBoltEnabled')->willReturn(true);
         $this->configHelper->method('isActive')->willReturn(true);
         $this->configHelper->method('isIPRestricted')->willReturn(false);
         $this->requestMock->method('getFullActionName')->willReturn('unrestrictedPage');
         $this->configHelper->method('getPageBlacklist')->willReturn(array('anotherPage', 'restrictedPage'));
         $this->configHelper->method('getMinicartSupport')->willReturn(true);
         $this->configHelper->method('getIPWhitelistArray')->willReturn(array());
+        $this->configHelper->method('getApiKey')->willReturn(self::CONFIG_API_KEY);
+        $this->configHelper->method('getSigningSecret')->willReturn(self::CONFIG_SIGNING_SECRET);
+        $this->configHelper->method('getPublishableKeyCheckout')->willReturn(self::CONFIG_PUBLISHABLE_KEY);
         $this->assertFalse($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
     }
 

@@ -18,12 +18,13 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Customer;
 
 use Bolt\Boltpay\Block\Customer\CreditCard;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Framework\App\Request\Http;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
-
+use Bolt\Boltpay\Helper\Config;
 
 /**
  * Class CreditCardTest
@@ -65,6 +66,11 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
     private $formKeyMock;
 
     /**
+     * @var Decider
+     */
+    protected $deciderMock;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -93,6 +99,8 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
             ->getMock();;
         $this->customerSessionMock = $this->createMock(Session::class);
         $this->customerSessionMock->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
+        $this->deciderMock = $this->createMock(Decider::class);
+        $this->configHelperMock = $this->createMock(Config::class);
     }
 
     private function initCurrentMock()
@@ -104,7 +112,9 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
                     $this->contextMock,
                     $this->collectionFactoryMock,
                     $this->customerSessionMock,
-                    $this->formKeyMock
+                    $this->formKeyMock,
+                    $this->configHelperMock,
+                    $this->deciderMock
                 ]
             )->getMock();
     }

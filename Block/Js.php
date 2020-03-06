@@ -33,10 +33,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
  */
 class Js extends Template
 {
-    /**
-     * @var Config
-     */
-    protected $configHelper;
+    use BlockTrait;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -49,17 +46,14 @@ class Js extends Template
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
-    /** @var Decider */
-    private $featureSwitches;
-
     /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag;
-     * @param array           $data
      * @param Decider         $featureSwitches
+     * @param array           $data
      */
     public function __construct(
         Context $context,
@@ -100,20 +94,6 @@ class Js extends Template
         $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/connect.js';
-    }
-
-    /**
-     * Get checkout key. Any of the defined publishable keys for use with track.js.
-     *
-     * @return  string
-     */
-    public function getCheckoutKey()
-    {
-        if($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION){
-            return $this->configHelper->getPublishableKeyPayment();
-        }
-
-        return $this->configHelper->getPublishableKeyCheckout();
     }
 
     /**
@@ -407,21 +387,6 @@ class Js extends Template
     }
 
     /**
-     * Return true if we need to disable bolt scripts and button
-     * Checks whether the module is active,
-     * the page is Bolt checkout restricted and if there is an IP restriction.
-     *
-     * @return bool
-     */
-    public function shouldDisableBoltCheckout()
-    {
-        if (!$this->featureSwitches->isBoltEnabled()) {
-            return true;
-        }
-        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
-    }
-
-    /**
      * If we have multi-website, we need current store_id
      *
      * @return int
@@ -447,10 +412,6 @@ class Js extends Template
     public function getModuleVersion()
     {
         return $this->configHelper->getModuleVersion();
-    }
-
-    public function shouldTrackCheckoutFunnel() {
-        return $this->configHelper->shouldTrackCheckoutFunnel();
     }
 
     /**
