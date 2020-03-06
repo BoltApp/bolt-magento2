@@ -175,7 +175,19 @@ if (!$block->isSupportableType()) return;
                 return quantity > 0 ? quantity : 1;
             };
 
-            var hints;
+            var hints = new Promise(function (resolve, reject) {
+                $.get(settings.get_hints_url)
+                    .done(function(data) {
+                        resolve(data.hints);
+                    })
+                    .fail(function() {
+                        resolve({prefill:{}});
+                    })
+                    .always(function() {
+                        // disapatch event when required data is ready
+                        $(document).trigger('ppc-hints-set');
+                    });
+            });
 
             var setupProductPage = function () {
                 var options = {};
@@ -203,29 +215,9 @@ if (!$block->isSupportableType()) return;
                     }]
                 };
 
-                var hintsPromise = new Promise(function (resolve, reject) {
-                    if (hints) {
-                        resolve(hints);
-                        return;
-                    }
-                    $.get(settings.get_hints_url)
-                        .done(function(data) {
-                            hints = data.hints;
-                        })
-                        .fail(function() {
-                            hints = {prefill:{}};
-                        })
-                        .always(function() {
-                            resolve(hints);
-                            // disapatch event when required data is ready
-                            $(document).trigger('ppc-hints-set');
-                            return;
-                        });
-                });
-
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
-                    BoltCheckout.configureProductCheckout(cart, hintsPromise, callbacks);
+                    BoltCheckout.configureProductCheckout(cart, hints, callbacks);
                 });
             };
 
