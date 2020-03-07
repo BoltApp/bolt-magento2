@@ -61,6 +61,86 @@ trait BlockTrait
     }
 
     /**
+     * If we have multi-website, we need current store_id
+     *
+     * @return int
+     */
+    public function getStoreId()
+    {
+        return $this->_storeManager->getStore()->getId();
+    }
+
+    /**
+     * Get Bolt Payment module active state.
+     * @return bool
+     */
+    public function isEnabled()
+    {
+        $storeId = $this->getStoreId();
+        return $this->configHelper->isActive($storeId);
+    }
+
+    /**
+     * Get blacklisted pages, stored in "pageFilters.blacklist" additional configuration
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    protected function getPageBlacklist()
+    {
+        return $this->configHelper->getPageBlacklist();
+    }
+
+    /**
+     * Check if Bolt checkout is restricted on the current loading page.
+     * Takes into account Minicart support and whitelisted / blacklisted pages configuration
+     * as well as the IP restriction.
+     * "Full Action Name", <router_controller_action>, is used to identify the page.
+     *
+     * @return bool
+     */
+    private function isPageRestricted()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+
+        // Check if the page is blacklisted
+        if (in_array($currentPage, $this->getPageBlacklist())) {
+            return true;
+        }
+
+        // If IP whitelist is defined, the Bolt checkout functionality
+        // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
+        if (!$this->configHelper->getIPWhitelistArray()) {
+            return false;
+        }
+        return !in_array($currentPage, $this->getPageWhitelist());
+    }
+
+    /**
+     * Get whitelisted pages, the default, non cached, shopping cart and checkout pages,
+     * and the pages stored in "pageFilters.whitelist" additional configuration,
+     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
+     *
+     * @return array
+     */
+    protected function getPageWhitelist()
+    {
+        $values =  $this->configHelper->getPageWhitelist();
+        return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
+    }
+
+    /**
+     * Check if the client IP is restricted -
+     * there is an IP whitelist and the client IP is not on the list.
+     *
+     * @return bool
+     */
+    protected function isIPRestricted()
+    {
+        return $this->configHelper->isIPRestricted();
+    }
+
+    /**
      * Return true if we need to disable bolt scripts and button
      * Checks whether the module is active,
      * the page is Bolt checkout restricted and if there is an IP restriction.
