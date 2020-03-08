@@ -53,6 +53,10 @@
     <preference for="Bolt\Boltpay\Api\Data\FeatureSwitchInterface" type="Bolt\Boltpay\Model\FeatureSwitch"/>
     <preference for="Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface" type="Bolt\Boltpay\Model\FeatureSwitchRepository"/>
 
+    <!-- For debug endpoint -->
+    <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
+    <preference for="Bolt\Boltpay\Api\Data\DebugInfoInterface" type="Bolt\Boltpay\Model\Api\Data\DebugInfo" />
+
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
