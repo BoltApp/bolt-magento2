@@ -24,4 +24,15 @@ interface DebugInfoInterface {
 	 * @return $this
 	 */
 	public function setPlatformVersion($platformVersion);
+
+	/**
+	 * @return \Bolt\Boltpay\Api\Data\PluginVersionInterface[]
+	 */
+	public function getOtherPluginVersions();
+
+	/**
+	 * @param \Bolt\Boltpay\Api\Data\PluginVersionInterface[]
+	 * @return $this
+	 */
+	public function setOtherPluginVersions($otherPluginVersions);
 }

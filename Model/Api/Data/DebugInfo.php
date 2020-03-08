@@ -3,9 +3,10 @@
 namespace Bolt\Boltpay\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\DebugInfoInterface;
+use Bolt\Boltpay\Api\Data\PluginVersionInterface;
 
-class DebugInfo implements DebugInfoInterface {
-
+class DebugInfo implements DebugInfoInterface
+{
 	/**
 	 * @var string
 	 */
@@ -17,9 +18,15 @@ class DebugInfo implements DebugInfoInterface {
 	private $platformVersion;
 
 	/**
+	 * @var PluginVersionInterface[]
+	 */
+	private $otherPluginVersions;
+
+	/**
 	 * @return string
 	 */
-	public function getPhpVersion() {
+	public function getPhpVersion()
+	{
 		return $this->phpVersion;
 	}
 
@@ -27,7 +34,8 @@ class DebugInfo implements DebugInfoInterface {
 	 * @param string $phpVersion
 	 * @return $this
 	 */
-	public function setPhpVersion($phpVersion){
+	public function setPhpVersion($phpVersion)
+	{
 		$this->phpVersion = $phpVersion;
 		return $this;
 	}
@@ -35,7 +43,8 @@ class DebugInfo implements DebugInfoInterface {
 	/**
 	 * @return string
 	 */
-	public function getPlatformVersion(){
+	public function getPlatformVersion()
+	{
 		return $this->platformVersion;
 	}
 
@@ -43,8 +52,26 @@ class DebugInfo implements DebugInfoInterface {
 	 * @param string $platformVersion
 	 * @return $this
 	 */
-	public function setPlatformVersion($platformVersion){
+	public function setPlatformVersion($platformVersion)
+	{
 		$this->platformVersion = $platformVersion;
+		return $this;
+	}
+
+	/**
+	 * @return PluginVersionInterface[]
+	 */
+	public function getOtherPluginVersions(){
+		return $this->otherPluginVersions;
+	}
+
+	/**
+	 * @param PluginVersionInterface[]
+	 * @return $this
+	 */
+	public function setOtherPluginVersions($otherPluginVersions)
+	{
+		$this->otherPluginVersions = $otherPluginVersions;
 		return $this;
 	}
 }

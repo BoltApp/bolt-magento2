@@ -1,23 +1,49 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\DebugInfoInterface;
 use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Api\Data\DebugInfoInterfaceFactory;
+use Bolt\Boltpay\Api\Data\PluginVersionInterfaceFactory;
 
-class Debug implements DebugInterface {
-
+class Debug implements DebugInterface
+{
 	/**
 	 * @var DebugInfoInterfaceFactory
 	 */
 	private $debugInfoInterfaceFactory;
 
 	/**
-	 * @param DebugInfoInterfaceFactory $debugInfoInterfaceFactory
+	 * @var PluginVersionInterfaceFactory
 	 */
-	public function __construct(DebugInfoInterfaceFactory $debugInfoInterfaceFactory) {
+	private $pluginVersionInterfaceFactory;
+
+	/**
+	 * @param DebugInfoInterfaceFactory $debugInfoInterfaceFactory
+	 * @param PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
+	 */
+	public function __construct(
+		DebugInfoInterfaceFactory $debugInfoInterfaceFactory,
+		PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
+	) {
 		$this->debugInfoInterfaceFactory = $debugInfoInterfaceFactory;
+		$this->pluginVersionInterfaceFactory = $pluginVersionInterfaceFactory;
 	}
 
 	/**
@@ -30,6 +56,11 @@ class Debug implements DebugInterface {
 		$result = $this->debugInfoInterfaceFactory->create();
 		$result->setPhpVersion("todo");
 		$result->setPlatformVersion("todo");
+
+		$otherPluginVersions = [];
+		$otherPluginVersions[] = $this->pluginVersionInterfaceFactory->create();
+		$result->setOtherPluginVersions($otherPluginVersions);
+
 		return $result;
 	}
 }
