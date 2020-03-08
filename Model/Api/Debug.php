@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\Data\DebugInfoInterface;
 use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Api\Data\DebugInfoInterfaceFactory;
 use Bolt\Boltpay\Api\Data\PluginVersionInterfaceFactory;
+use Bolt\Boltpay\Api\Data\BoltConfigSettingInterfaceFactory;
 
 class Debug implements DebugInterface
 {
@@ -30,19 +31,27 @@ class Debug implements DebugInterface
 	private $debugInfoInterfaceFactory;
 
 	/**
+	 * @var BoltConfigSettingInterfaceFactory
+	 */
+	private $boltConfigSettingInterfaceFactory;
+
+	/**
 	 * @var PluginVersionInterfaceFactory
 	 */
 	private $pluginVersionInterfaceFactory;
 
 	/**
 	 * @param DebugInfoInterfaceFactory $debugInfoInterfaceFactory
+	 * @param BoltConfigSettingInterfaceFactory $boltConfigSettingInterfaceFactory
 	 * @param PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
 	 */
 	public function __construct(
 		DebugInfoInterfaceFactory $debugInfoInterfaceFactory,
+		BoltConfigSettingInterfaceFactory $boltConfigSettingInterfaceFactory,
 		PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
 	) {
 		$this->debugInfoInterfaceFactory = $debugInfoInterfaceFactory;
+		$this->boltConfigSettingInterfaceFactory = $boltConfigSettingInterfaceFactory;
 		$this->pluginVersionInterfaceFactory = $pluginVersionInterfaceFactory;
 	}
 
@@ -56,6 +65,10 @@ class Debug implements DebugInterface
 		$result = $this->debugInfoInterfaceFactory->create();
 		$result->setPhpVersion("todo");
 		$result->setPlatformVersion("todo");
+
+		$boltSettings = [];
+		$boltSettings[] = $this->boltConfigSettingInterfaceFactory->create();
+		$result->setBoltConfigSettings($boltSettings);
 
 		$otherPluginVersions = [];
 		$otherPluginVersions[] = $this->pluginVersionInterfaceFactory->create();

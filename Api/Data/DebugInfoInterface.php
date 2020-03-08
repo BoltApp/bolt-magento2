@@ -2,6 +2,8 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
+use Bolt\Boltpay\Model\Api\Data\DebugInfo;
+
 interface DebugInfoInterface {
 	/**
 	 * @return string
@@ -24,6 +26,17 @@ interface DebugInfoInterface {
 	 * @return $this
 	 */
 	public function setPlatformVersion($platformVersion);
+
+	/**
+	 * @return \Bolt\Boltpay\Api\Data\BoltConfigSettingInterface[]
+	 */
+	public function getBoltConfigSettings();
+
+	/**
+	 * @param \Bolt\Boltpay\Api\Data\BoltConfigSettingInterface[]
+	 * @return $this
+	 */
+	public function setBoltConfigSettings($boltConfigSettings);
 
 	/**
 	 * @return \Bolt\Boltpay\Api\Data\PluginVersionInterface[]
