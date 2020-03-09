@@ -21,7 +21,7 @@ interface DebugInterface
 {
 	/**
 	 * @api
-	 * @return Bolt\Boltpay\Api\Data\DebugInfoInterface
+	 * @return \Bolt\Boltpay\Model\Api\Data\DebugInfo
 	 */
 	public function debug();
 }

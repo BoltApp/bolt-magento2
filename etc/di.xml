@@ -55,9 +55,6 @@
 
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
-    <preference for="Bolt\Boltpay\Api\Data\DebugInfoInterface" type="Bolt\Boltpay\Model\Api\Data\DebugInfo" />
-    <preference for="Bolt\Boltpay\Api\Data\PluginVersionInterface" type="Bolt\Boltpay\Model\Api\Data\PluginVersion" />
-    <preference for="Bolt\Boltpay\Api\Data\BoltConfigSettingInterface" type="Bolt\Boltpay\Model\Api\Data\BoltConfigSetting" />
 
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>

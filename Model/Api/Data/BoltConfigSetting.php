@@ -17,14 +17,12 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\BoltConfigSettingInterface;
-
 /**
  * Class PluginVersion. Represents a single plugin version object.
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class BoltConfigSetting implements BoltConfigSettingInterface
+class BoltConfigSetting
 {
 	/**
 	 * @var string

@@ -17,11 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\DebugInfoInterface;
-use Bolt\Boltpay\Api\Data\PluginVersionInterface;
-use Bolt\Boltpay\Api\Data\BoltConfigSettingInterface;
-
-class DebugInfo implements DebugInfoInterface
+class DebugInfo
 {
 	/**
 	 * @var string
@@ -34,12 +30,12 @@ class DebugInfo implements DebugInfoInterface
 	private $platformVersion;
 
 	/**
-	 * @var BoltConfigSettingInterface[]
+	 * @var BoltConfigSetting[]
 	 */
 	private $boltConfigSettings;
 
 	/**
-	 * @var PluginVersionInterface[]
+	 * @var PluginVersion[]
 	 */
 	private $otherPluginVersions;
 
@@ -80,14 +76,14 @@ class DebugInfo implements DebugInfoInterface
 	}
 
 	/**
-	 * @return BoltConfigSettingInterface[]
+	 * @return \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
 	 */
 	public function getBoltConfigSettings(){
 		return $this->boltConfigSettings;
 	}
 
 	/**
-	 * @param BoltConfigSettingInterface[]
+	 * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
 	 * @return $this
 	 */
 	public function setBoltConfigSettings($boltConfigSettings)
@@ -97,14 +93,14 @@ class DebugInfo implements DebugInfoInterface
 	}
 
 	/**
-	 * @return PluginVersionInterface[]
+	 * @return \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
 	 */
 	public function getOtherPluginVersions(){
 		return $this->otherPluginVersions;
 	}
 
 	/**
-	 * @param PluginVersionInterface[]
+	 * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
 	 * @return $this
 	 */
 	public function setOtherPluginVersions($otherPluginVersions)

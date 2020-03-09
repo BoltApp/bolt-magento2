@@ -17,61 +17,60 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\Data\DebugInfoInterface;
 use Bolt\Boltpay\Api\DebugInterface;
-use Bolt\Boltpay\Api\Data\DebugInfoInterfaceFactory;
-use Bolt\Boltpay\Api\Data\PluginVersionInterfaceFactory;
-use Bolt\Boltpay\Api\Data\BoltConfigSettingInterfaceFactory;
+use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
+use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 
 class Debug implements DebugInterface
 {
 	/**
-	 * @var DebugInfoInterfaceFactory
+	 * @var DebugInfoFactory
 	 */
-	private $debugInfoInterfaceFactory;
+	private $debugInfoFactory;
 
 	/**
-	 * @var BoltConfigSettingInterfaceFactory
+	 * @var BoltConfigSettingFactory
 	 */
-	private $boltConfigSettingInterfaceFactory;
+	private $boltConfigSettingFactory;
 
 	/**
-	 * @var PluginVersionInterfaceFactory
+	 * @var PluginVersionFactory
 	 */
-	private $pluginVersionInterfaceFactory;
+	private $pluginVersionFactory;
 
 	/**
-	 * @param DebugInfoInterfaceFactory $debugInfoInterfaceFactory
-	 * @param BoltConfigSettingInterfaceFactory $boltConfigSettingInterfaceFactory
-	 * @param PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
+	 * @param DebugInfoFactory $debugInfoFactory
+	 * @param BoltConfigSettingFactory $boltConfigSettingFactory
+	 * @param PluginVersionFactory $pluginVersionFactory
 	 */
 	public function __construct(
-		DebugInfoInterfaceFactory $debugInfoInterfaceFactory,
-		BoltConfigSettingInterfaceFactory $boltConfigSettingInterfaceFactory,
-		PluginVersionInterfaceFactory $pluginVersionInterfaceFactory
+		DebugInfoFactory $debugInfoFactory,
+		BoltConfigSettingFactory $boltConfigSettingFactory,
+		PluginVersionFactory $pluginVersionFactory
 	) {
-		$this->debugInfoInterfaceFactory = $debugInfoInterfaceFactory;
-		$this->boltConfigSettingInterfaceFactory = $boltConfigSettingInterfaceFactory;
-		$this->pluginVersionInterfaceFactory = $pluginVersionInterfaceFactory;
+		$this->debugInfoFactory         = $debugInfoFactory;
+		$this->boltConfigSettingFactory = $boltConfigSettingFactory;
+		$this->pluginVersionFactory     = $pluginVersionFactory;
 	}
 
 	/**
 	 * This request handler will return relevant information for Bolt for debugging purpose.
 	 *
 	 * @api
-	 * @return DebugInfoInterface
+	 * @return DebugInfo
 	 */
 	public function debug() {
-		$result = $this->debugInfoInterfaceFactory->create();
+		$result = $this->debugInfoFactory->create();
 		$result->setPhpVersion("todo");
 		$result->setPlatformVersion("todo");
 
 		$boltSettings = [];
-		$boltSettings[] = $this->boltConfigSettingInterfaceFactory->create();
+		$boltSettings[] = $this->boltConfigSettingFactory->create();
 		$result->setBoltConfigSettings($boltSettings);
 
 		$otherPluginVersions = [];
-		$otherPluginVersions[] = $this->pluginVersionInterfaceFactory->create();
+		$otherPluginVersions[] = $this->pluginVersionFactory->create();
 		$result->setOtherPluginVersions($otherPluginVersions);
 
 		return $result;
