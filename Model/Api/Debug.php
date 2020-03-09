@@ -62,8 +62,15 @@ class Debug implements DebugInterface
 	 */
 	public function debug() {
 		$result = $this->debugInfoFactory->create();
-		$result->setPhpVersion("todo");
-		$result->setPlatformVersion("todo");
+
+		# populate php version
+		$result->setPhpVersion(phpversion());
+
+		# populate platform version
+		$objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+		$productMetadata = $objectManager->get('Magento\Framework\App\ProductMetadataInterface');
+		$magentoVersion = $productMetadata->getVersion();
+		$result->setPlatformVersion($magentoVersion);
 
 		$boltSettings = [];
 		$boltSettings[] = $this->boltConfigSettingFactory->create();
