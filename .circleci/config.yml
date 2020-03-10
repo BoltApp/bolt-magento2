@@ -2,8 +2,23 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@3.3.0
+  swissknife: roopakv/swissknife@0.25.0
 
 commands:
+  notify-rc-tag:
+    description: 'Notifies #eng-magento2 when a release candidate is tagged.'
+    parameters:
+      tag-name:
+        type: string
+        default: ''
+    steps:
+    - slack/notify:
+        only_for_branches: master
+        color: '#33ff00'
+        mentions: '@oleksii,@Pavel,'
+        message: ":white_check_mark: A new RC << parameters.tag-name >> has been tagged for Magento 2!"
+        webhook: $SLACK_MAGENTO2_WEBHOOK
+
   m2-php-test:
     description: PHP Unit tests for M2
     parameters:
@@ -59,6 +74,24 @@ commands:
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
 jobs:
+  tag-rc-candidate:
+    description: Tag master as rc every 3 weeks
+    parameters:
+      tag-this-week:
+        type: boolean
+        default: false
+      tag-name:
+        type: string
+        default: ''
+    steps:
+      - when:
+          condition: << parameters.tag-this-week >>
+          steps:
+            - swissknife/publish_github_release:
+              tag: << parameters.tag-name >>
+            - notify-rc-tag
+              tag: << parameters.tag-name >>
+
   integration-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -136,3 +169,19 @@ workflows:
       - unit-php71-magento22
       - unit-php70-magento22
       - integration-php72-magento23
+  tagger:
+    triggers:
+      - schedule:
+          cron: "0 5 * * 5"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - run:
+          name: determine taggability of rc
+          command: |
+            .circleci/scripts/rc-tag.sh
+      - tag-rc-candidate
+        tag-this-week: true
+        tag-name: ""
