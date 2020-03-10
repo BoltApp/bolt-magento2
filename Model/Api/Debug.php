@@ -74,7 +74,7 @@ class Debug implements DebugInterface
 		$result = $this->debugInfoFactory->create();
 
 		# populate php version
-		$result->setPhpVersion(phpversion());
+		$result->setPhpVersion(PHP_VERSION);
 
 		# populate platform version
 		$result->setPlatformVersion($this->productMetadata->getVersion());
