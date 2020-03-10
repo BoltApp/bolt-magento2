@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
 use Bolt\Boltpay\Block\Checkout\Success;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class SuccessTest
@@ -59,9 +60,9 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
                 ]
             )
             ->getMock();
-
-        $data = $this->createMock(\Magento\Framework\App\ProductMetadata::class);
-        $this->block = new Success($data, $this->configHelper, $contextMock);
+        $deciderMock = $this->createMock(Decider::class);
+        $productMetadataMock = $this->createMock(\Magento\Framework\App\ProductMetadata::class);
+        $this->block = new Success($productMetadataMock, $this->configHelper, $contextMock, $deciderMock);
     }
 
     /**
