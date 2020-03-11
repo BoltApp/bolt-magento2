@@ -14,7 +14,7 @@
         "mikey179/vfsstream": "^1.6"
     },
     "type": "magento2-module",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "license": "MIT",
     "autoload": {
         "files": [ "registration.php" ],
