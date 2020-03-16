@@ -104,7 +104,7 @@ class JsProductPage extends Js
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
     }
 
-    private function isEnableOrderMinimumAmount()
+    public function isEnableOrderMinimumAmount()
     {
         $storeId                    = $this->getStoreId();
         $isEnableOrderMinimumAmount = $this->getScopeConfig()->isSetFlag(
@@ -116,7 +116,7 @@ class JsProductPage extends Js
         return $isEnableOrderMinimumAmount;
     }
 
-    private function getOrderMinimumAmountValue()
+    public function getOrderMinimumAmountValue()
     {
         $storeId                 = $this->getStoreId();
         $orderMinimumAmountValue = $this->getScopeConfig()->getValue(
