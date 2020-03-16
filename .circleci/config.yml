@@ -84,8 +84,10 @@ jobs:
     environment:
       MAGENTO_DIR: magento
     steps:
+      - run: |
+          .circleci/scripts/rc-tag.sh
       - when:
-          condition: ${TAGTHISWEEK}
+          condition: $TAGTHISWEEK
           steps:
             - run:
                 command: |
@@ -93,9 +95,9 @@ jobs:
                   apt-get install -y git
                   apt-get install -y openssh-server
             - swissknife/publish_github_release:
-              tag: ${NEWTAGNAME}
+              tag: $NEWTAGNAME
             - notify-rc-tag:
-              tag: ${NEWTAGNAME}
+              tag: $NEWTAGNAME
 
   integration-php72-magento23:
     docker:
@@ -183,8 +185,4 @@ workflows:
               only:
                 - master
     jobs:
-      - run:
-          name: determine taggability of rc
-          command: |
-            .circleci/scripts/rc-tag.sh
       - tag-rc-candidate
