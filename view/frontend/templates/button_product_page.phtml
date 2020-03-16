@@ -232,6 +232,8 @@ if (!$block->isSupportableType()) return;
             $('#qty').on('change', setupProductPage);
 
             $(document).on( 'updatePrice', function (event, data) {
+                // the name of the property that holds the price data
+                // varies depending on the product type, eg. prices, options
                 var key = Object.keys(data)[0];
                 if (key) {
                     var finalPrice = data[key].finalPrice;
