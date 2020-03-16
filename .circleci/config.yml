@@ -76,21 +76,19 @@ commands:
 jobs:
   tag-rc-candidate:
     description: Tag master as rc every 3 weeks
-    parameters:
-      tag-this-week:
-        type: boolean
-        default: false
-      tag-name:
-        type: string
-        default: ''
     steps:
       - when:
-          condition: << parameters.tag-this-week >>
+          condition: ${TAGTHISWEEK}
           steps:
+            - run:
+                command: |
+                  apt-get update
+                  apt-get install -y git
+                  apt-get install -y openssh-server
             - swissknife/publish_github_release:
-              tag: << parameters.tag-name >>
+              tag: ${NEWTAGNAME}
             - notify-rc-tag
-              tag: << parameters.tag-name >>
+              tag: ${NEWTAGNAME}
 
   integration-php72-magento23:
     docker:
@@ -183,5 +181,3 @@ workflows:
           command: |
             .circleci/scripts/rc-tag.sh
       - tag-rc-candidate
-        tag-this-week: true
-        tag-name: ""

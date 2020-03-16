@@ -8,4 +8,14 @@ RCENTRY=$(git for-each-ref --sort=-taggerdate --format="%(refname:short) | %(cre
 TAG=$(echo $RCENTRY | cut -d"|" -f1)
 TAGDATE=TAG=$(echo $RCENTRY | cut -d"|" -f2)
 
-NEWTAG=$(echo $TAG | awk -F. '{print $1 "." $2+1 "." $3}')
+export NEWTAGNAME=$(echo $TAG | awk -F. '{print $1 "." $2+1 "." $3}')
+threeWeeksAgo="21 days ago"
+threeWeekDate=$(date --date "$threeWeeksAgo" +'%s')
+taggedDate=$(date --date "$TAGDATE" +'%s')
+
+if [[ ${taggedDate} -lt ${threeWeekDate} ]];
+then
+    export TAGTHISWEEK=true
+else
+    export TAGTHISWEEK=false
+fi
