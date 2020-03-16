@@ -40,7 +40,7 @@ if (!$block->isSupportableType()) return;
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
-            var itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?>;
+            var itemPrice = <?= $block->getProduct()->getFinalPrice(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -193,15 +193,22 @@ if (!$block->isSupportableType()) return;
                 var options = {};
                 formData = new FormData(document.getElementById("product_addtocart_form"));
                 formData.forEach(function(value, key){
-                    matchResult = key.match(/super_attribute\[(\d+)\]/);
-                    if (matchResult) {
-                        if (!('super_attribute' in options)) {
-                            options['super_attribute'] = {};
+
+                    var compositeAttributtes = ['super_attribute', 'options'];
+                    var matchResult;
+
+                    for (var index in compositeAttributtes) {
+                        var compositeAttributte = compositeAttributtes[index];
+
+                        if (matchResult = key.match(compositeAttributte+'\\[(\\d+)\\]')) {
+                            if (!(compositeAttributte in options)) {
+                                options[compositeAttributte] = {};
+                            }
+                            options[compositeAttributte][matchResult[1]] = value;
+                            return;
                         }
-                        options['super_attribute'][matchResult[1]] = value;
-                    } else {
-                        options[key] = value;
                     }
+                    options[key] = value;
                 });
                 options['storeId'] = '<?= $block->getStoreId(); ?>';
                 var cart = {
@@ -224,13 +231,16 @@ if (!$block->isSupportableType()) return;
             setupProductPage();
             $('#qty').on('change', setupProductPage);
 
-            <?php if ($block->isConfigurable()): ?>
             $(document).on( 'updatePrice', function (event, data) {
-                var priceDelta = data.prices.finalPrice.amount;
-                itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                var key = Object.keys(data)[0];
+                if (key) {
+                    var finalPrice = data[key].finalPrice;
+                    if (finalPrice && typeof finalPrice === 'object') {
+                        var priceDelta = finalPrice.amount ? finalPrice.amount : 0;
+                        itemPrice = <?= $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                    }
+                }
                 setupProductPage();
             });
-            <?php endif; ?>
-
         });
     </script>
