@@ -87,7 +87,7 @@ jobs:
                   apt-get install -y openssh-server
             - swissknife/publish_github_release:
               tag: ${NEWTAGNAME}
-            - notify-rc-tag
+            - notify-rc-tag:
               tag: ${NEWTAGNAME}
 
   integration-php72-magento23:
