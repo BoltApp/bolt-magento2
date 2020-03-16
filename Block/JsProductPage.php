@@ -50,8 +50,8 @@ class JsProductPage extends Js
         Decider $featureSwitches,
         array $data = []
     ) {
-        $this->_product     = $productView->getProduct();
-        
+        $this->_product = $productView->getProduct();
+
         parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
     }
 
@@ -103,29 +103,37 @@ class JsProductPage extends Js
     {
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
     }
-    
-    public function getIsEnableOrderMinimumAmount()
+
+    private function isEnableOrderMinimumAmount()
     {
-        $storeId        = $this->getStoreId();
-        $isEnableOrderMinimumAmount = $this->_scopeConfig->isSetFlag(
+        $storeId                    = $this->getStoreId();
+        $isEnableOrderMinimumAmount = $this->getScopeConfig()->isSetFlag(
             'sales/minimum_order/active',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $storeId
         );
-        
+
         return $isEnableOrderMinimumAmount;
     }
-    
-    public function getOrderMinimumAmountValue()
+
+    private function getOrderMinimumAmountValue()
     {
-        $storeId        = $this->getStoreId();
-        $orderMinimumAmountValue = $this->_scopeConfig->getValue(
+        $storeId                 = $this->getStoreId();
+        $orderMinimumAmountValue = $this->getScopeConfig()->getValue(
             'sales/minimum_order/amount',
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
             $storeId
         );
-        
-        return $isEnableOrderMinimumAmount;
+
+        return $orderMinimumAmountValue;
+    }
+
+    /**
+     * @return \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    private function getScopeConfig()
+    {
+        return $this->_scopeConfig;
     }
 
     /**
@@ -135,9 +143,8 @@ class JsProductPage extends Js
      */
     public function getOrderMinimumAmount()
     {
-        $minOrderActive = $this->getIsEnableOrderMinimumAmount();
-        
-        if ( ! $minOrderActive) {
+        $isEnableOrderMinimumAmount = $this->isEnableOrderMinimumAmount();
+        if ( ! $isEnableOrderMinimumAmount) {
             return false;
         }
 

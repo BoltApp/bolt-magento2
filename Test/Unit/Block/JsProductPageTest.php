@@ -173,7 +173,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                                 'getUrl',
                                 'getBoltPopupErrorMessage',
                                 'getStoreId',
-                                'getIsEnableOrderMinimumAmount',
+                                'isEnableOrderMinimumAmount',
                                 'getOrderMinimumAmountValue'
                             ])
                             ->setConstructorArgs(
@@ -281,7 +281,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     public function getOrderMinimumAmount($flag, $expected_result)
     {
         $this->block->method('getStoreId')->willReturn(1);
-        $this->block->method('getIsEnableOrderMinimumAmount')->willReturn($flag);
+        $this->block->method('isEnableOrderMinimumAmount')->willReturn($flag);
         $this->block->method('getOrderMinimumAmountValue')->willReturn($expected_result);
 
         $result = $this->block->getOrderMinimumAmount();
