@@ -26,18 +26,27 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Catalog\Block\Product\View as ProductView;
+use Magento\Framework\App\Config\ScopeConfigInterface as ScopeConfig;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
-class JsProductPage extends Js {
+class JsProductPage extends Js
+{
 
     /**
      * @var \Magento\Catalog\Model\Product
      */
     private $_product;
+
+    /**
+     * Core store config
+     *
+     * @var \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    protected $_scopeConfig;
 
     public function __construct(
         Context $context,
@@ -47,11 +56,13 @@ class JsProductPage extends Js {
         Bugsnag $bugsnag,
         ProductView $productView,
         Decider $featureSwitches,
+        ScopeConfig $scopeConfig,
         array $data = []
     ) {
-        $this->_product = $productView->getProduct();
+        $this->_product     = $productView->getProduct();
+        $this->_scopeConfig = $scopeConfig;
 
-        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
+        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
     }
 
     /**
@@ -74,6 +85,7 @@ class JsProductPage extends Js {
         if (in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout)) {
             return true;
         }
+
         return false;
     }
 
@@ -100,5 +112,31 @@ class JsProductPage extends Js {
     public function getStoreCurrencyCode()
     {
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
+    }
+
+    /**
+     * Get the Order Minimum Amount
+     *
+     * @return boolean|float return minimum amount if `Order Minimum Amount` is enabled, otherwise false.
+     */
+    public function getOrderMinimumAmount()
+    {
+        $storeId        = $this->getStoreId();
+        $minOrderActive = $this->_scopeConfig->isSetFlag(
+            'sales/minimum_order/active',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+        if ( ! $minOrderActive) {
+            return false;
+        }
+
+        $minAmount = $this->_scopeConfig->getValue(
+            'sales/minimum_order/amount',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        return $minAmount;
     }
 }

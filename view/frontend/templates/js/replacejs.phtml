@@ -479,7 +479,8 @@ ob_start();
         unsetInitiateCheckoutCookie();
 
         // the open status of checkout modal
-        var popUpOpen = false;
+        var popUpOpen = false,
+            needToShowErrorPopup = false;
 
         ////////////////////////////////////
         // BoltCheckout.configure parameters
@@ -626,6 +627,15 @@ ob_start();
                         }
                     }
                 }
+                
+                // Is valid minimum amount for cart.
+                if (typeof settings !== undefined
+                    && needToShowErrorPopup
+                    && settings.minimum_amount_rule_message
+                ) {
+                    showBoltErrorMessage(settings.minimum_amount_rule_message);
+                    return false;
+                }
 
                 popUpOpen = true;
                 return true;
@@ -751,12 +761,14 @@ ob_start();
                     .done(function (data) {
 
                         var boltRestricted = !!data.restrict;
+                        needToShowErrorPopup = false;
 
                         toggleCheckoutIfNeeded(boltRestricted);
 
                         // Stop if Bolt checkout is restricted
                         if (boltRestricted) {
                             if (popUpOpen) reject(new Error(data.message));
+                            if (data.is_not_valid_minimum_amount) needToShowErrorPopup = true;
                             hintBarrier.resolve(hints);
                             return;
                         }

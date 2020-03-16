@@ -86,7 +86,7 @@ class Data extends Action
         $this->cartHelper        = $cartHelper;
         $this->configHelper      = $configHelper;
         $this->bugsnag           = $bugsnag;
-        $this->metricsClient   = $metricsClient;
+        $this->metricsClient     = $metricsClient;
     }
 
     /**
@@ -98,15 +98,27 @@ class Data extends Action
     public function execute()
     {
         $startTime = $this->metricsClient->getCurrentTime();
-        $result = $this->resultJsonFactory->create();
+        $result    = $this->resultJsonFactory->create();
 
         try {
             if ($this->cartHelper->hasProductRestrictions()) {
                 throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
             }
 
-            if (!$this->cartHelper->isCheckoutAllowed()) {
+            if ( ! $this->cartHelper->isCheckoutAllowed()) {
                 throw new BoltException(__('Guest checkout is not allowed.'));
+            }
+
+            if ( ! $this->cartHelper->hasValidMinimumOrderAmountForCart()) {
+                $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
+
+                return $result->setData([
+                    'status'                      => 'success',
+                    'restrict'                    => true,
+                    'message'                     => $this->cartHelper->getMinimumAmountRuleMessage(),
+                    'is_not_valid_minimum_amount' => true,
+                    'backUrl'                     => '',
+                ]);
             }
 
             // flag to determinate the type of checkout / data sent to Bolt
@@ -144,28 +156,28 @@ class Data extends Action
             $hints = $this->cartHelper->getHints($cartReference, 'cart');
 
             $result->setData([
-                'status' => 'success',
-                'cart' => $cart,
-                'hints' => $hints,
+                'status'  => 'success',
+                'cart'    => $cart,
+                'hints'   => $hints,
                 'backUrl' => '',
             ]);
         } catch (BoltException $e) {
             $result->setData([
-                'status' => 'success',
+                'status'   => 'success',
                 'restrict' => true,
-                'message' => $e->getMessage(),
-                'backUrl' => '',
+                'message'  => $e->getMessage(),
+                'backUrl'  => '',
             ]);
-            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
 
             $result->setData([
-                'status' => 'failure',
+                'status'  => 'failure',
                 'message' => $e->getMessage(),
                 'backUrl' => '',
             ]);
-            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
         } finally {
             return $result;
         }

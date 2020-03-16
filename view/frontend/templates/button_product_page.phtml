@@ -44,6 +44,17 @@ if (!$block->isSupportableType()) return;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
+            
+            var orderMinimumAmount = <?= (float) $block->getOrderMinimumAmount(); ?>;
+            var needToShowErrorPopup = false;
+            
+            var showBoltErrorMessage = function(messsage, order_reference) {
+                var boltModal = $('#bolt-modal'),
+                    errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
+    
+                boltModal.find('.bolt-modal-content').html(errorMsg);
+                boltModal.modal("openModal");
+            };
 
             // On multiple checkout open/close actions the success event remains registered
             // resulting in making the success call multiple times. This variable stores
@@ -158,6 +169,16 @@ if (!$block->isSupportableType()) return;
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
+                    
+                    // Is valid minimum amount for cart.
+                    if (typeof settings !== undefined
+                        && needToShowErrorPopup
+                        && settings.minimum_amount_rule_message
+                    ) {
+                        showBoltErrorMessage(settings.minimum_amount_rule_message);
+                        needToShowErrorPopup = false;    
+                        return false;
+                    }
                     return true;
                 },
 
@@ -214,6 +235,14 @@ if (!$block->isSupportableType()) return;
                         options: JSON.stringify(options)
                     }]
                 };
+                
+                var cartTotal = calcBoltPPCCartTotal(getQty(),itemPrice);
+                if(cartTotal < orderMinimumAmount){
+                    needToShowErrorPopup = true;
+                }
+                else{
+                    needToShowErrorPopup = false;
+                }
 
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
@@ -231,6 +260,25 @@ if (!$block->isSupportableType()) return;
                 setupProductPage();
             });
             <?php endif; ?>
+            
+            function calcBoltPPCCartTotal(itemQty, itemPrice) {
+                var total = 0; 
+          
+                // Convert the values in the quantity textboxes to numbers. The 10 that
+                // is being passed as the second argument indicates the "radix" or the
+                // numeric base system that should be used when the string is being 
+                // interpreted. Here (and often), we work in the base 10 numeral system.
+                var qty = parseInt(itemQty, 10);
+                
+                // NOTE: If parseInt() can't parse a number from the string provided, it returns NaN
+                //       (Not A Number), we can check to see if we got NaN with the isNaN() function
+                //       and here, we want to know if we don't have a NaN, so we prepend a ! to it 
+                //       (the logical NOT operator) to test the opposite of the isNaN() function result.
+                if (!isNaN(qty)) { total = qty * itemPrice; }
+          
+                total = total.toFixed(2);
+                return total;
+            }
 
         });
     </script>
