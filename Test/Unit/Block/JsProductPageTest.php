@@ -25,7 +25,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Request\Http;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\App\Config\ScopeConfigInterface;
+
 /**
  * Class JsTest
  *
@@ -77,8 +77,6 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     private $productViewMock;
 
-    private $scopeConfigMock;
-
     private $product;
 
     /**
@@ -92,45 +90,61 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     protected function setUp()
     {
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
-        $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
+        $this->contextMock       = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
 
         $this->checkoutSessionMock = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getQuote', 'getBoltInitiateCheckout', 'unsBoltInitiateCheckout'])
-            ->getMock();
+                                          ->disableOriginalConstructor()
+                                          ->setMethods([
+                                              'getQuote',
+                                              'getBoltInitiateCheckout',
+                                              'unsBoltInitiateCheckout'
+                                          ])
+                                          ->getMock();
 
         $this->magentoQuote = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getQuote'])
-            ->getMock();
+                                   ->disableOriginalConstructor()
+                                   ->setMethods(['getQuote'])
+                                   ->getMock();
 
         $methods = [
-            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
-            'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
-            'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
-            'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed'
+            'isSandboxModeSet',
+            'isActive',
+            'getAnyPublishableKey',
+            'getPublishableKeyPayment',
+            'getPublishableKeyCheckout',
+            'getPublishableKeyBackOffice',
+            'getReplaceSelectors',
+            'getGlobalCSS',
+            'getPrefetchShipping',
+            'getQuoteIsVirtual',
+            'getTotalsChangeSelectors',
+            'getAdditionalCheckoutButtonClass',
+            'getAdditionalConfigString',
+            'getIsPreAuth',
+            'shouldTrackCheckoutFunnel',
+            'isPaymentOnlyCheckoutEnabled',
+            'isGuestCheckoutAllowed',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
-            ->setMethods($methods)
-            ->setConstructorArgs(
-                [
-                    $this->helperContextMock,
-                    $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
-                    $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
-                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-                    $this->createMock(\Magento\Framework\App\Request\Http::class)
-                ]
-            )
-            ->getMock();
+                                   ->setMethods($methods)
+                                   ->setConstructorArgs(
+                                       [
+                                           $this->helperContextMock,
+                                           $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
+                                           $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
+                                           $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
+                                           $this->createMock(\Magento\Framework\App\Request\Http::class)
+                                       ]
+                                   )
+                                   ->getMock();
 
-        $this->cartHelperMock = $this->createMock(CartHelper::class);
+        $this->cartHelperMock    = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
-        $this->requestMock = $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getFullActionName'])
-            ->getMock();
+        $this->requestMock       = $this->getMockBuilder(Http::class)
+                                        ->disableOriginalConstructor()
+                                        ->setMethods(['getFullActionName'])
+                                        ->getMock();
 
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
 
@@ -141,32 +155,39 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         $this->contextMock->method('getStoreManager')->willReturn($storeManager);
 
         $this->product = $this->getMockBuilder(Product::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId'])
-            ->getMock();
+                              ->disableOriginalConstructor()
+                              ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId'])
+                              ->getMock();
 
         $this->productViewMock = $this->getMockBuilder(ProductView::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getProduct'])
-            ->getMock();
+                                      ->disableOriginalConstructor()
+                                      ->setMethods(['getProduct'])
+                                      ->getMock();
         $this->productViewMock->method('getProduct')
-            ->willReturn($this->product);
+                              ->willReturn($this->product);
         $this->decider = $this->createMock(Decider::class);
 
         $this->block = $this->getMockBuilder(BlockJsProductPage::class)
-            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
-            ->setConstructorArgs(
-                [
-                    $this->contextMock,
-                    $this->configHelper,
-                    $this->checkoutSessionMock,
-                    $this->cartHelperMock,
-                    $this->bugsnagHelperMock,
-                    $this->productViewMock,
-                    $this->decider
-                ]
-            )
-            ->getMock();
+                            ->setMethods([
+                                'configHelper',
+                                'getUrl',
+                                'getBoltPopupErrorMessage',
+                                'getStoreId',
+                                'getIsEnableOrderMinimumAmount',
+                                'getOrderMinimumAmountValue'
+                            ])
+                            ->setConstructorArgs(
+                                [
+                                    $this->contextMock,
+                                    $this->configHelper,
+                                    $this->checkoutSessionMock,
+                                    $this->cartHelperMock,
+                                    $this->bugsnagHelperMock,
+                                    $this->productViewMock,
+                                    $this->decider
+                                ]
+                            )
+                            ->getMock();
     }
 
     /**
@@ -231,23 +252,47 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     public function isGuestCheckoutAllowed($flag, $expected_result)
     {
         $this->configHelper->method('isGuestCheckoutAllowed')
-            ->willReturn($flag);
+                           ->willReturn($flag);
         $result = $this->block->isGuestCheckoutAllowed();
         $this->assertEquals($expected_result, $result);
     }
 
-    public function providerIsGuestCheckoutAllowed() {
+    public function providerIsGuestCheckoutAllowed()
+    {
         return [
-            [true,1],
-            [false,0],
+            [true, 1],
+            [false, 0],
         ];
     }
 
     /**
      * @test
      */
-    public function getStoreCurrencyCode() {
+    public function getStoreCurrencyCode()
+    {
         $result = $this->block->getStoreCurrencyCode();
         $this->assertEquals(self::CURRENCY_CODE, $result);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerGetOrderMinimumAmount
+     */
+    public function getOrderMinimumAmount($flag, $expected_result)
+    {
+        $this->block->method('getStoreId')->willReturn(1);
+        $this->block->method('getIsEnableOrderMinimumAmount')->willReturn($flag);
+        $this->block->method('getOrderMinimumAmountValue')->willReturn($expected_result);
+
+        $result = $this->block->getOrderMinimumAmount();
+        $this->assertEquals($expected_result, $result);
+    }
+
+    public function providerGetOrderMinimumAmount()
+    {
+        return [
+            [false, false],
+            [true, 60],
+        ];
     }
 }
