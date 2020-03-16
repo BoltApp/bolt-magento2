@@ -110,20 +110,4 @@ class DebugTest extends TestCase
 		$this->assertNotNull($debugInfo->getPhpVersion());
 		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
 	}
-
-
-//	/**
-//	 * @test
-//	 * @covers ::debug
-//	 */
-//	public function debug_invalid_hmac()
-//	{
-//		$this->expectException(InvalidArgumentException::class);
-//
-//		$debugInfo = $this->debug->debug();
-//
-//		$this->assertNotNull($debugInfo);
-//		$this->assertNotNull($debugInfo->getPhpVersion());
-//		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
-//	}
 }
