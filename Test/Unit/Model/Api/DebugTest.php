@@ -17,12 +17,15 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
-use Bolt\Boltpay\Model\Api\Debug;
-use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
+use Bolt\Boltpay\Model\Api\Debug;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class CreateOrderTest
@@ -40,7 +43,17 @@ class DebugTest extends TestCase
 	/**
 	 * @var DebugInfoFactory
 	 */
-	private $debugInfoFactory;
+	private $debugInfoFactoryMock;
+
+	/**
+	 * @var StoreManagerInterface
+	 */
+	private $storeManagerInterfaceMock;
+
+	/**
+	 * @var HookHelper
+	 */
+	private $hookHelperMock;
 
 	/**
 	 * @var ProductMetadataInterface
@@ -52,17 +65,33 @@ class DebugTest extends TestCase
 	 */
 	public function setUp()
 	{
+		// prepare debug info factory
+		$this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
+		$this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
+
+		// prepare store manager
+		$storeInterfaceMock = $this->createMock(StoreInterface::class);
+		$storeInterfaceMock->method('getId')->willReturn(0);
+		$this->storeManagerInterfaceMock = $this->createMock(StoreManagerInterface::class);
+		$this->storeManagerInterfaceMock->method('getStore')->willReturn($storeInterfaceMock);
+
+		// prepare product meta data
 		$this->productMetadataInterfaceMock = $this->createMock(ProductMetadataInterface::class);
 		$this->productMetadataInterfaceMock->method('getVersion')->willReturn('2.3.0');
 
-		$this->debugInfoFactory = $this->createMock(DebugInfoFactory::class);
-		$this->debugInfoFactory->method('create')->willReturn(new DebugInfo());
+		// prepare hook helper
+		$this->hookHelperMock = $this->createMock(HookHelper::class);
+		$this->hookHelperMock->method('preProcessWebhook');
 
+
+		// initialize test object
 		$objectManager = new ObjectManager($this);
 		$this->debug = $objectManager->getObject(
 			Debug::class,
 			[
-				'debugInfoFactory' => $this->debugInfoFactory,
+				'debugInfoFactory' => $this->debugInfoFactoryMock,
+				'storeManager' => $this->storeManagerInterfaceMock,
+				'hookHelper' => $this->hookHelperMock,
 				'productMetadata' => $this->productMetadataInterfaceMock
 			]
 		);
@@ -74,9 +103,27 @@ class DebugTest extends TestCase
 	 */
 	public function debug_successful()
 	{
+		$this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
+
 		$debugInfo = $this->debug->debug();
 		$this->assertNotNull($debugInfo);
 		$this->assertNotNull($debugInfo->getPhpVersion());
 		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
 	}
+
+
+//	/**
+//	 * @test
+//	 * @covers ::debug
+//	 */
+//	public function debug_invalid_hmac()
+//	{
+//		$this->expectException(InvalidArgumentException::class);
+//
+//		$debugInfo = $this->debug->debug();
+//
+//		$this->assertNotNull($debugInfo);
+//		$this->assertNotNull($debugInfo->getPhpVersion());
+//		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
+//	}
 }
