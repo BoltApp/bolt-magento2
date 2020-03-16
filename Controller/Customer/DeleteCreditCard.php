@@ -16,6 +16,8 @@
  */
 
 namespace Bolt\Boltpay\Controller\Customer;
+
+use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Action;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Magento\Framework\App\Action\Context;
@@ -40,22 +42,30 @@ class DeleteCreditCard extends Action
     private $formKeyValidator;
 
     /**
+     * @var Session
+     */
+    private $customerSession;
+
+    /**
      * DeleteCreditCard constructor.
      * @param Context $context
      * @param Bugsnag $bugsnag
      * @param CustomerCreditCardFactory $customerCreditCardFactory
      * @param Validator $formKeyValidator
+     * @param Session $customerSession
      */
     public function __construct(
         Context $context,
         Bugsnag $bugsnag,
         CustomerCreditCardFactory $customerCreditCardFactory,
-        Validator $formKeyValidator
+        Validator $formKeyValidator,
+        Session $customerSession
     )
     {
         $this->formKeyValidator = $formKeyValidator;
         $this->bugsnag = $bugsnag;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
+        $this->customerSession = $customerSession;
         parent::__construct($context);
     }
 
@@ -73,8 +83,11 @@ class DeleteCreditCard extends Action
             $id = $this->getRequest()->getParam('id');
             if($id){
                 $creditCard = $this->customerCreditCardFactory->create()->load($id);
-
-                if($creditCard && $creditCard->getId()){
+                if (
+                    $creditCard
+                    && $creditCard->getId()
+                    && $this->customerSession->getCustomerId() == $creditCard->getCustomerId()
+                ) {
                     $creditCard->delete();
                     $this->messageManager->addSuccessMessage(__('You deleted the Bolt credit card'));
                 }else{
