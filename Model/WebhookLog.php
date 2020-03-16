@@ -29,6 +29,35 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
 
     protected $_cacheTag = self::CACHE_TAG;
 
+    /**
+     * Core Date
+     *
+     * @var \Magento\Framework\Stdlib\DateTime\DateTime
+     */
+    protected $_coreDate;
+
+    /**
+     * WebhookLog constructor.
+     * @param \Magento\Framework\Stdlib\DateTime\DateTime $coreDate
+     * @param \Magento\Framework\Model\Context $context
+     * @param \Magento\Framework\Registry $registry
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
+     * @param array $data
+     */
+    public function __construct(
+        \Magento\Framework\Stdlib\DateTime\DateTime $coreDate,
+        \Magento\Framework\Model\Context $context,
+        \Magento\Framework\Registry $registry,
+        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        array $data = []
+    )
+    {
+        $this->_coreDate = $coreDate;
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
+    }
+
     protected function _construct()
     {
         $this->_init('Bolt\Boltpay\Model\ResourceModel\WebhookLog');
@@ -53,6 +82,7 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
         $this->setTransactionId($transactionId)
             ->setHookType($hookType)
             ->setNumberOfMissingQuoteFailedHooks(1)
+            ->setUpdatedAt($this->_coreDate->gmtDate())
             ->save();
 
         return $this;
@@ -63,7 +93,9 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
      */
     public function incrementAttemptCount()
     {
-        $this->setNumberOfMissingQuoteFailedHooks($this->getNumberOfMissingQuoteFailedHooks() + 1)->save();
+        $this->setNumberOfMissingQuoteFailedHooks($this->getNumberOfMissingQuoteFailedHooks() + 1)
+             ->setUpdatedAt($this->_coreDate->gmtDate())
+             ->save();
 
         return $this;
     }

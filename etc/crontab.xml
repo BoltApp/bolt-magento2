@@ -5,5 +5,8 @@
         <job name="deactivate_quote" instance="Bolt\Boltpay\Cron\DeactivateQuote" method="execute">
             <schedule>0 * * * *</schedule>
         </job>
+        <job name="delete_old_web_hook_logs" instance="Bolt\Boltpay\Cron\DeleteOldWebHookLogs" method="execute">
+            <schedule>0 1 * * *</schedule>
+        </job>
     </group>
 </config>
