@@ -127,6 +127,7 @@ class Debug implements DebugInterface
 	private function getBoltSettings()
 	{
 		$boltSettings = [];
+
 		// Active
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('active')

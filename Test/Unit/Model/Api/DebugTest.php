@@ -18,6 +18,8 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Bolt\Boltpay\Model\Api\Debug;
@@ -46,6 +48,11 @@ class DebugTest extends TestCase
 	private $debugInfoFactoryMock;
 
 	/**
+	 * @var BoltConfigSettingFactory
+	 */
+	private $boltConfigSettingFactoryMock;
+
+	/**
 	 * @var StoreManagerInterface
 	 */
 	private $storeManagerInterfaceMock;
@@ -69,6 +76,10 @@ class DebugTest extends TestCase
 		$this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
 		$this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
 
+		// prepare bolt config setting factory
+		$this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
+		$this->boltConfigSettingFactoryMock->method('create')->willReturn(new BoltConfigSetting());
+
 		// prepare store manager
 		$storeInterfaceMock = $this->createMock(StoreInterface::class);
 		$storeInterfaceMock->method('getId')->willReturn(0);
@@ -83,13 +94,13 @@ class DebugTest extends TestCase
 		$this->hookHelperMock = $this->createMock(HookHelper::class);
 		$this->hookHelperMock->method('preProcessWebhook');
 
-
 		// initialize test object
 		$objectManager = new ObjectManager($this);
 		$this->debug = $objectManager->getObject(
 			Debug::class,
 			[
 				'debugInfoFactory' => $this->debugInfoFactoryMock,
+				'boltConfigSettingFactory' => $this->boltConfigSettingFactoryMock,
 				'storeManager' => $this->storeManagerInterfaceMock,
 				'hookHelper' => $this->hookHelperMock,
 				'productMetadata' => $this->productMetadataInterfaceMock
