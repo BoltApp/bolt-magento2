@@ -191,20 +191,18 @@ if (!$block->isSupportableType()) return;
 
             var setupProductPage = function () {
                 var options = {};
+                var compositeAttributes = ['super_attribute', 'options'];
                 formData = new FormData(document.getElementById("product_addtocart_form"));
-                formData.forEach(function(value, key){
-
-                    var compositeAttributtes = ['super_attribute', 'options'];
+                formData.forEach(function(value, key) {
                     var matchResult;
+                    for (var index in compositeAttributes) {
+                        var compositeAttribute = compositeAttributes[index];
 
-                    for (var index in compositeAttributtes) {
-                        var compositeAttributte = compositeAttributtes[index];
-
-                        if (matchResult = key.match(compositeAttributte+'\\[(\\d+)\\]')) {
-                            if (!(compositeAttributte in options)) {
-                                options[compositeAttributte] = {};
+                        if (matchResult = key.match(compositeAttribute+'\\[(\\d+)\\]')) {
+                            if (!(compositeAttribute in options)) {
+                                options[compositeAttribute] = {};
                             }
-                            options[compositeAttributte][matchResult[1]] = value;
+                            options[compositeAttribute][matchResult[1]] = value;
                             return;
                         }
                     }
