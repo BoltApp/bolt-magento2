@@ -40,6 +40,11 @@ class Config extends AbstractHelper
      */
     private $encryptor;
 
+	/**
+	 * Path for title
+	 */
+	const XML_PATH_TITLE = 'payment/boltpay/title';
+
     /**
      * Path for API Key
      */
@@ -434,6 +439,22 @@ class Config extends AbstractHelper
     {
         return $this->getPublishableKeyCheckout($storeId) ?: $this->getPublishableKeyPayment($storeId);
     }
+
+	/**
+	 * Get API Key from config
+	 *
+	 * @param int|string $storeId
+	 *
+	 * @return  string
+	 */
+	public function getTitle($storeId = null)
+	{
+		return $this->getScopeConfig()->getValue(
+			self::XML_PATH_TITLE,
+			ScopeInterface::SCOPE_STORE,
+			$storeId
+		);
+	}
 
     /**
      * Get API Key from config
@@ -852,7 +873,7 @@ class Config extends AbstractHelper
      *
      * @return  string
      */
-    protected function getAdditionalConfigString($storeId = null)
+    public function getAdditionalConfigString($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_ADDITIONAL_CONFIG,
