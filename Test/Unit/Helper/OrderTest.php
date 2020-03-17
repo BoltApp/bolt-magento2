@@ -2157,6 +2157,32 @@ class OrderTest extends TestCase
     }
 
     /**
+     * @test
+     */
+    public function getTransactionState_AfterpayCompleted()
+    {
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])
+            ->getMockForAbstractClass();
+        $map = [
+            ['transaction_state', OrderHelper::TS_PENDING],
+            ['transaction_reference', '000123'],
+            ['real_transaction_id', self::TRANSACTION_ID],
+            //  ['captures', ""],
+        ];
+        $this->paymentMock->expects(static::exactly(4))
+            ->method('getAdditionalInformation')
+            ->will(static::returnValueMap($map));
+
+        $this->transactionMock = (object)([
+            'type'     => OrderHelper::TT_APM_PAYMENT,
+            'status'   => "completed",
+            'captures' => [1],
+        ]);
+        $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, null);
+        static::assertEquals($state, "cc_payment:completed");
+    }
+
+    /**
      * Setup method for {@see getTransactionState}
      *
      * @param string $prevTransactionState
