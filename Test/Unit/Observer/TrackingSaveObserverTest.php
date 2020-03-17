@@ -26,6 +26,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Observer\TrackingSaveObserver as Observer;
 use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class TrackingSaveObserverTest
@@ -54,6 +56,16 @@ class TrackingSaveObserverTest extends TestCase
     private $bugsnag;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @var Observer
      */
     protected $observer;
@@ -70,11 +82,15 @@ class TrackingSaveObserverTest extends TestCase
         $this->dataObjectFactory->method('create')->willReturn(new DataObject());
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->apiHelper = $this->createMock(ApiHelper::class);
+        $this->metricsClient = $this->createMock(MetricsClient::class);
+        $this->decider = $this->createMock(Decider::class);
         $this->observer = new Observer(
             $this->configHelper,
             $this->dataObjectFactory,
             $this->apiHelper,
-            $this->bugsnag
+            $this->bugsnag,
+            $this->metricsClient,
+            $this->decider
         );
     }
 
@@ -84,8 +100,8 @@ class TrackingSaveObserverTest extends TestCase
     public function testExecute()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
-        $shipmentItem = $this->getMockBuilder(\Magento\Sales\Api\Data\ShipmentItemInterface::class)->disableOriginalConstructor()->getMock();
-        $orderItem = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderItemInterface::class)->disableOriginalConstructor()->getMock();
+        $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
+        $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $payment = $this->getMockBuilder(\Magento\Payment\Model\InfoInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();

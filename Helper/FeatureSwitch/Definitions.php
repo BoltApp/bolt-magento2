@@ -61,6 +61,11 @@ class Definitions {
      */
     const M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER = "M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER";
 
+    /**
+     * Enable tracking event observer
+     */
+    const TRACKING_EVENT_OBSERVER_SWITCH = "TRACKING_EVENT_OBSERVER_SWITCH";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,

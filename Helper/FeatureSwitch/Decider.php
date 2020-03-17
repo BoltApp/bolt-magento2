@@ -175,4 +175,8 @@ class Decider extends AbstractHelper {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
     }
 
+    public function isTrackingSaveEventsEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::TRACKING_EVENT_OBSERVER_SWITCH);
+    }
 }
