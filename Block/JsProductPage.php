@@ -104,6 +104,10 @@ class JsProductPage extends Js
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
     }
 
+    /**
+     * Get Order Minimum Amount is enabled
+     *
+     */
     public function isEnableOrderMinimumAmount()
     {
         $storeId                    = $this->getStoreId();
@@ -116,6 +120,10 @@ class JsProductPage extends Js
         return $isEnableOrderMinimumAmount;
     }
 
+    /**
+     * Get the setting value of Order Minimum Amount
+     *
+     */
     public function getOrderMinimumAmountValue()
     {
         $storeId                 = $this->getStoreId();

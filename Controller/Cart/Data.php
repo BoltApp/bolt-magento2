@@ -109,6 +109,7 @@ class Data extends Action
                 throw new BoltException(__('Guest checkout is not allowed.'));
             }
 
+            // Verify if the cart meet the Order Minimum Amount
             if ( ! $this->cartHelper->hasValidMinimumOrderAmountForCart()) {
                 $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
 
