@@ -2139,9 +2139,7 @@ class OrderTest extends TestCase
             'captures' => [],
         ]);
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, null);
-        // TODO: this should fail a test
-        static::assertEquals($state,  OrderHelper::TS_ZERO_AMOUNT);
-//        static::assertEquals($state,  "cc_payment:completed");
+        static::assertEquals($state,  "cc_payment:completed");
     }
 
     /**
@@ -2169,7 +2167,7 @@ class OrderTest extends TestCase
             ['transaction_state', OrderHelper::TS_PENDING],
             ['transaction_reference', '000123'],
             ['real_transaction_id', self::TRANSACTION_ID],
-            //  ['captures', ""],
+            ['captures', ""],
         ];
         $this->paymentMock->expects(static::exactly(4))
             ->method('getAdditionalInformation')
@@ -2181,6 +2179,9 @@ class OrderTest extends TestCase
             'captures' => [1],
         ]);
         $state = $this->currentMock->getTransactionState($this->transactionMock, $this->paymentMock, null);
+        // TODO: this should fail a test
+//        static::assertEquals($state,  OrderHelper::TS_ZERO_AMOUNT);
+
         static::assertEquals($state, "cc_payment:completed");
     }
 
