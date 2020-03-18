@@ -243,7 +243,22 @@ JSON;
         ];
     }
 
-    /**
+	/**
+	 * @test
+	 */
+	public function getTitle()
+	{
+		$expected = 'Bolt Pay';
+		$this->scopeConfig
+			->expects(self::once())
+			->method('getValue')
+			->with(BoltConfig::XML_PATH_TITLE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+			->willReturn($expected);
+		$result = $this->currentMock->getTitle();
+		$this->assertEquals($expected, $result);
+	}
+
+	/**
      * @test
      */
     public function getAnyPublishableKey()

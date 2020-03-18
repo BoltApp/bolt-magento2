@@ -149,15 +149,15 @@ class Debug implements DebugInterface
 		// Publishable Key for Checkout (obscured)
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_checkout')
-		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyCheckout()));
+		                                                 ->setValue($this->configHelper->getPublishableKeyCheckout());
 		// Publishable Key for Payment (obscured)
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_payment')
-		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyPayment()));
+		                                                 ->setValue($this->configHelper->getPublishableKeyPayment());
 		// Publishable Key for Back Office (obscured)
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_back_office')
-		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyBackOffice()));
+		                                                 ->setValue($this->configHelper->getPublishableKeyBackOffice());
 		// Sandbox Mode
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('sandbox_mode')
