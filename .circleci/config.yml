@@ -1,23 +1,23 @@
 version: 2.1
 
 orbs:
-  slack: circleci/slack@3.3.0
+  slack: circleci/slack@3.4.2
   swissknife: roopakv/swissknife@0.25.0
 
 commands:
   notify-rc-tag:
     description: 'Notifies #eng-magento2 when a release candidate is tagged.'
     parameters:
-      tag-name:
+      tag:
         type: string
         default: ''
     steps:
-    - slack/notify:
-        only_for_branches: master
-        color: '#33ff00'
-        mentions: '@oleksii,@Pavel,'
-        message: ":white_check_mark: A new RC << parameters.tag-name >> has been tagged for Magento 2!"
-        webhook: $SLACK_MAGENTO2_WEBHOOK
+      - slack/notify:
+          channel: "#eng-magento2"
+          color: '#33ff00'
+          mentions: '@oleksii,@Pavel,'
+          message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
+          webhook: $SLACK_MAGENTO2_WEBHOOK
 
   m2-php-test:
     description: PHP Unit tests for M2
@@ -95,9 +95,9 @@ jobs:
                   apt-get install -y git
                   apt-get install -y openssh-server
             - swissknife/publish_github_release:
-              tag: '$NEWTAGNAME'
+                tag: $NEWTAGNAME
             - notify-rc-tag:
-              tag: '$NEWTAGNAME'
+                tag: $NEWTAGNAME
 
   integration-php72-magento23:
     docker:
