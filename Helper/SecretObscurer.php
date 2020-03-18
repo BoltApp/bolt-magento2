@@ -26,13 +26,15 @@ class SecretObscurer
 {
 	/**
 	 * Obscures the input string.
-	 * If the input is less than 6 characters, it returns ***. Otherwise it returns first 3 characters + *** + last 3 characters.
 	 *
 	 * @param string $input
 	 * @return string
 	 */
 	public static function obscure($input)
 	{
+		if (strlen($input) == 0) {
+			return '';
+		}
 		if (strlen($input) < 6) {
 			return '***';
 		}
