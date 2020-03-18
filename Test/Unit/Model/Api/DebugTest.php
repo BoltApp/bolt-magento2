@@ -185,15 +185,15 @@ class DebugTest extends TestCase
 		$expected_settings = [
 			['active', 'true'],
 			['title', 'bolt test title'],
-//			['api_key', 'bol***key'],
-//			['signing_secret', 'bol***ret'],
-//			['publishable_key_checkout', 'bol***out'],
-//			['publishable_key_payment', 'bol***ent'],
-//			['publishable_key_back_office', 'bol***ice'],
+			['api_key', 'bol***key'],
+			['signing_secret', 'bol***ret'],
+			['publishable_key_checkout', 'bol***out'],
+			['publishable_key_payment', 'bol***ent'],
+			['publishable_key_back_office', 'bol***ice'],
 			['sandbox_mode', 'true'],
 			['is_pre_auth', 'true'],
 			['product_page_checkout', 'true'],
-//			['geolocation_api_key', 'geo***key'],
+			['geolocation_api_key', 'geo***key'],
 			['replace_selectors', '#replace'],
 			['totals_change_selectors', '.totals'],
 			['global_css', '#customerbalance-placer {width: 210px;}'],
@@ -224,8 +224,8 @@ class DebugTest extends TestCase
 			['capture_merchant_metrics', 'false'],
 			['track_checkout_funnel', 'false'],
 		];
-		$this->assertEquals(34, count($debugInfo->getBoltConfigSettings()));
-		for ($i = 0; $i < 34; $i ++) {
+		$this->assertEquals(40, count($debugInfo->getBoltConfigSettings()));
+		for ($i = 0; $i < 40; $i ++) {
 			$this->assertEquals($expected_settings[$i][0], $debugInfo->getBoltConfigSettings()[$i]->getName());
 			$this->assertEquals($expected_settings[$i][1], $debugInfo->getBoltConfigSettings()[$i]->getValue(), 'actual value for ' . $expected_settings[$i][0] . ' is not equals to expected');
 		}

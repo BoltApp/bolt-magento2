@@ -25,6 +25,8 @@ use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Helper\SecretObscurer;
+
 
 class Debug implements DebugInterface
 {
@@ -136,26 +138,26 @@ class Debug implements DebugInterface
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('title')
 		                                                 ->setValue($this->configHelper->getTitle());
-//		// TODO：API Key (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('api_key')
-//		                                                 ->setValue($this->configHelper->getApiKey());
-//		// TODO：Signing Secret (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('signing_secret')
-//		                                                 ->setValue($this->configHelper->getSigningSecret());
-//		// TODO: Publishable Key for Checkout (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('publishable_key_checkout')
-//		                                                 ->setValue($this->configHelper->getPublishableKeyCheckout());
-//		// TODO: Publishable Key for Payment (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('publishable_key_payment')
-//		                                                 ->setValue($this->configHelper->getPublishableKeyPayment());
-//		// TODO: Publishable Key for Back Office (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('publishable_key_back_office')
-//		                                                 ->setValue($this->configHelper->getPublishableKeyBackOffice());
+		// API Key (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('api_key')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getApiKey()));
+		// Signing Secret (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('signing_secret')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getSigningSecret()));
+		// Publishable Key for Checkout (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('publishable_key_checkout')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyCheckout()));
+		// Publishable Key for Payment (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('publishable_key_payment')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyPayment()));
+		// Publishable Key for Back Office (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('publishable_key_back_office')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getPublishableKeyBackOffice()));
 		// Sandbox Mode
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('sandbox_mode')
@@ -168,10 +170,10 @@ class Debug implements DebugInterface
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('product_page_checkout')
 		                                                 ->setValue(var_export($this->configHelper->getProductPageCheckoutFlag(), true));
-//		// TODO: Geolocation API Key (obscure)
-//		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('geolocation_api_key')
-//		                                                 ->setValue($this->configHelper->getGeolocationApiKey());
+		// Geolocation API Key (obscured)
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('geolocation_api_key')
+		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getGeolocationApiKey()));
 		// Replace Button Selectors
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('replace_selectors')
