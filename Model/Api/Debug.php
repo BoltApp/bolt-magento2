@@ -146,15 +146,15 @@ class Debug implements DebugInterface
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('signing_secret')
 		                                                 ->setValue(SecretObscurer::obscure($this->configHelper->getSigningSecret()));
-		// Publishable Key for Checkout (obscured)
+		// Publishable Key for Checkout
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_checkout')
 		                                                 ->setValue($this->configHelper->getPublishableKeyCheckout());
-		// Publishable Key for Payment (obscured)
+		// Publishable Key for Payment
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_payment')
 		                                                 ->setValue($this->configHelper->getPublishableKeyPayment());
-		// Publishable Key for Back Office (obscured)
+		// Publishable Key for Back Office
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('publishable_key_back_office')
 		                                                 ->setValue($this->configHelper->getPublishableKeyBackOffice());
