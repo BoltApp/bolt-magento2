@@ -170,7 +170,7 @@ class Debug implements DebugInterface
 		                                                 ->setValue(var_export($this->configHelper->getProductPageCheckoutFlag(), true));
 //		// TODO: Geolocation API Key (obscure)
 //		$boltSettings[] = $this->boltConfigSettingFactory->create()
-//		                                                 ->setName('product_page_checkout')
+//		                                                 ->setName('geolocation_api_key')
 //		                                                 ->setValue($this->configHelper->getGeolocationApiKey());
 		// Replace Button Selectors
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
@@ -255,7 +255,7 @@ class Debug implements DebugInterface
 		// Client IP Restriction
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('ip_whitelist')
-		                                                 ->setValue($this->configHelper->getIPWhitelistArray());
+		                                                 ->setValue(implode(", ", $this->configHelper->getIPWhitelistArray()));
 		// Store Credit
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('store_credit')
