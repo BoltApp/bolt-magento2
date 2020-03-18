@@ -224,7 +224,7 @@ ob_start();
         var promise = new Promise(function(resolve){
             resolveHolder = resolve;
         });
-        return { promise, resolve: function(t){resolveHolder(t)}};
+        return { promise: promise, resolve: function(t){resolveHolder(t)}};
     };
 
     ////////////////////////////////////////////////////////////////////////
