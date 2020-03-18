@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -32,11 +31,6 @@ class Debug implements DebugInterface
 	 * @var DebugInfoFactory
 	 */
 	private $debugInfoFactory;
-
-	/**
-	 * @var BoltConfigSettingFactory
-	 */
-	private $boltConfigSettingFactory;
 
 	/**
 	 * @var PluginVersionFactory
@@ -65,7 +59,6 @@ class Debug implements DebugInterface
 
 	/**
 	 * @param DebugInfoFactory $debugInfoFactory
-	 * @param BoltConfigSettingFactory $boltConfigSettingFactory
 	 * @param PluginVersionFactory $pluginVersionFactory
 	 * @param StoreManagerInterface $storeManager
 	 * @param HookHelper $hookHelper
@@ -74,7 +67,6 @@ class Debug implements DebugInterface
 	 */
 	public function __construct(
 		DebugInfoFactory $debugInfoFactory,
-		BoltConfigSettingFactory $boltConfigSettingFactory,
 		PluginVersionFactory $pluginVersionFactory,
 		StoreManagerInterface $storeManager,
 		HookHelper $hookHelper,
@@ -82,7 +74,6 @@ class Debug implements DebugInterface
 		ConfigHelper $configHelper
 	) {
 		$this->debugInfoFactory = $debugInfoFactory;
-		$this->boltConfigSettingFactory = $boltConfigSettingFactory;
 		$this->pluginVersionFactory = $pluginVersionFactory;
 		$this->storeManager = $storeManager;
 		$this->hookHelper = $hookHelper;
