@@ -33,7 +33,7 @@ use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\View\Element\BlockFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Customer\Model\Address;
 use Magento\Quote\Model\QuoteFactory;
@@ -56,6 +56,8 @@ use Magento\Quote\Api\CartManagementInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 
 /**
  * Boltpay Cart helper
@@ -113,9 +115,9 @@ class Cart extends AbstractHelper
     private $dataObjectFactory;
 
     /**
-     * @var BlockFactory
+     * @var ImageFactory
      */
-    private $blockFactory;
+    private $imageHelperFactory;
 
     /**
      * @var Emulation
@@ -234,7 +236,7 @@ class Cart extends AbstractHelper
      * @param LogHelper         $logHelper
      * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
-     * @param BlockFactory      $blockFactory
+     * @param ImageFactory      $imageHelperFactory
      * @param Emulation         $appEmulation
      * @param QuoteFactory      $quoteFactory
      * @param TotalsCollector   $totalsCollector
@@ -263,7 +265,7 @@ class Cart extends AbstractHelper
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory,
-        BlockFactory $blockFactory,
+        ImageFactory $imageHelperFactory,
         Emulation $appEmulation,
         QuoteFactory $quoteFactory,
         TotalsCollector $totalsCollector,
@@ -288,7 +290,7 @@ class Cart extends AbstractHelper
         $this->customerSession = $customerSession;
         $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
-        $this->blockFactory = $blockFactory;
+        $this->imageHelperFactory = $imageHelperFactory;
         $this->appEmulation = $appEmulation;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->quoteFactory = $quoteFactory;
@@ -754,7 +756,7 @@ class Cart extends AbstractHelper
     public function getHints($cartReference = null, $checkoutType = 'admin')
     {
         /** @var Quote */
-        if ($checkoutType<>'product') {
+        if ($checkoutType != 'product') {
             $quote = $cartReference ?
                 $this->getQuoteById($cartReference) :
                 $this->checkoutSession->getQuote();
@@ -854,6 +856,7 @@ class Cart extends AbstractHelper
             $hints['virtual_terminal_mode'] = true;
         }
 
+        $hints['prefill'] = (object)$hints['prefill'];
         return $hints;
     }
 
@@ -1052,19 +1055,18 @@ class Cart extends AbstractHelper
     public function getCartItems($currencyCode, $items, $storeId = null, $totalAmount = 0, $diff = 0)
     {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // The "appEmulation" and block creation code is necessary for geting correct image url from an API call.
+        // The "appEmulation" is necessary for geting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->startEnvironmentEmulation(
             $storeId,
             \Magento\Framework\App\Area::AREA_FRONTEND,
             true
         );
-        /** @var  \Magento\Catalog\Block\Product\ListProduct $imageBlock */
-        $imageBlock = $this->blockFactory->createBlock('Magento\Catalog\Block\Product\ListProduct');
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $imageHelper = $this->imageHelperFactory->create();
 
         $products = array_map(
-            function ($item) use ($imageBlock, &$totalAmount, &$diff, $storeId, $currencyCode) {
+            function ($item) use ($imageHelper, &$totalAmount, &$diff, $storeId, $currencyCode) {
                 $product = [];
 
                 $unitPrice   = $item->getCalculationPrice();
@@ -1132,10 +1134,10 @@ class Cart extends AbstractHelper
                     $this->bugsnag->notifyError('Could not retrieve product from repository', "SKU: {$product['sku']}");
                 }
                 try {
-                    $productImage = $imageBlock->getImage($variantProductToGetImage, 'product_small_image');
+                    $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
                 } catch (\Exception $e) {
                     try {
-                        $productImage = $imageBlock->getImage($variantProductToGetImage, 'product_image');
+                        $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_base_image')->getUrl();
                     } catch (\Exception $e) {
                         $this->bugsnag->registerCallback(function ($report) use ($product) {
                             $report->setMetaData([
@@ -1145,8 +1147,8 @@ class Cart extends AbstractHelper
                         $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
                     }
                 }
-                if (@$productImage) {
-                    $product['image_url'] = ltrim($productImage->getImageUrl(),'/');
+                if (@$productImageUrl) {
+                    $product['image_url'] = ltrim($productImageUrl,'/');
                 }
                 ////////////////////////////////////
                 return  $product;
@@ -1685,7 +1687,7 @@ class Cart extends AbstractHelper
                 // Change giftcards balance as discount amount to giftcard balances to the discount amount
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
-                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodesFromSession();
+                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
                     $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
                 }
 
@@ -1813,7 +1815,6 @@ class Cart extends AbstractHelper
     /**
      * Create cart by request
      * TODO: add support for foreign currencies
-     * TODO: add support for multistore
      *
      * @param array $request
      *
@@ -1825,6 +1826,8 @@ class Cart extends AbstractHelper
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
 
+        $quote->setBoltParentQuoteId($quoteId);
+
         if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
             $this->assignQuoteCustomerByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
         }
@@ -1832,7 +1835,34 @@ class Cart extends AbstractHelper
         //add item to quote
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
-        $quote->addProduct($product, $item['quantity']);
+
+        $options = json_decode($item['options'],true);
+        if (isset($options['storeId']) && $options['storeId']) {
+            $quote->setStoreId($options['storeId']);
+        }
+        unset($options['storeId']);
+        unset($options['form_key']);
+        $options['qty'] = $item['quantity'];
+        $options = new \Magento\Framework\DataObject($options);
+
+        try {
+            $quote->addProduct($product, $options);
+        } catch (\Exception $e) {
+            $error_message = $e->getMessage();
+            if ($error_message == 'Product that you are trying to add is not available.') {
+                throw new BoltException(
+                    __($error_message),
+                    null,
+                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                );
+            } else {
+                throw new BoltException(
+                    __('The requested qty is not available'),
+                    null,
+                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                );
+            }
+        };
 
         $quote->reserveOrderId();
 
@@ -1843,10 +1873,10 @@ class Cart extends AbstractHelper
         // so we need to set boltReservedOrderId
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
 
+        $quote->setIsActive(false);
         $quote->collectTotals()->save();
 
-        $cart_data = $this->getCartData(false,'',$quote);
-        $cart_data['order_reference'] = $quote->getId();
+        $cart_data = $this->getCartData(false,'', $quote);
 
         return $cart_data;
     }

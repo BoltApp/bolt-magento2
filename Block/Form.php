@@ -6,6 +6,7 @@ use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\Session\SessionManager as MagentoQuote;
 use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
+use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 
 /**
  * Class Form
@@ -30,21 +31,29 @@ class Form extends PaymentForm
     private $configHelper;
 
     /**
+     * @var CustomerCreditCardCollectionFactory
+     */
+    private $customerCreditCardCollectionFactory;
+
+    /**
      * @param Context      $context
      * @param Config       $configHelper
      * @param MagentoQuote $magentoQuote
+     * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      * @param array        $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
         MagentoQuote $magentoQuote,
+        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         array $data = []
     ) {
         parent::__construct($context, $data);
 
         $this->configHelper = $configHelper;
         $this->_quote = $magentoQuote->getQuote();
+        $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
     }
 
     /**
@@ -119,5 +128,20 @@ class Form extends PaymentForm
         ];
 
         return json_encode($result);
+    }
+
+    /**
+     * @return array|bool
+     */
+    public function getCustomerCreditCardInfo(){
+        /** @var \Magento\Quote\Model\Quote\Address $billingAddress */
+        $billingAddress = $this->getQuoteData()->getBillingAddress();
+        if($customerId = $billingAddress->getCustomerId()){
+            /** @var \Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection $customerCreditCardCollection */
+            $customerCreditCardCollection = $this->customerCreditCardCollectionFactory->create();
+            return $customerCreditCardCollection->getCreditCardInfosByCustomerId($customerId);
+        }
+
+        return false;
     }
 }

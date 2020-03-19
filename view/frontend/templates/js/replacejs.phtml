@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -218,6 +218,41 @@ ob_start();
     }());
     ////////////////////////////////////////////////////////////////////////
 
+    // barrier is externally-resolved promise
+    var boltBarrier = function() {
+        var resolveHolder;
+        var promise = new Promise(function(resolve){
+            resolveHolder = resolve;
+        });
+        return { promise: promise, resolve: function(t){resolveHolder(t)}};
+    };
+
+    ////////////////////////////////////////////////////////////////////////
+    // Wait for an object to be defined and
+    // execute a callback when it becomes available
+    ////////////////////////////////////////////////////////////////////////
+    window.whenDefined = function(obj, property, callback) {
+        if (obj[property]) {
+            callback();
+        } else {
+            var prop = '_'+property;
+            Object.defineProperty(obj, property, {
+                configurable: true,
+                enumerable: true,
+                writeable: true,
+                get: function() {
+                    return this[prop];
+                },
+                // calls callback when variable is set
+                set: function(value) {
+                    this[prop] = value;
+                    callback();
+                }
+            });
+        }
+    };
+    ////////////////////////////////////////////////////////////////////////
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -238,7 +273,7 @@ ob_start();
 
         var showBoltErrorMessage = function(messsage, order_reference) {
             var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || window.boltConfig.defaultErrorMessage + " Order reference: " + order_reference;
+                errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -449,7 +484,7 @@ ob_start();
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
-        var cart = {orderToken:''};
+        var cart = {};
 
         var hints = {prefill:{}};
 
@@ -527,19 +562,23 @@ ob_start();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showBoltErrorMessage('', data.reference);
-                            // pretend order creation was success...
-                            // we need to call this; otherwise bolt modal show infinte spinner.
-                            callback();
+                            showError();
                         }
                         return;
                     }
                     processSuccess(data);
                 };
+                var showError = function() {
+                    showBoltErrorMessage('', transaction.reference);
+                    // pretend order creation was success...
+                    // we need to call this; otherwise bolt modal show infinte spinner.
+                    callback();
+                };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
                 save_request = $.post(settings.save_order_url, parameters)
-                                .done(onSuccess);
+                                .done(onSuccess)
+                                .fail(showError);
             },
 
             check: function () {
@@ -640,7 +679,14 @@ ob_start();
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
+        var allowAutoOpen = true;
         var createOrder = function () {
+            // Check if BoltCheckout is defined (connect.js executed).
+            // If not, postpone processing until it is
+            if (!window.BoltCheckout) {
+                whenDefined(window, 'BoltCheckout', createOrder);
+                return;
+            }
 
             // skip if there is already an ongoing request
             if (createRequest) return;
@@ -694,7 +740,9 @@ ob_start();
             }
             params = params.join('&');
 
-            var BC = BoltCheckout.configure(new Promise(function (resolve, reject) {
+            var hintBarrier = boltBarrier();
+
+            cart = new Promise(function (resolve, reject) {
 
                 createRequest = true;
 
@@ -709,26 +757,25 @@ ob_start();
                         // Stop if Bolt checkout is restricted
                         if (boltRestricted) {
                             if (popUpOpen) reject(new Error(data.message));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
                         if (data.status !== 'success') {
                             reject(new Error(data.message || 'Network request failed'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
-                        //////////////////////////
-                        // set cart and hints data
-                        //////////////////////////
-                        cart = data.cart;
-
-                        if (!cart) {
+                        if (!data.cart) {
                             reject(new Error('The cart info is missing.'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
-                        // the cart is empty, exit gracefully without an error
-                        if (!cart.orderToken) {
+                        if (!data.cart.orderToken) {
+                            reject(new Error('The cart is empty.'));
+                            hintBarrier.resolve(hints);
                             return;
                         }
 
@@ -738,16 +785,14 @@ ob_start();
                         hints.prefill = prefill;
                         //////////////////////////
 
-                        // Ensure bolt checkout is configured with the hints updated from the response
-                        // TODO: Pass hints as a promise and load separately from cart
-                        BoltCheckout.configure(cart, hints, callbacks);
-                        resolve(cart);
+                        resolve(data.cart);
+                        hintBarrier.resolve(hints);
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
-                        if (initiateCheckout) {
+                        if (initiateCheckout && allowAutoOpen) {
                             BC.open();
-                            initiateCheckout = false;
+                            allowAutoOpen = false;
                         }
 
                         // prefetch Shipping and Tax for multi-step checkout
@@ -759,8 +804,9 @@ ob_start();
                     .always(function() {
                         createRequest = false;
                     })
+            });
 
-            }), hints, callbacks);
+            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
         };
         /////////////////////////////////////////////////////
 
@@ -846,6 +892,13 @@ ob_start();
                         // if no position is specified remove the selector element
                         if (!position) {
                             $(element).hide();
+                        }
+                        // if the replacement takes place after BoltCheckout.configure call
+                        // call it again to set up the button. Skip if BoltCheckout is not available,
+                        // ie. connect.js not loaded / executed yet,
+                        // the button will be processed after connect.js loads.
+                        if (window.BoltCheckout) {
+                            BoltCheckout.configure(cart, hints, callbacks);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -938,23 +991,17 @@ ob_start();
         ///////////////////////////////////////////////////////////
         var old_hints;
         var configureHints = function() {
-
-            // wait 3 seconds for the field(s) to be fully filled,
-            // do not react on every keypress
-            setTimeout(
-
-                function() {
-
-                    var new_hints = JSON.stringify(hints);
-
-                    if (old_hints !== new_hints) {
-
-                        BoltCheckout.configure(cart, hints, callbacks);
-                        old_hints = new_hints;
-                    }
-                },
-                3000
-            );
+            // Check if cart exists (orderToken received).
+            // Othervise, do not update hints until it becomes available.
+            if (!cart.orderToken) {
+                whenDefined(cart, 'orderToken', configureHints);
+                return;
+            }
+            var new_hints = JSON.stringify(hints);
+            if (old_hints !== new_hints) {
+                BoltCheckout.configure(cart, hints, callbacks);
+                old_hints = new_hints;
+            }
         };
         ///////////////////////////////////////////////////////////
 
@@ -1061,14 +1108,10 @@ ob_start();
         ////////////////////////////////////////////////////
         createOrder();
         ////////////////////////////////////////////////////
+        <?php echo $block->getAdditionalJavascript(); ?>
     });
-
-    <?php echo $block->getAdditionalJavascript(); ?>
 </script>
 <?php
 $js = ob_get_clean();
-
 echo $block->minifyJs($js);
-
 ?>
-

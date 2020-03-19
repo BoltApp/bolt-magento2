@@ -33,10 +33,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
  */
 class Js extends Template
 {
-    /**
-     * @var Config
-     */
-    protected $configHelper;
+    use BlockTrait;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -49,17 +46,14 @@ class Js extends Template
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
-    /** @var Decider */
-    private $featureSwitches;
-
     /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
      * @param Bugsnag         $bugsnag;
-     * @param array           $data
      * @param Decider         $featureSwitches
+     * @param array           $data
      */
     public function __construct(
         Context $context,
@@ -100,20 +94,6 @@ class Js extends Template
         $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/connect.js';
-    }
-
-    /**
-     * Get checkout key. Any of the defined publishable keys for use with track.js.
-     *
-     * @return  string
-     */
-    public function getCheckoutKey()
-    {
-        if($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION){
-            return $this->configHelper->getPublishableKeyPayment();
-        }
-
-        return $this->configHelper->getPublishableKeyCheckout();
     }
 
     /**
@@ -219,16 +199,6 @@ class Js extends Template
             'is_pre_auth'              => $this->getIsPreAuth(),
             'default_error_message'    => $this->getBoltPopupErrorMessage(),
         ]);
-    }
-
-    /**
-     * Get Bolt Payment module active state.
-     * @return bool
-     */
-    public function isEnabled()
-    {
-        $storeId = $this->getStoreId();
-        return $this->configHelper->isActive($storeId);
     }
 
     /**
@@ -347,94 +317,6 @@ class Js extends Template
     }
 
     /**
-     * Get blacklisted pages, stored in "pageFilters.blacklist" additional configuration
-     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
-     *
-     * @return array
-     */
-    protected function getPageBlacklist()
-    {
-        return $this->configHelper->getPageBlacklist();
-    }
-
-    /**
-     * Get whitelisted pages, the default, non cached, shopping cart and checkout pages,
-     * and the pages stored in "pageFilters.whitelist" additional configuration,
-     * as an array of "Full Action Name" identifiers, [<router_controller_action>]
-     *
-     * @return array
-     */
-    protected function getPageWhitelist()
-    {
-        $values =  $this->configHelper->getPageWhitelist();
-        return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
-    }
-
-    /**
-     * Check if Bolt checkout is restricted on the current loading page.
-     * Takes into account Minicart support and whitelisted / blacklisted pages configuration
-     * as well as the IP restriction.
-     * "Full Action Name", <router_controller_action>, is used to identify the page.
-     *
-     * @return bool
-     */
-    private function isPageRestricted()
-    {
-        $currentPage = $this->getRequest()->getFullActionName();
-
-        // Check if the page is blacklisted
-        if (in_array($currentPage, $this->getPageBlacklist())) {
-            return true;
-        }
-
-        // If IP whitelist is defined, the Bolt checkout functionality
-        // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
-        if (!$this->configHelper->getIPWhitelistArray()) {
-            return false;
-        }
-        return !in_array($currentPage, $this->getPageWhitelist());
-    }
-
-    /**
-     * Check if the client IP is restricted -
-     * there is an IP whitelist and the client IP is not on the list.
-     *
-     * @return bool
-     */
-    protected function isIPRestricted()
-    {
-        return $this->configHelper->isIPRestricted();
-    }
-
-    /**
-     * Return true if we need to disable bolt scripts and button
-     * Checks whether the module is active,
-     * the page is Bolt checkout restricted and if there is an IP restriction.
-     *
-     * @return bool
-     */
-    public function shouldDisableBoltCheckout()
-    {
-        if (!$this->featureSwitches->isBoltEnabled()) {
-            return true;
-        }
-        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
-    }
-
-    /**
-     * If we have multi-website, we need current quote store_id
-     *
-     * @return int
-     */
-    public function getStoreId()
-    {
-        /** @var Quote $quote */
-        $quote = $this->getQuoteFromCheckoutSession();
-
-        return  $quote && $quote->getStoreId() ? $quote->getStoreId() : null;
-    }
-
-    /**
      * @return Quote
      */
     protected function getQuoteFromCheckoutSession()
@@ -450,10 +332,6 @@ class Js extends Template
     public function getModuleVersion()
     {
         return $this->configHelper->getModuleVersion();
-    }
-
-    public function shouldTrackCheckoutFunnel() {
-        return $this->configHelper->shouldTrackCheckoutFunnel();
     }
 
     /**

@@ -54,4 +54,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!--Debug Endpoint-->
+    <route url="/V1/bolt/boltpay/debug" method="POST">
+        <service class="Bolt\Boltpay\Api\DebugInterface" method="debug"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>

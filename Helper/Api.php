@@ -88,6 +88,11 @@ class Api extends AbstractHelper
     const API_FETCH_TRANSACTION = 'merchant/transactions';
 
     /**
+     * Api authorize transaction
+     */
+    const API_AUTHORIZE_TRANSACTION = 'merchant/transactions/authorize';
+
+    /**
      * Path for sandbox mode
      */
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';

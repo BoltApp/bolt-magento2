@@ -91,8 +91,7 @@ trait ReceivedUrlTrait
                             'Bolt transaction: %1',
                             $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
                         )
-                    );
-                    $this->orderHelper->resetOrderState($order);
+                    )->save();
                 } else {
                     $this->bugsnag->notifyError(
                         "Pre-Auth redirect wrong order state",
@@ -192,7 +191,7 @@ trait ReceivedUrlTrait
      */
     private function getOrderByIncrementId($incrementId)
     {
-        $order = $this->cartHelper->getOrderByIncrementId($incrementId);
+        $order = $this->orderHelper->getExistingOrder($incrementId);
 
         if (!$order) {
             throw new NoSuchEntityException(

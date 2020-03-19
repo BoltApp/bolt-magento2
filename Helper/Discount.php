@@ -769,16 +769,23 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Get Mageplaza GiftCard Codes From the Session
+     * Get Mageplaza GiftCard Codes
      *
      * @param $quote
      * @return array
+     * @throws LocalizedException
      */
-    public function getMageplazaGiftCardCodesFromSession()
+    public function getMageplazaGiftCardCodes($quote)
     {
         $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
+        $giftCardCodes = isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ? array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
 
-        return isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ? array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
+        $giftCardsQuote = $quote->getMpGiftCards();
+        if (!$giftCardCodes && $giftCardsQuote) {
+            $giftCardCodes = array_keys(json_decode($giftCardsQuote, true));
+        }
+
+        return $giftCardCodes;
     }
 
     /**

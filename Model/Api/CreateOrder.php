@@ -203,9 +203,9 @@ class CreateOrder implements CreateOrderInterface
                 );
             }
 
-            $quoteId = $this->getQuoteIdFromPayloadOrder($order);
+            $immutableQuoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
-            $immutableQuote = $this->loadQuoteData($quoteId);
+            $immutableQuote = $this->loadQuoteData($immutableQuoteId);
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
             $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
@@ -226,7 +226,7 @@ class CreateOrder implements CreateOrderInterface
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => 'Order create was successful',
-                'display_id' => $createdOrder->getIncrementId() . ' / ' . $quote->getId(),
+                'display_id' => $createdOrder->getIncrementId() . ' / ' . $immutableQuoteId,
                 'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
@@ -624,7 +624,7 @@ class CreateOrder implements CreateOrderInterface
             throw new BoltException(
                 __('Cart Tax mismatched.'),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_CART_HAS_EXPIRED
             );
         }
     }
@@ -689,7 +689,7 @@ class CreateOrder implements CreateOrderInterface
             throw new BoltException(
                 __('Total amount does not match.'),
                 null,
-                self::E_BOLT_GENERAL_ERROR
+                self::E_BOLT_CART_HAS_EXPIRED
             );
         }
     }

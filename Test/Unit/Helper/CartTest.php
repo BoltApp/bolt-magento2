@@ -33,7 +33,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\View\Element\BlockFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
@@ -71,6 +71,7 @@ class CartTest extends TestCase
     const STORE_ID = 1;
     const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
     const PRODUCT_SKU = 'TestProduct';
+    const SUPER_ATTRIBUTE = ["93" => "57", "136" => "383"];
 
     private $contextHelper;
     private $checkoutSession;
@@ -79,7 +80,7 @@ class CartTest extends TestCase
     private $customerSession;
     private $logHelper;
     private $bugsnag;
-    private $blockFactory;
+    private $imageHelperFactory;
     private $productRepository;
     private $appEmulation;
     private $dataObjectFactory;
@@ -126,18 +127,13 @@ class CartTest extends TestCase
             ->setMethods(['notifyError', 'notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->blockFactory = $this->getMockBuilder(BlockFactory::class)
-            ->setMethods(['createBlock', 'getImage', 'getImageUrl'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->blockFactory->method('createBlock')
-            ->with('Magento\Catalog\Block\Product\ListProduct')
-            ->willReturnSelf();
-        $this->blockFactory->method('getImage')
-            ->withAnyParameters()
-            ->willReturnSelf();
-        $this->blockFactory->method('getImageUrl')
-            ->willReturn('no-image');
+
+        $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
+        $imageHelper->method('init')->willReturnSelf();
+        $imageHelper->method('getUrl')->willReturn('no-image');
+
+        $this->imageHelperFactory = $this->createMock(ImageFactory::class);
+        $this->imageHelperFactory->method('create')->willReturn($imageHelper);
 
         $this->appEmulation = $this->getMockBuilder(Emulation::class)
             ->setMethods(['stopEnvironmentEmulation', 'startEnvironmentEmulation'])
@@ -225,7 +221,7 @@ class CartTest extends TestCase
             $this->logHelper,
             $this->bugsnag,
             $this->dataObjectFactory,
-            $this->blockFactory,
+            $this->imageHelperFactory,
             $this->appEmulation,
             $this->quoteFactory,
             $this->totalsCollector,
@@ -895,7 +891,7 @@ ORDER;
                 $this->logHelper,
                 $this->bugsnag,
                 $this->dataObjectFactory,
-                $this->blockFactory,
+                $this->imageHelperFactory,
                 $this->appEmulation,
                 $this->quoteFactory,
                 $this->totalsCollector,
@@ -963,7 +959,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1034,7 +1030,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1114,7 +1110,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1197,7 +1193,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1279,7 +1275,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1356,7 +1352,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1440,7 +1436,7 @@ ORDER;
             ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1525,7 +1521,7 @@ ORDER;
             ->method('getAheadworksStoreCredit');
 
         $this->discountHelper->expects($this->never())
-            ->method('getMageplazaGiftCardCodesFromSession');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
             ->method('getUnirgyGiftCertBalanceByCode');
@@ -1627,7 +1623,7 @@ ORDER;
         $mageplazaGiftCode = "12345";
 
         $this->discountHelper->expects($this->once())
-            ->method('getMageplazaGiftCardCodesFromSession')
+            ->method('getMageplazaGiftCardCodes')
             ->willReturn($mageplazaGiftCode);
 
         $this->discountHelper->expects($this->once())
@@ -1992,7 +1988,7 @@ ORDER;
 
     private function createCartByRequest_GetExpectedCartData() {
         return [
-            'order_reference' => NULL,
+            'order_reference' => SELF::QUOTE_ID,
             'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
             'currency' => 'USD',
             'items' => [
@@ -2021,7 +2017,7 @@ ORDER;
                         'reference' => SELF::PRODUCT_ID,
                         'name' => 'Product name',
                         'description' => NULL,
-                        'options' => NULL,
+                        'options' => json_encode(['storeId'=>SELF::STORE_ID]),
                         'total_amount' => SELF::PRODUCT_PRICE,
                         'unit_price' => SELF::PRODUCT_PRICE,
                         'tax_amount' => 0,
@@ -2057,7 +2053,10 @@ ORDER;
         }
     }
 
-    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true) {
+    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true, $options = null) {
+        if (is_null($options)) {
+            $options = ['qty'=>1];
+        }
         if ($isSuccessfulCase) {
             $expects = $this->once();
         } else {
@@ -2081,13 +2080,21 @@ ORDER;
             ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer'])
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer','setBoltParentQuoteId','setIsActive','setStoreId'])
             ->disableOriginalConstructor()
             ->getMock();
+        $quote->expects($this->once())
+            ->method('setBoltParentQuoteId')
+            ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('addProduct')
-            ->with($product,1);
-
+            ->with(
+                $product,
+                new \Magento\Framework\DataObject($options)
+            );
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setStoreId')
+            ->with(self::STORE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('reserveOrderId');
         $quote->expects($this->onceOrAny($isSuccessfulCase))
@@ -2096,15 +2103,14 @@ ORDER;
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setBoltReservedOrderId')
             ->with(self::ORDER_ID);
-
+        $quote->expects($this->onceOrAny($isSuccessfulCase))
+            ->method('setIsActive')
+            ->with(false);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('collectTotals')
             ->willReturnSelf();
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('save');
-        $quote->expects($this->onceOrAny($isSuccessfulCase))
-            ->method('getId')
-            ->willReturn(SELF::QUOTE_ID);
 
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
             ->setMethods(['create','load'])
@@ -2130,7 +2136,7 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_GuestUser() {
+    public function createCartByRequest_GuestUser_SimpleProduct() {
         $request = $this->createCartByRequest_GetBaseRequest();
 
         $quote = $this->createCartByRequest_CreateQuoteMock();
@@ -2142,10 +2148,47 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
+
+    /**
+     * @test
+     */
+    public function createCartByRequest_GuestUser_ConfigurableProduct() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $request['items'][0]['options'] = json_encode([
+            "product" => SELF::PRODUCT_ID,
+            "selected_configurable_option" => "",
+            "item" => SELF::PRODUCT_ID,
+            "related_product" => "",
+            "form_key" => "8xaF8eKXVaiRVM53",
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => "1",
+            'storeId' => SELF::STORE_ID], JSON_FORCE_OBJECT);
+
+        $options = [
+            "product" => SELF::PRODUCT_ID,
+            "selected_configurable_option" => "",
+            "related_product" => "",
+            "item" => SELF::PRODUCT_ID,
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => 1
+        ];
+
+        $quote = $this->createCartByRequest_CreateQuoteMock(true, $options);
+
+        $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects($this->once())
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
+
+        $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
+
 
     private function createCartByRequest_TuneMocksForSignature($expected_payload) {
         $this->hookHelper->method('verifySignature')
@@ -2186,7 +2229,6 @@ ORDER;
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
-        $expectedCartData['order_reference'] = SELF::QUOTE_ID;
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
