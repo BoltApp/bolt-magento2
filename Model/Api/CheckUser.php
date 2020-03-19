@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Model\Api\Data\AccountInfo;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Exception;
 use Magento\Framework\Webapi\Rest\Request;
@@ -28,9 +29,15 @@ use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Api\AccountManagementInterface;
 use Bolt\Boltpay\Api\CheckUserInterface;
+use Bolt\Boltpay\Model\Api\Data\AccountInfoFactory;
 
 class CheckUser implements CheckUserInterface
 {
+    /**
+     * @var AccountInfoFactory
+     */
+    private $accountInfoFactory;
+
     /**
      * @var Request
      */
@@ -75,6 +82,7 @@ class CheckUser implements CheckUserInterface
     private $accountManagement;
 
     /**
+     * @param AccountInfoFactory $accountInfoFactory
      * @param Request $request
      * @param Response $response
      * @param HookHelper $hookHelper
@@ -86,6 +94,7 @@ class CheckUser implements CheckUserInterface
      * @param AccountManagementInterface $accountManagement
      */
     public function __construct(
+        AccountInfoFactory $accountInfoFactory,
         Request $request,
         Response $response,
         HookHelper $hookHelper,
@@ -96,7 +105,7 @@ class CheckUser implements CheckUserInterface
         AccountManagementInterface $accountManagement
     )
     {
-        $this->request = $request;
+        $this->accountInfoFactory = $accountInfoFactory;
         $this->request = $request;
         $this->response = $response;
         $this->hookHelper = $hookHelper;
@@ -118,12 +127,14 @@ class CheckUser implements CheckUserInterface
     public function checkEmail()
     {
         $startTime = $this->metricsClient->getCurrentTime();
-        /*$this->hookHelper
-              ->preProcessWebhook($this->storeManager->getStore()->getId());*/
+        $this->hookHelper
+              ->preProcessWebhook($this->storeManager->getStore()->getId());
         try {
             $request = json_decode($this->request->getContent(), true);
             $email = $request['email'];
-            $result = $this->checkIfUserExistsByEmail($email);
+            $result = $this->accountInfoFactory->create();
+            $result->setEmail($email);
+            $result->setAccountExist($this->checkIfUserExistsByEmail($email));
         } catch (\Exception $e) {
             $encodedError = $this->errorResponse->prepareErrorMessage(
                 BoltErrorResponse::ERR_SERVICE, $e->getMessage()
@@ -146,8 +157,7 @@ class CheckUser implements CheckUserInterface
             ->processMetric("check_user.webhook.success", 1,
                 "check_user.webhook.latency", $startTime
             );
-        $this->response->setBody(json_encode(array("result" => $result)));
-        $this->response->sendResponse();
+        return $result;
     }
 
     private function checkIfUserExistsByEmail($email)

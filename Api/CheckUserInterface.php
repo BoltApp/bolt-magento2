@@ -24,7 +24,7 @@ namespace Bolt\Boltpay\Api;
 interface CheckUserInterface {
     /**
      * @api
-     * @return void
+     * @return \Bolt\Boltpay\Model\Api\Data\AccountInfo
      */
     public function checkEmail();
 }
