@@ -405,6 +405,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingMethodsWithoutTax($cart, $shipping_address)
     {
+        // echo statement initially
         $startTime = $this->metricsClient->getCurrentTime();
         try {
             // get immutable quote id stored with transaction

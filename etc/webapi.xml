@@ -34,7 +34,7 @@
         </resources>
     </route>
     <!-- Shipping hook -->
-    <route url="/V1/bolt/boltpay/shipping" method="POST">
+    <route url="/V1/bolt/boltpay/shippingoptions" method="POST">
         <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getShippingMethodsWithoutTax"/>
         <resources>
             <resource ref="anonymous" />
