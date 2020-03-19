@@ -103,40 +103,59 @@ class JsProductPage extends Js {
     }
     
     /**
-	 * Get the setting value of Order Minimum Amount
-	 *
-	 */
-	public function getOrderMinimumAmountValue() {
-		$storeId                 = $this->getStoreId();
-		$orderMinimumAmountValue = $this->getScopeConfig()->getValue(
-			'sales/minimum_order/amount',
-			\Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-			$storeId
-		);
+     * Get Order Minimum Amount is enabled
+     *
+     */
+    public function isEnableOrderMinimumAmount()
+    {
+        $storeId                    = $this->getStoreId();
+        $isEnableOrderMinimumAmount = $this->getScopeConfig()->isSetFlag(
+            'sales/minimum_order/active',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
 
-		return $orderMinimumAmountValue;
-	}
+        return $isEnableOrderMinimumAmount;
+    }
 
-	/**
-	 * @return \Magento\Framework\App\Config\ScopeConfigInterface
-	 */
-	private function getScopeConfig() {
-		return $this->_scopeConfig;
-	}
+    /**
+     * Get the setting value of Order Minimum Amount
+     *
+     */
+    public function getOrderMinimumAmountValue()
+    {
+        $storeId                 = $this->getStoreId();
+        $orderMinimumAmountValue = $this->getScopeConfig()->getValue(
+            'sales/minimum_order/amount',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
 
-	/**
-	 * Get the Order Minimum Amount
-	 *
-	 * @return boolean|float return minimum amount if `Order Minimum Amount` is enabled, otherwise false.
-	 */
-	public function getOrderMinimumAmount() {
-		$isEnableOrderMinimumAmount = $this->isEnableOrderMinimumAmount();
-		if ( ! $isEnableOrderMinimumAmount ) {
-			return false;
-		}
+        return $orderMinimumAmountValue;
+    }
 
-		$minAmount = $this->getOrderMinimumAmountValue();
+    /**
+     * @return \Magento\Framework\App\Config\ScopeConfigInterface
+     */
+    private function getScopeConfig()
+    {
+        return $this->_scopeConfig;
+    }
 
-		return $minAmount;
-	}
+    /**
+     * Get the Order Minimum Amount
+     *
+     * @return boolean|float return minimum amount if `Order Minimum Amount` is enabled, otherwise false.
+     */
+    public function getOrderMinimumAmount()
+    {
+        $isEnableOrderMinimumAmount = $this->isEnableOrderMinimumAmount();
+        if ( ! $isEnableOrderMinimumAmount) {
+            return false;
+        }
+
+        $minAmount = $this->getOrderMinimumAmountValue();
+
+        return $minAmount;
+    }
 }
