@@ -24,7 +24,6 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\Api\Data\AccountInfo;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Exception;
-use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Api\AccountManagementInterface;
@@ -37,11 +36,6 @@ class CheckUser implements CheckUserInterface
      * @var AccountInfoFactory
      */
     private $accountInfoFactory;
-
-    /**
-     * @var Request
-     */
-    private $request;
 
     /**
      * @var Response
@@ -63,11 +57,6 @@ class CheckUser implements CheckUserInterface
      */
     private $metricsClient;
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
     /* @var StoreManagerInterface */
     protected $storeManager;
 
@@ -83,19 +72,16 @@ class CheckUser implements CheckUserInterface
 
     /**
      * @param AccountInfoFactory $accountInfoFactory
-     * @param Request $request
      * @param Response $response
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
-     * @param Config $configHelper
      * @param BoltErrorResponse $errorResponse
      * @param AccountManagementInterface $accountManagement
      */
     public function __construct(
         AccountInfoFactory $accountInfoFactory,
-        Request $request,
         Response $response,
         HookHelper $hookHelper,
         StoreManagerInterface $storeManager,
@@ -106,7 +92,6 @@ class CheckUser implements CheckUserInterface
     )
     {
         $this->accountInfoFactory = $accountInfoFactory;
-        $this->request = $request;
         $this->response = $response;
         $this->hookHelper = $hookHelper;
         $this->logHelper = $logHelper;
@@ -120,18 +105,18 @@ class CheckUser implements CheckUserInterface
      * This webhook receive email and return true if M2 user with this email exists
      * and false otherwise
      *
+     * @param mixed $email
+     *
      * @return void
      * @throws \Exception
      * @api
      */
-    public function checkEmail()
+    public function checkEmail($email = null)
     {
         $startTime = $this->metricsClient->getCurrentTime();
         $this->hookHelper
               ->preProcessWebhook($this->storeManager->getStore()->getId());
         try {
-            $request = json_decode($this->request->getContent(), true);
-            $email = $request['email'];
             $result = $this->accountInfoFactory->create();
             $result->setEmail($email);
             $result->setAccountExist($this->checkIfUserExistsByEmail($email));

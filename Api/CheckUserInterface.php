@@ -21,10 +21,13 @@ namespace Bolt\Boltpay\Api;
  * Check User Interface
  * @api
  */
-interface CheckUserInterface {
+interface CheckUserInterface
+{
     /**
      * @api
+     *
+     * @param mixed $email
      * @return \Bolt\Boltpay\Model\Api\Data\AccountInfo
      */
-    public function checkEmail();
+    public function checkEmail($email = null);
 }
