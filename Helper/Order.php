@@ -59,6 +59,7 @@ use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 /**
  * Class Order
@@ -215,6 +216,9 @@ class Order extends AbstractHelper
      * @var CustomerCreditCardCollectionFactory
      */
     protected $customerCreditCardCollectionFactory;
+    
+    /** @var CheckoutSession */
+    private $checkoutSession;
 
     /**
      * @param Context $context
@@ -238,6 +242,7 @@ class Order extends AbstractHelper
      * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
      * @param WebhookLogFactory           $webhookLogFactory
      * @param Decider                     $featureSwitches
+     * @param CheckoutSession $checkoutSession
      *
      * @codeCoverageIgnore
      */
@@ -268,6 +273,7 @@ class Order extends AbstractHelper
         CheckboxesHandler $checkboxesHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+        CheckoutSession $checkoutSession
     )
     {
         parent::__construct($context);
@@ -296,6 +302,7 @@ class Order extends AbstractHelper
         $this->checkboxesHandler = $checkboxesHandler;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
