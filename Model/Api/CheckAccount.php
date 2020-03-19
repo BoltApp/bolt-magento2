@@ -131,8 +131,8 @@ class CheckAccount implements CheckAccountInterface
             $this->logHelper->addInfoLog($encodedError);
             $this->metricsClient
                 ->processMetric(
-                    "check_user.webhook.failure", 1,
-                    "check_user.webhook.latency", $startTime
+                    "check_account.webhook.failure", 1,
+                    "check_account.webhook.latency", $startTime
                 );
 
             $this->response->setHttpResponseCode(Exception::HTTP_INTERNAL_ERROR);
@@ -141,8 +141,8 @@ class CheckAccount implements CheckAccountInterface
             return;
         }
         $this->metricsClient
-            ->processMetric("check_user.webhook.success", 1,
-                "check_user.webhook.latency", $startTime
+            ->processMetric("check_account.webhook.success", 1,
+                "check_account.webhook.latency", $startTime
             );
         return $result;
     }
