@@ -1204,6 +1204,15 @@ class Cart extends AbstractHelper
         $quote = $immutableQuote ?
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
+        
+        // Customization for StorePickup
+        $original_quote = $this->checkoutSession->getQuote();
+        $original_shippingMethod = $original_quote->getShippingAddress()->getShippingMethod();
+        if(!empty($original_shippingMethod) && strpos($original_shippingMethod,'storepickup_storepickup') !== false){
+            $store_id = $original_quote->getStoreId();
+            $storepickup_session = array('store_id' => $store_id);
+            $this->checkoutSession->setData('storepickup_session',$storepickup_session);
+        }
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
@@ -1329,12 +1338,8 @@ class Cart extends AbstractHelper
 
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $quote) {
-                    $shippingMethod = $quote->getShippingAddress()->getShippingMethod();
-                    if(strpos($shippingMethod,'storepickup_storepickup') !== false){
-                        $store_id = $quote->getStoreId();
-                        $storepickup_session = array('store_id' => $store_id);
-                        $this->checkoutSession->setData('storepickup_session',$storepickup_session);
-                        $address->setShippingMethod($shippingMethod)->save();
+                    if(!empty($original_shippingMethod) && strpos($original_shippingMethod,'storepickup_storepickup') !== false){
+                        $address->setShippingMethod($original_shippingMethod)->save();
                     }
                     else{
                         $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
