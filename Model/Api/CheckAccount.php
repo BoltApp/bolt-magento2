@@ -27,10 +27,10 @@ use Magento\Framework\Webapi\Exception;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Api\AccountManagementInterface;
-use Bolt\Boltpay\Api\CheckUserInterface;
+use Bolt\Boltpay\Api\CheckAccountInterface;
 use Bolt\Boltpay\Model\Api\Data\AccountInfoFactory;
 
-class CheckUser implements CheckUserInterface
+class CheckAccount implements CheckAccountInterface
 {
     /**
      * @var AccountInfoFactory
@@ -57,8 +57,10 @@ class CheckUser implements CheckUserInterface
      */
     private $metricsClient;
 
-    /* @var StoreManagerInterface */
-    protected $storeManager;
+    /*
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
     /**
      * @var BoltErrorResponse
@@ -114,9 +116,9 @@ class CheckUser implements CheckUserInterface
     public function checkEmail($email = null)
     {
         $startTime = $this->metricsClient->getCurrentTime();
-        $this->hookHelper
-              ->preProcessWebhook($this->storeManager->getStore()->getId());
         try {
+            $this->hookHelper
+                ->preProcessWebhook($this->storeManager->getStore()->getId());
             $result = $this->accountInfoFactory->create();
             $result->setEmail($email);
             $result->setAccountExist($this->checkIfUserExistsByEmail($email));
@@ -125,7 +127,7 @@ class CheckUser implements CheckUserInterface
                 BoltErrorResponse::ERR_SERVICE, $e->getMessage()
             );
             $this->logHelper
-                ->addInfoLog('CheckUser: failed checking email');
+                ->addInfoLog('CheckAccount: failed checking email');
             $this->logHelper->addInfoLog($encodedError);
             $this->metricsClient
                 ->processMetric(

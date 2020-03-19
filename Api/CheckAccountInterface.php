@@ -21,7 +21,7 @@ namespace Bolt\Boltpay\Api;
  * Check User Interface
  * @api
  */
-interface CheckUserInterface
+interface CheckAccountInterface
 {
     /**
      * @api

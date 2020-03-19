@@ -62,8 +62,8 @@
         </resources>
     </route>
     <!--Check if user exists by email Endpoint-->
-    <route url="/V1/bolt/boltpay/checkuser" method="POST">
-        <service class="Bolt\Boltpay\Api\CheckUserInterface" method="checkEmail"/>
+    <route url="/V1/bolt/boltpay/checkaccount" method="POST">
+        <service class="Bolt\Boltpay\Api\CheckAccountInterface" method="checkEmail"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
