@@ -39,6 +39,17 @@ class Hook extends AbstractHelper
 
     const HMAC_HEADER = 'X-Bolt-Hmac-Sha256';
 
+    // hook types
+    const HT_PENDING = 'pending';
+    const HT_PAYMENT = 'payment';
+    const HT_VOID = 'void';
+    const HT_CREDIT = 'credit';
+    const HT_CAPTURE = 'capture';
+    const HT_AUTH = 'auth';
+    const HT_REJECTED_REVERSIBLE = 'rejected_reversible';
+    const HT_REJECTED_IRREVERSIBLE = 'rejected_irreversible';
+    const HT_FAILED_PAYMENT = 'failed_payment';
+
     /**
      * @var ConfigHelper
      */
@@ -144,20 +155,33 @@ class Hook extends AbstractHelper
     }
 
     /**
-     * Verifying Hook Request using pre-exchanged signing secret key.
+     * Verifying Signature using pre-exchanged signing secret key.
      *
      * @param string $payload
      * @param string $hmac_header
      *
      * @return bool
      */
-    public function verifyWebhookSecret($payload, $hmac_header)
+    public function verifySignature($payload, $hmac_header)
+    {
+        return $this->computeSignature($payload) == $hmac_header;
+    }
+
+    /**
+     * Compute signature using payment secret key
+     *
+     * @param $payload a string for which a signature is required
+     *
+     * @return string
+     */
+    public function computeSignature($payload)
     {
         $signing_secret = $this->configHelper->getSigningSecret($this->getStoreId());
-        $computed_hmac  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
+        $computed_signature  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
 
-        return $computed_hmac == $hmac_header;
+        return $computed_signature;
     }
+
 
     /**
      * Verifying Hook Request. If signing secret is not defined or fails fallback to api call.
@@ -170,7 +194,7 @@ class Hook extends AbstractHelper
         $payload     = $this->request->getContent();
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
-        if (!$this->verifyWebhookSecret($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
+        if (!$this->verifySignature($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
             throw new WebapiException(__('Precondition Failed'), 6001, 412);
         }
     }

@@ -21,6 +21,8 @@
  * @var $block \Bolt\Boltpay\Block\Js
  */
 if ($block->shouldDisableBoltCheckout()) return;
+//check if we need Bolt on this page
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) return;
 
 $trackJsUrl   = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
@@ -31,6 +33,7 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-track"
     type="text/javascript"
     src="<?php echo $trackJsUrl; ?>"
+    data-shopping-cart-id="magento2"
     async
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>
@@ -38,6 +41,7 @@ $checkoutKey  = $block->getCheckoutKey();
     id="bolt-connect"
     type="text/javascript"
     src="<?php echo $connectJsUrl; ?>"
+    data-shopping-cart-id="magento2"
     async
     data-publishable-key="<?php echo $checkoutKey; ?>">
 </script>

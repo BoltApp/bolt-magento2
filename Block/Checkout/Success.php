@@ -16,6 +16,7 @@
  */
 namespace Bolt\Boltpay\Block\Checkout;
 
+use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -35,8 +36,13 @@ class Success extends Template
      * @var ProductMetadataInterface
      */
     private $productMetadata;
+
+    /**
+     * @var Config
+     */
+    private $configHelper;
     
-    // Customization
+    /* Customization Start */
     /**
      * @var CheckoutSession
      */
@@ -51,12 +57,13 @@ class Success extends Template
      * @var StorepickupStoreCollection
      */
     private $storepickupStoreCollection;
-    // Customization
+    /* Customization End */
 
     /**
      * Success constructor.
      *
      * @param ProductMetadataInterface   $productMetadata
+     * @param Config                     $configHelper
      * @param CheckoutSession            $checkoutSession
      * @param OrderFactory               $orderFactory
      * @param StorepickupStoreCollection $storepickupStoreCollection
@@ -65,6 +72,7 @@ class Success extends Template
      */
     public function __construct(
         ProductMetadataInterface $productMetadata,
+        Config $configHelper,
         CheckoutSession $checkoutSession,
         OrderFactory $orderFactory,
         StorepickupStoreCollection $storepickupStoreCollection,
@@ -74,6 +82,7 @@ class Success extends Template
         parent::__construct($context, $data);
 
         $this->productMetadata = $productMetadata;
+        $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
         $this->orderFactory = $orderFactory;
         $this->storepickupStoreCollection = $storepickupStoreCollection;
@@ -85,7 +94,15 @@ class Success extends Template
     public function isAllowInvalidateQuote()
     {
         // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
-        return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'));
+        return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'))
+            || (bool) (version_compare($this->getMagentoVersion(), '2.3.4', '>='));
+    }
+
+    /**
+     * @return bool
+     */
+    public function shouldTrackCheckoutFunnel() {
+        return $this->configHelper->shouldTrackCheckoutFunnel();
     }
 
     /**
@@ -98,19 +115,17 @@ class Success extends Template
         return $this->productMetadata->getVersion();
     }
     
-    // Customization
+    /* Customization Start */
     public function getOrder()
     {
         return  $this->orderFactory->create()->loadByIncrementId($this->checkoutSession->getLastRealOrderId());
     }
     
-    // Customization
     public function getStorepickupSession()
     {
         return $this->checkoutSession->getData('storepickup_session');
     }
     
-    // Customization
     public function getStorepickupDetails()
     {
         $order = $this->getOrder();
@@ -127,9 +142,9 @@ class Success extends Template
         return '';
     }
     
-    // Customization
     public function getStoreCollection()
     {
         return $this->storepickupStoreCollection->create();
     }
+    /* Customization End */
 }

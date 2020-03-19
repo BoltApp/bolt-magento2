@@ -50,7 +50,7 @@ interface OrderManagementInterface
      */
     public function manage(
         $id = null,
-        $reference,
+        $reference = null,
         $order = null,
         $type = null,
         $amount = null,

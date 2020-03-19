@@ -122,8 +122,7 @@ class Decider extends AbstractHelper {
      * @return bool
      */
     public function isSwitchEnabled($switchName) {
-        $defaultDef = isset(Definitions::DEFAULT_SWITCH_VALUES[$switchName]) ?
-            Definitions::DEFAULT_SWITCH_VALUES[$switchName] : null;
+        $defaultDef = @Definitions::DEFAULT_SWITCH_VALUES[$switchName];
         if (!$defaultDef) {
             throw new LocalizedException(__("Unknown feature switch"));
         }
@@ -158,5 +157,13 @@ class Decider extends AbstractHelper {
 
     public function isSampleSwitchEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+    }
+
+    public function isBoltEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
+    }
+
+    public function isLogMissingQuoteFailedHooksEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
     }
 }

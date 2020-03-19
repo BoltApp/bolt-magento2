@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -27,6 +28,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class OrderManagement
@@ -77,6 +79,10 @@ class OrderManagement implements OrderManagementInterface
     private $configHelper;
 
     /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+    /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
      * @param LogHelper $logHelper
@@ -94,7 +100,8 @@ class OrderManagement implements OrderManagementInterface
         Bugsnag $bugsnag,
         MetricsClient $metricsClient,
         Response $response,
-        ConfigHelper $configHelper
+        ConfigHelper $configHelper,
+        CartHelper $cartHelper
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -104,6 +111,7 @@ class OrderManagement implements OrderManagementInterface
         $this->metricsClient = $metricsClient;
         $this->response     = $response;
         $this->configHelper = $configHelper;
+        $this->cartHelper   = $cartHelper;
     }
 
     /**
@@ -127,7 +135,7 @@ class OrderManagement implements OrderManagementInterface
      */
     public function manage(
         $id = null,
-        $reference,
+        $reference = null,
         $order = null, // <parent quote ID>
         $type = null,
         $amount = null,
@@ -152,40 +160,24 @@ class OrderManagement implements OrderManagementInterface
 
             $this->hookHelper->preProcessWebhook($storeId);
 
-            if (empty($reference)) {
-                throw new LocalizedException(
-                    __('Missing required parameters.')
-                );
+            if ($type === 'pending') {
+                $this->orderHelper->saveCustomerCreditCard($reference,$storeId);
             }
-            if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
-                $this->response->setHttpResponseCode(200);
-                $this->response->setBody(json_encode([
-                    'status' => 'success',
-                    'message' => 'Order was canceled due to declined payment: ' . $display_id,
-                ]));
-            } elseif ($type === 'failed_payment') {
-                $this->orderHelper->deleteOrderByIncrementId($display_id);
 
-                $this->response->setHttpResponseCode(200);
-                $this->response->setBody(json_encode([
-                    'status' => 'success',
-                    'message' => 'Order was deleted: ' . $display_id,
-                ]));
+            if ($type == 'cart.create') {
+                $this->handleCartCreateApiCall();
             } else {
-                $this->orderHelper->saveUpdateOrder(
-                    $reference,
-                    $storeId,
-                    $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
-                    $type
-                );
-
-                $this->response->setHttpResponseCode(200);
-                $this->response->setBody(json_encode([
-                    'status' => 'success',
-                    'message' => 'Order creation / update was successful',
-                ]));
+                $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+        } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
+            $this->response->setHttpResponseCode(422);
+            $this->response->setBody(json_encode([
+                'status' => 'failure',
+                'error' => ['code' => $e->getCode(), 'message' => $e->getMessage()],
+            ]));
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("webhooks.failure", 1, "webhooks.latency", $startTime);
@@ -207,5 +199,81 @@ class OrderManagement implements OrderManagementInterface
         } finally {
             $this->response->sendResponse();
         }
+    }
+
+    /**
+     * Save or Update magento Order by data from hook
+     *
+     * @param $reference
+     * @param $type
+     * @param $display_id
+     * @param $storeId
+     * @throws \Bolt\Boltpay\Exception\BoltException
+     */
+    private function saveUpdateOrder($reference, $type, $display_id, $storeId)
+    {
+        if (empty($reference)) {
+            throw new LocalizedException(
+                __('Missing required parameters.')
+            );
+        }
+        if ($type === 'failed_payment' || $type === 'failed') {
+            $this->orderHelper->deleteOrderByIncrementId($display_id);
+
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'message' => 'Order was deleted: ' . $display_id,
+            ]));
+            return;
+        }
+
+        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
+            $this->response->setHttpResponseCode(200);
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'message' => 'Order was canceled due to declined payment: ' . $display_id,
+            ]));
+            return;
+        }
+
+        $this->orderHelper->saveUpdateOrder(
+            $reference,
+            $storeId,
+            $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
+            $type,
+            $this->request->getBodyParams()
+        );
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'message' => 'Order creation / update was successful',
+        ]));
+    }
+
+    /**
+     * Handle cart.create API call
+     * - generate quote by item data
+     * - create bolt order
+     * - return order in Bolt format
+     *
+     * @throws \Exception
+     */
+    private function handleCartCreateApiCall()
+    {
+        $request = $this->request->getBodyParams();
+
+        if (!isset($request['items'][0])) {
+            throw new LocalizedException(
+                __('Missing required parameters.')
+            );
+        }
+
+        $cart = $this->cartHelper->createCartByRequest($request);
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'cart' => $cart,
+        ]));
     }
 }

@@ -21,10 +21,10 @@ use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Quote\Model\Quote\Validator\MinimumOrderAmount\ValidationMessage as MoaValidationMessage;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -36,7 +36,7 @@ class Js extends Template
     /**
      * @var Config
      */
-    private $configHelper;
+    protected $configHelper;
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -48,20 +48,18 @@ class Js extends Template
 
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
-    
-    /**
-     * @var MoaValidationMessage
-     */
-    private $moaValidationMessage;
+
+    /** @var Decider */
+    private $featureSwitches;
 
     /**
      * @param Context         $context
      * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper      $cartHelper
-     * @param Bugsnag         $bugsnag
-     * @param MoaValidationMessage $moaValidationMessage
+     * @param Bugsnag         $bugsnag;
      * @param array           $data
+     * @param Decider         $featureSwitches
      */
     public function __construct(
         Context $context,
@@ -69,7 +67,7 @@ class Js extends Template
         CheckoutSession $checkoutSession,
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
-        MoaValidationMessage $moaValidationMessage,
+        Decider $featureSwitches,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -77,7 +75,7 @@ class Js extends Template
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
-        $this->moaValidationMessage = $moaValidationMessage;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -208,6 +206,7 @@ class Js extends Template
             'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
             'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
             'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'get_hints_url'            => $this->getUrl(Config::GET_HINTS_ACTION),
             'selectors'                => $this->getReplaceSelectors(),
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
@@ -218,7 +217,8 @@ class Js extends Template
             'initiate_checkout'        => $this->getInitiateCheckout(),
             'toggle_checkout'          => $this->getToggleCheckout(),
             'is_pre_auth'              => $this->getIsPreAuth(),
-            'minimum_amount_rule_message'  => $this->getMinimumAmountRuleMessage(),
+            'default_error_message'    => $this->getBoltPopupErrorMessage(),
+            'minimum_amount_rule_message' => $this->cartHelper->getMinimumAmountRuleMessage(),
         ]);
     }
 
@@ -353,7 +353,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageBlacklist()
+    protected function getPageBlacklist()
     {
         return $this->configHelper->getPageBlacklist();
     }
@@ -365,7 +365,7 @@ class Js extends Template
      *
      * @return array
      */
-    private function getPageWhitelist()
+    protected function getPageWhitelist()
     {
         $values =  $this->configHelper->getPageWhitelist();
         return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
@@ -388,16 +388,12 @@ class Js extends Template
             return true;
         }
 
-        // If minicart is supported (allowing Bolt on every page)
-        // and no IP whitelist is defined there are no additional restrictions.
-        if ($this->configHelper->getMinicartSupport() && !$this->configHelper->getIPWhitelistArray()) {
-            return false;
-        }
-
-        // No minicart support or there is IP whitelist defined. Check if the page is whitelisted.
         // If IP whitelist is defined, the Bolt checkout functionality
         // must be limited to the non cached pages, shopping cart and checkout (internal or 3rd party).
-        return ! in_array($currentPage, $this->getPageWhitelist());
+        if (!$this->configHelper->getIPWhitelistArray()) {
+            return false;
+        }
+        return !in_array($currentPage, $this->getPageWhitelist());
     }
 
     /**
@@ -412,28 +408,28 @@ class Js extends Template
     }
 
     /**
-     * Determines if Bolt javascript should be loaded on the current page
-     * and Bolt checkout button displayed. Checks whether the module is active,
+     * Return true if we need to disable bolt scripts and button
+     * Checks whether the module is active,
      * the page is Bolt checkout restricted and if there is an IP restriction.
      *
      * @return bool
      */
     public function shouldDisableBoltCheckout()
     {
+        if (!$this->featureSwitches->isBoltEnabled()) {
+            return true;
+        }
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted();
     }
 
     /**
-     * If we have multi-website, we need current quote store_id
+     * If we have multi-website, we need current store_id
      *
      * @return int
      */
     public function getStoreId()
     {
-        /** @var Quote $quote */
-        $quote = $this->getQuoteFromCheckoutSession();
-
-        return  $quote && $quote->getStoreId() ? $quote->getStoreId() : null;
+        return $this->_storeManager->getStore()->getId();
     }
 
     /**
@@ -479,17 +475,30 @@ class Js extends Template
             return $js;
         }
     }
-    
-    /**
-     * Get MinimumOrderAmount message text.
-     *
-     * @return string
-     * @throws \Zend_Currency_Exception
-     */
-    private function getMinimumAmountRuleMessage()
-    {
-        $minimumAmountMessage = $this->moaValidationMessage->getMessage();
 
-        return $minimumAmountMessage->getText();
+    /**
+     * Return true if we are on cart page or checkout page
+     */
+    public function isOnPageFromWhiteList() {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return in_array($currentPage, $this->getPageWhitelist());
+    }
+
+    /**
+     * Return true if bolt on minicart is enabled
+     */
+    public function isMinicartEnabled() {
+        return $this->configHelper->getMinicartSupport();
+    }
+
+    /**
+     * Return true if we are on product page, and bolt on product page is enabled
+     */
+    public function isBoltProductPage() {
+        if (!$this->configHelper->getProductPageCheckoutFlag()) {
+            return false;
+        }
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage=="catalog_product_view";
     }
 }

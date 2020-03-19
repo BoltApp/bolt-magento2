@@ -34,6 +34,7 @@ use Magento\Sales\Model\Order;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 /**
  * Class OrderManagementTest
@@ -54,6 +55,7 @@ class OrderManagementTest extends TestCase
     const REQUEST_HEADER_TRACE_ID = 'aaaabbbbcccc';
     const TYPE = 'pending';
     const STATUS = 'pending';
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
 
     /**
      * @var MockObject|HookHelper
@@ -110,12 +112,17 @@ class OrderManagementTest extends TestCase
     private $requestContent;
 
     /**
+     * @var cartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
     {
         $this->initRequiredMocks();
-        $this->initCurrentMock();
+        $this->initCurrentMock([]);
 
         $this->requestContent = json_encode(
             [
@@ -139,12 +146,17 @@ class OrderManagementTest extends TestCase
         $this->quoteMock = $this->createMock(Quote::class);
 
         $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
-            ->with(self::ORDER_ID)->willReturn(self::STORE_ID);
+            ->will(self::returnValueMap([
+                [self::ORDER_ID,self::STORE_ID],
+                [null,null]
+            ]));
+
+        $this->cartHelper = $this->createMock(CartHelper::class);
     }
 
-    private function initCurrentMock()
+    private function initCurrentMock($methods)
     {
-        $this->currentMock = $this->getMockBuilder(OrderManagement::class)
+        $mockBuilder = $this->getMockBuilder(OrderManagement::class)
             ->setConstructorArgs([
                 $this->hookHelper,
                 $this->orderHelperMock,
@@ -153,15 +165,21 @@ class OrderManagementTest extends TestCase
                 $this->bugsnag,
                 $this->metricsClient,
                 $this->response,
-                $this->configHelper
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+                $this->configHelper,
+                $this->cartHelper,
+            ]);
+        if ($methods) {
+            $mockBuilder->setMethods($methods);
+        } else {
+            $mockBuilder->enableProxyingToOriginalMethods();
+        }
+        $this->currentMock = $mockBuilder->getMock();
     }
 
     /**
      * @test
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_common()
     {
@@ -192,6 +210,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_success()
     {
@@ -221,6 +240,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_fail()
     {
@@ -254,6 +274,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_rejectedIrreversible_exception()
     {
@@ -279,9 +300,11 @@ class OrderManagementTest extends TestCase
             ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => '6009',
-            'message' => 'Unprocessable Entity: ' . $exception->getMessage(),
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
         ]));
 
         $this->currentMock->manage(
@@ -300,6 +323,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_success()
     {
@@ -331,6 +355,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_failedPayment_exception()
     {
@@ -352,9 +377,11 @@ class OrderManagementTest extends TestCase
             ->with(self::DISPLAY_ID)->willThrowException($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => '6009',
-            'message' => 'Unprocessable Entity: ' . $exception->getMessage(),
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
@@ -375,6 +402,86 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function manage_failed_success()
+    {
+        $type = "failed";
+
+        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::DISPLAY_ID);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'message' => 'Order was deleted: ' . self::DISPLAY_ID,
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.success', 1, "webhooks.latency", self::anything());
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function manage_failed_exception()
+    {
+        $type = "failed";
+        $exception = new BoltException(
+            new Phrase(
+                'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                [
+                    self::ORDER_ID,
+                    Order::STATE_PROCESSING,
+                    self::QUOTE_ID
+                ]
+            ),
+            null,
+            CreateOrder::E_BOLT_GENERAL_ERROR
+        );
+
+        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::DISPLAY_ID)->willThrowException($exception);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'failure',
+            'error' => [
+                'code' => 2001001,
+                'message' => $exception->getMessage(),
+            ]
+        ]));
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_webApiException()
     {
@@ -405,6 +512,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_emptyReference()
     {
@@ -432,6 +540,7 @@ class OrderManagementTest extends TestCase
      * @test
      * @depends manage_common
      * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
     public function manage_pending()
     {
@@ -441,8 +550,14 @@ class OrderManagementTest extends TestCase
         $this->orderHelperMock->expects(self::never())->method('deleteOrderByIncrementId');
         $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
             ->willReturn(self::REQUEST_HEADER_TRACE_ID);
-        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
-            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type);
+        $this->request->expects(self::once())->method('getBodyParams')
+            ->willReturn(self::HOOK_PAYLOAD);
+        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')->with(
+            self::REFERENCE,
+            self::STORE_ID,
+            self::REQUEST_HEADER_TRACE_ID,
+            $type,
+            self::HOOK_PAYLOAD);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
@@ -474,7 +589,8 @@ class OrderManagementTest extends TestCase
             $this->bugsnag,
             $this->metricsClient,
             $this->response,
-            $this->configHelper
+            $this->configHelper,
+            $this->cartHelper
         );
         $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
@@ -484,5 +600,157 @@ class OrderManagementTest extends TestCase
         $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
         $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
         $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+    }
+
+    private function manage_cartCreate_basicAssertion(){
+        $this->startTime = microtime(true) * 1000;
+        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($this->startTime);
+
+        $this->requestArray = [
+            'type' => 'cart.create',
+            'items' =>
+                [
+                    [
+                        'reference' => '20102',
+                        'name' => 'Product name',
+                        'description' => NULL,
+                        'options' => NULL,
+                        'total_amount' => 100,
+                        'unit_price' => 100,
+                        'tax_amount' => 0,
+                        'quantity' => 1,
+                        'uom' => NULL,
+                        'upc' => NULL,
+                        'sku' => NULL,
+                        'isbn' => NULL,
+                        'brand' => NULL,
+                        'manufacturer' => NULL,
+                        'category' => NULL,
+                        'tags' => NULL,
+                        'properties' => NULL,
+                        'color' => NULL,
+                        'size' => NULL,
+                        'weight' => NULL,
+                        'weight_unit' => NULL,
+                        'image_url' => NULL,
+                        'details_url' => NULL,
+                        'tax_code' => NULL,
+                        'type' => 'unknown'
+                    ]
+                ],
+            'currency' => 'USD',
+            'metadata' => NULL,
+        ];
+
+        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
+        $this->request->expects(self::once())->method('getBodyParams')->willReturn($this->requestArray);
+    }
+
+    /**
+     * @test
+     * @covers ::manage
+     * @covers ::handleCartCreateApiCall
+     */
+    public function manage_cartCreate()
+    {
+        $this->manage_cartCreate_basicAssertion();
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.success', 1, 'webhooks.latency', $this->startTime);
+        $cart = [
+            'order_reference' => '1001',
+            'display_id' => '100010001 / 1001',
+            'currency' => 'USD',
+            'items' => [ [
+                'reference' => '20102',
+                'name' => 'Product name',
+                'total_amount' => 100,
+                'unit_price' => 100,
+                'quantity' => 100,
+                'sku' => 'TestProduct',
+                'type' => 'physical',
+                'description' => ''
+            ] ],
+            'discounts' => [],
+            'total_amount' => 100,
+            'tax_amount' => 0,
+        ];
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willReturn($cart);
+        $this->response->expects(self::once())->method('sendResponse');
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'cart' => $cart,
+        ]));
+
+        $this->currentMock->manage(
+            null,
+            null,
+            null,
+            'cart.create',
+            null,
+            null,
+            null,
+            null
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider manage_cartCreate_error_dataProvider
+     * @covers ::manage
+     * @covers ::handleCartCreateApiCall
+     */
+    public function manage_cartCreate_error($exception,$error_code,$error_message)
+    {
+        $this->manage_cartCreate_basicAssertion();
+        $this->metricsClient->expects(self::once())->method('processMetric')
+            ->with('webhooks.failure', 1, 'webhooks.latency', $this->startTime);
+
+        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willThrowException($exception);
+        $this->response->expects(self::once())->method('sendResponse');
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'failure',
+            'error' => ['code' => $error_code, 'message' => $error_message],
+        ]));
+
+        $this->currentMock->manage(
+            null,
+            null,
+            null,
+            'cart.create',
+            null,
+            null,
+            null,
+            null
+        );
+
+    }
+
+    public function manage_cartCreate_error_dataProvider() {
+        return [
+            [new BoltException(__('The requested qty is not available'),null,6303), 6303, 'The requested qty is not available'],
+            [new BoltException(__('Product that you are trying to add is not available.'),null,6301), 6301, 'Product that you are trying to add is not available.'],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function testSaveCustomerCreditCardWhenPendingHookIsSentToMagento(){
+        $type = "pending";
+        $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
+            ->with(self::REFERENCE,self::STORE_ID)->willReturnSelf();
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
     }
 }

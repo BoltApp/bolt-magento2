@@ -29,14 +29,19 @@ class ComponentSwitcherProcessor extends LayoutProcessor
     /**
      * Process the layout
      *
-     * @param array $jsLayout
+     * @param  array $jsLayout
      * @return array
      */
-    public function process($jsLayout) {
+    public function process($jsLayout)
+    {
         // Store Credit
-        $jsLayout['components']['block-totals']['children']['storeCredit']['componentDisabled'] =
-            ! $this->configHelper->useStoreCreditConfig();
-
+        if (! $this->configHelper->useStoreCreditConfig()) {
+            unset($jsLayout['components']['block-totals']['children']['storeCredit']);
+        }
+        // Reward Points
+        if (! $this->configHelper->useRewardPointsConfig()) {
+            unset($jsLayout['components']['block-totals']['children']['rewardPoints']);
+        }
         return $jsLayout;
     }
 }

@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\Js as BlockJs;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Request\Http;
 /**
  * Class JsTest
@@ -29,6 +30,10 @@ use Magento\Framework\App\Request\Http;
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
+    // Number of settings in method getSettings()
+    const SETTINGS_NUMBER = 18;
+    const STORE_ID = 1;
+
     /**
      * @var HelperConfig
      */
@@ -70,6 +75,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
     private $magentoQuote;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -88,11 +98,12 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->getMock();
 
         $methods = [
-            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
+            'isSandboxModeSet', 'isActive', 'getAnyPublishableKey', 'getCustomURLValueOrDefault',
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled'
+            'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
+            'getMinicartSupport', 'getIPWhitelistArray'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -110,30 +121,39 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
+        $this->decider = $this->createMock(Decider::class);
+
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getFullActionName'])
             ->getMock();
-
         $this->contextMock->method('getRequest')->willReturn($this->requestMock);
+
+        $store = $this->getMockForAbstractClass(\Magento\Store\Api\Data\StoreInterface::class);
+        $store->method('getId')->willReturn(self::STORE_ID);
+        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeManager->method('getStore')->willReturn($store);
+        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
+
         $this->block = $this->getMockBuilder(BlockJs::class)
-            ->setMethods(['configHelper', 'getUrl'])
+            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $this->contextMock,
                     $this->configHelper,
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
-                    $this->bugsnagHelperMock
+                    $this->bugsnagHelperMock,
+                    $this->decider
                 ]
             )
             ->getMock();
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrl()
+    public function getTrackJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -144,9 +164,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetTrackJsUrlForProductionMode()
+    public function getTrackJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -157,9 +177,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetConnectJsUrl()
+    public function getConnectJsUrl()
     {
         // For CDN URL in sandbox mode
         $this->setSandboxMode();
@@ -168,7 +188,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($result, $expectedUrl, 'Not equal CDN Url in Sandbox mode');
     }
 
-    public function testGetConnectJsUrlForProductionMode()
+    /**
+     * @test
+     */
+    public function getConnectJsUrlForProductionMode()
     {
         // For CDN URL in production mode.
         $this->setSandboxMode(false);
@@ -182,7 +205,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerTestGetCheckoutKey
      */
-    public function testGetCheckoutKey($data)
+    public function getCheckoutKey($data)
     {
         $this->configHelper->expects($this->any())
             ->method('isPaymentOnlyCheckoutEnabled')
@@ -244,7 +267,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerGetReplaceSelectors
      */
-    public function testGetReplaceSelectors($data)
+    public function getReplaceSelectors($data)
     {
         $this->configHelper->expects($this->any())
             ->method('getReplaceSelectors')
@@ -288,9 +311,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetGlobalCSS()
+    public function getGlobalCSS()
     {
         $value = '.replaceable-example-selector1 {
             color: red;
@@ -306,16 +329,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testGetSettings()
+    public function getSettings()
     {
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(16, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(SELF::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -324,6 +347,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
         $this->assertArrayHasKey('create_order_url', $array, $message . 'create_order_url');
         $this->assertArrayHasKey('save_order_url', $array, $message . 'save_order_url');
+        $this->assertArrayHasKey('get_hints_url', $array, $message . 'get_hints_url');
         $this->assertArrayHasKey('selectors', $array, $message . 'selectors');
         $this->assertArrayHasKey('shipping_prefetch_url', $array, $message . 'shipping_prefetch_url');
         $this->assertArrayHasKey('prefetch_shipping', $array, $message . 'prefetch_shipping');
@@ -333,14 +357,15 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('additional_checkout_button_class', $array, $message . 'additional_checkout_button_class');
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
+        $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
     }
 
     /**
-     * @inheritdoc
+     * @test
      */
-    public function testIsEnabled()
+    public function isEnabled()
     {
-        $storeId = 0;
+        $storeId = self::STORE_ID;
         $this->configHelper->expects($this->any())
             ->method('isActive')
             ->with($storeId)
@@ -361,6 +386,10 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->expects($this->any())
             ->method('isSandboxModeSet')
             ->will($this->returnValue($value));
+
+        $this->configHelper
+            ->method('getCustomURLValueOrDefault')
+            ->will($this->returnArgument(1));
     }
 
     public function setBoltInitiateCheckout($value = true)
@@ -371,18 +400,51 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ->willReturn($value);
     }
 
-    public function testGetInitiateCheckoutFalse()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutFalse()
     {
         $this->assertFalse($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testGetInitiateCheckoutTrue()
+    /**
+     * @test
+     */
+    public function getInitiateCheckoutTrue()
     {
         $this->setBoltInitiateCheckout();
         $this->assertTrue($this->block->getInitiateCheckout(), 'getInitiateCheckout() method: not working properly');
     }
 
-    public function testShouldTrackCheckoutFunnel()
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOff()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(false);
+        $this->assertTrue($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldDisableBoltCheckout_featureSwitchOn()
+    {
+        $this->decider->method('isBoltEnabled')->willReturn(true);
+        $this->configHelper->method('isActive')->willReturn(true);
+        $this->configHelper->method('isIPRestricted')->willReturn(false);
+        $this->requestMock->method('getFullActionName')->willReturn('unrestrictedPage');
+        $this->configHelper->method('getPageBlacklist')->willReturn(array('anotherPage', 'restrictedPage'));
+        $this->configHelper->method('getMinicartSupport')->willReturn(true);
+        $this->configHelper->method('getIPWhitelistArray')->willReturn(array());
+        $this->assertFalse($this->block->shouldDisableBoltCheckout(), 'feature switch for disabling bolt not working properly');
+    }
+
+    /**
+     * @test
+     */
+    public function shouldTrackCheckoutFunnel()
     {
         $this->configHelper->expects($this->any())
                            ->method('shouldTrackCheckoutFunnel')

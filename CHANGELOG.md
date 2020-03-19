@@ -87,3 +87,19 @@
  - BSS store credit support
  - Improved checkout metricing
  - Various bug fixes
+## [v2.2.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.2.0) 2020-02-05
+ - [Beta] Simple Product Page Checkout
+ - Staged Rollout
+ - Some M2 2.3.4 compat. fixes
+ - Multicurrency improvements
+ - Various bug fixes
+## [v2.3.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.3.0) 2020-02-20
+ - Custom checkboxes
+ - Re-order feature for logged-in customers
+ - Product page checkout improvements
+ - Various bug fixes
+## [v2.4.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.0) 2020-03-11
+ - Bug fixes
+ - Added JS event for when hints are set 
+## [v2.4.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.1) 2020-03-18
+ - Fix Bolt checkout not opening on IE

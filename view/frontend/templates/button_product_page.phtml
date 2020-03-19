@@ -1,0 +1,293 @@
+<?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
+/**
+ * Product page Bolt Checkout button
+ *
+ * @var $block \Bolt\Boltpay\Block\JsProductPage
+ */
+if ($block->shouldDisableBoltCheckout()) return;
+
+// return if PPC option is disabled or we aren't on product page
+if (!$block->isBoltProductPage()) return;
+
+if (!$block->isSupportableType()) return;
+?>
+    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>"></div>
+    <script>
+        require([
+            'jquery',
+            'Magento_Customer/js/model/authentication-popup',
+            'Magento_Customer/js/customer-data',
+            'mage/validation/validation',
+            'mage/cookies',
+            'domReady!'
+        ], function ($, authenticationPopup, customerData) {
+
+            var customer = customerData.get('customer');
+            var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
+            var itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?>;
+
+            var settings = window.boltConfig;
+            var trackCallbacks = settings.trackCallbacks;
+            
+            var orderMinimumAmount = <?= (float) $block->getOrderMinimumAmount(); ?>;
+            var needToShowErrorPopup = false;
+
+            var showBoltErrorMessage = function(messsage, order_reference) {
+                var boltModal = $('#bolt-modal'),
+                    errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
+
+                boltModal.find('.bolt-modal-content').html(errorMsg);
+                boltModal.modal("openModal");
+            };
+
+            // On multiple checkout open/close actions the success event remains registered
+            // resulting in making the success call multiple times. This variable stores
+            // the last request to be aborted before new one is sent.
+            var save_request;
+
+            var callbacks = {
+
+                close: function () {
+                    popUpOpen = false;
+                    trackCallbacks.onClose();
+
+                    if (callbacks.success_url) {
+                        // redirect on success order save
+                        location.href = callbacks.success_url;
+                    }
+                },
+
+                onCheckoutStart: function() {
+                    trackCallbacks.onCheckoutStart();
+                },
+
+                onShippingDetailsComplete: function() {
+                    trackCallbacks.onShippingDetailsComplete();
+                },
+
+                onShippingOptionsComplete: function() {
+                    trackCallbacks.onShippingOptionsComplete();
+                },
+
+                onPaymentSubmit: function() {
+                    trackCallbacks.onPaymentSubmit();
+                },
+
+                success: function (transaction, callback) {
+                    /**
+                     * Success transaction handler.
+                     * Sets the success url for the non-preauth flow.
+                     * Calls additional javascript if defined in configuration.
+                     * Triggers on success track event handler.
+                     * Finally, calls the callback function
+                     * that finishes the checkout modal operation.
+                     *
+                     * param object data    response from the non-preauth order/save controller, optional
+                     * return void
+                     */
+                    var processSuccess = function (data) {
+                        try {
+                            if (typeof data !== 'undefined') {
+                                callbacks.success_url = data.success_url;
+                            }
+                            trackCallbacks.onSuccess(data);
+                        } finally {
+                            callback();
+                        }
+                    };
+
+                    if (settings.is_pre_auth) {
+                        processSuccess();
+                        return;
+                    }
+
+                    // abort previously sent save order request.
+                    if (save_request) save_request.abort();
+                    // get thr transaction reference
+                    var parameters = [];
+                    parameters.push('form_key=' + $('[name="form_key"]').val());
+                    parameters.push('reference=' + transaction.reference);
+                    parameters = parameters.join('&');
+                    // update order ajax request callback
+                    // sets the success order page redirect url from received data
+                    // and calls the final Bolt defined callback
+                    var onSuccess = function(data){
+                        if (data.status !== 'success') {
+                            if (data.message) {
+                                showBoltErrorMessage('', data.reference);
+                                // pretend order creation was success...
+                                // we need to call this; otherwise bolt modal show infinte spinner.
+                                callback();
+                            }
+                            return;
+                        }
+                        processSuccess(data);
+                    };
+                    // ajax call to the update order transaction data endpoint.
+                    // passes the bolt transaction reference
+                    save_request = $.post(settings.save_order_url, parameters)
+                                    .done(onSuccess);
+                },
+
+                check: function () {
+                    /**
+                     * On Bolt button click check if guest checkout is allowed.
+                     * Display login popup to guest customers if it is not. The
+                     * Magento customerData and authenticationPopup objects are
+                     * used.
+                     */
+                    // check if login is required
+                    if ( !customer().firstname && !isGuestCheckoutAllowed) {
+                        // if authentication is required for checkout set a cookie
+                        // for auto opening Bolt checkout after login
+                        authenticationPopup.showModal();
+                        return false;
+                    }
+                    // wait for validation module init
+                    try {
+                        $('#product_addtocart_form').validation('isValid');
+                    } catch (e) {
+                        return false;
+                    }
+                    // validate form and show error messages
+                    if ( ! $('#product_addtocart_form').validate().form()) {
+                        return false;
+                    }
+                    
+                    // Is valid minimum amount for cart.
+                    if (typeof settings !== undefined
+                        && needToShowErrorPopup
+                        && settings.minimum_amount_rule_message
+                    ) {
+                        showBoltErrorMessage(settings.minimum_amount_rule_message);
+                        needToShowErrorPopup = false;    
+                        return false;
+                    }
+                    
+                    return true;
+                },
+
+                onEmailEnter: function(email) {
+                    trackCallbacks.onEmailEnter(email);
+                    if (callbacks.email !== email) {
+                        $.post(settings.save_email_url, 'email='+encodeURIComponent(email));
+                        callbacks.email = email;
+                    }
+                }
+            };
+
+            var getQty = function() {
+                var quantity = Number($('#qty').val());
+                return quantity > 0 ? quantity : 1;
+            };
+
+            var hints;
+
+            var setupProductPage = function () {
+                var options = {};
+                formData = new FormData(document.getElementById("product_addtocart_form"));
+                formData.forEach(function(value, key){
+                    matchResult = key.match(/super_attribute\[(\d+)\]/);
+                    if (matchResult) {
+                        if (!('super_attribute' in options)) {
+                            options['super_attribute'] = {};
+                        }
+                        options['super_attribute'][matchResult[1]] = value;
+                    } else {
+                        options[key] = value;
+                    }
+                });
+                options['storeId'] = '<?= $block->getStoreId(); ?>';
+                var cart = {
+                    currency: "<?= $block->getStoreCurrencyCode(); ?>",
+                    items: [{
+                        reference: '<?= $block->getProduct()->getId(); ?>',
+                        price: itemPrice,
+                        name: '<?= $block->getProduct()->getName(); ?>',
+                        quantity: getQty(),
+                        options: JSON.stringify(options)
+                    }]
+                };
+
+                var hintsPromise = new Promise(function (resolve, reject) {
+                    if (hints) {
+                        resolve(hints);
+                        return;
+                    }
+                    $.get(settings.get_hints_url)
+                        .done(function(data) {
+                            hints = data.hints;
+                        })
+                        .fail(function() {
+                            hints = {prefill:{}};
+                        })
+                        .always(function() {
+                            resolve(hints);
+                            // disapatch event when required data is ready
+                            $(document).trigger('ppc-hints-set');
+                            return;
+                        });
+                });
+                
+                var cartTotal = calcBoltPPCCartTotal(getQty(),itemPrice);
+                if(cartTotal < orderMinimumAmount){
+                    needToShowErrorPopup = true;
+                }
+                else{
+                    needToShowErrorPopup = false;
+                }
+
+                // if connect.js is not loaded postpone until it is
+                whenDefined(window, 'BoltCheckout', function(){
+                    BoltCheckout.configureProductCheckout(cart, hintsPromise, callbacks);
+                });
+            };
+
+            setupProductPage();
+            $('#qty').on('change', setupProductPage);
+
+            <?php if ($block->isConfigurable()): ?>
+            $(document).on( 'updatePrice', function (event, data) {
+                var priceDelta = data.prices.finalPrice.amount;
+                itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                setupProductPage();
+            });
+            <?php endif; ?>
+            
+            function calcBoltPPCCartTotal(itemQty, itemPrice) {
+                var total = 0; 
+
+                // Convert the values in the quantity textboxes to numbers. The 10 that
+                // is being passed as the second argument indicates the "radix" or the
+                // numeric base system that should be used when the string is being 
+                // interpreted. Here (and often), we work in the base 10 numeral system.
+                var qty = parseInt(itemQty, 10);
+
+                // NOTE: If parseInt() can't parse a number from the string provided, it returns NaN
+                //       (Not A Number), we can check to see if we got NaN with the isNaN() function
+                //       and here, we want to know if we don't have a NaN, so we prepend a ! to it 
+                //       (the logical NOT operator) to test the opposite of the isNaN() function result.
+                if (!isNaN(qty)) { total = qty * itemPrice; }
+
+                total = total.toFixed(2);
+                return total;
+            }
+
+        });
+    </script>
