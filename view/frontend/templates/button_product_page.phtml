@@ -46,9 +46,9 @@ if (!$block->isSupportableType()) return;
             var trackCallbacks = settings.trackCallbacks;
             
             var orderMinimumAmount = <?= (float) $block->getOrderMinimumAmount(); ?>;
-            var needToShowErrorPopup = false;
+            var needToShowErrorPopupPPC = false;
 
-            var showBoltErrorMessage = function(messsage, order_reference) {
+            var showBoltErrorMessagePPC = function(messsage, order_reference) {
                 var boltModal = $('#bolt-modal'),
                     errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
 
@@ -130,7 +130,7 @@ if (!$block->isSupportableType()) return;
                     var onSuccess = function(data){
                         if (data.status !== 'success') {
                             if (data.message) {
-                                showBoltErrorMessage('', data.reference);
+                                showBoltErrorMessagePPC('', data.reference);
                                 // pretend order creation was success...
                                 // we need to call this; otherwise bolt modal show infinte spinner.
                                 callback();
@@ -172,11 +172,10 @@ if (!$block->isSupportableType()) return;
                     
                     // Is valid minimum amount for cart.
                     if (typeof settings !== undefined
-                        && needToShowErrorPopup
+                        && needToShowErrorPopupPPC
                         && settings.minimum_amount_rule_message
                     ) {
-                        showBoltErrorMessage(settings.minimum_amount_rule_message);
-                        needToShowErrorPopup = false;    
+                        showBoltErrorMessagePPC(settings.minimum_amount_rule_message);   
                         return false;
                     }
                     
@@ -247,10 +246,10 @@ if (!$block->isSupportableType()) return;
                 
                 var cartTotal = calcBoltPPCCartTotal(getQty(),itemPrice);
                 if(cartTotal < orderMinimumAmount){
-                    needToShowErrorPopup = true;
+                    needToShowErrorPopupPPC = true;
                 }
                 else{
-                    needToShowErrorPopup = false;
+                    needToShowErrorPopupPPC = false;
                 }
 
                 // if connect.js is not loaded postpone until it is
