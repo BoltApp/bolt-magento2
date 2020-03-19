@@ -17,13 +17,17 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Bolt\Boltpay\Model\Api\Debug;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -46,6 +50,11 @@ class DebugTest extends TestCase
 	private $debugInfoFactoryMock;
 
 	/**
+	 * @var BoltConfigSettingFactory
+	 */
+	private $boltConfigSettingFactoryMock;
+
+	/**
 	 * @var StoreManagerInterface
 	 */
 	private $storeManagerInterfaceMock;
@@ -61,6 +70,11 @@ class DebugTest extends TestCase
 	private $productMetadataInterfaceMock;
 
 	/**
+	 * @var ConfigHelper
+	 */
+	private $configHelperMock;
+
+	/**
 	 * @inheritdoc
 	 */
 	public function setUp()
@@ -68,6 +82,12 @@ class DebugTest extends TestCase
 		// prepare debug info factory
 		$this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
 		$this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
+
+		// prepare bolt config setting factory
+		$this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
+		$this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
+			return new BoltConfigSetting();
+		});
 
 		// prepare store manager
 		$storeInterfaceMock = $this->createMock(StoreInterface::class);
@@ -82,7 +102,12 @@ class DebugTest extends TestCase
 		// prepare hook helper
 		$this->hookHelperMock = $this->createMock(HookHelper::class);
 		$this->hookHelperMock->method('preProcessWebhook');
+		$this->hookHelperMock->method('preProcessWebhook');
 
+
+		// prepare config helper
+		$this->configHelperMock = $this->createMock(ConfigHelper::class);
+		$this->prepareConfigHelperMock();
 
 		// initialize test object
 		$objectManager = new ObjectManager($this);
@@ -90,11 +115,25 @@ class DebugTest extends TestCase
 			Debug::class,
 			[
 				'debugInfoFactory' => $this->debugInfoFactoryMock,
+				'boltConfigSettingFactory' => $this->boltConfigSettingFactoryMock,
 				'storeManager' => $this->storeManagerInterfaceMock,
 				'hookHelper' => $this->hookHelperMock,
-				'productMetadata' => $this->productMetadataInterfaceMock
+				'productMetadata' => $this->productMetadataInterfaceMock,
+				'configHelper' => $this->configHelperMock
 			]
 		);
+	}
+
+	private function prepareConfigHelperMock()
+	{
+		$boltSettings = [];
+		$boltSettings[] = $this->boltConfigSettingFactoryMock->create()
+		                                                     ->setName('config_name1')
+		                                                     ->setValue('config_value1');
+		$boltSettings[] = $this->boltConfigSettingFactoryMock->create()
+		                                                     ->setName('config_name2')
+		                                                     ->setValue('config_value2');
+		$this->configHelperMock->method('getAllConfigSettings')->willReturn($boltSettings);
 	}
 
 	/**
@@ -109,5 +148,16 @@ class DebugTest extends TestCase
 		$this->assertNotNull($debugInfo);
 		$this->assertNotNull($debugInfo->getPhpVersion());
 		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
+
+		// check bolt settings
+		$expected_settings = [
+			['config_name1', 'config_value1'],
+			['config_name2', 'config_value2']
+		];
+		$this->assertEquals(2, count($debugInfo->getBoltConfigSettings()));
+		for ($i = 0; $i < 2; $i ++) {
+			$this->assertEquals($expected_settings[$i][0], $debugInfo->getBoltConfigSettings()[$i]->getName());
+			$this->assertEquals($expected_settings[$i][1], $debugInfo->getBoltConfigSettings()[$i]->getValue(), 'actual value for ' . $expected_settings[$i][0] . ' is not equals to expected');
+		}
 	}
 }
