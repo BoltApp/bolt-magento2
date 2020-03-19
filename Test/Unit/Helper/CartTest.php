@@ -111,24 +111,24 @@ class CartTest extends TestCase
     {
         $this->contextHelper = $this->createMock(ContextHelper::class);
 
-        $this->checkoutSession   = $this->createMock(CheckoutSession::class);
+        $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->productRepository = $this->getProductRepositoryMock();
 
-        $this->apiHelper       = $this->createMock(ApiHelper::class);
-        $this->configHelper    = $this->createMock(ConfigHelper::class);
+        $this->apiHelper = $this->createMock(ApiHelper::class);
+        $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->customerSession = $this->createMock(CustomerSession::class);
-        $this->logHelper       = $this->getMockBuilder(LogHelper::class)
-                                      ->setMethods(['addInfoLog'])
-                                      ->disableOriginalConstructor()
-                                      ->getMock();
+        $this->logHelper = $this->getMockBuilder(LogHelper::class)
+            ->setMethods(['addInfoLog'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->logHelper->method('addInfoLog')
-                        ->withAnyParameters()
-                        ->willReturnSelf();
+            ->withAnyParameters()
+            ->willReturnSelf();
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-                              ->setMethods(['notifyError', 'notifyException'])
-                              ->disableOriginalConstructor()
-                              ->getMock();
+            ->setMethods(['notifyError', 'notifyException'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $imageHelper = $this->createMock(\Magento\Catalog\Helper\Image::class);
         $imageHelper->method('init')->willReturnSelf();
@@ -137,34 +137,34 @@ class CartTest extends TestCase
         $this->imageHelperFactory = $this->createMock(ImageFactory::class);
         $this->imageHelperFactory->method('create')->willReturn($imageHelper);
 
-        $this->appEmulation          = $this->getMockBuilder(Emulation::class)
-                                            ->setMethods(['stopEnvironmentEmulation', 'startEnvironmentEmulation'])
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
-        $this->dataObjectFactory     = $this->getMockBuilder(DataObjectFactory::class)
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
-        $this->quoteFactory          = $this->getMockBuilder(QuoteFactory::class)
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
-        $this->totalsCollector       = $this->createMock(TotalsCollector::class);
-        $this->quoteCartRepository   = $this->createMock(QuoteCartRepository::class);
-        $this->orderRepository       = $this->createMock(OrderRepository::class);
+        $this->appEmulation = $this->getMockBuilder(Emulation::class)
+            ->setMethods(['stopEnvironmentEmulation', 'startEnvironmentEmulation'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->totalsCollector = $this->createMock(TotalsCollector::class);
+        $this->quoteCartRepository = $this->createMock(QuoteCartRepository::class);
+        $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
-        $this->quoteResource         = $this->createMock(QuoteResource::class);
-        $this->sessionHelper         = $this->createMock(SessionHelper::class);
-        $this->checkoutHelper        = $this->createMock(CheckoutHelper::class);
-        $this->discountHelper        = $this->createMock(DiscountHelper::class);
-        $this->cache                 = $this->createMock(CacheInterface::class);
-        $this->resourceConnection    = $this->createMock(ResourceConnection::class);
-        $this->quoteAddressTotal     = $this->getMockBuilder(Total::class)
-                                            ->setMethods(['getValue', 'setValue', 'getTitle'])
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
-        $this->quoteManagement       = $this->createMock(CartManagementInterface::class);
-        $this->hookHelper            = $this->createMock(HookHelper::class);
-        $this->customerRepository    = $this->createMock(CustomerRepository::class);
-        $this->moaValidationMessage  = $this->createMock(MoaValidationMessage::class);
+        $this->quoteResource = $this->createMock(QuoteResource::class);
+        $this->sessionHelper = $this->createMock(SessionHelper::class);
+        $this->checkoutHelper = $this->createMock(CheckoutHelper::class);
+        $this->discountHelper = $this->createMock(DiscountHelper::class);
+        $this->cache = $this->createMock(CacheInterface::class);
+        $this->resourceConnection = $this->createMock(ResourceConnection::class);
+        $this->quoteAddressTotal = $this->getMockBuilder(Total::class)
+            ->setMethods(['getValue', 'setValue', 'getTitle'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->quoteManagement = $this->createMock(CartManagementInterface::class);
+        $this->hookHelper = $this->createMock(HookHelper::class);
+        $this->customerRepository = $this->createMock(CustomerRepository::class);
+        $this->moaValidationMessage  = $this->createMock( MoaValidationMessage::class );
     }
 
     /**
@@ -172,55 +172,47 @@ class CartTest extends TestCase
      */
     public function getCartData_multistepNoDiscount()
     {
-        $billingAddress  = $this->getBillingAddress();
+        $billingAddress = $this->getBillingAddress();
         $shippingAddress = $this->getShippingAddress();
-        $quote           = $this->getQuoteMock($billingAddress, $shippingAddress);
+        $quote = $this->getQuoteMock($billingAddress, $shippingAddress);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $this->checkoutSession = $this->getMockBuilder(\Magento\Framework\Session\SessionManager::class)
-                                      ->setMethods(['getQuote'])
-                                      ->disableOriginalConstructor()
-                                      ->getMock();
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->checkoutSession->expects($this->any())
-                              ->method('getQuote')
-                              ->willReturn($quote);
+            ->method('getQuote')
+            ->willReturn($quote);
 
         $this->searchCriteriaBuilder = $this->getMockBuilder(SearchCriteriaBuilder::class)
-                                            ->setMethods(['addFilter', 'create'])
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
+            ->setMethods(['addFilter', 'create'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->searchCriteriaBuilder->expects($this->once())
-                                    ->method('addFilter')
-                                    ->withAnyParameters()
-                                    ->willReturnSelf();
+            ->method('addFilter')
+            ->withAnyParameters()
+            ->willReturnSelf();
         $this->searchCriteriaBuilder->expects($this->once())
-                                    ->method('create')
-                                    ->willReturn($this->createMock(\Magento\Framework\Api\SearchCriteria::class));
+            ->method('create')
+            ->willReturn($this->createMock(\Magento\Framework\Api\SearchCriteria::class));
 
-        $methods                   = [
-            'getList',
-            'getItems',
-            'getForCustomer',
-            'getActive',
-            'getActiveForCustomer',
-            'save',
-            'delete',
-            'get'
-        ];
+        $methods = ['getList', 'getItems', 'getForCustomer', 'getActive',
+            'getActiveForCustomer', 'save', 'delete', 'get'];
         $this->quoteCartRepository = $this->getMockBuilder(QuoteCartRepository::class)
-                                          ->setMethods($methods)
-                                          ->disableOriginalConstructor()
-                                          ->disableOriginalClone()
-                                          ->getMock();
+            ->setMethods($methods)
+            ->disableOriginalConstructor()
+            ->disableOriginalClone()
+            ->getMock();
         $this->quoteCartRepository->expects($this->any())
-                                  ->method('getList')
-                                  ->with($this->createMock(\Magento\Framework\Api\SearchCriteria::class))
-                                  ->willReturnSelf();
+            ->method('getList')
+            ->with($this->createMock(\Magento\Framework\Api\SearchCriteria::class))
+            ->willReturnSelf();
         $this->quoteCartRepository->expects($this->any())
-                                  ->method('getItems')
-                                  ->will($this->returnValue([$quote]));
+            ->method('getItems')
+            ->will($this->returnValue([$quote]));
 
         $currentMock = new BoltHelperCart(
             $this->contextHelper,
@@ -251,45 +243,43 @@ class CartTest extends TestCase
             $this->moaValidationMessage
         );
 
-        $paymentOnly       = false;
+        $paymentOnly = false;
         $placeOrderPayload = '';
-        $immutableQuote    = $quote;
+        $immutableQuote = $quote;
 
         $result = $currentMock->getCartData($paymentOnly, $placeOrderPayload, $immutableQuote);
 
         $expected = [
             'order_reference' => self::PARENT_QUOTE_ID,
-            'display_id'      => '100010001 / ' . self::QUOTE_ID,
-            'currency'        => 'USD',
-            'items'           => [
-                [
-                    'reference'    => self::PRODUCT_ID,
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product Description',
-                    'image_url'    => 'no-image'
-                ]
-            ],
+            'display_id' => '100010001 / '.self::QUOTE_ID,
+            'currency' => 'USD',
+            'items' => [[
+                'reference' => self::PRODUCT_ID,
+                'name'  => 'Test Product',
+                'total_amount'  => 10000,
+                'unit_price'    => 10000,
+                'quantity'      => 1,
+                'sku'           => self::PRODUCT_SKU,
+                'type'          => 'physical',
+                'description'   => 'Product Description',
+                'image_url'     => 'no-image'
+            ]],
             "billing_address" => [
-                'first_name'      => "IntegrationBolt",
-                'last_name'       => "BoltTest",
-                'company'         => "",
-                'phone'           => "132 231 1234",
+                'first_name' => "IntegrationBolt",
+                'last_name' => "BoltTest",
+                'company' => "",
+                'phone' => "132 231 1234",
                 'street_address1' => "228 7th Avenue",
                 'street_address2' => null,
-                'locality'        => "New York",
-                'region'          => "New York",
-                'postal_code'     => "10011",
-                'country_code'    => "US",
-                'email'           => "integration@bolt.com"
+                'locality' => "New York",
+                'region' => "New York",
+                'postal_code' => "10011",
+                'country_code' => "US",
+                'email'=> "integration@bolt.com"
             ],
-            'discounts'       => [],
-            'total_amount'    => 10000,
-            'tax_amount'      => 0
+            'discounts' => [],
+            'total_amount' => 10000,
+            'tax_amount' => 0
         ];
 
         $this->assertEquals($expected, $result);
@@ -300,7 +290,6 @@ class CartTest extends TestCase
      *
      * @param $billingAddress
      * @param $shippingAddress
-     *
      * @return \PHPUnit_Framework_MockObject_MockObject
      */
     private function getQuoteMock($billingAddress, $shippingAddress)
@@ -308,56 +297,42 @@ class CartTest extends TestCase
         $quoteItem = $this->getQuoteItemMock();
 
         $quoteMethods = [
-            'getId',
-            'getBoltParentQuoteId',
-            'getSubtotal',
-            'getAllVisibleItems',
-            'getAppliedRuleIds',
-            'isVirtual',
-            'getShippingAddress',
-            'collectTotals',
-            'getQuoteCurrencyCode',
-            'getBillingAddress',
-            'getReservedOrderId',
-            'getTotals',
-            'getStoreId',
-            'getUseRewardPoints',
-            'getUseCustomerBalance',
-            'getRewardCurrencyAmount',
-            'getCustomerBalanceAmountUsed',
-            'getData',
-            'validateMinimumAmount'
+            'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
+            'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
+            'getQuoteCurrencyCode', 'getBillingAddress', 'getReservedOrderId', 'getTotals',
+            'getStoreId', 'getUseRewardPoints', 'getUseCustomerBalance', 'getRewardCurrencyAmount',
+            'getCustomerBalanceAmountUsed','getData','validateMinimumAmount' 
         ];
-        $quote        = $this->getMockBuilder(Quote::class)
-                             ->setMethods($quoteMethods)
-                             ->disableOriginalConstructor()
-                             ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->setMethods($quoteMethods)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $quote->method('getId')
-              ->willReturn(self::QUOTE_ID);
+            ->willReturn(self::QUOTE_ID);
         $quote->method('getReservedOrderId')
-              ->willReturn('100010001');
+            ->willReturn('100010001');
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(self::PARENT_QUOTE_ID);
+            ->willReturn(self::PARENT_QUOTE_ID);
         $quote->method('getSubtotal')
-              ->willReturn(self::PRODUCT_PRICE);
+            ->willReturn(self::PRODUCT_PRICE);
         $quote->method('getAllVisibleItems')
-              ->willReturn([$quoteItem]);
+            ->willReturn([$quoteItem]);
         $quote->method('getAppliedRuleIds')
-              ->willReturn('2,3');
+            ->willReturn('2,3');
         $quote->method('isVirtual')
-              ->willReturn(false);
+            ->willReturn(false);
         $quote->method('getBillingAddress')
-              ->willReturn($billingAddress);
+            ->willReturn($billingAddress);
         $quote->method('getShippingAddress')
-              ->willReturn($shippingAddress);
+            ->willReturn($shippingAddress);
         $quote->method('getQuoteCurrencyCode')
-              ->willReturn('USD');
+            ->willReturn('USD');
         $quote->method('collectTotals')
-              ->willReturnSelf();
+            ->willReturnSelf();
         $quote->expects($this->any())
-              ->method('getStoreId')
-              ->will($this->returnValue("1"));
+            ->method('getStoreId')
+            ->will($this->returnValue("1"));
 
         return $quote;
     }
@@ -367,48 +342,39 @@ class CartTest extends TestCase
      */
     private function getBillingAddress()
     {
-        $addressData    = $this->getAddressData();
+        $addressData = $this->getAddressData();
         $billingAddress = $this->getMockBuilder(Quote\Address::class)
-                               ->setMethods([
-                                   'getFirstname',
-                                   'getLastname',
-                                   'getCompany',
-                                   'getTelephone',
-                                   'getStreetLine',
-                                   'getCity',
-                                   'getRegion',
-                                   'getPostcode',
-                                   'getCountryId',
-                                   'getEmail',
-                                   'getDiscountAmount',
-                                   'getCouponCode'
-                               ])
-                               ->disableOriginalConstructor()
-                               ->getMock();
+            ->setMethods([
+                'getFirstname', 'getLastname', 'getCompany', 'getTelephone', 'getStreetLine',
+                'getCity', 'getRegion', 'getPostcode', 'getCountryId', 'getEmail',
+                'getDiscountAmount', 'getCouponCode'
+            ])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $billingAddress->method('getFirstname')
-                       ->willReturn($addressData['first_name']);
+            ->willReturn($addressData['first_name']);
         $billingAddress->method('getLastname')
-                       ->willReturn($addressData['last_name']);
+            ->willReturn($addressData['last_name']);
         $billingAddress->method('getCompany')
-                       ->willReturn($addressData['company']);
+            ->willReturn($addressData['company']);
         $billingAddress->method('getTelephone')
-                       ->willReturn($addressData['phone']);
+            ->willReturn($addressData['phone']);
         $billingAddress->method('getStreetLine')
-                       ->will($this->returnValueMap([
-                           [1, $addressData['street_address1']],
-                           [2, $addressData['street_address2']]
-                       ]));
+            ->will($this->returnValueMap([
+                [1, $addressData['street_address1']],
+                [2, $addressData['street_address2']]
+            ]));
         $billingAddress->method('getCity')
-                       ->willReturn($addressData['locality']);
+            ->willReturn($addressData['locality']);
         $billingAddress->method('getRegion')
-                       ->willReturn($addressData['region']);
+            ->willReturn($addressData['region']);
         $billingAddress->method('getPostcode')
-                       ->willReturn($addressData['postal_code']);
+            ->willReturn($addressData['postal_code']);
         $billingAddress->method('getCountryId')
-                       ->willReturn($addressData['country_code']);
+            ->willReturn($addressData['country_code']);
         $billingAddress->method('getEmail')
-                       ->willReturn($addressData['email']);
+            ->willReturn($addressData['email']);
 
         return $billingAddress;
     }
@@ -427,16 +393,16 @@ class CartTest extends TestCase
     private function getAddressData()
     {
         return [
-            'company'         => "",
-            'country'         => "United States",
-            'country_code'    => "US",
-            'email'           => "integration@bolt.com",
-            'first_name'      => "IntegrationBolt",
-            'last_name'       => "BoltTest",
-            'locality'        => "New York",
-            'phone'           => "132 231 1234",
-            'postal_code'     => "10011",
-            'region'          => "New York",
+            'company' => "",
+            'country' => "United States",
+            'country_code' => "US",
+            'email' => "integration@bolt.com",
+            'first_name' => "IntegrationBolt",
+            'last_name' => "BoltTest",
+            'locality' => "New York",
+            'phone' => "132 231 1234",
+            'postal_code' => "10011",
+            'region' => "New York",
             'street_address1' => "228 7th Avenue",
             'street_address2' => null,
         ];
@@ -450,13 +416,13 @@ class CartTest extends TestCase
         $product = $this->getProductMock();
 
         $this->productRepository = $this->getMockBuilder(ProductRepository::class)
-                                        ->setMethods(['get'])
-                                        ->disableOriginalConstructor()
-                                        ->getMock();
+            ->setMethods(['get'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->productRepository->method('get')
-                                ->with(self::PRODUCT_SKU)
-                                ->willReturn($product);
+            ->with(self::PRODUCT_SKU)
+            ->willReturn($product);
 
         return $this->productRepository;
     }
@@ -467,19 +433,19 @@ class CartTest extends TestCase
     private function getProductMock()
     {
         $product = $this->getMockBuilder(Product::class)
-                        ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getOrderOptions'])
-                        ->disableOriginalConstructor()
-                        ->getMock();
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getOrderOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $product->method('getId')
-                ->willReturn(self::PRODUCT_ID);
+            ->willReturn(self::PRODUCT_ID);
         $product->method('getDescription')
-                ->willReturn('Product Description');
+            ->willReturn('Product Description');
         $product->method('getTypeInstance')
-                ->willReturnSelf();
+            ->willReturnSelf();
         $product->method('getOrderOptions')
-                ->withAnyParameters()
-                ->willReturn([]);
+            ->withAnyParameters()
+            ->willReturn([]);
 
         return $product;
     }
@@ -520,8 +486,8 @@ class CartTest extends TestCase
     private function getCart()
     {
         $parentQuoteId = self::PARENT_QUOTE_ID;
-        $quoteId       = self::QUOTE_ID;
-        $orderId       = self::ORDER_ID;
+        $quoteId = self::QUOTE_ID;
+        $orderId = self::ORDER_ID;
 
         $cart = <<<CART
         {
@@ -568,8 +534,8 @@ CART;
     private function getOrder()
     {
         $parentQuoteId = self::PARENT_QUOTE_ID;
-        $quoteId       = self::QUOTE_ID;
-        $orderId       = self::ORDER_ID;
+        $quoteId = self::QUOTE_ID;
+        $orderId = self::ORDER_ID;
 
         $order = <<<ORDER
         {
@@ -646,10 +612,9 @@ ORDER;
      */
     private function getBoltOrderResponse()
     {
-        $order             = $this->getOrder();
+        $order = $this->getOrder();
         $boltOrderResponse = new \Bolt\Boltpay\Model\Response;
         $boltOrderResponse->setResponse($order);
-
         return $boltOrderResponse;
     }
 
@@ -660,52 +625,52 @@ ORDER;
     {
         $mock = $this->getHelperCartMock();
 
-        $cart      = $this->getCart();
+        $cart = $this->getCart();
         $boltOrder = $this->getBoltOrderResponse();
 
         $mock->expects($this->once())
-             ->method('getCartData')
-             ->with(false, '')
-             ->willReturn($cart);
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
 
         $mock->expects($this->once())
-             ->method('getSessionQuoteStoreId')
-             ->willReturn(self::STORE_ID);
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
-             ->method('isBoltOrderCachingEnabled')
-             ->with(self::STORE_ID)
-             ->willReturn(false);
+            ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
+            ->willReturn(false);
 
         $mock->expects($this->never())
-             ->method('getCartCacheIdentifier');
+            ->method('getCartCacheIdentifier');
 
         $mock->expects($this->never())
-             ->method('loadFromCache');
+            ->method('loadFromCache');
 
         $mock->expects($this->never())
-             ->method('getImmutableQuoteIdFromBoltOrder');
+            ->method('getImmutableQuoteIdFromBoltOrder');
 
         $mock->expects($this->never())
-             ->method('isQuoteAvailable');
+            ->method('isQuoteAvailable');
 
         $mock->expects($this->never())
-             ->method('getLastImmutableQuote');
+            ->method('getLastImmutableQuote');
 
         $mock->expects($this->never())
-             ->method('deleteQuote');
+            ->method('deleteQuote');
 
         $mock->expects($this->once())
-             ->method('saveCartSession')
-             ->with(self::PARENT_QUOTE_ID);
+            ->method('saveCartSession')
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
-             ->method('boltCreateOrder')
-             ->with($cart, self::STORE_ID)
-             ->willReturn($boltOrder);
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
 
         $mock->expects($this->never())
-             ->method('saveToCache');
+            ->method('saveToCache');
 
         $result = $mock->getBoltpayOrder(false, '');
 
@@ -719,56 +684,56 @@ ORDER;
     {
         $mock = $this->getHelperCartMock();
 
-        $cart      = $this->getCart();
+        $cart = $this->getCart();
         $boltOrder = $this->getBoltOrderResponse();
 
         $mock->expects($this->once())
-             ->method('getCartData')
-             ->with(false, '')
-             ->willReturn($cart);
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
 
         $mock->expects($this->once())
-             ->method('getSessionQuoteStoreId')
-             ->willReturn(self::STORE_ID);
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
-             ->method('isBoltOrderCachingEnabled')
-             ->with(self::STORE_ID)
-             ->willReturn(true);
+            ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
+            ->willReturn(true);
 
         $mock->expects($this->once())
-             ->method('getCartCacheIdentifier')
-             ->willReturn(self::CACHE_IDENTIFIER);
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $mock->expects($this->once())
-             ->method('loadFromCache')
-             ->with(self::CACHE_IDENTIFIER)
-             ->willReturn(false);
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn(false);
 
         $mock->expects($this->never())
-             ->method('getImmutableQuoteIdFromBoltOrder');
+            ->method('getImmutableQuoteIdFromBoltOrder');
 
         $mock->expects($this->never())
-             ->method('isQuoteAvailable');
+            ->method('isQuoteAvailable');
 
         $mock->expects($this->never())
-             ->method('getLastImmutableQuote');
+            ->method('getLastImmutableQuote');
 
         $mock->expects($this->never())
-             ->method('deleteQuote');
+            ->method('deleteQuote');
 
         $mock->expects($this->once())
-             ->method('saveCartSession')
-             ->with(self::PARENT_QUOTE_ID);
+            ->method('saveCartSession')
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
-             ->method('boltCreateOrder')
-             ->with($cart, self::STORE_ID)
-             ->willReturn($boltOrder);
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
 
         $mock->expects($this->once())
-             ->method('saveToCache')
-             ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
+            ->method('saveToCache')
+            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
 
         $result = $mock->getBoltpayOrder(false, '');
 
@@ -782,59 +747,59 @@ ORDER;
     {
         $mock = $this->getHelperCartMock();
 
-        $cart           = $this->getCart();
-        $boltOrder      = $this->getBoltOrderResponse();
+        $cart = $this->getCart();
+        $boltOrder = $this->getBoltOrderResponse();
         $immutableQuote = $this->getQuoteMock($this->getBillingAddress(), $this->getShippingAddress());
 
         $mock->expects($this->once())
-             ->method('getCartData')
-             ->with(false, '')
-             ->willReturn($cart);
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
 
         $mock->expects($this->once())
-             ->method('getSessionQuoteStoreId')
-             ->willReturn(self::STORE_ID);
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
-             ->method('isBoltOrderCachingEnabled')
-             ->with(self::STORE_ID)
-             ->willReturn(true);
+            ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
+            ->willReturn(true);
 
         $mock->expects($this->once())
-             ->method('getCartCacheIdentifier')
-             ->willReturn(self::CACHE_IDENTIFIER);
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $mock->expects($this->once())
-             ->method('loadFromCache')
-             ->with(self::CACHE_IDENTIFIER)
-             ->willReturn($boltOrder);
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn($boltOrder);
 
         $mock->expects($this->once())
-             ->method('getImmutableQuoteIdFromBoltOrder')
-             ->with($boltOrder)
-             ->willReturn(self::QUOTE_ID);
+            ->method('getImmutableQuoteIdFromBoltOrder')
+            ->with($boltOrder)
+            ->willReturn(self::QUOTE_ID);
 
         $mock->expects($this->once())
-             ->method('isQuoteAvailable')
-             ->with(self::QUOTE_ID)
-             ->willReturn(true);
+            ->method('isQuoteAvailable')
+            ->with(self::QUOTE_ID)
+            ->willReturn(true);
 
         $mock->expects($this->exactly(2))
-             ->method('getLastImmutableQuote')
-             ->willReturn($immutableQuote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($immutableQuote);
 
         $mock->expects($this->once())
-             ->method('deleteQuote')
-             ->with($immutableQuote);
+            ->method('deleteQuote')
+            ->with($immutableQuote);
 
         $mock->expects($this->never())
-             ->method('saveCartSession');
+            ->method('saveCartSession');
 
         $mock->expects($this->never())
-             ->method('boltCreateOrder');
+            ->method('boltCreateOrder');
 
         $mock->expects($this->never())
-             ->method('saveToCache');
+            ->method('saveToCache');
 
         $result = $mock->getBoltpayOrder(false, '');
 
@@ -848,60 +813,60 @@ ORDER;
     {
         $mock = $this->getHelperCartMock();
 
-        $cart      = $this->getCart();
+        $cart = $this->getCart();
         $boltOrder = $this->getBoltOrderResponse();
 
         $mock->expects($this->once())
-             ->method('getCartData')
-             ->with(false, '')
-             ->willReturn($cart);
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
 
         $mock->expects($this->once())
-             ->method('getSessionQuoteStoreId')
-             ->willReturn(self::STORE_ID);
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
 
         $mock->expects($this->once())
-             ->method('isBoltOrderCachingEnabled')
-             ->with(self::STORE_ID)
-             ->willReturn(true);
+            ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
+            ->willReturn(true);
 
         $mock->expects($this->once())
-             ->method('getCartCacheIdentifier')
-             ->willReturn(self::CACHE_IDENTIFIER);
+            ->method('getCartCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $mock->expects($this->once())
-             ->method('loadFromCache')
-             ->with(self::CACHE_IDENTIFIER)
-             ->willReturn($boltOrder);
+            ->method('loadFromCache')
+            ->with(self::CACHE_IDENTIFIER)
+            ->willReturn($boltOrder);
 
         $mock->expects($this->once())
-             ->method('getImmutableQuoteIdFromBoltOrder')
-             ->with($boltOrder)
-             ->willReturn(self::QUOTE_ID);
+            ->method('getImmutableQuoteIdFromBoltOrder')
+            ->with($boltOrder)
+            ->willReturn(self::QUOTE_ID);
 
         $mock->expects($this->once())
-             ->method('isQuoteAvailable')
-             ->with(self::QUOTE_ID)
-             ->willReturn(false);
+            ->method('isQuoteAvailable')
+            ->with(self::QUOTE_ID)
+            ->willReturn(false);
 
         $mock->expects($this->never())
-             ->method('getLastImmutableQuote');
+            ->method('getLastImmutableQuote');
 
         $mock->expects($this->never())
-             ->method('deleteQuote');
+            ->method('deleteQuote');
 
         $mock->expects($this->once())
-             ->method('saveCartSession')
-             ->with(self::PARENT_QUOTE_ID);
+            ->method('saveCartSession')
+            ->with(self::PARENT_QUOTE_ID);
 
         $mock->expects($this->once())
-             ->method('boltCreateOrder')
-             ->with($cart, self::STORE_ID)
-             ->willReturn($boltOrder);
+            ->method('boltCreateOrder')
+            ->with($cart, self::STORE_ID)
+            ->willReturn($boltOrder);
 
         $mock->expects($this->once())
-             ->method('saveToCache')
-             ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
+            ->method('saveToCache')
+            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
 
         $result = $mock->getBoltpayOrder(false, '');
 
@@ -918,38 +883,36 @@ ORDER;
             'getCalculationAddress',
             'getQuoteById'
         ], $methods);
-
         return $this->getMockBuilder(BoltHelperCart::class)
-                    ->setMethods($methods)
-                    ->setConstructorArgs([
-                        $this->contextHelper,
-                        $this->checkoutSession,
-                        $this->productRepository,
-                        $this->apiHelper,
-                        $this->configHelper,
-                        $this->customerSession,
-                        $this->logHelper,
-                        $this->bugsnag,
-                        $this->dataObjectFactory,
-                        $this->imageHelperFactory,
-                        $this->appEmulation,
-                        $this->quoteFactory,
-                        $this->totalsCollector,
-                        $this->quoteCartRepository,
-                        $this->orderRepository,
-                        $this->searchCriteriaBuilder,
-                        $this->quoteResource,
-                        $this->sessionHelper,
-                        $this->checkoutHelper,
-                        $this->discountHelper,
-                        $this->cache,
-                        $this->resourceConnection,
-                        $this->quoteManagement,
-                        $this->hookHelper,
-                        $this->customerRepository,
-                        $this->moaValidationMessage
-
-                    ])->getMock();
+            ->setMethods($methods)
+            ->setConstructorArgs([
+                $this->contextHelper,
+                $this->checkoutSession,
+                $this->productRepository,
+                $this->apiHelper,
+                $this->configHelper,
+                $this->customerSession,
+                $this->logHelper,
+                $this->bugsnag,
+                $this->dataObjectFactory,
+                $this->imageHelperFactory,
+                $this->appEmulation,
+                $this->quoteFactory,
+                $this->totalsCollector,
+                $this->quoteCartRepository,
+                $this->orderRepository,
+                $this->searchCriteriaBuilder,
+                $this->quoteResource,
+                $this->sessionHelper,
+                $this->checkoutHelper,
+                $this->discountHelper,
+                $this->cache,
+                $this->resourceConnection,
+                $this->quoteManagement,
+                $this->hookHelper,
+                $this->customerRepository,
+                $this->moaValidationMessage
+            ])->getMock();
     }
 
     /**
@@ -957,57 +920,57 @@ ORDER;
      */
     public function collectDiscounts_NoDiscounts()
     {
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $this->getShippingAddress());
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->once())
-                        ->method('getDiscountAmount')
-                        ->willReturn(0);
+            ->method('getDiscountAmount')
+            ->willReturn(0);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $totalAmount = 10000;
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = false;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1024,74 +987,74 @@ ORDER;
      */
     public function collectDiscounts_Coupon()
     {
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn('123456');
+            ->method('getCouponCode')
+            ->willReturn('123456');
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $appliedDiscount = 10; // $
 
         $shippingAddress->expects($this->once())
-                        ->method('getDiscountAmount')
-                        ->willReturn($appliedDiscount);
+            ->method('getDiscountAmount')
+            ->willReturn($appliedDiscount);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = false;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
 
         $this->assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
     }
@@ -1101,70 +1064,70 @@ ORDER;
      */
     public function collectDiscounts_StoreCreditWithPaymentOnly()
     {
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())->method('getUseCustomerBalance')
-              ->willReturn(true);
+            ->willReturn(true);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $appliedDiscount = 10; // $
 
         $quote->expects($this->once())
-              ->method('getCustomerBalanceAmountUsed')
-              ->willReturn($appliedDiscount);
+            ->method('getCustomerBalanceAmountUsed')
+            ->willReturn($appliedDiscount);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1172,7 +1135,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1183,72 +1146,72 @@ ORDER;
      */
     public function collectDiscounts_MirasvitStoreCredit()
     {
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(true);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(true);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
-        $totalAmount     = 10000; // cents
-        $diff            = 0;
-        $paymentOnly     = true;
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
         $appliedDiscount = 10; // $
 
         $this->discountHelper->expects($this->once())
-                             ->method('getMirasvitStoreCreditAmount')
-                             ->with($quote, $paymentOnly)
-                             ->willReturn($appliedDiscount);
+            ->method('getMirasvitStoreCreditAmount')
+            ->with($quote, $paymentOnly)
+            ->willReturn($appliedDiscount);
 
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1256,7 +1219,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1268,75 +1231,75 @@ ORDER;
     public function collectDiscounts_RewardPointsWithPaymentOnly()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $quote->method('getTotals')
-              ->willReturn([]);
+            ->willReturn([]);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(true);
+            ->method('getUseRewardPoints')
+            ->willReturn(true);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
-        $totalAmount     = 10000; // cents
-        $diff            = 0;
-        $paymentOnly     = true;
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
         $appliedDiscount = 10; // $
 
         $quote->expects($this->once())
-              ->method('getRewardCurrencyAmount')
-              ->willReturn($appliedDiscount);
+            ->method('getRewardCurrencyAmount')
+            ->willReturn($appliedDiscount);
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
 
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1348,70 +1311,70 @@ ORDER;
     public function collectDiscounts_AheadworksStoreCredit()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $appliedDiscount = 10; // $
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::AHEADWORKS_STORE_CREDIT => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::AHEADWORKS_STORE_CREDIT => $this->quoteAddressTotal]);
 
         $this->discountHelper->expects($this->once())
-                             ->method('getAheadworksStoreCredit')
-                             ->with($quote->getCustomerId())
-                             ->willReturn($appliedDiscount);
+            ->method('getAheadworksStoreCredit')
+            ->with($quote->getCustomerId())
+            ->willReturn($appliedDiscount);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1419,7 +1382,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1431,73 +1394,73 @@ ORDER;
     public function collectDiscounts_BssStoreCredit()
     {
         $appliedDiscount = 10; // $
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAmastyPayForEverything');
+            ->method('getAmastyPayForEverything');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isBssStoreCreditAllowed')
-                             ->willReturn(true);
+            ->method('isBssStoreCreditAllowed')
+            ->willReturn(true);
 
         $this->discountHelper->expects($this->once())
-                             ->method('getBssStoreCreditAmount')
-                             ->withAnyParameters()
-                             ->willReturn($appliedDiscount);
+            ->method('getBssStoreCreditAmount')
+            ->withAnyParameters()
+            ->willReturn($appliedDiscount);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1505,7 +1468,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1517,83 +1480,83 @@ ORDER;
     public function collectDiscounts_Amasty_Giftcard()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getMageplazaGiftCardCodes');
+            ->method('getMageplazaGiftCardCodes');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
         $appliedDiscount = 10; // $
-        $amastyGiftCode  = "12345";
+        $amastyGiftCode = "12345";
 
         $this->discountHelper->expects($this->once())
-                             ->method('getAmastyPayForEverything')
-                             ->willReturn(true);
+            ->method('getAmastyPayForEverything')
+            ->willReturn(true);
         $this->discountHelper->expects($this->once())
-                             ->method('getAmastyGiftCardCodesFromTotals')
-                             ->willReturn($amastyGiftCode);
+            ->method('getAmastyGiftCardCodesFromTotals')
+            ->willReturn($amastyGiftCode);
 
         $this->discountHelper->expects($this->once())
-                             ->method('getAmastyGiftCardCodesCurrentValue')
-                             ->with($amastyGiftCode)
-                             ->willReturn($appliedDiscount);
+            ->method('getAmastyGiftCardCodesCurrentValue')
+            ->with($amastyGiftCode)
+            ->willReturn($appliedDiscount);
 
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getValue')
-                                ->willReturn($appliedDiscount);
+        ->method('getValue')
+        ->willReturn($appliedDiscount);
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1601,7 +1564,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1613,77 +1576,77 @@ ORDER;
     public function collectDiscounts_Mageplaza_GiftCard()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $this->discountHelper->expects($this->never())
-                             ->method('getUnirgyGiftCertBalanceByCode');
+            ->method('getUnirgyGiftCertBalanceByCode');
 
-        $appliedDiscount   = 10; // $
+        $appliedDiscount = 10; // $
         $mageplazaGiftCode = "12345";
 
         $this->discountHelper->expects($this->once())
-                             ->method('getMageplazaGiftCardCodes')
-                             ->willReturn($mageplazaGiftCode);
+            ->method('getMageplazaGiftCardCodes')
+            ->willReturn($mageplazaGiftCode);
 
         $this->discountHelper->expects($this->once())
-                             ->method('getMageplazaGiftCardCodesCurrentValue')
-                             ->with($mageplazaGiftCode)
-                             ->willReturn($appliedDiscount);
+            ->method('getMageplazaGiftCardCodesCurrentValue')
+            ->with($mageplazaGiftCode)
+            ->willReturn($appliedDiscount);
 
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getValue')
-                                ->willReturn($appliedDiscount);
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::MAGEPLAZA_GIFTCARD => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::MAGEPLAZA_GIFTCARD => $this->quoteAddressTotal]);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1691,7 +1654,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1703,74 +1666,74 @@ ORDER;
     public function collectDiscounts_Unirgy_Giftcert()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
-        $appliedDiscount    = 10; // $
+        $appliedDiscount = 10; // $
         $unirgyGiftcertCode = "12345";
 
         $quote->expects($this->any())
-              ->method("getData")
-              ->with("giftcert_code")
-              ->willReturn($unirgyGiftcertCode);
+            ->method("getData")
+            ->with("giftcert_code")
+            ->willReturn($unirgyGiftcertCode);
 
         $this->discountHelper->expects($this->once())
-                             ->method('getUnirgyGiftCertBalanceByCode')
-                             ->with($unirgyGiftcertCode)
-                             ->willReturn($appliedDiscount);
+            ->method('getUnirgyGiftCertBalanceByCode')
+            ->with($unirgyGiftcertCode)
+            ->willReturn($appliedDiscount);
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getValue')
-                                ->willReturn($appliedDiscount);
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1778,7 +1741,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1790,68 +1753,68 @@ ORDER;
     public function collectDiscounts_GiftVoucher()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $appliedDiscount = 10; // $
-        $giftVaucher     = "12345";
+        $giftVaucher = "12345";
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn($giftVaucher);
+            ->method('getCouponCode')
+            ->willReturn($giftVaucher);
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getValue')
-                                ->willReturn($appliedDiscount);
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getTitle')
-                                ->willReturn("Gift Voucher");
+            ->method('getTitle')
+            ->willReturn("Gift Voucher");
 
         $shippingAddress->expects($this->once())
-                        ->method('getDiscountAmount')
-                        ->willReturn($appliedDiscount);
+            ->method('getDiscountAmount')
+            ->willReturn($appliedDiscount);
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1859,7 +1822,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[1]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1871,68 +1834,68 @@ ORDER;
     public function collectDiscounts_OtherDiscount()
     {
 
-        $mock            = $this->getCurrentMock();
+        $mock = $this->getCurrentMock();
         $shippingAddress = $this->getShippingAddress();
 
         $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
 
         $quote->method('getBoltParentQuoteId')
-              ->willReturn(999999);
+            ->willReturn(999999);
 
         $mock->expects($this->once())
-             ->method('getQuoteById')
-             ->willReturn($quote);
+            ->method('getQuoteById')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getLastImmutableQuote')
-             ->willReturn($quote);
+            ->method('getLastImmutableQuote')
+            ->willReturn($quote);
 
         $mock->expects($this->once())
-             ->method('getCalculationAddress')
-             ->with($quote)
-             ->willReturn($shippingAddress);
+            ->method('getCalculationAddress')
+            ->with($quote)
+            ->willReturn($shippingAddress);
 
         $quote->expects($this->once())
-              ->method('getUseCustomerBalance')
-              ->willReturn(false);
+            ->method('getUseCustomerBalance')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->once())
-                             ->method('isMirasvitStoreCreditAllowed')
-                             ->with($quote)
-                             ->willReturn(false);
+            ->method('isMirasvitStoreCreditAllowed')
+            ->with($quote)
+            ->willReturn(false);
 
         $quote->expects($this->once())
-              ->method('getUseRewardPoints')
-              ->willReturn(false);
+            ->method('getUseRewardPoints')
+            ->willReturn(false);
 
         $this->discountHelper->expects($this->never())
-                             ->method('getAheadworksStoreCredit');
+            ->method('getAheadworksStoreCredit');
 
         $shippingAddress->expects($this->any())
-                        ->method('getDiscountAmount')
-                        ->willReturn(false);
+            ->method('getDiscountAmount')
+            ->willReturn(false);
 
         $shippingAddress->expects($this->any())
-                        ->method('getCouponCode')
-                        ->willReturn(false);
+            ->method('getCouponCode')
+            ->willReturn(false);
 
         $appliedDiscount = 10; // $
-        $discountCode    = "12345";
+        $discountCode = "12345";
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getValue')
-                                ->willReturn($appliedDiscount);
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
 
         $this->quoteAddressTotal->expects($this->once())
-                                ->method('getTitle')
-                                ->willReturn("Other Discount");
+            ->method('getTitle')
+            ->willReturn("Other Discount");
 
         $quote->expects($this->any())
-              ->method('getTotals')
-              ->willReturn([DiscountHelper::GIFT_VOUCHER_AFTER_TAX => $this->quoteAddressTotal]);
+            ->method('getTotals')
+            ->willReturn([DiscountHelper::GIFT_VOUCHER_AFTER_TAX => $this->quoteAddressTotal]);
 
         $totalAmount = 10000; // cents
-        $diff        = 0;
+        $diff = 0;
         $paymentOnly = true;
 
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
@@ -1940,7 +1903,7 @@ ORDER;
         $this->assertEquals($diffResult, $diff);
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount    = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -1952,9 +1915,9 @@ ORDER;
      */
     public function getCartItems_AttributeInfoValue_Boolean()
     {
-        $color                       = 'Blue';
-        $size                        = 'S';
-        $quoteItemOptions            = [
+        $color = 'Blue';
+        $size = 'S';
+        $quoteItemOptions = [
             'attributes_info' => [
                 [
                     'label' => 'Size',
@@ -1967,22 +1930,21 @@ ORDER;
             ]
         ];
         $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
-                                            ->setMethods(['getOrderOptions'])
-                                            ->disableOriginalConstructor()
-                                            ->getMock();
+            ->setMethods(['getOrderOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
         $productMock = $this->getMockBuilder(Product::class)
-                            ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
-                            ->disableOriginalConstructor()
-                            ->getMock();
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $productMock->method('getDescription')->willReturn('Product Description');
         $productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
 
         $quoteItemMock = $this->getQuoteItemMock($productMock);
 
-        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems('USD', [$quoteItemMock],
-            self::STORE_ID);
+        list($products, $totalAmount, $diff) = $this->getCurrentMock()->getCartItems('USD', [$quoteItemMock], self::STORE_ID);
 
         $this->assertCount(1, $products);
         $this->assertArrayHasKey('properties', $products[0]);
@@ -2000,100 +1962,95 @@ ORDER;
     private function getQuoteItemMock($product = null)
     {
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-                          ->setMethods([
-                              'getSku',
-                              'getQty',
-                              'getCalculationPrice',
-                              'getName',
-                              'getIsVirtual',
-                              'getProductId',
-                              'getProduct'
-                          ])
-                          ->disableOriginalConstructor()
-                          ->getMock();
+            ->setMethods([
+                'getSku',
+                'getQty',
+                'getCalculationPrice',
+                'getName',
+                'getIsVirtual',
+                'getProductId',
+                'getProduct'
+            ])
+            ->disableOriginalConstructor()
+            ->getMock();
         $quoteItem->method('getName')
-                  ->willReturn('Test Product');
+            ->willReturn('Test Product');
         $quoteItem->method('getSku')
-                  ->willReturn('TestProduct');
+            ->willReturn('TestProduct');
         $quoteItem->method('getQty')
-                  ->willReturn(1);
+            ->willReturn(1);
         $quoteItem->method('getCalculationPrice')
-                  ->willReturn(self::PRODUCT_PRICE);
+            ->willReturn(self::PRODUCT_PRICE);
         $quoteItem->method('getIsVirtual')
-                  ->willReturn(false);
+            ->willReturn(false);
         $quoteItem->method('getProductId')
-                  ->willReturn(self::PRODUCT_ID);
+            ->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')
-                  ->willReturn($product ? $product : $this->getProductMock());
+            ->willReturn($product ? $product : $this->getProductMock());
 
         return $quoteItem;
     }
 
-    private function createCartByRequest_GetExpectedCartData()
-    {
+    private function createCartByRequest_GetExpectedCartData() {
         return [
             'order_reference' => SELF::QUOTE_ID,
-            'display_id'      => SELF::ORDER_ID . ' / ' . SELF::QUOTE_ID,
-            'currency'        => 'USD',
-            'items'           => [
-                [
-                    'reference'    => SELF::PRODUCT_ID,
-                    'name'         => 'Affirm Water Bottle ',
+            'display_id' => SELF::ORDER_ID.' / '.SELF::QUOTE_ID,
+            'currency' => 'USD',
+            'items' => [
+                [ 'reference' => SELF::PRODUCT_ID,
+                    'name' => 'Affirm Water Bottle ',
                     'total_amount' => SELF::PRODUCT_PRICE,
-                    'unit_price'   => SELF::PRODUCT_PRICE,
-                    'quantity'     => 1,
-                    'sku'          => SELF::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product description',
+                    'unit_price' => SELF::PRODUCT_PRICE,
+                    'quantity' => 1,
+                    'sku' => SELF::PRODUCT_SKU,
+                    'type' => 'physical',
+                    'description' => 'Product description',
                 ],
             ],
-            'discounts'       => [],
-            'total_amount'    => SELF::PRODUCT_PRICE,
-            'tax_amount'      => 0,
+            'discounts' => [],
+            'total_amount' => SELF::PRODUCT_PRICE,
+            'tax_amount' => 0,
         ];
     }
 
-    private function createCartByRequest_GetBaseRequest()
-    {
+    private function createCartByRequest_GetBaseRequest() {
         return [
-            'type'     => 'cart.create',
-            'items'    =>
+            'type' => 'cart.create',
+            'items' =>
                 [
                     [
-                        'reference'    => SELF::PRODUCT_ID,
-                        'name'         => 'Product name',
-                        'description'  => null,
-                        'options'      => json_encode(['storeId' => SELF::STORE_ID]),
+                        'reference' => SELF::PRODUCT_ID,
+                        'name' => 'Product name',
+                        'description' => NULL,
+                        'options' => json_encode(['storeId'=>SELF::STORE_ID]),
                         'total_amount' => SELF::PRODUCT_PRICE,
-                        'unit_price'   => SELF::PRODUCT_PRICE,
-                        'tax_amount'   => 0,
-                        'quantity'     => 1,
-                        'uom'          => null,
-                        'upc'          => null,
-                        'sku'          => null,
-                        'isbn'         => null,
-                        'brand'        => null,
-                        'manufacturer' => null,
-                        'category'     => null,
-                        'tags'         => null,
-                        'properties'   => null,
-                        'color'        => null,
-                        'size'         => null,
-                        'weight'       => null,
-                        'weight_unit'  => null,
-                        'image_url'    => null,
-                        'details_url'  => null,
-                        'tax_code'     => null,
-                        'type'         => 'unknown'
+                        'unit_price' => SELF::PRODUCT_PRICE,
+                        'tax_amount' => 0,
+                        'quantity' => 1,
+                        'uom' => NULL,
+                        'upc' => NULL,
+                        'sku' => NULL,
+                        'isbn' => NULL,
+                        'brand' => NULL,
+                        'manufacturer' => NULL,
+                        'category' => NULL,
+                        'tags' => NULL,
+                        'properties' => NULL,
+                        'color' => NULL,
+                        'size' => NULL,
+                        'weight' => NULL,
+                        'weight_unit' => NULL,
+                        'image_url' => NULL,
+                        'details_url' => NULL,
+                        'tax_code' => NULL,
+                        'type' => 'unknown'
                     ]
                 ],
             'currency' => 'USD',
-            'metadata' => null,
+            'metadata' => NULL,
         ];
     }
-
-    private function onceOrAny($isSuccessfulCase)
-    {
+    private function onceOrAny($isSuccessfulCase) {
         if ($isSuccessfulCase) {
             return $this->once();
         } else {
@@ -2101,10 +2058,9 @@ ORDER;
         }
     }
 
-    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true, $options = null)
-    {
+    private function createCartByRequest_CreateQuoteMock($isSuccessfulCase = true, $options = null) {
         if (is_null($options)) {
-            $options = ['qty' => 1];
+            $options = ['qty'=>1];
         }
         if ($isSuccessfulCase) {
             $expects = $this->once();
@@ -2121,85 +2077,71 @@ ORDER;
             ['createEmptyCart']
         );
         $this->quoteManagement->expects($this->once())
-                              ->method('createEmptyCart')
-                              ->willReturn(SELF::QUOTE_ID);
+            ->method('createEmptyCart')
+            ->willReturn(SELF::QUOTE_ID);
 
         $product = $this->getMockBuilder(Product::class)
-                        ->disableOriginalConstructor()
-                        ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $quote = $this->getMockBuilder(Quote::class)
-                      ->setMethods([
-                          'addProduct',
-                          'reserveOrderId',
-                          'collectTotals',
-                          'save',
-                          'getId',
-                          'getReservedOrderId',
-                          'setBoltReservedOrderId',
-                          'assignCustomer',
-                          'setBoltParentQuoteId',
-                          'setIsActive',
-                          'setStoreId'
-                      ])
-                      ->disableOriginalConstructor()
-                      ->getMock();
+            ->setMethods(['addProduct','reserveOrderId','collectTotals','save','getId','getReservedOrderId','setBoltReservedOrderId','assignCustomer','setBoltParentQuoteId','setIsActive','setStoreId'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $quote->expects($this->once())
-              ->method('setBoltParentQuoteId')
-              ->with(SELF::QUOTE_ID);
+            ->method('setBoltParentQuoteId')
+            ->with(SELF::QUOTE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('addProduct')
-              ->with(
-                  $product,
-                  new \Magento\Framework\DataObject($options)
-              );
+            ->method('addProduct')
+            ->with(
+                $product,
+                new \Magento\Framework\DataObject($options)
+            );
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('setStoreId')
-              ->with(self::STORE_ID);
+            ->method('setStoreId')
+            ->with(self::STORE_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('reserveOrderId');
+            ->method('reserveOrderId');
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('getReservedOrderId')
-              ->willReturn(self::ORDER_ID);
+            ->method('getReservedOrderId')
+            ->willReturn(self::ORDER_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('setBoltReservedOrderId')
-              ->with(self::ORDER_ID);
+            ->method('setBoltReservedOrderId')
+            ->with(self::ORDER_ID);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('setIsActive')
-              ->with(false);
+            ->method('setIsActive')
+            ->with(false);
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('collectTotals')
-              ->willReturnSelf();
+            ->method('collectTotals')
+            ->willReturnSelf();
         $quote->expects($this->onceOrAny($isSuccessfulCase))
-              ->method('save');
+            ->method('save');
 
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
-                                   ->setMethods(['create', 'load'])
-                                   ->disableOriginalConstructor()
-                                   ->getMock();
+            ->setMethods(['create','load'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->quoteFactory->method('create')
-                           ->withAnyParameters()
-                           ->willReturnSelf();
+            ->withAnyParameters()
+            ->willReturnSelf();
         $this->quoteFactory->method('load')
-                           ->with(SELF::QUOTE_ID)
-                           ->willReturn($quote);
+            ->with(SELF::QUOTE_ID)
+            ->willReturn($quote);
 
         $this->productRepository = $this->getMockBuilder(ProductRepository::class)
-                                        ->setMethods(['getbyId'])
-                                        ->disableOriginalConstructor()
-                                        ->getMock();
+            ->setMethods(['getbyId'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->productRepository->method('getbyId')
-                                ->with(SELF::PRODUCT_ID)
-                                ->willReturn($product);
-
+            ->with(SELF::PRODUCT_ID)
+            ->willReturn($product);
         return $quote;
     }
 
     /**
      * @test
      */
-    public function createCartByRequest_GuestUser_SimpleProduct()
-    {
+    public function createCartByRequest_GuestUser_SimpleProduct() {
         $request = $this->createCartByRequest_GetBaseRequest();
 
         $quote = $this->createCartByRequest_CreateQuoteMock();
@@ -2208,9 +2150,9 @@ ORDER;
 
         $cartMock = $this->getCurrentMock(['getCartData']);
         $cartMock->expects($this->once())
-                 ->method('getCartData')
-                 ->with(false, '', $quote)
-                 ->willReturn($expectedCartData);
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -2218,27 +2160,25 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_GuestUser_ConfigurableProduct()
-    {
-        $request                        = $this->createCartByRequest_GetBaseRequest();
+    public function createCartByRequest_GuestUser_ConfigurableProduct() {
+        $request = $this->createCartByRequest_GetBaseRequest();
         $request['items'][0]['options'] = json_encode([
-            "product"                      => SELF::PRODUCT_ID,
+            "product" => SELF::PRODUCT_ID,
             "selected_configurable_option" => "",
-            "item"                         => SELF::PRODUCT_ID,
-            "related_product"              => "",
-            "form_key"                     => "8xaF8eKXVaiRVM53",
-            "super_attribute"              => SELF::SUPER_ATTRIBUTE,
-            "qty"                          => "1",
-            'storeId'                      => SELF::STORE_ID
-        ], JSON_FORCE_OBJECT);
+            "item" => SELF::PRODUCT_ID,
+            "related_product" => "",
+            "form_key" => "8xaF8eKXVaiRVM53",
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => "1",
+            'storeId' => SELF::STORE_ID], JSON_FORCE_OBJECT);
 
         $options = [
-            "product"                      => SELF::PRODUCT_ID,
+            "product" => SELF::PRODUCT_ID,
             "selected_configurable_option" => "",
-            "related_product"              => "",
-            "item"                         => SELF::PRODUCT_ID,
-            "super_attribute"              => SELF::SUPER_ATTRIBUTE,
-            "qty"                          => 1
+            "related_product" => "",
+            "item" => SELF::PRODUCT_ID,
+            "super_attribute" => SELF::SUPER_ATTRIBUTE,
+            "qty" => 1
         ];
 
         $quote = $this->createCartByRequest_CreateQuoteMock(true, $options);
@@ -2247,45 +2187,40 @@ ORDER;
 
         $cartMock = $this->getCurrentMock(['getCartData']);
         $cartMock->expects($this->once())
-                 ->method('getCartData')
-                 ->with(false, '', $quote)
-                 ->willReturn($expectedCartData);
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
 
 
-    private function createCartByRequest_TuneMocksForSignature($expected_payload)
-    {
+    private function createCartByRequest_TuneMocksForSignature($expected_payload) {
         $this->hookHelper->method('verifySignature')
-                         ->will($this->returnCallback(function ($payload, $hmac_header) use ($expected_payload) {
-                             return $payload == json_encode($expected_payload) && $hmac_header == 'correct_signature';
-                         }));
+            ->will($this->returnCallback(function($payload, $hmac_header) use ($expected_payload) {
+                return $payload==json_encode( $expected_payload ) && $hmac_header == 'correct_signature';
+            }));
     }
 
-    private function createCartByRequest_CreateCustomerMock()
-    {
+    private function createCartByRequest_CreateCustomerMock() {
         $customer = $this->createMock(\Magento\Customer\Api\Data\CustomerInterface::class);
         $this->customerRepository->method('getById')
-                                 ->will($this->returnCallback(function ($user_id) use ($customer) {
-                                     if ($user_id <> 1) {
-                                         throw new \Exception;
-                                     }
-
-                                     return $customer;
-                                 }));
-
+            ->will($this->returnCallback(function($user_id) use ($customer) {
+                if ($user_id<>1) {
+                    throw new \Exception;
+                }
+                return $customer;
+            }));
         return $customer;
     }
 
     /**
      * @test
      */
-    public function createCartByRequest_LoggedInUser()
-    {
-        $request                                  = $this->createCartByRequest_GetBaseRequest();
-        $payload                                  = ['user_id' => 1, 'timestamp' => time()];
-        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'correct_signature']);
+    public function createCartByRequest_LoggedInUser() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
         $this->createCartByRequest_TuneMocksForSignature($payload);
         $customer = $this->createCartByRequest_CreateCustomerMock();
 
@@ -2296,9 +2231,9 @@ ORDER;
 
         $cartMock = $this->getCurrentMock(['getCartData']);
         $cartMock->expects($this->once())
-                 ->method('getCartData')
-                 ->with(false, '', $quote)
-                 ->willReturn($expectedCartData);
+            ->method('getCartData')
+            ->with(false,'',$quote)
+            ->willReturn($expectedCartData);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -2306,20 +2241,19 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_LoggedInUser_IncorrectEncryptedUserID()
-    {
-        $request                                  = $this->createCartByRequest_GetBaseRequest();
-        $payload                                  = ['user_id' => 1];
-        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'correct_signature']);
+    public function createCartByRequest_LoggedInUser_IncorrectEncryptedUserID() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
         $this->createCartByRequest_TuneMocksForSignature($payload);
         $customer = $this->createCartByRequest_CreateCustomerMock();
 
         $quote = $this->createCartByRequest_CreateQuoteMock(false);
 
-        try {
+        try{
             $this->getCurrentMock()->createCartByRequest($request);
             $this->fail("Expected exception not thrown");
-        } catch (WebapiException $e) {
+        }catch(WebapiException $e){
             $this->assertEquals(6306, $e->getCode());
             $this->assertEquals("Incorrect encrypted_user_id", $e->getMessage());
         }
@@ -2328,20 +2262,19 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_LoggedInUser_IncorrectSignature()
-    {
-        $request                                  = $this->createCartByRequest_GetBaseRequest();
-        $payload                                  = ['user_id' => 1, 'timestamp' => time()];
-        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'incorrect_signature']);
+    public function createCartByRequest_LoggedInUser_IncorrectSignature() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'incorrect_signature']);
         $this->createCartByRequest_TuneMocksForSignature($payload);
         $customer = $this->createCartByRequest_CreateCustomerMock();
 
         $quote = $this->createCartByRequest_CreateQuoteMock(false);
 
-        try {
+        try{
             $this->getCurrentMock()->createCartByRequest($request);
             $this->fail("Expected exception not thrown");
-        } catch (WebapiException $e) {
+        }catch(WebapiException $e){
             $this->assertEquals(6306, $e->getCode());
             $this->assertEquals("Incorrect signature", $e->getMessage());
         }
@@ -2350,20 +2283,19 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_LoggedInUser_OutdatedEnctyptedUserId()
-    {
-        $request                                  = $this->createCartByRequest_GetBaseRequest();
-        $payload                                  = ['user_id' => 1, 'timestamp' => time() - 3600 - 1];
-        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'correct_signature']);
+    public function createCartByRequest_LoggedInUser_OutdatedEnctyptedUserId() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>1, 'timestamp' => time()-3600-1];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
         $this->createCartByRequest_TuneMocksForSignature($payload);
         $customer = $this->createCartByRequest_CreateCustomerMock();
 
         $quote = $this->createCartByRequest_CreateQuoteMock(false);
 
-        try {
+        try{
             $this->getCurrentMock()->createCartByRequest($request);
             $this->fail("Expected exception not thrown");
-        } catch (WebapiException $e) {
+        }catch(WebapiException $e){
             $this->assertEquals(6306, $e->getCode());
             $this->assertEquals("Outdated encrypted_user_id", $e->getMessage());
         }
@@ -2372,56 +2304,53 @@ ORDER;
     /**
      * @test
      */
-    public function createCartByRequest_LoggedInUser_WrongUserId()
-    {
-        $request                                  = $this->createCartByRequest_GetBaseRequest();
-        $payload                                  = ['user_id' => 2, 'timestamp' => time()];
-        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'correct_signature']);
+    public function createCartByRequest_LoggedInUser_WrongUserId() {
+        $request = $this->createCartByRequest_GetBaseRequest();
+        $payload = ['user_id'=>2, 'timestamp' => time()];
+        $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature'=>'correct_signature']);
         $this->createCartByRequest_TuneMocksForSignature($payload);
         $customer = $this->createCartByRequest_CreateCustomerMock();
 
         $quote = $this->createCartByRequest_CreateQuoteMock(false);
 
-        try {
+        try{
             $this->getCurrentMock()->createCartByRequest($request);
             $this->fail("Expected exception not thrown");
-        } catch (WebapiException $e) {
+        }catch(WebapiException $e){
             $this->assertEquals(6306, $e->getCode());
             $this->assertEquals("Incorrect user_id", $e->getMessage());
         }
     }
-
+    
     /**
-     * @test
-     * @dataProvider providerHasValidMinimumOrderAmountForCart
-     */
-    public function hasValidMinimumOrderAmountForCart($flag, $expected_result)
-    {
-        $billingAddress  = $this->getBillingAddress();
-        $shippingAddress = $this->getShippingAddress();
-        $quote           = $this->getQuoteMock($billingAddress, $shippingAddress);
+	 * @test
+	 * @dataProvider providerHasValidMinimumOrderAmountForCart
+	 */
+	public function hasValidMinimumOrderAmountForCart( $flag, $expected_result ) {
+		$billingAddress  = $this->getBillingAddress();
+		$shippingAddress = $this->getShippingAddress();
+		$quote           = $this->getQuoteMock( $billingAddress, $shippingAddress );
 
-        $quote->method('validateMinimumAmount')
-              ->willReturn($flag);
+		$quote->method( 'validateMinimumAmount' )
+		      ->willReturn( $flag );
 
-        $this->checkoutSession = $this->getMockBuilder(\Magento\Framework\Session\SessionManager::class)
-                                      ->setMethods(['getQuote'])
-                                      ->disableOriginalConstructor()
-                                      ->getMock();
-        $this->checkoutSession->expects($this->any())
-                              ->method('getQuote')
-                              ->willReturn($quote);
+		$this->checkoutSession = $this->getMockBuilder( \Magento\Framework\Session\SessionManager::class )
+		                              ->setMethods( [ 'getQuote' ] )
+		                              ->disableOriginalConstructor()
+		                              ->getMock();
+		$this->checkoutSession->expects( $this->any() )
+		                      ->method( 'getQuote' )
+		                      ->willReturn( $quote );
 
-        $result = $this->getCurrentMock()->hasValidMinimumOrderAmountForCart();
-        $this->assertEquals($expected_result, $result);
-    }
+		$result = $this->getCurrentMock()->hasValidMinimumOrderAmountForCart();
+		$this->assertEquals( $expected_result, $result );
+	}
 
-    public function providerHasValidMinimumOrderAmountForCart()
-    {
-        return [
-            [false, false],
-            [true, true],
-        ];
-    }
+	public function providerHasValidMinimumOrderAmountForCart() {
+		return [
+			[ false, false ],
+			[ true, true ],
+		];
+	}
 
 }

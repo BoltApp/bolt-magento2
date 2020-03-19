@@ -95,68 +95,68 @@ class DataTest extends TestCase
     {
         $this->requestShippingAddress = 'String';
 
-        $this->response = (object)(array(
-            'cart'  =>
-                (object)(array(
+        $this->response = (object) ( array(
+            'cart' =>
+                (object) ( array(
                     'order_reference' => self::ORDER_REFERENCE,
                     'display_id'      => '100050001 / 1234',
                     'shipments'       =>
                         array(
                             0 =>
-                                (object)(array(
+                                (object) ( array(
                                     'shipping_address' => $this->requestShippingAddress,
-                                    'shipping_method'  => 'unknown',
-                                    'service'          => 'Flat Rate - Fixed',
-                                    'cost'             =>
-                                        (object)(array(
+                                    'shipping_method' => 'unknown',
+                                    'service'         => 'Flat Rate - Fixed',
+                                    'cost'            =>
+                                        (object) ( array(
                                             'amount'          => 500,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        )),
-                                    'tax_amount'       =>
-                                        (object)(array(
+                                        ) ),
+                                    'tax_amount'      =>
+                                        (object) ( array(
                                             'amount'          => 0,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        )),
-                                    'reference'        => 'flatrate_flatrate'
-                                )),
+                                        ) ),
+                                    'reference'       => 'flatrate_flatrate'
+                                ) ),
                         ),
-                )),
+                ) ),
             'token' => self::TOKEN
-        ));
+        ) );
 
         //weird bit of stuff here, copied from the code under test
         $this->responseData = json_decode(json_encode($this->response), true);
 
         $this->expectedCart = array_merge($this->responseData['cart'], [
-            'orderToken'    => self::TOKEN,
+            'orderToken' => self::TOKEN,
             'cartReference' => self::ORDER_REFERENCE
         ]);
     }
 
     private function initRequiredMocks()
     {
-        $this->context       = $this->createMock(Context::class);
-        $this->request       = $this->createMock(RequestInterface::class);
+        $this->context = $this->createMock(Context::class);
+        $this->request = $this->createMock(RequestInterface::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
 
         $this->request->method('getParam')->willReturn('placeholder');
         $this->context->method('getRequest')->willReturn($this->request);
 
         $this->boltpayOrder = $this->getMockBuilder(Response::class)
-                                   ->setMethods(['getResponse'])
-                                   ->disableOriginalConstructor()
-                                   ->getMock();
+            ->setMethods(['getResponse'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->boltpayOrder->method('getResponse')->willReturn($this->response);
 
         $this->cartHelper = $this->createMock(Cart::class);
         $this->cartHelper->method('isCheckoutAllowed')->willReturn(true);
         $this->cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $this->cartHelper->method('hasValidMinimumOrderAmountForCart')->willReturn(true);
+        $this->cartHelper->method( 'hasValidMinimumOrderAmountForCart' )->willReturn( true );
         $this->cartHelper->method('getBoltpayOrder')
-                         ->withAnyParameters()
-                         ->willReturn($this->boltpayOrder);
+            ->withAnyParameters()
+            ->willReturn($this->boltpayOrder);
         $this->cartHelper->method('getHints')->willReturn(self::HINT);
 
         //Does not appear to be used in Data.php but is a part of the constructor
@@ -168,17 +168,16 @@ class DataTest extends TestCase
     private function buildJsonMock($expected)
     {
         $json = $this->getMockBuilder(Json::class)
-                     ->disableOriginalConstructor()
-                     ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock();
         $json->expects($this->at(0))
-             ->method('setData')
-             ->with($expected);
+            ->method('setData')
+            ->with($expected);
         $jsonFactoryMock = $this->getMockBuilder(JsonFactory::class)
-                                ->disableOriginalConstructor()
-                                ->getMock();
+            ->disableOriginalConstructor()
+            ->getMock();
         $jsonFactoryMock->method('create')
-                        ->willReturn($json);
-
+            ->willReturn($json);
         return $jsonFactoryMock;
     }
 
@@ -188,24 +187,24 @@ class DataTest extends TestCase
     public function execute_happyPath()
     {
         $expected = array(
-            'status'  => 'success',
-            'cart'    => $this->expectedCart,
-            'hints'   => self::HINT,
+            'status' => 'success',
+            'cart' => $this->expectedCart,
+            'hints' => self::HINT,
             'backUrl' => ''
         );
 
         $this->boltpayOrder = $this->getMockBuilder(Response::class)
-                                   ->setMethods(['getResponse'])
-                                   ->disableOriginalConstructor()
-                                   ->getMock();
+            ->setMethods(['getResponse'])
+            ->disableOriginalConstructor()
+            ->getMock();
         $this->boltpayOrder->method('getResponse')->willReturn($this->response);
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('isCheckoutAllowed')->willReturn(true);
         $cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $cartHelper->method('hasValidMinimumOrderAmountForCart')->willReturn(true);
+        $cartHelper->method( 'hasValidMinimumOrderAmountForCart' )->willReturn( true );
         $cartHelper->method('getBoltpayOrder')
-                   ->withAnyParameters()
-                   ->willReturn($this->boltpayOrder);
+            ->withAnyParameters()
+            ->willReturn($this->boltpayOrder);
 
         $jsonFactoryMock = $this->buildJsonMock($expected);
 
@@ -230,10 +229,10 @@ class DataTest extends TestCase
         $cartHelper->method('hasProductRestrictions')->willReturn(true);
 
         $expected = array(
-            'status'   => 'success',
+            'status' => 'success',
             'restrict' => true,
-            'message'  => 'The cart has products not allowed for Bolt checkout',
-            'backUrl'  => ''
+            'message' => 'The cart has products not allowed for Bolt checkout',
+            'backUrl' => ''
         );
 
         $jsonFactoryMock = $this->buildJsonMock($expected);
@@ -259,10 +258,10 @@ class DataTest extends TestCase
         $cartHelper->method('isCheckoutAllowed')->willReturn(false);
 
         $expected = array(
-            'status'   => 'success',
+            'status' => 'success',
             'restrict' => true,
-            'message'  => 'Guest checkout is not allowed.',
-            'backUrl'  => ''
+            'message' => 'Guest checkout is not allowed.',
+            'backUrl' => ''
         );
 
         $jsonFactoryMock = $this->buildJsonMock($expected);
@@ -284,16 +283,16 @@ class DataTest extends TestCase
     public function execute_GeneralException()
     {
         //Make a method throw an exception during execution
-        $exception  = new \Exception(self::EXCEPTION_MESSAGE);
+        $exception = new \Exception(self::EXCEPTION_MESSAGE);
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('hasProductRestrictions')->willReturn(false);
         $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('hasValidMinimumOrderAmountForCart')->willReturn(true);
+        $cartHelper->method( 'hasValidMinimumOrderAmountForCart' )->willReturn( true );
         $cartHelper->method('getBoltpayOrder')->willThrowException($exception);
         $this->bugsnag->expects($this->once())->method('notifyException');
 
         $expected = array(
-            'status'  => 'failure',
+            'status' => 'failure',
             'message' => self::EXCEPTION_MESSAGE,
             'backUrl' => '',
         );
@@ -318,19 +317,19 @@ class DataTest extends TestCase
     public function execute_NullResponse()
     {
         $expected = array(
-            'status'  => 'success',
-            'cart'    => array(
-                'orderToken'    => '',
+            'status' => 'success',
+            'cart' => array(
+                'orderToken' => '',
                 'cartReference' => ''
             ),
-            'hints'   => null,
+            'hints' => null,
             'backUrl' => ''
         );
 
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('hasProductRestrictions')->willReturn(false);
         $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('hasValidMinimumOrderAmountForCart')->willReturn(true);
+        $cartHelper->method( 'hasValidMinimumOrderAmountForCart' )->willReturn( true );
         $cartHelper->method('getBoltpayOrder')->willReturn(null);
 
         $jsonFactoryMock = $this->buildJsonMock($expected);
@@ -346,38 +345,37 @@ class DataTest extends TestCase
 
         $data->execute();
     }
-
+    
     /**
-     * @test
-     */
-    public function execute_failValidMinimumOrderAmountForCart()
-    {
-        $minimumOrderAmountValidationMessage = 'The subtotal (after discount) must be $69 before you can checkout.';
-        $expected                            = array(
-            'status'                      => 'success',
-            'restrict'                    => true,
-            'message'                     => $minimumOrderAmountValidationMessage,
-            'is_not_valid_minimum_amount' => true,
-            'backUrl'                     => '',
-        );
+	 * @test
+	 */
+	public function execute_failValidMinimumOrderAmountForCart() {
+		$minimumOrderAmountValidationMessage = 'The subtotal (after discount) must be $69 before you can checkout.';
+		$expected                            = array(
+			'status'                      => 'success',
+			'restrict'                    => true,
+			'message'                     => $minimumOrderAmountValidationMessage,
+			'is_not_valid_minimum_amount' => true,
+			'backUrl'                     => '',
+		);
 
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('hasValidMinimumOrderAmountForCart')->willReturn(false);
-        $cartHelper->method('getMinimumAmountRuleMessage')->willReturn($minimumOrderAmountValidationMessage);
+		$cartHelper = $this->createMock( Cart::class );
+		$cartHelper->method( 'hasProductRestrictions' )->willReturn( false );
+		$cartHelper->method( 'isCheckoutAllowed' )->willReturn( true );
+		$cartHelper->method( 'hasValidMinimumOrderAmountForCart' )->willReturn( false );
+		$cartHelper->method( 'getMinimumAmountRuleMessage' )->willReturn( $minimumOrderAmountValidationMessage );
 
-        $jsonFactoryMock = $this->buildJsonMock($expected);
+		$jsonFactoryMock = $this->buildJsonMock( $expected );
 
-        $data = new Data(
-            $this->context,
-            $jsonFactoryMock,
-            $cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
-        );
+		$data = new Data(
+			$this->context,
+			$jsonFactoryMock,
+			$cartHelper,
+			$this->configHelper,
+			$this->bugsnag,
+			$this->metricsClient
+		);
 
-        $data->execute();
-    }
+		$data->execute();
+	}
 }

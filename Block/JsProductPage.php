@@ -32,8 +32,7 @@ use Magento\Catalog\Block\Product\View as ProductView;
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
-class JsProductPage extends Js
-{
+class JsProductPage extends Js {
 
     /**
      * @var \Magento\Catalog\Model\Product
@@ -52,7 +51,7 @@ class JsProductPage extends Js
     ) {
         $this->_product = $productView->getProduct();
 
-        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
+        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
     }
 
     /**
@@ -75,7 +74,6 @@ class JsProductPage extends Js
         if (in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout)) {
             return true;
         }
-
         return false;
     }
 
@@ -103,61 +101,42 @@ class JsProductPage extends Js
     {
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
     }
-
+    
     /**
-     * Get Order Minimum Amount is enabled
-     *
-     */
-    public function isEnableOrderMinimumAmount()
-    {
-        $storeId                    = $this->getStoreId();
-        $isEnableOrderMinimumAmount = $this->getScopeConfig()->isSetFlag(
-            'sales/minimum_order/active',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
+	 * Get the setting value of Order Minimum Amount
+	 *
+	 */
+	public function getOrderMinimumAmountValue() {
+		$storeId                 = $this->getStoreId();
+		$orderMinimumAmountValue = $this->getScopeConfig()->getValue(
+			'sales/minimum_order/amount',
+			\Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+			$storeId
+		);
 
-        return $isEnableOrderMinimumAmount;
-    }
+		return $orderMinimumAmountValue;
+	}
 
-    /**
-     * Get the setting value of Order Minimum Amount
-     *
-     */
-    public function getOrderMinimumAmountValue()
-    {
-        $storeId                 = $this->getStoreId();
-        $orderMinimumAmountValue = $this->getScopeConfig()->getValue(
-            'sales/minimum_order/amount',
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
+	/**
+	 * @return \Magento\Framework\App\Config\ScopeConfigInterface
+	 */
+	private function getScopeConfig() {
+		return $this->_scopeConfig;
+	}
 
-        return $orderMinimumAmountValue;
-    }
+	/**
+	 * Get the Order Minimum Amount
+	 *
+	 * @return boolean|float return minimum amount if `Order Minimum Amount` is enabled, otherwise false.
+	 */
+	public function getOrderMinimumAmount() {
+		$isEnableOrderMinimumAmount = $this->isEnableOrderMinimumAmount();
+		if ( ! $isEnableOrderMinimumAmount ) {
+			return false;
+		}
 
-    /**
-     * @return \Magento\Framework\App\Config\ScopeConfigInterface
-     */
-    private function getScopeConfig()
-    {
-        return $this->_scopeConfig;
-    }
+		$minAmount = $this->getOrderMinimumAmountValue();
 
-    /**
-     * Get the Order Minimum Amount
-     *
-     * @return boolean|float return minimum amount if `Order Minimum Amount` is enabled, otherwise false.
-     */
-    public function getOrderMinimumAmount()
-    {
-        $isEnableOrderMinimumAmount = $this->isEnableOrderMinimumAmount();
-        if ( ! $isEnableOrderMinimumAmount) {
-            return false;
-        }
-
-        $minAmount = $this->getOrderMinimumAmountValue();
-
-        return $minAmount;
-    }
+		return $minAmount;
+	}
 }
