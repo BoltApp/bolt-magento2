@@ -41,7 +41,7 @@ class CheckSettingsUpdate
     private $configHelper;
 
     /*
-     * @var Manager
+     * @var FeatureSwitchManager
      */
     protected $fsManager;
 
