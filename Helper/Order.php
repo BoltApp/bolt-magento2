@@ -272,7 +272,7 @@ class Order extends AbstractHelper
         Decider $featureSwitches,
         CheckboxesHandler $checkboxesHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
-        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CheckoutSession $checkoutSession
     )
     {
