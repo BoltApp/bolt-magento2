@@ -43,17 +43,17 @@ class Js extends Template
      */
     private $cartHelper;
 
-    /** @var Bugsnag  Bug logging interface */
+     /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
     /**
-     * @param Context $context
-     * @param Config $configHelper
+     * @param Context         $context
+     * @param Config          $configHelper
      * @param CheckoutSession $checkoutSession
-     * @param CartHelper $cartHelper
-     * @param Bugsnag $bugsnag ;
-     * @param Decider $featureSwitches
-     * @param array $data
+     * @param CartHelper      $cartHelper
+     * @param Bugsnag         $bugsnag;
+     * @param Decider         $featureSwitches
+     * @param array           $data
      */
     public function __construct(
         Context $context,
@@ -65,10 +65,10 @@ class Js extends Template
         array $data = []
     ) {
         parent::__construct($context, $data);
-        $this->configHelper    = $configHelper;
+        $this->configHelper = $configHelper;
         $this->checkoutSession = $checkoutSession;
-        $this->cartHelper      = $cartHelper;
-        $this->bugsnag         = $bugsnag;
+        $this->cartHelper = $cartHelper;
+        $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
     }
 
@@ -81,7 +81,7 @@ class Js extends Template
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
 
-        return $cdnUrl . '/track.js';
+        return $cdnUrl.'/track.js';
     }
 
     /**
@@ -93,7 +93,7 @@ class Js extends Template
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
 
-        return $cdnUrl . '/connect.js';
+        return $cdnUrl.'/connect.js';
     }
 
     /**
@@ -104,7 +104,7 @@ class Js extends Template
     public function getReplaceSelectors()
     {
         $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
-        $subject                  = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
+        $subject = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
 
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
@@ -170,7 +170,6 @@ class Js extends Template
     {
         $flag = $this->checkoutSession->getBoltInitiateCheckout();
         $this->checkoutSession->unsBoltInitiateCheckout();
-
         return (bool)$flag;
     }
 
@@ -181,25 +180,25 @@ class Js extends Template
     public function getSettings()
     {
         return json_encode([
-            'connect_url'                      => $this->getConnectJsUrl(),
-            'publishable_key_payment'          => $this->configHelper->getPublishableKeyPayment(),
-            'publishable_key_checkout'         => $this->configHelper->getPublishableKeyCheckout(),
-            'publishable_key_back_office'      => $this->configHelper->getPublishableKeyBackOffice(),
-            'create_order_url'                 => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'                   => $this->getUrl(Config::SAVE_ORDER_ACTION),
-            'get_hints_url'                    => $this->getUrl(Config::GET_HINTS_ACTION),
-            'selectors'                        => $this->getReplaceSelectors(),
-            'shipping_prefetch_url'            => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping'                => $this->configHelper->getPrefetchShipping(),
-            'save_email_url'                   => $this->getUrl(Config::SAVE_EMAIL_ACTION),
-            'quote_is_virtual'                 => $this->getQuoteIsVirtual(),
-            'totals_change_selectors'          => $this->getTotalsChangeSelectors(),
+            'connect_url'              => $this->getConnectJsUrl(),
+            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
+            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
+            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
+            'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
+            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'get_hints_url'            => $this->getUrl(Config::GET_HINTS_ACTION),
+            'selectors'                => $this->getReplaceSelectors(),
+            'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
+            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
+            'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'quote_is_virtual'         => $this->getQuoteIsVirtual(),
+            'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
-            'initiate_checkout'                => $this->getInitiateCheckout(),
-            'toggle_checkout'                  => $this->getToggleCheckout(),
-            'is_pre_auth'                      => $this->getIsPreAuth(),
-            'default_error_message'            => $this->getBoltPopupErrorMessage(),
-            'minimum_amount_rule_message'      => $this->cartHelper->getMinimumAmountRuleMessage(),
+            'initiate_checkout'        => $this->getInitiateCheckout(),
+            'toggle_checkout'          => $this->getToggleCheckout(),
+            'is_pre_auth'              => $this->getIsPreAuth(),
+            'default_error_message'    => $this->getBoltPopupErrorMessage(),
+            'minimum_amount_rule_message' => $this->cartHelper->getMinimumAmountRuleMessage(),
         ]);
     }
 
@@ -210,7 +209,6 @@ class Js extends Template
     private function getQuoteIsVirtual()
     {
         $quote = $this->getQuoteFromCheckoutSession();
-
         return $quote ? $quote->isVirtual() : false;
     }
 
@@ -220,10 +218,9 @@ class Js extends Template
     public function getBoltPopupErrorMessage()
     {
         $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?:
-            $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '';
-
+                         $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' ;
         return __('Your payment was successful and we\'re now processing your order.' .
-                  'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' . $contact_email . '.');
+        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
     }
 
     /**
@@ -232,13 +229,13 @@ class Js extends Template
     public function getTrackCallbacks()
     {
         return [
-            'checkout_start'            => $this->getOnCheckoutStart(),
-            'email_enter'               => $this->getOnEmailEnter(),
-            'shipping_details_complete' => $this->getOnShippingDetailsComplete(),
-            'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
-            'payment_submit'            => $this->getOnPaymentSubmit(),
-            'success'                   => $this->getOnSuccess(),
-            'close'                     => $this->getOnClose(),
+            'checkout_start' => $this->getOnCheckoutStart(),
+            'email_enter' => $this->getOnEmailEnter(),
+            'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
+            'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
+            'payment_submit'=> $this->getOnPaymentSubmit(),
+            'success' => $this->getOnSuccess(),
+            'close' => $this->getOnClose(),
         ];
     }
 
@@ -306,7 +303,6 @@ class Js extends Template
     private function getToggleCheckout()
     {
         $toggleCheckout = $this->configHelper->getToggleCheckout();
-
         return $toggleCheckout && $toggleCheckout->active ? $toggleCheckout : null;
     }
 
@@ -318,7 +314,6 @@ class Js extends Template
     private function getIsPreAuth()
     {
         $storeId = $this->getStoreId();
-
         return $this->configHelper->getIsPreAuth($storeId);
     }
 
@@ -345,7 +340,6 @@ class Js extends Template
      * order to shrink the code without altering it's functionality.
      *
      * @param string $js
-     *
      * @return string
      * @throws \Exception
      */
@@ -356,7 +350,6 @@ class Js extends Template
                 return \JShrink\Minifier::minify($js);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
-
                 return $js;
             }
         } else {
@@ -367,31 +360,26 @@ class Js extends Template
     /**
      * Return true if we are on cart page or checkout page
      */
-    public function isOnPageFromWhiteList()
-    {
+    public function isOnPageFromWhiteList() {
         $currentPage = $this->getRequest()->getFullActionName();
-
         return in_array($currentPage, $this->getPageWhitelist());
     }
 
     /**
      * Return true if bolt on minicart is enabled
      */
-    public function isMinicartEnabled()
-    {
+    public function isMinicartEnabled() {
         return $this->configHelper->getMinicartSupport();
     }
 
     /**
      * Return true if we are on product page, and bolt on product page is enabled
      */
-    public function isBoltProductPage()
-    {
-        if ( ! $this->configHelper->getProductPageCheckoutFlag()) {
+    public function isBoltProductPage() {
+        if (!$this->configHelper->getProductPageCheckoutFlag()) {
             return false;
         }
         $currentPage = $this->getRequest()->getFullActionName();
-
-        return $currentPage == "catalog_product_view";
+        return $currentPage=="catalog_product_view";
     }
 }
