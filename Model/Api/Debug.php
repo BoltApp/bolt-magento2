@@ -35,11 +35,6 @@ class Debug implements DebugInterface
 	private $debugInfoFactory;
 
 	/**
-	 * @var PluginVersionFactory
-	 */
-	private $pluginVersionFactory;
-
-	/**
 	 * @var HookHelper
 	 */
 	private $hookHelper;
