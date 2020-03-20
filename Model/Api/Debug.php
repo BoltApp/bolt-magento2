@@ -21,9 +21,11 @@ use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
-use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\Module\FullModuleList;
+use Bolt\Boltpay\Helper\ModuleRetriever;
+
 
 class Debug implements DebugInterface
 {
@@ -58,27 +60,32 @@ class Debug implements DebugInterface
 	private $configHelper;
 
 	/**
+	 * @var ModuleRetriever
+	 */
+	private $moduleRetriever;
+
+	/**
 	 * @param DebugInfoFactory $debugInfoFactory
-	 * @param PluginVersionFactory $pluginVersionFactory
 	 * @param StoreManagerInterface $storeManager
 	 * @param HookHelper $hookHelper
 	 * @param ProductMetadataInterface $productMetadata
 	 * @param ConfigHelper $configHelper
+	 * @param ModuleRetriever $moduleRetriever
 	 */
 	public function __construct(
 		DebugInfoFactory $debugInfoFactory,
-		PluginVersionFactory $pluginVersionFactory,
 		StoreManagerInterface $storeManager,
 		HookHelper $hookHelper,
 		ProductMetadataInterface $productMetadata,
-		ConfigHelper $configHelper
+		ConfigHelper $configHelper,
+		ModuleRetriever $moduleRetriever
 	) {
 		$this->debugInfoFactory = $debugInfoFactory;
-		$this->pluginVersionFactory = $pluginVersionFactory;
 		$this->storeManager = $storeManager;
 		$this->hookHelper = $hookHelper;
 		$this->productMetadata = $productMetadata;
 		$this->configHelper = $configHelper;
+		$this->moduleRetriever = $moduleRetriever;
 	}
 
 	/**
@@ -103,9 +110,11 @@ class Debug implements DebugInterface
 		# populate bolt config settings
 		$result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
 
-		$otherPluginVersions = [];
-		$otherPluginVersions[] = $this->pluginVersionFactory->create();
-		$result->setOtherPluginVersions($otherPluginVersions);
+		# populate bolt config settings
+		$result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
+
+		# populate other plugin info
+		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
 		return $result;
 	}
