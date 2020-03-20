@@ -363,7 +363,7 @@ require([
             var parameters = [];
             parameters.push('form_key=' + $('[name="form_key"]').val());
             parameters.push('reference=' + transaction.reference);
-            parameters.push('store_id=' + settings.storeId);
+            parameters.push('store_id=' + window.boltConfig.storeId);
             parameters = parameters.join('&');
             // update order ajax request callback
             // sets the success order page redirect url from received data
