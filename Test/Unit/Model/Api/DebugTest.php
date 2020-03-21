@@ -19,10 +19,12 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
+use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 use Bolt\Boltpay\Model\Api\Debug;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
@@ -53,6 +55,11 @@ class DebugTest extends TestCase
 	 * @var BoltConfigSettingFactory
 	 */
 	private $boltConfigSettingFactoryMock;
+
+	/**
+	 * @var ModuleRetriever
+	 */
+	private $moduleRetrieverMock;
 
 	/**
 	 * @var StoreManagerInterface
@@ -102,12 +109,20 @@ class DebugTest extends TestCase
 		// prepare hook helper
 		$this->hookHelperMock = $this->createMock(HookHelper::class);
 		$this->hookHelperMock->method('preProcessWebhook');
-		$this->hookHelperMock->method('preProcessWebhook');
-
 
 		// prepare config helper
 		$this->configHelperMock = $this->createMock(ConfigHelper::class);
 		$this->prepareConfigHelperMock();
+
+		// prepare module retriever
+		$this->moduleRetrieverMock = $this->createMock(ModuleRetriever::class);
+		$this->moduleRetrieverMock->method('getInstalledModules')->willReturn(
+			[
+				(new PluginVersion())->setName('plugin1')->setVersion('1.0.0'),
+				(new PluginVersion())->setName('plugin2')->setVersion('2.0.0'),
+				(new PluginVersion())->setName('plugin3')->setVersion('3.0.0')
+			]
+		);
 
 		// initialize test object
 		$objectManager = new ObjectManager($this);
@@ -119,7 +134,8 @@ class DebugTest extends TestCase
 				'storeManager' => $this->storeManagerInterfaceMock,
 				'hookHelper' => $this->hookHelperMock,
 				'productMetadata' => $this->productMetadataInterfaceMock,
-				'configHelper' => $this->configHelperMock
+				'configHelper' => $this->configHelperMock,
+				'moduleRetriever' => $this->moduleRetrieverMock
 			]
 		);
 	}
@@ -150,14 +166,26 @@ class DebugTest extends TestCase
 		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
 
 		// check bolt settings
-		$expected_settings = [
+		$expectedSettings = [
 			['config_name1', 'config_value1'],
 			['config_name2', 'config_value2']
 		];
 		$this->assertEquals(2, count($debugInfo->getBoltConfigSettings()));
 		for ($i = 0; $i < 2; $i ++) {
-			$this->assertEquals($expected_settings[$i][0], $debugInfo->getBoltConfigSettings()[$i]->getName());
-			$this->assertEquals($expected_settings[$i][1], $debugInfo->getBoltConfigSettings()[$i]->getValue(), 'actual value for ' . $expected_settings[$i][0] . ' is not equals to expected');
+			$this->assertEquals($expectedSettings[$i][0], $debugInfo->getBoltConfigSettings()[$i]->getName());
+			$this->assertEquals($expectedSettings[$i][1], $debugInfo->getBoltConfigSettings()[$i]->getValue(), 'actual value for ' . $expectedSettings[$i][0] . ' is not equals to expected');
+		}
+
+		// check bolt settings
+		$expectedPVs = [
+			['plugin1', '1.0.0'],
+			['plugin2', '2.0.0'],
+			['plugin3', '3.0.0']
+		];
+		$this->assertEquals(3, count($debugInfo->getOtherPluginVersions()));
+		for ($i = 0; $i < 3; $i ++) {
+			$this->assertEquals($expectedPVs[$i][0], $debugInfo->getOtherPluginVersions()[$i]->getName());
+			$this->assertEquals($expectedPVs[$i][1], $debugInfo->getOtherPluginVersions()[$i]->getVersion(), 'actual version for ' . $expectedPVs[$i][0] . ' is not equals to expected');
 		}
 	}
 }
