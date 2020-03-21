@@ -22,7 +22,7 @@ class AccountInfo
     /**
      * @var string
      */
-    private $email;
+    private $status;
 
     /**
      * @var bool
@@ -32,18 +32,18 @@ class AccountInfo
     /**
      * @return string
      */
-    public function getEmail()
+    public function getStatus()
     {
-        return $this->email;
+        return $this->status;
     }
 
     /**
      * @param string $phpVersion
      * @return $this
      */
-    public function setEmail($email)
+    public function setStatus($status)
     {
-        $this->email = $email;
+        $this->status = $status;
         return $this;
     }
 

@@ -142,7 +142,7 @@ class CheckAccountTest extends TestCase
             ->method('isEmailAvailable')->with(self::EMAIL)->willReturn(!$accountExist);
         $accountInfo = $this->checkAccount->checkEmail(self::EMAIL);
 
-        $this->assertEquals(self::EMAIL, $accountInfo->getEmail());
+        $this->assertEquals("success", $accountInfo->getStatus());
         $this->assertEquals($accountExist, $accountInfo->getAccountExist());
     }
 

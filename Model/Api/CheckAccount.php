@@ -76,7 +76,7 @@ class CheckAccount implements CheckAccountInterface
      * @param AccountInfoFactory $accountInfoFactory
      * @param Response $response
      * @param HookHelper $hookHelper
-     * @param OrderHelper $orderHelper
+     * @param StoreManagerInterface $storeManager,
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
      * @param BoltErrorResponse $errorResponse
@@ -109,7 +109,7 @@ class CheckAccount implements CheckAccountInterface
      *
      * @param mixed $email
      *
-     * @return void
+     * @return \Bolt\Boltpay\Model\Api\Data\AccountInfo
      * @throws \Exception
      * @api
      */
@@ -120,7 +120,7 @@ class CheckAccount implements CheckAccountInterface
             $this->hookHelper
                 ->preProcessWebhook($this->storeManager->getStore()->getId());
             $result = $this->accountInfoFactory->create();
-            $result->setEmail($email);
+            $result->setStatus("success");
             $result->setAccountExist($this->checkIfUserExistsByEmail($email));
         } catch (\Exception $e) {
             $encodedError = $this->errorResponse->prepareErrorMessage(
