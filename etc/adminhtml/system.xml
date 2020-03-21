@@ -145,6 +145,11 @@
                     <label>Client IP Restriction</label>
                     <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
                 </field>
+                <field id="amasty_store_credit" translate="label" type="select" sortOrder="235" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Use Amasty Store Credit on Shopping Cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <if_module_enabled>Amasty_StoreCredit</if_module_enabled>
+                </field>
                 <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Use Store Credit on Shopping Cart</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

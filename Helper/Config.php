@@ -252,6 +252,11 @@ class Config extends AbstractHelper
     const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
 
     /**
+     * Use Store Credit on Shopping Cart configuration path
+     */
+    const XML_PATH_AMASTY_STORE_CREDIT = 'payment/boltpay/amasty_store_credit';
+
+    /**
      * Use Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_REWARD_POINTS = 'payment/boltpay/reward_points';
@@ -1127,6 +1132,21 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_STORE_CREDIT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Use Amasty Store Credit on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function useAmastyStoreCreditConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_AMASTY_STORE_CREDIT,
             ScopeInterface::SCOPE_STORE,
             $store
         );

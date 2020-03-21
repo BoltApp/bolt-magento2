@@ -47,7 +47,7 @@ class ComponentSwitcherProcessorTest extends TestCase
     {
         $this->helperContextMock = $this->createMock(Context::class);
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['useStoreCreditConfig', 'useRewardPointsConfig'])
+            ->setMethods(['useStoreCreditConfig', 'useRewardPointsConfig', 'useAmastyStoreCreditConfig'])
             ->setConstructorArgs(
                 [
                     $this->helperContextMock,
@@ -68,31 +68,46 @@ class ComponentSwitcherProcessorTest extends TestCase
             ->getMock();
     }
 
-
     /**
-     * Test process method sets componentDisabled property to inverse value of config
-     *
      * @test
+     * Test process method sets componentDisabled property to inverse value of config
      *
      * @param bool $useStoreCreditConfig Configuration value for Store Credit
      * @param bool $useRewardPointsConfig Configuration value for Reward Points
+     * @param bool $useAmastyStoreCreditConfig Configuration value for Amasty Store Credit
      *
      * @dataProvider process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider
      *
-     * @return void
+     * @covers ::process
      */
-    public function process_withVariousConfigurationStates_returnsModifiedJsLayout($useStoreCreditConfig, $useRewardPointsConfig)
-    {
+    public function process_withVariousConfigurationStates_returnsModifiedJsLayout(
+        $useStoreCreditConfig,
+        $useRewardPointsConfig,
+        $useAmastyStoreCreditConfig
+    ) {
         $this->configHelper->expects(self::once())->method('useStoreCreditConfig')
             ->willReturn($useStoreCreditConfig);
         $this->configHelper->expects(self::once())->method('useRewardPointsConfig')
             ->willReturn($useRewardPointsConfig);
+        $this->configHelper->expects(self::once())->method('useAmastyStoreCreditConfig')
+            ->willReturn($useAmastyStoreCreditConfig);
         $jsLayout = [
             'components' => [
                 'block-totals' => [
                     'children' => [
-                        'storeCredit'  => [],
-                        'rewardPoints' => []
+                        'storeCredit'         => [
+                            'component' => 'Magento_CustomerBalance/js/view/payment/customer-balance',
+                        ],
+                        'rewardPoints'        => [
+                            'component' => 'Magento_Reward/js/view/payment/reward',
+                        ],
+                        'amstorecredit_total' => [
+                            'component' => 'Amasty_StoreCredit/js/view/checkout/totals/store-credit',
+                            'sortOrder' => '90',
+                        ],
+                        'amstorecredit_form'  => [
+                            'component' => 'Amasty_StoreCredit/js/view/checkout/payment/store-credit',
+                        ],
                     ]
                 ]
             ]
@@ -111,6 +126,14 @@ class ComponentSwitcherProcessorTest extends TestCase
         } else {
             self::assertArrayNotHasKey('rewardPoints', $blockTotalsChildren);
         }
+
+        if ($useAmastyStoreCreditConfig) {
+            self::assertArrayHasKey('amstorecredit_total', $blockTotalsChildren);
+            self::assertArrayHasKey('amstorecredit_form', $blockTotalsChildren);
+        } else {
+            self::assertArrayNotHasKey('amstorecredit_total', $blockTotalsChildren);
+            self::assertArrayNotHasKey('amstorecredit_form', $blockTotalsChildren);
+        }
     }
 
     /**
@@ -121,10 +144,14 @@ class ComponentSwitcherProcessorTest extends TestCase
     public function process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider()
     {
         return [
-            [true, true],
-            [true, false],
-            [false, true],
-            [false, false]
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => true],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => false],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => true],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => false],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => true],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => false],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => true],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => false],
         ];
     }
 }

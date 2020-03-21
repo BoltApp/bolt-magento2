@@ -42,6 +42,11 @@ class ComponentSwitcherProcessor extends LayoutProcessor
         if (! $this->configHelper->useRewardPointsConfig()) {
             unset($jsLayout['components']['block-totals']['children']['rewardPoints']);
         }
+        // Amasty Store Credit
+        if (! $this->configHelper->useAmastyStoreCreditConfig()) {
+            unset($jsLayout['components']['block-totals']['children']['amstorecredit_total']);
+            unset($jsLayout['components']['block-totals']['children']['amstorecredit_form']);
+        }
         return $jsLayout;
     }
 }
