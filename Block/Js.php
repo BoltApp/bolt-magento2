@@ -46,6 +46,9 @@ class Js extends Template
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
+    /** @var array */
+    static $blockAlreadyShown;
+
     /**
      * @param Context         $context
      * @param Config          $configHelper
@@ -94,6 +97,18 @@ class Js extends Template
         $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/connect.js';
+    }
+
+    /**
+     * Get account js url
+     *
+     * @return  string
+     */
+    public function getAccountJsUrl()
+    {
+        $cdnUrl = $this->configHelper->getCdnUrl();
+
+        return $cdnUrl.'/account.js';
     }
 
     /**
@@ -394,5 +409,29 @@ class Js extends Template
             return "";
         }
         return '--bolt-primary-action-color:' . $buttonColor;
+    }
+
+    /**
+     * Return true if Order Management is enabled
+     * @return bool
+     */
+    public function isOrderManagementEnabled()
+    {
+        return $this->configHelper->isOrderManagementEnabled();
+    }
+
+    /**
+     * Return false if block wasn't shown yet
+     * Need to provide using block only once
+     *
+     * @return bool
+     */
+    public function isBlockAlreadyShown($blockType)
+    {
+        if (isset(static::$blockAlreadyShown[$blockType])) {
+            return true;
+        }
+        static::$blockAlreadyShown[$blockType] = true;
+        return false;
     }
 }
