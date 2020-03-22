@@ -375,6 +375,7 @@ class OrderTest extends TestCase
             ->getMock();
 
         $this->customerCreditCardCollectionFactory = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
+            ->disableOriginalConstructor()
             ->setMethods(['create', 'doesCardExist'])
             ->getMock();
 
