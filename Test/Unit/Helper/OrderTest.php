@@ -478,6 +478,12 @@ class OrderTest extends TestCase
             $response,
             $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
         );
+
+        // When we call method second time result should be returned from cache
+        static::assertEquals(
+            $response,
+            $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
+        );
     }
 
     /**
