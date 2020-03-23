@@ -109,6 +109,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
 
         $this->sessionManager->method('getQuote')->willReturn($this->quoteMock);
         $this->customerCreditCardCollectionFactoryMock = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
+            ->disableOriginalConstructor()
             ->setMethods(['create', 'getCreditCardInfosByCustomerId','addFilter'])
             ->getMock();
 
