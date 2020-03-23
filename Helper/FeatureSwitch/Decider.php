@@ -166,4 +166,9 @@ class Decider extends AbstractHelper {
     public function isLogMissingQuoteFailedHooksEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
     }
+
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
+    }
+
 }
