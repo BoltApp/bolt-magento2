@@ -10,15 +10,15 @@ $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
     <?php if($customerCreditCardInfos): ?>
         <div>
             <select name="bolt-credit-cards" style="width: 284px; margin: 10px 0 5px;">
-                <option value=""><?php echo __('Add New Card') ?></option>
+                <option value=""><?php echo $block->escapeHtml(__('Add New Card')) ?></option>
                 <?php foreach ($customerCreditCardInfos as $customerCreditCardInfo): ?>
-                <option value="<?php echo $customerCreditCardInfo->getId() ?>"><?php echo $customerCreditCardInfo->getCardLast4Digit().' '.$customerCreditCardInfo->getCardType() ?></option>
+                <option value="<?php echo $block->escapeHtml($customerCreditCardInfo->getId()) ?>"><?php echo $block->escapeHtml($customerCreditCardInfo->getCardLast4Digit()).' '.$block->escapeHtml($customerCreditCardInfo->getCardType()) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
     <?php endif; ?>
-    <input type="hidden" id="bolt-billing-address" value='<?php echo $block->getBillingAddress() ?>' />
-    <input type="hidden" id="bolt-place-order-payload" value='<?php echo $block->getPlaceOrderPayload() ?>' />
+    <input type="hidden" id="bolt-billing-address" value='<?php echo $block->escapeHtml($block->getBillingAddress()) ?>' />
+    <input type="hidden" id="bolt-place-order-payload" value='<?php echo $block->escapeHtml($block->getPlaceOrderPayload()) ?>' />
     <div class="bolt-checkout-button with-cards"></div>
     <input type="hidden" class="required-entry" id="bolt-required-field">
 </fieldset>
