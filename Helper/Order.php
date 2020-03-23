@@ -317,8 +317,8 @@ class Order extends AbstractHelper
      */
     public function fetchTransactionInfo($reference, $storeId = null)
     {
-        if (isset($this->transactionInfo[$reference][$storeId])) {
-            return $this->transactionInfo[$reference][$storeId];
+        if (isset($this->transactionInfo[$reference])) {
+            return $this->transactionInfo[$reference];
         }
         //Request Data
         $requestData = $this->dataObjectFactory->create();
@@ -330,7 +330,7 @@ class Order extends AbstractHelper
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
-        $this->transactionInfo[$reference][$storeId] = $response;
+        $this->transactionInfo[$reference] = $response;
 
         return $response;
     }
