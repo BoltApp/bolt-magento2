@@ -119,8 +119,9 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
                     "display_id" =>  $order->getIncrementId()  .'/ '.$order->getQuoteId(),
                     'order_reference' => $order->getQuoteId(),
                     'total_amount' => CurrencyUtils::toMinor($order->getGrandTotal(), $orderCurrency),
-                    'currency' => $orderCurrency
-                ]
+                    'currency' => $orderCurrency,
+                ],
+                'source' => 'direct_payments'
             ]
         );
 

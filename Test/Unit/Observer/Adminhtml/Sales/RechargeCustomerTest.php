@@ -25,6 +25,8 @@ use Magento\Sales\Model\Order\Payment;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\App\Request\Http;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
+use Bolt\Boltpay\Model\ResponseFactory;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Class RechargeCustomerTest
@@ -34,6 +36,8 @@ class RechargeCustomerTest extends TestCase
 {
     const ID  = '111';
     const QUOTE_ID  = '112';
+    const REFERENCE  = 'DBT9-RL78-TTMM';
+    const REFERENCE_URL  = 'https://merchant-sandbox.bolt.com/transaction/8NLY-4NJQ-KFH6';
 
     /**
      * @var \Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer
@@ -65,6 +69,9 @@ class RechargeCustomerTest extends TestCase
      */
     private $requestMock;
 
+    private $orderHelper;
+    private $responseFactory;
+
     /**
      * @var CustomerCreditCardFactory
      */
@@ -84,7 +91,7 @@ class RechargeCustomerTest extends TestCase
 
         $this->customerCreditCardFactoryMock = $this->getMockBuilder(CustomerCreditCardFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create','load','getConsumerId','getCreditCardId','recharge'])
+            ->setMethods(['create','load','getConsumerId','getCreditCardId','recharge', 'getResponse'])
             ->getMock();
 
         $this->paymentMock = $this->getMockBuilder(Payment::class)
@@ -94,7 +101,7 @@ class RechargeCustomerTest extends TestCase
 
         $this->orderMock = $this->getMockBuilder(Order::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getPayment'])
+            ->setMethods(['getPayment','addStatusHistoryComment'])
             ->getMock();
 
         $this->observerMock = $this->getMockBuilder(Observer::class)
@@ -106,6 +113,16 @@ class RechargeCustomerTest extends TestCase
             ->disableOriginalConstructor()
             ->setMethods(['notifyException'])
             ->getMock();
+
+        $this->orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['formatReferenceUrl'])
+            ->getMock();
+
+        $this->responseFactory = $this->getMockBuilder(ResponseFactory::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['getResponse'])
+            ->getMock();
     }
 
     private function initCurrentMock(){
@@ -113,7 +130,8 @@ class RechargeCustomerTest extends TestCase
             ->setConstructorArgs([
                 $this->bugsnagMock,
                 $this->requestMock,
-                $this->customerCreditCardFactoryMock
+                $this->customerCreditCardFactoryMock,
+                $this->orderHelper
             ])
             ->setMethods(['_init'])
             ->getMock();
@@ -133,7 +151,14 @@ class RechargeCustomerTest extends TestCase
 
         $this->customerCreditCardFactoryMock->expects(self::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactoryMock->expects(self::once())->method('load')->with(self::ID)->willReturnSelf();
-        $this->customerCreditCardFactoryMock->expects(self::once())->method('recharge')->with($this->orderMock)->willReturnSelf();
+        $this->customerCreditCardFactoryMock->expects(self::once())->method('recharge')->with($this->orderMock)->willReturn($this->responseFactory);
+
+        $responseData = new \stdClass();
+        @$responseData->transaction->reference = self::REFERENCE;
+
+        $this->responseFactory->expects(self::once())->method('getResponse')->willReturn($responseData);
+        $this->orderHelper->expects(self::once())->method('formatReferenceUrl')->with(self::REFERENCE)->willReturn(self::REFERENCE_URL);
+        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')->willReturnSelf();
 
         $this->assertTrue($this->rechargeCustomerMock->execute($this->observerMock));
     }

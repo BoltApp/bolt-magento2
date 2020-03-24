@@ -7,6 +7,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\App\RequestInterface;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Class OrderCreateProcessDataObserver
@@ -30,17 +31,25 @@ class RechargeCustomer implements ObserverInterface
     private $bugsnag;
 
     /**
+     * @var OrderHelper
+     */
+    private $orderHelper;
+
+    /**
      * RechargeCustomer constructor.
      * @param Bugsnag $bugsnag
      * @param RequestInterface $request
      * @param CustomerCreditCardFactory $boltCustomerCreditCardFactory
+     * @param Order $orderHelper
      */
     public function __construct(
         Bugsnag $bugsnag,
         RequestInterface $request,
-        CustomerCreditCardFactory $boltCustomerCreditCardFactory
+        CustomerCreditCardFactory $boltCustomerCreditCardFactory,
+        OrderHelper $orderHelper
     )
     {
+        $this->orderHelper = $orderHelper;
         $this->bugsnag = $bugsnag;
         $this->request = $request;
         $this->boltCustomerCreditCardFactory = $boltCustomerCreditCardFactory;
@@ -59,7 +68,19 @@ class RechargeCustomer implements ObserverInterface
             if ($creditCardValue = $this->request->getParam('bolt-credit-cards')) {
                 /** @var \Bolt\Boltpay\Model\CustomerCreditCard $boltCustomerCreditCard */
                 $boltCustomerCreditCard = $this->boltCustomerCreditCardFactory->create()->load($creditCardValue);
-                $boltCustomerCreditCard->recharge($order);
+                $response = $boltCustomerCreditCard->recharge($order);
+
+                $responseData = $response->getResponse();
+                $reference = @$responseData->transaction->reference;
+                if ($reference) {
+                    $order->addStatusHistoryComment(
+                        __(
+                            'Bolt recharged transaction: %1',
+                            $this->orderHelper->formatReferenceUrl($reference)
+                        )
+                    );
+                }
+
                 return true;
             }
         } catch (\Exception $e) {
