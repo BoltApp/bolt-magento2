@@ -72,6 +72,7 @@ class Debug implements DebugInterface
 	 * @param ProductMetadataInterface $productMetadata
 	 * @param ConfigHelper $configHelper
 	 * @param ModuleRetriever $moduleRetriever
+     * @param LogRetriever $logRetriever
 	 */
 	public function __construct(
 		DebugInfoFactory $debugInfoFactory,
