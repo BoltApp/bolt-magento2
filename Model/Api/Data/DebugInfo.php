@@ -39,6 +39,11 @@ class DebugInfo
 	 */
 	private $otherPluginVersions;
 
+    /**
+     * @var string
+     */
+    private $logInfo;
+
 	/**
 	 * @return string
 	 */
