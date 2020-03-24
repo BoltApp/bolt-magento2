@@ -115,6 +115,14 @@ class DebugInfo
 	}
 
     /**
+     * @return string
+     */
+	public function getLogInfo()
+    {
+        return $this->logInfo;
+    }
+
+    /**
      * @param string $logInfo
      * @return $this
      */
