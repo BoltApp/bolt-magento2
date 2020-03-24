@@ -536,7 +536,7 @@ class CreateOrder implements CreateOrderInterface
         $errorInfos = $quoteItem->getErrorInfos();
         $message = '';
         foreach ($errorInfos as $errorInfo) {
-            $message .= '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL;
+            $message .= '(' . $errorInfo['origin'] . '): ' . (is_string($errorInfo['message']) ?  $errorInfo['message'] : $errorInfo['message']->render()) . PHP_EOL;
         }
         $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 

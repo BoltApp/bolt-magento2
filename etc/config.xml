@@ -48,7 +48,8 @@ tr.shipping.totals td.amount span.price,
 /* Store Credit */
 .cart-container #customerbalance-placer {width: 210px;}
 .cart-container #customerbalance-placer .payment-option-title {display: none;}
-.cart-container #customerbalance-placer #use-customer-balance {width: 284px;}</global_css>
+.cart-container #customerbalance-placer #use-customer-balance {width: 284px;}
+.payment-method-boltpay .payment-method-title img.payment-icon {padding: 8px; border: 1px solid #cccccc; width: 200px;}</global_css>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>1</prefetch_shipping>

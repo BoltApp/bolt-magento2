@@ -170,4 +170,9 @@ class Decider extends AbstractHelper {
     public function isCreatingCreditMemoFromWebHookEnabled(){
         return $this->isSwitchEnabled(Definitions::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED);
     }
+
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
+    }
+
 }

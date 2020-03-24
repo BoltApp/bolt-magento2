@@ -98,3 +98,6 @@
  - Re-order feature for logged-in customers
  - Product page checkout improvements
  - Various bug fixes
+## [v2.4.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.0) 2020-03-11
+ - Bug fixes
+ - Added JS event for when hints are set 

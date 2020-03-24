@@ -225,6 +225,11 @@ class Order extends AbstractHelper
     protected $creditmemoManagement;
 
     /**
+     * @var array transaction info cache
+     */
+    private $transactionInfo;
+
+    /**
      * Order constructor.
      * @param Context $context
      * @param ApiHelper $apiHelper
@@ -330,6 +335,9 @@ class Order extends AbstractHelper
      */
     public function fetchTransactionInfo($reference, $storeId = null)
     {
+        if (isset($this->transactionInfo[$reference])) {
+            return $this->transactionInfo[$reference];
+        }
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
@@ -340,6 +348,7 @@ class Order extends AbstractHelper
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
+        $this->transactionInfo[$reference] = $response;
 
         return $response;
     }
@@ -1169,8 +1178,8 @@ class Order extends AbstractHelper
         $quote->setUpdatedAt($this->date->gmtDate());
         // If it's PPC quote make it temporary active
         // for third party plugins work
-        $is_quote_active = $quote->getIsActive();
-        if (!$is_quote_active) {
+        $isQuoteActive = $quote->getIsActive();
+        if (!$isQuoteActive) {
             $quote->setIsActive(true);
         }
         $this->_eventManager->dispatch(
@@ -1178,7 +1187,7 @@ class Order extends AbstractHelper
                 'quote' => $quote
             ]
         );
-        if (!$is_quote_active) {
+        if (!$isQuoteActive) {
             $quote->setIsActive(false);
         }
 

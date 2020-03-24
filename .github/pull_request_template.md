@@ -3,9 +3,7 @@ Please include a summary of the change and which issue is fixed. Include the mot
 
 Fixes: (link Asana Task)
 
-(Optional: Add a changelog by writing a comment after "#changelog" on the next line)
-
-\#changelog
+#changelog
 
 # Type of change
 

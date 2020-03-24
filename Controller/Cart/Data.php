@@ -124,8 +124,8 @@ class Data extends Action
                 $responseData = json_decode(json_encode($response), true);
                 $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
             } else {
+                // Empty cart - order_token not fetched because doesn't exist. Not a failure.
                 $responseData['cart'] = [];
-                $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
             }
 
             // get immutable quote id stored with cart data

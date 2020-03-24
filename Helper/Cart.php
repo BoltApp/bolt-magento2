@@ -856,6 +856,7 @@ class Cart extends AbstractHelper
             $hints['virtual_terminal_mode'] = true;
         }
 
+        $hints['prefill'] = (object)$hints['prefill'];
         return $hints;
     }
 

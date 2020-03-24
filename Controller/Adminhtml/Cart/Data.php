@@ -109,11 +109,10 @@ class Data extends Action
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
 
+            // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $this->metricsClient->processMetric("back_office_order_token.success", 1, "back_office_order_token.latency", $startTime);
-            } else {
-                $this->metricsClient->processMetric("back_office_order_token.failure", 1, "back_office_order_token.latency", $startTime);
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();

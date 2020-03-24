@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -40,7 +40,7 @@ if (!$block->isSupportableType()) return;
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
-            var itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?>;
+            var itemPrice = <?= $block->getProduct()->getFinalPrice(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -141,7 +141,6 @@ if (!$block->isSupportableType()) return;
                      * Magento customerData and authenticationPopup objects are
                      * used.
                      */
-
                     // check if login is required
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
@@ -149,11 +148,6 @@ if (!$block->isSupportableType()) return;
                         authenticationPopup.showModal();
                         return false;
                     }
-
-                    if (!hints) {
-                        return false;
-                    }
-
                     // wait for validation module init
                     try {
                         $('#product_addtocart_form').validation('isValid');
@@ -164,7 +158,6 @@ if (!$block->isSupportableType()) return;
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
-
                     return true;
                 },
 
@@ -182,19 +175,38 @@ if (!$block->isSupportableType()) return;
                 return quantity > 0 ? quantity : 1;
             };
 
+            var hints = new Promise(function (resolve, reject) {
+                $.get(settings.get_hints_url)
+                    .done(function(data) {
+                        resolve(data.hints);
+                    })
+                    .fail(function() {
+                        resolve({prefill:{}});
+                    })
+                    .always(function() {
+                        // dispatch event when required data is ready
+                        $(document).trigger('ppc-hints-set');
+                    });
+            });
+
             var setupProductPage = function () {
                 var options = {};
+                var compositeAttributes = ['super_attribute', 'options'];
                 formData = new FormData(document.getElementById("product_addtocart_form"));
-                formData.forEach(function(value, key){
-                    matchResult = key.match(/super_attribute\[(\d+)\]/);
-                    if (matchResult) {
-                        if (!('super_attribute' in options)) {
-                            options['super_attribute'] = {};
+                formData.forEach(function(value, key) {
+                    var matchResult;
+                    for (var index in compositeAttributes) {
+                        var compositeAttribute = compositeAttributes[index];
+
+                        if (matchResult = key.match(compositeAttribute+'\\[(\\d+)\\]')) {
+                            if (!(compositeAttribute in options)) {
+                                options[compositeAttribute] = {};
+                            }
+                            options[compositeAttribute][matchResult[1]] = value;
+                            return;
                         }
-                        options['super_attribute'][matchResult[1]] = value;
-                    } else {
-                        options[key] = value;
                     }
+                    options[key] = value;
                 });
                 options['storeId'] = '<?= $block->getStoreId(); ?>';
                 var cart = {
@@ -207,39 +219,28 @@ if (!$block->isSupportableType()) return;
                         options: JSON.stringify(options)
                     }]
                 };
+
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
                     BoltCheckout.configureProductCheckout(cart, hints, callbacks);
                 });
             };
 
-            var hints;
+            setupProductPage();
+            $('#qty').on('change', setupProductPage);
 
-            // wait for the hints to load
-            // the viable way to assign user to order
-            $.get(settings.get_hints_url)
-                .done(function(data) {
-                    hints = data.hints;
-                }).fail(function() {
-                    hints = {prefill:{}};
-                }).always(function() {
-                    setupProductPage();
-                    $('#qty').on('change', setupProductPage);
-                });
-
-            // early button display, not active untill hints are received
-            // do not run if connect.js is not loaded yet
-            if (window.BoltCheckout) {
-                BoltCheckout.configureProductCheckout({},{}, callbacks);
-            }
-
-            <?php if ($block->isConfigurable()): ?>
             $(document).on( 'updatePrice', function (event, data) {
-                var priceDelta = data.prices.finalPrice.amount;
-                itemPrice = <?= (int) $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                // the name of the property that holds the price data
+                // varies depending on the product type, eg. prices, options
+                var key = Object.keys(data)[0];
+                if (key) {
+                    var finalPrice = data[key].finalPrice;
+                    if (finalPrice && typeof finalPrice === 'object') {
+                        var priceDelta = finalPrice.amount ? finalPrice.amount : 0;
+                        itemPrice = <?= $block->getProduct()->getFinalPrice(); ?> + priceDelta;
+                    }
+                }
                 setupProductPage();
             });
-            <?php endif; ?>
-
         });
     </script>

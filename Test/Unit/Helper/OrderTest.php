@@ -388,6 +388,7 @@ class OrderTest extends TestCase
             ->getMock();
 
         $this->customerCreditCardCollectionFactory = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
+            ->disableOriginalConstructor()
             ->setMethods(['create', 'doesCardExist'])
             ->getMock();
 
@@ -490,6 +491,12 @@ class OrderTest extends TestCase
 
         $result->expects(static::once())->method('getResponse')->willReturn($response);
 
+        static::assertEquals(
+            $response,
+            $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
+        );
+
+        // When we call method second time result should be returned from cache
         static::assertEquals(
             $response,
             $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
