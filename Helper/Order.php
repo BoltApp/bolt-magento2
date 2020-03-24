@@ -217,6 +217,11 @@ class Order extends AbstractHelper
     protected $customerCreditCardCollectionFactory;
 
     /**
+     * @var array transaction info cache
+     */
+    private $transactionInfo;
+
+    /**
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -312,6 +317,9 @@ class Order extends AbstractHelper
      */
     public function fetchTransactionInfo($reference, $storeId = null)
     {
+        if (isset($this->transactionInfo[$reference])) {
+            return $this->transactionInfo[$reference];
+        }
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
@@ -322,6 +330,7 @@ class Order extends AbstractHelper
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
+        $this->transactionInfo[$reference] = $response;
 
         return $response;
     }
