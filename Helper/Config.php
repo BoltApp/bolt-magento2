@@ -80,6 +80,11 @@ class Config extends AbstractHelper
     /**
      * Path for Replace Selectors
      */
+    const XML_PATH_BUTTON_COLOR = 'payment/boltpay/button_color';
+
+    /**
+     * Path for Replace Selectors
+     */
     const XML_PATH_REPLACE_SELECTORS = 'payment/boltpay/replace_selectors';
 
     /**
@@ -524,6 +529,22 @@ class Config extends AbstractHelper
     public function getPublishableKeyBackOffice($storeId = null)
     {
         return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
+    }
+
+    /**
+     * Get Bolt color from config
+     *
+     * @param int|string $storeId
+     *
+     * @return  string
+     */
+    public function getButtonColor($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_BUTTON_COLOR,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 
     /**

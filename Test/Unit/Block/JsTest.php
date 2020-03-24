@@ -33,7 +33,7 @@ use Magento\Framework\App\Request\Http;
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 18;
+    const SETTINGS_NUMBER = 19;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
@@ -108,7 +108,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
-            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret'
+            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -364,6 +364,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('initiate_checkout', $array, $message . 'initiate_checkout');
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
         $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
+        $this->assertArrayHasKey('button_css_styles', $array, $message . 'button_css_styles');
     }
 
     /**
@@ -462,5 +463,29 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->shouldTrackCheckoutFunnel();
 
         $this->assertTrue($result, 'shouldTrackCheckoutFunnel() returns true when config is set to true');
+    }
+
+    /**
+     * @test
+     * @dataProvider getButtonCssStylesProvider
+     */
+    public function getButtonCssStyles($settingValue,$resultValue)
+    {
+        $this->configHelper->expects($this->any())
+            ->method('getButtonColor')
+            ->willReturn($settingValue);
+
+        $this->assertEquals(
+            $resultValue,
+            $this->block->getButtonCssStyles()
+        );
+    }
+
+    public function getButtonCssStylesProvider()
+    {
+        return [
+            ["",""],
+            ["#AA00AA","--bolt-primary-action-color:#AA00AA"]
+        ];
     }
 }

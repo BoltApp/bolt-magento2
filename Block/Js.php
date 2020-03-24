@@ -198,6 +198,7 @@ class Js extends Template
             'toggle_checkout'          => $this->getToggleCheckout(),
             'is_pre_auth'              => $this->getIsPreAuth(),
             'default_error_message'    => $this->getBoltPopupErrorMessage(),
+            'button_css_styles'        => $this->getButtonCssStyles(),
         ]);
     }
 
@@ -380,5 +381,18 @@ class Js extends Template
         }
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage=="catalog_product_view";
+    }
+
+    /**
+     * Return CSS styles for bolt button
+     * @return string
+     */
+    public function getButtonCssStyles()
+    {
+        $buttonColor = $this->configHelper->getButtonColor();
+        if (!$buttonColor) {
+            return "";
+        }
+        return '--bolt-primary-action-color:' . $buttonColor;
     }
 }
