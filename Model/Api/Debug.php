@@ -122,7 +122,7 @@ class Debug implements DebugInterface
 
 		# populate log
         # for now only $MAGENTO_ROOT/var/log/exception.php
-        $result->setLogInfo("I'm a log!");
+        $result->setLogInfo($this->logRetriever->getExceptionLog());
 
 		return $result;
 	}
