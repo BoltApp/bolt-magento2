@@ -307,6 +307,9 @@ require([
         }
     };
 
+    // The window object may be reset during backoffice creation for some reasons,
+    // as a result, the variable settings fail to keep in sync with window.boltConfig,
+    // so we use Proxy object to make sure settings always point to the updated window.boltConfig.
     var boltConfigHandler = {
         get: function(target, property) {
             return target['boltConfig'][property];
