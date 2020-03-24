@@ -25,6 +25,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Module\FullModuleList;
 use Bolt\Boltpay\Helper\ModuleRetriever;
+use Bolt\Boltpay\Helper\LogRetriever;
 
 
 class Debug implements DebugInterface
