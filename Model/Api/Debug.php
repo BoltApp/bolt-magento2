@@ -59,6 +59,11 @@ class Debug implements DebugInterface
 	 */
 	private $moduleRetriever;
 
+    /**
+     * @var LogRetriever
+     */
+    private $logRetriever;
+
 	/**
 	 * @param DebugInfoFactory $debugInfoFactory
 	 * @param StoreManagerInterface $storeManager
@@ -73,7 +78,8 @@ class Debug implements DebugInterface
 		HookHelper $hookHelper,
 		ProductMetadataInterface $productMetadata,
 		ConfigHelper $configHelper,
-		ModuleRetriever $moduleRetriever
+		ModuleRetriever $moduleRetriever,
+        LogRetriever $logRetriever
 	) {
 		$this->debugInfoFactory = $debugInfoFactory;
 		$this->storeManager = $storeManager;
@@ -81,6 +87,7 @@ class Debug implements DebugInterface
 		$this->productMetadata = $productMetadata;
 		$this->configHelper = $configHelper;
 		$this->moduleRetriever = $moduleRetriever;
+		$this->logRetriever = $logRetriever;
 	}
 
 	/**
@@ -110,6 +117,10 @@ class Debug implements DebugInterface
 
 		# populate other plugin info
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+
+		# populate log
+        # for now only $MAGENTO_ROOT/var/log/exception.php
+        $result->setLogInfo($this->logRetriever->getExceptionLog());
 
 		return $result;
 	}

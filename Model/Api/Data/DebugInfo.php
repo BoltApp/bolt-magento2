@@ -108,4 +108,15 @@ class DebugInfo
 		$this->otherPluginVersions = $otherPluginVersions;
 		return $this;
 	}
+
+    /**
+     * @param string $logInfo
+     * @return $this
+     */
+
+	public function setLogInfo($logInfo)
+    {
+        $this->logInfo = $logInfo;
+        return $this;
+    }
 }
