@@ -307,8 +307,18 @@ require([
         }
     };
 
+    var boltConfigHandler = {
+        get: function(target, property) {
+            return target['boltConfig'][property];
+        },
+        set: function(target, property, value, receiver) {
+            target['boltConfig'][property] = value;
+            return true;
+        },
+    };
+
     // The configuration parameters passed from the php block
-    var settings = window.boltConfig,
+    var settings = new Proxy(window, boltConfigHandler),
     // TODO: make `with-cards` option backend configurable
         bolt_button_css_class    = 'bolt-checkout-button with-cards',
         bolt_button_selector     = '.bolt-checkout-button',
