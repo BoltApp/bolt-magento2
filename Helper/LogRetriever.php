@@ -11,11 +11,16 @@ class LogRetriever
 
     }
 
+    /**
+     * @param string $logpath
+     * @return array
+     */
     public function getExceptionLog($logpath = self::LOGPATH)
     {
         //open file
         //get last 100 lines
-        return $this->customTail(self::LOGPATH, 10, true).str_split("\n");
+        $logString = $this->customTail(self::LOGPATH, 10, true);
+        return explode("\n", $logString);
     }
 
     private function customTail($logpath = self::LOGPATH, $lines = 100, $adaptive = true)
