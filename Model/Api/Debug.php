@@ -121,8 +121,8 @@ class Debug implements DebugInterface
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
 		# populate log
-        # for now only $MAGENTO_ROOT/var/log/exception.php
-        $result->setLogInfo($this->logRetriever->getExceptionLog(null));
+        # parameters exist for getExceptionLog, default to exception.php last 100 lines
+        $result->setLogInfo($this->logRetriever->getExceptionLog());
 
 		return $result;
 	}

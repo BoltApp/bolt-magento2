@@ -15,11 +15,11 @@ class LogRetriever
      * @param string $logpath
      * @return array
      */
-    public function getExceptionLog($logpath = self::LOGPATH)
+    public function getExceptionLog($logpath = self::LOGPATH, $lines = 100)
     {
         //open file
         //get last 100 lines
-        $logString = $this->customTail(self::LOGPATH, 10, true);
+        $logString = $this->customTail($logpath, $lines, true);
         return explode("\n", $logString);
     }
 
