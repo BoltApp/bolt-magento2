@@ -40,7 +40,7 @@ class DebugInfo
 	private $otherPluginVersions;
 
     /**
-     * @var string
+     * @var array
      */
     private $logInfo;
 
@@ -115,7 +115,7 @@ class DebugInfo
 	}
 
     /**
-     * @return string
+     * @return array
      */
 	public function getLogInfo()
     {
@@ -123,7 +123,7 @@ class DebugInfo
     }
 
     /**
-     * @param string $logInfo
+     * @param array $logInfo
      * @return $this
      */
 

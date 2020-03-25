@@ -15,7 +15,7 @@ class LogRetriever
     {
         //open file
         //get last 100 lines
-        return $this->customTail($logpath, 10, true);
+        return $this->customTail(self::LOGPATH, 10, true).str_split("\n");
     }
 
     private function customTail($logpath = self::LOGPATH, $lines = 100, $adaptive = true)
