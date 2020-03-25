@@ -428,11 +428,22 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
 
+                $shippingMethod = $request->cart->shipments[0]->reference;
+                if(strpos($shippingMethod,'storepickup_storepickup') !== false){
+                    $shippingMethod_array = explode("+",$shippingMethod);
+                    $shippingMethod = $shippingMethod_array[0];
+                }
+        
                 $shippingAddress
-                    ->setShippingMethod($request->cart->shipments[0]->reference)
+                    ->setShippingMethod($shippingMethod)
                     ->setCollectShippingRates(true)
                     ->collectShippingRates()
                     ->save();
+                
+                // Customization to fix a bug that fail to save shipping method, this bug (collectShippingRates()) is casued by some other plugins. 
+                $shippingAddress->setShippingMethod($shippingMethod)
+                                ->save();
+
             }
 
             if ($coupon && $coupon->getCouponId()) {

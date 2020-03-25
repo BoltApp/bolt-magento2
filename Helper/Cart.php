@@ -1204,15 +1204,6 @@ class Cart extends AbstractHelper
         $quote = $immutableQuote ?
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
-        
-        // Customization for StorePickup
-        $original_quote = $this->checkoutSession->getQuote();
-        $original_shippingMethod = $original_quote->getShippingAddress()->getShippingMethod();
-        if(!empty($original_shippingMethod) && strpos($original_shippingMethod,'storepickup_storepickup') !== false){
-            $store_id = $original_quote->getStoreId();
-            $storepickup_session = array('store_id' => $store_id);
-            $this->checkoutSession->setData('storepickup_session',$storepickup_session);
-        }
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
@@ -1224,6 +1215,14 @@ class Cart extends AbstractHelper
         if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
             return $cart;
         }
+        
+        // Customization for StorePickup
+        if($paymentOnly){
+            // 1. For backoffice order, we need to retrieve the shipping method first.
+            // 2. During discounts validation, the $original_quote could be empty, so check it before processing.
+            $original_quote = $this->checkoutSession->getQuote();
+            $original_shippingMethod = !empty($original_quote) ? $original_quote->getShippingAddress()->getShippingMethod() : '';
+        }        
 
         ////////////////////////////////////////////////////////
         // CLONE THE QUOTE and quote billing / shipping  address
@@ -1338,8 +1337,14 @@ class Cart extends AbstractHelper
 
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $quote) {
-                    if(!empty($original_shippingMethod) && strpos($original_shippingMethod,'storepickup_storepickup') !== false){
-                        $address->setShippingMethod($original_shippingMethod)->save();
+                    // Customization for StorePickup
+                    // Setup storepickup_session
+                    $quote_ShippingMethod = !empty($original_shippingMethod) ? $original_shippingMethod : $quote->getShippingAddress()->getShippingMethod();
+                    if( !empty($quote_ShippingMethod) && strpos($quote_ShippingMethod,'storepickup_storepickup') !== false){
+                        $store_id = $quote->getStoreId();
+                        $storepickup_session = array('store_id' => $store_id);
+                        $this->checkoutSession->setData('storepickup_session',$storepickup_session);
+                        $address->setShippingMethod($quote_ShippingMethod)->save();
                     }
                     else{
                         $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
