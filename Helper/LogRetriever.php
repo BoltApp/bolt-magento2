@@ -24,7 +24,7 @@ class LogRetriever
         $file = @fopen($logpath, "rb");
         if ($file === false)
         {
-            return false;
+            return "No file found";
         }
 
         //set buffer according to lines we want
