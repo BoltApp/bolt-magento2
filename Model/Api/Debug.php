@@ -101,7 +101,7 @@ class Debug implements DebugInterface
 	public function debug()
 	{
 		# verify request
-//		$this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
+		$this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
 
 		$result = $this->debugInfoFactory->create();
 

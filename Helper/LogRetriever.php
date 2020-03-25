@@ -5,10 +5,8 @@ namespace Bolt\Boltpay\Helper;
 class LogRetriever
 {
     const LOGPATH = "var/log/exception.log";
-    public function _construct (
-
-    ) {
-
+    public function __construct ()
+    {
     }
 
     /**
@@ -23,7 +21,7 @@ class LogRetriever
         return explode("\n", $logString);
     }
 
-    private function customTail($logpath = self::LOGPATH, $lines = 100, $adaptive = true)
+    private function customTail($logpath, $lines, $adaptive = true)
     {
         //Open file, return false if doesn't exist
         $file = @fopen($logpath, "rb");
