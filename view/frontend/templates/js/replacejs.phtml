@@ -421,6 +421,7 @@ ob_start();
         var settings = window.boltConfig;
         var bolt_button_css_class    = 'bolt-checkout-button';
         var additional_button_class  = settings.additional_checkout_button_class;
+        var bolt_button_css_styles   = settings.button_css_styles;
         var bolt_button_selector     = '.bolt-checkout-button';
         var multi_step_css_class     = 'bolt-multi-step-checkout';
         var billing_address_selector = '#bolt-billing-address';
@@ -880,6 +881,9 @@ ob_start();
                         if (getCheckoutKey() === '') return;
                         var bolt_button = document.createElement('div');
                         bolt_button.setAttribute('class', bolt_button_css_class);
+                        if (bolt_button_css_styles.length) {
+                            bolt_button.setAttribute('style', bolt_button_css_styles);
+                        }
                         if (getCheckoutType() === 'checkout') {
                             bolt_button.classList.add(multi_step_css_class);
                         }
