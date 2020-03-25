@@ -92,12 +92,15 @@ class Debug implements DebugInterface
 		$this->logRetriever = $logRetriever;
 	}
 
-	/**
-	 * This request handler will return relevant information for Bolt for debugging purpose.
-	 *
-	 * @return DebugInfo
-	 * @api
-	 */
+    /**
+     * This request handler will return relevant information for Bolt for debugging purpose.
+     *
+     * @return DebugInfo
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Webapi\Exception
+     * @api
+     */
 	public function debug()
 	{
 		# verify request

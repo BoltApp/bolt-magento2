@@ -4,41 +4,28 @@ namespace Bolt\Boltpay\Helper;
 
 class LogRetriever
 {
-    const LOGPATH = "var/log/exception.log";
-    public function __construct ()
-    {
-    }
+    const DEFAULT_LOG_PATH = "var/log/exception.log";
 
     /**
-     * @param string $logpath
+     * @param string $logPath
+     * @param int $lines
      * @return array
      */
-    public function getExceptionLog($logpath = self::LOGPATH, $lines = 100)
+    public function getExceptionLog($logPath = self::DEFAULT_LOG_PATH, $lines = 100)
     {
-        //open file
-        //get last 100 lines
-        $logString = $this->customTail($logpath, $lines, true);
-        return explode("\n", $logString);
+        return explode("\n", $this->customTail($logPath, $lines));
     }
 
-    private function customTail($logpath, $lines, $adaptive = true)
+    private function customTail($logPath, $lines)
     {
-        //Open file, return false if doesn't exist
-        $file = @fopen($logpath, "rb");
+        //Open file, return informative error string if doesn't exist
+        $file = @fopen($logPath, "rb");
         if ($file === false)
         {
-            return "No file found at " . $logpath;
+            return "No file found at " . $logPath;
         }
 
-        //set buffer according to lines we want
-        if (!$adaptive)
-        {
-            $buffer = 4096;
-        }
-        else
-        {
-            $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
-        }
+        $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
 
         fseek($file, -1, SEEK_END);
 
