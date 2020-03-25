@@ -11,7 +11,7 @@ class LogRetriever
 
     }
 
-    public function getExceptionLog($logpath)
+    public function getExceptionLog($logpath = self::LOGPATH)
     {
         //open file
         //get last 100 lines
