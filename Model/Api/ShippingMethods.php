@@ -162,6 +162,8 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $ruleFactory;
 
+    protected $_oldShippingAddress;
+
     /**
      * Assigns local references to global resources
      *
@@ -654,6 +656,11 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
+            if ($this->configHelper->isPickupInStoreShippingRateCode($method)) {
+                $this->_oldShippingAddress = $quote->getShippingAddress()->getData();
+                $this->configHelper->setAddressToInStoreAddress($quote);
+            }
+
             $this->resetShippingCalculationIfNeeded($shippingAddress);
 
             $shippingAddress->setShippingMethod($method);
@@ -716,6 +723,10 @@ class ShippingMethods implements ShippingMethodsInterface
                         ]
                     ]);
                 });
+            }
+
+            if ($this->configHelper->isPickupInStoreShippingRateCode($method)) {
+                $quote->getShippingAddress()->addData($this->_oldShippingAddress);
             }
 
             $error = $shippingMethod->getErrorMessage();

@@ -188,6 +188,40 @@
                 <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
                     <label>Custom CDN</label>
                 </field>
+                <field id="pickup_street" translate="label" type="text" sortOrder="294" showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="1">
+                    <label>In-Store Pickup Address</label>
+                </field>
+                <field id="pickup_apartment" translate="label" type="text" sortOrder="295" showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="1">
+                    <label>In-Store Pickup Apartment</label>
+                </field>
+                <field id="pickup_city" translate="label" type="text" sortOrder="296" showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="1">
+                    <label>In-Store Pickup City</label>
+                </field>
+                <field id="pickup_zipcode" translate="label" type="text" sortOrder="297" showInDefault="1"
+                       showInWebsite="1"
+                       showInStore="1">
+                    <label>In-Store Pickup Zip Code</label>
+                </field>
+                <field id="pickup_country_id" translate="label" type="select" sortOrder="298" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>In-Store Pickup Country</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                </field>
+                <field id="pickup_region_id" translate="label" type="select" sortOrder="299" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>In-Store Pickup Region/State</label>
+                    <source_model>Magento\Directory\Model\Config\Source\Allregion</source_model>
+                </field>
+                <field id="pickup_shipping_rate_code" translate="label" type="text" sortOrder="300" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label>In-Store Pickup Shipping Rate Code</label>
+                </field>
             </group>
         </section>
     </system>

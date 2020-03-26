@@ -402,8 +402,13 @@ class Order extends AbstractHelper
     protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
+        $referenceShipmentMethod = (@$transaction->order->cart->shipments[0]->reference) ?: false;
+
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
+            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInstoreShippingRate($referenceShipmentMethod)) {
+                $this->configHelper->setAddressToInStoreAddress($quote);
+            }
         }
     }
 
