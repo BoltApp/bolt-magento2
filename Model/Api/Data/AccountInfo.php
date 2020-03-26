@@ -27,7 +27,7 @@ class AccountInfo
     /**
      * @var bool
      */
-    private $accountExist;
+    private $accountExists;
 
     /**
      * @return string
@@ -50,18 +50,18 @@ class AccountInfo
     /**
      * @return bool
      */
-    public function getAccountExist()
+    public function getAccountExists()
     {
-        return $this->accountExist;
+        return $this->accountExists;
     }
 
     /**
      * @param bool $accountExist
      * @return $this
      */
-    public function setAccountExist($accountExist)
+    public function setAccountExists($accountExists)
     {
-        $this->accountExist = $accountExist;
+        $this->accountExists = $accountExists;
         return $this;
     }
 

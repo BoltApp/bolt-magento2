@@ -121,7 +121,7 @@ class CheckAccount implements CheckAccountInterface
                 ->preProcessWebhook($this->storeManager->getStore()->getId());
             $result = $this->accountInfoFactory->create();
             $result->setStatus("success");
-            $result->setAccountExist($this->checkIfUserExistsByEmail($email));
+            $result->setAccountExists($this->checkIfUserExistsByEmail($email));
         } catch (\Exception $e) {
             $encodedError = $this->errorResponse->prepareErrorMessage(
                 BoltErrorResponse::ERR_SERVICE, $e->getMessage()
