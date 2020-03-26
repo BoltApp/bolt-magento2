@@ -427,6 +427,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
+                
+                // Customization : the plugin Amasty Shipping Restriction would reset the FreeMethodWeight of address to null during discount validation.
+                // and result in tablerate shipping error, so we need to set FreeMethodWeight properly again.
+                $this->totalsCollector->collectAddressTotals($immutableQuote, $shippingAddress);
 
                 $shippingMethod = $request->cart->shipments[0]->reference;
                 if(strpos($shippingMethod,'storepickup_storepickup') !== false){
@@ -439,11 +443,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     ->setCollectShippingRates(true)
                     ->collectShippingRates()
                     ->save();
-                
-                // Customization to fix a bug that fail to save shipping method, this bug (collectShippingRates()) is casued by some other plugins. 
-                $shippingAddress->setShippingMethod($shippingMethod)
-                                ->save();
-
             }
 
             if ($coupon && $coupon->getCouponId()) {
