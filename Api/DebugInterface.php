@@ -20,8 +20,8 @@ namespace Bolt\Boltpay\Api;
 interface DebugInterface
 {
 	/**
+	 * @return void
 	 * @api
-	 * @return \Bolt\Boltpay\Model\Api\Data\DebugInfo
 	 */
 	public function debug();
 }
