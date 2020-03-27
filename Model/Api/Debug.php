@@ -24,7 +24,6 @@ use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Module\FullModuleList;
-use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Helper\LogRetriever;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
