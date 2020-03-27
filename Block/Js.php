@@ -417,7 +417,8 @@ class Js extends Template
      */
     public function isOrderManagementEnabled()
     {
-        return $this->configHelper->isOrderManagementEnabled();
+        return $this->configHelper->isOrderManagementEnabled() &&
+            $this->featureSwitches->isOrderManagementEnabled();
     }
 
     /**
