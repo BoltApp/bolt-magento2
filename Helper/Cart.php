@@ -1385,9 +1385,6 @@ class Cart extends AbstractHelper
             $taxAmount = 0;
         }
 
-        // include potential rounding difference and reset $diff accumulator
-        $cart['items'][0]['total_amount'] += round($diff);
-        $totalAmount += round($diff);
         $diff = 0;
 
         // add discount data
