@@ -131,7 +131,7 @@ class Debug implements DebugInterface
 		$this->response->setBody(
 			json_encode([
 				'status' => 'success',
-				'event' => 'debug',
+				'event' => 'integration.debug',
 				'data' => $result
 			])
 		);

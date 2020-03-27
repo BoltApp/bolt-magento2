@@ -179,7 +179,7 @@ class DebugTest extends TestCase
 
 		$expectedJson = json_encode([
 			'status' => 'success',
-			'event' => 'debug',
+			'event' => 'integration.debug',
 			'data' => [
 				'phpVersion' => PHP_VERSION,
 				'platformVersion' => '2.3.0',
