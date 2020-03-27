@@ -132,8 +132,8 @@ class Debug implements DebugInterface
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
 		# populate log
-        # parameters exist for getExceptionLog, default to exception.php last 100 lines
-        $result->setLogInfo($this->logRetriever->getExceptionLog());
+        # parameters exist for getLog, default to exception.php last 100 lines
+        $result->setLogInfo($this->logRetriever->getLog());
 
 		return $result;
 

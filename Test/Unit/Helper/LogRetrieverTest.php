@@ -38,7 +38,7 @@ class LogRetrieverTest extends TestCase
         $this->root = vfsStream::setup('root', null, $structure);
         $this->virtualLogPath = "/log/exception.log";
         $this->logRetriever = $this->getMockBuilder(LogRetriever::class)
-            ->setMethods(['getExceptionLog'])
+            ->setMethods(['getLog'])
             ->enableProxyingToOriginalMethods()
             ->getMock();
     }
@@ -50,7 +50,7 @@ class LogRetrieverTest extends TestCase
     {
         $expected = ['Line 1 of log', 'Line 2 of log', 'Line 3 of log'];
 
-        $result = $this->logRetriever->getExceptionLog(
+        $result = $this->logRetriever->getLog(
             $this->root->url() . $this->virtualLogPath
         );
 
@@ -63,7 +63,7 @@ class LogRetrieverTest extends TestCase
     {
         $expected = ['Line 3 of log'];
 
-        $result = $this->logRetriever->getExceptionLog(
+        $result = $this->logRetriever->getLog(
             $this->root->url() . $this->virtualLogPath,
             1
         );
@@ -78,7 +78,7 @@ class LogRetrieverTest extends TestCase
         $invalidPath = "invalid/path";
         $expected = ['No file found at ' . $this->root->url() . $invalidPath];
 
-        $result = $this->logRetriever->getExceptionLog(
+        $result = $this->logRetriever->getLog(
             $this->root->url() . $invalidPath
         );
         $this->assertEquals($expected, $result);

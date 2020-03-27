@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
@@ -66,6 +67,11 @@ class DebugTest extends TestCase
 	 * @var ModuleRetriever
 	 */
 	private $moduleRetrieverMock;
+
+    /**
+     * @var LogRetriever
+     */
+    private $logRetrieverMock;
 
 	/**
 	 * @var StoreManagerInterface
@@ -133,6 +139,12 @@ class DebugTest extends TestCase
 			]
 		);
 
+		// prepare log retriever
+        $this->logRetrieverMock = $this->createMock(LogRetriever::class);
+        $this->logRetrieverMock->method('getLog')->willReturn(
+            [['Line 1 of log'], ['Line 2 of log']]
+        );
+
 		// initialize test object
 		$objectManager = new ObjectManager($this);
 		$this->debug = $objectManager->getObject(
@@ -145,7 +157,8 @@ class DebugTest extends TestCase
 				'hookHelper' => $this->hookHelperMock,
 				'productMetadata' => $this->productMetadataInterfaceMock,
 				'configHelper' => $this->configHelperMock,
-				'moduleRetriever' => $this->moduleRetrieverMock
+				'moduleRetriever' => $this->moduleRetrieverMock,
+                'logRetriever' => $this->logRetrieverMock
 			]
 		);
 	}
@@ -200,7 +213,11 @@ class DebugTest extends TestCase
 						'name' => 'plugin3',
 						'version' => '3.0.0'
 					]
-				]
+				],
+                'log' => [
+                    ['Line 1 of mock'],
+                    ['Line 2 of mock']
+                ]
 			]
 
 		]);

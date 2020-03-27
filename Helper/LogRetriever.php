@@ -11,7 +11,7 @@ class LogRetriever
      * @param int $lines
      * @return array
      */
-    public function getExceptionLog($logPath = self::DEFAULT_LOG_PATH, $lines = 100)
+    public function getLog($logPath = self::DEFAULT_LOG_PATH, $lines = 100)
     {
         return explode("\n", $this->customTail($logPath, $lines));
     }
