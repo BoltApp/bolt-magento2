@@ -170,12 +170,6 @@ class DebugTest extends TestCase
 	{
 		$this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
 		$this->responseMock->expects($this->once())->method('sendResponse');
-		$this->responseMock->expects($spy = $this->any())->method('setBody');
-		$this->debug->debug();
-
-		$invocations = $spy->getInvocations();
-		$args = $invocations[0]->getParameters();
-		$this->assertEquals(1, count($args));
 
 		$expectedJson = json_encode([
 			'status' => 'success',
@@ -210,6 +204,8 @@ class DebugTest extends TestCase
 			]
 
 		]);
-		$this->assertEquals($expectedJson, $args[0]);
+
+		$this->responseMock->expects($this->once())->method('setBody')->with($this->equalTo($expectedJson));
+		$this->debug->debug();
 	}
 }
