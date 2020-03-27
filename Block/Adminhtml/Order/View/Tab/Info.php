@@ -14,12 +14,19 @@
  * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+namespace Bolt\Boltpay\Block\Adminhtml\Order\View\Tab;
 
 /**
- * Shopping Cart page Bolt Checkout button
- *
- * @var $block \Bolt\Boltpay\Block\Js
+ * Class Info
+ * @package Bolt\Boltpay\Block\Adminhtml\Order\View\Tab
  */
-if ($block->shouldDisableBoltCheckout()) return;
-?>
-<div class="bolt-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass(); ?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+class Info extends \Magento\Sales\Block\Adminhtml\Order\View\Tab\Info
+{
+    /**
+     * @param $order
+     * @return mixed
+     */
+    public function isBoltOrder($order){
+        return ($order->getPayment() && $order->getPayment()->getMethod() === \Bolt\Boltpay\Model\Payment::METHOD_CODE);
+    }
+}
