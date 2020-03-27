@@ -104,4 +104,8 @@
 ## [v2.5.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.5.0) 2020-03-27
  - Add support for boltPrimaryActionColor
  - Moved some CSS to M2 config page
+ - Custom options support for simple products in product page checkout
+ - Webhook log cleaner cron
+ - Improved api result caching
+ - Improved debug webhook data collection
  - Bug fixes
