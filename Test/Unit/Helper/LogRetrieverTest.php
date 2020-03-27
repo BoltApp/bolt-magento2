@@ -36,24 +36,51 @@ class LogRetrieverTest extends TestCase
             ]
         ];
         $this->root = vfsStream::setup('root', null, $structure);
-        $this->logRetriever = $this->getMockBuilder(LogRetriever::class);
+        $this->virtualLogPath = "/log/exception.log";
+        $this->logRetriever = $this->getMockBuilder(LogRetriever::class)
+            ->setMethods(['getExceptionLog'])
+            ->enableProxyingToOriginalMethods()
+            ->getMock();
     }
 
     /**
      * @test
      */
-    public function getLog_success()
+    public function getLogWithoutSpecifiedLines()
     {
-        $this->assertTrue(true);
-    }
+        $expected = ['Line 1 of log', 'Line 2 of log', 'Line 3 of log'];
 
+        $result = $this->logRetriever->getExceptionLog(
+            $this->root->url() . $this->virtualLogPath
+        );
+
+        $this->assertEquals($expected, $result);
+    }
     /**
      * @test
      */
     public function getOneLineOfLog()
     {
-        $expected = array(["Line 3 of log"]);
+        $expected = ['Line 3 of log'];
 
-        $this->assertEquals($expected, $this->logRetriever->getExceptionLog($this->virtualLogPath, 1));
+        $result = $this->logRetriever->getExceptionLog(
+            $this->root->url() . $this->virtualLogPath,
+            1
+        );
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function noLogFound()
+    {
+        $invalidPath = "invalid/path";
+        $expected = ['No file found at ' . $this->root->url() . $invalidPath];
+
+        $result = $this->logRetriever->getExceptionLog(
+            $this->root->url() . $invalidPath
+        );
+        $this->assertEquals($expected, $result);
     }
 }
