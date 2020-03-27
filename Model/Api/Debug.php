@@ -103,7 +103,7 @@ class Debug implements DebugInterface
     /**
      * This request handler will return relevant information for Bolt for debugging purpose.
      *
-     * @return DebugInfo
+     * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Webapi\Exception
@@ -134,8 +134,6 @@ class Debug implements DebugInterface
 		# populate log
         # parameters exist for getLog, default to exception.php last 100 lines
         $result->setLogInfo($this->logRetriever->getLog());
-
-		return $result;
 
 		// prepare response
 		$this->response->setHeader('Content-Type', 'json');

@@ -214,9 +214,9 @@ class DebugTest extends TestCase
 						'version' => '3.0.0'
 					]
 				],
-                'log' => [
-                    ['Line 1 of mock'],
-                    ['Line 2 of mock']
+                'logInfo' => [
+                    ['Line 1 of log'],
+                    ['Line 2 of log']
                 ]
 			]
 
