@@ -135,15 +135,15 @@ class CheckAccountTest extends TestCase
      * @test
      * @dataProvider checkEmailDataProvider
      */
-    public function checkEmail_returnSuccessfulResult($accountExist)
+    public function checkEmail_returnSuccessfulResult($accountExists)
     {
         $this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
         $this->accountManagementMock->expects($this->once())
-            ->method('isEmailAvailable')->with(self::EMAIL)->willReturn(!$accountExist);
+            ->method('isEmailAvailable')->with(self::EMAIL)->willReturn(!$accountExists);
         $accountInfo = $this->checkAccount->checkEmail(self::EMAIL);
 
         $this->assertEquals("success", $accountInfo->getStatus());
-        $this->assertEquals($accountExist, $accountInfo->getAccountExist());
+        $this->assertEquals($accountExists, $accountInfo->getAccountExists());
     }
 
     public function checkEmailDataProvider()
