@@ -101,3 +101,7 @@
 ## [v2.4.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.0) 2020-03-11
  - Bug fixes
  - Added JS event for when hints are set 
+## [v2.5.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.5.0) 2020-03-27
+ - Add support for boltPrimaryActionColor
+ - Moved some CSS to M2 config page
+ - Bug fixes
