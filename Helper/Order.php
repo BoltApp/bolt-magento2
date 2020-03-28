@@ -406,7 +406,7 @@ class Order extends AbstractHelper
 
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
-            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInstoreShippingRate($referenceShipmentMethod)) {
+            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingRateCode($referenceShipmentMethod)) {
                 $this->configHelper->setAddressToInStoreAddress($quote);
             }
         }
