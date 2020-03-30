@@ -222,6 +222,7 @@ class Order extends AbstractHelper
     private $transactionInfo;
 
     /**
+     * Order constructor.
      * @param Context $context
      * @param ApiHelper $apiHelper
      * @param Config $configHelper
@@ -230,19 +231,24 @@ class Order extends AbstractHelper
      * @param OrderSender $emailSender
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
-     * @param TransactionBuilder          $transactionBuilder
-     * @param TimezoneInterface           $timezone
-     * @param DataObjectFactory           $dataObjectFactory
-     * @param LogHelper                   $logHelper
-     * @param Bugsnag                     $bugsnag
-     * @param CartHelper                  $cartHelper
-     * @param ResourceConnection          $resourceConnection
-     * @param SessionHelper               $sessionHelper
-     * @param DiscountHelper              $discountHelper
-     * @param DateTime                    $date
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param OrderRepository $orderRepository
+     * @param TransactionBuilder $transactionBuilder
+     * @param TimezoneInterface $timezone
+     * @param DataObjectFactory $dataObjectFactory
+     * @param LogHelper  $logHelper
+     * @param Bugsnag $bugsnag
+     * @param CartHelper $cartHelper
+     * @param ResourceConnection $resourceConnection
+     * @param SessionHelper $sessionHelper
+     * @param DiscountHelper $discountHelper
+     * @param DateTime $date
      * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
-     * @param WebhookLogFactory           $webhookLogFactory
-     * @param Decider                     $featureSwitches
+     * @param WebhookLogFactory $webhookLogFactory
+     * @param Decider $featureSwitches
+     * @param CheckboxesHandler $checkboxesHandler
+     * @param CustomerCreditCardFactory $customerCreditCardFactory
+     * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      *
      * @codeCoverageIgnore
      */
@@ -411,8 +417,14 @@ class Order extends AbstractHelper
     protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
+        $referenceShipmentMethod = (@$transaction->order->cart->shipments[0]->reference) ?: false;
+
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
+            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingMethodCode($referenceShipmentMethod)) {
+                $addressData = $this->configHelper->getPickupAddressData();
+                $quote->getShippingAddress()->addData($addressData);
+            }
         }
     }
 

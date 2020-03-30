@@ -25,6 +25,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
+use Magento\Directory\Model\RegionFactory;
 
 
 /**
@@ -299,6 +300,22 @@ class Config extends AbstractHelper
 
     const XML_PATH_MINIMUM_ORDER_AMOUNT = 'sales/minimum_order/amount';
 
+    const XML_PATH_ENABLE_STORE_PICKUP_FEATURE = 'payment/boltpay/enable_store_pickup_feature';
+
+    const XML_PATH_PICKUP_STREET = 'payment/boltpay/pickup_street';
+
+    const XML_PATH_PICKUP_APARTMENT  = 'payment/boltpay/pickup_apartment';
+
+    const XML_PATH_PICKUP_CITY = 'payment/boltpay/pickup_city';
+
+    const XML_PATH_PICKUP_ZIP_CODE = 'payment/boltpay/pickup_zipcode';
+
+    const XML_PATH_PICKUP_COUNTRY_ID = 'payment/boltpay/pickup_country_id';
+
+    const XML_PATH_PICKUP_REGION_ID = 'payment/boltpay/pickup_region_id';
+
+    const XML_PATH_PICKUP_SHIPPING_METHOD_CODE = 'payment/boltpay/pickup_shipping_method_code';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -329,11 +346,17 @@ class Config extends AbstractHelper
     private $productMetadata;
 
     /**
+     * @var \Magento\Directory\Model\RegionFactory
+     */
+    private $regionFactory;
+
+    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
      * @param BoltConfigSettingFactory $boltConfigSettingFactory
+     * @param RegionFactory            $regionFactory
      *
      * @codeCoverageIgnore
      */
@@ -342,13 +365,15 @@ class Config extends AbstractHelper
         EncryptorInterface $encryptor,
         ResourceInterface $moduleResource,
         ProductMetadataInterface $productMetadata,
-	    BoltConfigSettingFactory $boltConfigSettingFactory
+	    BoltConfigSettingFactory $boltConfigSettingFactory,
+        RegionFactory $regionFactory
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
         $this->moduleResource = $moduleResource;
         $this->productMetadata = $productMetadata;
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
+        $this->regionFactory = $regionFactory;
     }
 
     /**
@@ -1516,4 +1541,158 @@ class Config extends AbstractHelper
 
 		return $boltSettings;
 	}
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupStreetConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_STREET,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupCityConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_CITY,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupZipCodeConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_ZIP_CODE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupCountryIdConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_COUNTRY_ID,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupRegionIdConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_REGION_ID,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupShippingMethodCodeConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_SHIPPING_METHOD_CODE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function getPickupApartmentConfiguration($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PICKUP_APARTMENT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @param null $storeId
+     * @return mixed
+     */
+    public function isStorePickupFeatureEnabled($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ENABLE_STORE_PICKUP_FEATURE,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getPickupAddressData()
+    {
+        $street = $this->getPickupStreetConfiguration();
+        $city = $this->getPickupCityConfiguration();
+        $postCode = $this->getPickupZipCodeConfiguration();
+        $countryId = $this->getPickupCountryIdConfiguration();
+        $regionId = $this->getPickupRegionIdConfiguration();
+        $apartment = $this->getPickupApartmentConfiguration();
+
+        if (empty($street) || empty($city) || empty($postCode) || empty($countryId) || empty($regionId)) {
+            return null;
+        }
+
+        $regionCode = $this->regionFactory->create()->load($regionId)->getCode();
+
+        if (empty($regionCode)) {
+            return null;
+        }
+
+        if ($apartment) {
+            $street .= "\n".$apartment;
+        }
+
+        $addressData = array(
+            'street' => trim($street),
+            'city' => $city,
+            'postcode' => $postCode,
+            'country_id' => $countryId,
+            'region_id' => $regionId,
+            'region_code' => $regionCode,
+        );
+
+        return $addressData;
+    }
+
+    /**
+     * @param $rateCode
+     * @return bool
+     */
+    public function isPickupInStoreShippingMethodCode($rateCode) {
+        if (!$this->isStorePickupFeatureEnabled()) {
+            return false;
+        }
+        $pickupInStoreShippingRateCode = $this->getPickupShippingMethodCodeConfiguration();
+        return isset($pickupInStoreShippingRateCode) && $rateCode == $pickupInStoreShippingRateCode;
+    }
 }
