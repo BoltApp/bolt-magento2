@@ -272,4 +272,10 @@
                 type="Bolt\Boltpay\Plugin\Magento\GiftCard\GenerateGiftCardAccountsOrderPlugin"
                 sortOrder="1"/>
     </type>
+
+    <type name="Magento\Sales\Model\ResourceModel\Order">
+        <plugin name="BoltBoltpayOrderStatusLogging"
+                type="Bolt\Boltpay\Plugin\OrderCanceledStatusLogging"
+                sortOrder="1"/>
+    </type>
 </config>
