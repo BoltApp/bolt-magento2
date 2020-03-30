@@ -40,9 +40,7 @@ class OrderCanceledStatusLogging
                     "\nStatus: {$order->getStatus()}, State: {$order->getState()}"
                 );
             }
-
-            throw new \Exception('Testing! This should be removed after testing!');
-
+            
         } catch (\Throwable $e) {
             $this->bugsnag->notifyError(
                 "{$order->getIncrementId()} - Order status update - Error - {$e->getMessage()}",
