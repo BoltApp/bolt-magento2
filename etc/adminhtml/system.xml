@@ -67,6 +67,11 @@
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     <comment><![CDATA[If specified, Bolt plugin performs geolocation lookup to optimize the performance. Get key from <a target="_blank" href="https://ipstack.com">https://ipstack.com</a> or contact Bolt team.]]></comment>
                 </field>
+                <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Primary Color</label>
+                    <validate>validate-color</validate>
+                    <comment><![CDATA[The primary color to be used for the Bolt Checkout button and modal styling.]]></comment>
+                </field>
                 <field id="replace_selectors" translate="label" type="textarea" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Replace Button Selectors</label>
                 </field>

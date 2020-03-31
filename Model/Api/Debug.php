@@ -20,16 +20,21 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Module\FullModuleList;
-use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Helper\LogRetriever;
-
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Debug implements DebugInterface
 {
+	/**
+	 * @var Response
+	 */
+	private $response;
+
 	/**
 	 * @var DebugInfoFactory
 	 */
@@ -66,6 +71,7 @@ class Debug implements DebugInterface
     private $logRetriever;
 
 	/**
+	 * @param Response $response
 	 * @param DebugInfoFactory $debugInfoFactory
 	 * @param StoreManagerInterface $storeManager
 	 * @param HookHelper $hookHelper
@@ -75,6 +81,7 @@ class Debug implements DebugInterface
      * @param LogRetriever $logRetriever
 	 */
 	public function __construct(
+		Response $response,
 		DebugInfoFactory $debugInfoFactory,
 		StoreManagerInterface $storeManager,
 		HookHelper $hookHelper,
@@ -83,6 +90,7 @@ class Debug implements DebugInterface
 		ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever
 	) {
+		$this->response = $response;
 		$this->debugInfoFactory = $debugInfoFactory;
 		$this->storeManager = $storeManager;
 		$this->hookHelper = $hookHelper;
@@ -95,7 +103,7 @@ class Debug implements DebugInterface
     /**
      * This request handler will return relevant information for Bolt for debugging purpose.
      *
-     * @return DebugInfo
+     * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      * @throws \Magento\Framework\Webapi\Exception
@@ -124,9 +132,19 @@ class Debug implements DebugInterface
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
 		# populate log
-        # parameters exist for getExceptionLog, default to exception.php last 100 lines
-        $result->setLogInfo($this->logRetriever->getExceptionLog());
+        # parameters exist for getLog, default to exception.php last 100 lines
+        $result->setLogInfo($this->logRetriever->getLog());
 
-		return $result;
+		// prepare response
+		$this->response->setHeader('Content-Type', 'json');
+		$this->response->setHttpResponseCode(200);
+		$this->response->setBody(
+			json_encode([
+				'status' => 'success',
+				'event' => 'integration.debug',
+				'data' => $result
+			])
+		);
+		$this->response->sendResponse();
 	}
 }
