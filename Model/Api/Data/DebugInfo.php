@@ -142,7 +142,8 @@ class DebugInfo implements \JsonSerializable
 			'php_version' => $this->phpVersion,
 			'platform_version' => $this->platformVersion,
 			'bolt_config_settings' => $this->boltConfigSettings,
-			'other_plugin_versions' => $this->otherPluginVersions
+			'other_plugin_versions' => $this->otherPluginVersions,
+            'log_info' => $this->logInfo
 		];
 
 	}
