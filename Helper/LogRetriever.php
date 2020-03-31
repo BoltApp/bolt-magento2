@@ -18,6 +18,6 @@ class LogRetriever
 
     private function customTail($logPath, $lines)
     {
-        return trim (`tail -n $lines $logPath`) ?: "No file found at " . $logPath;
+        return trim (shell_exec("tail -n $lines $logPath")) ?: "No file found at " . $logPath;
     }
 }
