@@ -214,7 +214,7 @@ class DebugTest extends TestCase
 						'version' => '3.0.0'
 					]
 				],
-                'log_info' => [
+                'logs' => [
                     ['Line 1 of log'],
                     ['Line 2 of log']
                 ]

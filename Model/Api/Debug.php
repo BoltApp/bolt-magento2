@@ -133,7 +133,7 @@ class Debug implements DebugInterface
 
 		# populate log
         # parameters exist for getLog, default to exception.php last 100 lines
-        $result->setLogInfo($this->logRetriever->getLog());
+        $result->setLogs($this->logRetriever->getLogs());
 
 		// prepare response
 		$this->response->setHeader('Content-Type', 'json');

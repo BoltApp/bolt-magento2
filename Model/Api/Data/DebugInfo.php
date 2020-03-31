@@ -42,7 +42,7 @@ class DebugInfo implements \JsonSerializable
     /**
      * @var array
      */
-    private $logInfo;
+    private $logs;
 
 	/**
 	 * @return string
@@ -117,19 +117,19 @@ class DebugInfo implements \JsonSerializable
     /**
      * @return array
      */
-	public function getLogInfo()
+	public function getLogs()
     {
-        return $this->logInfo;
+        return $this->logs;
     }
 
     /**
-     * @param array $logInfo
+     * @param array $logs
      * @return $this
      */
 
-	public function setLogInfo($logInfo)
+	public function setLogs($logs)
     {
-        $this->logInfo = $logInfo;
+        $this->logs = $logs;
         return $this;
     }
 
@@ -143,7 +143,7 @@ class DebugInfo implements \JsonSerializable
 			'platform_version' => $this->platformVersion,
 			'bolt_config_settings' => $this->boltConfigSettings,
 			'other_plugin_versions' => $this->otherPluginVersions,
-            'log_info' => $this->logInfo
+            'logs' => $this->logs
 		];
 
 	}
