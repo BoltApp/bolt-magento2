@@ -141,7 +141,7 @@ class DebugTest extends TestCase
 
 		// prepare log retriever
         $this->logRetrieverMock = $this->createMock(LogRetriever::class);
-        $this->logRetrieverMock->method('getLog')->willReturn(
+        $this->logRetrieverMock->method('getLogs')->willReturn(
             [['Line 1 of log'], ['Line 2 of log']]
         );
 
