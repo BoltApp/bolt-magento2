@@ -175,9 +175,9 @@ class DebugTest extends TestCase
 			'status' => 'success',
 			'event' => 'integration.debug',
 			'data' => [
-				'phpVersion' => PHP_VERSION,
-				'platformVersion' => '2.3.0',
-				'boltConfigSettings' => [
+				'php_version' => PHP_VERSION,
+				'platform_version' => '2.3.0',
+				'bolt_config_settings' => [
 					[
 						'name' => 'config_name1',
 						'value' => 'config_value1'
@@ -187,7 +187,7 @@ class DebugTest extends TestCase
 						'value' => 'config_value2'
 					]
 				],
-				'otherPluginVersions' => [
+				'other_plugin_versions' => [
 					[
 						'name' => 'plugin1',
 						'version' => '1.0.0'
