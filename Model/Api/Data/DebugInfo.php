@@ -138,6 +138,12 @@ class DebugInfo implements \JsonSerializable
 	 */
 	public function jsonSerialize()
 	{
-		return get_object_vars($this);
+		return [
+			'php_version' => $this->phpVersion,
+			'platform_version' => $this->platformVersion,
+			'bolt_config_settings' => $this->boltConfigSettings,
+			'other_plugin_versions' => $this->otherPluginVersions
+		];
+
 	}
 }
