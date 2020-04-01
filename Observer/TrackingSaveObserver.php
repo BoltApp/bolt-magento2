@@ -10,6 +10,7 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Class TrackingSaveObserver
@@ -125,6 +126,9 @@ class TrackingSaveObserver implements ObserverInterface
             }
             $this->metricsClient->processMetric("tracking_creation.success", 1, "tracking_creation.latency", $startTime);
         } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+        } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
         }
