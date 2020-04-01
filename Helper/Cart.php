@@ -1222,6 +1222,10 @@ class Cart extends AbstractHelper
             // 2. During discounts validation, the $original_quote could be empty, so check it before processing.
             $original_quote = $this->checkoutSession->getQuote();
             $original_shippingMethod = !empty($original_quote) ? $original_quote->getShippingAddress()->getShippingMethod() : '';
+            // For backoffice order, the plugin Amasty Shipping Restriction need OrigData to process,
+            // app/code/Amasty/Shiprestriction/Model/ShippingRestrictionRule.php,
+            // so we restore it when get cart data.
+            $original_address_data = !empty($original_quote) ? $original_quote->getShippingAddress()->getOrigData() : '';
         }        
 
         ////////////////////////////////////////////////////////
@@ -1334,7 +1338,10 @@ class Cart extends AbstractHelper
                 }
             } else {
                 $address->setCollectShippingRates(true);
-
+                // Customization for Amasty Shipping Restriction
+                if( !empty( $original_address_data ) ){
+                    $address->addData($original_address_data);
+                }
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $quote) {
                     // Customization for StorePickup
