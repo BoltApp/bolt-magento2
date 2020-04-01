@@ -17,11 +17,17 @@
 
 namespace Bolt\Boltpay\Api;
 
-interface DebugInterface
+/**
+ * Check User Interface
+ * @api
+ */
+interface CheckAccountInterface
 {
-	/**
-	 * @api
-	 * @return void
-	 */
-	public function debug();
+    /**
+     * @api
+     *
+     * @param mixed $email
+     * @return \Bolt\Boltpay\Model\Api\Data\AccountInfo
+     */
+    public function checkEmail($email = null);
 }

@@ -56,6 +56,9 @@
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
 
+    <!-- For check email endpoint -->
+    <preference for="Bolt\Boltpay\Api\CheckAccountInterface" type="Bolt\Boltpay\Model\Api\CheckAccount" />
+
     <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>

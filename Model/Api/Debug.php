@@ -20,15 +20,20 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Module\FullModuleList;
-use Bolt\Boltpay\Helper\ModuleRetriever;
-
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Debug implements DebugInterface
 {
+	/**
+	 * @var Response
+	 */
+	private $response;
+
 	/**
 	 * @var DebugInfoFactory
 	 */
@@ -60,6 +65,7 @@ class Debug implements DebugInterface
 	private $moduleRetriever;
 
 	/**
+	 * @param Response $response
 	 * @param DebugInfoFactory $debugInfoFactory
 	 * @param StoreManagerInterface $storeManager
 	 * @param HookHelper $hookHelper
@@ -68,6 +74,7 @@ class Debug implements DebugInterface
 	 * @param ModuleRetriever $moduleRetriever
 	 */
 	public function __construct(
+		Response $response,
 		DebugInfoFactory $debugInfoFactory,
 		StoreManagerInterface $storeManager,
 		HookHelper $hookHelper,
@@ -75,6 +82,7 @@ class Debug implements DebugInterface
 		ConfigHelper $configHelper,
 		ModuleRetriever $moduleRetriever
 	) {
+		$this->response = $response;
 		$this->debugInfoFactory = $debugInfoFactory;
 		$this->storeManager = $storeManager;
 		$this->hookHelper = $hookHelper;
@@ -86,7 +94,7 @@ class Debug implements DebugInterface
 	/**
 	 * This request handler will return relevant information for Bolt for debugging purpose.
 	 *
-	 * @return DebugInfo
+	 * @return void
 	 * @api
 	 */
 	public function debug()
@@ -111,6 +119,16 @@ class Debug implements DebugInterface
 		# populate other plugin info
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
-		return $result;
+		// prepare response
+		$this->response->setHeader('Content-Type', 'json');
+		$this->response->setHttpResponseCode(200);
+		$this->response->setBody(
+			json_encode([
+				'status' => 'success',
+				'event' => 'integration.debug',
+				'data' => $result
+			])
+		);
+		$this->response->sendResponse();
 	}
 }
