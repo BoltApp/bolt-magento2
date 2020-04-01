@@ -39,6 +39,11 @@ class DebugInfo implements \JsonSerializable
 	 */
 	private $otherPluginVersions;
 
+    /**
+     * @var array
+     */
+    private $logs;
+
 	/**
 	 * @return string
 	 */
@@ -109,6 +114,25 @@ class DebugInfo implements \JsonSerializable
 		return $this;
 	}
 
+    /**
+     * @return array
+     */
+	public function getLogs()
+    {
+        return $this->logs;
+    }
+
+    /**
+     * @param array $logs
+     * @return $this
+     */
+
+	public function setLogs($logs)
+    {
+        $this->logs = $logs;
+        return $this;
+    }
+
 	/**
 	 * @inheritDoc
 	 */
@@ -118,7 +142,8 @@ class DebugInfo implements \JsonSerializable
 			'php_version' => $this->phpVersion,
 			'platform_version' => $this->platformVersion,
 			'bolt_config_settings' => $this->boltConfigSettings,
-			'other_plugin_versions' => $this->otherPluginVersions
+			'other_plugin_versions' => $this->otherPluginVersions,
+            'logs' => $this->logs
 		];
 
 	}
