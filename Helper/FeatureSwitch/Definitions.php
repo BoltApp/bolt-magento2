@@ -62,9 +62,9 @@ class Definitions {
     const M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER = "M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER";
 
     /**
-     * Enable tracking event observer
+     * Enable tracking shipment
      */
-    const TRACKING_EVENT_OBSERVER_SWITCH = "TRACKING_EVENT_OBSERVER_SWITCH";
+    const M2_TRACK_SHIPMENT = "M2_TRACK_SHIPMENT";
 
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
@@ -97,8 +97,8 @@ class Definitions {
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ),
-        self::TRACKING_EVENT_OBSERVER_SWITCH => array(
-            self::NAME_KEY            => self::TRACKING_EVENT_OBSERVER_SWITCH,
+        self::M2_TRACK_SHIPMENT => array(
+            self::NAME_KEY            => self::M2_TRACK_SHIPMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100

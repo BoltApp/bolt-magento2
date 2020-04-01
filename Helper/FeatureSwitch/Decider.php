@@ -188,8 +188,8 @@ class Decider extends AbstractHelper {
     /**
      * Checks whether the feature switch for saving/sending tracking data is enabled
      */
-    public function isTrackingSaveEventsEnabled()
+    public function isTrackShipmentEnabled()
     {
-        return $this->isSwitchEnabled(Definitions::TRACKING_EVENT_OBSERVER_SWITCH);
+        return $this->isSwitchEnabled(Definitions::M2_TRACK_SHIPMENT);
     }
 }

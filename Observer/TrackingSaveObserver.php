@@ -78,7 +78,7 @@ class TrackingSaveObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->decider->isTrackingSaveEventsEnabled()) {
+        if (!$this->decider->isTrackShipmentEnabled()) {
             return;
         }
 
