@@ -101,7 +101,7 @@ class Definitions {
             self::NAME_KEY            => self::TRACKING_EVENT_OBSERVER_SWITCH,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::ROLLOUT_KEY         => 100
         )
     );
 }
