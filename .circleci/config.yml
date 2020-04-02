@@ -84,20 +84,18 @@ jobs:
     environment:
       MAGENTO_DIR: magento
     steps:
+      - checkout
       - run: |
-          .circleci/scripts/rc-tag.sh
-      - when:
-          condition: $TAGTHISWEEK
-          steps:
-            - run:
-                command: |
-                  apt-get update
-                  apt-get install -y git
-                  apt-get install -y openssh-server
-            - swissknife/publish_github_release:
-                tag: $NEWTAGNAME
-            - notify-rc-tag:
-                tag: $NEWTAGNAME
+          source .circleci/scripts/rc-tag.sh
+          echo "export NEWTAGNAME=$NEWTAGNAME" >> $BASH_ENV
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y git
+          sudo apt-get install -y openssh-server
+      - swissknife/publish_github_release:
+          tag: $NEWTAGNAME
+      - notify-rc-tag:
+          tag: $NEWTAGNAME
 
   integration-php72-magento23:
     docker:

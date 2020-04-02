@@ -4,18 +4,17 @@ set -e
 set -u
 set -x
 
-RCENTRY=$(git for-each-ref --sort=-taggerdate --format="%(refname:short) | %(creatordate)" refs/tags/* | grep "rc " | head -n 1)
+RCENTRY=$(git for-each-ref --sort=-taggerdate --format="%(refname:short) | %(creatordate:format:%s)" refs/tags/* | grep "rc " | head -n 1)
+
 TAG=$(echo $RCENTRY | cut -d"|" -f1)
-TAGDATE=TAG=$(echo $RCENTRY | cut -d"|" -f2)
+TAGDATE=$(echo $RCENTRY | cut -d"|" -f2 | sed 's/^ *//g')
 
-export NEWTAGNAME=$(echo $TAG | awk -F. '{print $1 "." $2+1 ".0-rc"}')
-threeWeeksAgo="21 days ago"
-threeWeekDate=$(date --date "$threeWeeksAgo" +'%s')
-taggedDate=$(date --date "$TAGDATE" +'%s')
+NEWTAGNAME=$(echo $TAG | awk -F. '{print $1 "." $2+1 ".0-rc"}')
 
-if [[ ${taggedDate} -lt ${threeWeekDate} ]];
+CUTOFFDATE =$(date --date "20 days ago" +'%s')
+
+if [[ ${TAGDATE} -gt ${CUTOFFDATE} ]];
 then
-    export TAGTHISWEEK=true
-else
-    export TAGTHISWEEK=false
+    echo "No need to create RC-tag this week"
+    circleci-agent step halt
 fi
