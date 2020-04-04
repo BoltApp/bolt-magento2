@@ -3,10 +3,14 @@
  * @var \Bolt\Boltpay\Block\Form $block
  */
 $code = $block->escapeHtml($block->getMethodCode());
+$backofficePublishableKey = $block->getPublishableKeyBackOffice();
 $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
 $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLoggedInCustomerFeatureEnabled();
 ?>
 
+<?php if (!$backofficePublishableKey): ?>
+    In order to use Bolt from admin, please set "Publishable Key - Back Office" in the config.
+<?php else: ?>
 <fieldset class="admin__fieldset payment-method" id="payment_form_<?php /* @noEscape */ echo $code; ?>" style="display:none">
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
         <div>
@@ -49,4 +53,6 @@ $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLogg
             });
         });
     </script>
+<?php endif; ?>
+
 <?php endif; ?>
