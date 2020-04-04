@@ -207,6 +207,16 @@ require([
     ////////////////////////////////
 
     /**
+     * Get the current page checkout type.
+     * This function should be extended for Magento checkout extensions.
+     *
+     * return string
+     */
+    var getCheckoutType = function() {
+        return 'payment';
+    };
+
+    /**
      * Get the checkout key according to the checkout type.
      *
      * return string
