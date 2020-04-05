@@ -2,23 +2,23 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@3.4.2
-  swissknife: roopakv/swissknife@0.25.0
 
 commands:
   notify-rc-tag:
-    description: 'Notifies #eng-magento2 when a release candidate is tagged.'
+    description: 'Notify #eng-magento2 after a release candidate is tagged.'
     parameters:
       tag:
         type: string
         default: ''
     steps:
       - slack/notify:
-          channel: "#eng-magento2"
-          color: '#33ff00'
-          mentions: '@oleksii,@Pavel,'
+          color: '#58a359'
+          mentions: 'oleksii,Pavel'
           message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
           webhook: $SLACK_MAGENTO2_WEBHOOK
-
+          include_job_number_field: false
+          include_project_field: false
+          include_visit_job_action: false
   m2-php-test:
     description: PHP Unit tests for M2
     parameters:
@@ -74,30 +74,19 @@ commands:
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
 jobs:
-  tag-rc-candidate:
-    description: Tag master as rc every 3 weeks
+  tag-release-candidate:
     docker:
-    - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-      auth:
-        username: $DOCKERHUB_USER
-        password: $DOCKERHUB_PASS
-    environment:
-      MAGENTO_DIR: magento
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
     steps:
-      - run: |
-          .circleci/scripts/rc-tag.sh
-      - when:
-          condition: $TAGTHISWEEK
-          steps:
-            - run:
-                command: |
-                  apt-get update
-                  apt-get install -y git
-                  apt-get install -y openssh-server
-            - swissknife/publish_github_release:
-                tag: $NEWTAGNAME
-            - notify-rc-tag:
-                tag: $NEWTAGNAME
+      - checkout
+      - run:
+          name: Tag master as release candidate every 3 weeks
+          command: .circleci/scripts/tag-rc-if-necessary.sh
+      - notify-rc-tag:
+          tag: $NEWTAGNAME
 
   integration-php72-magento23:
     docker:
