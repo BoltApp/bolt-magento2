@@ -21,182 +21,182 @@
     <system>
         <section id="payment">
             <group id="boltpay" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Bolt Pay</label>
-                <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Enabled</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Title</label>
-                </field>
-                <field id="api_key" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>API Key</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="signing_secret" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Signing Secret</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="publishable_key_checkout" translate="label" type="obscure" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Publishable Key - Multi Step</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="publishable_key_payment" translate="label" type="obscure" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Publishable Key - Payment Only</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="publishable_key_back_office" translate="label" type="obscure" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Publishable Key - Back Office</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                </field>
-                <field id="sandbox_mode" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Sandbox Mode</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="is_pre_auth" translate="label" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Pre-Auth order creation</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment><![CDATA[Yes - order gets created in the store prior to transaction authorization<br />No - transaction has to be authorized before order is created in the store]]></comment>
-                </field>
-                <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>(BETA) Enable product page checkout</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="order_management" translate="label" type="select" sortOrder="82" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>(BETA) Enable Bolt order management</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="geolocation_api_key" translate="label" type="obscure" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Geolocation API Key</label>
-                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
-                    <comment><![CDATA[If specified, Bolt plugin performs geolocation lookup to optimize the performance. Get key from <a target="_blank" href="https://ipstack.com">https://ipstack.com</a> or contact Bolt team.]]></comment>
-                </field>
-                <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Primary Color</label>
-                    <validate>validate-color</validate>
-                    <comment><![CDATA[The primary color to be used for the Bolt Checkout button and modal styling.]]></comment>
-                </field>
-                <field id="replace_selectors" translate="label" type="textarea" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Replace Button Selectors</label>
-                </field>
-                <field id="totals_change_selectors" translate="label" type="textarea" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Totals Monitor Selectors</label>
-                </field>
-                <field id="global_css" translate="label" type="textarea" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Global CSS</label>
-                </field>
-                <field id="additional_checkout_button_class" translate="label" type="text" sortOrder="105" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Additional Checkout Button Class</label>
-                </field>
-                <field id="success_page" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Success Page Redirect</label>
-                </field>
-                <field id="prefetch_shipping" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Prefetch Shipping and Tax</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="prefetch_address_fields" translate="label" type="textarea" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Prefetch Shipping and Tax: Cache Identifier Custom Address Fields</label>
-                </field>
-                <field id="reset_shipping_calculation" translate="label" type="select" sortOrder="125" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Reset Shipping Calculation</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Set to YES if shipping is not calculated correctly.</comment>
-                </field>
-                <field id="javascript_success" translate="label" type="textarea" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Javascript: success</label>
-                    <comment>This function is called when the Bolt checkout transaction is successful.</comment>
-                </field>
-                <field id="debug" translate="label" type="select" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
-                    <label>Debug</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Additional Javascript</label>
-                </field>
-                <field id="track_on_checkout_start" translate="label" type="textarea" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onCheckoutStart</label>
-                    <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
-                </field>
-                <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="151" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onEmailEnter</label>
-                    <comment>The javascript code executed when user enters or changes email. Email can be accessed as a variable named email.</comment>
-                </field>
-                <field id="track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onShippingDetailsComplete</label>
-                    <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
-                </field>
-                <field id="track_on_shipping_options_complete" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onShippingOptionsComplete</label>
-                    <comment>The javascript code executed when the user proceeds to the payment details page.</comment>
-                </field>
-                <field id="track_on_payment_submit" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onPaymentSubmit</label>
-                    <comment>The javascript code executed when the user clicks the pay button.</comment>
-                </field>
-                <field id="track_on_success" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onSuccess</label>
-                    <comment>The javascript code executed when the Bolt checkout transaction is successful.</comment>
-                </field>
-                <field id="track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Tracking: onClose</label>
-                    <comment>The javascript code executed when the Bolt checkout modal is closed.</comment>
-                </field>
-                <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Additional Configuration</label>
-                </field>
-                <field id="minicart_support" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>MiniCart Support</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Set to NO to load Bolt javascript only on Shopping Cart and Checkout pages.</comment>
-                </field>
-                <field id="ip_whitelist" translate="label" type="text" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Client IP Restriction</label>
-                    <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
-                </field>
-                <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Use Store Credit on Shopping Cart</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <if_module_enabled>Magento_CustomerBalance</if_module_enabled>
-                </field>
-                <field id="reward_points" translate="label" type="select" sortOrder="245" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Use Reward Points on Shopping Cart</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <if_module_enabled>Magento_Reward</if_module_enabled>
-                </field>
-                <field id="enable_payment_only_checkout" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enable Payment Only Checkout</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Cache Bolt Order Token (Performance Optimization)</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="api_emulate_session" translate="label" type="select" sortOrder="270" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Emulate Customer Session in API Calls</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="should_minify_javascript" translate="label" type="select" sortOrder="280" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Minify JavaScript for Better Performance</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="capture_merchant_metrics" translate="label" type="select" sortOrder="280" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Capture Internal Merchant Metrics</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="track_checkout_funnel" translate="label" type="select" sortOrder="290" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Track checkout funnel</label>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="custom_api" translate="label" type="text" sortOrder="291" showInDefault="0" showInWebsite="0" showInStore="0">
-                    <label>Custom API</label>
-                </field>
-                <field id="custom_merchant_dash" translate="label" type="text" sortOrder="292" showInDefault="0" showInWebsite="0" showInStore="0">
-                    <label>Custom Merchant Dash</label>
-                </field>
-                <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
-                    <label>Custom CDN</label>
-                </field>
+                    <label>Bolt Pay</label>
+                    <field id="active" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Enabled</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="title" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Title</label>
+                    </field>
+                    <field id="api_key" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>API Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="signing_secret" translate="label" type="obscure" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Signing Secret</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="publishable_key_checkout" translate="label" type="obscure" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Multi Step</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="publishable_key_payment" translate="label" type="obscure" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Payment Only</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="publishable_key_back_office" translate="label" type="obscure" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Back Office</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    </field>
+                    <field id="sandbox_mode" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Sandbox Mode</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="is_pre_auth" translate="label" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Pre-Auth order creation</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment><![CDATA[Yes - order gets created in the store prior to transaction authorization<br />No - transaction has to be authorized before order is created in the store]]></comment>
+                    </field>
+                    <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>(BETA) Enable product page checkout</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="order_management" translate="label" type="select" sortOrder="82" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>(BETA) Enable Bolt order management</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="geolocation_api_key" translate="label" type="obscure" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Geolocation API Key</label>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <comment><![CDATA[If specified, Bolt plugin performs geolocation lookup to optimize the performance. Get key from <a target="_blank" href="https://ipstack.com">https://ipstack.com</a> or contact Bolt team.]]></comment>
+                    </field>
+                    <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Primary Color</label>
+                        <validate>validate-color</validate>
+                        <comment><![CDATA[The primary color to be used for the Bolt Checkout button and modal styling.]]></comment>
+                    </field>
+                    <field id="replace_selectors" translate="label" type="textarea" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Replace Button Selectors</label>
+                    </field>
+                    <field id="totals_change_selectors" translate="label" type="textarea" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Totals Monitor Selectors</label>
+                    </field>
+                    <field id="global_css" translate="label" type="textarea" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Global CSS</label>
+                    </field>
+                    <field id="additional_checkout_button_class" translate="label" type="text" sortOrder="105" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Additional Checkout Button Class</label>
+                    </field>
+                    <field id="success_page" translate="label" type="text" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Success Page Redirect</label>
+                    </field>
+                    <field id="prefetch_shipping" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Prefetch Shipping and Tax</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="prefetch_address_fields" translate="label" type="textarea" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Prefetch Shipping and Tax: Cache Identifier Custom Address Fields</label>
+                    </field>
+                    <field id="reset_shipping_calculation" translate="label" type="select" sortOrder="125" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Reset Shipping Calculation</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Set to YES if shipping is not calculated correctly.</comment>
+                    </field>
+                    <field id="javascript_success" translate="label" type="textarea" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Javascript: success</label>
+                        <comment>This function is called when the Bolt checkout transaction is successful.</comment>
+                    </field>
+                    <field id="debug" translate="label" type="select" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                        <label>Debug</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Additional Javascript</label>
+                    </field>
+                    <field id="track_on_checkout_start" translate="label" type="textarea" sortOrder="150" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onCheckoutStart</label>
+                        <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
+                    </field>
+                    <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="151" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onEmailEnter</label>
+                        <comment>The javascript code executed when user enters or changes email. Email can be accessed as a variable named email.</comment>
+                    </field>
+                    <field id="track_on_shipping_details_complete" translate="label" type="textarea" sortOrder="160" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onShippingDetailsComplete</label>
+                        <comment>The javascript code executed when the user proceeds to the shipping options page.</comment>
+                    </field>
+                    <field id="track_on_shipping_options_complete" translate="label" type="textarea" sortOrder="170" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onShippingOptionsComplete</label>
+                        <comment>The javascript code executed when the user proceeds to the payment details page.</comment>
+                    </field>
+                    <field id="track_on_payment_submit" translate="label" type="textarea" sortOrder="180" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onPaymentSubmit</label>
+                        <comment>The javascript code executed when the user clicks the pay button.</comment>
+                    </field>
+                    <field id="track_on_success" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onSuccess</label>
+                        <comment>The javascript code executed when the Bolt checkout transaction is successful.</comment>
+                    </field>
+                    <field id="track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onClose</label>
+                        <comment>The javascript code executed when the Bolt checkout modal is closed.</comment>
+                    </field>
+                    <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Additional Configuration</label>
+                    </field>
+                    <field id="minicart_support" translate="label" type="select" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>MiniCart Support</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Set to NO to load Bolt javascript only on Shopping Cart and Checkout pages.</comment>
+                    </field>
+                    <field id="ip_whitelist" translate="label" type="text" sortOrder="230" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Client IP Restriction</label>
+                        <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
+                    </field>
+                    <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Store Credit on Shopping Cart</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_CustomerBalance</if_module_enabled>
+                    </field>
+                    <field id="reward_points" translate="label" type="select" sortOrder="245" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Reward Points on Shopping Cart</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
+                    <field id="enable_payment_only_checkout" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable Payment Only Checkout</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Cache Bolt Order Token (Performance Optimization)</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="api_emulate_session" translate="label" type="select" sortOrder="270" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Emulate Customer Session in API Calls</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="should_minify_javascript" translate="label" type="select" sortOrder="280" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Minify JavaScript for Better Performance</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="capture_merchant_metrics" translate="label" type="select" sortOrder="280" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Capture Internal Merchant Metrics</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="track_checkout_funnel" translate="label" type="select" sortOrder="290" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Track checkout funnel</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="custom_api" translate="label" type="text" sortOrder="291" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Custom API</label>
+                    </field>
+                    <field id="custom_merchant_dash" translate="label" type="text" sortOrder="292" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Custom Merchant Dash</label>
+                    </field>
+                    <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Custom CDN</label>
+                    </field>
             </group>
         </section>
     </system>
