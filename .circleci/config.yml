@@ -174,4 +174,4 @@ workflows:
               only:
                 - master
     jobs:
-      - tag-rc-candidate
+      - tag-release-candidate
