@@ -62,6 +62,10 @@
                     <label>(BETA) Enable product page checkout</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="order_management" translate="label" type="select" sortOrder="82" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>(BETA) Enable Bolt order management</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <field id="geolocation_api_key" translate="label" type="obscure" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Geolocation API Key</label>
                     <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>

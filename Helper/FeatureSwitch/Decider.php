@@ -192,4 +192,8 @@ class Decider extends AbstractHelper {
     {
         return $this->isSwitchEnabled(Definitions::M2_TRACK_SHIPMENT);
     }
+
+    public function isOrderManagementEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_ORDER_MANAGEMENT);
+    }
 }

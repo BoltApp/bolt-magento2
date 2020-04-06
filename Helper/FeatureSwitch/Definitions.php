@@ -66,6 +66,11 @@ class Definitions {
      */
     const M2_TRACK_SHIPMENT = "M2_TRACK_SHIPMENT";
 
+    /**
+     * Enable Order Management (account button)
+     */
+    const M2_ORDER_MANAGEMENT = "M2_ORDER_MANAGEMENT";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -99,6 +104,12 @@ class Definitions {
         ),
         self::M2_TRACK_SHIPMENT => array(
             self::NAME_KEY            => self::M2_TRACK_SHIPMENT,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ),
+        self::M2_ORDER_MANAGEMENT =>  array(
+            self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
