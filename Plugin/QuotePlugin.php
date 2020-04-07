@@ -25,7 +25,7 @@ class QuotePlugin
 {
     /**
      * Override Quote afterSave method.
-     * Skip execution for inactive quotes, thus preventing dispatching the after save events.
+     * Skip execution for immutable quotes, thus preventing dispatching the after save events.
      *
      * @param \Magento\Quote\Model\Quote $subject
      * @param callable $proceed
@@ -33,9 +33,29 @@ class QuotePlugin
      */
     public function aroundAfterSave(\Magento\Quote\Model\Quote $subject, callable $proceed)
     {
-        if ($subject->getIsActive()) {
-            return $proceed();
+        if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
+            return;
         }
-        return $subject;
+        return $proceed();
+    }
+
+    /**
+     * Always consider immutable quotes as active
+     * so we can run internal Magento actions with them
+     * the as they were active, except dispatching after save events
+     * which is taken care of in the above method.
+     * Note: there are restriction on inactive quotes processing
+     * that we need to bypass
+     *
+     * @param \Magento\Quote\Model\Quote $subject
+     * @param bool|null $result
+     * @return bool|null
+     */
+    public function afterGetIsActive(\Magento\Quote\Model\Quote $subject, $result)
+    {
+        if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
+            return true;
+        }
+        return $result;
     }
 }

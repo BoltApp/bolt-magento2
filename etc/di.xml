@@ -44,6 +44,13 @@
     <preference for="Bolt\Boltpay\Api\Data\ShippingOptionInterface"  type="Bolt\Boltpay\Model\Api\Data\ShippingOption" />
     <preference for="Bolt\Boltpay\Api\Data\ShippingTaxInterface"     type="Bolt\Boltpay\Model\Api\Data\ShippingTax" />
 
+    <preference for="Bolt\Boltpay\Api\ShippingInterface"          type="Bolt\Boltpay\Model\Api\Shipping" />
+    <preference for="Bolt\Boltpay\Api\Data\ShippingDataInterface" type="Bolt\Boltpay\Model\Api\Data\ShippingData" />
+
+    <preference for="Bolt\Boltpay\Api\TaxInterface"            type="Bolt\Boltpay\Model\Api\Tax" />
+    <preference for="Bolt\Boltpay\Api\Data\TaxDataInterface"   type="Bolt\Boltpay\Model\Api\Data\TaxData" />
+    <preference for="Bolt\Boltpay\Api\Data\TaxResultInterface" type="Bolt\Boltpay\Model\Api\Data\TaxResult" />
+
     <!-- For rest api discount code validation for gift card module -->
     <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
 
