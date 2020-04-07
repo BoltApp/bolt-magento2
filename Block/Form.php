@@ -160,4 +160,11 @@ class Form extends PaymentForm
     public function isAdminReorderForLoggedInCustomerFeatureEnabled(){
         return $this->featureSwitch->isAdminReorderForLoggedInCustomerFeatureEnabled();
     }
+
+    /**
+     * @return string
+     */
+    public function getPublishableKeyBackOffice(){
+        return $this->configHelper->getPublishableKeyBackOffice();
+    }
 }

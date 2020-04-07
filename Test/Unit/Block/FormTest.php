@@ -177,4 +177,15 @@ class FormTest extends \PHPUnit\Framework\TestCase
         $this->featureSwitch->expects(static::once())->method('isAdminReorderForLoggedInCustomerFeatureEnabled')->willReturn(true);
         $this->assertTrue($this->block->isAdminReorderForLoggedInCustomerFeatureEnabled());
     }
+
+    /**
+     * @test
+     */
+    public function getPublishableKeyBackOfficeShouldReturnConfigValue(){
+        $this->configHelperMock
+            ->method('getPublishableKeyBackOffice')
+            ->willReturn("backoffice-key");
+
+        $this->assertEquals("backoffice-key", $this->block->getPublishableKeyBackOffice());
+    }
 }
