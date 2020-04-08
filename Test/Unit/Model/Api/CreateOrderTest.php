@@ -725,10 +725,14 @@ class CreateOrderTest extends TestCase
     }
 
     /**
-     * @test
+     * @param $errorInfo
+     * @param $message
+     * @dataProvider providerHasItemErrors_qty
      * @covers ::hasItemErrors
+     * @test
+     * @throws BoltException
      */
-    public function hasItemErrors_qty()
+    public function hasItemErrors_qty($errorInfo, $message)
     {
         /** @var MockObject|Quote\Item $quoteItem */
         $quoteItem = $this->getMockBuilder(Quote\Item::class)
@@ -738,20 +742,16 @@ class CreateOrderTest extends TestCase
             ])
             ->disableOriginalConstructor()
             ->getMock();
-        $message = 'This product is out of stock.';
-        $errorInfo = [
-            'origin' => 'cataloginventory',
-            'code' => Data::ERROR_QTY,
-            'message' => __($message),
-        ];
+
+
         $quoteItem->method('getErrorInfos')->willReturn([$errorInfo]);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($errorInfo) {
+            function (callable $fn) use ($errorInfo, $message) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())->method('setMetaData')->with([
                     'Pre Auth' => [
-                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL,
+                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $message . PHP_EOL,
                         'Error Code' => Data::ERROR_QTY
                     ]
                 ]);
@@ -762,6 +762,33 @@ class CreateOrderTest extends TestCase
         $this->expectExceptionMessage($message);
         $this->currentMock->hasItemErrors($quoteItem);
     }
+
+    /**
+     * Data provider for {@see hasItemErrors_qty}
+     * @return array
+     */
+    public function providerHasItemErrors_qty()
+    {
+        return [
+            [
+                [
+                    'origin' => 'cataloginventory',
+                    'code' => Data::ERROR_QTY,
+                    'message' => __('This product is out of stock.'),
+                ],
+                'This product is out of stock.'
+            ],
+            [
+                [
+                    'origin' => 'cataloginventory',
+                    'code' => Data::ERROR_QTY,
+                    'message' => 'This product is out of stock.',
+                ],
+                'This product is out of stock.'
+            ]
+        ];
+    }
+
 
     /**
      * @test

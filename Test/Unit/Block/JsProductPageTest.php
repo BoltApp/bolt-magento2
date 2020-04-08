@@ -19,13 +19,15 @@ namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\JsProductPage as BlockJsProductPage;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Magento\Framework\App\Request\Http;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Request\Http;
+
 /**
  * Class JsTest
  *
@@ -120,7 +122,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-                    $this->createMock(\Magento\Framework\App\Request\Http::class)
+	                $this->createMock(BoltConfigSettingFactory::class),
+	                $this->createMock(\Magento\Framework\App\Request\Http::class)
                 ]
             )
             ->getMock();

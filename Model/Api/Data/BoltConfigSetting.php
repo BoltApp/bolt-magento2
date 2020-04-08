@@ -22,7 +22,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class BoltConfigSetting
+class BoltConfigSetting implements \JsonSerializable
 {
 	/**
 	 * @var string
@@ -82,5 +82,13 @@ class BoltConfigSetting
 	{
 		$this->value = $value;
 		return $this;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function jsonSerialize()
+	{
+		return get_object_vars($this);
 	}
 }

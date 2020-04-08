@@ -63,6 +63,11 @@ class Api extends AbstractHelper
     const API_CREATE_ORDER = 'merchant/orders';
 
     /**
+     * Api create tracking
+     */
+    const API_CREATE_TRACKING = 'merchant/track_shipment';
+
+    /**
      * Api void transaction
      */
     const API_VOID_TRANSACTION = 'merchant/transactions/void';
@@ -176,6 +181,7 @@ class Api extends AbstractHelper
      *
      * @param  mixed $response    Bolt API response
      * @return bool               true if there is an error, false otherwise
+     * @deprecated
      */
     private function isResponseError($response)
     {
@@ -194,7 +200,6 @@ class Api extends AbstractHelper
      */
     public function sendRequest(Request $request)
     {
-
         $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
 

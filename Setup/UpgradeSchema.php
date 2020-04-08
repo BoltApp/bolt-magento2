@@ -79,6 +79,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupWebhookLogTable($setup);
 
+        $this->updateWebhookLogTable($setup);
+
         $setup->endSetup();
     }
 
@@ -234,5 +236,24 @@ class UpgradeSchema implements UpgradeSchemaInterface
             )
             ->setComment("Bolt customer credit cards");
         $setup->getConnection()->createTable($table);
+    }
+
+    private function updateWebhookLogTable($setup){
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
+
+        if (!$tableCreated) {
+            return;
+        }
+
+        $connection = $setup->getConnection();
+
+        $connection->addColumn(
+            $setup->getTable('bolt_webhook_log'),
+            'updated_at', [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+                'comment' => 'Updated At'
+            ]
+        );
+
     }
 }

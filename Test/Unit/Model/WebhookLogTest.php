@@ -20,6 +20,11 @@ namespace Bolt\Boltpay\Test\Unit\Model;
 use Bolt\Boltpay\Model\WebhookLog;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Registry;
+use Magento\Framework\Model\ResourceModel\AbstractResource;
+use Magento\Framework\Data\Collection\AbstractDb;
 
 class WebhookLogTest extends TestCase
 {
@@ -27,18 +32,62 @@ class WebhookLogTest extends TestCase
     const HOOK_TYPE = 'pending';
 
     /**
-     * @var \Bolt\Boltpay\Model\WebhookLog
+     * @var WebhookLog
      */
     private $webhookLogMock;
 
     /**
-     * Setup for CustomerCreditCardTest Class
+     * @var DateTime
      */
+    private $coreDate;
+
+    /**
+     * @var Context
+     */
+    private $context;
+
+    /**
+     * @var Registry
+     */
+    private $registry;
+
+    /**
+     * @var AbstractResource
+     */
+    private $resource;
+
+    /**
+     * @var AbstractDb
+     */
+    private $resourceCollection;
+
     public function setUp()
     {
+        $this->coreDate = $this->createPartialMock(DateTime::class, ['gmtDate']);
+        $this->context = $this->createMock(Context::class);
+        $this->registry = $this->createMock(Registry::class);
+        $this->resource =  $this->createMock(AbstractResource::class);
+        $this->resourceCollection =  $this->createMock(AbstractDb::class);
+
         $this->webhookLogMock = $this->getMockBuilder(WebhookLog::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init', 'setTransactionId', 'setHookType', 'getNumberOfMissingQuoteFailedHooks', 'setNumberOfMissingQuoteFailedHooks', 'save', 'load'])
+            ->setConstructorArgs([
+                $this->coreDate,
+                $this->context,
+                $this->registry,
+                $this->resource,
+                $this->resourceCollection,
+                []
+            ])
+            ->setMethods([
+                '_init',
+                'setTransactionId',
+                'setHookType',
+                'getNumberOfMissingQuoteFailedHooks',
+                'setNumberOfMissingQuoteFailedHooks',
+                'save',
+                'load',
+                'setUpdatedAt'
+            ])
             ->getMock();
     }
 
@@ -60,9 +109,11 @@ class WebhookLogTest extends TestCase
      */
     public function recordAttempt()
     {
+        $this->coreDate->expects($this->once())->method('gmtDate')->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('setTransactionId')->with(self::TRANSACTION_ID)->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('setHookType')->with(self::HOOK_TYPE)->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('setNumberOfMissingQuoteFailedHooks')->with(1)->willReturnSelf();
+        $this->webhookLogMock->expects($this->once())->method('setUpdatedAt')->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('save')->willReturnSelf();
         $this->webhookLogMock->recordAttempt(self::TRANSACTION_ID, self::HOOK_TYPE);
     }
@@ -72,8 +123,10 @@ class WebhookLogTest extends TestCase
      */
     public function incrementAttemptCount()
     {
+        $this->coreDate->expects($this->once())->method('gmtDate')->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(1);
         $this->webhookLogMock->expects($this->once())->method('setNumberOfMissingQuoteFailedHooks')->with(2)->willReturnSelf();
+        $this->webhookLogMock->expects($this->once())->method('setUpdatedAt')->willReturnSelf();
         $this->webhookLogMock->expects($this->once())->method('save')->willReturnSelf();
         $this->webhookLogMock->incrementAttemptCount();
     }

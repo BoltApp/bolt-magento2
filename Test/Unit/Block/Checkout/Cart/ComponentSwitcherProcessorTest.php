@@ -4,6 +4,7 @@ namespace Bolt\Boltpay\Test\Unit\Block\Checkout\Cart;
 
 use Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Request\Http;
@@ -54,7 +55,8 @@ class ComponentSwitcherProcessorTest extends TestCase
                     $this->createMock(EncryptorInterface::class),
                     $this->createMock(ResourceInterface::class),
                     $this->createMock(ProductMetadataInterface::class),
-                    $this->createMock(Http::class)
+	                $this->createMock(BoltConfigSettingFactory::class),
+	                $this->createMock(Http::class)
                 ]
             )
             ->getMock();
