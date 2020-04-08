@@ -63,6 +63,11 @@ class Api extends AbstractHelper
     const API_CREATE_ORDER = 'merchant/orders';
 
     /**
+     * Api create tracking
+     */
+    const API_CREATE_TRACKING = 'merchant/track_shipment';
+
+    /**
      * Api void transaction
      */
     const API_VOID_TRANSACTION = 'merchant/transactions/void';

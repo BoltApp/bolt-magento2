@@ -123,6 +123,11 @@ class Config extends AbstractHelper
      */
     const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
 
+    /**
+     * Enable Bolt order management
+     */
+    const XML_PATH_PRODUCT_ORDER_MANAGEMENT = 'payment/boltpay/order_management';
+
 
     /**
      * Prefetch shipping
@@ -695,6 +700,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Order management flag from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  boolean
+     */
+    public function isOrderManagementEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_PRODUCT_ORDER_MANAGEMENT,
             ScopeInterface::SCOPE_STORE,
             $store
         );

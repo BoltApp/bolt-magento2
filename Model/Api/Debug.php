@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Module\FullModuleList;
+use Bolt\Boltpay\Helper\LogRetriever;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -64,6 +65,11 @@ class Debug implements DebugInterface
 	 */
 	private $moduleRetriever;
 
+    /**
+     * @var LogRetriever
+     */
+    private $logRetriever;
+
 	/**
 	 * @param Response $response
 	 * @param DebugInfoFactory $debugInfoFactory
@@ -72,6 +78,7 @@ class Debug implements DebugInterface
 	 * @param ProductMetadataInterface $productMetadata
 	 * @param ConfigHelper $configHelper
 	 * @param ModuleRetriever $moduleRetriever
+     * @param LogRetriever $logRetriever
 	 */
 	public function __construct(
 		Response $response,
@@ -80,7 +87,8 @@ class Debug implements DebugInterface
 		HookHelper $hookHelper,
 		ProductMetadataInterface $productMetadata,
 		ConfigHelper $configHelper,
-		ModuleRetriever $moduleRetriever
+		ModuleRetriever $moduleRetriever,
+        LogRetriever $logRetriever
 	) {
 		$this->response = $response;
 		$this->debugInfoFactory = $debugInfoFactory;
@@ -89,14 +97,18 @@ class Debug implements DebugInterface
 		$this->productMetadata = $productMetadata;
 		$this->configHelper = $configHelper;
 		$this->moduleRetriever = $moduleRetriever;
+		$this->logRetriever = $logRetriever;
 	}
 
-	/**
-	 * This request handler will return relevant information for Bolt for debugging purpose.
-	 *
-	 * @return void
-	 * @api
-	 */
+    /**
+     * This request handler will return relevant information for Bolt for debugging purpose.
+     *
+     * @return void
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Webapi\Exception
+     * @api
+     */
 	public function debug()
 	{
 		# verify request
@@ -118,6 +130,10 @@ class Debug implements DebugInterface
 
 		# populate other plugin info
 		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+
+		# populate log
+        # parameters exist for getLog, default to exception.php last 100 lines
+        $result->setLogs($this->logRetriever->getLogs());
 
 		// prepare response
 		$this->response->setHeader('Content-Type', 'json');
