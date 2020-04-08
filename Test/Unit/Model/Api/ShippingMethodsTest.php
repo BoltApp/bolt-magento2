@@ -983,6 +983,62 @@ class ShippingMethodsTest extends TestCase
         $this->currentMock->getShippingOptions($quote, $addressData);
     }
 
+    /**
+     * @test
+     * that getShippingOptions unsets shipping amount for discount when discount applies to shipping
+     * before collecting shipping totals to allow {@see \Magento\SalesRule\Model\Validator::processShippingAmount}
+     * to correctly process shipping discount
+     *
+     * @covers ::getShippingOptions
+     */
+    public function getShippingOptions_whenDiscountAppliesToShipping_unsetsShippingAmountForDiscount()
+    {
+        $this->initCurrentMock(['doesDiscountApplyToShipping'], false);
+
+        $shippingAddress = $this->getShippingAddressMock(5, 2.34);
+
+        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $shippingRates = [['flatrate' => $addressRate]];
+        $shippingAddress->expects(static::once())->method('getGroupedAllShippingRates')
+            ->willReturn($shippingRates);
+        $shippingAddress->expects(static::once())->method('unsShippingAmountForDiscount')
+            ->willReturn($shippingRates);
+        $shippingAddress->expects(static::once())->method('unsBaseShippingAmountForDiscount')
+            ->willReturn($shippingRates);
+
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed [2.34 discount]',
+            'flatrate_flatrate',
+            266,
+            0
+        );
+
+        $quote = $this->getQuoteMock($shippingAddress);
+        $quote->method('getCouponCode')->willReturn(123);
+
+        $quote->expects(self::exactly(2))->method('setCouponCode')->withConsecutive([''], ['123'])
+            ->willReturnSelf();
+
+        $this->currentMock->expects(static::once())->method('doesDiscountApplyToShipping')->with($quote)
+            ->willReturn(true);
+
+        $this->totalsCollector->expects(static::exactly(3))->method('collectAddressTotals')
+            ->with($quote, $shippingAddress);
+
+        $addressData = [
+            'country_id' => 'US',
+            'postcode'   => '10001',
+            'region'     => 'New York',
+            'city'       => 'New York',
+        ];
+
+        $result = $this->currentMock->getShippingOptions($quote, $addressData);
+        print_r($result);
+    }
+
 
     /**
      * @test
@@ -1430,6 +1486,8 @@ class ShippingMethodsTest extends TestCase
                     'getGroupedAllShippingRates',
                     'getShippingDiscountAmount',
                     'getShippingAmount',
+                    'unsShippingAmountForDiscount',
+                    'unsBaseShippingAmountForDiscount',
                     'save'
                 ]
             )
