@@ -1036,7 +1036,6 @@ class ShippingMethodsTest extends TestCase
         ];
 
         $result = $this->currentMock->getShippingOptions($quote, $addressData);
-        print_r($result);
     }
 
 
