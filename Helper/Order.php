@@ -834,11 +834,9 @@ class Order extends AbstractHelper
             $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
-        } else {
-            // if called from the store controller return quote and order
-            // wait for the hook call to update the payment
-            return [$parentQuote, $order];
         }
+
+        return [$parentQuote, $order];
     }
 
     /**
