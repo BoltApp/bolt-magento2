@@ -232,7 +232,7 @@ class Order extends AbstractHelper
     /**
      * Order constructor.
      * @param Context $context
-     * @param ApiHelper $apiHelper
+     * @param Api $apiHelper
      * @param Config $configHelper
      * @param RegionModel $regionModel
      * @param QuoteManagement $quoteManagement
@@ -429,8 +429,14 @@ class Order extends AbstractHelper
     protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
+        $referenceShipmentMethod = (@$transaction->order->cart->shipments[0]->reference) ?: false;
+
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
+            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingMethodCode($referenceShipmentMethod)) {
+                $addressData = $this->configHelper->getPickupAddressData();
+                $quote->getShippingAddress()->addData($addressData);
+            }
         }
     }
 

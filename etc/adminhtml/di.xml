@@ -25,4 +25,8 @@
     <type name="Mirasvit\Credit\Observer\QuotePaymentImportDataBefore">
         <plugin name="Bolt_Boltpay_Mirasvit_Credit_QuotePaymentImportDataBefore_Plugin" type="Bolt\Boltpay\Plugin\MirasvitCreditQuotePaymentImportDataBeforePlugin" sortOrder="1" />
     </type>
+
+    <type name="Magento\Sales\Model\AdminOrder\Create">
+        <plugin name="BoltBoltpayCreatePlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin" sortOrder="1"/>
+    </type>
 </config>
