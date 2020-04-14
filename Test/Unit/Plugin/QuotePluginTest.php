@@ -51,7 +51,7 @@ class QuotePluginTest extends TestCase
     public function setUp()
     {
         $this->subject = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getIsActive'])
+            ->setMethods(['getBoltParentQuoteId', 'getId'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -74,19 +74,27 @@ class QuotePluginTest extends TestCase
      * @param $expectedCall
      * @param $isActive
      */
-    public function aroundAfterSave($expectedCall, $isActive)
+    public function aroundAfterSave($boltParentQuoteId, $id, $numCallsParentId, $numCallsId, $expectedCall)
     {
+        $this->subject
+            ->expects(self::exactly($numCallsParentId))
+            ->method('getBoltParentQuoteId')
+            ->willReturn($boltParentQuoteId);
+        $this->subject
+            ->expects(self::exactly($numCallsId))
+            ->method('getId')
+            ->willReturn($id);
         $this->callback->expects($expectedCall)->method('__invoke');
-        $this->subject->expects(self::any())->method('getIsActive')->willReturn($isActive);
         $this->plugin->aroundAfterSave($this->subject, $this->proceed);
-
     }
 
     public function dataProviderAroundAfterSave()
     {
         return [
-            [self::once(),true],
-            [self::never(),false]
+            [1111, 1111, 2, 1, self::once()],
+            [1111, 2222, 2, 1, self::never()],
+            [0, 2222, 1, 0, self::once()],
+            [null, null, 1, 0, self::once()]
         ];
     }
 }
