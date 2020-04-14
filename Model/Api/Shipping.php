@@ -31,6 +31,7 @@ use Magento\Quote\Model\ShippingMethodManagement;
 use Magento\Customer\Api\Data\AddressInterfaceFactory;
 use Magento\Customer\Model\Data\Region;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
+use Magento\Framework\Api\ExtensibleDataInterface;
 
 /**
  * Class ShippingMethods
@@ -120,6 +121,35 @@ class Shipping extends ShippingTax implements ShippingInterface
     }
 
     /**
+     * @param array $addressData
+     * @return ExtensibleDataInterface
+     */
+    public function createAddress($addressData)
+    {
+        $regionInstance = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
+        $addressData = $this->reformatAddressData($addressData);
+
+        $region = $this->objectManager->create(
+            'Magento\Customer\Model\Data\Region',
+            [
+                Region::REGION => $addressData['region'],
+                Region::REGION_ID => $addressData['region_id'],
+                Region::REGION_CODE => $regionInstance->getCode()
+            ]
+        );
+        /**
+         * @var ExtensibleDataInterface $address
+         */
+        $address = $this->addressFactory->create()
+            ->setCountryId($addressData['country_id'])
+            ->setPostcode($addressData['postcode'])
+            ->setRegionId($addressData['region_id'])
+            ->setRegion($region);
+
+        return $address;
+    }
+
+    /**
      * Collects shipping options for the quote and received address data
      *
      * @param Quote $quote
@@ -139,31 +169,12 @@ class Shipping extends ShippingTax implements ShippingInterface
             ];
         }
 
-        $regionInstance = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
-
-        $addressData = $this->reformatAddressData($addressData);
-
-        $region = $this->objectManager->create(
-            'Magento\Customer\Model\Data\Region',
-            [
-                Region::REGION => $addressData['region'],
-                Region::REGION_ID => $addressData['region_id'],
-                Region::REGION_CODE => $regionInstance->getCode()
-            ]
-        );
+        $address = $this->createAddress($addressData);
 
         /**
-         * @var \Magento\Framework\Api\ExtensibleDataInterface $address
+         * @var \Magento\Quote\Api\Data\ShippingMethodInterface[] $shippingOptionArray
          */
-        $address = $this->addressFactory->create()
-            ->setCountryId($addressData['country_id'])
-            ->setPostcode($addressData['postcode'])
-            ->setRegionId($addressData['region_id'])
-            ->setRegion($region);
-        /**
-         * @var \Magento\Quote\Api\Data\ShippingMethodInterface[] $shippingMethodArray
-         */
-        $shippingMethodArray = $this->restrictedMethodCaller(
+        $shippingOptionArray = $this->restrictedMethodCaller(
             $this->shippingMethodManagement,
             'getEstimatedRates',
             $quote,
@@ -174,53 +185,50 @@ class Shipping extends ShippingTax implements ShippingInterface
             $address
         );
 
-        $shippingMethods = [];
+        $shippingOptions = [];
         $errors = [];
 
-        foreach ($shippingMethodArray as $shippingMethod) {
-            $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
-            $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
+        foreach ($shippingOptionArray as $shippingOption) {
+            $service = $shippingOption->getCarrierTitle() . ' - ' . $shippingOption->getMethodTitle();
+            $method  = $shippingOption->getCarrierCode() . '_' . $shippingOption->getMethodCode();
 
-            $cost = $shippingMethod->getAmount();
+            $majorAmount = $shippingOption->getAmount();
             $currencyCode = $quote->getQuoteCurrencyCode();
-            $roundedCost = CurrencyUtils::toMinor($cost, $currencyCode);
+            $cost = CurrencyUtils::toMinor($majorAmount, $currencyCode);
 
-            $error = $shippingMethod->getErrorMessage();
-
+            $error = $shippingOption->getErrorMessage();
             if ($error) {
                 $errors[] = [
                     'service'    => $service,
                     'reference'  => $method,
-                    'cost'       => $roundedCost,
+                    'cost'       => $cost,
                     'error'      => $error
                 ];
                 continue;
             }
-
-            $shippingMethods[] = $this->shippingOptionInterfaceFactory
+            $shippingOptions[] = $this->shippingOptionInterfaceFactory
                 ->create()
                 ->setService($service)
-                ->setCost($roundedCost)
+                ->setCost($cost)
                 ->setReference($method);
         }
 
         if ($errors) {
             $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
                 $report->setMetaData([
-                    'SHIPPING METHOD' => [
+                    'SHIPPING ERRORS' => [
                         'address' => $addressData,
                         'errors'  => $errors
                     ]
                 ]);
             });
-
             $this->bugsnag->notifyError('Shipping Method Error', $error);
         }
 
-        if (!$shippingMethods) {
+        if (!$shippingOptions) {
             $this->bugsnag->registerCallback(function ($report) use ($quote, $addressData) {
                 $report->setMetaData([
-                    'SHIPPING' => [
+                    'NO SHIPPING' => [
                         'address' => $addressData,
                         'immutable quote ID' => $quote->getId(),
                         'parent quote ID' => $quote->getBoltParentQuoteId(),
@@ -229,13 +237,12 @@ class Shipping extends ShippingTax implements ShippingInterface
                     ]
                 ]);
             });
-
             throw new BoltException(
                 __('No Shipping Methods retrieved'),
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
         }
-        return $shippingMethods;
+        return $shippingOptions;
     }
 }
