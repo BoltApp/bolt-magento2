@@ -27,6 +27,8 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
+use Magento\Backend\Model\UrlInterface as BackendUrl;
+use Magento\Framework\App\Response\RedirectInterface;
 
 /**
  * Class ReceivedUrl
@@ -36,6 +38,16 @@ use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 class ReceivedUrl extends Action
 {
     use ReceivedUrlTrait;
+
+    /**
+     * @var BackendUrl
+     */
+    private $backendUrl;
+
+    /**
+     * @var RedirectInterface\
+     */
+    private $redirect;
 
     /**
      * ReceivedUrl constructor.
@@ -55,7 +67,9 @@ class ReceivedUrl extends Action
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         CheckoutSession $checkoutSession,
-        OrderHelper $orderHelper
+        OrderHelper $orderHelper,
+        BackendUrl $backendUrl,
+        RedirectInterface $redirect
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
@@ -64,6 +78,34 @@ class ReceivedUrl extends Action
         $this->logHelper = $logHelper;
         $this->checkoutSession = $checkoutSession;
         $this->orderHelper = $orderHelper;
+        $this->backendUrl = $backendUrl;
+        $this->redirect = $redirect;
+    }
+
+    /**
+     * @return boolean
+     */
+    protected function redirectToAdminIfNeeded($quote)
+    {
+        if (!$quote->getBoltIsBackendOrder()) {
+            return false;
+        }
+        // Set admin scope
+        $this->backendUrl->setScope(0);
+        $refererUrl = $this->redirect->getRefererUrl();
+        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index/", []);
+        if (substr($refererUrl, 0, strlen($adminUrl)) !== $adminUrl) {
+            return false;
+        }
+
+        $params = [
+            '_secure' => true,
+            'store_id' => $quote->getStoreId(),
+            '_query' => $this->getRequest()->getParams(),
+        ];
+        $redirectUrl = $this->backendUrl->getUrl('boltpay/order/receivedurl', $params);
+        $this->_redirect($redirectUrl);
+        return true;
     }
 
     /**

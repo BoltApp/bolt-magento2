@@ -84,6 +84,11 @@ trait ReceivedUrlTrait
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
 
+                if ($this->redirectToAdminIfNeeded($quote)) {
+                    // redirected
+                    return;
+                }
+
                 if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
                     // Save reference to the Bolt transaction with the order
                     $order->addStatusHistoryComment(

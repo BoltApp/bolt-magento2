@@ -365,6 +365,7 @@ class CreateOrder implements CreateOrderInterface
             '_secure' => true,
             'store_id' => $storeId
         ];
+        // redirect to storefront for both storefront and admin orders.
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
         return $url;
     }

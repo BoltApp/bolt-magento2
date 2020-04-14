@@ -256,7 +256,6 @@ require([
      * return void
      */
     var processButtons = function () {
-        console.log(settings);
         if (getBackofficeKey() || getPaymentOnlyKey()) {
             createOrder();
         }
@@ -403,7 +402,7 @@ require([
             }
             if (getPaymentOnlyKey()) {
                 $(".bolt-checkout-pay-by-link").html("Send <a href='"
-                    + "https://connect-sandbox.bolt.com/test_open.html?publishable_key=" + getPaymentOnlyKey()
+                    + settings.pay_by_link_url + "?publishable_key=" + getPaymentOnlyKey()
                     + "&token=" + data.cart.orderToken
                     + "'>this link</a> to consumer to receive payment");
             }
