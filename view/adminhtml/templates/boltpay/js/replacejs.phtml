@@ -217,15 +217,17 @@ require([
     };
 
     /**
-     * Get the checkout key according to the checkout type.
+     * Get the checkout key for backoffice processing.
      *
      * return string
      */
-    var getCheckoutKey = function () {
-        var key = 'publishable_key_back_office';
-
-        return settings[key];
+    var getBackofficeKey = function () {
+        return settings['publishable_key_back_office'];
     };
+
+    var getPaymentOnlyKey = function() {
+        return settings['publishable_key_payment'];
+    }
 
     /**
      * Inject connect.js
@@ -251,11 +253,11 @@ require([
     };
 
     /**
-     * Set load connect.js
      * return void
      */
     var processButtons = function () {
-        if (getCheckoutKey() !== '') {
+        console.log(settings);
+        if (getBackofficeKey() || getPaymentOnlyKey()) {
             createOrder();
         }
     };
@@ -396,7 +398,15 @@ require([
             settings.storeId = data.storeId;
             settings.is_pre_auth = data.isPreAuth;
 
-            insertConnectScript(data.publishableKey);
+            if (getBackofficeKey()) {
+                insertConnectScript(data.publishableKey);
+            }
+            if (getPaymentOnlyKey()) {
+                $(".bolt-checkout-pay-by-link").html("Send <a href='"
+                    + "https://connect-sandbox.bolt.com/test_open.html?publishable_key=" + getPaymentOnlyKey()
+                    + "&token=" + data.cart.orderToken
+                    + "'>this link</a> to consumer to receive payment");
+            }
         };
 
         var onError = function(error) {
@@ -417,6 +427,10 @@ require([
     ////////////////////////////////////////////////
     onElementReady(bolt_button_selector, function(element) {
         checkout_buttons = true;
+        processButtons();
+    });
+    ////////////////////////////////////////////////
+    onElementReady(".bolt-checkout-pay-by-link", function(element) {
         processButtons();
     });
     ////////////////////////////////////////////////
