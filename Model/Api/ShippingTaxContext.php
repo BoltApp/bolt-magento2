@@ -29,7 +29,8 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\App\CacheInterface;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Framework\App\ObjectManager;
+use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
+
 
 /**
  * Class ShippingMethods
@@ -99,9 +100,9 @@ class ShippingTaxContext
     protected $response;
 
     /**
-     * @var ObjectManager
+     * @var ShippingOptionInterfaceFactory
      */
-    protected $objectManager;
+    protected $shippingOptionInterfaceFactory;
 
     /**
      * Assigns local references to global resources
@@ -118,6 +119,7 @@ class ShippingTaxContext
      * @param CacheInterface $cache
      * @param RegionModel $regionModel
      * @param Response $response
+     * @param ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -131,7 +133,8 @@ class ShippingTaxContext
         BoltErrorResponse $errorResponse,
         CacheInterface $cache,
         RegionModel $regionModel,
-        Response $response
+        Response $response,
+        ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -145,7 +148,7 @@ class ShippingTaxContext
         $this->cache = $cache;
         $this->regionModel = $regionModel;
         $this->response = $response;
-        $this->objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
     }
 
     /**
@@ -245,10 +248,10 @@ class ShippingTaxContext
     }
 
     /**
-     * @return ObjectManager
+     * @return ShippingOptionInterfaceFactory
      */
-    public function getObjectManager()
+    public function getShippingOptionInterfaceFactory()
     {
-        return $this->objectManager;
+        return $this->shippingOptionInterfaceFactory;
     }
 }

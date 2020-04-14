@@ -18,21 +18,15 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\ShippingTaxDataInterface;
-use Bolt\Boltpay\Api\Data\TaxDataInterface;
-use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
-use Bolt\Boltpay\Api\Data\TaxDataInterfaceFactory;
-use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
 use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\App\CacheInterface;
@@ -40,11 +34,9 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Magento\Customer\Model\Data\Region;
-use Magento\Checkout\Api\TotalsInformationManagementInterface;
-use Magento\Checkout\Api\Data\TotalsInformationInterface;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use Magento\Framework\App\ObjectManager;
+use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 
 /**
  * Class ShippingMethods
@@ -54,9 +46,11 @@ use Magento\Framework\App\ObjectManager;
  */
 abstract class ShippingTax
 {
-    CONST METRICS_SUCCESS_KEY = 'shipping_tax.success';
-    CONST METRICS_FAILURE_KEY = 'shipping_tax.failure';
-    CONST METRICS_LATENCY_KEY = 'shipping_tax.latency';
+    const METRICS_SUCCESS_KEY = 'shipping_tax.success';
+    const METRICS_FAILURE_KEY = 'shipping_tax.failure';
+    const METRICS_LATENCY_KEY = 'shipping_tax.latency';
+
+    const CACHE_IDENTIFIER_PREFIX = '';
 
     /**
      * @var HookHelper
@@ -133,6 +127,11 @@ abstract class ShippingTax
     protected $shippingTaxContext;
 
     /**
+     * @var ShippingOptionInterfaceFactory
+     */
+    protected $shippingOptionInterfaceFactory;
+
+    /**
      * Assigns local references to global resources
      *
      * @param ShippingTaxContext $shippingTaxContext
@@ -152,7 +151,8 @@ abstract class ShippingTax
         $this->cache = $shippingTaxContext->getCache();
         $this->regionModel = $shippingTaxContext->getRegionModel();
         $this->response = $shippingTaxContext->getResponse();
-        $this->objectManager = $shippingTaxContext->getObjectManager();
+        $this->shippingOptionInterfaceFactory = $shippingTaxContext->getShippingOptionInterfaceFactory();
+        $this->objectManager = ObjectManager::getInstance();
     }
 
     /**
@@ -162,7 +162,7 @@ abstract class ShippingTax
      * @throws BoltException
      * @throws \Zend_Validate_Exception
      */
-    protected function validateAddressData($addressData)
+    public function validateAddressData($addressData)
     {
         $this->validateEmail(@$addressData['email']);
     }
@@ -174,7 +174,7 @@ abstract class ShippingTax
      * @throws BoltException
      * @throws \Zend_Validate_Exception
      */
-    protected function validateEmail($email)
+    public function validateEmail($email)
     {
         if (!$this->cartHelper->validateEmail($email)) {
             throw new BoltException(
@@ -233,19 +233,16 @@ abstract class ShippingTax
      * Fetch and apply external quote data, not stored within a quote or totals (third party modules DB tables)
      * If data is applied it is used as a part of the cache identifier.
      *
-     * @param Quote $quote
      * @return string
      */
-    public function applyExternalQuoteData($quote)
+    public function applyExternalQuoteData()
     {
         $data = '';
-        $this->discountHelper->applyExternalDiscountData($quote);
-        if ($quote->getAmrewardsPoint()) {
-            $data .= $quote->getAmrewardsPoint();
-        }
-        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
-            $data .=$rewardsAmount;
-        }
+        $this->discountHelper->applyExternalDiscountData($this->quote);
+
+        $data .= (string) $this->quote->getAmrewardsPoint();
+        $data .= (string) $this->discountHelper->getMirasvitRewardsAmount($this->quote);
+
         return $data;
     }
 
@@ -300,7 +297,7 @@ abstract class ShippingTax
      * @api
      * @param array $cart cart details
      * @param array $shipping_address shipping address
-     * @param array $shipping_option selected shipping option
+     * @param array|null $shipping_option selected shipping option
      * @return ShippingTaxDataInterface
      */
     public function execute($cart, $shipping_address, $shipping_option = null)
@@ -332,7 +329,7 @@ abstract class ShippingTax
                 $this->validateAddressData($addressData);
             }
 
-            $result = $this->generateResult($addressData, $shipping_option);
+            $result = $this->getResult($addressData, $shipping_option);
 
             $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
 
@@ -351,5 +348,81 @@ abstract class ShippingTax
         }
     }
 
+    /**
+     * @param array $addressData
+     * @param array $shipping_option
+     * @param string $externalData
+     * @return string
+     */
+    public function getCacheIdentifier($addressData, $shipping_option, $externalData)
+    {
+        // use parent quote id for caching.
+        // if everything else matches the cache is used more efficiently this way
+        $parentQuoteId = $this->quote->getBoltParentQuoteId();
+
+        $cacheIdentifier = static::CACHE_IDENTIFIER_PREFIX.'_'.$parentQuoteId.'_'.
+            round($this->quote->getSubtotal()*100).'_'. $addressData['country_code']. '_'.
+            $addressData['region'].'_'.$addressData['postal_code']. '_'. @$addressData['street_address1'].'_'.
+            @$addressData['street_address2'].'_'.$externalData.'_'.@$shipping_option['reference'];
+
+        // include products in cache key
+        foreach ($this->quote->getAllVisibleItems() as $item) {
+            $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
+        }
+
+        // include applied rule ids (discounts) in cache key
+        $ruleIds = str_replace(',', '_', $this->quote->getAppliedRuleIds());
+        if ($ruleIds) {
+            $cacheIdentifier .= '_'.$ruleIds;
+        }
+
+        // extend cache identifier with custom address fields
+        $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($this->quote);
+
+        return md5($cacheIdentifier);
+    }
+
+    /**
+     * Get Shipping options from cache or run the Shipping options collection routine, store it in cache and return.
+     *
+     * @param array $addressData
+     * @param array|null $shipping_option
+     *
+     * @return ShippingTaxDataInterface
+     * @throws LocalizedException
+     */
+    public function getResult($addressData, $shipping_option)
+    {
+        // Take into account external data applied to quote in thirt party modules
+        $externalData = $this->applyExternalQuoteData();
+
+        ////////////////////////////////////////////////////////////////////////////////////////
+        // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
+        // applied rules (discounts), region and postal_code match then use the cached version.
+        ////////////////////////////////////////////////////////////////////////////////////////
+        $cacheResult = $this->configHelper->getPrefetchShipping($this->quote->getStoreId());
+        if ($cacheResult) {
+            $cacheIdentifier = $this->getCacheIdentifier($addressData, $shipping_option, $externalData);
+            if ($serialized = $this->cache->load($cacheIdentifier)) {
+                return unserialize($serialized);
+            }
+        }
+        ////////////////////////////////////////////////////////////////////////////////////////
+        $result = $this->generateResult($addressData, $shipping_option);
+
+        // Cache the calculated result
+        if ($cacheResult) {
+            $this->cache->save(serialize($result), $cacheIdentifier, [], 3600);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param array $addressData
+     * @param array|null $shipping_option
+     * @return ShippingTaxDataInterface
+     * @throws \Exception
+     */
     abstract public function generateResult($addressData, $shipping_option);
 }

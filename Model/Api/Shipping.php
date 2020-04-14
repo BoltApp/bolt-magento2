@@ -18,31 +18,19 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
+use Bolt\Boltpay\Api\Data\ShippingTaxDataInterface;
 use Bolt\Boltpay\Api\ShippingInterface;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingDataInterfaceFactory;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Magento\Framework\Webapi\Rest\Response;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Quote\Model\ShippingMethodManagement;
 use Magento\Customer\Api\Data\AddressInterfaceFactory;
 use Magento\Customer\Model\Data\Region;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use Magento\Framework\App\ObjectManager;
 
 /**
  * Class ShippingMethods
@@ -55,78 +43,16 @@ class Shipping extends ShippingTax implements ShippingInterface
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
 
-    CONST METRICS_SUCCESS_KEY = 'shipping.success';
-    CONST METRICS_FAILURE_KEY = 'shipping.failure';
-    CONST METRICS_LATENCY_KEY = 'shipping.latency';
+    const METRICS_SUCCESS_KEY = 'shipping.success';
+    const METRICS_FAILURE_KEY = 'shipping.failure';
+    const METRICS_LATENCY_KEY = 'shipping.latency';
 
-    /**
-     * @var HookHelper
-     */
-    protected $hookHelper;
-
-    /**
-     * @var CartHelper
-     */
-    protected $cartHelper;
-
-    /**
-     * @var RegionModel
-     */
-    protected $regionModel;
+    const CACHE_IDENTIFIER_PREFIX = 'SHIPPING';
 
     /**
      * @var ShippingDataInterfaceFactory
      */
     protected $shippingDataInterfaceFactory;
-
-    /**
-     * @var ShippingOptionInterfaceFactory
-     */
-    protected $shippingOptionInterfaceFactory;
-
-    /**
-     * @var Bugsnag
-     */
-    protected $bugsnag;
-
-    /**
-     * @var MetricsClient
-     */
-    protected $metricsClient;
-
-    /**
-     * @var LogHelper
-     */
-    protected $logHelper;
-
-    /**
-     * @var BoltErrorResponse
-     */
-    protected $errorResponse;
-
-    /**
-     * @var Response
-     */
-    protected $response;
-
-    /**
-     * @var ConfigHelper
-     */
-    protected $configHelper;
-
-    /**
-     * @var CacheInterface
-     */
-    protected $cache;
-
-    /** @var SessionHelper */
-    protected $sessionHelper;
-
-    /** @var DiscountHelper */
-    protected $discountHelper;
-
-    /** @var Quote */
-    protected $quote;
 
     /**
      * @var ShippingMethodManagement
@@ -145,17 +71,11 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingTaxContext;
 
     /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
      * Assigns local references to global resources
      *
      * @param ShippingTaxContext $shippingTaxContext
      *
      * @param ShippingDataInterfaceFactory $shippingDataInterfaceFactory
-     * @param ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
      * @param ShippingMethodManagement $shippingMethodManagement
      * @param AddressInterfaceFactory $addressFactory
      */
@@ -163,93 +83,31 @@ class Shipping extends ShippingTax implements ShippingInterface
         ShippingTaxContext $shippingTaxContext,
 
         ShippingDataInterfaceFactory $shippingDataInterfaceFactory,
-        ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         ShippingMethodManagement $shippingMethodManagement,
         AddressInterfaceFactory $addressFactory
     ) {
         parent::__construct($shippingTaxContext);
 
         $this->shippingDataInterfaceFactory = $shippingDataInterfaceFactory;
-        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->shippingMethodManagement = $shippingMethodManagement;
         $this->addressFactory = $addressFactory;
     }
 
-    public function generateResult($addressData, $shipping_option)
-    {
-        $shippingOptionsModel = $this->shippingEstimation($this->quote, $addressData);
-        return $shippingOptionsModel;
-    }
-
     /**
-     * Get Shipping options from cache or run the Shipping options collection routine, store it in cache and return.
-     *
-     * @param Quote $quote
      * @param array $addressData
-     *
+     * @param null $shipping_option
      * @return ShippingDataInterface
      * @throws LocalizedException
      */
-    public function shippingEstimation($quote, $addressData)
+    public function generateResult($addressData, $shipping_option)
     {
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
-        // applied rules (discounts), region and postal_code match then use the cached version.
-        ////////////////////////////////////////////////////////////////////////////////////////
-        if ($prefetchShipping = $this->configHelper->getPrefetchShipping($quote->getStoreId()) && false) {
-            // use parent quote id for caching.
-            // if everything else matches the cache is used more efficiently this way
-            $parentQuoteId = $quote->getBoltParentQuoteId();
-            // Take into account external data applied to quote in thirt party modules
-            $externalData = $this->applyExternalQuoteData($quote);
-
-            $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
-                $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code']. '_'.
-                @$addressData['street_address1'].'_'.@$addressData['street_address2'].'_'.$externalData;
-
-            // include products in cache key
-            foreach ($quote->getAllVisibleItems() as $item) {
-                $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
-            }
-
-            // include applied rule ids (discounts) in cache key
-            $ruleIds = str_replace(',', '_', $quote->getAppliedRuleIds());
-            if ($ruleIds) {
-                $cacheIdentifier .= '_'.$ruleIds;
-            }
-
-            // extend cache identifier with custom address fields
-            $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
-
-            $cacheIdentifier = md5($cacheIdentifier);
-
-            if ($serialized = $this->cache->load($cacheIdentifier)) {
-                return unserialize($serialized);
-            }
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////
-
-        $shippingMethods = $this->getShippingOptionsArray($quote, $addressData);
-        $shippingOptionsModel = $this->getShippingOptionsData($shippingMethods);
-
-        // Cache the calculated result
-        if ($prefetchShipping) {
-            $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
-        }
-
-        return $shippingOptionsModel;
-    }
-
-    /**
-     * Set shipping methods to the ShippingOptions object
-     *
-     * @param ShippingOptionInterface[] $shippingMethods
-     */
-    protected function getShippingOptionsData($shippingMethods)
-    {
-        $shippingOptionsModel = $this->shippingDataInterfaceFactory->create();
-        $shippingOptionsModel->setShippingOptions($shippingMethods);
-        return $shippingOptionsModel;
+        $shippingOptions = $this->getShippingOptionsArray($this->quote, $addressData);
+        /**
+         * @var ShippingDataInterface $shippingData
+         */
+        $shippingData = $this->shippingDataInterfaceFactory->create();
+        $shippingData->setShippingOptions($shippingOptions);
+        return $shippingData;
     }
 
     protected function restrictedMethodCaller($object, $methodName, ...$params)
