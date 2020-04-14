@@ -234,7 +234,7 @@ class CurrencyUtils {
      */
     public static function toMinorWithoutRounding($amountInMajor, $currencyCode) {
         $precision = self::getPrecisionForCurrencyCode($currencyCode);
-        return $amountInMajor * pow(10, $precision);
+        return (float)$amountInMajor * pow(10, $precision);
     }
 
     /**
