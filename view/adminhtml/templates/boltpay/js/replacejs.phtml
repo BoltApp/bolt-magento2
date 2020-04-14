@@ -407,6 +407,9 @@ require([
                     + "&token=" + data.cart.orderToken
                     + "'>this link</a> to consumer to receive payment");
             }
+            if (getBackofficeKey() && getPaymentOnlyKey()) {
+                $(".bolt-checkout-options-separator").show();
+            }
         };
 
         var onError = function(error) {

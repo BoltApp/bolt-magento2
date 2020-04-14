@@ -174,4 +174,11 @@ class Form extends PaymentForm
     public function getPublishableKeyPaymentOnly(){
         return $this->configHelper->getPublishableKeyPayment();
     }
+
+    /**
+     * @return string
+     */
+    public function getPayByLinkBaseURL() {
+        return "https://connect-sandbox.bolt.com/test_open.html";
+    }
 }
