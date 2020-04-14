@@ -58,7 +58,7 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
 	                $this->createMock(BoltConfigSettingFactory::class),
-	                $this->createMock(\Magento\Framework\App\Request\Http::class)
+                    $this->createMock(\Magento\Directory\Model\RegionFactory::class)
                 ]
             )
             ->getMock();

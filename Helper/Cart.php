@@ -668,7 +668,8 @@ class Cart extends AbstractHelper
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
-        if (!$cart) {
+
+        if (!$cart || $this->doesOrderExist($cart)) {
             return;
         }
 
@@ -715,6 +716,18 @@ class Cart extends AbstractHelper
         }
 
         return $boltOrder;
+    }
+
+    /**
+     * @param $cart
+     * @return false|OrderInterface
+     */
+    public function doesOrderExist($cart)
+    {
+        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $order = $this->getOrderByIncrementId($incrementId);
+
+        return $order;
     }
 
     /**

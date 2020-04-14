@@ -46,6 +46,9 @@ class Js extends Template
      /** @var Bugsnag  Bug logging interface*/
     private $bugsnag;
 
+    /** @var array */
+    static $blockAlreadyShown;
+
     /**
      * @param Context         $context
      * @param Config          $configHelper
@@ -94,6 +97,18 @@ class Js extends Template
         $cdnUrl = $this->configHelper->getCdnUrl();
 
         return $cdnUrl.'/connect.js';
+    }
+
+    /**
+     * Get account js url
+     *
+     * @return  string
+     */
+    public function getAccountJsUrl()
+    {
+        $cdnUrl = $this->configHelper->getCdnUrl();
+
+        return $cdnUrl.'/account.js';
     }
 
     /**
@@ -198,6 +213,7 @@ class Js extends Template
             'toggle_checkout'          => $this->getToggleCheckout(),
             'is_pre_auth'              => $this->getIsPreAuth(),
             'default_error_message'    => $this->getBoltPopupErrorMessage(),
+            'button_css_styles'        => $this->getButtonCssStyles(),
         ]);
     }
 
@@ -380,5 +396,43 @@ class Js extends Template
         }
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage=="catalog_product_view";
+    }
+
+    /**
+     * Return CSS styles for bolt button
+     * @return string
+     */
+    public function getButtonCssStyles()
+    {
+        $buttonColor = $this->configHelper->getButtonColor();
+        if (!$buttonColor) {
+            return "";
+        }
+        return '--bolt-primary-action-color:' . $buttonColor;
+    }
+
+    /**
+     * Return true if Order Management is enabled
+     * @return bool
+     */
+    public function isOrderManagementEnabled()
+    {
+        return $this->configHelper->isOrderManagementEnabled() &&
+            $this->featureSwitches->isOrderManagementEnabled();
+    }
+
+    /**
+     * Return false if block wasn't shown yet
+     * Need to provide using block only once
+     *
+     * @return bool
+     */
+    public function isBlockAlreadyShown($blockType)
+    {
+        if (isset(static::$blockAlreadyShown[$blockType])) {
+            return true;
+        }
+        static::$blockAlreadyShown[$blockType] = true;
+        return false;
     }
 }

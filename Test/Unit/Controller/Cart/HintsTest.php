@@ -12,6 +12,11 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class HintsTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Cart
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Hints
+ */
 class HintsTest extends TestCase
 {
     /** @var JsonFactory */
@@ -60,6 +65,7 @@ class HintsTest extends TestCase
 
     /**
      * @test
+     * @covers ::execute
      */
     public function hintsExecute()
     {
@@ -85,6 +91,31 @@ class HintsTest extends TestCase
         $expected = ['hints'=>$hints];
         $this->cartHelper->method('getHints')
             ->with(null,'product')->willReturn($hints);
+
+        $json = $this->getMockBuilder(Json::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $json->expects($this->at(0))
+            ->method('setData')
+            ->with($expected);
+        $this->resultJsonFactory->method('create')
+            ->willReturn($json);
+
+        $this->currentMock->execute();
+    }
+
+    /**
+     * @test
+     * @covers ::execute
+     */
+    public function hintsExecute_throwException()
+    {
+        $expected = [
+            'status' => 'failure',
+        ];
+
+        $this->cartHelper->method('getHints')
+            ->with(null,'product')->willThrowException(new \Exception('General exception'));
 
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()

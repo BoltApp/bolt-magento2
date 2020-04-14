@@ -235,7 +235,7 @@ class CreateOrderTest extends TestCase
             [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
         ]);
 
-        $this->orderMock = $this->createMock(Order::class);
+        $this->orderMock = $this->createPartialMock(Order::class,['getData','getIncrementId','getGrandTotal']);
 
         $this->request->expects(self::any())->method('getContent')->willReturn($this->getRequestContent());
     }
@@ -262,6 +262,7 @@ class CreateOrderTest extends TestCase
                 'getQuoteIdFromPayloadOrder',
                 'loadQuoteData',
                 'preProcessWebhook',
+                'sendResponse',
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
@@ -364,7 +365,7 @@ class CreateOrderTest extends TestCase
         $type = 'order.create';
 
         $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-        $this->logHelper->expects(self::exactly(4))->method('addInfoLog')
+        $this->logHelper->expects(self::any())->method('addInfoLog')
             ->withConsecutive(
                 ['[-= Pre-Auth CreateOrder =-]'], [$this->getRequestContent()], ['[-= getReceivedUrl =-]'], ['---> ']
             );
@@ -372,11 +373,35 @@ class CreateOrderTest extends TestCase
         $this->orderHelper->expects(self::once())->method('prepareQuote')
             ->with($this->immutableQuoteMock, $this->getTransaction())
             ->willReturn($this->quoteMock);
+
+        $this->orderMock->expects(self::any())->method('getData')
+            ->willReturn([
+                'id' => '1111',
+                'increment_id'=> 'XXXXX',
+                'grand_total' => '11.00'
+            ]);
+
+        $this->orderMock->expects(self::any())->method('getIncrementId')->willReturn('XXXXX');
+        $this->orderMock->expects(self::any())->method('getGrandTotal')->willReturn('11.00');
+
         $this->orderHelper->expects(self::once())->method('processExistingOrder')
             ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with(self::anything(), 1, 'order_creation.latency', $startTime);
-        $this->response->expects(self::once())->method('sendResponse');
+
+
+
+        $this->currentMock->expects(self::once())->method('sendResponse')->with(
+            200, [
+                'display_id'   => 'XXXXX / 456',
+                'message'   => 'Order create was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"11.00"}',
+                'order_received_url'   => '',
+                'status'    => 'success',
+                'total'=> 1100,
+            ]
+        );
+
+
 
         $this->currentMock->execute(
             $type,
@@ -725,10 +750,14 @@ class CreateOrderTest extends TestCase
     }
 
     /**
-     * @test
+     * @param $errorInfo
+     * @param $message
+     * @dataProvider providerHasItemErrors_qty
      * @covers ::hasItemErrors
+     * @test
+     * @throws BoltException
      */
-    public function hasItemErrors_qty()
+    public function hasItemErrors_qty($errorInfo, $message)
     {
         /** @var MockObject|Quote\Item $quoteItem */
         $quoteItem = $this->getMockBuilder(Quote\Item::class)
@@ -738,20 +767,16 @@ class CreateOrderTest extends TestCase
             ])
             ->disableOriginalConstructor()
             ->getMock();
-        $message = 'This product is out of stock.';
-        $errorInfo = [
-            'origin' => 'cataloginventory',
-            'code' => Data::ERROR_QTY,
-            'message' => __($message),
-        ];
+
+
         $quoteItem->method('getErrorInfos')->willReturn([$errorInfo]);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($errorInfo) {
+            function (callable $fn) use ($errorInfo, $message) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())->method('setMetaData')->with([
                     'Pre Auth' => [
-                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL,
+                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $message . PHP_EOL,
                         'Error Code' => Data::ERROR_QTY
                     ]
                 ]);
@@ -762,6 +787,33 @@ class CreateOrderTest extends TestCase
         $this->expectExceptionMessage($message);
         $this->currentMock->hasItemErrors($quoteItem);
     }
+
+    /**
+     * Data provider for {@see hasItemErrors_qty}
+     * @return array
+     */
+    public function providerHasItemErrors_qty()
+    {
+        return [
+            [
+                [
+                    'origin' => 'cataloginventory',
+                    'code' => Data::ERROR_QTY,
+                    'message' => __('This product is out of stock.'),
+                ],
+                'This product is out of stock.'
+            ],
+            [
+                [
+                    'origin' => 'cataloginventory',
+                    'code' => Data::ERROR_QTY,
+                    'message' => 'This product is out of stock.',
+                ],
+                'This product is out of stock.'
+            ]
+        ];
+    }
+
 
     /**
      * @test

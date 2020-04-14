@@ -54,6 +54,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use \Magento\Framework\Stdlib\DateTime\DateTime;
+use Magento\Sales\Model\Order\CreditmemoFactory;
+use Magento\Sales\Api\CreditmemoManagementInterface;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
@@ -216,30 +218,47 @@ class Order extends AbstractHelper
      */
     protected $customerCreditCardCollectionFactory;
 
+    /** @var CreditmemoFactory */
+    protected $creditmemoFactory;
+
+    /** @var CreditmemoManagementInterface  */
+    protected $creditmemoManagement;
+
     /**
+     * @var array transaction info cache
+     */
+    private $transactionInfo;
+
+    /**
+     * Order constructor.
      * @param Context $context
-     * @param ApiHelper $apiHelper
+     * @param Api $apiHelper
      * @param Config $configHelper
      * @param RegionModel $regionModel
      * @param QuoteManagement $quoteManagement
      * @param OrderSender $emailSender
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
-     * @param TransactionBuilder          $transactionBuilder
-     * @param TimezoneInterface           $timezone
-     * @param DataObjectFactory           $dataObjectFactory
-     * @param LogHelper                   $logHelper
-     * @param Bugsnag                     $bugsnag
-     * @param CartHelper                  $cartHelper
-     * @param ResourceConnection          $resourceConnection
-     * @param SessionHelper               $sessionHelper
-     * @param DiscountHelper              $discountHelper
-     * @param DateTime                    $date
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param OrderRepository $orderRepository
+     * @param TransactionBuilder $transactionBuilder
+     * @param TimezoneInterface $timezone
+     * @param DataObjectFactory $dataObjectFactory
+     * @param Log $logHelper
+     * @param Bugsnag $bugsnag
+     * @param Cart $cartHelper
+     * @param ResourceConnection $resourceConnection
+     * @param Session $sessionHelper
+     * @param Discount $discountHelper
+     * @param DateTime $date
      * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
-     * @param WebhookLogFactory           $webhookLogFactory
-     * @param Decider                     $featureSwitches
-     *
-     * @codeCoverageIgnore
+     * @param WebhookLogFactory $webhookLogFactory
+     * @param Decider $featureSwitches
+     * @param CheckboxesHandler $checkboxesHandler
+     * @param CustomerCreditCardFactory $customerCreditCardFactory
+     * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param CreditmemoManagementInterface $creditmemoManagement
      */
     public function __construct(
         Context $context,
@@ -267,7 +286,9 @@ class Order extends AbstractHelper
         Decider $featureSwitches,
         CheckboxesHandler $checkboxesHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
-        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
+        CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
+        CreditmemoFactory $creditmemoFactory,
+        CreditmemoManagementInterface $creditmemoManagement
     )
     {
         parent::__construct($context);
@@ -296,6 +317,8 @@ class Order extends AbstractHelper
         $this->checkboxesHandler = $checkboxesHandler;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
+        $this->creditmemoFactory = $creditmemoFactory;
+        $this->creditmemoManagement = $creditmemoManagement;
     }
 
     /**
@@ -312,6 +335,9 @@ class Order extends AbstractHelper
      */
     public function fetchTransactionInfo($reference, $storeId = null)
     {
+        if (isset($this->transactionInfo[$reference])) {
+            return $this->transactionInfo[$reference];
+        }
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_FETCH_TRANSACTION . "/" . $reference);
@@ -322,6 +348,7 @@ class Order extends AbstractHelper
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
+        $this->transactionInfo[$reference] = $response;
 
         return $response;
     }
@@ -402,8 +429,14 @@ class Order extends AbstractHelper
     protected function setShippingAddress($quote, $transaction)
     {
         $address = @$transaction->order->cart->shipments[0]->shipping_address;
+        $referenceShipmentMethod = (@$transaction->order->cart->shipments[0]->reference) ?: false;
+
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
+            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingMethodCode($referenceShipmentMethod)) {
+                $addressData = $this->configHelper->getPickupAddressData();
+                $quote->getShippingAddress()->addData($addressData);
+            }
         }
     }
 
@@ -807,11 +840,9 @@ class Order extends AbstractHelper
             $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
             $this->holdOnTotalsMismatch($order, $transaction);
-        } else {
-            // if called from the store controller return quote and order
-            // wait for the hook call to update the payment
-            return [$parentQuote, $order];
         }
+
+        return [$parentQuote, $order];
     }
 
     /**
@@ -1624,7 +1655,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
             // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
             // If called from Bolt merchant dashboard there is no enough info to sync the totals
-            self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+            self::TS_CREDIT_COMPLETED => (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
         ][$transactionState];
     }
 
@@ -1764,7 +1795,12 @@ class Order extends AbstractHelper
             case self::TS_CREDIT_COMPLETED:
                 if (in_array($transaction->id, $processedRefunds)) return;
                 $transactionType = Transaction::TYPE_REFUND;
-                $transactionId = $transaction->id.'-refund';
+                $transactionId = $transaction->id . '-refund';
+
+                if ($this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()){
+                    $this->createCreditMemoForHookRequest($order, $transaction);
+                }
+
                 break;
 
             default:
@@ -1919,6 +1955,60 @@ class Order extends AbstractHelper
         )->setIsCustomerNotified(true);
 
         return $invoice;
+    }
+
+    /**
+     * @param OrderModel $order
+     * @param $transaction
+     * @throws \Exception
+     */
+    public function createCreditMemoForHookRequest(OrderModel $order, $transaction)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $refundAmount = CurrencyUtils::toMajor($transaction->amount->amount, $currencyCode);
+        $this->validateRefundAmount($order, $refundAmount);
+
+        $boltTotal = CurrencyUtils::toMajor($transaction->order->cart->total_amount->amount, $currencyCode);
+        $adjustment = [];
+        if ($refundAmount < $boltTotal) {
+            $adjustment = [
+                'adjustment_positive' => $refundAmount,
+                'shipping_amount' => 0
+            ];
+
+            foreach ($order->getAllItems() as $item){
+                $adjustment['qtys'][$item->getId()] = 0;
+            }
+        }
+
+        $creditMemo = $this->creditmemoFactory->createByOrder($order, $adjustment);
+
+        $creditMemo->setAutomaticallyCreated(true)
+                    ->addComment(__('The credit memo has been created automatically.'));
+
+        $this->creditmemoManagement->refund($creditMemo, true);
+    }
+
+    /**
+     * @param OrderModel $order
+     * @param $refundAmount
+     * @throws \Exception
+     */
+    protected function validateRefundAmount(OrderModel $order, $refundAmount)
+    {
+        if (!isset($refundAmount) || !is_numeric($refundAmount) || $refundAmount < 0) {
+            throw new \Exception(__('Refund amount is invalid'));
+        }
+
+        $totalRefunded = $order->getTotalRefunded() ?: 0;
+        $totalPaid = $order->getTotalPaid();
+        $availableRefund = CurrencyUtils::toMinor($totalPaid - $totalRefunded, $order->getOrderCurrencyCode());
+
+        if ($availableRefund < $refundAmount) {
+            throw new \Exception(
+                __('Refund amount is invalid: refund amount [%1], available refund [%2]', $refundAmount, $availableRefund)
+            );
+        }
     }
 
     /**

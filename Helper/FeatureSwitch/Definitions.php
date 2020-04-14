@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Helper\FeatureSwitch;
 /**
  * All feature switches are defined here. By default all new switches should be
  * false and not rolled out. These values are only fallbacks for when something
- * isn't defined on the Bolt side. Anything values coming from Bolt take presedence.
+ * isn't defined on the Bolt side. Anything values coming from Bolt take precedence.
  *
  * Class Definitions
  * @package Bolt\Boltpay\Helper\FeatureSwitch
@@ -50,6 +50,27 @@ class Definitions {
      */
     const M2_LOG_MISSING_QUOTE_FAILED_HOOKS = "M2_LOG_MISSING_QUOTE_FAILED_HOOKS";
 
+    /**
+     * Enable creating credit memo for webhook
+     *
+     */
+    const M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED = "M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED";
+
+    /**
+     * Enable feature/admin reorder for logged in customer
+     */
+    const M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER = "M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER";
+
+    /**
+     * Enable tracking shipment
+     */
+    const M2_TRACK_SHIPMENT = "M2_TRACK_SHIPMENT";
+
+    /**
+     * Enable Order Management (account button)
+     */
+    const M2_ORDER_MANAGEMENT = "M2_ORDER_MANAGEMENT";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -65,6 +86,30 @@ class Definitions {
         ),
         self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS =>  array(
             self::NAME_KEY            => self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ),
+        self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER =>  array(
+            self::NAME_KEY            => self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ),
+        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED =>  array(
+            self::NAME_KEY            => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ),
+        self::M2_TRACK_SHIPMENT => array(
+            self::NAME_KEY            => self::M2_TRACK_SHIPMENT,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ),
+        self::M2_ORDER_MANAGEMENT =>  array(
+            self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100

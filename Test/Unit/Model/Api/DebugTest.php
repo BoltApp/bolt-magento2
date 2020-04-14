@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
@@ -28,6 +29,7 @@ use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 use Bolt\Boltpay\Model\Api\Debug;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
@@ -47,6 +49,11 @@ class DebugTest extends TestCase
 	private $debug;
 
 	/**
+	 * @var Response
+	 */
+	private $responseMock;
+
+	/**
 	 * @var DebugInfoFactory
 	 */
 	private $debugInfoFactoryMock;
@@ -60,6 +67,11 @@ class DebugTest extends TestCase
 	 * @var ModuleRetriever
 	 */
 	private $moduleRetrieverMock;
+
+    /**
+     * @var LogRetriever
+     */
+    private $logRetrieverMock;
 
 	/**
 	 * @var StoreManagerInterface
@@ -86,6 +98,9 @@ class DebugTest extends TestCase
 	 */
 	public function setUp()
 	{
+		// prepare response
+		$this->responseMock = $this->createMock(Response::class);
+
 		// prepare debug info factory
 		$this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
 		$this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
@@ -124,18 +139,26 @@ class DebugTest extends TestCase
 			]
 		);
 
+		// prepare log retriever
+        $this->logRetrieverMock = $this->createMock(LogRetriever::class);
+        $this->logRetrieverMock->method('getLogs')->willReturn(
+            [['Line 1 of log'], ['Line 2 of log']]
+        );
+
 		// initialize test object
 		$objectManager = new ObjectManager($this);
 		$this->debug = $objectManager->getObject(
 			Debug::class,
 			[
+				'response' => $this->responseMock,
 				'debugInfoFactory' => $this->debugInfoFactoryMock,
 				'boltConfigSettingFactory' => $this->boltConfigSettingFactoryMock,
 				'storeManager' => $this->storeManagerInterfaceMock,
 				'hookHelper' => $this->hookHelperMock,
 				'productMetadata' => $this->productMetadataInterfaceMock,
 				'configHelper' => $this->configHelperMock,
-				'moduleRetriever' => $this->moduleRetrieverMock
+				'moduleRetriever' => $this->moduleRetrieverMock,
+                'logRetriever' => $this->logRetrieverMock
 			]
 		);
 	}
@@ -159,33 +182,47 @@ class DebugTest extends TestCase
 	public function debug_successful()
 	{
 		$this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
+		$this->responseMock->expects($this->once())->method('sendResponse');
 
-		$debugInfo = $this->debug->debug();
-		$this->assertNotNull($debugInfo);
-		$this->assertNotNull($debugInfo->getPhpVersion());
-		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
+		$expectedJson = json_encode([
+			'status' => 'success',
+			'event' => 'integration.debug',
+			'data' => [
+				'php_version' => PHP_VERSION,
+				'platform_version' => '2.3.0',
+				'bolt_config_settings' => [
+					[
+						'name' => 'config_name1',
+						'value' => 'config_value1'
+					],
+					[
+						'name' => 'config_name2',
+						'value' => 'config_value2'
+					]
+				],
+				'other_plugin_versions' => [
+					[
+						'name' => 'plugin1',
+						'version' => '1.0.0'
+					],
+					[
+						'name' => 'plugin2',
+						'version' => '2.0.0'
+					],
+					[
+						'name' => 'plugin3',
+						'version' => '3.0.0'
+					]
+				],
+                'logs' => [
+                    ['Line 1 of log'],
+                    ['Line 2 of log']
+                ]
+			]
 
-		// check bolt settings
-		$expectedSettings = [
-			['config_name1', 'config_value1'],
-			['config_name2', 'config_value2']
-		];
-		$this->assertEquals(2, count($debugInfo->getBoltConfigSettings()));
-		for ($i = 0; $i < 2; $i ++) {
-			$this->assertEquals($expectedSettings[$i][0], $debugInfo->getBoltConfigSettings()[$i]->getName());
-			$this->assertEquals($expectedSettings[$i][1], $debugInfo->getBoltConfigSettings()[$i]->getValue(), 'actual value for ' . $expectedSettings[$i][0] . ' is not equals to expected');
-		}
+		]);
 
-		// check bolt settings
-		$expectedPVs = [
-			['plugin1', '1.0.0'],
-			['plugin2', '2.0.0'],
-			['plugin3', '3.0.0']
-		];
-		$this->assertEquals(3, count($debugInfo->getOtherPluginVersions()));
-		for ($i = 0; $i < 3; $i ++) {
-			$this->assertEquals($expectedPVs[$i][0], $debugInfo->getOtherPluginVersions()[$i]->getName());
-			$this->assertEquals($expectedPVs[$i][1], $debugInfo->getOtherPluginVersions()[$i]->getVersion(), 'actual version for ' . $expectedPVs[$i][0] . ' is not equals to expected');
-		}
+		$this->responseMock->expects($this->once())->method('setBody')->with($this->equalTo($expectedJson));
+		$this->debug->debug();
 	}
 }

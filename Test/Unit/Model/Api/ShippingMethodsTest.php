@@ -212,7 +212,14 @@ class ShippingMethodsTest extends TestCase
             ->willReturn("");
 
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
+            ->setMethods([
+                'getPrefetchShipping',
+                'getResetShippingCalculation',
+                'getIgnoredShippingAddressCoupons',
+                'isPickupInStoreShippingMethodCode',
+                'getPickupAddressData',
+                'setAddressToInStoreAddress'
+            ])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
@@ -972,6 +979,53 @@ class ShippingMethodsTest extends TestCase
 
         $quote->expects(self::exactly(2))->method('setCouponCode')->withConsecutive([''], ['123'])
             ->willReturnSelf();
+
+        $addressData = [
+            'country_id' => 'US',
+            'postcode'   => '10001',
+            'region'     => 'New York',
+            'city'       => 'New York',
+        ];
+
+        $this->currentMock->getShippingOptions($quote, $addressData);
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingOptions_IfStorePickupMethodExist()
+    {
+        $this->initCurrentMock();
+
+        $shippingAddress = $this->getShippingAddressMock(5, 0);
+
+        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $shippingRates = [['flatrate' => $addressRate]];
+        $shippingAddress->expects($this->once())
+            ->method('getGroupedAllShippingRates')
+            ->willReturn($shippingRates);
+
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed',
+            'flatrate_flatrate',
+            500,
+            0
+        );
+        $this->configHelper->expects(self::exactly(2))->method('isPickupInStoreShippingMethodCode')->with('flatrate_flatrate')->willReturn(true);
+        $this->configHelper->expects(self::once())->method('getPickupAddressData')->willReturn([
+            'city' => 'Knoxville',
+            'country_id' => 'US',
+            'postcode' => '37921',
+            'region_code' => 'TN',
+            'region_id' => '56',
+            'street' => '4535 ANNALEE Way
+Room 4000',
+        ]);
+
+        $quote = $this->getQuoteMock($shippingAddress);
 
         $addressData = [
             'country_id' => 'US',

@@ -23,5 +23,8 @@
                    name="bolt.transaction.target"
                    template="Bolt_Boltpay::boltpay/js/transaction.phtml"/>
         </referenceContainer>
+        <referenceContainer name="payment_additional_info">
+            <block class="Bolt\Boltpay\Block\Adminhtml\Order\View\Tab\Info" name="bolt.payment_additional_info.cc_info" template="Bolt_Boltpay::order/view/tab/info/payment.phtml"/>
+        </referenceContainer>
     </body>
 </page>

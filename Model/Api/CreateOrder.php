@@ -222,10 +222,10 @@ class CreateOrder implements CreateOrderInterface
                 $this->validateQuoteData($quote, $transaction);
                 $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
             }
-
+            $orderData = json_encode($createdOrder->getData());
             $this->sendResponse(200, [
                 'status'    => 'success',
-                'message'   => 'Order create was successful',
+                'message'   => "Order create was successful. Order Data: $orderData",
                 'display_id' => $createdOrder->getIncrementId() . ' / ' . $immutableQuoteId,
                 'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
@@ -536,7 +536,7 @@ class CreateOrder implements CreateOrderInterface
         $errorInfos = $quoteItem->getErrorInfos();
         $message = '';
         foreach ($errorInfos as $errorInfo) {
-            $message .= '(' . $errorInfo['origin'] . '): ' . $errorInfo['message']->render() . PHP_EOL;
+            $message .= '(' . $errorInfo['origin'] . '): ' . (is_string($errorInfo['message']) ?  $errorInfo['message'] : $errorInfo['message']->render()) . PHP_EOL;
         }
         $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 

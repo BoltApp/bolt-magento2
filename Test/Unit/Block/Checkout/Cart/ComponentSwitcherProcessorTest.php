@@ -12,7 +12,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
-
+use Magento\Directory\Model\RegionFactory;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor
  */
@@ -56,7 +56,7 @@ class ComponentSwitcherProcessorTest extends TestCase
                     $this->createMock(ResourceInterface::class),
                     $this->createMock(ProductMetadataInterface::class),
 	                $this->createMock(BoltConfigSettingFactory::class),
-	                $this->createMock(Http::class)
+                    $this->createMock(RegionFactory::class)
                 ]
             )
             ->getMock();
