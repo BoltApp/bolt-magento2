@@ -170,6 +170,7 @@ class Shipping extends ShippingTax implements ShippingInterface
         }
 
         $address = $this->createAddress($addressData);
+        $addressData = $this->reformatAddressData($addressData);
 
         /**
          * @var \Magento\Quote\Api\Data\ShippingMethodInterface[] $shippingOptionArray
