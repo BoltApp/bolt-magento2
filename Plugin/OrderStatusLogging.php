@@ -6,7 +6,7 @@ namespace Bolt\Boltpay\Plugin;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\ResourceModel\Order as ResourceOrder;
 
-class OrderCanceledStatusLogging
+class OrderStatusLogging
 {
 
     /**
@@ -35,6 +35,13 @@ class OrderCanceledStatusLogging
             }
 
             if ($order->getStatus() === Order::STATE_CANCELED || $order->getState() === Order::STATE_CANCELED){
+                $this->bugsnag->notifyError(
+                    "{$order->getIncrementId()} - Order status update",
+                    "\nStatus: {$order->getStatus()}, State: {$order->getState()}"
+                );
+            }
+
+            if ($order->getStatus() === Order::STATE_CLOSED || $order->getState() === Order::STATE_CLOSED){
                 $this->bugsnag->notifyError(
                     "{$order->getIncrementId()} - Order status update",
                     "\nStatus: {$order->getStatus()}, State: {$order->getState()}"

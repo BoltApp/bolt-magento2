@@ -275,7 +275,7 @@
 
     <type name="Magento\Sales\Model\ResourceModel\Order">
         <plugin name="BoltBoltpayOrderStatusLogging"
-                type="Bolt\Boltpay\Plugin\OrderCanceledStatusLogging"
+                type="Bolt\Boltpay\Plugin\OrderStatusLogging"
                 sortOrder="1"/>
     </type>
 </config>
