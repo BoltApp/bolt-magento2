@@ -21,6 +21,8 @@ use Magento\Sales\Model\Order;
 use PHPUnit\Framework\Constraint\ExceptionMessage;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Backend\Model\UrlInterface as BackendUrl;
+use Magento\Framework\App\Response\RedirectInterface;
 
 class ReceivedUrlTest extends TestCase
 {
@@ -90,6 +92,16 @@ class ReceivedUrlTest extends TestCase
      * @var OrderHelper | MockObject
      */
     private $orderHelper;
+
+    /**
+     * @var BackendUrl\ | MockObject
+     */
+    private $backendUrl;
+
+    /**
+     * @var RedirectInterface | MockObject
+     */
+    private $redirect;
 
     /**
      * @test
@@ -550,6 +562,8 @@ class ReceivedUrlTest extends TestCase
             ])
             ->getMock();
         $this->orderHelper = $this->createMock(OrderHelper::class);
+        $this->backendUrl = $this->createMock(BackendUrl::class);
+        $this->redirect = $this->createMock(RedirectInterface::class);
     }
 
     private function initReceivedUrlMock($context, $configHelper, $cartHelper, $bugsnag, $logHelper, $checkoutSession, $orderHelper)
@@ -566,7 +580,9 @@ class ReceivedUrlTest extends TestCase
                 $bugsnag,
                 $logHelper,
                 $checkoutSession,
-                $orderHelper
+                $orderHelper,
+                $this->backendUrl,
+                $this->redirect,
             ])
             ->getMock();
         return $receivedUrl;
