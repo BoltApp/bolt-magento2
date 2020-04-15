@@ -212,7 +212,14 @@ class ShippingMethodsTest extends TestCase
             ->willReturn("");
 
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getPrefetchShipping', 'getResetShippingCalculation', 'getIgnoredShippingAddressCoupons'])
+            ->setMethods([
+                'getPrefetchShipping',
+                'getResetShippingCalculation',
+                'getIgnoredShippingAddressCoupons',
+                'isPickupInStoreShippingMethodCode',
+                'getPickupAddressData',
+                'setAddressToInStoreAddress'
+            ])
             ->disableOriginalConstructor()
             ->getMock();
         $this->configHelper->method('getPrefetchShipping')
@@ -744,7 +751,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
+            "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
             'flatrate_flatrate',
             500, 0
         );
@@ -876,7 +883,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            "Flate Rate - Fixed [free shipping discount]",
+            "Flate Rate - Fixed [free shipping discount]",
             'flatrate_flatrate',
             0, 0
         );
@@ -985,6 +992,53 @@ class ShippingMethodsTest extends TestCase
 
     /**
      * @test
+     */
+    public function getShippingOptions_IfStorePickupMethodExist()
+    {
+        $this->initCurrentMock();
+
+        $shippingAddress = $this->getShippingAddressMock(5, 0);
+
+        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $shippingRates = [['flatrate' => $addressRate]];
+        $shippingAddress->expects($this->once())
+            ->method('getGroupedAllShippingRates')
+            ->willReturn($shippingRates);
+
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed',
+            'flatrate_flatrate',
+            500,
+            0
+        );
+        $this->configHelper->expects(self::exactly(2))->method('isPickupInStoreShippingMethodCode')->with('flatrate_flatrate')->willReturn(true);
+        $this->configHelper->expects(self::once())->method('getPickupAddressData')->willReturn([
+            'city' => 'Knoxville',
+            'country_id' => 'US',
+            'postcode' => '37921',
+            'region_code' => 'TN',
+            'region_id' => '56',
+            'street' => '4535 ANNALEE Way
+Room 4000',
+        ]);
+
+        $quote = $this->getQuoteMock($shippingAddress);
+
+        $addressData = [
+            'country_id' => 'US',
+            'postcode'   => '10001',
+            'region'     => 'New York',
+            'city'       => 'New York',
+        ];
+
+        $this->currentMock->getShippingOptions($quote, $addressData);
+    }
+
+    /**
+     * @test
      * that getShippingOptions unsets shipping amount for discount when discount applies to shipping
      * before collecting shipping totals to allow {@see \Magento\SalesRule\Model\Validator::processShippingAmount}
      * to correctly process shipping discount
@@ -1010,7 +1064,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            'Flate Rate - Fixed [2.34 discount]',
+            'Flate Rate - Fixed [2.34 discount]',
             'flatrate_flatrate',
             266,
             0
@@ -1035,7 +1089,7 @@ class ShippingMethodsTest extends TestCase
             'city'       => 'New York',
         ];
 
-        $result = $this->currentMock->getShippingOptions($quote, $addressData);
+        $this->currentMock->getShippingOptions($quote, $addressData);
     }
 
 

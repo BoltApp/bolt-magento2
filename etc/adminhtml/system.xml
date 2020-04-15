@@ -264,6 +264,57 @@
                         <label>Custom CDN</label>
                         <config_path>payment/boltpay/custom_cdn</config_path>
                     </field>
+                    <field id="enable_store_pickup_feature" translate="label" sortOrder="294" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Enable In-Store Pickup Feature</label>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="pickup_street" translate="label" type="text" sortOrder="295" showInDefault="1"
+                           showInWebsite="1"
+                           showInStore="1">
+                        <label>In-Store Pickup Address</label>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="pickup_apartment" translate="label" type="text" sortOrder="296" showInDefault="1"
+                           showInWebsite="1"
+                           showInStore="1">
+                        <label>In-Store Pickup Apartment</label>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                    </field>
+                    <field id="pickup_city" translate="label" type="text" sortOrder="297" showInDefault="1"
+                           showInWebsite="1"
+                           showInStore="1">
+                        <label>In-Store Pickup City</label>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="pickup_zipcode" translate="label" type="text" sortOrder="298" showInDefault="1"
+                           showInWebsite="1"
+                           showInStore="1">
+                        <label>In-Store Pickup Zip Code</label>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="pickup_country_id" translate="label" type="select" sortOrder="299" showInDefault="1"
+                           showInWebsite="1" showInStore="1">
+                        <label>In-Store Pickup Country</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="pickup_region_id" translate="label" type="select" sortOrder="300" showInDefault="1"
+                           showInWebsite="1" showInStore="1">
+                        <label>In-Store Pickup Region/State</label>
+                        <source_model>Magento\Directory\Model\Config\Source\Allregion</source_model>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="pickup_shipping_method_code" translate="label" type="text" sortOrder="301" showInDefault="1"
+                           showInWebsite="1" showInStore="1">
+                        <label>In-Store Pickup Shipping Method Code</label>
+                        <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <validate>validate-no-empty</validate>
+                    </field>
                 </group>
             </group>
         </section>

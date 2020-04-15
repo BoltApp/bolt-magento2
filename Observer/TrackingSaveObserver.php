@@ -98,7 +98,7 @@ class TrackingSaveObserver implements ObserverInterface
 
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
-                $items[] = $item->getOrderItem()->getProductId();
+                $items[] = (object)['reference'=>$item->getOrderItem()->getProductId()];
             }
 
             $apiKey = $this->configHelper->getApiKey($order->getStoreId());
