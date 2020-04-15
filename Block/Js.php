@@ -107,7 +107,7 @@ class Js extends Template
     public function getPayByLinkUrl()
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
-        return $cdnUrl.'/test_open.html';
+        return $cdnUrl.'/checkout';
     }
 
     /**

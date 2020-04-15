@@ -83,6 +83,19 @@ class ReceivedUrl extends Action
     }
 
     /**
+     * @param quote Quote
+     * @return boolean
+     */
+    private function hasAdminUrlReferer() {
+        $this->backendUrl->setScope(0);
+        $refererUrl = $this->redirect->getRefererUrl();
+        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index", []);
+        return substr($refererUrl, 0, strlen($adminUrl)) === $adminUrl;
+    }
+
+    /**
+     * Redirect user to admin's order confirmation page if this is backoffice order placed by admin page
+     * @param quote Quote
      * @return boolean
      */
     protected function redirectToAdminIfNeeded($quote)
@@ -90,11 +103,8 @@ class ReceivedUrl extends Action
         if (!$quote->getBoltIsBackendOrder()) {
             return false;
         }
-        // Set admin scope
-        $this->backendUrl->setScope(0);
-        $refererUrl = $this->redirect->getRefererUrl();
-        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index/", []);
-        if (substr($refererUrl, 0, strlen($adminUrl)) !== $adminUrl) {
+
+        if (!$this->hasAdminUrlReferer()) {
             return false;
         }
 
