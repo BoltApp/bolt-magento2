@@ -751,7 +751,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            "",
+            "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
             'flatrate_flatrate',
             500, 0
         );
@@ -883,7 +883,7 @@ class ShippingMethodsTest extends TestCase
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            "",
+            "Flate Rate - Fixed [free shipping discount]",
             'flatrate_flatrate',
             0, 0
         );
