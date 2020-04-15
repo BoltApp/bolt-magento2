@@ -1,5 +1,5 @@
 <?php
-/**
+/** 
  * Bolt magento2 plugin
  *
  * NOTICE OF LICENSE
