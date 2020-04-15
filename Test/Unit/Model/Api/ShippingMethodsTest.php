@@ -1064,7 +1064,7 @@ Room 4000',
             ->willReturn($shippingRates);
 
         $this->setupShippingOptionFactory(
-            '',
+            'Flate Rate - Fixed [2.34 discount]',
             'flatrate_flatrate',
             266,
             0
