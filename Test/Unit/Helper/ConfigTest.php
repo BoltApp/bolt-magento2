@@ -28,6 +28,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleResource;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Directory\Model\RegionFactory;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
@@ -41,6 +42,14 @@ class ConfigTest extends TestCase
         '222.222.222.222',
         '123.123.123.123'
     ];
+    const STORE_PICKUP_STREET = '4535 ANNALEE Way';
+    const STORE_PICKUP_ZIP_CODE = '37921';
+    const STORE_PICKUP_CITY = 'Knoxville';
+    const STORE_PICKUP_COUNTRY_ID = 'US';
+    const STORE_PICKUP_REGION_ID = '56';
+    const STORE_PICKUP_APARTMENT = 'Room 4000';
+    const STORE_PICKUP_SHIPPING_METHOD_CODE = 'instorepickup_instorepickup';
+
     const ADDITIONAL_CONFIG = <<<JSON
 {
     "amastyGiftCard": {
@@ -109,6 +118,8 @@ JSON;
      */
     private $request;
 
+    private $regionFactory;
+
 	/**
 	 * @inheritdoc
 	 */
@@ -129,6 +140,11 @@ JSON;
 
 		$this->productMetadata = $this->createMock(ProductMetadataInterface::class);
 		$this->request = $this->createMock(Request::class);
+
+		$this->regionFactory = $this->createPartialMock(
+		    RegionFactory::class,
+                            ['create', 'load', 'getCode']
+        );
 
 		// prepare bolt config setting factory
 		$this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
@@ -161,7 +177,7 @@ JSON;
 				                $this->moduleResource,
 				                $this->productMetadata,
 				                $this->boltConfigSettingFactoryMock,
-				                $this->request
+				                $this->regionFactory
 			                ]
 		                )
 		                ->setMethods($methods);
@@ -974,5 +990,154 @@ JSON;
 		}
 	}
 
+    /**
+     * @test
+     * @covers ::getPickupStreetConfiguration
+     */
+    public function getPickupStreetConfiguration()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PICKUP_STREET, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(self::STORE_PICKUP_STREET);
+        $result = $this->currentMock->getPickupStreetConfiguration();
+        $this->assertEquals(self::STORE_PICKUP_STREET, $result);
+    }
 
+    /**
+     * @test
+     * @covers ::getPickupCityConfiguration
+     */
+    public function getPickupCityConfiguration() {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PICKUP_CITY, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(self::STORE_PICKUP_CITY);
+        $result = $this->currentMock->getPickupCityConfiguration();
+        $this->assertEquals(self::STORE_PICKUP_CITY, $result);
+    }
+
+    /**
+     * @test
+     * @covers ::getPickupShippingMethodCodeConfiguration
+     */
+    public function getPickupShippingMethodCodeConfiguration()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(self::STORE_PICKUP_SHIPPING_METHOD_CODE);
+        $result = $this->currentMock->getPickupShippingMethodCodeConfiguration();
+        $this->assertEquals(self::STORE_PICKUP_SHIPPING_METHOD_CODE, $result);
+    }
+
+    /**
+     * @test
+     * @covers ::getPickupApartmentConfiguration
+     */
+    public function getPickupApartmentConfiguration()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PICKUP_APARTMENT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(self::STORE_PICKUP_APARTMENT);
+        $result = $this->currentMock->getPickupApartmentConfiguration();
+        $this->assertEquals(self::STORE_PICKUP_APARTMENT, $result);
+    }
+
+    /**
+     * @param $method
+     * @param $expected
+     * @param $isStorePickFeatureEnabled
+     * @test
+     * @covers ::isPickupInStoreShippingMethodCode
+     * @dataProvider providerGetPickupShippingMethodCode
+     */
+    public function isPickupInStoreShippingMethodCode($isStorePickFeatureEnabled , $method, $expected) {
+        $this->scopeConfig
+            ->expects(self::any())
+            ->method('getValue')
+            ->withConsecutive(
+                [BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null]
+            )
+            ->willReturnOnConsecutiveCalls(
+                $isStorePickFeatureEnabled,
+                self::STORE_PICKUP_SHIPPING_METHOD_CODE
+            );
+
+        $result = $this->currentMock->isPickupInStoreShippingMethodCode($method);
+        $this->assertEquals($expected, $result);
+    }
+
+    public function providerGetPickupShippingMethodCode() {
+        return [
+            [false, 'instorepickup_instorepickup', false],
+            [true, 'instorepickup_instorepickup', true],
+            [true, 'is_not_instorepickup_instorepickup', false],
+            [true, null, false]
+        ];
+    }
+
+    /**
+     * @test
+     * @covers ::isStorePickupFeatureEnabled
+     */
+    public function isStorePickupFeatureEnabled()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(true);
+        $result = $this->currentMock->isStorePickupFeatureEnabled();
+        $this->assertTrue($result);
+    }
+
+    /**
+     * @test
+     * @covers ::getPickupAddressData
+     */
+    public function getPickupAddressData() {
+        $this->scopeConfig
+            ->expects(self::exactly(6))
+            ->method('getValue')
+            ->withConsecutive(
+                [BoltConfig::XML_PATH_PICKUP_STREET, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_CITY, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_ZIP_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_COUNTRY_ID, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_REGION_ID, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
+                [BoltConfig::XML_PATH_PICKUP_APARTMENT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null]
+            )
+            ->willReturnOnConsecutiveCalls(
+                self::STORE_PICKUP_STREET,
+                self::STORE_PICKUP_CITY,
+                self::STORE_PICKUP_ZIP_CODE,
+                self::STORE_PICKUP_COUNTRY_ID,
+                self::STORE_PICKUP_REGION_ID,
+                self::STORE_PICKUP_APARTMENT
+            );
+
+        $this->regionFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->regionFactory->expects(self::once())->method('load')->with(self::STORE_PICKUP_REGION_ID)->willReturnSelf();
+        $this->regionFactory->expects(self::once())->method('getCode')->willReturn('TN');
+
+        $result = $this->currentMock->getPickupAddressData();
+
+        $this->assertEquals(
+            [
+                'city' => 'Knoxville',
+                'country_id' => 'US',
+                'postcode' => '37921',
+                'region_code' => 'TN',
+                'region_id' => '56',
+                'street' => '4535 ANNALEE Way
+Room 4000',
+            ], $result);
+    }
 }

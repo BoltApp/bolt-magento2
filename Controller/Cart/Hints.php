@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Controller\Cart;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Framework\Exception\LocalizedException;
+use Exception;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\Controller\Result\JsonFactory;
 

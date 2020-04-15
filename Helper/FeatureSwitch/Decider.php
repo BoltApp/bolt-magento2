@@ -196,4 +196,8 @@ class Decider extends AbstractHelper {
     public function isOrderManagementEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_ORDER_MANAGEMENT);
     }
+
+    public function isPayByLinkEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_PAY_BY_LINK);
+    }
 }

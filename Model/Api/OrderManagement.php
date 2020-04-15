@@ -237,17 +237,19 @@ class OrderManagement implements OrderManagementInterface
             return;
         }
 
-        $this->orderHelper->saveUpdateOrder(
+        list(, $order) = $this->orderHelper->saveUpdateOrder(
             $reference,
             $storeId,
             $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
             $type,
             $this->request->getBodyParams()
         );
+
+        $orderData = json_encode($order->getData());
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',
-            'message' => 'Order creation / update was successful',
+            'message' => "Order creation / update was successful. Order Data: $orderData",
         ]));
     }
 

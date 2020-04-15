@@ -117,6 +117,11 @@ class OrderManagementTest extends TestCase
     private $cartHelper;
 
     /**
+     * @var Order
+     */
+    private $order;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -135,15 +140,33 @@ class OrderManagementTest extends TestCase
     private function initRequiredMocks()
     {
         $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->orderHelperMock = $this->createMock(OrderHelper::class);
+        $this->orderHelperMock = $this->createPartialMock(OrderHelper::class,
+            [
+                'saveUpdateOrder',
+                'getStoreIdByQuoteId',
+                'tryDeclinedPaymentCancelation',
+                'deleteOrderByIncrementId',
+                'saveCustomerCreditCard'
+            ]);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->request = $this->createMock(Request::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->response = $this->createMock(Response::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->order = $this->createPartialMock(Order::class,['getData']);
 
         $this->quoteMock = $this->createMock(Quote::class);
+
+        $this->order->expects(self::any())->method('getData')
+            ->willReturn([
+                'id' => '1111',
+                'increment_id'=> 'XXXXX',
+                'grand_total' => '$11.00'
+            ]);
+
+        $this->orderHelperMock->expects(self::any())->method('saveUpdateOrder')
+            ->willReturn([$this->quoteMock, $this->order]);
 
         $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
             ->will(self::returnValueMap([
@@ -193,6 +216,8 @@ class OrderManagementTest extends TestCase
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with(self::anything(), 1, 'webhooks.latency', $startTime);
         $this->response->expects(self::once())->method('sendResponse');
+
+
 
         $this->currentMock->manage(
             self::ID,
@@ -251,11 +276,13 @@ class OrderManagementTest extends TestCase
         $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
             ->willReturn(self::REQUEST_HEADER_TRACE_ID);
         $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
-            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type);
+            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type)
+            ->willReturn([null, $this->order]);
+
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order creation / update was successful',
+            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"$11.00"}',
         ]));
 
         $this->currentMock->manage(
@@ -561,7 +588,7 @@ class OrderManagementTest extends TestCase
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order creation / update was successful',
+            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"$11.00"}',
         ]));
 
         $this->currentMock->manage(
