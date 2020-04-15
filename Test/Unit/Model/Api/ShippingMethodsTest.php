@@ -1510,7 +1510,6 @@ Room 4000',
         $this->shippingOptionInterfaceFactory->method('create')
             ->willReturnSelf();
         $this->shippingOptionInterfaceFactory->method('setService')
-            ->with($service)
             ->willReturnSelf();
         $this->shippingOptionInterfaceFactory->method('setCost')
             ->with($cost)
