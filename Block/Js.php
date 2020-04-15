@@ -100,6 +100,17 @@ class Js extends Template
     }
 
     /**
+     * Get pay-by-link url
+     *
+     * @return  string
+     */
+    public function getPayByLinkUrl()
+    {
+        $cdnUrl = $this->configHelper->getCdnUrl();
+        return $cdnUrl.'/checkout';
+    }
+
+    /**
      * Get account js url
      *
      * @return  string
@@ -206,6 +217,7 @@ class Js extends Template
             'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
             'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
             'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'pay_by_link_url'          => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
             'quote_is_virtual'         => $this->getQuoteIsVirtual(),
             'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
