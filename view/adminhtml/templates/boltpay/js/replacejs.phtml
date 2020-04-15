@@ -400,13 +400,13 @@ require([
             if (getBackofficeKey()) {
                 insertConnectScript(data.publishableKey);
             }
-            if (getPaymentOnlyKey()) {
+            if (getPaymentOnlyKey() && settings.pay_by_link_url) {
                 $(".bolt-checkout-pay-by-link").html("Send <a href='"
                     + settings.pay_by_link_url + "?publishable_key=" + getPaymentOnlyKey()
                     + "&token=" + data.cart.orderToken
                     + "'>this link</a> to consumer to receive payment");
             }
-            if (getBackofficeKey() && getPaymentOnlyKey()) {
+            if (getBackofficeKey() && getPaymentOnlyKey() && settings.pay_by_link_url) {
                 $(".bolt-checkout-options-separator").show();
             }
         };

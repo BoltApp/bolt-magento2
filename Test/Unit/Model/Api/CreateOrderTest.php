@@ -663,7 +663,7 @@ class CreateOrderTest extends TestCase
             '_secure' => true,
             'store_id' => self::STORE_ID
         ])->willReturn($url);
-        $this->currBlock/Js.phpentMock->getReceivedUrl($this->quoteMock);
+        $this->currentMock->getReceivedUrl($this->quoteMock);
     }
 
     /**

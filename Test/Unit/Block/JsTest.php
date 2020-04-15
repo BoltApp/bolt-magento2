@@ -339,6 +339,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      */
     public function getSettings()
     {
+        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
@@ -365,6 +366,26 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
         $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
         $this->assertArrayHasKey('button_css_styles', $array, $message . 'button_css_styles');
+    }
+
+    /**
+     * @test
+     */
+    public function getSettings_payByLinkUrlIsNullWhenFeatureIsOff() {
+        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(false);
+        $result = $this->block->getSettings();
+
+        $this->assertNull(json_decode($result, true)['pay_by_link_url']);
+    }
+
+    /**
+     * @test
+     */
+    public function getSettings_payByLinkUrlExistsWhenFeatureIsOn() {
+        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
+        $result = $this->block->getSettings();
+
+        $this->assertEquals('https://connect.bolt.com/checkout', json_decode($result, true)['pay_by_link_url']);
     }
 
     /**
