@@ -22,7 +22,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class PluginVersion
+class PluginVersion implements \JsonSerializable
 {
 	/**
 	 * @var string
@@ -37,8 +37,8 @@ class PluginVersion
 	/**
 	 * Get plugin name.
 	 *
-	 * @api
 	 * @return string
+	 * @api
 	 */
 	public function getName()
 	{
@@ -48,22 +48,23 @@ class PluginVersion
 	/**
 	 * Set plugin name.
 	 *
-	 * @api
 	 * @param string $name
 	 *
 	 * @return $this
+	 * @api
 	 */
 	public function setName($name)
 	{
 		$this->name = $name;
+
 		return $this;
 	}
 
 	/**
 	 * Get plugin name.
 	 *
-	 * @api
 	 * @return string
+	 * @api
 	 */
 	public function getVersion()
 	{
@@ -73,14 +74,23 @@ class PluginVersion
 	/**
 	 * Set plugin version.
 	 *
-	 * @api
 	 * @param string $version
 	 *
 	 * @return $this
+	 * @api
 	 */
 	public function setVersion($version)
 	{
 		$this->version = $version;
+
 		return $this;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function jsonSerialize()
+	{
+		return get_object_vars($this);
 	}
 }

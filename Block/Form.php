@@ -7,6 +7,7 @@ use Magento\Framework\Session\SessionManager as MagentoQuote;
 use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class Form
@@ -36,24 +37,32 @@ class Form extends PaymentForm
     private $customerCreditCardCollectionFactory;
 
     /**
-     * @param Context      $context
-     * @param Config       $configHelper
+     * @var Decider
+     */
+    private $featureSwitch;
+
+    /**
+     * Form constructor.
+     * @param Context $context
+     * @param Config $configHelper
      * @param MagentoQuote $magentoQuote
      * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
-     * @param array        $data
+     * @param Decider $featureSwitch
+     * @param array $data
      */
     public function __construct(
         Context $context,
         Config $configHelper,
         MagentoQuote $magentoQuote,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
+        Decider $featureSwitch,
         array $data = []
     ) {
         parent::__construct($context, $data);
-
         $this->configHelper = $configHelper;
         $this->_quote = $magentoQuote->getQuote();
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
+        $this->featureSwitch = $featureSwitch;
     }
 
     /**
@@ -143,5 +152,19 @@ class Form extends PaymentForm
         }
 
         return false;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled(){
+        return $this->featureSwitch->isAdminReorderForLoggedInCustomerFeatureEnabled();
+    }
+
+    /**
+     * @return string
+     */
+    public function getPublishableKeyBackOffice(){
+        return $this->configHelper->getPublishableKeyBackOffice();
     }
 }

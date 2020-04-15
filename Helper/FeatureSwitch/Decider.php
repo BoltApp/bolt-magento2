@@ -155,15 +155,49 @@ class Decider extends AbstractHelper {
      * Switch Helpers below
      ***************************************************/
 
-    public function isSampleSwitchEnabled() {
+    /**
+     * Checks whether the sample feature switch is enabled
+     */
+    public function isSampleSwitchEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
     }
 
+    /**
+     * Checks whether the feature switch for enabling/disabling bolt is enabled
+     */
     public function isBoltEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
     }
 
+    /**
+     * Checks whether the feature switch for logging missing quote failed hook is enabled
+     */
     public function isLogMissingQuoteFailedHooksEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
+    }
+
+    public function isCreatingCreditMemoFromWebHookEnabled(){
+        return $this->isSwitchEnabled(Definitions::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED);
+    }
+
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
+    }
+
+    /**
+     * Checks whether the feature switch for saving/sending tracking data is enabled
+     */
+    public function isTrackShipmentEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_TRACK_SHIPMENT);
+    }
+
+    public function isOrderManagementEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_ORDER_MANAGEMENT);
+    }
+
+    public function isPayByLinkEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_PAY_BY_LINK);
     }
 }

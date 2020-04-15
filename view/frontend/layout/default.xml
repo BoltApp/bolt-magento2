@@ -24,6 +24,14 @@
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>
+        <!-- for blank theme-->
+        <referenceBlock name="top.links">
+            <block class="Bolt\Boltpay\Block\Js" name="boltaccount_blank" template="Bolt_Boltpay::boltaccount.phtml" before="-"/>
+        </referenceBlock>
+        <!-- for luna theme-->
+        <referenceBlock name="header.links">
+            <block class="Bolt\Boltpay\Block\Js" name="boltaccount_luna" template="Bolt_Boltpay::boltaccount.phtml" before="-"/>
+        </referenceBlock>
         <referenceBlock name="after.body.start">
             <block class="Bolt\Boltpay\Block\Js" name="bolt_popup" template="Bolt_Boltpay::popup.phtml" />
         </referenceBlock>

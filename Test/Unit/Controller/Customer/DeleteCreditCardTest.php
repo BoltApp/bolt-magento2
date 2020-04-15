@@ -26,10 +26,12 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Message\Manager;
 use Magento\Store\App\Response\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator;
+use Magento\Customer\Model\Session;
 
 class DeleteCreditCardTest extends TestCase
 {
     const ID = '1';
+    const CUSTOMER_ID = '111';
 
     /**
      * @var CustomerCreditCardFactory
@@ -67,6 +69,11 @@ class DeleteCreditCardTest extends TestCase
     private $redirectMock;
 
     /**
+     * @var Session
+     */
+    private $customerSession;
+
+    /**
      * @var Validator
      */
     private $validatorMock;
@@ -82,7 +89,7 @@ class DeleteCreditCardTest extends TestCase
 
         $this->customerCreditCardFactoryMock = $this->getMockBuilder(CustomerCreditCardFactory::class)
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'delete', 'getId'])
+            ->setMethods(['create', 'load', 'delete', 'getId', 'getCustomerId'])
             ->getMock();
 
         $this->requestMock = $this->getMockBuilder(Http::class)
@@ -105,15 +112,20 @@ class DeleteCreditCardTest extends TestCase
             ->setMethods(['getRefererUrl'])
             ->getMock();
 
+        $this->customerSession = $this->createPartialMock(Session::class, ['getCustomerId']);
+
         $this->contextMock->method('getMessageManager')->willReturn($this->messageMock);
         $this->contextMock->method('getRedirect')->willReturn($this->redirectMock);
+
+
 
         $this->currentMock = $this->getMockBuilder(DeleteCreditCard::class)
             ->setConstructorArgs([
                 $this->contextMock,
                 $this->bugsnagMock,
                 $this->customerCreditCardFactoryMock,
-                $this->validatorMock
+                $this->validatorMock,
+                $this->customerSession
             ])->setMethods(['getRequest', '_redirect'])
             ->getMock();
     }
@@ -139,15 +151,29 @@ class DeleteCreditCardTest extends TestCase
         $this->customerCreditCardFactoryMock->expects(self::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactoryMock->expects(self::once())->method('load')->with(self::ID)->willReturnSelf();
         $this->customerCreditCardFactoryMock->expects(self::once())->method('getId')->willReturn(self::ID);
+
+        $this->customerSession->expects(self::once())->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
+        $this->customerCreditCardFactoryMock->expects(self::once())->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
         $this->customerCreditCardFactoryMock->expects(self::once())->method('delete')->willReturnSelf();
 
         $this->assertSame($this->redirectMock, $this->currentMock->execute());
     }
 
+    public function dataProvider_execute_withInvalidIdParameter(){
+        return [
+            [self::ID, 'test', self::CUSTOMER_ID],
+            [null, self::CUSTOMER_ID, self::CUSTOMER_ID]
+        ];
+    }
+
     /**
+     * @param $id
+     * @param $customerId
+     * @param $customerSessionId
+     * @dataProvider dataProvider_execute_withInvalidIdParameter
      * @test
      */
-    public function execute_withInvalidIdParameter()
+    public function execute_withInvalidIdParameter($id, $customerId, $customerSessionId)
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(true);
 
@@ -157,13 +183,17 @@ class DeleteCreditCardTest extends TestCase
             ->with(__('Credit Card doesn\'t exist'))
             ->willReturnSelf();
         $this->redirectMock->expects(self::once())->method('getRefererUrl')->willReturnSelf();
-
         $this->currentMock->expects(self::any())->method('getRequest')->willReturn($this->requestMock);
+        if ($id){
+            $this->customerSession->expects(self::once())->method('getCustomerId')->willReturn($customerSessionId);
+            $this->customerCreditCardFactoryMock->expects(self::once())->method('getCustomerId')->willReturn($customerId);
+        }
+
         $this->currentMock->expects(self::once())->method('_redirect')->with($this->redirectMock)->willReturn($this->redirectMock);
 
         $this->customerCreditCardFactoryMock->expects(self::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactoryMock->expects(self::once())->method('load')->with(self::ID)->willReturnSelf();
-        $this->customerCreditCardFactoryMock->expects(self::once())->method('getId')->willReturn(null);
+        $this->customerCreditCardFactoryMock->expects(self::once())->method('getId')->willReturn($id);
         $this->assertSame($this->redirectMock, $this->currentMock->execute());
     }
 
@@ -229,5 +259,4 @@ class DeleteCreditCardTest extends TestCase
         $this->currentMock->expects(self::once())->method('_redirect')->with($this->redirectMock)->willReturn($this->redirectMock);
         $this->assertSame($this->redirectMock, $this->currentMock->execute());
     }
-
 }

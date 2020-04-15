@@ -228,52 +228,6 @@ require([
     };
 
     /**
-     * Apply function to every element with the specified selector.
-     *
-     * param selector   elements CSS selector
-     * param fn         function to apply
-     *
-     * return void
-     */
-    var selectorApply = function(selector, fn){
-        var elements = document.querySelectorAll(selector);
-        for (var i = 0, length = elements.length; i < length; i++) {
-            var element = elements[i];
-            fn.call(element, element)
-        }
-    };
-
-    /**
-     * Apply function to every bolt checkout button.
-     *
-     * param fn         function to apply
-     *
-     * return void
-     */
-    var checkoutButtonApply = function(fn) {
-        var elm = document.getElementById('payment_form_boltpay');
-        if (elm.style.visibility = 'visible') {
-            selectorApply(bolt_button_selector, fn);
-        }
-    };
-
-    /**
-     * Toggle checkout button multi-step class, `bolt-multi-step-checkout`, according to the checkout type.
-     *
-     * return void
-     */
-    var setCheckoutTypeStyle = function() {
-        var checkout_type = getCheckoutType();
-        checkoutButtonApply(function(button) {
-            if (checkout_type === 'payment') {
-                button.classList.remove(multi_step_css_class);
-            } else {
-                button.classList.add(multi_step_css_class);
-            }
-        });
-    };
-
-    /**
      * Inject connect.js
      * return void
      */
@@ -297,24 +251,22 @@ require([
     };
 
     /**
-     * Set checkout button CSS and load connect.js
+     * Set load connect.js
      * return void
      */
     var processButtons = function () {
         if (getCheckoutKey() !== '') {
-            setCheckoutTypeStyle();
             createOrder();
         }
     };
 
-    // The configuration parameters passed from the php block
+    // The configuration parameters passed from the php block.
+    // The window object may be reset during backoffice creation for some reasons,
+    // as a result, the variable settings fail to keep in sync with window.boltConfig,
+    // so we should treat it as a internal copy of window.boltConfig, the updates have to
+    // be applied on this variable instead of window.boltConfig.
     var settings = window.boltConfig,
-    // TODO: make `with-cards` option backend configurable
-        bolt_button_css_class    = 'bolt-checkout-button with-cards',
-        bolt_button_selector     = '.bolt-checkout-button',
-        multi_step_css_class     = 'bolt-multi-step-checkout',
-        billing_address_selector = '#bolt-billing-address',
-        place_order_payload_id   = 'bolt-place-order-payload';
+        bolt_button_selector     = '.bolt-checkout-button';
 
     // On multiple checkout open/close actions the success event remains registered
     // resulting in making the success call multiple times. This variable stores
@@ -410,8 +362,6 @@ require([
             }
 
             return true;
-            // if orderToken is set the checkout window will open
-            // return !!cart.orderToken;
         }
     };
 
@@ -443,8 +393,8 @@ require([
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
-            window.boltConfig.storeId = data.storeId;
-            window.boltConfig.is_pre_auth = data.isPreAuth;
+            settings.storeId = data.storeId;
+            settings.is_pre_auth = data.isPreAuth;
 
             insertConnectScript(data.publishableKey);
         };
@@ -470,42 +420,6 @@ require([
         processButtons();
     });
     ////////////////////////////////////////////////
-
-    //////////////////////////////////////////////////////////
-    // loop through selectors array and set up the replacement
-    //////////////////////////////////////////////////////////
-    for (var i = 0, length = settings.selectors.length; i < length; i++) {
-        var selector = settings.selectors[i];
-        ! function(selector) {
-            var parts = selector.split('|'),
-                // the CSS selector
-                identifier = parts[0].trim(),
-                // button placement regarding the selector element, prepend, append
-                position =  parts[1];
-            /////////////////////////////////////////////////////
-            // replace the selectors with bolt button identifiers
-            // if / when selectors are in the DOM
-            /////////////////////////////////////////////////////
-            onElementReady(identifier, function(element) {
-                if (getCheckoutKey() === '') return;
-                var bolt_button = document.createElement("div");
-
-                bolt_button.setAttribute("class", bolt_button_css_class);
-                // place the button before or after selector element
-                if (position && position.trim().toLowerCase() === 'append') {
-                    element.parentNode.insertBefore(bolt_button, element.nextSibling);
-                } else {
-                    element.parentNode.insertBefore(bolt_button, element);
-                }
-                // if no position is specified remove the selector element
-                if (!position) {
-                    element.parentNode.removeChild(element);
-                }
-            });
-            /////////////////////////////////////////////////////
-        }(selector);
-    }
-    //////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////
     // Reconfigure BoltCheckout with page collected hints data
@@ -609,39 +523,6 @@ require([
         } (prefix);
     }
     /////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Monitor Country DOM element change and update hints
-    ///////////////////////////////////////////////////////////
-    var country_selectors = ['select[name="order[billing_address][country_id]"]'];
-    monitorAttributesChange(country_selectors, function(element) {
-        if (!element.value) {
-            delete hints.prefill.country;
-        }
-        else {
-            hints.prefill.country = element.value;
-        }
-        delete hints.prefill.state;
-
-        configureHints();
-    }, true);
-    ///////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////
-    // Monitor State DOM element change and update hints
-    ///////////////////////////////////////////////////////////
-    var state_selectors = ['select[name="order[billing_address][region_id]"]'];
-    monitorAttributesChange(state_selectors, function(element) {
-        if (!element.value) {
-            delete hints.prefill.state;
-        }
-        else {
-            hints.prefill.state = element.options[element.selectedIndex].text;
-        }
-
-        configureHints();
-    });
-    ///////////////////////////////////////////////////////////
 
     /////////////////////////////////////////////////////
     // Call Bolt order creation Magento endpoint on

@@ -162,6 +162,8 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $ruleFactory;
 
+    protected $_oldShippingAddress;
+
     /**
      * Assigns local references to global resources
      *
@@ -654,6 +656,12 @@ class ShippingMethods implements ShippingMethodsInterface
             $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
             $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
 
+            if ($this->configHelper->isPickupInStoreShippingMethodCode($method)) {
+                $this->_oldShippingAddress = $quote->getShippingAddress()->getData();
+                $addressData = $this->configHelper->getPickupAddressData();
+                $quote->getShippingAddress()->addData($addressData);
+            }
+
             $this->resetShippingCalculationIfNeeded($shippingAddress);
 
             $shippingAddress->setShippingMethod($method);
@@ -668,6 +676,15 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             if($this->doesDiscountApplyToShipping($quote)){
+                /**
+                 * Unset values for shipping_amount_for_discount and base_shipping_amount_for_discount to allow
+                 * @see \Magento\SalesRule\Model\Validator::processShippingAmount
+                 * to calculate shipping discount amount properly during totals collection.
+                 * Amount for discount gets set to 0 by {@see \Magento\Tax\Model\Sales\Total\Quote\Tax::clearValues}
+                 * in a previous quote totals collection call.
+                 */
+                $shippingAddress->unsShippingAmountForDiscount();
+                $shippingAddress->unsBaseShippingAmountForDiscount();
                 // In order to get correct shipping discounts the following method must be called twice.
                 // Being a bug in Magento, or a bug in the tested store version, shipping discounts
                 // are not collected the first time the method is called.
@@ -716,6 +733,10 @@ class ShippingMethods implements ShippingMethodsInterface
                         ]
                     ]);
                 });
+            }
+
+            if ($this->configHelper->isPickupInStoreShippingMethodCode($method)) {
+                $quote->getShippingAddress()->addData($this->_oldShippingAddress);
             }
 
             $error = $shippingMethod->getErrorMessage();

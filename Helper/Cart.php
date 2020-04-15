@@ -669,7 +669,8 @@ class Cart extends AbstractHelper
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
-        if (!$cart) {
+
+        if (!$cart || $this->doesOrderExist($cart)) {
             return;
         }
 
@@ -716,6 +717,18 @@ class Cart extends AbstractHelper
         }
 
         return $boltOrder;
+    }
+
+    /**
+     * @param $cart
+     * @return false|OrderInterface
+     */
+    public function doesOrderExist($cart)
+    {
+        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $order = $this->getOrderByIncrementId($incrementId);
+
+        return $order;
     }
 
     /**
@@ -1386,11 +1399,6 @@ class Cart extends AbstractHelper
             // multi-step checkout, subtotal with discounts, no shipping, no tax
             $taxAmount = 0;
         }
-
-        // include potential rounding difference and reset $diff accumulator
-        $cart['items'][0]['total_amount'] += round($diff);
-        $totalAmount += round($diff);
-        $diff = 0;
 
         // add discount data
         list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (

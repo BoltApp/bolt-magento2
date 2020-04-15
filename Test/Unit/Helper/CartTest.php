@@ -469,7 +469,8 @@ class CartTest extends TestCase
             'clearExternalData',
             'convertCustomAddressFieldsToCacheIdentifier',
             'getCustomAddressFieldsPascalCaseArray',
-            'getCalculationAddress'
+            'getCalculationAddress',
+            'doesOrderExist'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
@@ -672,6 +673,36 @@ ORDER;
         $result = $mock->getBoltpayOrder(false, '');
 
         $this->assertEquals($result, $boltOrder);
+    }
+
+    /**
+     * @test
+     */
+    public function getBoltpayOrder_IfOrderExists()
+    {
+        $mock = $this->getHelperCartMock();
+
+        $cart = $this->getCart();
+        $mock->expects(self::once())
+            ->method('getCartData')
+            ->with(false, '')
+            ->willReturn($cart);
+
+        $mock->expects(self::once())
+            ->method('doesOrderExist')
+            ->with($cart)
+            ->willReturn(true);
+
+        $mock->expects(self::never())
+            ->method('getSessionQuoteStoreId')
+            ->willReturn(self::STORE_ID);
+
+        $mock->expects(self::never())
+            ->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)
+            ->willReturn(false);
+
+         $mock->getBoltpayOrder(false, '');
     }
 
     /**

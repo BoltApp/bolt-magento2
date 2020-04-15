@@ -17,13 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\LogRetriever;
+use Bolt\Boltpay\Helper\ModuleRetriever;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
+use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
+use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 use Bolt\Boltpay\Model\Api\Debug;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Api\Data\StoreInterface;
+use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
 
@@ -41,9 +49,29 @@ class DebugTest extends TestCase
 	private $debug;
 
 	/**
+	 * @var Response
+	 */
+	private $responseMock;
+
+	/**
 	 * @var DebugInfoFactory
 	 */
 	private $debugInfoFactoryMock;
+
+	/**
+	 * @var BoltConfigSettingFactory
+	 */
+	private $boltConfigSettingFactoryMock;
+
+	/**
+	 * @var ModuleRetriever
+	 */
+	private $moduleRetrieverMock;
+
+    /**
+     * @var LogRetriever
+     */
+    private $logRetrieverMock;
 
 	/**
 	 * @var StoreManagerInterface
@@ -61,13 +89,27 @@ class DebugTest extends TestCase
 	private $productMetadataInterfaceMock;
 
 	/**
+	 * @var ConfigHelper
+	 */
+	private $configHelperMock;
+
+	/**
 	 * @inheritdoc
 	 */
 	public function setUp()
 	{
+		// prepare response
+		$this->responseMock = $this->createMock(Response::class);
+
 		// prepare debug info factory
 		$this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
 		$this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
+
+		// prepare bolt config setting factory
+		$this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
+		$this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
+			return new BoltConfigSetting();
+		});
 
 		// prepare store manager
 		$storeInterfaceMock = $this->createMock(StoreInterface::class);
@@ -83,18 +125,54 @@ class DebugTest extends TestCase
 		$this->hookHelperMock = $this->createMock(HookHelper::class);
 		$this->hookHelperMock->method('preProcessWebhook');
 
+		// prepare config helper
+		$this->configHelperMock = $this->createMock(ConfigHelper::class);
+		$this->prepareConfigHelperMock();
+
+		// prepare module retriever
+		$this->moduleRetrieverMock = $this->createMock(ModuleRetriever::class);
+		$this->moduleRetrieverMock->method('getInstalledModules')->willReturn(
+			[
+				(new PluginVersion())->setName('plugin1')->setVersion('1.0.0'),
+				(new PluginVersion())->setName('plugin2')->setVersion('2.0.0'),
+				(new PluginVersion())->setName('plugin3')->setVersion('3.0.0')
+			]
+		);
+
+		// prepare log retriever
+        $this->logRetrieverMock = $this->createMock(LogRetriever::class);
+        $this->logRetrieverMock->method('getLogs')->willReturn(
+            [['Line 1 of log'], ['Line 2 of log']]
+        );
 
 		// initialize test object
 		$objectManager = new ObjectManager($this);
 		$this->debug = $objectManager->getObject(
 			Debug::class,
 			[
+				'response' => $this->responseMock,
 				'debugInfoFactory' => $this->debugInfoFactoryMock,
+				'boltConfigSettingFactory' => $this->boltConfigSettingFactoryMock,
 				'storeManager' => $this->storeManagerInterfaceMock,
 				'hookHelper' => $this->hookHelperMock,
-				'productMetadata' => $this->productMetadataInterfaceMock
+				'productMetadata' => $this->productMetadataInterfaceMock,
+				'configHelper' => $this->configHelperMock,
+				'moduleRetriever' => $this->moduleRetrieverMock,
+                'logRetriever' => $this->logRetrieverMock
 			]
 		);
+	}
+
+	private function prepareConfigHelperMock()
+	{
+		$boltSettings = [];
+		$boltSettings[] = $this->boltConfigSettingFactoryMock->create()
+		                                                     ->setName('config_name1')
+		                                                     ->setValue('config_value1');
+		$boltSettings[] = $this->boltConfigSettingFactoryMock->create()
+		                                                     ->setName('config_name2')
+		                                                     ->setValue('config_value2');
+		$this->configHelperMock->method('getAllConfigSettings')->willReturn($boltSettings);
 	}
 
 	/**
@@ -104,10 +182,47 @@ class DebugTest extends TestCase
 	public function debug_successful()
 	{
 		$this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
+		$this->responseMock->expects($this->once())->method('sendResponse');
 
-		$debugInfo = $this->debug->debug();
-		$this->assertNotNull($debugInfo);
-		$this->assertNotNull($debugInfo->getPhpVersion());
-		$this->assertEquals('2.3.0', $debugInfo->getPlatformVersion());
+		$expectedJson = json_encode([
+			'status' => 'success',
+			'event' => 'integration.debug',
+			'data' => [
+				'php_version' => PHP_VERSION,
+				'platform_version' => '2.3.0',
+				'bolt_config_settings' => [
+					[
+						'name' => 'config_name1',
+						'value' => 'config_value1'
+					],
+					[
+						'name' => 'config_name2',
+						'value' => 'config_value2'
+					]
+				],
+				'other_plugin_versions' => [
+					[
+						'name' => 'plugin1',
+						'version' => '1.0.0'
+					],
+					[
+						'name' => 'plugin2',
+						'version' => '2.0.0'
+					],
+					[
+						'name' => 'plugin3',
+						'version' => '3.0.0'
+					]
+				],
+                'logs' => [
+                    ['Line 1 of log'],
+                    ['Line 2 of log']
+                ]
+			]
+
+		]);
+
+		$this->responseMock->expects($this->once())->method('setBody')->with($this->equalTo($expectedJson));
+		$this->debug->debug();
 	}
 }

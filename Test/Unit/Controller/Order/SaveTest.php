@@ -24,6 +24,7 @@ class SaveTest extends TestCase
 {
     const ORDER_ID = 1234;
     const QUOTE_ID = 5678;
+    const PPC_QUOTE_ID = 5679;
     const INCREMENT_ID = 1235;
     const STATUS = "Ready";
     const REFERENCE = "referenceValue";
@@ -77,8 +78,11 @@ class SaveTest extends TestCase
 
     /**
      * @test
+     * @param $isPPCCase true for PPC case, when we need to save checkout quote
+     *
+     * @dataProvider executeProvider
      */
-    public function execute_HappyPath()
+    public function execute_HappyPath($isPPCCase)
     {
         $result = [
             'status' => 'success',
@@ -115,7 +119,8 @@ class SaveTest extends TestCase
                 'setQuoteId',
                 'setLastOrderId',
                 'setLastRealOrderId',
-                'setLastOrderStatus'
+                'setLastOrderStatus',
+                'getQuote'
             ])
             ->getMock();
 
@@ -129,8 +134,17 @@ class SaveTest extends TestCase
         $checkoutSession->expects($this->once())->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
         $checkoutSession->expects($this->once())->method('setLastOrderStatus')->with(self::STATUS)->willReturnSelf();
 
-        //replaceQuote
-        $checkoutSession->method('replaceQuote')->with($this->quoteMock);
+        if ($isPPCCase) {
+            $checkoutQuote = $this->createMock(Order::class);
+            $checkoutQuote->method('getId')->willReturn(self::PPC_QUOTE_ID);
+            $checkoutSession->expects($this->once())->method('getQuote')->willReturn($checkoutQuote);
+            //replaceQuote
+            $checkoutSession->method('replaceQuote')->with($checkoutQuote);
+        } else {
+            $checkoutSession->expects($this->once())->method('getQuote')->willReturn(null);
+            //replaceQuote
+            $checkoutSession->method('replaceQuote')->with($this->quoteMock);
+        }
 
         $save = $this->getMockBuilder(Save::class)
             ->setMethods([
@@ -153,6 +167,11 @@ class SaveTest extends TestCase
         $save->method('getRequest')->willReturn($request);
 
         $save->execute();
+    }
+
+    public function executeProvider()
+    {
+        return [[true], [false]];
     }
 
     /**

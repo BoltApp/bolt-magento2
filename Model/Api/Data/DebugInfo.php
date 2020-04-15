@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-class DebugInfo
+class DebugInfo implements \JsonSerializable
 {
 	/**
 	 * @var string
@@ -38,6 +38,11 @@ class DebugInfo
 	 * @var PluginVersion[]
 	 */
 	private $otherPluginVersions;
+
+    /**
+     * @var array
+     */
+    private $logs;
 
 	/**
 	 * @return string
@@ -107,5 +112,39 @@ class DebugInfo
 	{
 		$this->otherPluginVersions = $otherPluginVersions;
 		return $this;
+	}
+
+    /**
+     * @return array
+     */
+	public function getLogs()
+    {
+        return $this->logs;
+    }
+
+    /**
+     * @param array $logs
+     * @return $this
+     */
+
+	public function setLogs($logs)
+    {
+        $this->logs = $logs;
+        return $this;
+    }
+
+	/**
+	 * @inheritDoc
+	 */
+	public function jsonSerialize()
+	{
+		return [
+			'php_version' => $this->phpVersion,
+			'platform_version' => $this->platformVersion,
+			'bolt_config_settings' => $this->boltConfigSettings,
+			'other_plugin_versions' => $this->otherPluginVersions,
+            'logs' => $this->logs
+		];
+
 	}
 }

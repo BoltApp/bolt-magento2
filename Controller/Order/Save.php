@@ -103,13 +103,20 @@ class Save extends Action
     public function execute()
     {
         try {
+            $sessionQuote = $this->checkoutSession->getQuote();
             // get the transaction reference parameter
             $reference = $this->getRequest()->getParam('reference');
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
-
-            // clear the session data
-            $this->replaceQuote($quote);
+            if ($sessionQuote && $sessionQuote->getId() != $quote->getId()) {
+                // If we had quote linked to session and it's not immutableQuote
+                // then we in product page, non-pre-auth checkout flow
+                // Session quote represents regular cart and we want to save it and restore after order creation
+                $this->replaceQuote($sessionQuote);
+            } else {
+                // clear the session data
+                $this->replaceQuote($quote);
+            }
             //Clear quote session
             $this->clearQuoteSession($quote);
             //Clear order session
