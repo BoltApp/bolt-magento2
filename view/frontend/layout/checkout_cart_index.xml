@@ -34,6 +34,13 @@
                                 <item name="rewardPoints" xsi:type="array">
                                     <item name="component" xsi:type="string">Magento_Reward/js/view/payment/reward</item>
                                 </item>
+                                <item name="amstorecredit_total" xsi:type="array">
+                                    <item name="component"  xsi:type="string">Amasty_StoreCredit/js/view/checkout/totals/store-credit</item>
+                                    <item name="sortOrder" xsi:type="string">90</item>
+                                </item>
+                                <item name="amstorecredit_form" xsi:type="array">
+                                    <item name="component" xsi:type="string">Amasty_StoreCredit/js/view/checkout/payment/store-credit</item>
+                                </item>
                             </item>
                         </item>
                     </item>

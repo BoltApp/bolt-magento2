@@ -30,7 +30,7 @@
                     <label>Enable Sandbox for Testing</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" path="payment">
+                <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Keys</label>
                     <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.bolt.com/settings">merchant.bolt.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.bolt.com/settings">merchant-sandbox.bolt.com/settings</a>.]]></comment>
                     <attribute type="expanded">1</attribute>
@@ -226,6 +226,12 @@
                         <config_path>payment/boltpay/reward_points</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
+                    <field id="amasty_store_credit" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Amasty Store Credit on Shopping Cart</label>
+                        <config_path>payment/boltpay/amasty_store_credit</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Amasty_StoreCredit</if_module_enabled>
                     </field>
                     <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Cache Bolt Order Token (Performance Optimization)</label>

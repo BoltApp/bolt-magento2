@@ -525,6 +525,7 @@ JSON;
             ['getIsPreAuth', BoltConfig::XML_PATH_IS_PRE_AUTH],
             ['getMinicartSupport', BoltConfig::XML_PATH_MINICART_SUPPORT, false],
             ['useStoreCreditConfig', BoltConfig::XML_PATH_STORE_CREDIT],
+            ['useAmastyStoreCreditConfig', BoltConfig::XML_PATH_AMASTY_STORE_CREDIT],
             ['useRewardPointsConfig', BoltConfig::XML_PATH_REWARD_POINTS, false],
             ['isPaymentOnlyCheckoutEnabled', BoltConfig::XML_PATH_PAYMENT_ONLY_CHECKOUT],
             ['isBoltOrderCachingEnabled', BoltConfig::XML_PATH_BOLT_ORDER_CACHING, false],

@@ -217,15 +217,17 @@ require([
     };
 
     /**
-     * Get the checkout key according to the checkout type.
+     * Get the checkout key for backoffice processing.
      *
      * return string
      */
-    var getCheckoutKey = function () {
-        var key = 'publishable_key_back_office';
-
-        return settings[key];
+    var getBackofficeKey = function () {
+        return settings['publishable_key_back_office'];
     };
+
+    var getPaymentOnlyKey = function() {
+        return settings['publishable_key_payment'];
+    }
 
     /**
      * Inject connect.js
@@ -251,11 +253,10 @@ require([
     };
 
     /**
-     * Set load connect.js
      * return void
      */
     var processButtons = function () {
-        if (getCheckoutKey() !== '') {
+        if (getBackofficeKey() || getPaymentOnlyKey()) {
             createOrder();
         }
     };
@@ -396,7 +397,18 @@ require([
             settings.storeId = data.storeId;
             settings.is_pre_auth = data.isPreAuth;
 
-            insertConnectScript(data.publishableKey);
+            if (getBackofficeKey()) {
+                insertConnectScript(data.publishableKey);
+            }
+            if (getPaymentOnlyKey() && settings.pay_by_link_url) {
+                $(".bolt-checkout-pay-by-link").html("Send <a href='"
+                    + settings.pay_by_link_url + "?publishable_key=" + getPaymentOnlyKey()
+                    + "&token=" + data.cart.orderToken
+                    + "'>this link</a> to consumer to receive payment");
+            }
+            if (getBackofficeKey() && getPaymentOnlyKey() && settings.pay_by_link_url) {
+                $(".bolt-checkout-options-separator").show();
+            }
         };
 
         var onError = function(error) {
@@ -417,6 +429,10 @@ require([
     ////////////////////////////////////////////////
     onElementReady(bolt_button_selector, function(element) {
         checkout_buttons = true;
+        processButtons();
+    });
+    ////////////////////////////////////////////////
+    onElementReady(".bolt-checkout-pay-by-link", function(element) {
         processButtons();
     });
     ////////////////////////////////////////////////

@@ -67,6 +67,14 @@ class ReceivedUrl extends Action
     }
 
     /**
+     * @return boolean
+     */
+    protected function redirectToAdminIfNeeded($quote)
+    {
+        return false; // already admin
+    }
+
+    /**
      * @return string
      */
     protected function getErrorRedirectUrl()

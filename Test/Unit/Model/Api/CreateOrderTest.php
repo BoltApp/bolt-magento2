@@ -654,34 +654,12 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::getReceivedUrl
      */
-    public function getReceivedUrl_frontend()
+    public function getReceivedUrl()
     {
         $url = 'baseurl/admin/boltpay/order/receivedurl';
         $this->sessionHelper->expects(self::once())->method('setFormKey')->with($this->quoteMock);
-        $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
-            ->withConsecutive(['[-= getReceivedUrl =-]'], ['---> ' . $url]);
-        $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(false);
         $this->url->expects(self::once())->method('setScope')->with(self::STORE_ID);
         $this->url->expects(self::once())->method('getUrl')->with('boltpay/order/receivedurl', [
-            '_secure' => true,
-            'store_id' => self::STORE_ID
-        ])->willReturn($url);
-        $this->currentMock->getReceivedUrl($this->quoteMock);
-    }
-
-    /**
-     * @test
-     * @covers ::getReceivedUrl
-     */
-    public function getReceivedUrl_backend()
-    {
-        $url = 'baseurl/boltpay/order/receivedurl';
-        $this->sessionHelper->expects(self::once())->method('setFormKey')->with($this->quoteMock);
-        $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
-            ->withConsecutive(['[-= getReceivedUrl =-]'], ['---> ' . $url]);
-        $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
-        $this->backendUrl->expects(self::once())->method('setScope')->with(0);
-        $this->backendUrl->expects(self::once())->method('getUrl')->with('boltpay/order/receivedurl', [
             '_secure' => true,
             'store_id' => self::STORE_ID
         ])->willReturn($url);

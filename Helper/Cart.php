@@ -193,8 +193,9 @@ class Cart extends AbstractHelper
     // Store discount type keys and description prefixes, internal and 3rd party.
     // Can appear as keys in Quote::getTotals result array.
     /////////////////////////////////////////////////////////////////////////////
-    private $discountTypes = [
+    protected $discountTypes = [
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
+        Discount::AMASTY_STORECREDIT => '',
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
@@ -1716,10 +1717,16 @@ class Cart extends AbstractHelper
                 $amount = abs($amount);
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
-                $discounts[] = [
+                $discountItem = [
                     'description' => $description . @$totals[$discount]->getTitle(),
                     'amount'      => $roundedAmount,
                 ];
+
+                if ($discount == Discount::AMASTY_STORECREDIT) {
+                    $discountItem['type'] = 'fixed_amount';
+                }
+
+                $discounts[] = $discountItem;
 
                 if ($discount == Discount::GIFT_VOUCHER) {
                     // the amount is added to adress discount included above, $address->getDiscountAmount(),

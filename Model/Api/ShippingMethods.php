@@ -676,6 +676,15 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             if($this->doesDiscountApplyToShipping($quote)){
+                /**
+                 * Unset values for shipping_amount_for_discount and base_shipping_amount_for_discount to allow
+                 * @see \Magento\SalesRule\Model\Validator::processShippingAmount
+                 * to calculate shipping discount amount properly during totals collection.
+                 * Amount for discount gets set to 0 by {@see \Magento\Tax\Model\Sales\Total\Quote\Tax::clearValues}
+                 * in a previous quote totals collection call.
+                 */
+                $shippingAddress->unsShippingAmountForDiscount();
+                $shippingAddress->unsBaseShippingAmountForDiscount();
                 // In order to get correct shipping discounts the following method must be called twice.
                 // Being a bug in Magento, or a bug in the tested store version, shipping discounts
                 // are not collected the first time the method is called.
