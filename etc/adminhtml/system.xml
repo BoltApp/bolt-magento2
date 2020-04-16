@@ -30,7 +30,7 @@
                     <label>Enable Sandbox for Testing</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1" path="payment">
+                <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Keys</label>
                     <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.bolt.com/settings">merchant.bolt.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.bolt.com/settings">merchant-sandbox.bolt.com/settings</a>.]]></comment>
                     <attribute type="expanded">1</attribute>
