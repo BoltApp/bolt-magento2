@@ -60,6 +60,7 @@ use Magento\Framework\Webapi\Exception as WebapiException;
  * Class ConfigTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
  */
 class CartTest extends TestCase
 {
@@ -1593,6 +1594,62 @@ ORDER;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
 
         $this->assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
+     * that collectDiscounts collects Amasty Store Credit if it exists in quote totals
+     *
+     * @covers ::collectDiscounts
+     */
+    public function collectDiscounts_withAmastyStoreCreditInQuoteTotals_collectsAmastyStoreCredit()
+    {
+        $currentMock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')->willReturn(999999);
+        $currentMock->expects($this->once())->method('getQuoteById')->willReturn($quote);
+        $currentMock->expects($this->once())->method('getLastImmutableQuote')->willReturn($quote);
+        $currentMock->expects($this->once())->method('getCalculationAddress')->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())->method('getCouponCode')->willReturn(false);
+        $shippingAddress->expects($this->any())->method('getDiscountAmount')->willReturn(false);
+        $quote->expects($this->once())->method('getUseCustomerBalance')->willReturn(false);
+        $this->discountHelper->expects($this->once())->method('isMirasvitStoreCreditAllowed')->with($quote)
+            ->willReturn(false);
+        $quote->expects($this->once())->method('getUseRewardPoints')->willReturn(false);
+        $this->discountHelper->expects($this->never())->method('getAheadworksStoreCredit');
+        $this->discountHelper->expects($this->never())->method('getMageplazaGiftCardCodes');
+        $this->discountHelper->expects($this->never())->method('getUnirgyGiftCertBalanceByCode');
+        $appliedDiscount = 10; // $
+        $this->quoteAddressTotal->expects($this->once())->method('getValue')->willReturn($appliedDiscount);
+        $this->quoteAddressTotal->expects($this->once())->method('getTitle')->willReturn('Store Credit');
+        $quote->expects($this->any())->method('getTotals')
+            ->willReturn([DiscountHelper::AMASTY_STORECREDIT => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+            $totalAmount,
+            $diff,
+            $paymentOnly
+        );
+        $this->assertEquals(
+            ['description' => 'Store Credit', 'amount' => $appliedDiscount * 100, 'type' => 'fixed_amount'],
+            $discounts[0]
+        );
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
         $this->assertEquals($expectedTotalAmount, $totalAmountResult);
     }
 

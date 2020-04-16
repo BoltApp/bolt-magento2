@@ -227,6 +227,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
                     </field>
+                    <field id="amasty_store_credit" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Amasty Store Credit on Shopping Cart</label>
+                        <config_path>payment/boltpay/amasty_store_credit</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Amasty_StoreCredit</if_module_enabled>
+                    </field>
                     <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Cache Bolt Order Token (Performance Optimization)</label>
                         <config_path>payment/boltpay/bolt_order_caching</config_path>

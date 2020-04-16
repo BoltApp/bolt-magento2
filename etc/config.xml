@@ -58,6 +58,7 @@ tr.shipping.totals td.amount span.price,
                 <reset_shipping_calculation>0</reset_shipping_calculation>
                 <minicart_support>1</minicart_support>
                 <store_credit>0</store_credit>
+                <amasty_store_credit>0</amasty_store_credit>
                 <reward_points>0</reward_points>
                 <enable_payment_only_checkout>0</enable_payment_only_checkout>
                 <bolt_order_caching>1</bolt_order_caching>
