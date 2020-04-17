@@ -669,9 +669,15 @@ class Cart extends AbstractHelper
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
 
-        if (!$cart || $this->doesOrderExist($cart)) {
+        if (!$cart) {
             return;
         }
+
+        if ($this->doesOrderExist($cart)) {
+            $this->deactivateSessionQuote();
+            return;
+        }
+
 
         // If storeId was missed through request, then try to get it from the session quote.
         if ($storeId === null) {
@@ -716,6 +722,21 @@ class Cart extends AbstractHelper
         }
 
         return $boltOrder;
+    }
+
+    public function deactivateSessionQuote()
+    {
+        try {
+            $quote = $this->checkoutSession->getQuote();
+            if ($quote && $quote->getIsActive()) {
+                $quoteId = $quote->getId();
+                $quote->setIsActive(false)->save();
+                $this->bugsnag->notifyError('Deactivate quote that associates with an existing order', "Quote Id: {$quoteId}");
+            };
+
+        } catch (\Exception $exception) {
+            $this->bugsnag->notifyException($exception);
+        }
     }
 
     /**

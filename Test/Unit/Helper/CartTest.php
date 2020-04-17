@@ -469,7 +469,8 @@ class CartTest extends TestCase
             'convertCustomAddressFieldsToCacheIdentifier',
             'getCustomAddressFieldsPascalCaseArray',
             'getCalculationAddress',
-            'doesOrderExist'
+            'doesOrderExist',
+            'deactivateSessionQuote'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
@@ -692,6 +693,10 @@ ORDER;
             ->with($cart)
             ->willReturn(true);
 
+        $mock->expects(self::once())
+            ->method('deactivateSessionQuote')
+            ->willReturnSelf();
+
         $mock->expects(self::never())
             ->method('getSessionQuoteStoreId')
             ->willReturn(self::STORE_ID);
@@ -702,6 +707,65 @@ ORDER;
             ->willReturn(false);
 
          $mock->getBoltpayOrder(false, '');
+    }
+
+    /**
+     * @test
+     */
+    public function deactivateSessionQuote(){
+
+        $quote = $this->createPartialMock(Quote::class,[
+            'getIsActive','getId','setIsActive','save'
+        ]);
+
+        $quote->expects(self::once())->method('getIsActive')->willReturn(true);
+        $quote->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
+        $quote->expects(self::once())->method('setIsActive')->with(false)->willReturnSelf();
+        $quote->expects(self::once())->method('save')->willReturnSelf();
+
+        $this->bugsnag->method('notifyError')->with(
+            'Deactivate quote that associates with an existing order',
+            'QuoteId: 1001'
+        )->willReturnSelf();
+
+        $this->checkoutSession = $this->getMockBuilder(\Magento\Framework\Session\SessionManager::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->checkoutSession->expects($this->any())
+            ->method('getQuote')
+            ->willReturn($quote);
+
+        $currentMock = new BoltHelperCart(
+            $this->contextHelper,
+            $this->checkoutSession,
+            $this->productRepository,
+            $this->apiHelper,
+            $this->configHelper,
+            $this->customerSession,
+            $this->logHelper,
+            $this->bugsnag,
+            $this->dataObjectFactory,
+            $this->imageHelperFactory,
+            $this->appEmulation,
+            $this->quoteFactory,
+            $this->totalsCollector,
+            $this->quoteCartRepository,
+            $this->orderRepository,
+            $this->searchCriteriaBuilder,
+            $this->quoteResource,
+            $this->sessionHelper,
+            $this->checkoutHelper,
+            $this->discountHelper,
+            $this->cache,
+            $this->resourceConnection,
+            $this->quoteManagement,
+            $this->hookHelper,
+            $this->customerRepository
+        );
+
+        $currentMock->deactivateSessionQuote();
+
     }
 
     /**
