@@ -278,4 +278,10 @@
                 type="Bolt\Boltpay\Plugin\Magento\GiftCard\GenerateGiftCardAccountsOrderPlugin"
                 sortOrder="1"/>
     </type>
+
+    <type name="Magento\Checkout\Model\Session">
+        <plugin name="BoltBoltpayRestoreQuotePlugin"
+                type="Bolt\Boltpay\Plugin\RestoreQuotePlugin"
+                sortOrder="1"/>
+    </type>
 </config>
