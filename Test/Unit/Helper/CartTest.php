@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\Log;
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Customer\Model\Address;
+use Magento\Framework\Registry;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Exception\NoSuchEntityException;
 use \PHPUnit\Framework\TestCase;
@@ -114,6 +115,11 @@ class CartTest extends TestCase
     private $quoteMock;
 
     /**
+     * @var CustomerRepository|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $coreRegistry;
+
+    /**
      * @inheritdoc
      */
     public function setUp()
@@ -173,6 +179,7 @@ class CartTest extends TestCase
         $this->quoteManagement = $this->createMock(CartManagementInterface::class);
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->customerRepository = $this->createMock(CustomerRepository::class);
+        $this->coreRegistry = $this->createMock(Registry::class);
     }
 
     /**
@@ -247,7 +254,8 @@ class CartTest extends TestCase
             $this->resourceConnection,
             $this->quoteManagement,
             $this->hookHelper,
-            $this->customerRepository
+            $this->customerRepository,
+            $this->coreRegistry
         );
 
         $paymentOnly = false;
@@ -948,7 +956,8 @@ ORDER;
                 $this->resourceConnection,
                 $this->quoteManagement,
                 $this->hookHelper,
-                $this->customerRepository
+                $this->customerRepository,
+                $this->coreRegistry
             ])->getMock();
     }
 
@@ -2765,5 +2774,40 @@ ORDER;
         $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
         $hints = $this->getCurrentMock()->getHints();
         static::assertEquals((object)[], $hints['prefill']);
+    }
+    /**
+     * @test
+     * that getCartData populates registry rule_data when executed from backend
+     *
+     * @covers ::getCartData
+     */
+    public function getCartData_fromBackend_initializesRuleData()
+    {
+        $billingAddress = $this->getBillingAddress();
+        $shippingAddress = $this->getShippingAddress();
+        $immutableQuote = $this->getQuoteMock($billingAddress, $shippingAddress);
+        $this->checkoutSession = $this->createMock(\Magento\Backend\Model\Session\Quote::class);
+        $currentMock = $this->getCurrentMock(['isBackendSession', 'getCartItems', 'collectDiscounts']);
+        $immutableQuote->method('getAllVisibleItems')->willReturn(true);
+        $currentMock->expects($this->once())->method('getCartItems')->willReturn([[['total_amount' => 0]], 0, 0]);
+
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getId')->willReturn(self::STORE_ID);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+
+        $this->checkoutSession->method('getStore')->willReturn($storeMock);
+        $this->coreRegistry->expects($this->once())->method('unregister')->with('rule_data');
+        $this->coreRegistry->expects($this->once())->method('register')->with(
+            'rule_data',
+            new DataObject(
+                [
+                    'store_id'          => self::STORE_ID,
+                    'website_id'        => 1,
+                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
+                ]
+            )
+        );
+        $immutableQuote->expects($this->once())->method('collectTotals');
+        $currentMock->getCartData(false, '', $immutableQuote);
     }
 }
