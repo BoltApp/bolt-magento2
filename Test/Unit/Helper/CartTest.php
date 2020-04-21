@@ -22,10 +22,12 @@ use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
 use Magento\Catalog\Model\Product;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Customer\Model\Address;
 use Magento\Quote\Model\Quote;
+use Magento\Framework\Exception\NoSuchEntityException;
 use \PHPUnit\Framework\TestCase;
 use Magento\Framework\App\Helper\Context as ContextHelper;
-use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -60,10 +62,13 @@ use Magento\Framework\Webapi\Exception as WebapiException;
  * Class ConfigTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
  */
 class CartTest extends TestCase
 {
     const QUOTE_ID = 1001;
+    const IMMUTABLE_QUOTE_ID = 1001;
+    const CUSTOMER_ID = 234;
     const PARENT_QUOTE_ID = 1000;
     const PRODUCT_ID = 20102;
     const PRODUCT_PRICE = 100;
@@ -72,6 +77,8 @@ class CartTest extends TestCase
     const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
     const PRODUCT_SKU = 'TestProduct';
     const SUPER_ATTRIBUTE = ["93" => "57", "136" => "383"];
+    const API_KEY = 'c2ZkKs4Bd2GKMtzRRqB73dFtT5QtMQRv';
+    const SIGNATURE = 'ZGEvY22bckLNUuZJZguEt2qZvrsyK8C6';
 
     private $contextHelper;
     private $checkoutSession;
@@ -101,6 +108,10 @@ class CartTest extends TestCase
     private $quoteManagement;
     private $hookHelper;
     private $customerRepository;
+    /**
+     * @var \PHPUnit\Framework\MockObject\MockObject
+     */
+    private $quoteMock;
 
     /**
      * @inheritdoc
@@ -108,8 +119,8 @@ class CartTest extends TestCase
     public function setUp()
     {
         $this->contextHelper = $this->createMock(ContextHelper::class);
-
-        $this->checkoutSession = $this->createMock(CheckoutSession::class);
+        $this->quoteMock = $this->createMock(Quote::class);
+        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
         $this->productRepository = $this->getProductRepositoryMock();
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
@@ -1598,6 +1609,62 @@ ORDER;
 
     /**
      * @test
+     * that collectDiscounts collects Amasty Store Credit if it exists in quote totals
+     *
+     * @covers ::collectDiscounts
+     */
+    public function collectDiscounts_withAmastyStoreCreditInQuoteTotals_collectsAmastyStoreCredit()
+    {
+        $currentMock = $this->getCurrentMock();
+        $shippingAddress = $this->getShippingAddress();
+
+        $quote = $this->getQuoteMock($this->getBillingAddress(), $shippingAddress);
+
+        $quote->method('getBoltParentQuoteId')->willReturn(999999);
+        $currentMock->expects($this->once())->method('getQuoteById')->willReturn($quote);
+        $currentMock->expects($this->once())->method('getLastImmutableQuote')->willReturn($quote);
+        $currentMock->expects($this->once())->method('getCalculationAddress')->with($quote)
+            ->willReturn($shippingAddress);
+
+        $shippingAddress->expects($this->any())->method('getCouponCode')->willReturn(false);
+        $shippingAddress->expects($this->any())->method('getDiscountAmount')->willReturn(false);
+        $quote->expects($this->once())->method('getUseCustomerBalance')->willReturn(false);
+        $this->discountHelper->expects($this->once())->method('isMirasvitStoreCreditAllowed')->with($quote)
+            ->willReturn(false);
+        $quote->expects($this->once())->method('getUseRewardPoints')->willReturn(false);
+        $this->discountHelper->expects($this->never())->method('getAheadworksStoreCredit');
+        $this->discountHelper->expects($this->never())->method('getMageplazaGiftCardCodes');
+        $this->discountHelper->expects($this->never())->method('getUnirgyGiftCertBalanceByCode');
+        $appliedDiscount = 10; // $
+        $this->quoteAddressTotal->expects($this->once())->method('getValue')->willReturn($appliedDiscount);
+        $this->quoteAddressTotal->expects($this->once())->method('getTitle')->willReturn('Store Credit');
+        $quote->expects($this->any())->method('getTotals')
+            ->willReturn([DiscountHelper::AMASTY_STORECREDIT => $this->quoteAddressTotal]);
+
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = true;
+
+        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+            $totalAmount,
+            $diff,
+            $paymentOnly
+        );
+        $this->assertEquals(
+            ['description' => 'Store Credit', 'amount' => $appliedDiscount * 100, 'type' => 'fixed_amount'],
+            $discounts[0]
+        );
+
+        $this->assertEquals($diffResult, $diff);
+
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+
+        $this->assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
+
+    /**
+     * @test
      */
     public function collectDiscounts_Mageplaza_GiftCard()
     {
@@ -2347,5 +2414,356 @@ ORDER;
             $this->assertEquals("Incorrect user_id", $e->getMessage());
         }
     }
+    /**
+     * @test
+     * that getHints returns virtual_terminal_mode set to true when provided checkout type is admin
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException
+     */
+    public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
+    {
+        $result = $this->getCurrentMock()->getHints(null, 'admin');
+        static::assertTrue($result['virtual_terminal_mode']);
+    }
+    /**
+     * @test
+     * that getHints returns encrypted user id if checkout type is product and customer is logged in
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_whenCheckoutTypeIsProductAndCustomerLoggedIn_returnsHintsWithEncryptedUserId()
+    {
+        $customerMock = $this->createPartialMock(
+            \Magento\Customer\Model\Customer::class,
+            [
+                'getId',
+                'getEmail',
+                'getDefaultBillingAddress',
+                'getDefaultShippingAddress'
+            ]
+        );
+        $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
+        $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn('test@bolt.com');
+        $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
+        $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
+        $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
+        $requestMock = $this->createMock(Request::class);
+        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
+        $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
+        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
+        $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
+        $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
+        $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
+        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
+            ->willReturn($requestMock);
+        $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
+        $signedMerchantUserId = [
+            'merchant_user_id' => self::CUSTOMER_ID,
+            'signature'        => self::SIGNATURE,
+            'nonce'            => 999999
+        ];
+        $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
+        $hints = $this->getCurrentMock()->getHints(null, 'product');
+        static::assertEquals((object)['email' => 'test@bolt.com'], $hints['prefill']);
+        static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
+        $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
+        self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
+    }
 
+    /**
+     * @test
+     * that getHints will return hints from customer default shipping address when quote is not virtual
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     * @throws \ReflectionException if unable to create mock
+     */
+    public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints()
+    {
+        $customerMock = $this->createPartialMock(
+            \Magento\Customer\Model\Customer::class,
+            [
+                'getId',
+                'getEmail',
+                'getDefaultBillingAddress',
+                'getDefaultShippingAddress'
+            ]
+        );
+        $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
+        $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn('test@bolt.com');
+        $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
+        $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
+        $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
+        $requestMock = $this->createMock(Request::class);
+        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
+        $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
+        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
+        $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
+        $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
+        $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
+        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
+            ->willReturn($requestMock);
+        $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
+        $signedMerchantUserId = [
+            'merchant_user_id' => self::CUSTOMER_ID,
+            'signature'        => self::SIGNATURE,
+            'nonce'            => 999999
+        ];
+        $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
+        $shippingAddressMock = $this->createPartialMock(Address::class,
+            [
+                'getFirstname',
+                'getLastname',
+                'getEmail',
+                'getTelephone',
+                'getStreetLine',
+                'getCity',
+                'getRegion',
+                'getPostcode',
+                'getCountryId',
+            ]);
+        $shippingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
+        $shippingAddressMock->expects(static::once())->method('getLastname')->willReturn('BoltTest');
+        $shippingAddressMock->expects(static::once())->method('getEmail')->willReturn('integration@bolt.com');
+        $shippingAddressMock->expects(static::once())->method('getTelephone')->willReturn('132 231 1234');
+        $shippingAddressMock->expects(static::exactly(2))->method('getStreetLine')->willReturnOnConsecutiveCalls('228 7th Avenue', '228 7th Avenue1');
+        $shippingAddressMock->expects(static::once())->method('getCity')->willReturn('New York');
+        $shippingAddressMock->expects(static::once())->method('getRegion')->willReturn('New York');
+        $shippingAddressMock->expects(static::once())->method('getPostcode')->willReturn('10011');
+        $shippingAddressMock->expects(static::once())->method('getCountryId')->willReturn('1111');
+        $customerMock->expects(static::once())->method('getDefaultShippingAddress')->willReturn($shippingAddressMock);
+        $hints = $this->getCurrentMock()->getHints(null, 'product');
+        static::assertEquals((object)
+        [
+           'firstName' => 'IntegrationBolt',
+           'lastName' => 'BoltTest',
+           'email' => 'test@bolt.com',
+           'phone' => '132 231 1234',
+           'addressLine1' => '228 7th Avenue',
+           'addressLine2' => '228 7th Avenue1',
+           'city' => 'New York',
+           'state' => 'New York',
+           'zip' => '10011',
+           'country' => '1111',
+        ], $hints['prefill']);
+        static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
+        $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
+        self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
+    }
+
+    /**
+     * @test
+     * that getHints will return hints from customer default billing address when quote is virtual
+     *
+     * @covers ::getHints
+     */
+    public function getHints_withVirtualQuoteAndCustomerLoggedIn_willReturnCustomerBillingAddressHints()
+    {
+        $customerMock = $this->createPartialMock(
+            \Magento\Customer\Model\Customer::class,
+            [
+                'getId',
+                'getEmail',
+                'getDefaultBillingAddress',
+                'getDefaultShippingAddress'
+            ]
+        );
+        $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
+        $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn('test@bolt.com');
+        $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
+        $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
+        $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
+        $requestMock = $this->createMock(Request::class);
+        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
+        $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
+        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
+        $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
+        $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
+        $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
+        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
+            ->willReturn($requestMock);
+        $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
+        $signedMerchantUserId = [
+            'merchant_user_id' => self::CUSTOMER_ID,
+            'signature'        => self::SIGNATURE,
+            'nonce'            => 999999
+        ];
+        $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
+        $billingAddressMock = $this->createPartialMock(Address::class,
+            [
+                'getFirstname',
+                'getLastname',
+                'getEmail',
+                'getTelephone',
+                'getStreetLine',
+                'getCity',
+                'getRegion',
+                'getPostcode',
+                'getCountryId',
+            ]);
+        $billingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
+        $billingAddressMock->expects(static::once())->method('getLastname')->willReturn('BoltTest');
+        $billingAddressMock->expects(static::once())->method('getEmail')->willReturn('integration@bolt.com');
+        $billingAddressMock->expects(static::once())->method('getTelephone')->willReturn('132 231 1234');
+        $billingAddressMock->expects(static::exactly(2))->method('getStreetLine')->willReturnOnConsecutiveCalls('228 7th Avenue', '228 7th Avenue1');
+        $billingAddressMock->expects(static::once())->method('getCity')->willReturn('New York');
+        $billingAddressMock->expects(static::once())->method('getRegion')->willReturn('New York');
+        $billingAddressMock->expects(static::once())->method('getPostcode')->willReturn('10011');
+        $billingAddressMock->expects(static::once())->method('getCountryId')->willReturn('1111');
+        $customerMock->expects(static::once())->method('getDefaultBillingAddress')->willReturn($billingAddressMock);
+        $this->checkoutSession->method('getQuote')->willReturn($this->quoteMock);
+        $this->quoteMock->method('isVirtual')->willReturn(true);
+        $hints = $this->getCurrentMock()->getHints(null, 'multipage');
+        static::assertEquals((object)
+        [
+            'firstName' => 'IntegrationBolt',
+            'lastName' => 'BoltTest',
+            'email' => 'test@bolt.com',
+            'phone' => '132 231 1234',
+            'addressLine1' => '228 7th Avenue',
+            'addressLine2' => '228 7th Avenue1',
+            'city' => 'New York',
+            'state' => 'New York',
+            'zip' => '10011',
+            'country' => '1111',
+        ], $hints['prefill']);
+    }
+
+    /**
+     * @test
+     * that getHints returns hints from quote billing address if checkout type is not product and quote is virtual
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
+    {
+        $currentMock = $this->getCurrentMock();
+        $currentMock->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->quoteMock->expects(static::once())->method('getBillingAddress')->willReturn($this->getBillingAddress());
+        $hints = $currentMock->getHints(self::IMMUTABLE_QUOTE_ID, 'multipage');
+        static::assertEquals(
+            [
+                'prefill' => (object)[
+                    'firstName'    => 'IntegrationBolt',
+                    'lastName'     => 'BoltTest',
+                    'email'        => 'integration@bolt.com',
+                    'phone'        => '132 231 1234',
+                    'addressLine1' => '228 7th Avenue',
+                    'city'         => 'New York',
+                    'state'        => 'New York',
+                    'zip'          => '10011',
+                    'country'      => 'US',
+                ]
+            ],
+            $hints
+        );
+    }
+
+    /**
+     * @test
+     * that getHints returns hints from quote shipping address if checkout type is not product and quote is not virtual
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
+    {
+        $currentMock = $this->getCurrentMock();
+        $currentMock->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
+        $this->quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($this->getShippingAddress());
+        $hints = $currentMock->getHints(self::IMMUTABLE_QUOTE_ID, 'multipage');
+        static::assertEquals(
+            [
+                'prefill' => (object)[
+                    'firstName'    => 'IntegrationBolt',
+                    'lastName'     => 'BoltTest',
+                    'email'        => 'integration@bolt.com',
+                    'phone'        => '132 231 1234',
+                    'addressLine1' => '228 7th Avenue',
+                    'city'         => 'New York',
+                    'state'        => 'New York',
+                    'zip'          => '10011',
+                    'country'      => 'US',
+                ]
+            ],
+            $hints
+        );
+    }
+
+    /**
+     * @test
+     * that getHints skips pre-fill for Apple Pay related data when phone is 8005550111
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
+    {
+        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
+        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
+        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
+        $shippingAddress = $this->createPartialMock(Quote\Address::class, ['getTelephone']);
+        $shippingAddress->expects(static::once())->method('getTelephone')->willReturn('8005550111');
+        $quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn('na@bolt.com');
+        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
+        $hints = $this->getCurrentMock()->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
+
+    /**
+     * @test
+     * that getHints skips pre-fill for Apple Pay related data when email is na@bolt.com
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
+    {
+        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
+        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
+        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
+        $shippingAddress = $this->createPartialMock(Quote\Address::class, ['getEmail']);
+        $quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn('na@bolt.com');
+        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
+        $hints = $this->getCurrentMock()->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
+
+    /**
+     * @test
+     * that getHints skips pre-fill for Apple Pay related data when address line is tbd
+     *
+     * @covers ::getHints
+     *
+     * @throws NoSuchEntityException from tested method
+     */
+    public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
+    {
+        $quoteMock = $this->createPartialMock(Quote::class, ['isVirtual', 'getShippingAddress']);
+        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
+        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
+        $shippingAddress = $this->getMockBuilder(Quote\Address::class)->setMethods(['getStreetLine'])->disableOriginalConstructor()
+            ->getMock();;
+        $shippingAddress->method('getStreetLine')
+            ->willReturn('tbd');
+        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
+        $hints = $this->getCurrentMock()->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
 }

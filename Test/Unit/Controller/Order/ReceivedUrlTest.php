@@ -21,6 +21,8 @@ use Magento\Sales\Model\Order;
 use PHPUnit\Framework\Constraint\ExceptionMessage;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Backend\Model\UrlInterface as BackendUrl;
+use Magento\Framework\App\Response\RedirectInterface;
 
 class ReceivedUrlTest extends TestCase
 {
@@ -35,6 +37,7 @@ class ReceivedUrlTest extends TestCase
     const SIGNING_SECRET = 'signing secret';
     const FORMATTED_REFERENCE_URL = 'https://for.matted.ref/erence/url';
     const REDIRECT_URL = 'https://red.irect.url';
+    const BACKEND_REDIRECT_URL = 'https://red.irect.url/backend';
     const ORDER_STATUS = 'order_status';
     const TRANSACTION_REFERENCE = 'transaction_reference';
     const NO_SUCH_ENTITY_MESSAGE = 'Could not find the order data.';
@@ -92,19 +95,23 @@ class ReceivedUrlTest extends TestCase
     private $orderHelper;
 
     /**
+     * @var BackendUrl\ | MockObject
+     */
+    private $backendUrl;
+
+    /**
+     * @var RedirectInterface | MockObject
+     */
+    private $redirect;
+
+    /**
      * @test
      */
     public function execute_HappyPath()
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $order = $this->createMock(Order::class);
-        $order->method('getId')
-            ->willReturn(self::ORDER_ID);
-        $order->method('getQuoteId')
-            ->willReturn(self::QUOTE_ID);
-        $order->method('getState')
-            ->willReturn(Order::STATE_PENDING_PAYMENT); //this is specifically for happy path
+        $order = $this->createOrderMock(Order::STATE_PENDING_PAYMENT);
         $order->expects($this->once())
             ->method('addStatusHistoryComment')
             ->with('Bolt transaction: ' . self::FORMATTED_REFERENCE_URL)
@@ -112,15 +119,6 @@ class ReceivedUrlTest extends TestCase
         $order->expects($this->once())
             ->method('save')
             ->willReturnSelf();
-        $order->expects($this->once())
-            ->method('getStoreId')
-            ->willReturn(self::STORE_ID);
-        $order->expects($this->once())
-            ->method('getIncrementId')
-            ->willReturn(self::INCREMENT_ID);
-        $order->expects($this->once())
-            ->method('getStatus')
-            ->willReturn(self::ORDER_STATUS);
 
         $quote = $this->createMock(Quote::class);
         $quote->method('getId')
@@ -226,23 +224,70 @@ class ReceivedUrlTest extends TestCase
     /**
      * @test
      */
+    public function execute_RedirectToAdminUrlIfBackofficeOrderPlacedByAdmin()
+    {
+        $request = $this->initRequest($this->defaultRequestMap);
+
+        $order = $this->createOrderMock(Order::STATE_PENDING_PAYMENT);
+        $quote = $this->createPartialMock(Quote::class, [ 'getId', 'getStoreId', 'getBoltIsBackendOrder' ]);
+        $quote->method('getId')
+              ->willReturn(self::QUOTE_ID);
+        $quote->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->expects($this->once())
+                   ->method('getQuoteById')
+                   ->with(self::QUOTE_ID)
+                   ->willReturn($quote);
+
+
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects($this->once())
+                     ->method('getSigningSecret')
+                     ->with(self::STORE_ID)
+                     ->willReturn(self::SIGNING_SECRET);
+
+        $context = $this->createMock(Context::class);
+
+        $orderHelper = $this->createMock(OrderHelper::class);
+        $orderHelper->expects($this->once())
+                    ->method('getExistingOrder')
+                    ->with(self::INCREMENT_ID)
+                    ->willReturn($order);
+
+        $receivedUrl = $this->initReceivedUrlMock(
+            $context,
+            $configHelper,
+            $cartHelper,
+            $this->bugsnag,
+            $this->logHelper,
+            $checkoutSession,
+            $orderHelper
+        );
+
+        $this->redirect->method('getRefererUrl')->willReturn('https://example.com/admin/sales/order');
+        $this->backendUrl->method('getUrl')
+             ->willReturnOnConsecutiveCalls('https://example.com/admin/sales/order', self::BACKEND_REDIRECT_URL);
+
+        $receivedUrl->method('getRequest')
+                    ->willReturn($request);
+        $receivedUrl->expects($this->once())
+                    ->method('_redirect')
+                    ->with(self::BACKEND_REDIRECT_URL);
+
+        $receivedUrl->execute();
+    }
+
+    /**
+     * @test
+     */
     public function execute_IncorrectOrderState()
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
-        $order = $this->createMock(Order::class);
-        $order->method('getState')
-            ->wilLReturn(Order::STATE_CLOSED);
-        $order->method('getQuoteId')
-            ->willReturn(self::QUOTE_ID);
-        $order->method('getStoreId')
-            ->willReturn(self::STORE_ID);
-        $order->method('getIncrementId')
-            ->willReturn(self::INCREMENT_ID);
-        $order->method('getStatus')
-            ->willReturn(self::ORDER_STATUS);
-        $order->method('getId')
-            ->willReturn(self::ORDER_ID);
+        $order = $this->createOrderMock(Order::STATE_CLOSED);
 
         $quote = $this->createMock(Quote::class);
         $quote->method('getId')
@@ -550,6 +595,25 @@ class ReceivedUrlTest extends TestCase
             ])
             ->getMock();
         $this->orderHelper = $this->createMock(OrderHelper::class);
+        $this->backendUrl = $this->createMock(BackendUrl::class);
+        $this->redirect = $this->createMock(RedirectInterface::class);
+    }
+
+    private function createOrderMock($state) {
+        $order = $this->createMock(Order::class);
+        $order->method('getState')
+              ->wilLReturn($state);
+        $order->method('getQuoteId')
+              ->willReturn(self::QUOTE_ID);
+        $order->method('getId')
+              ->willReturn(self::ORDER_ID);
+        $order->method('getStoreId')
+              ->willReturn(self::STORE_ID);
+        $order->method('getIncrementId')
+              ->willReturn(self::INCREMENT_ID);
+        $order->method('getStatus')
+              ->willReturn(self::ORDER_STATUS);
+        return $order;
     }
 
     private function initReceivedUrlMock($context, $configHelper, $cartHelper, $bugsnag, $logHelper, $checkoutSession, $orderHelper)
@@ -566,7 +630,9 @@ class ReceivedUrlTest extends TestCase
                 $bugsnag,
                 $logHelper,
                 $checkoutSession,
-                $orderHelper
+                $orderHelper,
+                $this->backendUrl,
+                $this->redirect,
             ])
             ->getMock();
         return $receivedUrl;

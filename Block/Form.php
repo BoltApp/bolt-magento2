@@ -167,4 +167,11 @@ class Form extends PaymentForm
     public function getPublishableKeyBackOffice(){
         return $this->configHelper->getPublishableKeyBackOffice();
     }
+
+    /**
+     * @return string
+     */
+    public function getPublishableKeyPaymentOnly(){
+        return $this->configHelper->getPublishableKeyPayment();
+    }
 }

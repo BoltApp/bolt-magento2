@@ -358,24 +358,15 @@ class CreateOrder implements CreateOrderInterface
     public function getReceivedUrl($quote)
     {
         $this->sessionHelper->setFormKey($quote);
-
-        $this->logHelper->addInfoLog('[-= getReceivedUrl =-]');
         $storeId = $quote->getStoreId();
-        if ($this->isBackOfficeOrder($quote)) {
-            $urlInterface = $this->backendUrl;
-            // Set admin scope
-            $urlInterface->setScope(0);
-        } else {
-            $urlInterface = $this->url;
-            $urlInterface->setScope($storeId);
-        }
+        $urlInterface = $this->url;
+        $urlInterface->setScope($storeId);
         $params = [
             '_secure' => true,
             'store_id' => $storeId
         ];
+        // redirect to storefront for both storefront and admin orders.
         $url = $urlInterface->getUrl('boltpay/order/receivedurl', $params);
-        $this->logHelper->addInfoLog('---> ' . $url);
-
         return $url;
     }
 
