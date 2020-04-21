@@ -310,7 +310,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (@$response->status != 'cancelled') {
+            if (!in_array(@$response->status,['cancelled','completed'])) {
                 throw new LocalizedException(__('Payment void error.'));
             }
 
