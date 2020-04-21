@@ -38,7 +38,7 @@ use ReflectionException;
 class BugsnagTest extends TestCase
 {
     /** @var string Dummy store url */
-    public const STORE_URL = 'http://store.local/';
+    const STORE_URL = 'http://store.local/';
 
     /** @var MockObject|Bugsnag mocked instance of the class tested */
     private $currentMock;
