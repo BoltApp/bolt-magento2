@@ -65,7 +65,7 @@ class PaymentTest extends TestCase
     private $configHelper;
 
     /**
-     * @var ApiHelper
+     * @var MockObject|ApiHelper
      */
     private $apiHelper;
 
@@ -163,6 +163,11 @@ class PaymentTest extends TestCase
      * @var MockObject|MetricsClient
      */
     private $metricsClient;
+
+    /**
+     * @var Order\Creditmemo|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $creditMemoMock;
 
     protected function setUp()
     {
@@ -507,7 +512,6 @@ class PaymentTest extends TestCase
         $this->currentMock->refund($this->paymentMock, 100);
     }
 
-
     /**
      * @test
      */
@@ -516,7 +520,49 @@ class PaymentTest extends TestCase
         $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Invalid amount for refund.');
-        $this->currentMock->refund($this->paymentMock, 0);
+        $this->currentMock->refund($this->paymentMock, -1);
+    }
+
+    /**
+     * @test
+     * that refund avoids calling Bolt refund API for amounts lower than 1 cent
+     *
+     * @covers ::refund
+     *
+     * @dataProvider refund_withAmountsLessThanOneCentProvider
+     *
+     * @param int|float|null $amount to be refunded
+     *
+     * @throws \Exception
+     */
+    public function refund_withAmountsLessThanOneCent_refundsWithoutCallingTheBoltApi($amount)
+    {
+        $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->apiHelper->expects($this->never())->method('buildRequest');
+        $this->apiHelper->expects($this->never())->method('sendRequest');
+        $paymentMock = $this->getMockBuilder(InfoInterface::class)
+            ->setMethods(['getOrder', 'getCreditMemo' ])
+            ->getMockForAbstractClass();
+        $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
+        $creditMemoMock = $this->createMock(Order\Creditmemo::class);
+        $paymentMock->expects($this->once())->method('getCreditMemo')->willReturn($creditMemoMock);
+        $creditMemoMock->expects($this->once())->method('getGrandTotal')->willReturn($amount);
+        $this->currentMock->refund($paymentMock, $amount);
+    }
+
+    /**
+     * Data provider for {@see refund_withAmountsLessThanOneCent_refundsWithoutCallingTheBoltApi}
+     *
+     * @return array containing zero or negative values for which to avoid calling Bolt API refund
+     */
+    public function refund_withAmountsLessThanOneCentProvider()
+    {
+        return [
+            ['amount' => 0.009],
+            ['amount' => 0],
+            ['amount' => null],
+            ['amount' => 0.001],
+        ];
     }
 
     /**
@@ -528,10 +574,13 @@ class PaymentTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction get updated from Bolt.');
 
-        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])
+        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)
+            ->setMethods(['getId', 'getOrder', 'getCreditMemo'])
             ->getMockForAbstractClass();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
+        $paymentInfoMock->method('getOrder')->willReturn($this->orderMock);
+        $paymentInfoMock->method('getCreditMemo')->willReturn($this->creditMemoMock);
         $this->currentMock->refund($paymentInfoMock, 100);
     }
 
@@ -798,10 +847,10 @@ class PaymentTest extends TestCase
         $this->paymentMock->method('getAdditionalInformation')
             ->with('real_transaction_id')
             ->willReturn('ABCD-1234-XXXX');
-        $creditMemoMock = $this->createMock(Order\Creditmemo::class);
-        $creditMemoMock->method("getGrandTotal")->willReturn(200);
+        $this->creditMemoMock = $this->createMock(Order\Creditmemo::class);
+        $this->creditMemoMock->method("getGrandTotal")->willReturn(200);
         $this->paymentMock->method('getOrder')->willReturn($this->orderMock);
-        $this->paymentMock->method('getCreditMemo')->willReturn($creditMemoMock);
+        $this->paymentMock->method('getCreditMemo')->willReturn($this->creditMemoMock);
     }
 
     /**
