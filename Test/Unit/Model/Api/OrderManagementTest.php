@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
@@ -122,6 +123,11 @@ class OrderManagementTest extends TestCase
     private $order;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @inheritdoc
      */
     protected function setUp()
@@ -157,6 +163,10 @@ class OrderManagementTest extends TestCase
         $this->order = $this->createPartialMock(Order::class,['getData']);
 
         $this->quoteMock = $this->createMock(Quote::class);
+        $this->decider = $this->createPartialMock(
+            Decider::class,
+            ['isIgnoreHookForInvoiceCreationEnabled','isIgnoreHookForCreditMemoCreationEnabled']
+        );
 
         $this->order->expects(self::any())->method('getData')
             ->willReturn([
@@ -190,6 +200,7 @@ class OrderManagementTest extends TestCase
                 $this->response,
                 $this->configHelper,
                 $this->cartHelper,
+                $this->decider
             ]);
         if ($methods) {
             $mockBuilder->setMethods($methods);
@@ -504,6 +515,8 @@ class OrderManagementTest extends TestCase
         );
     }
 
+
+
     /**
      * @test
      * @depends manage_common
@@ -617,7 +630,8 @@ class OrderManagementTest extends TestCase
             $this->metricsClient,
             $this->response,
             $this->configHelper,
-            $this->cartHelper
+            $this->cartHelper,
+            $this->decider
         );
         $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
@@ -759,6 +773,64 @@ class OrderManagementTest extends TestCase
             [new BoltException(__('The requested qty is not available'),null,6303), 6303, 'The requested qty is not available'],
             [new BoltException(__('Product that you are trying to add is not available.'),null,6301), 6301, 'Product that you are trying to add is not available.'],
         ];
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function manage_capture_IgnoreHookForInvoiceCreationIsEnabled()
+    {
+        $type = "capture";
+        $this->decider->expects(self::once())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'message' => 'Ignore the credit hook for the invoice creation',
+        ]));
+
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
+    }
+
+    /**
+     * @test
+     * @depends manage_common
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function manage_credit_IgnoreHookForCreditMemoCreationIsEnabled()
+    {
+        $type = "credit";
+        $this->decider->expects(self::once())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
+        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
+        $this->response->expects(self::once())->method('setBody')->with(json_encode([
+            'status' => 'success',
+            'message' => 'Ignore the credit hook for the credit memo creation',
+        ]));
+
+
+        $this->currentMock->manage(
+            self::ID,
+            self::REFERENCE,
+            self::ORDER_ID,
+            $type,
+            self::AMOUNT,
+            self::CURRENCY,
+            null,
+            self::DISPLAY_ID
+        );
     }
 
     /**
