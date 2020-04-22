@@ -102,7 +102,7 @@ class ShippingTaxContext
     /**
      * @var ShippingOptionInterfaceFactory
      */
-    protected $shippingOptionInterfaceFactory;
+    protected $shippingOptionFactory;
 
     /**
      * Assigns local references to global resources
@@ -119,7 +119,7 @@ class ShippingTaxContext
      * @param CacheInterface $cache
      * @param RegionModel $regionModel
      * @param Response $response
-     * @param ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
+     * @param ShippingOptionInterfaceFactory $shippingOptionFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -134,7 +134,7 @@ class ShippingTaxContext
         CacheInterface $cache,
         RegionModel $regionModel,
         Response $response,
-        ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory
+        ShippingOptionInterfaceFactory $shippingOptionFactory
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -148,7 +148,7 @@ class ShippingTaxContext
         $this->cache = $cache;
         $this->regionModel = $regionModel;
         $this->response = $response;
-        $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
+        $this->shippingOptionFactory = $shippingOptionFactory;
     }
 
     /**
@@ -250,8 +250,8 @@ class ShippingTaxContext
     /**
      * @return ShippingOptionInterfaceFactory
      */
-    public function getShippingOptionInterfaceFactory()
+    public function getShippingOptionFactory()
     {
-        return $this->shippingOptionInterfaceFactory;
+        return $this->shippingOptionFactory;
     }
 }

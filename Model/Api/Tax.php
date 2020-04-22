@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
-use Bolt\Boltpay\Api\Data\ShippingTaxDataInterface;
 use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\Data\TaxDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
@@ -47,17 +46,17 @@ class Tax extends ShippingTax implements TaxInterface
     /**
      * @var TaxDataInterfaceFactory
      */
-    protected $taxDataInterfaceFactory;
+    protected $taxDataFactory;
 
     /**
      * @var TaxResultInterfaceFactory
      */
-    protected $taxResultInterfaceFactory;
+    protected $taxResultFactory;
 
     /**
      * @var TotalsInformationManagementInterface
      */
-    protected $totalsInformationManagementInterface;
+    protected $totalsInformationManagement;
 
     /**
      * @var ShippingTaxContext
@@ -65,26 +64,34 @@ class Tax extends ShippingTax implements TaxInterface
     protected $shippingTaxContext;
 
     /**
+     * @var TotalsInformationInterface
+     */
+    protected $addressInformation;
+
+    /**
      * Assigns local references to global resources
      *
      * @param ShippingTaxContext $shippingTaxContext
      *
-     * @param TaxDataInterfaceFactory $taxDataInterfaceFactory
-     * @param TaxResultInterfaceFactory $taxResultInterfaceFactory
-     * @param TotalsInformationManagementInterface $totalsInformationManagementInterface
+     * @param TaxDataInterfaceFactory $taxDataFactory
+     * @param TaxResultInterfaceFactory $taxResultFactory
+     * @param TotalsInformationManagementInterface $totalsInformationManagement
+     * @param TotalsInformationInterface $addressInformation
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
 
-        TaxDataInterfaceFactory $taxDataInterfaceFactory,
-        TaxResultInterfaceFactory $taxResultInterfaceFactory,
-        TotalsInformationManagementInterface $totalsInformationManagementInterface
+        TaxDataInterfaceFactory $taxDataFactory,
+        TaxResultInterfaceFactory $taxResultFactory,
+        TotalsInformationManagementInterface $totalsInformationManagement,
+        TotalsInformationInterface $addressInformation
     ) {
         parent::__construct($shippingTaxContext);
 
-        $this->taxDataInterfaceFactory = $taxDataInterfaceFactory;
-        $this->taxResultInterfaceFactory = $taxResultInterfaceFactory;
-        $this->totalsInformationManagementInterface = $totalsInformationManagementInterface;
+        $this->taxDataFactory = $taxDataFactory;
+        $this->taxResultFactory = $taxResultFactory;
+        $this->totalsInformationManagement = $totalsInformationManagement;
+        $this->addressInformation = $addressInformation;
     }
 
     /**
@@ -92,7 +99,7 @@ class Tax extends ShippingTax implements TaxInterface
      * @param array $shipping_option
      * @return TotalsInformationInterface
      */
-    public function createAddressInformation($addressData, $shipping_option)
+    public function setAddressInformation($addressData, $shipping_option)
     {
         $selectedOption = $shipping_option['reference'];
 
@@ -103,18 +110,9 @@ class Tax extends ShippingTax implements TaxInterface
         $addressData = $this->reformatAddressData($addressData);
         $address->addData($addressData);
 
-        /**
-         * @var TotalsInformationInterface $addressInformation
-         */
-        $addressInformation = $this->objectManager->create(
-            '\Magento\Checkout\Api\Data\TotalsInformationInterface'
-        );
-
-        $addressInformation->setShippingCarrierCode($carrierCode);
-        $addressInformation->setShippingMethodCode($methodCode);
-        $addressInformation->setAddress($address);
-
-        return $addressInformation;
+        $this->addressInformation->setShippingCarrierCode($carrierCode);
+        $this->addressInformation->setShippingMethodCode($methodCode);
+        $this->addressInformation->setAddress($address);
     }
 
     /**
@@ -131,7 +129,7 @@ class Tax extends ShippingTax implements TaxInterface
         /**
          * @var TaxResultInterface $taxResult
          */
-        $taxResult = $this->taxResultInterfaceFactory->create();
+        $taxResult = $this->taxResultFactory->create();
         $taxResult->setSubtotalAmount($taxAmount);
 
         return $taxResult;
@@ -146,7 +144,7 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function createShippingOption($totalsInformation, $currencyCode, $shipping_option)
     {
-        $shippingOption = $this->shippingOptionInterfaceFactory->create();
+        $shippingOption = $this->shippingOptionFactory->create();
         $shippingOption->setTaxAmount(CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode));
         $shippingOption->setService($shipping_option['service']);
         $shippingOption->setCost(CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode));
@@ -163,11 +161,11 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function generateResult($addressData, $shipping_option)
     {
-        $addressInformation = $this->createAddressInformation($addressData, $shipping_option);
+        $this->setAddressInformation($addressData, $shipping_option);
 
-        $totalsInformation = $this->totalsInformationManagementInterface->calculate(
+        $totalsInformation = $this->totalsInformationManagement->calculate(
             $this->quote->getId(),
-            $addressInformation
+            $this->addressInformation
         );
 
         $currencyCode = $this->quote->getQuoteCurrencyCode();
@@ -178,7 +176,7 @@ class Tax extends ShippingTax implements TaxInterface
         // shipping tax is already included, don't count it twice
         $taxResult->setSubtotalAmount($taxResult->getSubtotalAmount() - $shippingOption->getTaxAmount());
 
-        $taxData = $this->taxDataInterfaceFactory->create();
+        $taxData = $this->taxDataFactory->create();
         $taxData->setTaxResult($taxResult);
         $taxData->setShippingOption($shippingOption);
 

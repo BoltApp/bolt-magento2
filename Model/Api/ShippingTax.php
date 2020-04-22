@@ -35,8 +35,6 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use Magento\Framework\App\ObjectManager;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 
 /**
  * Class ShippingMethods
@@ -117,11 +115,6 @@ abstract class ShippingTax
     protected $quote;
 
     /**
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
      * @var ShippingTaxContext
      */
     protected $shippingTaxContext;
@@ -129,7 +122,7 @@ abstract class ShippingTax
     /**
      * @var ShippingOptionInterfaceFactory
      */
-    protected $shippingOptionInterfaceFactory;
+    protected $shippingOptionFactory;
 
     /**
      * Assigns local references to global resources
@@ -151,8 +144,7 @@ abstract class ShippingTax
         $this->cache = $shippingTaxContext->getCache();
         $this->regionModel = $shippingTaxContext->getRegionModel();
         $this->response = $shippingTaxContext->getResponse();
-        $this->shippingOptionInterfaceFactory = $shippingTaxContext->getShippingOptionInterfaceFactory();
-        $this->objectManager = ObjectManager::getInstance();
+        $this->shippingOptionFactory = $shippingTaxContext->getShippingOptionFactory();
     }
 
     /**
@@ -194,7 +186,6 @@ abstract class ShippingTax
     protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
     {
         $this->bugsnag->notifyException($exception);
-
         $this->sendErrorResponse($code, $msg, $httpStatusCode);
     }
 
