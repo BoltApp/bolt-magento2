@@ -208,16 +208,27 @@ class PaymentTest extends TestCase
 
     /**
      * @test
+     * @dataProvider provider_voidPayment_success
+     *
+     * @param $responseStatus
+     * @throws \Exception
      */
-    public function voidPayment_success()
+    public function voidPayment_success($responseStatus)
     {
         $this->mockApiResponse(
             "merchant/transactions/void",
-            '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'
+            '{"status": "'.$responseStatus.'", "reference": "ABCD-1234-XXXX"}'
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->void($this->paymentMock);
+    }
+
+    public function provider_voidPayment_success(){
+        return [
+            ['cancelled'],
+            ['completed']
+        ];
     }
 
     /**
