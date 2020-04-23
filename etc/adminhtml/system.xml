@@ -85,7 +85,7 @@
                     <label>Additional options</label>
                     <attribute type="expanded">1</attribute>
                     <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>(BETA) Product page checkout</label>
+                        <label>Product page checkout</label>
                         <comment>Enable Bolt Checkout on Product Pages</comment>
                         <config_path>payment/boltpay/product_page_checkout</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
