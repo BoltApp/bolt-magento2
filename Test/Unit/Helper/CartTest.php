@@ -108,6 +108,9 @@ class CartTest extends TestCase
     /** @var CartManagementInterface */
     private $quoteManagement;
     private $hookHelper;
+    /**
+     * @var CustomerRepository|\PHPUnit\Framework\MockObject\MockObject
+     */
     private $customerRepository;
     /**
      * @var \PHPUnit\Framework\MockObject\MockObject
@@ -115,9 +118,10 @@ class CartTest extends TestCase
     private $quoteMock;
 
     /**
-     * @var CustomerRepository|\PHPUnit\Framework\MockObject\MockObject
+     * @var Registry|\PHPUnit\Framework\MockObject\MockObject
      */
     private $coreRegistry;
+
 
     /**
      * @inheritdoc
@@ -780,7 +784,8 @@ ORDER;
             $this->resourceConnection,
             $this->quoteManagement,
             $this->hookHelper,
-            $this->customerRepository
+            $this->customerRepository,
+            $this->coreRegistry
         );
 
         $currentMock->deactivateSessionQuote();
