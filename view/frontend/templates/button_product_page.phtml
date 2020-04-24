@@ -229,16 +229,37 @@ if (!$block->isSupportableType()) return;
             setupProductPage();
             $('#qty').on('change', setupProductPage);
 
+            // Object holding the base item price
+            // and price deltas for every custom option selected.
+            // The properties are added / updated on custom
+            // options change in updatePrice event listened below.
+            // The final item price is the sum of all prices stored here.
+            var itemPrices = {
+                basePrice: <?= $block->getProduct()->getFinalPrice(); ?>
+            };
+
+            /**
+             * Sum the values of all (numeric) object properties
+             * @param obj
+             * @returns {number}
+             */
+            var sum = function (obj) {
+                return Object.keys(obj).reduce(
+                    function(sum,key) {
+                        return sum+(parseFloat(obj[key])||0);
+                    }, 0
+                );
+            };
+
             $(document).on( 'updatePrice', function (event, data) {
                 // the name of the property that holds the price data
                 // varies depending on the product type, eg. prices, options
                 var key = Object.keys(data)[0];
                 if (key) {
                     var finalPrice = data[key].finalPrice;
-                    if (finalPrice && typeof finalPrice === 'object') {
-                        var priceDelta = finalPrice.amount ? finalPrice.amount : 0;
-                        itemPrice = <?= $block->getProduct()->getFinalPrice(); ?> + priceDelta;
-                    }
+                    itemPrices[key] =
+                        finalPrice && typeof finalPrice === 'object' && finalPrice.amount ? finalPrice.amount : 0;
+                    itemPrice = sum(itemPrices);
                 }
                 setupProductPage();
             });
