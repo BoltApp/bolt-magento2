@@ -458,10 +458,28 @@ class Payment extends AbstractMethod
         try {
             $startTime = $this->metricsClient->getCurrentTime();
 
+            if ($amount < 0) {
+                throw new LocalizedException(__('Invalid amount for refund.'));
+            }
+
             $order = $payment->getOrder();
 
-            if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for refund.'));
+            $orderCurrency = $order->getOrderCurrencyCode();
+            // $amount argument of refund method is in store currency,
+            // we need to get amount from credit memo to get the value in order's currency.
+            $refundAmount = CurrencyUtils::toMinorWithoutRounding(
+                $payment->getCreditMemo()->getGrandTotal(),
+                $orderCurrency
+            );
+
+            if ($refundAmount < 1) {
+                ////////////////////////////////////////////////////////////////////////////////
+                // In certain circumstances, an amount's value of zero can be sent, for
+                // example if the complete invoice already being refunded using
+                // store credit. This will then result in an exception by the Bolt API.  In
+                // these instances, there is no need to call the Bolt API, so we simply return
+                ////////////////////////////////////////////////////////////////////////////////
+                return $this;
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -471,10 +489,6 @@ class Payment extends AbstractMethod
                     __('Please wait while transaction get updated from Bolt.')
                 );
             }
-
-            $orderCurrency = $order->getOrderCurrencyCode();
-            // $amount argument of refund method is in store currency, we need to get amount from credit memo to get the value in order's currency.
-            $refundAmount = CurrencyUtils::toMinor( $payment->getCreditMemo()->getGrandTotal(), $orderCurrency );
 
             $refundData = [
                 'transaction_id' => $realTransactionId,
