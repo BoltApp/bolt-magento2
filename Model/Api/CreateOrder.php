@@ -376,7 +376,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function isBackOfficeOrder($quote)
     {
-        return (bool)$quote->getBoltIsBackendOrder();
+        return $quote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE;
     }
 
     /**
