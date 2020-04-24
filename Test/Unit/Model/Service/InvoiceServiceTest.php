@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
+use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use PHPUnit\Framework\TestCase;
 use Magento\Sales\Api\InvoiceRepositoryInterface;
 use Magento\Sales\Api\InvoiceCommentRepositoryInterface;
@@ -126,6 +127,8 @@ class InvoiceServiceTest extends TestCase
             ['addItem']
         );
 
+        $this->serializer = $this->createMock(JsonSerializer::class);
+
         $this->currentMock = $this->getMockBuilder(InvoiceService::class)
             ->setConstructorArgs([
                 $this->repository,
@@ -134,7 +137,8 @@ class InvoiceServiceTest extends TestCase
                 $this->filterBuilder,
                 $this->invoiceNotifier,
                 $this->orderRepository,
-                $this->orderConverter
+                $this->orderConverter,
+                $this->serializer
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();

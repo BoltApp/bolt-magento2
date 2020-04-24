@@ -481,7 +481,8 @@ class CartTest extends TestCase
             'getCustomAddressFieldsPascalCaseArray',
             'getCalculationAddress',
             'doesOrderExist',
-            'deactivateSessionQuote'
+            'deactivateSessionQuote',
+            'saveQuote'
         ];
 
         $mock = $this->createPartialMock(BoltHelperCart::class, $methods);
@@ -2268,11 +2269,6 @@ ORDER;
         $quote->expects($this->onceOrAny($isSuccessfulCase))
             ->method('setIsActive')
             ->with(false);
-        $quote->expects($this->onceOrAny($isSuccessfulCase))
-            ->method('collectTotals')
-            ->willReturnSelf();
-        $quote->expects($this->onceOrAny($isSuccessfulCase))
-            ->method('save');
 
         $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
             ->setMethods(['create','load'])
@@ -2305,11 +2301,15 @@ ORDER;
 
         $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
 
-        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock = $this->getCurrentMock(['getCartData', 'saveQuote']);
         $cartMock->expects($this->once())
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
+
+        $cartMock->expects($this->once())
+            ->method('saveQuote')
+            ->with($quote);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }

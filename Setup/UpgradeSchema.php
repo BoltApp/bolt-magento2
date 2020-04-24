@@ -67,6 +67,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             [
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
                 'unsigned' => true,
+                'nullable' => false,
                 'default' => '1',
                 'comment' => '1 - multi-step, 2 - PPC, 3 - back office'
             ]
