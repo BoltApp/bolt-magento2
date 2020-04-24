@@ -16,6 +16,8 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+
 /**
  * Class QuotePlugin
  *
@@ -40,12 +42,12 @@ class QuotePlugin
     }
 
     /**
-     * Always consider immutable quotes as active
-     * so we can run internal Magento actions with them
-     * the as they were active, except dispatching after save events
-     * which is taken care of in the above method.
-     * Note: there are restriction on inactive quotes processing
-     * that we need to bypass
+     * Always consider immutable and PPC quotes active
+     * so we can run internal Magento actions on them
+     * as they were active, except dispatching after save events
+     * for immutable ones, which is taken care of in the above method.
+     * Note: there are restrictions on inactive quotes processing
+     * that we need to bypass, eg. calling native shipping and tax methods.
      *
      * @param \Magento\Quote\Model\Quote $subject
      * @param bool|null $result
@@ -53,7 +55,8 @@ class QuotePlugin
      */
     public function afterGetIsActive(\Magento\Quote\Model\Quote $subject, $result)
     {
-        if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
+        if ($subject->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC ||
+            $subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
             return true;
         }
         return $result;
