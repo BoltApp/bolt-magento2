@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Response;
+use Magento\Framework\Registry;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -228,6 +229,11 @@ class Cart extends AbstractHelper
     private $quoteManagement;
 
     /**
+     * @var Registry
+     */
+    private $coreRegistry;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -253,6 +259,7 @@ class Cart extends AbstractHelper
      * @param CartManagementInterface $quoteManagement
      * @param HookHelper $hookHelper
      * @param CustomerRepository $customerRepository
+     * @param Registry $coreRegistry
      *
      * @codeCoverageIgnore
      */
@@ -281,7 +288,8 @@ class Cart extends AbstractHelper
         ResourceConnection $resourceConnection,
         CartManagementInterface $quoteManagement,
         HookHelper $hookHelper,
-        CustomerRepository $customerRepository
+        CustomerRepository $customerRepository,
+        Registry $coreRegistry
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -308,6 +316,7 @@ class Cart extends AbstractHelper
         $this->quoteManagement = $quoteManagement;
         $this->hookHelper = $hookHelper;
         $this->customerRepository = $customerRepository;
+        $this->coreRegistry = $coreRegistry;
     }
 
     /**
@@ -1267,6 +1276,25 @@ class Cart extends AbstractHelper
         }
 
         $this->setLastImmutableQuote($immutableQuote);
+        if ($this->isBackendSession()) {
+            /**
+             * initialize rule data for backend orders, consumed by
+             * @see \Magento\CatalogRule\Observer\ProcessAdminFinalPriceObserver::execute
+             */
+            $this->coreRegistry->unregister('rule_data');
+            $this->coreRegistry->register(
+                'rule_data',
+                new \Magento\Framework\DataObject(
+                    [
+                        'store_id'          => $this->checkoutSession->getStore()->getId(),
+                        'website_id'        => $this->checkoutSession->getStore()->getWebsiteId(),
+                        'customer_group_id' => $immutableQuote->getCustomerGroupId()
+                            ? $immutableQuote->getCustomerGroupId()
+                            : $this->checkoutSession->getCustomerGroupId()
+                    ]
+                )
+            );
+        }
         $immutableQuote->collectTotals();
 
         // Set order_reference to parent quote id.
