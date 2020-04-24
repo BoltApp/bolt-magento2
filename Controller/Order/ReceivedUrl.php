@@ -100,7 +100,7 @@ class ReceivedUrl extends Action
      */
     protected function redirectToAdminIfNeeded($quote)
     {
-        if (!$quote->getBoltIsBackendOrder()) {
+        if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
             return false;
         }
 

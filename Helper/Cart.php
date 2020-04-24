@@ -72,6 +72,10 @@ class Cart extends AbstractHelper
     const BOLT_ORDER_TAG = 'Bolt_Order';
     const BOLT_ORDER_CACHE_LIFETIME = 3600; // one hour
 
+    const BOLT_CHECKOUT_TYPE_MULTISTEP = 1;
+    const BOLT_CHECKOUT_TYPE_PPC = 2;
+    const BOLT_CHECKOUT_TYPE_BACKOFFICE = 3;
+
     /** @var CacheInterface */
     private $cache;
 
@@ -1023,7 +1027,9 @@ class Cart extends AbstractHelper
     {
         // assign origin session type flag to the parent quote
         // to be replicated to the immutable quote with the other data
-        $quote->setBoltIsBackendOrder( (int) $this->isBackendSession() );
+        if ($this->isBackendSession()) {
+            $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_BACKOFFICE);
+        }
 
         if (!$quote->getBoltParentQuoteId()) {
             $quote->setBoltParentQuoteId($quote->getId());
@@ -1863,6 +1869,7 @@ class Cart extends AbstractHelper
         $quote = $this->quoteFactory->create()->load($quoteId);
 
         $quote->setBoltParentQuoteId($quoteId);
+        $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_PPC);
 
         if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
             $this->assignQuoteCustomerByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
@@ -1910,7 +1917,7 @@ class Cart extends AbstractHelper
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
 
         $quote->setIsActive(false);
-        $quote->collectTotals()->save();
+        $this->saveQuote($quote);
 
         $cart_data = $this->getCartData(false,'', $quote);
 
