@@ -56,14 +56,20 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ]
         );
 
+        $setup->getConnection()->dropColumn(
+            $setup->getTable('quote'),
+            'bolt_is_backend_order'
+        );
+
         $setup->getConnection()->addColumn(
             $setup->getTable('quote'),
-            'bolt_is_backend_order',
+            'bolt_checkout_type',
             [
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
                 'unsigned' => true,
-                'default' => '0',
-                'comment' => '0 - frontend order, 1 - backend order'
+                'nullable' => false,
+                'default' => '1',
+                'comment' => '1 - multi-step, 2 - PPC, 3 - back office'
             ]
         );
 

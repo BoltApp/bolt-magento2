@@ -182,8 +182,8 @@ class CreateOrderTest extends TestCase
                 'getAllVisibleItems',
                 'isVirtual',
                 'getShippingAddress',
-                'getBoltIsBackendOrder',
-                'getQuoteCurrencyCode'
+                'getQuoteCurrencyCode',
+                'getBoltCheckoutType'
             ]);
         $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
@@ -672,7 +672,9 @@ class CreateOrderTest extends TestCase
      */
     public function isBackOfficeOrder_true()
     {
-        $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
+        $this->quoteMock->expects(self::once())
+                        ->method('getBoltCheckoutType')
+                        ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
         self::assertTrue($this->currentMock->isBackOfficeOrder($this->quoteMock));
     }
 
@@ -682,7 +684,9 @@ class CreateOrderTest extends TestCase
      */
     public function isBackOfficeOrder_false()
     {
-        $this->quoteMock->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(false);
+        $this->quoteMock->expects(self::once())
+            ->method('getBoltCheckoutType')
+            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP);
         self::assertFalse($this->currentMock->isBackOfficeOrder($this->quoteMock));
     }
 

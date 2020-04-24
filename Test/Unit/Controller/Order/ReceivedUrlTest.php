@@ -229,17 +229,17 @@ class ReceivedUrlTest extends TestCase
         $request = $this->initRequest($this->defaultRequestMap);
 
         $order = $this->createOrderMock(Order::STATE_PENDING_PAYMENT);
-        $quote = $this->createPartialMock(Quote::class, [ 'getId', 'getStoreId', 'getBoltIsBackendOrder' ]);
+        $quote = $this->createPartialMock(Quote::class, [ 'getId', 'getStoreId', 'getBoltCheckoutType' ]);
         $quote->method('getId')
               ->willReturn(self::QUOTE_ID);
-        $quote->expects(self::once())->method('getBoltIsBackendOrder')->willReturn(true);
+        $quote->expects(self::once())->method('getBoltCheckoutType')
+              ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
                    ->method('getQuoteById')
                    ->with(self::QUOTE_ID)
                    ->willReturn($quote);
-
 
         $checkoutSession = $this->createMock(CheckoutSession::class);
 
