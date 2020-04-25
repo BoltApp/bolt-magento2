@@ -610,7 +610,7 @@ class Order extends AbstractHelper
     {
         // set PPC quote status to complete so it is not considered active anymore
         if ($quote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
-            $quote->SetBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+            $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
             $this->cartHelper->quoteResourceSave($quote);
         }
         // Check and fix tax mismatch
