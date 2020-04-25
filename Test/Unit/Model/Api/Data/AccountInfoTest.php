@@ -11,38 +11,46 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Model\Api\Data\AccountInfo;
 
 /**
- * Class ShippingTaxTest
+ * Class AccountInfoTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  */
-class ShippingTaxTest extends TestCase
+class AccountInfoTest extends TestCase
 {
-    const TAX_AMOUNT = '111';
-
     /**
-     * @var \Bolt\Boltpay\Model\Api\Data\ShippingTax
+     * @var \Bolt\Boltpay\Model\Api\Data\AccountInfo
      */
-    protected $shippingTax;
+    protected $accountInfo;
 
     protected function setUp()
     {
-        $this->shippingTax = new \Bolt\Boltpay\Model\Api\Data\ShippingTax();
+        $this->accountInfo = new AccountInfo();
     }
 
     /**
      * @test
      */
-    public function setAndGetAmount()
+    public function setAndGetStatus()
     {
-        $this->shippingTax->setAmount(self::TAX_AMOUNT);
-        $this->assertEquals(self::TAX_AMOUNT, $this->shippingTax->getAmount());
+        $this->accountInfo->setStatus(true);
+        $this->assertTrue($this->accountInfo->getStatus());
+    }
+
+    /**
+     * @test
+     */
+    public function setAndGetAccountExists()
+    {
+        $this->accountInfo->setAccountExists(true);
+        $this->assertTrue($this->accountInfo->getAccountExists());
     }
 }

@@ -53,8 +53,6 @@ class Bugsnag extends AbstractHelper
      * @param Config $configHelper
      * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -73,11 +71,15 @@ class Bugsnag extends AbstractHelper
         // lib/internal/Bolt/guzzle
         //////////////////////////////////////////
         if (!class_exists('\GuzzleHttp\Client')) {
+            // @codeCoverageIgnoreStart
             require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
+            // @codeCoverageIgnoreEnd
         }
 
         if (!class_exists('\Bugsnag\Client')) {
+            // @codeCoverageIgnoreStart
             require_once $directoryList->getPath('lib_internal') . '/Bolt/bugsnag/autoloader.php';
+            // @codeCoverageIgnoreEnd
         }
         //////////////////////////////////////////
 
@@ -144,6 +146,7 @@ class Bugsnag extends AbstractHelper
     private function addCommonMetaData()
     {
         $this->bugsnag->registerCallback(function ($report) {
+            /** @var \Bugsnag\Report $report */
             $report->addMetaData([
                 'META DATA' => [
                     'store_url' => $this->storeManager->getStore()->getBaseUrl(
