@@ -101,18 +101,18 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function setAddressInformation($addressData, $shipping_option)
     {
+        $address = $this->populateAddress($addressData);
+        $this->addressInformation->setAddress($address);
+
+        if (!$shipping_option) {
+            return ;
+        }
+
         $selectedOption = $shipping_option['reference'];
-
         list($carrierCode, $methodCode) = explode('_', $selectedOption);
-
-        $address = $this->quote->isVirtual() ? $this->quote->getBillingAddress() : $this->quote->getShippingAddress();
-
-        $addressData = $this->reformatAddressData($addressData);
-        $address->addData($addressData);
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
-        $this->addressInformation->setAddress($address);
     }
 
     /**

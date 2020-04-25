@@ -23,7 +23,7 @@ use Bolt\Boltpay\Api\Data\TaxResultInterface;
  * Class ShippingTax. Tax property of the Shipping and Tax.
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class TaxResult implements TaxResultInterface
+class TaxResult implements TaxResultInterface, \JsonSerializable
 {
     /**
      * @var int
@@ -53,5 +53,15 @@ class TaxResult implements TaxResultInterface
     {
         $this->subtotalAmount = $amount;
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize ()
+    {
+        return [
+            'subtotal_amount' => $this->subtotalAmount
+        ];
     }
 }

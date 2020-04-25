@@ -69,7 +69,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'unsigned' => true,
                 'nullable' => false,
                 'default' => '1',
-                'comment' => '1 - multi-step, 2 - PPC, 3 - back office'
+                'comment' => '1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete'
             ]
         );
 

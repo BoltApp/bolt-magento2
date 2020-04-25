@@ -25,7 +25,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class ShippingData implements ShippingDataInterface
+class ShippingData implements ShippingDataInterface, \JsonSerializable
 {
     /**
      * @var array
@@ -54,5 +54,14 @@ class ShippingData implements ShippingDataInterface
     {
         $this->shippingOptions = $shippingOptions;
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize () {
+        return [
+            'shipping_options' => $this->shippingOptions
+        ];
     }
 }

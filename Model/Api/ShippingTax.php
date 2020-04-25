@@ -283,35 +283,55 @@ abstract class ShippingTax
     }
 
     /**
+     * @param $quoteId
+     * @return \Magento\Quote\Api\Data\CartInterface
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     */
+    public function loadQuote($quoteId)
+    {
+        $quote = $this->getQuoteById($quoteId);
+        if (!$quote) {
+            $this->throwUnknownQuoteIdException($quoteId);
+        }
+        return $quote;
+    }
+
+    /**
      * Get tax for a given shipping option.
      *
      * @api
-     * @param array $cart cart details
-     * @param array $shipping_address shipping address
-     * @param array|null $shipping_option selected shipping option
+     * @param mixed $cart cart details
+     * @param mixed $shipping_address shipping address
+     * @param mixed $shipping_option selected shipping option
      * @return ShippingTaxDataInterface
      */
     public function execute($cart, $shipping_address, $shipping_option = null)
     {
         // echo statement initially
         $startTime = $this->metricsClient->getCurrentTime();
+
+        $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
+        $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
-            // get immutable quote id stored with transaction
-            list(, $quoteId) = explode(' / ', $cart['display_id']);
-
-            // Load quote from entity id
-            $this->quote = $this->getQuoteById($quoteId);
-
-            if (!$this->quote) {
-                $this->throwUnknownQuoteIdException($quoteId);
-            }
-
 //            $this->preprocessHook();
 
+            // get immutable quote id stored with transaction
+            list(, $immutableQuoteId) = explode(' / ', $cart['display_id']);
+            // Load immutable quote from entity id
+            $immutableQuote = $this->loadQuote($immutableQuoteId);
+
+            // get the parent quote
+            $parentQuoteId = $cart['order_reference'];
+            $parentQuote = $this->loadQuote($parentQuoteId);
+
+            $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
+
+            $this->quote = $parentQuote;
             $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
 
             // Load logged in customer checkout and customer sessions from cached session id.
-            // Replace parent quote with immutable quote in checkout session.
+            // Replace the quote with $parentQuote in checkout session.
             $this->sessionHelper->loadSession($this->quote);
 
             $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
@@ -321,6 +341,9 @@ abstract class ShippingTax
             }
 
             $result = $this->getResult($addressData, $shipping_option);
+
+            $this->logHelper->addInfoLog('[-= Shipping / Tax result =-]');
+            $this->logHelper->addInfoLog(json_encode($result, JSON_PRETTY_PRINT));
 
             $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
 
@@ -392,6 +415,7 @@ abstract class ShippingTax
         // applied rules (discounts), region and postal_code match then use the cached version.
         ////////////////////////////////////////////////////////////////////////////////////////
         $cacheResult = $this->configHelper->getPrefetchShipping($this->quote->getStoreId());
+        $cacheResult = false;
         if ($cacheResult) {
             $cacheIdentifier = $this->getCacheIdentifier($addressData, $shipping_option, $externalData);
             if ($serialized = $this->cache->load($cacheIdentifier)) {
@@ -407,6 +431,18 @@ abstract class ShippingTax
         }
 
         return $result;
+    }
+
+    /**
+     * @param $addressData
+     * @return Quote\Address
+     */
+    public function populateAddress($addressData)
+    {
+        $address = $this->quote->isVirtual() ? $this->quote->getBillingAddress() : $this->quote->getShippingAddress();
+        $addressData = $this->reformatAddressData($addressData);
+        $address->addData($addressData);
+        return $address;
     }
 
     /**

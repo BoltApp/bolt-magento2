@@ -26,7 +26,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class TaxData implements TaxDataInterface
+class TaxData implements TaxDataInterface, \JsonSerializable
 {
    /**
      * @var TaxResultInterface
@@ -84,5 +84,15 @@ class TaxData implements TaxDataInterface
     {
         $this->shippingOption = $shippingOption;
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize () {
+        return [
+            'tax_result' => $this->taxResult,
+            'shipping_option' => $this->shippingOption
+        ];
     }
 }

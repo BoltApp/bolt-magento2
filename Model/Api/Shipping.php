@@ -27,10 +27,8 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
 use Magento\Quote\Api\ShippingMethodManagementInterface;
-use Magento\Quote\Api\Data\AddressInterfaceFactory;
-use Magento\Quote\Api\Data\AddressInterface;
-use Magento\Customer\Api\Data\RegionInterface;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
+use \Magento\Quote\Api\Data\ShippingMethodInterface;
 
 /**
  * Class ShippingMethods
@@ -40,13 +38,9 @@ use Bolt\Boltpay\Model\Api\ShippingTaxContext;
  */
 class Shipping extends ShippingTax implements ShippingInterface
 {
-    const NO_SHIPPING_SERVICE = 'No Shipping Required';
-    const NO_SHIPPING_REFERENCE = 'noshipping';
-
     const METRICS_SUCCESS_KEY = 'shipping.success';
     const METRICS_FAILURE_KEY = 'shipping.failure';
     const METRICS_LATENCY_KEY = 'shipping.latency';
-
     const CACHE_IDENTIFIER_PREFIX = 'SHIPPING';
 
     /**
@@ -60,20 +54,9 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingMethodManagement;
 
     /**
-     * Customer address interface factory.
-     * @var AddressInterfaceFactory $addressFactory
-     */
-    protected $addressFactory;
-
-    /**
      * @var ShippingTaxContext
      */
     protected $shippingTaxContext;
-
-    /**
-     * @var RegionInterface
-     */
-    protected $region;
 
     /**
      * Assigns local references to global resources
@@ -82,23 +65,17 @@ class Shipping extends ShippingTax implements ShippingInterface
      *
      * @param ShippingDataInterfaceFactory $shippingDataFactory
      * @param ShippingMethodManagementInterface $shippingMethodManagement
-     * @param AddressInterfaceFactory $addressFactory
-     * @param RegionInterface $region
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
 
         ShippingDataInterfaceFactory $shippingDataFactory,
-        ShippingMethodManagementInterface $shippingMethodManagement,
-        AddressInterfaceFactory $addressFactory,
-        RegionInterface $region
+        ShippingMethodManagementInterface $shippingMethodManagement
     ) {
         parent::__construct($shippingTaxContext);
 
         $this->shippingDataFactory = $shippingDataFactory;
         $this->shippingMethodManagement = $shippingMethodManagement;
-        $this->addressFactory = $addressFactory;
-        $this->region = $region;
     }
 
     /**
@@ -109,7 +86,7 @@ class Shipping extends ShippingTax implements ShippingInterface
      */
     public function generateResult($addressData, $shipping_option)
     {
-        $shippingOptions = $this->getShippingOptionsArray($this->quote, $addressData);
+        $shippingOptions = $this->getShippingOptions($addressData);
         /**
          * @var ShippingDataInterface $shippingData
          */
@@ -119,65 +96,24 @@ class Shipping extends ShippingTax implements ShippingInterface
     }
 
     /**
-     * @param array $addressData
-     * @return AddressInterface
+     * @param ShippingMethodInterface[] $shippingOptionsArray
+     * @param string $currencyCode
+     * @return array[]
+     * @throws \Exception
      */
-    public function createAddress($addressData)
+    public function formatResult($shippingOptionsArray, $currencyCode)
     {
-        $regionInstance = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
-        $addressData = $this->reformatAddressData($addressData);
-
-        $this->region->setRegion($regionInstance->getName());
-        $this->region->setRegionId($regionInstance->getRegionId());
-        $this->region->setRegionCode($regionInstance->getCode());
-
-        $address = $this->addressFactory->create()
-            ->setCountryId($addressData['country_id'])
-            ->setPostcode($addressData['postcode'])
-            ->setRegionId($addressData['region_id'])
-            ->setRegion($this->region);
-
-        return $address;
-    }
-
-    /**
-     * Collects shipping options for the quote and received address data
-     *
-     * @param Quote $quote
-     * @param array $addressData
-     *
-     * @return ShippingOptionInterface[]
-     */
-    public function getShippingOptionsArray($quote, $addressData)
-    {
-        if ($quote->isVirtual()) {
-            return [
-                $this->shippingOptionFactory
-                    ->create()
-                    ->setService(self::NO_SHIPPING_SERVICE)
-                    ->setCost(0)
-                    ->setReference(self::NO_SHIPPING_REFERENCE)
-            ];
-        }
-
-        $address = $this->createAddress($addressData);
-        $addressData = $this->reformatAddressData($addressData);
-
-        $shippingOptionArray = $this->shippingMethodManagement->estimateByExtendedAddress($quote->getId(), $address);
-
         $shippingOptions = [];
         $errors = [];
 
-        foreach ($shippingOptionArray as $shippingOption) {
+        foreach ($shippingOptionsArray as $shippingOption) {
             $service = $shippingOption->getCarrierTitle() . ' - ' . $shippingOption->getMethodTitle();
             $method  = $shippingOption->getCarrierCode() . '_' . $shippingOption->getMethodCode();
 
             $majorAmount = $shippingOption->getAmount();
-            $currencyCode = $quote->getQuoteCurrencyCode();
             $cost = CurrencyUtils::toMinor($majorAmount, $currencyCode);
 
-            $error = $shippingOption->getErrorMessage();
-            if ($error) {
+            if ($error = $shippingOption->getErrorMessage()) {
                 $errors[] = [
                     'service'    => $service,
                     'reference'  => $method,
@@ -193,6 +129,29 @@ class Shipping extends ShippingTax implements ShippingInterface
                 ->setReference($method);
         }
 
+        return [$shippingOptions, $errors];
+    }
+
+    /**
+     * Collects shipping options for the quote and received address data
+     *
+     * @param array $addressData
+     *
+     * @return ShippingOptionInterface[]
+     */
+    public function getShippingOptions($addressData)
+    {
+        $this->populateAddress($addressData);
+
+        /**
+         * @var ShippingMethodInterface[] $shippingOptionsArray
+         */
+        $shippingOptionsArray = $this->shippingMethodManagement
+            ->estimateByExtendedAddress($this->quote->getId(), $this->quote->getShippingAddress());
+        $currencyCode = $this->quote->getQuoteCurrencyCode();
+
+        list($shippingOptions, $errors) = $this->formatResult($shippingOptionsArray, $currencyCode);
+
         if ($errors) {
             $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
                 $report->setMetaData([
@@ -206,14 +165,14 @@ class Shipping extends ShippingTax implements ShippingInterface
         }
 
         if (!$shippingOptions) {
-            $this->bugsnag->registerCallback(function ($report) use ($quote, $addressData) {
+            $this->bugsnag->registerCallback(function ($report) use ($addressData) {
                 $report->setMetaData([
                     'NO SHIPPING' => [
                         'address' => $addressData,
-                        'immutable quote ID' => $quote->getId(),
-                        'parent quote ID' => $quote->getBoltParentQuoteId(),
-                        'order increment ID' => $quote->getReservedOrderId(),
-                        'Store Id'  => $quote->getStoreId()
+                        'immutable quote ID' => $this->quote->getId(),
+                        'parent quote ID' => $this->quote->getBoltParentQuoteId(),
+                        'order increment ID' => $this->quote->getReservedOrderId(),
+                        'Store Id' => $this->quote->getStoreId()
                     ]
                 ]);
             });

@@ -608,6 +608,11 @@ class Order extends AbstractHelper
      */
     protected function orderPostprocess($order, $quote, $transaction)
     {
+        // set PPC quote status to complete so it is not considered active anymore
+        if ($quote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
+            $quote->SetBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+            $this->cartHelper->quoteResourceSave($quote);
+        }
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
@@ -1155,10 +1160,15 @@ class Order extends AbstractHelper
 
         $parentQuoteId = $order->getQuoteId();
         $this->deleteOrder($order);
+        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
         // reactivate session quote - the condiotion excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
-            $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
+        }
+        // reset PPC quote checkout type so it can be treated as active
+        if ($parentQuote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE) {
+            $parentQuote->SetBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
+            $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
     }
 
@@ -1180,21 +1190,11 @@ class Order extends AbstractHelper
     protected function quoteAfterChange($quote)
     {
         $quote->setUpdatedAt($this->date->gmtDate());
-        // If it's PPC quote make it temporary active
-        // for third party plugins work
-        $isQuoteActive = $quote->getIsActive();
-        if (!$isQuoteActive) {
-            $quote->setIsActive(true);
-        }
         $this->_eventManager->dispatch(
             'sales_quote_save_after', [
                 'quote' => $quote
             ]
         );
-        if (!$isQuoteActive) {
-            $quote->setIsActive(false);
-        }
-
     }
 
     /**
