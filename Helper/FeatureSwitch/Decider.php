@@ -200,4 +200,12 @@ class Decider extends AbstractHelper {
     public function isPayByLinkEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_PAY_BY_LINK);
     }
+
+    public function isIgnoreHookForCreditMemoCreationEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION);
+    }
+
+    public function isIgnoreHookForInvoiceCreationEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_IGNORE_HOOK_FOR_INVOICE_CREATION);
+    }
 }
