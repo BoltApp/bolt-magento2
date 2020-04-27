@@ -76,6 +76,16 @@ class Definitions {
      */
     const M2_PAY_BY_LINK = "M2_PAY_BY_LINK";
 
+    /**
+     * Enable ignore hook for invoice creation feature
+     */
+    const M2_IGNORE_HOOK_FOR_INVOICE_CREATION = "M2_IGNORE_HOOK_FOR_INVOICE_CREATION";
+
+    /**
+     * Enable ignore hook for credit memo creation feature
+     */
+    const M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION = "M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -124,6 +134,18 @@ class Definitions {
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        )
+        ),
+        self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION =>  array(
+            self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ),
+        self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION =>  array(
+            self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ),
     );
 }

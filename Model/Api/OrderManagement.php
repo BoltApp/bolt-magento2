@@ -29,7 +29,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 /**
  * Class OrderManagement
  * Web hook endpoint. Save the order / Update order and payment status.
@@ -82,6 +82,12 @@ class OrderManagement implements OrderManagementInterface
      * @var CartHelper
      */
     private $cartHelper;
+
+    /**
+     * @var Decider
+     */
+    private $decider;
+
     /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
@@ -90,7 +96,9 @@ class OrderManagement implements OrderManagementInterface
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
      * @param Response $response
-     * @param Config $configHelper
+     * @param ConfigHelper $configHelper
+     * @param CartHelper $cartHelper
+     * @param Decider $decider
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -101,7 +109,8 @@ class OrderManagement implements OrderManagementInterface
         MetricsClient $metricsClient,
         Response $response,
         ConfigHelper $configHelper,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        Decider $decider
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -112,6 +121,7 @@ class OrderManagement implements OrderManagementInterface
         $this->response     = $response;
         $this->configHelper = $configHelper;
         $this->cartHelper   = $cartHelper;
+        $this->decider = $decider;
     }
 
     /**
@@ -219,21 +229,22 @@ class OrderManagement implements OrderManagementInterface
         }
         if ($type === 'failed_payment' || $type === 'failed') {
             $this->orderHelper->deleteOrderByIncrementId($display_id);
-
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order was deleted: ' . $display_id,
-            ]));
+            $this->setSuccessResponse('Order was deleted: ' . $display_id);
             return;
         }
 
         if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode([
-                'status' => 'success',
-                'message' => 'Order was canceled due to declined payment: ' . $display_id,
-            ]));
+            $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
+            return;
+        }
+
+        if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
+            $this->setSuccessResponse('Ignore the credit hook for the invoice creation');
+            return;
+        }
+
+        if ($type === HookHelper::HT_CREDIT && $this->decider->isIgnoreHookForCreditMemoCreationEnabled()) {
+            $this->setSuccessResponse('Ignore the credit hook for the credit memo creation');
             return;
         }
 
@@ -250,6 +261,17 @@ class OrderManagement implements OrderManagementInterface
         $this->response->setBody(json_encode([
             'status' => 'success',
             'message' => "Order creation / update was successful. Order Data: $orderData",
+        ]));
+    }
+
+    /**
+     * @param $message
+     */
+    private function setSuccessResponse($message) {
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(json_encode([
+            'status' => 'success',
+            'message' => $message,
         ]));
     }
 
