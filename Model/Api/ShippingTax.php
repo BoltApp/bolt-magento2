@@ -29,7 +29,6 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
@@ -44,12 +43,6 @@ use Bolt\Boltpay\Model\Api\ShippingTaxContext;
  */
 abstract class ShippingTax
 {
-    const METRICS_SUCCESS_KEY = 'shipping_tax.success';
-    const METRICS_FAILURE_KEY = 'shipping_tax.failure';
-    const METRICS_LATENCY_KEY = 'shipping_tax.latency';
-
-    const CACHE_IDENTIFIER_PREFIX = '';
-
     /**
      * @var HookHelper
      */
@@ -94,10 +87,6 @@ abstract class ShippingTax
      * @var BoltErrorResponse
      */
     protected $errorResponse;
-    /**
-     * @var CacheInterface
-     */
-    protected $cache;
 
     /**
      * @var RegionModel
@@ -141,7 +130,6 @@ abstract class ShippingTax
         $this->bugsnag = $shippingTaxContext->getBugsnag();
         $this->metricsClient = $shippingTaxContext->getMetricsClient();
         $this->errorResponse = $shippingTaxContext->getErrorResponse();
-        $this->cache = $shippingTaxContext->getCache();
         $this->regionModel = $shippingTaxContext->getRegionModel();
         $this->response = $shippingTaxContext->getResponse();
         $this->shippingOptionFactory = $shippingTaxContext->getShippingOptionFactory();
@@ -222,19 +210,12 @@ abstract class ShippingTax
 
     /**
      * Fetch and apply external quote data, not stored within a quote or totals (third party modules DB tables)
-     * If data is applied it is used as a part of the cache identifier.
      *
-     * @return string
+     * @return void
      */
     public function applyExternalQuoteData()
     {
-        $data = '';
         $this->discountHelper->applyExternalDiscountData($this->quote);
-
-        $data .= (string) $this->quote->getAmrewardsPoint();
-        $data .= (string) $this->discountHelper->getMirasvitRewardsAmount($this->quote);
-
-        return $data;
     }
 
     public function reformatAddressData($addressData)
@@ -363,41 +344,7 @@ abstract class ShippingTax
     }
 
     /**
-     * @param array $addressData
-     * @param array $shipping_option
-     * @param string $externalData
-     * @return string
-     */
-    public function getCacheIdentifier($addressData, $shipping_option, $externalData)
-    {
-        // use parent quote id for caching.
-        // if everything else matches the cache is used more efficiently this way
-        $parentQuoteId = $this->quote->getBoltParentQuoteId();
-
-        $cacheIdentifier = static::CACHE_IDENTIFIER_PREFIX.'_'.$parentQuoteId.'_'.
-            round($this->quote->getSubtotal()*100).'_'. $addressData['country_code']. '_'.
-            $addressData['region'].'_'.$addressData['postal_code']. '_'. @$addressData['street_address1'].'_'.
-            @$addressData['street_address2'].'_'.$externalData.'_'.@$shipping_option['reference'];
-
-        // include products in cache key
-        foreach ($this->quote->getAllVisibleItems() as $item) {
-            $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
-        }
-
-        // include applied rule ids (discounts) in cache key
-        $ruleIds = str_replace(',', '_', $this->quote->getAppliedRuleIds());
-        if ($ruleIds) {
-            $cacheIdentifier .= '_'.$ruleIds;
-        }
-
-        // extend cache identifier with custom address fields
-        $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($this->quote);
-
-        return md5($cacheIdentifier);
-    }
-
-    /**
-     * Get Shipping options from cache or run the Shipping options collection routine, store it in cache and return.
+     * Ally external quote data and generate the Shipping / Tax result
      *
      * @param array $addressData
      * @param array|null $shipping_option
@@ -408,28 +355,8 @@ abstract class ShippingTax
     public function getResult($addressData, $shipping_option)
     {
         // Take into account external data applied to quote in thirt party modules
-        $externalData = $this->applyExternalQuoteData();
-
-        ////////////////////////////////////////////////////////////////////////////////////////
-        // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
-        // applied rules (discounts), region and postal_code match then use the cached version.
-        ////////////////////////////////////////////////////////////////////////////////////////
-        $cacheResult = $this->configHelper->getPrefetchShipping($this->quote->getStoreId());
-        $cacheResult = false;
-        if ($cacheResult) {
-            $cacheIdentifier = $this->getCacheIdentifier($addressData, $shipping_option, $externalData);
-            if ($serialized = $this->cache->load($cacheIdentifier)) {
-                return unserialize($serialized);
-            }
-        }
-        ////////////////////////////////////////////////////////////////////////////////////////
+        $this->applyExternalQuoteData();
         $result = $this->generateResult($addressData, $shipping_option);
-
-        // Cache the calculated result
-        if ($cacheResult) {
-            $this->cache->save(serialize($result), $cacheIdentifier, [], 3600);
-        }
-
         return $result;
     }
 

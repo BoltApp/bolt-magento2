@@ -26,7 +26,6 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Magento\Framework\App\CacheInterface;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
@@ -84,10 +83,6 @@ class ShippingTaxContext
      * @var BoltErrorResponse
      */
     protected $errorResponse;
-    /**
-     * @var CacheInterface
-     */
-    protected $cache;
 
     /**
      * @var RegionModel
@@ -116,7 +111,6 @@ class ShippingTaxContext
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
      * @param BoltErrorResponse $errorResponse
-     * @param CacheInterface $cache
      * @param RegionModel $regionModel
      * @param Response $response
      * @param ShippingOptionInterfaceFactory $shippingOptionFactory
@@ -131,7 +125,6 @@ class ShippingTaxContext
         Bugsnag $bugsnag,
         MetricsClient $metricsClient,
         BoltErrorResponse $errorResponse,
-        CacheInterface $cache,
         RegionModel $regionModel,
         Response $response,
         ShippingOptionInterfaceFactory $shippingOptionFactory
@@ -145,7 +138,6 @@ class ShippingTaxContext
         $this->bugsnag = $bugsnag;
         $this->metricsClient = $metricsClient;
         $this->errorResponse = $errorResponse;
-        $this->cache = $cache;
         $this->regionModel = $regionModel;
         $this->response = $response;
         $this->shippingOptionFactory = $shippingOptionFactory;
@@ -221,14 +213,6 @@ class ShippingTaxContext
     public function getErrorResponse()
     {
         return $this->errorResponse;
-    }
-
-    /**
-     * @return CacheInterface
-     */
-    public function getCache()
-    {
-        return $this->cache;
     }
 
     /**

@@ -41,7 +41,6 @@ class Shipping extends ShippingTax implements ShippingInterface
     const METRICS_SUCCESS_KEY = 'shipping.success';
     const METRICS_FAILURE_KEY = 'shipping.failure';
     const METRICS_LATENCY_KEY = 'shipping.latency';
-    const CACHE_IDENTIFIER_PREFIX = 'SHIPPING';
 
     /**
      * @var ShippingDataInterfaceFactory

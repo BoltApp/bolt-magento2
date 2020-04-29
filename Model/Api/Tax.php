@@ -41,8 +41,6 @@ class Tax extends ShippingTax implements TaxInterface
     const METRICS_FAILURE_KEY = 'tax.failure';
     const METRICS_LATENCY_KEY = 'tax.latency';
 
-    const CACHE_IDENTIFIER_PREFIX = 'TAX';
-
     /**
      * @var TaxDataInterfaceFactory
      */
