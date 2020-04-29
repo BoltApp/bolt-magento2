@@ -38,6 +38,10 @@ class ShippingOptionTest extends TestCase
     protected function setUp()
     {
         $this->shippingOption = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $this->shippingOption->setReference(self::REFERENCE);
+        $this->shippingOption->setService(self::SERVICE);
+        $this->shippingOption->setCost(self::COST);
+        $this->shippingOption->setTaxAmount(self::TAX_AMOUNT);
     }
 
     /**
@@ -45,7 +49,6 @@ class ShippingOptionTest extends TestCase
      */
     public function setAndGetReference()
     {
-        $this->shippingOption->setReference(self::REFERENCE);
         $this->assertEquals(self::REFERENCE, $this->shippingOption->getReference());
     }
 
@@ -54,7 +57,6 @@ class ShippingOptionTest extends TestCase
      */
     public function testAndGetService()
     {
-        $this->shippingOption->setService(self::SERVICE);
         $this->assertEquals(self::SERVICE, $this->shippingOption->getService());
     }
 
@@ -63,7 +65,6 @@ class ShippingOptionTest extends TestCase
      */
     public function setAndGetCost()
     {
-        $this->shippingOption->setCost(self::COST);
         $this->assertEquals(self::COST, $this->shippingOption->getCost());
     }
 
@@ -72,7 +73,20 @@ class ShippingOptionTest extends TestCase
      */
     public function setAndGetTaxAmount()
     {
-        $this->shippingOption->setTaxAmount(self::TAX_AMOUNT);
         $this->assertEquals(self::TAX_AMOUNT, $this->shippingOption->getTaxAmount());
+    }
+
+    /**
+     * @test
+     */
+    public function jsonSerialize()
+    {
+        $result = $this->shippingOption->jsonSerialize();
+        $this->assertEquals([
+            'service' => self::SERVICE,
+            'cost' => self::COST,
+            'reference' => self::REFERENCE,
+            'tax_amount' => self::TAX_AMOUNT
+        ], $result);
     }
 }

@@ -17,11 +17,9 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\TaxDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 use Bolt\Boltpay\Model\Api\Data\TaxData;
-use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
 use PHPUnit\Framework\TestCase;
 
