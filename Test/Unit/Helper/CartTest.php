@@ -2315,14 +2315,14 @@ ORDER;
 
         $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
 
-        $cartMock = $this->getCurrentMock(['getCartData', 'saveQuote']);
+        $cartMock = $this->getCurrentMock(['getCartData', 'quoteResourceSave']);
         $cartMock->expects($this->once())
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
 
         $cartMock->expects($this->once())
-            ->method('saveQuote')
+            ->method('quoteResourceSave')
             ->with($quote);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -2865,17 +2865,17 @@ ORDER;
         $storeMock->method('getWebsiteId')->willReturn(1);
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
-        $this->coreRegistry->expects($this->once())->method('unregister')->with('rule_data');
-        $this->coreRegistry->expects($this->once())->method('register')->with(
-            'rule_data',
-            new DataObject(
-                [
-                    'store_id'          => self::STORE_ID,
-                    'website_id'        => 1,
-                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
-                ]
-            )
-        );
+//        $this->coreRegistry->expects($this->once())->method('unregister')->with('rule_data');
+//        $this->coreRegistry->expects($this->once())->method('register')->with(
+//            'rule_data',
+//            new DataObject(
+//                [
+//                    'store_id'          => self::STORE_ID,
+//                    'website_id'        => 1,
+//                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
+//                ]
+//            )
+//        );
         $immutableQuote->expects($this->once())->method('collectTotals');
         $currentMock->getCartData(false, '', $immutableQuote);
     }
