@@ -199,13 +199,14 @@ abstract class ShippingTax
     }
 
     /**
+     * @param int $storeId
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    protected function preprocessHook()
+    protected function preprocessHook($storeId)
     {
         HookHelper::$fromBolt = true;
-        $this->hookHelper->preProcessWebhook($this->quote->getStoreId());
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**
@@ -295,12 +296,12 @@ abstract class ShippingTax
         $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
-//            $this->preprocessHook();
-
             // get immutable quote id stored with transaction
             list(, $immutableQuoteId) = explode(' / ', $cart['display_id']);
             // Load immutable quote from entity id
             $immutableQuote = $this->loadQuote($immutableQuoteId);
+
+            $this->preprocessHook($immutableQuote->getStoreId());
 
             // get the parent quote
             $parentQuoteId = $cart['order_reference'];
