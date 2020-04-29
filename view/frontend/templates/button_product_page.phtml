@@ -193,7 +193,7 @@ if (!$block->isSupportableType()) return;
                 var options = {};
                 var compositeAttributes = ['super_attribute', 'options'];
                 formData = new FormData(document.getElementById("product_addtocart_form"));
-                formData.forEach(function(value, key) {
+                $.each( formData, function( key, value ) {
                     var matchResult;
                     for (var index in compositeAttributes) {
                         var compositeAttribute = compositeAttributes[index];
