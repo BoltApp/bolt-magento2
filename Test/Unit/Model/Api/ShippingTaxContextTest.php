@@ -41,67 +41,67 @@ use PHPUnit\Framework\MockObject\MockObject;
 class ShippingTaxContextTest extends TestCase
 {
     /**
-     * @var HookHelper
+     * @var HookHelper|MockObject
      */
     private $hookHelper;
 
     /**
-     * @var CartHelper
+     * @var CartHelper|MockObject
      */
     private $cartHelper;
 
     /**
-     * @var LogHelper
+     * @var LogHelper|MockObject
      */
     private $logHelper;
 
     /**
-     * @var ConfigHelper
+     * @var ConfigHelper|MockObject
      */
     private $configHelper;
 
     /**
-     * @var SessionHelper
+     * @var SessionHelper|MockObject
      */
     private $sessionHelper;
 
     /**
-     * @var DiscountHelper
+     * @var DiscountHelper|MockObject
      */
     private $discountHelper;
 
     /**
-     * @var Bugsnag
+     * @var Bugsnag|MockObject
      */
     private $bugsnag;
 
     /**
-     * @var MetricsClient
+     * @var MetricsClient|MockObject
      */
     private $metricsClient;
 
     /**
-     * @var BoltErrorResponse
+     * @var BoltErrorResponse|MockObject
      */
     private $errorResponse;
 
     /**
-     * @var RegionModel
+     * @var RegionModel|MockObject
      */
     private $regionModel;
 
     /**
-     * @var Response
+     * @var Response|MockObject
      */
     private $response;
 
     /**
-     * @var ShippingOptionInterfaceFactory
+     * @var ShippingOptionInterfaceFactory|MockObject
      */
     private $shippingOptionFactory;
 
     /**
-     * @var MockObject|ShippingTaxContext
+     * @var ShippingTaxContext|MockObject
      */
     private $currentMock;
 
@@ -134,7 +134,7 @@ class ShippingTaxContextTest extends TestCase
                     $this->errorResponse,
                     $this->regionModel,
                     $this->response,
-                    $this->shippingOptionFactory,
+                    $this->shippingOptionFactory
                 ])
             ->enableProxyingToOriginalMethods()
             ->getMock();

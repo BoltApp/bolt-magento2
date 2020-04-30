@@ -43,6 +43,10 @@ use Bolt\Boltpay\Model\Api\ShippingTaxContext;
  */
 abstract class ShippingTax
 {
+    const METRICS_SUCCESS_KEY = 'shippingtax.success';
+    const METRICS_FAILURE_KEY = 'shippingtax.failure';
+    const METRICS_LATENCY_KEY = 'shippingtax.latency';
+
     /**
      * @var HookHelper
      */
