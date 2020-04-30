@@ -767,7 +767,7 @@ class OrderManagementTest extends TestCase
     public function testSaveCustomerCreditCardWhenPendingHookIsSentToMagento(){
         $type = "pending";
         $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
-            ->with(self::REFERENCE,self::STORE_ID)->willReturnSelf();
+            ->with(self::DISPLAY_ID, self::REFERENCE, self::STORE_ID)->willReturnSelf();
 
         $this->currentMock->manage(
             self::ID,

@@ -161,7 +161,7 @@ class OrderManagement implements OrderManagementInterface
             $this->hookHelper->preProcessWebhook($storeId);
 
             if ($type === 'pending') {
-                $this->orderHelper->saveCustomerCreditCard($reference,$storeId);
+                $this->orderHelper->saveCustomerCreditCard($display_id, $reference,$storeId);
             }
 
             if ($type == 'cart.create') {
