@@ -144,9 +144,9 @@ class Tax extends ShippingTax implements TaxInterface
     {
         $shippingOption = $this->shippingOptionFactory->create();
         $shippingOption->setTaxAmount(CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode));
-        $shippingOption->setService($shipping_option['service']);
+        $shippingOption->setService(@$shipping_option['service']);
         $shippingOption->setCost(CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode));
-        $shippingOption->setReference($shipping_option['reference']);
+        $shippingOption->setReference(@$shipping_option['reference']);
 
         return $shippingOption;
     }
