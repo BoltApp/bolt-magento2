@@ -13,7 +13,7 @@ commands:
     steps:
       - slack/notify:
           color: '#58a359'
-          mentions: 'oleksii,Pavel'
+          mentions: 'oleksii,Pavel,'
           message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
           webhook: $SLACK_MAGENTO2_WEBHOOK
           include_job_number_field: false
