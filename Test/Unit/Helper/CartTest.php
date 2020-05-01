@@ -2865,17 +2865,17 @@ ORDER;
         $storeMock->method('getWebsiteId')->willReturn(1);
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
-//        $this->coreRegistry->expects($this->once())->method('unregister')->with('rule_data');
-//        $this->coreRegistry->expects($this->once())->method('register')->with(
-//            'rule_data',
-//            new DataObject(
-//                [
-//                    'store_id'          => self::STORE_ID,
-//                    'website_id'        => 1,
-//                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
-//                ]
-//            )
-//        );
+        $this->coreRegistry->expects($this->once())->method('unregister')->with('rule_data');
+        $this->coreRegistry->expects($this->once())->method('register')->with(
+            'rule_data',
+            new DataObject(
+                [
+                    'store_id'          => self::STORE_ID,
+                    'website_id'        => 1,
+                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
+                ]
+            )
+        );
         $immutableQuote->expects($this->once())->method('collectTotals');
         $currentMock->getCartData(false, '', $immutableQuote);
     }
