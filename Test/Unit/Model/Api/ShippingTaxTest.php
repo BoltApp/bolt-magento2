@@ -382,11 +382,9 @@ class ShippingTaxTest extends TestCase
     }
 
     /**
-     * Get quote mock with quote items
-     *
-     * @param  $shippingAddress
-     * @param  $quoteId
-     * @param  $parentQuoteId
+     * @param int $quoteId
+     * @param int $parentQuoteId
+     * @param array $methods
      * @return MockObject
      */
     private function getQuoteMock(
@@ -395,7 +393,7 @@ class ShippingTaxTest extends TestCase
         $methods = []
     ) {
         $quoteMethods = array_merge([
-            'getId', 'getBoltParentQuoteId','getStoreId', 'getStore', 'getQuoteCurrencyCode'
+            'getId', 'getBoltParentQuoteId', 'getStoreId', 'getStore', 'getQuoteCurrencyCode'
         ], $methods);
 
         $quote = $this->getMockBuilder(Quote::class)
@@ -412,8 +410,6 @@ class ShippingTaxTest extends TestCase
             ->willReturn($this->store);
         $quote->method('getStoreId')
             ->willReturn(self::STORE_ID);
-        $quote->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
         return $quote;
     }
 

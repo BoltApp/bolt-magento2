@@ -26,7 +26,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
-use Magento\Quote\Api\ShippingMethodManagementInterface;
+use Magento\Quote\Api\ShipmentEstimationInterface;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
 
@@ -48,7 +48,7 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingDataFactory;
 
     /**
-     * @var ShippingMethodManagementInterface
+     * @var ShipmentEstimationInterface
      */
     protected $shippingMethodManagement;
 
@@ -63,13 +63,13 @@ class Shipping extends ShippingTax implements ShippingInterface
      * @param ShippingTaxContext $shippingTaxContext
      *
      * @param ShippingDataInterfaceFactory $shippingDataFactory
-     * @param ShippingMethodManagementInterface $shippingMethodManagement
+     * @param ShipmentEstimationInterface $shippingMethodManagement
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
 
         ShippingDataInterfaceFactory $shippingDataFactory,
-        ShippingMethodManagementInterface $shippingMethodManagement
+        ShipmentEstimationInterface $shippingMethodManagement
     ) {
         parent::__construct($shippingTaxContext);
 
@@ -160,7 +160,7 @@ class Shipping extends ShippingTax implements ShippingInterface
                     ]
                 ]);
             });
-            $this->bugsnag->notifyError('Shipping Method Error', $error);
+            $this->bugsnag->notifyError('SHIPPING ERRORS', 'Shipping Method Errors');
         }
 
         if (!$shippingOptions) {
