@@ -152,6 +152,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that setAddressInformation would return set shipping method code and set shipping carrier code
+     *
      * @covers ::setAddressInformation
      */
     public function setAddressInformation_happyPath()
@@ -188,6 +190,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that setAddressInformation would return null
+     *
      * @covers ::setAddressInformation
      */
     public function setAddressInformation_noShippingOption()
@@ -221,6 +225,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that createTaxResult would return tax result interface instance
+     *
      * @covers ::createTaxResult
      */
     public function createTaxResult()
@@ -242,6 +248,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that createShippingOption would return shipping option factory
+     *
      * @covers ::createShippingOption
      */
     public function createShippingOption()
@@ -280,6 +288,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that createShippingOption would return shipping option without set service and reference
+     *
      * @covers ::createShippingOption
      */
     public function createShippingOption_noShippingOption()
@@ -315,6 +325,8 @@ class TaxTest extends TestCase
 
     /**
      * @test
+     * that generateResult would return tax data factory instance
+     *
      * @covers ::generateResult
      */
     public function generateResult()

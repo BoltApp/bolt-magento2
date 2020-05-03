@@ -127,6 +127,8 @@ class ShippingTest extends TestCase
 
     /**
      * @test
+     * that generateResult returns shipping data
+     *
      * @covers ::generateResult
      */
     public function generateResult()
@@ -161,6 +163,8 @@ class ShippingTest extends TestCase
 
     /**
      * @test
+     * that formatResult would return shipping options according to shipping options factory
+     *
      * @covers ::formatResult
      */
     public function formatResult()
@@ -228,6 +232,8 @@ class ShippingTest extends TestCase
 
     /**
      * @test
+     * that getShippingOptions would return shipping options
+     *
      * @covers ::getShippingOptions
      */
     public function getShippingOptions_happyPath()
@@ -302,6 +308,8 @@ class ShippingTest extends TestCase
 
     /**
      * @test
+     * that getShippingOptions would return bolt exception if there is no shipping options
+     *
      * @covers ::getShippingOptions
      */
     public function getShippingOptions_noShippingOptions()

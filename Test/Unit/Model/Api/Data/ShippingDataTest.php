@@ -22,6 +22,11 @@ use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingData;
 
+/**
+ * Class ShippingTest
+ * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingData
+ */
 class ShippingDataTest extends TestCase
 {
     /**
@@ -43,6 +48,8 @@ class ShippingDataTest extends TestCase
 
     /**
      * @test
+     * that getShippingOptions would return shipping options
+     * @covers ::getShippingOptions
      */
     public function getShippingOptions()
     {
@@ -51,6 +58,8 @@ class ShippingDataTest extends TestCase
 
     /**
      * @test
+     * that setShippingOptions would set instance of shipping option
+     * @covers ::setShippingOptions
      */
     public function setShippingOptions()
     {
@@ -60,6 +69,8 @@ class ShippingDataTest extends TestCase
 
     /**
      * @test
+     * that jsonSerialize would include in return shipping options
+     * @covers ::jsonSerialize
      */
     public function jsonSerialize()
     {

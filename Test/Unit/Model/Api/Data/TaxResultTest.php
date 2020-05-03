@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Class TaxResultTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
- * @coversDefaultClass TaxResult
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\TaxResult
  */
 class TaxResultTest extends TestCase
 {
@@ -43,6 +43,9 @@ class TaxResultTest extends TestCase
 
     /**
      * @test
+     * that getSubtotalAmount would return subtotal amount
+     *
+     * @covers ::getSubtotalAmount
      */
     public function getSubtotalAmount()
     {
@@ -51,6 +54,9 @@ class TaxResultTest extends TestCase
 
     /**
      * @test
+     * that setSubtotalAmount would set subtotal amount and return tax result instance
+     *
+     * @covers ::setSubtotalAmount
      */
     public function setSubtotalAmount()
     {
@@ -60,6 +66,9 @@ class TaxResultTest extends TestCase
 
     /**
      * @test
+     * that jsonSerialize would return array subtotal amount
+     *
+     * @covers ::jsonSerialize
      */
     public function jsonSerialize()
     {

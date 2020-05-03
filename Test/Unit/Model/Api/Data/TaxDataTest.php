@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Class TaxDataTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
- * @coversDefaultClass TaxData
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\TaxData
  */
 class TaxDataTest extends TestCase
 {
@@ -56,6 +56,9 @@ class TaxDataTest extends TestCase
 
     /**
      * @test
+     * that getTaxResult would return tax result
+     *
+     * @covers ::getTaxResult
      */
     public function getTaxResult()
     {
@@ -64,6 +67,9 @@ class TaxDataTest extends TestCase
 
     /**
      * @test
+     * that setTaxResult would set tax result and return tax data class instance
+     *
+     * @covers ::setTaxResult
      */
     public function setTaxResult()
     {
@@ -73,6 +79,9 @@ class TaxDataTest extends TestCase
 
     /**
      * @test
+     * that getShippingOption would return shipping option
+     *
+     * @covers ::getShippingOption
      */
     public function getShippingOption()
     {
@@ -81,8 +90,11 @@ class TaxDataTest extends TestCase
 
     /**
      * @test
+     * that setShippingOption would set shipping option and return tax data instance
+     *
+     * @covers ::setShippingOption
      */
-    public function seShippingOption()
+    public function setShippingOption()
     {
         $result = $this->taxData->setShippingOption($this->shippingOption);
         $this->assertInstanceOf(TaxData::class, $result);
@@ -90,6 +102,9 @@ class TaxDataTest extends TestCase
 
     /**
      * @test
+     * that jsonSerialize would return array of tax result and shipping option
+     *
+     * @covers ::jsonSerialize
      */
     public function jsonSerialize()
     {

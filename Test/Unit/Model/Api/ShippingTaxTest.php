@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Store\Model\Store;
 use PHPUnit\Framework\TestCase;
-use Bolt\Boltpay\Api\Data\ShippingTaxDataInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Directory\Model\Region as RegionModel;
@@ -110,11 +109,6 @@ class ShippingTaxTest extends TestCase
      * @var Response|MockObject
      */
     private $response;
-
-    /**
-     * @var Quote|MockObject
-     */
-    private $quote;
 
     /**
      * @var ShippingTaxContext|MockObject
@@ -243,6 +237,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that throwUnknownQuoteIdException would return localized exception
      *
      * @covers ::throwUnknownQuoteIdException
      */
@@ -260,6 +255,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that catchExceptionAndSendError would notify bugsnag exception and send error response
      *
      * @covers ::catchExceptionAndSendError
      */
@@ -279,6 +275,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that preprocessHook would set pre process web hook
      *
      * @covers ::preprocessHook
      */
@@ -296,6 +293,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that sendErrorResponse would prepare error messages and set response code, body and send response
      *
      * @covers ::sendErrorResponse
      */
@@ -319,6 +317,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that getQuoteById would return quote from cart helper
      *
      * @covers ::getQuoteById
      */
@@ -333,6 +332,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that applyExternalQuoteData would apply external quote data in discount helper with quote id
+     *
      * @covers ::applyExternalQuoteData
      */
     public function applyExternalQuoteData()
@@ -346,6 +347,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that reformatAddressData would return address data includes region and unset empty values
+     *
      * @covers ::reformatAddressData
      */
     public function reformatAddressData()
@@ -415,6 +418,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that validateAddressData would validate email
+     *
      * @covers ::validateAddressData
      */
     public function validateAddressData()
@@ -430,6 +435,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that validateEmail would call validateEmail from cart helper and return validated
+     *
      * @covers ::validateEmail
      */
     public function validateEmail_valid()
@@ -442,6 +449,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that validateEmail throws BoltException with Invalid email message
+     *
      * @covers ::validateEmail
      */
     public function validateEmail_invalid()
@@ -483,6 +492,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that loadQuote return quote
+     *
      * @covers ::loadQuote
      */
     public function loadQuote_happyPath()
@@ -498,9 +509,11 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that loadQuote throw unknown quote id exception regarding get quote id return false
+     *
      * @covers ::loadQuote
      */
-    public function loadQuote_throwUnknownQuoteIdException ()
+    public function loadQuote_throwUnknownQuoteIdException()
     {
         $this->initCurrentMock(['getQuoteById']);
         $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
@@ -515,6 +528,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that execute throws web api exception
+     *
      * @covers ::execute
      */
     public function execute_WebApiException()
@@ -546,6 +561,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that execute would throw bolt exception
+     *
      * @covers ::execute
      */
     public function execute_BoltException()
@@ -601,6 +618,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that execute throw exception and return null
+     *
      * @covers ::execute
      */
     public function execute_Exception()
@@ -621,6 +640,8 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that execute would return result regarding address data and shipping option
+     *
      * @covers ::execute
      */
     public function execute_happyPath()
@@ -671,6 +692,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that getResult would return generate result
      *
      * @covers ::getResult
      */
@@ -700,6 +722,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
+     * that populateAddress would return reformat address
      *
      * @covers ::populateAddress
      */

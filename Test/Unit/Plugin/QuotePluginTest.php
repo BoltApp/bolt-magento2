@@ -69,10 +69,16 @@ class QuotePluginTest extends TestCase
 
     /**
      * @test
+     * that aroundAfterSave should return proceed if subject have boltParentQuoteId and boltParentQuoteId is not same as
+     * getId
+     *
      * @covers ::aroundAfterSave
      * @dataProvider dataProviderAroundAfterSave
+     * @param $boltParentQuoteId
+     * @param $id
+     * @param $numCallsParentId
+     * @param $numCallsId
      * @param $expectedCall
-     * @param $isActive
      */
     public function aroundAfterSave($boltParentQuoteId, $id, $numCallsParentId, $numCallsId, $expectedCall)
     {
