@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Class ShippingTaxTest
- * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  */
 class ShippingTaxTest extends TestCase
 {
@@ -34,7 +34,7 @@ class ShippingTaxTest extends TestCase
 
     protected function setUp()
     {
-        $this->shippingTax = new \Bolt\Boltpay\Model\Api\Data\ShippingTax();
+        $this->shippingTax = new \Bolt\Boltpay\Model\Api\Data\ShippingTax;
     }
 
     /**

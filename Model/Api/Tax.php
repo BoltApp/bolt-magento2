@@ -78,14 +78,12 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
-
         TaxDataInterfaceFactory $taxDataFactory,
         TaxResultInterfaceFactory $taxResultFactory,
         TotalsInformationManagementInterface $totalsInformationManagement,
         TotalsInformationInterface $addressInformation
     ) {
         parent::__construct($shippingTaxContext);
-
         $this->taxDataFactory = $taxDataFactory;
         $this->taxResultFactory = $taxResultFactory;
         $this->totalsInformationManagement = $totalsInformationManagement;

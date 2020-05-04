@@ -67,7 +67,6 @@ class Shipping extends ShippingTax implements ShippingInterface
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
-
         ShippingDataInterfaceFactory $shippingDataFactory,
         ShipmentEstimationInterface $shippingMethodManagement
     ) {

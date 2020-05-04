@@ -69,8 +69,8 @@ class QuotePluginTest extends TestCase
 
     /**
      * @test
-     * that aroundAfterSave should return proceed if subject have boltParentQuoteId and boltParentQuoteId is not same as
-     * getId
+     * that aroundAfterSave should return proceed if subject have boltParentQuoteId
+     * and boltParentQuoteId is not same as getId
      *
      * @covers ::aroundAfterSave
      * @dataProvider dataProviderAroundAfterSave

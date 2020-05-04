@@ -24,7 +24,7 @@ use Bolt\Boltpay\Model\Api\Data\ShippingData;
 
 /**
  * Class ShippingTest
- * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingData
  */
 class ShippingDataTest extends TestCase
@@ -69,7 +69,7 @@ class ShippingDataTest extends TestCase
 
     /**
      * @test
-     * that jsonSerialize would include in return shipping options
+     * that jsonSerialize result would include shipping options
      * @covers ::jsonSerialize
      */
     public function jsonSerialize()

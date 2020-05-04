@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 /**
  * Class ShippingOptionTest
- * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingOption
  */
 class ShippingOptionTest extends TestCase

@@ -255,7 +255,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
-     * that catchExceptionAndSendError would notify bugsnag exception and send error response
+     * that catchExceptionAndSendError would notify bugsnag and send error response
      *
      * @covers ::catchExceptionAndSendError
      */
@@ -275,7 +275,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
-     * that preprocessHook would set pre process web hook
+     * that preprocessHook would forward to hook helper preProcessWebhook
      *
      * @covers ::preprocessHook
      */
@@ -305,7 +305,19 @@ class ShippingTaxTest extends TestCase
 
         $this->initCurrentMock();
 
+        $errResponse = [
+            'status' => 'failure',
+            'error' => [
+                'code' => $errCode,
+                'message' => $message,
+            ],
+        ];
+
+        $this->errorResponse->expects(self::once())->method('prepareErrorMessage')
+            ->with($errCode, $message)->willReturn($errResponse);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
+        $this->response->expects(self::once())->method('setBody')
+            ->with($errResponse);
         $this->response->expects(self::once())->method('sendResponse');
 
         TestHelper::invokeMethod(
@@ -332,7 +344,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
-     * that applyExternalQuoteData would apply external quote data in discount helper with quote id
+     * that applyExternalQuoteData would call apply external quote data in discount helper for the quote
      *
      * @covers ::applyExternalQuoteData
      */
@@ -359,8 +371,9 @@ class ShippingTaxTest extends TestCase
             'postal_code' => '90210',
             'locality' => 'San Franciso',
             'street_address1' => '123 Sesame St.',
+            'street_address2' => '',
             'email' => self::EMAIL,
-            'company' => 'Bolt'
+            'company' => ''
         ];
         $expected = [
             'country_id' => 'US',
@@ -369,8 +382,7 @@ class ShippingTaxTest extends TestCase
             'region_id' => 12,
             'city' => 'San Franciso',
             'street' => '123 Sesame St.',
-            'email' => self::EMAIL,
-            'company' => 'Bolt'
+            'email' => self::EMAIL
         ];
         $this->initCurrentMock();
         $region = $this->createMock(RegionModel::class);
@@ -449,7 +461,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
-     * that validateEmail throws BoltException with Invalid email message
+     * that validateEmail throws BoltException with Invalid email message for invalid email input
      *
      * @covers ::validateEmail
      */
@@ -722,7 +734,7 @@ class ShippingTaxTest extends TestCase
 
     /**
      * @test
-     * that populateAddress would return reformat address
+     * that populateAddress would return reformatted address
      *
      * @covers ::populateAddress
      */
@@ -737,7 +749,7 @@ class ShippingTaxTest extends TestCase
             'email' => self::EMAIL,
             'company' => 'Bolt'
         ];
-        $addressDataReformated = [
+        $addressDataReformatted = [
             'country_id' => 'US',
             'postcode' => '90210',
             'region' => 'California',
@@ -758,7 +770,7 @@ class ShippingTaxTest extends TestCase
         TestHelper::setProperty($this->currentMock, 'quote', $quote);
 
         $this->currentMock->expects(self::once())->method('reformatAddressData')
-            ->with($addressData)->willReturn($addressDataReformated);
+            ->with($addressData)->willReturn($addressDataReformatted);
 
         $address->expects(self::once())->method('addData')->willReturnSelf();
 

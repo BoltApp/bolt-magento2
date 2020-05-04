@@ -36,7 +36,7 @@ class QuotePlugin
     public function aroundAfterSave(\Magento\Quote\Model\Quote $subject, callable $proceed)
     {
         if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
-            return;
+            return $subject;
         }
         return $proceed();
     }

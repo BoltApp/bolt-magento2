@@ -190,7 +190,7 @@ class TaxTest extends TestCase
 
     /**
      * @test
-     * that setAddressInformation would return null
+     * that setAddressInformation would return null if no shipping option was specified
      *
      * @covers ::setAddressInformation
      */
@@ -248,7 +248,7 @@ class TaxTest extends TestCase
 
     /**
      * @test
-     * that createShippingOption would return shipping option factory
+     * that createShippingOption would return shipping option interface instance
      *
      * @covers ::createShippingOption
      */
@@ -288,7 +288,9 @@ class TaxTest extends TestCase
 
     /**
      * @test
-     * that createShippingOption would return shipping option without set service and reference
+     * that createShippingOption would return "empty" shipping option,
+     * with zero cost and tax amount and without service and reference,
+     * if no $shipping_option input is specified
      *
      * @covers ::createShippingOption
      */
@@ -325,7 +327,7 @@ class TaxTest extends TestCase
 
     /**
      * @test
-     * that generateResult would return tax data factory instance
+     * that generateResult would return tax data interface instance
      *
      * @covers ::generateResult
      */
