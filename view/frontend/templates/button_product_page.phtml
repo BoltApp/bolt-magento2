@@ -192,13 +192,13 @@ if (!$block->isSupportableType()) return;
             var setupProductPage = function () {
                 var options = {};
                 var compositeAttributes = ['super_attribute', 'options'];
-                formData = new FormData(document.getElementById("product_addtocart_form"));
-                $.each( formData, function( key, value ) {
+                formData = $("#product_addtocart_form").serializeArray();
+                $.each( formData, function( key, input ) {
+                    var name = input.name, value = input.value;
                     var matchResult;
                     for (var index in compositeAttributes) {
                         var compositeAttribute = compositeAttributes[index];
-
-                        if (matchResult = key.match(compositeAttribute+'\\[(\\d+)\\]')) {
+                        if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
                             }
@@ -206,7 +206,7 @@ if (!$block->isSupportableType()) return;
                             return;
                         }
                     }
-                    options[key] = value;
+                    options[name] = value;
                 });
                 options['storeId'] = '<?= $block->getStoreId(); ?>';
                 var cart = {
