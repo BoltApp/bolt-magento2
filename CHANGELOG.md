@@ -111,3 +111,13 @@
  - Improved api result caching
  - Improved debug webhook data collection
  - Bug fixes
+## [v2.6.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.6.0) 2020-05-04
+ - Debug webhook now fully available
+ - In-store pickup feature
+ - Pay-by-link added
+ - Unit tests and code cleanup
+ - Admin page reoganization
+ - Development quality of life fixes
+ - Support for shipping discounts
+ - Add Bolt account button for order management
+ - Added Amasty store credit support
