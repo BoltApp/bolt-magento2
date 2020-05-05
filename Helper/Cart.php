@@ -519,6 +519,7 @@ class Cart extends AbstractHelper
     {
         $apiKey = $this->configHelper->getApiKey($storeId);
 
+        $cart['cart_url'] = "http://m2.patrick.dev.bolt.me/pub/checkout/cart/";
         //Request Data
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData(['cart' => $cart]);

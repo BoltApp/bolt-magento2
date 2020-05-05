@@ -333,11 +333,20 @@ class Config extends AbstractHelper
     const SHOPPING_CART_PAGE_ACTION = 'checkout_cart_index';
     const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
     const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
+    const PRODUCT_PAGE_ACTION = "catalog_product_view";
+    const CATEGORY_PAGE_ACTION = "catalog_category_view";
+    const INDEX_PAGE_ACTION = "cms_index_index";
 
     public static $defaultPageWhitelist = [
         self::SHOPPING_CART_PAGE_ACTION,
         self::CHECKOUT_PAGE_ACTION,
-        self::SUCCESS_PAGE_ACTION
+        self::SUCCESS_PAGE_ACTION,
+    ];
+
+    public static $floatingButtonWhitelist = [
+        self::PRODUCT_PAGE_ACTION,
+        self::CATEGORY_PAGE_ACTION,
+        self::INDEX_PAGE_ACTION,
     ];
 
     public static $supportableProductTypesForProductPageCheckout = [

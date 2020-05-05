@@ -129,6 +129,10 @@ trait BlockTrait
         return array_unique(array_merge(Config::$defaultPageWhitelist, $values));
     }
 
+    protected function getFloatingButtonWhitelist() {
+        return array_unique(Config::$floatingButtonWhitelist);
+    }
+
     /**
      * Check if the client IP is restricted -
      * there is an IP whitelist and the client IP is not on the list.

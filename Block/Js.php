@@ -392,11 +392,25 @@ class Js extends Template
         return in_array($currentPage, $this->getPageWhitelist());
     }
 
+    public function isOnPageFromFloatingButtonWhitelist() {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return in_array($currentPage, $this->getFloatingButtonWhitelist());
+    }
+
+    public function getPageActionName() {
+        return $this->getRequest()->getFullActionName();
+    }
+
+
     /**
      * Return true if bolt on minicart is enabled
      */
     public function isMinicartEnabled() {
         return $this->configHelper->getMinicartSupport();
+    }
+
+    public function isFloatingButtonEnabled() {
+        return true;
     }
 
     /**

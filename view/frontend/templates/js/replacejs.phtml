@@ -22,12 +22,13 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
+
 if ($block->shouldDisableBoltCheckout()) return;
 
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isFloatingButtonEnabled()) return;
 
 $trackCallbackCode = $block->getTrackCallbacks();
 
@@ -45,6 +46,7 @@ function($argName) {
 ob_start();
 ?>
 <script type="text/javascript">
+    var floatingButtonEnabled = <?php echo $block->isFloatingButtonEnabled() && $block->isOnPageFromFloatingButtonWhitelist() ? "true" : "false" ?>;
 
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
@@ -681,7 +683,7 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var createOrder = function () {
+        var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
             if (!window.BoltCheckout) {
@@ -806,8 +808,9 @@ ob_start();
                         createRequest = false;
                     })
             });
-
-            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+            var numItems = $(".counter-number").text();
+            var config = floatingButtonEnabled && (numItems && numItems !=="0" || dataChanged)? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover" } : {};
+            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks, config);
         };
         /////////////////////////////////////////////////////
 
@@ -859,6 +862,9 @@ ob_start();
             checkout_buttons = true;
             processButtons();
         });
+        if (floatingButtonEnabled) {
+            processButtons();
+        }
         ////////////////////////////////////////////////
 
         //////////////////////////////////////////////////////////
@@ -941,8 +947,10 @@ ob_start();
                         onDataChange(selector, function(element) {
                             if (visible_only && element.offsetParent === null) return;
                             if (element.textContent !== value) {
+                                var originalValue = value;
                                 value = element.textContent;
                                 if (non_empty && !value) return;
+                                if (originalValue !== "" && parseInt(originalValue) > -1) return;
                                 fn(element);
                             }
                         });
@@ -987,7 +995,7 @@ ob_start();
         // totals updated or items added via ajax call.
         // TODO: add this option to plugin configuration admin page
         ///////////////////////////////////////////////////////////////
-        monitorDataChange(settings.totals_change_selectors, createOrder, true, false);
+        monitorDataChange(settings.totals_change_selectors, createOrder, false, false);
         ///////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
@@ -1103,6 +1111,10 @@ ob_start();
         ///////////////////////////////////////////////////////////
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
+
+        $(document).on("ajax:addToCart", function () {
+            createOrder(null, true);
+        });
 
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
