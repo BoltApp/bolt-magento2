@@ -910,7 +910,7 @@ class Order extends AbstractHelper
             }
 
             $doesCardExist = $this->customerCreditCardCollectionFactory->create()
-                ->doesCardExist($customerId, $boltConsumerId, $boltCreditCardId);
+                            ->doesCardExist($customerId, $boltConsumerId, $boltCreditCardId);
 
             if ($doesCardExist) {
                 return false;
@@ -1984,7 +1984,7 @@ class Order extends AbstractHelper
         $creditMemo = $this->creditmemoFactory->createByOrder($order, $adjustment);
 
         $creditMemo->setAutomaticallyCreated(true)
-            ->addComment(__('The credit memo has been created automatically.'));
+                    ->addComment(__('The credit memo has been created automatically.'));
 
         $this->creditmemoManagement->refund($creditMemo, true);
     }
@@ -2068,8 +2068,8 @@ class Order extends AbstractHelper
     protected function isAnAllowedUpdateFromAdminPanel(OrderInterface $order, $transactionState)
     {
         return !Hook::$fromBolt &&
-            in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
-            $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
+               in_array($transactionState, [self::TS_AUTHORIZED, self::TS_COMPLETED]) &&
+               $order->getState() === OrderModel::STATE_PAYMENT_REVIEW;
     }
 
     /**

@@ -3680,19 +3680,19 @@ class OrderTest extends TestCase
                 'response' => '{"status": "completed", "reference": "ABCD-1234-XXXX"}',
                 'exception_message' => 'Payment void error',
                 'exception' => true,
-            ]
+                ]
             ],
             ['data' => [
                 'response' => '',
                 'exception_message' => 'Bad void response from boltpay',
                 'exception' => true,
-            ]
+                ]
             ],
             ['data' => [
                 'response' => '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}',
                 'exception_message' => 'Bad void response from boltpay',
                 'exception' => false,
-            ]
+                ]
             ]
         ];
     }
