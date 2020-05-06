@@ -42,7 +42,7 @@ class ShippingTaxTest extends TestCase
      */
     public function setAndGetAmount()
     {
-        $this->shippingTax->setAmount(self::Test/Unit/Model/Api/Data/TaxDataTest.phpTAX_AMOUNT);
+        $this->shippingTax->setAmount(self::TAX_AMOUNT);
         $this->assertEquals(self::TAX_AMOUNT, $this->shippingTax->getAmount());
     }
 }
