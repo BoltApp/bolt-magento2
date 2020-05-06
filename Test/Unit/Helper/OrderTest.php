@@ -1843,11 +1843,16 @@ class OrderTest extends TestCase
         );
     }
 
-
-    private function quoteAfterChange_baseAssertions()
+    /**
+     * @test
+     *
+     * @covers ::quoteAfterChange
+     *
+     * @throws ReflectionException
+     */
+    public function quoteAfterChange()
     {
         $time = date('Y-m-d H:i:s');
-
         $this->date->expects(self::once())->method('gmtDate')->willReturn($time);
         $this->quoteMock->expects(self::at(0))->method('setUpdatedAt')->with($time);
         $this->eventManager->expects(self::once())->method('dispatch')->with(
@@ -1856,38 +1861,6 @@ class OrderTest extends TestCase
                 'quote' => $this->quoteMock
             ]
         );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::quoteAfterChange
-     *
-     * @throws ReflectionException
-     */
-    public function quoteAfterChange_activeQuote()
-    {
-        $this->quoteAfterChange_baseAssertions();
-        $this->quoteMock->expects(self::at(1))->method('getIsActive')->willReturn(true);
-        $this->quoteMock->expects(self::never())->method('setIsActive');
-
-        TestHelper::invokeMethod($this->currentMock, 'quoteAfterChange', [$this->quoteMock]);
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::quoteAfterChange
-     *
-     * @throws ReflectionException
-     */
-    public function quoteAfterChange_inactiveQuote()
-    {
-        $this->quoteAfterChange_baseAssertions();
-        $this->quoteMock->expects(self::at(1))->method('getIsActive')->willReturn(false);
-        $this->quoteMock->expects(self::at(2))->method('setIsActive')->with(true);
-        $this->quoteMock->expects(self::at(3))->method('setIsActive')->with(false);
-
         TestHelper::invokeMethod($this->currentMock, 'quoteAfterChange', [$this->quoteMock]);
     }
 
@@ -3707,19 +3680,19 @@ class OrderTest extends TestCase
                 'response' => '{"status": "completed", "reference": "ABCD-1234-XXXX"}',
                 'exception_message' => 'Payment void error',
                 'exception' => true,
-                ]
+            ]
             ],
             ['data' => [
                 'response' => '',
                 'exception_message' => 'Bad void response from boltpay',
                 'exception' => true,
-                ]
+            ]
             ],
             ['data' => [
                 'response' => '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}',
                 'exception_message' => 'Bad void response from boltpay',
                 'exception' => false,
-                ]
+            ]
             ]
         ];
     }
