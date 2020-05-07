@@ -103,7 +103,6 @@ class BugsnagTest extends TestCase
         $this->storeManagerMock->expects(static::once())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
             ->willReturn(self::STORE_URL);
 
-
         $instance = new Bugsnag(
             $this->contextMock,
             $this->configHelperMock,
@@ -144,7 +143,7 @@ class BugsnagTest extends TestCase
         return [
             ['isSandboxModeSet' => true, 'releaseStage' => Bugsnag::STAGE_DEVELOPMENT, 'testEnv' => false],
             ['isSandboxModeSet' => false, 'releaseStage' => Bugsnag::STAGE_PRODUCTION, 'testEnv' => false],
-            ['isSandboxModeSet' => false, 'releaseStage' => Bugsnag::STAGE_PRODUCTION, 'testEnv' => true]
+            ['isSandboxModeSet' => true, 'releaseStage' => Bugsnag::STAGE_TEST, 'testEnv' => true]
         ];
     }
 
