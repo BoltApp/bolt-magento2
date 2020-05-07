@@ -1736,4 +1736,12 @@ class Config extends AbstractHelper
         $pickupInStoreShippingRateCode = $this->getPickupShippingMethodCodeConfiguration();
         return isset($pickupInStoreShippingRateCode) && $rateCode == $pickupInStoreShippingRateCode;
     }
+
+    /**
+     * @return bool
+     */
+    public function isTestEnvSet()
+    {
+        return isset($_SERVER['TEST_ENV']);
+    }
 }

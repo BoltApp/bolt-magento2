@@ -96,13 +96,13 @@ class BugsnagTest extends TestCase
     public function __construct_inVariousSandboxStates_setsAppropriateReleaseStage($isSandboxModeSet, $releaseStage, $testEnv)
     {
         $this->configHelperMock->expects(static::once())->method('isSandboxModeSet')->willReturn($isSandboxModeSet);
+        $this->configHelperMock->expects(static::once())->method('isTestEnvSet')->willReturn($testEnv);
         $this->configHelperMock->expects(static::once())->method('getModuleVersion')->willReturn('2.1.0');
 
         $this->storeManagerMock->expects(static::once())->method('getStore')->willReturnSelf();
         $this->storeManagerMock->expects(static::once())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
             ->willReturn(self::STORE_URL);
 
-        $this->currentMock->expects(static::once())->method('isTestEnvSet')->willReturn($testEnv);
 
         $instance = new Bugsnag(
             $this->contextMock,
