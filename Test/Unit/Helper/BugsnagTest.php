@@ -95,7 +95,7 @@ class BugsnagTest extends TestCase
      */
     public function __construct_inVariousSandboxStates_setsAppropriateReleaseStage($isSandboxModeSet, $releaseStage, $testEnv)
     {
-        $this->configHelperMock->expects(static::once())->method('isSandboxModeSet')->willReturn($isSandboxModeSet);
+        $this->configHelperMock->expects(static::any())->method('isSandboxModeSet')->willReturn($isSandboxModeSet);
         $this->configHelperMock->expects(static::once())->method('isTestEnvSet')->willReturn($testEnv);
         $this->configHelperMock->expects(static::once())->method('getModuleVersion')->willReturn('2.1.0');
 
