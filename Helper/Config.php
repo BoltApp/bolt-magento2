@@ -808,10 +808,30 @@ class Config extends AbstractHelper
         );
     }
 
+    /**
+     * @param $path
+     * @param $default
+     * @return mixed
+     */
     public function getCustomURLValueOrDefault($path, $default)
     {
         $storedValue = $this->getScopeConfig()->getValue($path);
-        return !empty($storedValue) ? $storedValue : $default;
+
+        return $this->validateCustomUrl($storedValue) ? $storedValue : $default;
+    }
+
+    /**
+     * @param $url
+     * @return bool
+     */
+    protected function validateCustomUrl($url) {
+        if (!$url) {
+            return false;
+        }
+
+        $last7Characters = substr($url, -7);
+        $last8Characters = substr($url, -8);
+        return ($last7Characters == 'bolt.me' || $last8Characters == 'bolt.me/');
     }
 
     /**
