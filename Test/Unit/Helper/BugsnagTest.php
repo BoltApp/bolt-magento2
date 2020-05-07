@@ -99,8 +99,8 @@ class BugsnagTest extends TestCase
         $this->configHelperMock->expects(static::once())->method('isTestEnvSet')->willReturn($testEnv);
         $this->configHelperMock->expects(static::once())->method('getModuleVersion')->willReturn('2.1.0');
 
-        $this->storeManagerMock->expects(static::once())->method('getStore')->willReturnSelf();
-        $this->storeManagerMock->expects(static::once())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
+        $this->storeManagerMock->expects(static::any())->method('getStore')->willReturnSelf();
+        $this->storeManagerMock->expects(static::any())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
             ->willReturn(self::STORE_URL);
 
         $instance = new Bugsnag(
