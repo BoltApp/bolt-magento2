@@ -1,7 +1,7 @@
 # Description
 Please include a summary of the change and which issue is fixed. Include the motivation for the changes, and comment on your PR if necessary for clarity.
 
-Fixes: (link Asana Task)
+Fixes: (link Jira ticket)
 
 #changelog
 
@@ -28,4 +28,4 @@ Please validate that you have tested your change in at least one of the followin
 - [ ] I have commented my code, particularly in hard-to-understand areas.
 - [ ] New and existing unit tests pass locally with my changes.
 - [ ] I have created or modified unit tests to sufficiently cover my changes.
-- [ ] I have added my Asana task link and provided a changelog message if applicable.
+- [ ] I have added my Jira ticket link and provided a changelog message.
