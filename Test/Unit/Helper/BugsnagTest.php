@@ -91,8 +91,9 @@ class BugsnagTest extends TestCase
      *
      * @param bool   $isSandboxModeSet configuration flag
      * @param string $releaseStage expected to be set to Bugsnag client
+     * @param bool   $testEnv to mock env variable or not
      */
-    public function __construct_inVariousSandboxStates_setsAppropriateReleaseStage($isSandboxModeSet, $releaseStage)
+    public function __construct_inVariousSandboxStates_setsAppropriateReleaseStage($isSandboxModeSet, $releaseStage, $testEnv)
     {
         $this->configHelperMock->expects(static::once())->method('isSandboxModeSet')->willReturn($isSandboxModeSet);
         $this->configHelperMock->expects(static::once())->method('getModuleVersion')->willReturn('2.1.0');
@@ -100,6 +101,9 @@ class BugsnagTest extends TestCase
         $this->storeManagerMock->expects(static::once())->method('getStore')->willReturnSelf();
         $this->storeManagerMock->expects(static::once())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
             ->willReturn(self::STORE_URL);
+
+        $this->currentMock->expects(static::once())->method('isTestEnvSet')->willReturn($testEnv);
+
         $instance = new Bugsnag(
             $this->contextMock,
             $this->configHelperMock,
@@ -138,8 +142,9 @@ class BugsnagTest extends TestCase
     public function __construct_inVariousSandboxStates_setsAppropriateReleaseStageProvider()
     {
         return [
-            ['isSandboxModeSet' => true, 'releaseStage' => Bugsnag::STAGE_DEVELOPMENT],
-            ['isSandboxModeSet' => false, 'releaseStage' => Bugsnag::STAGE_PRODUCTION]
+            ['isSandboxModeSet' => true, 'releaseStage' => Bugsnag::STAGE_DEVELOPMENT, 'testEnv' => false],
+            ['isSandboxModeSet' => false, 'releaseStage' => Bugsnag::STAGE_PRODUCTION, 'testEnv' => false],
+            ['isSandboxModeSet' => false, 'releaseStage' => Bugsnag::STAGE_PRODUCTION, 'testEnv' => true]
         ];
     }
 

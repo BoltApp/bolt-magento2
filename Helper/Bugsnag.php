@@ -90,7 +90,7 @@ class Bugsnag extends AbstractHelper
         $this->bugsnag->getConfig()->setNotifyReleaseStages([self::STAGE_DEVELOPMENT, self::STAGE_PRODUCTION]);
         $this->bugsnag->getConfig()->setAppVersion($this->configHelper->getModuleVersion());
 
-        if (isset($_SERVER['TEST_ENV'])) {
+        if ($this->isTestEnvSet()) {
             $this->bugsnag->getConfig()->setReleaseStage(self::STAGE_TEST);
         } else {
             $this->bugsnag->getConfig()->setReleaseStage($this->configHelper->isSandboxModeSet() ? self::STAGE_DEVELOPMENT : self::STAGE_PRODUCTION);
@@ -160,5 +160,15 @@ class Bugsnag extends AbstractHelper
                 ]
             ]);
         });
+    }
+
+    /**
+     * Returns if test env variable is set.
+     * Factored out here for ease of unit testing.
+     * @return bool
+     */
+    private function isTestEnvSet()
+    {
+        return isset($_SERVER['TEST_ENV']);
     }
 }
