@@ -264,8 +264,6 @@ class Cart extends AbstractHelper
      * @param HookHelper $hookHelper
      * @param CustomerRepository $customerRepository
      * @param Registry $coreRegistry
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
