@@ -1056,7 +1056,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
