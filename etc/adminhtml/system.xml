@@ -273,6 +273,7 @@
                     <field id="enable_store_pickup_feature" translate="label" sortOrder="294" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Enable In-Store Pickup Feature</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <config_path>payment/boltpay/enable_store_pickup_feature</config_path>
                     </field>
                     <field id="pickup_street" translate="label" type="text" sortOrder="295" showInDefault="1"
                            showInWebsite="1"
@@ -280,12 +281,14 @@
                         <label>In-Store Pickup Address</label>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                        <config_path>payment/boltpay/pickup_street</config_path>
                     </field>
                     <field id="pickup_apartment" translate="label" type="text" sortOrder="296" showInDefault="1"
                            showInWebsite="1"
                            showInStore="1">
                         <label>In-Store Pickup Apartment</label>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <config_path>payment/boltpay/pickup_apartment</config_path>
                     </field>
                     <field id="pickup_city" translate="label" type="text" sortOrder="297" showInDefault="1"
                            showInWebsite="1"
@@ -293,6 +296,7 @@
                         <label>In-Store Pickup City</label>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                        <config_path>payment/boltpay/pickup_city</config_path>
                     </field>
                     <field id="pickup_zipcode" translate="label" type="text" sortOrder="298" showInDefault="1"
                            showInWebsite="1"
@@ -300,6 +304,7 @@
                         <label>In-Store Pickup Zip Code</label>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                        <config_path>payment/boltpay/pickup_zipcode</config_path>
                     </field>
                     <field id="pickup_country_id" translate="label" type="select" sortOrder="299" showInDefault="1"
                            showInWebsite="1" showInStore="1">
@@ -307,17 +312,20 @@
                         <source_model>Magento\Directory\Model\Config\Source\Country</source_model>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                        <config_path>payment/boltpay/pickup_country_id</config_path>
                     </field>
                     <field id="pickup_region_id" translate="label" type="select" sortOrder="300" showInDefault="1"
                            showInWebsite="1" showInStore="1">
                         <label>In-Store Pickup Region/State</label>
                         <source_model>Magento\Directory\Model\Config\Source\Allregion</source_model>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
+                        <config_path>payment/boltpay/pickup_region_id</config_path>
                         <validate>validate-no-empty</validate>
                     </field>
                     <field id="pickup_shipping_method_code" translate="label" type="text" sortOrder="301" showInDefault="1"
                            showInWebsite="1" showInStore="1">
                         <label>In-Store Pickup Shipping Method Code</label>
+                        <config_path>payment/boltpay/pickup_shipping_method_code</config_path>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
                     </field>
