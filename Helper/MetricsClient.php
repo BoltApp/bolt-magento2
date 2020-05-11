@@ -17,10 +17,15 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Exception;
+use GuzzleHttp\Client;
 use http\Encoding\Stream;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -39,7 +44,7 @@ class MetricsClient extends AbstractHelper
     const METRICS_POST_INTERVAL_MICROS = 30000000;
 
     /**
-     * @var \GuzzleHttp\Client
+     * @var Client
      */
     private $guzzleClient;
 
@@ -79,6 +84,11 @@ class MetricsClient extends AbstractHelper
     private $cache;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param Context $context
      * @param Config $configHelper
      * @param DirectoryList $directoryList
@@ -86,8 +96,9 @@ class MetricsClient extends AbstractHelper
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
      * @param CacheInterface $cache
+     * @param Decider $featureSwitches
      *
-     * @throws
+     * @throws FileSystemException
      */
     public function __construct(
         Context $context,
@@ -96,7 +107,8 @@ class MetricsClient extends AbstractHelper
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
-        CacheInterface $cache
+        CacheInterface $cache,
+        Decider $featureSwitches
     ) {
         parent::__construct($context);
 
@@ -104,6 +116,7 @@ class MetricsClient extends AbstractHelper
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->cache = $cache;
+        $this->featureSwitches = $featureSwitches;
         //////////////////////////////////////////
         // Composerless installation.
         // Make sure libraries are in place:
@@ -117,8 +130,6 @@ class MetricsClient extends AbstractHelper
         $this->metricsFile = null;
         $this->guzzleClient = null;
         $this->metricsFile = null;
-
-
     }
 
     /**
@@ -145,7 +156,7 @@ class MetricsClient extends AbstractHelper
 
 
     /**
-     * Retrieves currrent time for when metrics are uploaded
+     * Retrieves current time for when metrics are uploaded
      *
      * @return int
      */
@@ -156,14 +167,14 @@ class MetricsClient extends AbstractHelper
     /**
      * Based off the environment the project is ran in, determines the endpoint to add merchant metrics
      *
-     * @return \GuzzleHttp\Client
+     * @return Client
      */
     protected function setClient() {
         // determines if we are in the Sandbox env or not
         $base_uri = $this->configHelper->getApiUrl();
 
         // Creates a Guzzle Client and Headers needed for Metrics Requests
-        return new \GuzzleHttp\Client(['base_uri' => $base_uri]);
+        return new Client(['base_uri' => $base_uri]);
     }
 
     /**
@@ -194,7 +205,7 @@ class MetricsClient extends AbstractHelper
      */
     protected function getFilePath() {
         // determine root directory and add create a metrics file there
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $objectManager = ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
         $rootPath  =  $directory->getRoot();
         return $rootPath . '/var/log/bolt_metrics.json';
@@ -324,6 +335,7 @@ class MetricsClient extends AbstractHelper
 
     /**
      * Centralized logic for handling the count and latency for a metric
+     * Controllable with the M2_MERCHANT_METRICS feature switch
      *
      * @param string        $countKey           name of count metric
      * @param int           $countValue         the count value of the metric
@@ -334,6 +346,10 @@ class MetricsClient extends AbstractHelper
      */
     public function processMetric($countKey, $countValue, $latencyKey, $latencyStartTime)
     {
+        if (!$this->featureSwitches->isMerchantMetricsEnabled())
+        {
+            return;
+        }
         $this->processCountMetric($countKey, $countValue);
         $this->processLatencyMetric($latencyKey, $latencyStartTime);
 
@@ -390,8 +406,8 @@ class MetricsClient extends AbstractHelper
             } else {
                 return null;
             }
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException(new Exception("Merchant Metrics send error", 1, $e));
         } finally {
             if ($workingFile) {
                 flock($workingFile, LOCK_UN);    // release the lock
