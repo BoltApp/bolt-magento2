@@ -17,20 +17,15 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Exception;
-use GuzzleHttp\Client;
 use http\Encoding\Stream;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 
 /**
@@ -44,7 +39,7 @@ class MetricsClient extends AbstractHelper
     const METRICS_POST_INTERVAL_MICROS = 30000000;
 
     /**
-     * @var Client
+     * @var \GuzzleHttp\Client
      */
     private $guzzleClient;
 
@@ -98,7 +93,7 @@ class MetricsClient extends AbstractHelper
      * @param CacheInterface $cache
      * @param Decider $featureSwitches
      *
-     * @throws FileSystemException
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
     public function __construct(
         Context $context,
@@ -167,14 +162,14 @@ class MetricsClient extends AbstractHelper
     /**
      * Based off the environment the project is ran in, determines the endpoint to add merchant metrics
      *
-     * @return Client
+     * @return \GuzzleHttp\Client
      */
     protected function setClient() {
         // determines if we are in the Sandbox env or not
         $base_uri = $this->configHelper->getApiUrl();
 
         // Creates a Guzzle Client and Headers needed for Metrics Requests
-        return new Client(['base_uri' => $base_uri]);
+        return new \GuzzleHttp\Client(['base_uri' => $base_uri]);
     }
 
     /**
@@ -205,7 +200,7 @@ class MetricsClient extends AbstractHelper
      */
     protected function getFilePath() {
         // determine root directory and add create a metrics file there
-        $objectManager = ObjectManager::getInstance();
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
         $rootPath  =  $directory->getRoot();
         return $rootPath . '/var/log/bolt_metrics.json';
@@ -406,8 +401,8 @@ class MetricsClient extends AbstractHelper
             } else {
                 return null;
             }
-        } catch (Exception $e) {
-            $this->bugsnag->notifyException(new Exception("Merchant Metrics send error", 1, $e));
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException(new \Exception("Merchant Metrics send error", 1, $e));
         } finally {
             if ($workingFile) {
                 flock($workingFile, LOCK_UN);    // release the lock

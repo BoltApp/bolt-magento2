@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Metric;
 use Magento\Framework\App\CacheInterface;
 use PHPUnit\Framework\TestCase;
@@ -37,7 +36,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class MetricsClientTest extends TestCase
 {
