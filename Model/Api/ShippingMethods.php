@@ -260,8 +260,10 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         if (!$quoteItems) {
-            throw new LocalizedException(
-                __('The Cart is empty.')
+            throw new BoltException (
+                __('The cart is empty. Please reload the page and checkout again.'),
+                null,
+                6103
             );
         }
 
@@ -283,8 +285,10 @@ class ShippingMethods implements ShippingMethodsInterface
                     ]
                 ]);
             });
-            throw new LocalizedException(
-                __('Cart Items data has changed.')
+            throw new BoltException (
+                __('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
+                null,
+                6103
             );
         }
     }
@@ -341,7 +345,14 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->quote = $this->getQuoteById($quoteId);
 
             if (!$this->quote) {
-                $this->throwUnknownQuoteIdException($quoteId);
+                $exception =  new BoltException(
+                    __('Unknown quote id: %1.', $quoteId)
+                );
+                return $this->catchExceptionAndSendError(
+                    $exception,
+                    __('Something went wrong with your cart. Please reload the page and checkout again.'),
+                    6103
+                );
             }
 
             $this->preprocessHook();

@@ -74,6 +74,28 @@ class TrackingSaveObserver implements ObserverInterface
     }
 
     /**
+     * Convert item options into bolt format
+     * @param array item options
+     * @return array
+     */
+    private function getPropertiesByProductOptions ($itemOptions) {
+        if (!isset($itemOptions['attributes_info'])) {
+            return [];
+        }
+        $properties = [];
+        foreach($itemOptions['attributes_info'] as $attributeInfo){
+            // Convert attribute to string if it's a boolean before sending to the Bolt API
+            $attributeValue = is_bool($attributeInfo['value']) ? var_export($attributeInfo['value'], true) : $attributeInfo['value'];
+            $attributeLabel = $attributeInfo['label'];
+            $properties[] = (object) [
+                'name' => $attributeLabel,
+                'value' => $attributeValue
+            ];
+        }
+        return $properties;
+    }
+
+    /**
      * @param Observer $observer
      */
     public function execute(Observer $observer)
@@ -98,7 +120,11 @@ class TrackingSaveObserver implements ObserverInterface
 
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
-                $items[] = (object)['reference'=>$item->getOrderItem()->getProductId()];
+                $orderItem = $item->getOrderItem();
+                $items[] = (object)[
+                    'reference' => $orderItem->getProductId(),
+                    'options'   => $this->getPropertiesByProductOptions($orderItem->getProductOptions()),
+                ];
             }
 
             $apiKey = $this->configHelper->getApiKey($order->getStoreId());

@@ -336,18 +336,14 @@ class ShippingMethodsTest extends TestCase
         $quote->method('isVirtual')
             ->willReturn(false);
 
-        $this->initCurrentMock(['throwUnknownQuoteIdException', 'sendErrorResponse']);
+        $this->initCurrentMock(['catchExceptionAndSendError']);
 
-        $message = new Phrase('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
-        $exception = new LocalizedException($message);
+        $exception =  new BoltException(
+            __('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID)
+        );
 
-        $this->currentMock->method('throwUnknownQuoteIdException')
-            ->willThrowException($exception);
-
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(6009, "Unprocessable Entity: $message", 422);
+        $this->currentMock->expects(self::once())->method('catchExceptionAndSendError')
+            ->with($exception, "Something went wrong with your cart. Please reload the page and checkout again.", 6103);
 
         $result = $this->currentMock->getShippingMethods($cart, $shippingAddress);
 
@@ -1186,8 +1182,9 @@ Room 4000',
         $quote->expects(self::once())->method('getAllVisibleItems')->willReturn([]);
         self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('The Cart is empty.');
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(6103);
+        $this->expectExceptionMessage('The cart is empty. Please reload the page and checkout again.');
 
         self::invokeInaccessibleMethod(
             $this->currentMock,
@@ -1220,7 +1217,8 @@ Room 4000',
         self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Cart Items data has changed.');
+        $this->expectExceptionCode(6103);
+        $this->expectExceptionMessage('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.');
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($quote, $cart) {
