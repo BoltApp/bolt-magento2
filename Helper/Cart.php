@@ -950,6 +950,7 @@ class Cart extends AbstractHelper
 
             $child->setData($key, $value);
         }
+        $child->setExtensionAttributes($parent->getExtensionAttributes());
         if ($save) $child->save();
     }
 
