@@ -99,4 +99,14 @@ class ReceivedUrl extends Action
 
         return $this->_backendUrl->getUrl('sales/order/view', $params);
     }
+
+    /**
+     * Here we don't validate URL form/secret keys because administrator is redirected here from frontend
+     * This poses no security risk as this endpoint requires payload signed by Bolt to work
+     * Potentially move signature validation here
+     */
+    public function _processUrlKeys()
+    {
+        return true;
+    }
 }
