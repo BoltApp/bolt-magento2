@@ -885,17 +885,29 @@ class Order extends AbstractHelper
 
     /**
      * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
+     *
+     * @param $displayId
      * @param $reference
      * @param $storeId
      * @return bool
      */
-    public function saveCustomerCreditCard($reference, $storeId)
+    public function saveCustomerCreditCard($displayId, $reference, $storeId)
     {
         try {
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
-            $parentQuote = $this->cartHelper->getQuoteById(@$transaction->order->cart->order_reference);
+            $parentQuoteId = @$transaction->order->cart->order_reference;
+            $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
-            $customerId = $parentQuote->getCustomerId();
+            if (!$quote){
+                list(, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
+                $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
+            }
+
+            if (!$quote) {
+                return false;
+            }
+
+            $customerId = $quote->getCustomerId();
             $boltConsumerId = @$transaction->from_consumer->id;
             $boltCreditCard = @$transaction->from_credit_card;
             $boltCreditCardId = @$boltCreditCard->id;
@@ -1215,7 +1227,13 @@ class Order extends AbstractHelper
         $boltParentQuoteId = $immutableQuote->getBoltParentQuoteId();
         if ($boltParentQuoteId) {
             $quote = $this->cartHelper->getQuoteById($boltParentQuoteId);
-            $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+            if($quote) {
+                $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
+            } else {
+                // if the parent quote is removed then we create order by the immutable quote
+                $quote = $immutableQuote;
+            }
+
         } else {
             // In Product page checkout case we created quote ourselves so we can change it and no need to work with quote copy
             $quote = $immutableQuote;
