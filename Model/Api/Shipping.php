@@ -29,6 +29,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Magento\Quote\Api\ShipmentEstimationInterface;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
+use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
 
 /**
  * Class ShippingMethods
@@ -58,22 +59,30 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingTaxContext;
 
     /**
+     * @var EstimateAddressInterfaceFactory
+     */
+    protected $estimateAddressFactory;
+
+    /**
      * Assigns local references to global resources
      *
      * @param ShippingTaxContext $shippingTaxContext
      *
      * @param ShippingDataInterfaceFactory $shippingDataFactory
      * @param ShipmentEstimationInterface $shippingMethodManagement
+     * @param EstimateAddressInterfaceFactory $estimateAddressFactory
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
-        ShipmentEstimationInterface $shippingMethodManagement
+        ShipmentEstimationInterface $shippingMethodManagement,
+        EstimateAddressInterfaceFactory $estimateAddressFactory
     ) {
         parent::__construct($shippingTaxContext);
 
         $this->shippingDataFactory = $shippingDataFactory;
         $this->shippingMethodManagement = $shippingMethodManagement;
+        $this->estimateAddressFactory = $estimateAddressFactory;
     }
 
     /**
@@ -139,13 +148,19 @@ class Shipping extends ShippingTax implements ShippingInterface
      */
     public function getShippingOptions($addressData)
     {
-        $this->populateAddress($addressData);
+        $addressData = $this->reformatAddressData($addressData);
 
+        $estimateAddress = $this->estimateAddressFactory->create();
+
+        $estimateAddress->setRegionId(@$addressData['region_id']);
+        $estimateAddress->setRegion(@$addressData['region']);
+        $estimateAddress->setCountryId(@$addressData['country_id']);
+        $estimateAddress->setPostcode(@$addressData['postcode']);
         /**
          * @var ShippingMethodInterface[] $shippingOptionsArray
          */
         $shippingOptionsArray = $this->shippingMethodManagement
-            ->estimateByExtendedAddress($this->quote->getId(), $this->quote->getShippingAddress());
+            ->estimateByAddress($this->quote->getId(), $estimateAddress);
         $currencyCode = $this->quote->getQuoteCurrencyCode();
 
         list($shippingOptions, $errors) = $this->formatResult($shippingOptionsArray, $currencyCode);
