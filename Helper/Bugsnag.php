@@ -34,6 +34,7 @@ class Bugsnag extends AbstractHelper
     const API_KEY           = '888766c6cfe49858afc36b3a2a2c6548';
     const STAGE_DEVELOPMENT = 'development';
     const STAGE_PRODUCTION  = 'production';
+    const STAGE_TEST        = 'test';
 
     /**
      * @var BugsnagClient
@@ -85,11 +86,15 @@ class Bugsnag extends AbstractHelper
 
         $this->configHelper = $configHelper;
 
-        $release_stage = $this->configHelper->isSandboxModeSet() ? self::STAGE_DEVELOPMENT : self::STAGE_PRODUCTION;
-
         $this->bugsnag = \Bugsnag\Client::make(self::API_KEY);
-        $this->bugsnag->getConfig()->setReleaseStage($release_stage);
+        $this->bugsnag->getConfig()->setNotifyReleaseStages([self::STAGE_DEVELOPMENT, self::STAGE_PRODUCTION]);
         $this->bugsnag->getConfig()->setAppVersion($this->configHelper->getModuleVersion());
+
+        if ($this->configHelper->isTestEnvSet()) {
+            $this->bugsnag->getConfig()->setReleaseStage(self::STAGE_TEST);
+        } else {
+            $this->bugsnag->getConfig()->setReleaseStage($this->configHelper->isSandboxModeSet() ? self::STAGE_DEVELOPMENT : self::STAGE_PRODUCTION);
+        }
 
         $this->addCommonMetaData();
 
