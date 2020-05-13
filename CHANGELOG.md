@@ -121,3 +121,7 @@
  - Support for shipping discounts
  - Add Bolt account button for order management
  - Added Amasty store credit support
+## [v2.7.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.7.0) 2020-05-12
+ - Add catalog price rule support for backoffice
+ - Unit tests
+ - Bug fixes
