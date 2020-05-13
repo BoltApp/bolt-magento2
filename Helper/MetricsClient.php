@@ -25,7 +25,7 @@ use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 
 /**
@@ -79,6 +79,11 @@ class MetricsClient extends AbstractHelper
     private $cache;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param Context $context
      * @param Config $configHelper
      * @param DirectoryList $directoryList
@@ -86,8 +91,9 @@ class MetricsClient extends AbstractHelper
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
      * @param CacheInterface $cache
+     * @param Decider $featureSwitches
      *
-     * @throws
+     * @throws \Magento\Framework\Exception\FileSystemException
      */
     public function __construct(
         Context $context,
@@ -96,7 +102,8 @@ class MetricsClient extends AbstractHelper
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
-        CacheInterface $cache
+        CacheInterface $cache,
+        Decider $featureSwitches
     ) {
         parent::__construct($context);
 
@@ -104,6 +111,7 @@ class MetricsClient extends AbstractHelper
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->cache = $cache;
+        $this->featureSwitches = $featureSwitches;
         //////////////////////////////////////////
         // Composerless installation.
         // Make sure libraries are in place:
@@ -117,8 +125,6 @@ class MetricsClient extends AbstractHelper
         $this->metricsFile = null;
         $this->guzzleClient = null;
         $this->metricsFile = null;
-
-
     }
 
     /**
@@ -145,7 +151,7 @@ class MetricsClient extends AbstractHelper
 
 
     /**
-     * Retrieves currrent time for when metrics are uploaded
+     * Retrieves current time for when metrics are uploaded
      *
      * @return int
      */
@@ -324,6 +330,7 @@ class MetricsClient extends AbstractHelper
 
     /**
      * Centralized logic for handling the count and latency for a metric
+     * Controllable with the M2_MERCHANT_METRICS feature switch
      *
      * @param string        $countKey           name of count metric
      * @param int           $countValue         the count value of the metric
@@ -334,6 +341,10 @@ class MetricsClient extends AbstractHelper
      */
     public function processMetric($countKey, $countValue, $latencyKey, $latencyStartTime)
     {
+        if (!$this->featureSwitches->isMerchantMetricsEnabled())
+        {
+            return;
+        }
         $this->processCountMetric($countKey, $countValue);
         $this->processLatencyMetric($latencyKey, $latencyStartTime);
 
