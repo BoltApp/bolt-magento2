@@ -460,8 +460,13 @@ class Payment extends AbstractMethod
 
             $order = $payment->getOrder();
 
-            if ($amount <= 0) {
-                throw new LocalizedException(__('Invalid amount for refund.'));
+            if ($amount < 0.01) {
+                ////////////////////////////////////////////////////////////////////////////////
+                // In certain circumstances, an amount's value of zero can be sent.
+                // This will then result in an exception by the Bolt API.
+                // In these instances, there is no need to call the Bolt API, so we simply return
+                ////////////////////////////////////////////////////////////////////////////////
+                return $this;
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
