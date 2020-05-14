@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\TaxResultInterface;
 
 /**
- * Class ShippingTax. Tax property of the Shipping and Tax.
+ * Class TaxResult. SubtotalAmount property of Tax.
  * @package Bolt\Boltpay\Model\Api\Data
  */
 class TaxResult implements TaxResultInterface, \JsonSerializable

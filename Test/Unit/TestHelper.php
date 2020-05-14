@@ -104,5 +104,3 @@ class TestHelper extends TestCase
     }
 
 }
-
-

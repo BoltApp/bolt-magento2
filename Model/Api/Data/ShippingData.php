@@ -21,7 +21,7 @@ use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 
 /**
- * Class ShippingOptions. Shipping options property of the Shipping and Tax.
+ * Class ShippingData. Shipping options property of Shipping.
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
