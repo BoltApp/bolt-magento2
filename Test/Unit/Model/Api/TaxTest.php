@@ -281,8 +281,8 @@ class TaxTest extends TestCase
 
         $this->assertEquals(
             $shippingOption, $this->currentMock->createShippingOption(
-                $totalsInformation, self::CURRENCY_CODE, $shipping_option
-            )
+            $totalsInformation, self::CURRENCY_CODE, $shipping_option
+        )
         );
     }
 
@@ -320,8 +320,8 @@ class TaxTest extends TestCase
 
         $this->assertEquals(
             $shippingOption, $this->currentMock->createShippingOption(
-                $totalsInformation, self::CURRENCY_CODE, $shipping_option
-            )
+            $totalsInformation, self::CURRENCY_CODE, $shipping_option
+        )
         );
     }
 

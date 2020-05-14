@@ -32,7 +32,7 @@ use \Magento\Quote\Api\Data\ShippingMethodInterface;
 use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
 
 /**
- * Class ShippingMethods
+ * Class Shipping
  * Shipping options hook endpoint. Get shipping methods using shipping address and cart details
  *
  * @package Bolt\Boltpay\Model\Api

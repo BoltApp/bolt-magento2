@@ -255,7 +255,7 @@ class ShippingTest extends TestCase
             'email' => 'integration@bolt.com'
         ];
 
-        $reformatedAddressData = [
+        $reformattedAddressData = [
             'country_id' => 'US',
             'postcode' => '90210',
             'region' => 'California',
@@ -272,7 +272,7 @@ class ShippingTest extends TestCase
         $this->initCurrentMock(['reformatAddressData', 'formatResult']);
 
         $this->currentMock->expects(self::once())->method('reformatAddressData')->with($addressData)
-            ->willReturn($reformatedAddressData);
+            ->willReturn($reformattedAddressData);
 
         $quote = $this->getQuoteMock();
 
@@ -310,13 +310,13 @@ class ShippingTest extends TestCase
             ->willReturn([$shippingOptions, $errors]);
 
         $bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $callback) use ($errors, $reformatedAddressData) {
+            function (callable $callback) use ($errors, $reformattedAddressData) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())
                     ->method('setMetaData')->with(
                         [
                             'SHIPPING ERRORS' => [
-                                'address' => $reformatedAddressData,
+                                'address' => $reformattedAddressData,
                                 'errors'  => $errors
                             ]
                         ]
@@ -347,7 +347,7 @@ class ShippingTest extends TestCase
             'email' => 'integration@bolt.com'
         ];
 
-        $reformatedAddressData = [
+        $reformattedAddressData = [
             'country_id' => 'US',
             'postcode' => '90210',
             'region' => 'California',
@@ -364,7 +364,7 @@ class ShippingTest extends TestCase
         $this->initCurrentMock(['reformatAddressData', 'formatResult']);
 
         $this->currentMock->expects(self::once())->method('reformatAddressData')->with($addressData)
-            ->willReturn($reformatedAddressData);
+            ->willReturn($reformattedAddressData);
 
         $quote = $this->getQuoteMock();
 
@@ -397,13 +397,13 @@ class ShippingTest extends TestCase
             ->willReturn([$shippingOptions, $errors]);
 
         $bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $callback) use ($reformatedAddressData) {
+            function (callable $callback) use ($reformattedAddressData) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())
                     ->method('setMetaData')->with(
                         [
                             'NO SHIPPING' => [
-                                'address' => $reformatedAddressData,
+                                'address' => $reformattedAddressData,
                                 'immutable quote ID' => self::IMMUTABLE_QUOTE_ID,
                                 'parent quote ID' => self::PARENT_QUOTE_ID,
                                 'order increment ID' => self::INCREMENT_ID,
@@ -454,6 +454,4 @@ class ShippingTest extends TestCase
             ->willReturn(self::CURRENCY_CODE);
         return $quote;
     }
-
-
 }
