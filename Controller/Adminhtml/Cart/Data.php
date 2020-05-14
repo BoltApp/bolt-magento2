@@ -60,7 +60,7 @@ class Data extends Action
      * @var MetricsClient
      */
     private $metricsClient;
-    
+
     /**
      * @var DataObjectFactory
      */
@@ -116,7 +116,8 @@ class Data extends Action
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
-            $publishableKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment($storeId);
             $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
 
             // format and send the response
@@ -129,7 +130,8 @@ class Data extends Action
             $result = $this->dataObjectFactory->create();
             $result->setData('cart', $cart);
             $result->setData('hints', $hints);
-            $result->setData('publishableKey', $publishableKey);
+            $result->setData('backOfficeKey', $backOfficeKey);
+            $result->setData('paymentOnlyKey', $paymentOnlyKey);
             $result->setData('storeId', $storeId);
             $result->setData('isPreAuth', $isPreAuth);
 

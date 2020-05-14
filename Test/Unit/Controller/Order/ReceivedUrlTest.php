@@ -8,6 +8,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
@@ -15,6 +16,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
@@ -24,6 +26,9 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Framework\App\Response\RedirectInterface;
 
+/**
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Order\ReceivedUrl
+ */
 class ReceivedUrlTest extends TestCase
 {
     //TODO: figure out proper values for these things, probably some reverse engineering to be done.
@@ -103,6 +108,66 @@ class ReceivedUrlTest extends TestCase
      * @var RedirectInterface | MockObject
      */
     private $redirect;
+
+    /**
+     * @test
+     * that hasAdminUrlReferer returns true when referrer for current request is admin order create page
+     *
+     * @covers ::hasAdminUrlReferer
+     *
+     * @dataProvider hasAdminUrlReferer_withVariousHttpReferrersProvider
+     *
+     * @param string $referrerUrl of the currenct request
+     * @param bool   $isAdminReferrer expected output of the method call
+     *
+     * @throws \ReflectionException if class tested doesn't have _request property or hasAdminUrlReferer method
+     */
+    public function hasAdminUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsAdminOrderCreate(
+        $referrerUrl,
+        $isAdminReferrer
+    ) {
+        $om = new ObjectManager($this);
+        $backendUrl = $this->createMock(\Magento\Backend\Model\UrlInterface::class);
+        $instance = $om->getObject(\Bolt\Boltpay\Controller\Order\ReceivedUrl::class, ['backendUrl' => $backendUrl]);
+        $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
+        $backendUrl->expects(static::once())->method('setScope')->with(0);
+        $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')->willReturn($referrerUrl);
+        $backendUrl->expects(static::once())->method('getUrl')->with("sales/order_create/index", ['_nosecret' => true])
+            ->willReturn('https://example.com/admin/sales/order/create');
+        TestHelper::setProperty($instance, '_request', $request);
+        static::assertEquals($isAdminReferrer, TestHelper::invokeMethod($instance, 'hasAdminUrlReferer'));
+    }
+
+    /**
+     * Data provider for {@see hasAdminUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsAdminOrderCreate}
+     *
+     * @return array[] containing referrer url and expected result of the method tested
+     */
+    public function hasAdminUrlReferer_withVariousHttpReferrersProvider()
+    {
+        return [
+            [
+                'referrerUrl'     => 'https://example.com/admin/sales/order/create/key/' . sha1('bolt'),
+                'isAdminReferrer' => true
+            ],
+            [
+                'referrerUrl'     => 'https://example.com/admin/sales/order/create',
+                'isAdminReferrer' => true
+            ],
+            [
+                'referrerUrl'     => '',
+                'isAdminReferrer' => false
+            ],
+            [
+                'referrerUrl'     => 'https://example.com/',
+                'isAdminReferrer' => false
+            ],
+            [
+                'referrerUrl'     => 'https://example.com/admin',
+                'isAdminReferrer' => false
+            ],
+        ];
+    }
 
     /**
      * @test
@@ -223,8 +288,13 @@ class ReceivedUrlTest extends TestCase
 
     /**
      * @test
+     * that customer will be redirected to backend received url endpoint if backoffice order is placed by admin
+     *
+     * @covers ::execute
+     * @covers ::hasAdminUrlReferer
+     * @covers ::redirectToAdminIfNeeded
      */
-    public function execute_RedirectToAdminUrlIfBackofficeOrderPlacedByAdmin()
+    public function execute_ifBackofficeOrderPlacedByAdmin_redirectsToAdminReceivedUrl()
     {
         $request = $this->initRequest($this->defaultRequestMap);
 
@@ -267,9 +337,11 @@ class ReceivedUrlTest extends TestCase
             $orderHelper
         );
 
-        $this->redirect->method('getRefererUrl')->willReturn('https://example.com/admin/sales/order');
+        $this->redirect->expects(static::never())->method('getRefererUrl');
+        $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')
+            ->willReturn('https://example.com/admin/sales/order/create');
         $this->backendUrl->method('getUrl')
-             ->willReturnOnConsecutiveCalls('https://example.com/admin/sales/order', self::BACKEND_REDIRECT_URL);
+             ->willReturnOnConsecutiveCalls('https://example.com/admin/sales/order/create', self::BACKEND_REDIRECT_URL);
 
         $receivedUrl->method('getRequest')
                     ->willReturn($request);
@@ -657,7 +729,7 @@ class ReceivedUrlTest extends TestCase
 
     private function initRequest($requestMap)
     {
-        $request = $this->createMock(RequestInterface::class);
+        $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
         $request->expects($this->exactly(3))
             ->method('getParam')
             ->will($this->returnValueMap($requestMap));
