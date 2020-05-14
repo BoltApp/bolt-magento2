@@ -18,9 +18,9 @@
 namespace Bolt\Boltpay\Api;
 
 /**
- * Tax interface Tax endpoint.
+ * Tax interface. Tax endpoint.
  *
- * Get shipping methods using shipping address and cart details.
+ * Get tax data using shipping address, cart details and selected shipping option.
  * @api
  */
 interface TaxInterface
