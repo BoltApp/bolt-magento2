@@ -194,7 +194,7 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
-   /** @var WebhookLogCollectionFactory  */
+    /** @var WebhookLogCollectionFactory  */
     protected $webhookLogCollectionFactory;
 
     /** @var WebhookLogFactory */
@@ -789,10 +789,10 @@ class Order extends AbstractHelper
                         $this->voidTransactionOnBolt($transaction->id, $storeId);
                     }
 
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
-                ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
+                    ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                     if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
                         $this->bugsnag->notifyException($exception);
