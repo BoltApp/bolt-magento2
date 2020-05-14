@@ -23,7 +23,7 @@ use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingData;
 
 /**
- * Class ShippingTest
+ * Class ShippingDataTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingData
  */
