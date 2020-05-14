@@ -36,7 +36,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class MetricsClientTest extends TestCase
 {
@@ -120,7 +120,10 @@ class MetricsClientTest extends TestCase
      */
     private $cache;
 
-
+    /**
+     * @var Decider
+     */
+    private $deciderMock;
 
     /**
      * @inheritdoc
@@ -153,6 +156,7 @@ class MetricsClientTest extends TestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->cache = $this->createMock(CacheInterface::class);
+        $this->deciderMock = $this->createMock(Decider::class);
 
         // Partially Mock the Class we are tesing
         $methods = ['unlockFile', 'lockFile', 'getCurrentTime'];
@@ -167,7 +171,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -238,7 +243,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -278,7 +284,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -316,7 +323,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -888,6 +896,9 @@ class MetricsClientTest extends TestCase
      */
     public function processMetric()
     {
+        $this->deciderMock->expects($this->once())->method('isMerchantMetricsEnabled')
+            ->willReturn(true);
+
         $methods = ['processCountMetric', 'processLatencyMetric', 'postMetrics'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
@@ -900,7 +911,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -913,6 +925,42 @@ class MetricsClientTest extends TestCase
             ->method('processLatencyMetric')
             ->with($this->latencyKey,$this->latencyValue);
         $this->currentMock->expects(self::once())->method('postMetrics');
+
+        $this->currentMock->processMetric($this->countKey, $this->countValue,$this->latencyKey,$this->latencyValue);
+    }
+
+    /**
+     * @test
+     */
+    public function processMetric_disabledFeature()
+    {
+        $this->deciderMock->expects($this->once())->method('isMerchantMetricsEnabled')
+            ->willReturn(false);
+
+        $methods = ['processCountMetric', 'processLatencyMetric', 'postMetrics'];
+        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
+            ->setMethods($methods)
+            ->enableOriginalConstructor()
+            ->setConstructorArgs(
+                [
+                    $this->context,
+                    $this->configHelper,
+                    $this->directoryList,
+                    $this->storeManager,
+                    $this->bugsnag,
+                    $this->logHelper,
+                    $this->cache,
+                    $this->deciderMock
+                ]
+            )
+            ->getMock();
+        $this->currentMock
+            ->expects(self::never())
+            ->method('processCountMetric');
+        $this->currentMock
+            ->expects(self::never())
+            ->method('processLatencyMetric');
+        $this->currentMock->expects(self::never())->method('postMetrics');
 
         $this->currentMock->processMetric($this->countKey, $this->countValue,$this->latencyKey,$this->latencyValue);
     }
@@ -943,7 +991,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -966,7 +1015,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -985,7 +1035,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
@@ -1004,7 +1055,8 @@ class MetricsClientTest extends TestCase
                     $this->storeManager,
                     $this->bugsnag,
                     $this->logHelper,
-                    $this->cache
+                    $this->cache,
+                    $this->deciderMock
                 ]
             )
             ->getMock();
