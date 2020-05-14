@@ -291,4 +291,11 @@
                 type="Bolt\Boltpay\Plugin\RestoreQuotePlugin"
                 sortOrder="1"/>
     </type>
+
+    <type name="Bolt\Boltpay\Helper\FeatureSwitch\Decider">
+        <arguments>
+            <argument name="coreSession" xsi:type="object">Magento\Framework\Session\SessionManagerInterface\Proxy</argument>
+        </arguments>
+    </type>
+
 </config>

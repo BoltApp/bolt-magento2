@@ -86,6 +86,11 @@ class Definitions {
      */
     const M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION = "M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION";
 
+    /**
+     * Enable merchant metrics
+     */
+    const M2_MERCHANT_METRICS = "M2_MERCHANT_METRICS";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -147,5 +152,11 @@ class Definitions {
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ),
+        self::M2_MERCHANT_METRICS => array(
+            self::NAME_KEY            => self::M2_MERCHANT_METRICS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        )
     );
 }
