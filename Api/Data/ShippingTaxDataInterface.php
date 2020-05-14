@@ -18,9 +18,8 @@
 namespace Bolt\Boltpay\Api\Data;
 
 /**
- * Shipping options interface. Shipping options field of the Shipping response object.
+ * Shipping / Tax common interface
  *
- * Get shipping options available.
  * @api
  */
 interface ShippingTaxDataInterface

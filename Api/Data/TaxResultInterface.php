@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Api\Data;
 
 /**
- * Shipping tax interface. Tax field of the Shipping and Tax response object.
+ * Tax result interface. Subtotal amount field of the Tax response object.
  *
  * @api
  */
