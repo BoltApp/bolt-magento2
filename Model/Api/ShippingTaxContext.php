@@ -32,8 +32,8 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 
 
 /**
- * Class ShippingMethods
- * Shipping and Tax hook endpoint. Get shipping methods using shipping address and cart details
+ * Class ShippingTaxContext
+ * Common DI objects for Shipping Aand Tax endpoint handlers
  *
  * @package Bolt\Boltpay\Model\Api
  */

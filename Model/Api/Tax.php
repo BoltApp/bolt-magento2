@@ -30,8 +30,8 @@ use Bolt\Boltpay\Model\Api\ShippingTax;
 use Magento\Quote\Api\Data\TotalsInterface;
 
 /**
- * Class ShippingMethods
- * Shipping and Tax hook endpoint. Get shipping methods using shipping address and cart details
+ * Class Tax
+ * Tax hook endpoint. Get resulting tax data.
  *
  * @package Bolt\Boltpay\Model\Api
  */

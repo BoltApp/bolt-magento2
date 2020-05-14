@@ -36,8 +36,8 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 
 /**
- * Class ShippingMethods
- * Shipping and Tax hook endpoint. Get shipping methods using shipping address and cart details
+ * Class ShippingTax
+ * Shipping and Tax hook endpoints paremt class - common methods.
  *
  * @package Bolt\Boltpay\Model\Api
  */
