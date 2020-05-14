@@ -208,4 +208,8 @@ class Decider extends AbstractHelper {
     public function isIgnoreHookForInvoiceCreationEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_IGNORE_HOOK_FOR_INVOICE_CREATION);
     }
+
+    public function isMerchantMetricsEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_MERCHANT_METRICS);
+    }
 }
