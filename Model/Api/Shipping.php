@@ -26,7 +26,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
-use Magento\Quote\Api\ShipmentEstimationInterface;
+use Magento\Quote\Api\ShippingMethodManagementInterface;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
 use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
@@ -49,7 +49,7 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingDataFactory;
 
     /**
-     * @var ShipmentEstimationInterface
+     * @var ShippingMethodManagementInterface
      */
     protected $shippingMethodManagement;
 
@@ -69,16 +69,17 @@ class Shipping extends ShippingTax implements ShippingInterface
      * @param ShippingTaxContext $shippingTaxContext
      *
      * @param ShippingDataInterfaceFactory $shippingDataFactory
-     * @param ShipmentEstimationInterface $shippingMethodManagement
+     * @param ShippingMethodManagementInterface $shippingMethodManagement
      * @param EstimateAddressInterfaceFactory $estimateAddressFactory
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
-        ShipmentEstimationInterface $shippingMethodManagement,
+        ShippingMethodManagementInterface $shippingMethodManagement,
         EstimateAddressInterfaceFactory $estimateAddressFactory
     ) {
         parent::__construct($shippingTaxContext);
+
         $this->shippingDataFactory = $shippingDataFactory;
         $this->shippingMethodManagement = $shippingMethodManagement;
         $this->estimateAddressFactory = $estimateAddressFactory;
