@@ -525,17 +525,6 @@ class PaymentTest extends TestCase
 
     /**
      * @test
-     */
-    public function refundPayment_invalidAmount()
-    {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Invalid amount for refund.');
-        $this->currentMock->refund($this->paymentMock, -1);
-    }
-
-    /**
-     * @test
      * that refund avoids calling Bolt refund API for amounts lower than 1 cent
      *
      * @covers ::refund
@@ -548,17 +537,9 @@ class PaymentTest extends TestCase
      */
     public function refund_withAmountsLessThanOneCent_refundsWithoutCallingTheBoltApi($amount)
     {
-        $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
-        $this->apiHelper->expects($this->never())->method('buildRequest');
-        $this->apiHelper->expects($this->never())->method('sendRequest');
-        $paymentMock = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getOrder', 'getCreditMemo' ])
-            ->getMockForAbstractClass();
-        $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
-        $creditMemoMock = $this->createMock(Order\Creditmemo::class);
-        $paymentMock->expects($this->once())->method('getCreditMemo')->willReturn($creditMemoMock);
-        $creditMemoMock->expects($this->once())->method('getGrandTotal')->willReturn($amount);
-        $this->currentMock->refund($paymentMock, $amount);
+        $this->orderMock->expects(self::never())->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+
+        $this->currentMock->refund($this->paymentMock, $amount);
     }
 
     /**
