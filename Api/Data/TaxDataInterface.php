@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Api\Data;
 /**
  * Tax data interface. Tax response object fields.
  *
- * Get shipping options available.
+ * Get subtotal and shipping tax.
  * @api
  */
 interface TaxDataInterface extends ShippingTaxDataInterface
@@ -34,7 +34,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
     public function getTaxResult();
 
     /**
-     * Set available shipping options.
+     * Set tax result.
      *
      * @param \Bolt\Boltpay\Api\Data\TaxResultInterface
      * @return $this
@@ -43,7 +43,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
     public function setTaxResult($taxResult);
 
     /**
-     * Get selected shipping option.
+     * Get selected shipping option tax data.
      *
      * @return \Bolt\Boltpay\Api\Data\ShippingOptionInterface
      * @api
@@ -51,7 +51,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
     public function getShippingOption();
 
     /**
-     * Set selected shipping option.
+     * Set selected shipping option tax data.
      *
      * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface
      * @return $this
