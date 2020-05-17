@@ -25,7 +25,7 @@ namespace Bolt\Boltpay\Api\Data;
 interface TaxResultInterface
 {
     /**
-     * Get subtotaltotal tax amount.
+     * Get subtotal tax amount.
      *
      * @api
      * @return int
@@ -33,7 +33,7 @@ interface TaxResultInterface
     public function getSubtotalAmount();
 
     /**
-     * Set subtotaltotal tax amount.
+     * Set subtotal tax amount.
      *
      * @api
      * @param int $amount
