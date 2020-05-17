@@ -374,8 +374,6 @@ class TaxTest extends TestCase
         $this->currentMock->expects(self::once())->method('createShippingOption')
             ->with($totalsInformation, self::CURRENCY_CODE, $shipping_option)->willReturn($shippingOption);
 
-        $taxResult->expects(self::once())->method('setSubtotalAmount')->willReturn(110);
-
         $taxData = $this->createMock(TaxDataInterface::class);
         $this->taxDataFactory->expects(self::once())->method('create')->willReturn($taxData);
         $taxData->expects(self::once())->method('setTaxResult')->with($taxResult);
