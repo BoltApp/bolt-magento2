@@ -119,7 +119,7 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function createTaxResult($totalsInformation, $currencyCode)
     {
-        $majorAmount = $totalsInformation->getTaxAmount();
+        $majorAmount = $totalsInformation->getTaxAmount() - $totalsInformation->getShippingTaxAmount();
         $taxAmount = CurrencyUtils::toMinor($majorAmount, $currencyCode);
 
         /**
@@ -168,9 +168,6 @@ class Tax extends ShippingTax implements TaxInterface
 
         $taxResult = $this->createTaxResult($totalsInformation, $currencyCode);
         $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
-
-        // shipping tax is already included, don't count it twice
-        $taxResult->setSubtotalAmount($taxResult->getSubtotalAmount() - $shippingOption->getTaxAmount());
 
         $taxData = $this->taxDataFactory->create();
         $taxData->setTaxResult($taxResult);
