@@ -69,7 +69,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'unsigned' => true,
                 'nullable' => false,
                 'default' => '1',
-                'comment' => '1 - multi-step, 2 - PPC, 3 - back office'
+                'comment' => '1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete'
             ]
         );
 
@@ -104,41 +104,41 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         // Create table now that we know it doesnt already exists.
         $table = $setup->getConnection()
-          ->newTable($setup->getTable('bolt_feature_switches'))
-          ->addColumn(
-            'id',
-            \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-            null,
-            ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-            'ID'
-        )
-        ->addColumn(
-            'switch_name',
-            \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-            255,
-            ['nullable' => false],
-            'Switch name'
-        )
-        ->addColumn(
-            'switch_value',
-            \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
-            null,
-            ['nullable' => false, 'default' => '0'],
-            'switch value'
-        )->addColumn(
-            'default_value',
-            \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
-            null,
-            ['nullable' => false, 'default' => '0'],
-            'default value'
-        )->addColumn(
-            'rollout_percentage',
-            \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-            null,
-            ['nullable' => false, 'default' => '0'],
-            'rollout percentage'
-        )->setComment("Bolt feature switch table");
-          $setup->getConnection()->createTable($table);
+            ->newTable($setup->getTable('bolt_feature_switches'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'switch_name',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Switch name'
+            )
+            ->addColumn(
+                'switch_value',
+                \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'switch value'
+            )->addColumn(
+                'default_value',
+                \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'default value'
+            )->addColumn(
+                'rollout_percentage',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'rollout percentage'
+            )->setComment("Bolt feature switch table");
+        $setup->getConnection()->createTable($table);
     }
 
     private function setupWebhookLogTable($setup){

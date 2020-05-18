@@ -16,6 +16,8 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+
 /**
  * Class QuotePlugin
  *
@@ -25,7 +27,7 @@ class QuotePlugin
 {
     /**
      * Override Quote afterSave method.
-     * Skip execution for inactive quotes, thus preventing dispatching the after save events.
+     * Skip execution for immutable quotes, thus preventing dispatching the after save events.
      *
      * @param \Magento\Quote\Model\Quote $subject
      * @param callable $proceed
@@ -33,9 +35,30 @@ class QuotePlugin
      */
     public function aroundAfterSave(\Magento\Quote\Model\Quote $subject, callable $proceed)
     {
-        if ($subject->getIsActive()) {
-            return $proceed();
+        if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
+            return $subject;
         }
-        return $subject;
+        return $proceed();
+    }
+
+    /**
+     * Always consider PPC quotes active
+     * so we can run internal Magento actions on them
+     * as they were active.
+     * Note: there are restrictions on inactive quotes processing
+     * that we need to bypass, eg. calling native shipping and tax methods.
+     * After PPC checkout completes we change BoltCheckoutType so
+     * the quote is not considered active anymore and can be cleaned up.
+     *
+     * @param \Magento\Quote\Model\Quote $subject
+     * @param bool|null $result
+     * @return bool|null
+     */
+    public function afterGetIsActive(\Magento\Quote\Model\Quote $subject, $result)
+    {
+        if ($subject->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
+            return true;
+        }
+        return $result;
     }
 }

@@ -730,7 +730,7 @@ ORDER;
             ->with(self::STORE_ID)
             ->willReturn(false);
 
-         $mock->getBoltpayOrder(false, '');
+        $mock->getBoltpayOrder(false, '');
     }
 
     /**
@@ -1664,8 +1664,8 @@ ORDER;
 
 
         $this->quoteAddressTotal->expects($this->once())
-        ->method('getValue')
-        ->willReturn($appliedDiscount);
+            ->method('getValue')
+            ->willReturn($appliedDiscount);
 
         $quote->expects($this->any())
             ->method('getTotals')
@@ -2315,14 +2315,14 @@ ORDER;
 
         $expectedCartData = $this->createCartByRequest_GetExpectedCartData();
 
-        $cartMock = $this->getCurrentMock(['getCartData', 'saveQuote']);
+        $cartMock = $this->getCurrentMock(['getCartData', 'quoteResourceSave']);
         $cartMock->expects($this->once())
             ->method('getCartData')
             ->with(false,'',$quote)
             ->willReturn($expectedCartData);
 
         $cartMock->expects($this->once())
-            ->method('saveQuote')
+            ->method('quoteResourceSave')
             ->with($quote);
 
         $this->assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -2619,16 +2619,16 @@ ORDER;
         $hints = $this->getCurrentMock()->getHints(null, 'product');
         static::assertEquals((object)
         [
-           'firstName' => 'IntegrationBolt',
-           'lastName' => 'BoltTest',
-           'email' => 'test@bolt.com',
-           'phone' => '132 231 1234',
-           'addressLine1' => '228 7th Avenue',
-           'addressLine2' => '228 7th Avenue1',
-           'city' => 'New York',
-           'state' => 'New York',
-           'zip' => '10011',
-           'country' => '1111',
+            'firstName' => 'IntegrationBolt',
+            'lastName' => 'BoltTest',
+            'email' => 'test@bolt.com',
+            'phone' => '132 231 1234',
+            'addressLine1' => '228 7th Avenue',
+            'addressLine2' => '228 7th Avenue1',
+            'city' => 'New York',
+            'state' => 'New York',
+            'zip' => '10011',
+            'country' => '1111',
         ], $hints['prefill']);
         static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);

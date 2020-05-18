@@ -739,11 +739,27 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $giftAmount = $giftCard->getBalance();
             } else {
                 if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
-                    $giftCard->addToCart(true, $immutableQuote);
+                    try {
+                        // on subsequest validation calls from Bolt checkout
+                        // try removing the gift card before adding it
+                        $giftCard->removeFromCart(true, $immutableQuote);
+                    } catch (\Exception $e) {
+                        // gift card not added yet
+                    } finally {
+                        $giftCard->addToCart(true, $immutableQuote);
+                    }
                 }
 
                 if ($parentQuote->getGiftCardsAmountUsed() == 0) {
-                    $giftCard->addToCart(true, $parentQuote);
+                    try {
+                        // on subsequest validation calls from Bolt checkout
+                        // try removing the gift card before adding it
+                        $giftCard->removeFromCart(true, $parentQuote);
+                    } catch (\Exception $e) {
+                        // gift card not added yet
+                    } finally {
+                        $giftCard->addToCart(true, $parentQuote);
+                    }
                 }
 
                 // Send the whole GiftCard Amount.
