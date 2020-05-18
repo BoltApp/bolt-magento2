@@ -29,7 +29,7 @@ use Magento\Framework\Module\ModuleResource;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Directory\Model\RegionFactory;
-
+use Bolt\Boltpay\Test\Unit\TestHelper;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
@@ -357,15 +357,24 @@ JSON;
 
     /**
      * @test
+     * @dataProvider dataProvider_getCdnUrl_devModeSet
+     * @covers::getCdnUrl
+     *
+     * @param $validateCustomUrl
+     * @param $expected
      */
-    public function getCdnUrl_devModeSet()
+    public function getCdnUrl_devModeSet($validateCustomUrl,$expected)
     {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
 
         $this->currentMock
             ->expects(self::once())
             ->method('isSandboxModeSet')
             ->willReturn(true);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('validateCustomUrl')
+            ->willReturn($validateCustomUrl);
         $this->currentMock
             ->expects(self::once())
             ->method('getScopeConfig')
@@ -374,13 +383,20 @@ JSON;
             ->expects(self::once())
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
-            ->willReturn("https://cdn.something");
+            ->willReturn("https://connect.bolt.me/");
 
         $this->assertEquals(
-            "https://cdn.something",
+            $expected,
             $this->currentMock->getCdnUrl(),
             'getCdnUrl() method: not working properly'
         );
+    }
+
+    public function dataProvider_getCdnUrl_devModeSet(){
+        return [
+            [true, 'https://connect.bolt.me/'],
+            [false,'https://connect-sandbox.bolt.com'],
+        ];
     }
 
     /**
@@ -468,15 +484,25 @@ JSON;
 
     /**
      * @test
+     * @dataProvider dataProvider_getApiUrl_devMode
+     * @covers::getApiUrl
+     *
+     * @param $validateCustomUrl
+     * @param $expected
      */
-    public function getApiUrl_devMode()
+    public function getApiUrl_devMode($validateCustomUrl, $expected)
     {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
 
         $this->currentMock
             ->expects(self::once())
             ->method('isSandboxModeSet')
             ->willReturn(true);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('validateCustomUrl')
+            ->willReturn($validateCustomUrl);
 
         $this->currentMock
             ->expects(self::once())
@@ -486,14 +512,22 @@ JSON;
             ->expects(self::once())
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_CUSTOM_API)
-            ->willReturn("https://api.something");
+            ->willReturn('https://api.bolt.me/');
 
         $this->assertEquals(
-            "https://api.something",
+            $expected,
             $this->currentMock->getApiUrl(),
             'getApiUrl() method: not working properly'
         );
     }
+
+    public function dataProvider_getApiUrl_devMode(){
+        return [
+            [true, 'https://api.bolt.me/'],
+            [false,'https://api-sandbox.bolt.com/'],
+        ];
+    }
+
 
     /**
      * @test
@@ -1140,5 +1174,29 @@ JSON;
                 'street' => '4535 ANNALEE Way
 Room 4000',
             ], $result);
+    }
+
+    /**
+     * @test
+     * @covers ::validateCustomUrl
+     * @dataProvider providerValidateCustomUrl
+     *
+     * @param $url
+     * @param $expected
+     * @throws \ReflectionException
+     */
+    public function validateCustomUrl($url, $expected){
+       $result = TestHelper::invokeMethod($this->currentMock,'validateCustomUrl', [$url]);
+       $this->assertEquals($expected, $result);
+    }
+
+    public function providerValidateCustomUrl(){
+        return [
+            ['https://test.bolt.me', true],
+            ['https://test.bolt.me/', true],
+            ['https://test.bolt.com', false],
+            ['https://test.com', false],
+            ['a.com', false]
+        ];
     }
 }

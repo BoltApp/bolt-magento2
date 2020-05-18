@@ -261,14 +261,17 @@
                     <field id="custom_api" translate="label" type="text" sortOrder="291" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Custom API</label>
                         <config_path>payment/boltpay/custom_api</config_path>
+                        <validate>validate-custom-url-api</validate>
                     </field>
                     <field id="custom_merchant_dash" translate="label" type="text" sortOrder="292" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Custom Merchant Dash</label>
                         <config_path>payment/boltpay/custom_merchant_dash</config_path>
+                        <validate>validate-custom-url-api</validate>
                     </field>
                     <field id="custom_cdn" translate="label" type="text" sortOrder="293" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Custom CDN</label>
                         <config_path>payment/boltpay/custom_cdn</config_path>
+                        <validate>validate-custom-url-api</validate>
                     </field>
                     <field id="enable_store_pickup_feature" translate="label" sortOrder="294" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Enable In-Store Pickup Feature</label>
