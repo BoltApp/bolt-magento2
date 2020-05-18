@@ -1722,7 +1722,8 @@ class Order extends AbstractHelper
         if (
             $transactionState == $prevTransactionState &&
             $reference == $prevTransactionReference &&
-            !$newCapture
+            !$newCapture &&
+            !($hookType == Hook::HT_PENDING && $order->getState() == OrderModel::STATE_PENDING_PAYMENT)
         ) {
             if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)){
                 $payment->setIsTransactionApproved(true);

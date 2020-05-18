@@ -2954,6 +2954,47 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * @covers ::updateOrderPayment
+     */
+    public function updateOrderPayment_sameState_withPendingHookAndOrderStatusIsPendingPayment()
+    {
+        $transactionState = OrderHelper::TS_AUTHORIZED;
+        $prevTransactionState = OrderHelper::TS_AUTHORIZED;
+        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp($transactionState);
+        $prevTransactionReference = self::REFERENCE_ID;
+        $this->orderMock->expects(self::any())->method('getState')
+            ->willReturn(OrderModel::STATE_PENDING_PAYMENT);
+
+        $this->currentMock->expects(self::never())->method('isAnAllowedUpdateFromAdminPanel')
+            ->with($this->orderMock, $transactionState)->willReturn(true);
+        $paymentMock->expects(self::never())->method('setIsTransactionApproved')->with(true);
+        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
+            ->withConsecutive(
+                ['transaction_state'],
+                ['transaction_reference'],
+                ['real_transaction_id'],
+                ['authorized'],
+                ['captures']
+            )->willReturnOnConsecutiveCalls(
+                $prevTransactionState,
+                $prevTransactionReference,
+                self::TRANSACTION_ID,
+                true,
+                ''
+            );
+
+        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
+
+        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_PENDING);
+    }
+
+    /**
+     * @test
      *
      * @covers ::updateOrderPayment
      */
