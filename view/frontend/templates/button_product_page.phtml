@@ -175,19 +175,7 @@ if (!$block->isSupportableType()) return;
                 return quantity > 0 ? quantity : 1;
             };
 
-            var hints = new Promise(function (resolve, reject) {
-                $.get(settings.get_hints_url)
-                    .done(function(data) {
-                        resolve(data.hints);
-                    })
-                    .fail(function() {
-                        resolve({prefill:{}});
-                    })
-                    .always(function() {
-                        // dispatch event when required data is ready
-                        $(document).trigger('ppc-hints-set');
-                    });
-            });
+            var hints = {}
 
             var setupProductPage = function () {
                 var options = {};
