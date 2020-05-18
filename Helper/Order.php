@@ -1932,7 +1932,8 @@ class Order extends AbstractHelper
      */
     public function isZeroAmountHook($transactionState)
     {
-        return Hook::$fromBolt && ($transactionState === self::TS_ZERO_AMOUNT);
+        // Ignore invoice creation on zero amount order.
+        return false;
     }
 
     /**
