@@ -76,6 +76,7 @@ class Cart extends AbstractHelper
     const BOLT_CHECKOUT_TYPE_MULTISTEP = 1;
     const BOLT_CHECKOUT_TYPE_PPC = 2;
     const BOLT_CHECKOUT_TYPE_BACKOFFICE = 3;
+    const BOLT_CHECKOUT_TYPE_PPC_COMPLETE = 4;
 
     /** @var CacheInterface */
     private $cache;
@@ -949,6 +950,7 @@ class Cart extends AbstractHelper
 
             $child->setData($key, $value);
         }
+        $child->setExtensionAttributes($parent->getExtensionAttributes());
         if ($save) $child->save();
     }
 
@@ -1943,11 +1945,10 @@ class Cart extends AbstractHelper
         // Second purpose is actual for Product page checkout
         // so we need to set boltReservedOrderId
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
-
         $quote->setIsActive(false);
-        $this->saveQuote($quote);
 
         $cart_data = $this->getCartData(false,'', $quote);
+        $this->quoteResourceSave($quote);
 
         return $cart_data;
     }

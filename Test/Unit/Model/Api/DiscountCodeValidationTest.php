@@ -1070,11 +1070,15 @@ class DiscountCodeValidationTest extends TestCase
 
         $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
             ->disableOriginalConstructor()
-            ->setMethods(['isEmpty', 'isValid', 'getId', 'addToCart'])
+            ->setMethods(['isEmpty', 'isValid', 'getId', 'removeFromCart', 'addToCart'])
             ->getMock();
         $giftcardMock->method('isEmpty')->willReturn(false);
         $giftcardMock->method('isValid')->willReturn(true);
         $giftcardMock->method('getId')->willReturn(123);
+
+        $giftcardMock->expects(self::exactly(2))->method('removeFromCart')
+            ->withConsecutive($immutableQuoteMock, $parentQuoteMock)
+            ->willReturn($giftcardMock);
 
         $giftcardMock->expects(self::exactly(2))->method('addToCart')
             ->withConsecutive($immutableQuoteMock, $parentQuoteMock)

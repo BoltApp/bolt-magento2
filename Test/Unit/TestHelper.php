@@ -75,6 +75,32 @@ class TestHelper extends TestCase
             }
         }
     }
+
+    /**
+     * Convenience method to get a private or protected property
+     *
+     * @param object|string $objectOrClassName The object of the property to get
+     *                                          If the property is static, then this should be a string of the class name.
+     * @param string        $propertyName The name of the property to get
+     *
+     * @throws ReflectionException  if a specified object, class or property does not exist.
+     */
+    public static function getProperty($objectOrClassName, $propertyName)
+    {
+        try {
+            $reflectedProperty = self::getReflectedClass($objectOrClassName)->getProperty($propertyName);
+            $reflectedProperty->setAccessible(true);
+
+            if (is_object($objectOrClassName)) {
+                return $reflectedProperty->getValue($objectOrClassName);
+            } else {
+                return $reflectedProperty->getValue();
+            }
+        } finally {
+            if ($reflectedProperty && ($reflectedProperty->isProtected() || $reflectedProperty->isPrivate())) {
+                $reflectedProperty->setAccessible(false);
+            }
+        }
+    }
+
 }
-
-

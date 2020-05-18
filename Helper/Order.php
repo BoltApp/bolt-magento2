@@ -194,7 +194,7 @@ class Order extends AbstractHelper
     /** @var DateTime */
     protected $date;
 
-   /** @var WebhookLogCollectionFactory  */
+    /** @var WebhookLogCollectionFactory  */
     protected $webhookLogCollectionFactory;
 
     /** @var WebhookLogFactory */
@@ -608,6 +608,11 @@ class Order extends AbstractHelper
      */
     protected function orderPostprocess($order, $quote, $transaction)
     {
+        // set PPC quote status to complete so it is not considered active anymore
+        if ($quote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
+            $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+            $this->cartHelper->quoteResourceSave($quote);
+        }
         // Check and fix tax mismatch
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
@@ -784,10 +789,10 @@ class Order extends AbstractHelper
                         $this->voidTransactionOnBolt($transaction->id, $storeId);
                     }
 
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-                //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
-                ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
-                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+                    //// Allow missing quote failed hooks to resend 10 times so the Administrator can be notified via email
+                    ///  On the eleventh time that the failed hook was sent to Magento, we return $this in order to have the hook return successfully.
+                    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
                     if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
                         $this->bugsnag->notifyException($exception);
@@ -1167,10 +1172,15 @@ class Order extends AbstractHelper
 
         $parentQuoteId = $order->getQuoteId();
         $this->deleteOrder($order);
+        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
         // reactivate session quote - the condiotion excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
-            $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
+        }
+        // reset PPC quote checkout type so it can be treated as active
+        if ($parentQuote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE) {
+            $parentQuote->SetBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
+            $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
     }
 
@@ -1192,21 +1202,11 @@ class Order extends AbstractHelper
     protected function quoteAfterChange($quote)
     {
         $quote->setUpdatedAt($this->date->gmtDate());
-        // If it's PPC quote make it temporary active
-        // for third party plugins work
-        $isQuoteActive = $quote->getIsActive();
-        if (!$isQuoteActive) {
-            $quote->setIsActive(true);
-        }
         $this->_eventManager->dispatch(
             'sales_quote_save_after', [
                 'quote' => $quote
             ]
         );
-        if (!$isQuoteActive) {
-            $quote->setIsActive(false);
-        }
-
     }
 
     /**
@@ -1722,7 +1722,8 @@ class Order extends AbstractHelper
         if (
             $transactionState == $prevTransactionState &&
             $reference == $prevTransactionReference &&
-            !$newCapture
+            !$newCapture &&
+            !($hookType == Hook::HT_PENDING && $order->getState() == OrderModel::STATE_PENDING_PAYMENT)
         ) {
             if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)){
                 $payment->setIsTransactionApproved(true);
