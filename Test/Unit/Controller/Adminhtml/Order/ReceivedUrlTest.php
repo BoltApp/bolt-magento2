@@ -31,7 +31,11 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Backend\Model\UrlInterface;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit_Framework_MockObject_MockObject;
 
+/**
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Order\ReceivedUrl
+ */
 class ReceivedUrlTest extends TestCase
 {
     const ORDER_ID = '1234';
@@ -134,6 +138,19 @@ class ReceivedUrlTest extends TestCase
         $this->order->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
 
         TestHelper::invokeMethod($this->currentMock, 'getRedirectUrl',[$this->order]);
+    }
 
+    /**
+     * @test
+     * that _processUrlKeys always returns true
+     *
+     * @covers ::_processUrlKeys
+     */
+    public function _processUrlKeys_always_returnsTrue()
+    {
+        /** @var PHPUnit_Framework_MockObject_MockObject|ReceivedUrl $currentMock */
+        $currentMock = $this->getMockBuilder(ReceivedUrl::class)
+            ->disableOriginalConstructor()->setMethods(null)->getMock();
+        static::assertTrue($currentMock->_processUrlKeys());
     }
 }
