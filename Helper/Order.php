@@ -1836,7 +1836,8 @@ class Order extends AbstractHelper
         }
 
         // We will create an invoice if we have zero amount or new capture.
-        if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
+        // Customization : Ignore invoice creation on zero amount order.
+        if ($this->isCaptureHookRequest($newCapture)) {
             $currencyCode = $order->getOrderCurrencyCode();
             $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
             $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
@@ -1931,9 +1932,8 @@ class Order extends AbstractHelper
      * @return bool
      */
     public function isZeroAmountHook($transactionState)
-    {
-        // Ignore invoice creation on zero amount order.
-        return false;
+    {        
+        return Hook::$fromBolt && ($transactionState === self::TS_ZERO_AMOUNT);
     }
 
     /**
