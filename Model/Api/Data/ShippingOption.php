@@ -24,7 +24,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class ShippingOption implements ShippingOptionInterface
+class ShippingOption implements ShippingOptionInterface, \JsonSerializable
 {
     /**
      * @var string
@@ -44,7 +44,7 @@ class ShippingOption implements ShippingOptionInterface
     /**
      * @var int
      */
-    private $tax_amount;
+    private $taxAmount;
 
     /**
      * Get shipping service.
@@ -129,20 +129,33 @@ class ShippingOption implements ShippingOptionInterface
      */
     public function getTaxAmount()
     {
-        return $this->tax_amount;
+        return $this->taxAmount;
     }
 
     /**
      * Set shipping tax.
      *
      * @api
-     * @param $tax_amount
+     * @param $taxAmount
      *
      * @return $this
      */
-    public function setTaxAmount($tax_amount)
+    public function setTaxAmount($taxAmount)
     {
-        $this->tax_amount = $tax_amount;
+        $this->taxAmount = $taxAmount;
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'service' => $this->service,
+            'cost' => $this->cost,
+            'reference' => $this->reference,
+            'tax_amount' => $this->taxAmount
+        ];
     }
 }

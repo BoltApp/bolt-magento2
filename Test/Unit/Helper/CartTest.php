@@ -311,7 +311,6 @@ class CartTest extends TestCase
             'getStore',
             'save',
         ];
-        $this->quoteMock = $this->createPartialMock(Quote::class, $quoteMethods);
         $this->immutableQuoteMock = $this->createPartialMock(Quote::class, $quoteMethods);
 
         $addressMethods = [
@@ -1441,6 +1440,8 @@ class CartTest extends TestCase
     public function transferData_withDefaultFields_transfersDataFromParentToChildAndSavesTheChild()
     {
         $currentMock = $this->getCurrentMock(['validateEmail']);
+
+        $extensionAttributes = $this->createMock(\Magento\Quote\Api\Data\CartExtensionInterface::class);
         $this->quoteMock->expects(static::once())->method('getData')->willReturn(
             [
                 'entity_id'          => self::PARENT_QUOTE_ID,
@@ -1452,6 +1453,8 @@ class CartTest extends TestCase
                 'customer_id'        => self::CUSTOMER_ID,
             ]
         );
+        $this->quoteMock->expects(static::once())->method('getExtensionAttributes')->willReturn($extensionAttributes);
+
         $childQuoteMock = $this->createMock(Quote::class);
         $childQuoteMock->expects(static::atLeastOnce())->method('setData')->withConsecutive(
             ['customer_firstname', 'Test'],
@@ -1459,11 +1462,16 @@ class CartTest extends TestCase
             ['customer_email', self::EMAIL_ADDRESS],
             ['customer_id', self::CUSTOMER_ID]
         );
+        $childQuoteMock->expects(static::once())
+            ->method('setExtensionAttributes')
+            ->with($extensionAttributes)
+            ->willReturnSelf();
         $childQuoteMock->expects(static::once())->method('save');
         $currentMock->expects(static::exactly(2))->method('validateEmail')->withConsecutive(
             [self::EMAIL_ADDRESS],
             ['invalid.mail']
         )->willReturnOnConsecutiveCalls(true, false);
+
         TestHelper::invokeMethod($currentMock, 'transferData', [$this->quoteMock, $childQuoteMock]);
     }
 
@@ -1476,12 +1484,26 @@ class CartTest extends TestCase
     {
         $sourceQuote = $this->createMock(Quote::class);
         $destinationQuote = $this->createMock(Quote::class);
+        $quoteExtensionAttributes = $this->createMock(
+            \Magento\Quote\Api\Data\CartExtensionInterface::class
+        );
+        $addressExtensionAttributes = $this->createMock(
+            \Magento\Quote\Api\Data\AddressExtensionInterface::class
+        );
+        $sourceQuote->method('getExtensionAttributes')->willReturn($quoteExtensionAttributes);
+        $destinationQuote->method('setExtensionAttributes')->with($quoteExtensionAttributes)->willReturnSelf();
         $sourceQuoteBillingAddress = $this->createMock(Quote\Address::class);
         $sourceQuoteShippingAddress = $this->createMock(Quote\Address::class);
         $sourceQuote->method('getBillingAddress')->willReturn($sourceQuoteBillingAddress);
         $sourceQuote->method('getShippingAddress')->willReturn($sourceQuoteShippingAddress);
         $destinationQuoteBillingAddress = $this->createMock(Quote\Address::class);
         $destinationQuoteShippingAddress = $this->createMock(Quote\Address::class);
+        $sourceQuoteBillingAddress->method('getExtensionAttributes')->willReturn($addressExtensionAttributes);
+        $destinationQuoteBillingAddress->method('setExtensionAttributes')
+            ->with($addressExtensionAttributes)->willReturnSelf();
+        $sourceQuoteShippingAddress->method('getExtensionAttributes')->willReturn($addressExtensionAttributes);
+        $destinationQuoteShippingAddress->method('setExtensionAttributes')
+            ->with($addressExtensionAttributes)->willReturnSelf();
         $destinationQuote->method('getBillingAddress')->willReturn($destinationQuoteBillingAddress);
         $destinationQuote->method('getShippingAddress')->willReturn($destinationQuoteShippingAddress);
         $currentMock = $this->getCurrentMock(['transferData', 'quoteResourceSave']);
@@ -3933,10 +3955,12 @@ ORDER
         $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
         $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesFromTotals')
             ->willReturn($amastyGiftCode);
+
         $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesCurrentValue')
             ->with($amastyGiftCode)->willReturn($appliedDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
+
             ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
         $totalAmount = 10000; // cents
         $diff = 0;
@@ -4838,9 +4862,9 @@ ORDER
         $shippingAddressMock->expects(static::once())->method('getCountryId')->willReturn('1111');
         $customerMock->expects(static::once())->method('getDefaultShippingAddress')->willReturn($shippingAddressMock);
         $hints = $this->getCurrentMock()->getHints(null, 'product');
+
         static::assertEquals(
-            (object)
-            [
+            (object) [
                 'firstName'    => 'IntegrationBolt',
                 'lastName'     => 'BoltTest',
                 'email'        => self::EMAIL_ADDRESS,
@@ -4854,6 +4878,7 @@ ORDER
             ],
             $hints['prefill']
         );
+
         static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
