@@ -168,6 +168,6 @@ trait BlockTrait
      */
     public function isInstantCheckoutButton()
     {
-        return $this->configHelper->isInstantCheckoutButton();
+        return $this->featureSwitches->isInstantCheckoutButton();
     }
 }

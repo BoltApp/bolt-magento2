@@ -106,12 +106,6 @@
                         <comment>This CSS will be added to any page that displays the Bolt Checkout button.</comment>
                         <config_path>payment/boltpay/global_css</config_path>
                     </field>
-                    <field id="instant_checkout_button" translate="label" type="select" sortOrder="105" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Instant Checkout Button</label>
-                        <comment>Enable Instant Checkout Button</comment>
-                        <config_path>payment/boltpay/instant_checkout_button</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    </field>
                 </group>
                 <group id="boltpay_advanced" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Advanced options</label>
