@@ -28,7 +28,6 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
-use Magento\Framework\App\Response\RedirectInterface;
 
 /**
  * Class ReceivedUrl
@@ -45,11 +44,6 @@ class ReceivedUrl extends Action
     private $backendUrl;
 
     /**
-     * @var RedirectInterface\
-     */
-    private $redirect;
-
-    /**
      * ReceivedUrl constructor.
      *
      * @param Context         $context
@@ -59,6 +53,7 @@ class ReceivedUrl extends Action
      * @param LogHelper       $logHelper
      * @param CheckoutSession $checkoutSession
      * @param OrderHelper     $orderHelper
+     * @param BackendUrl      $backendUrl
      */
     public function __construct(
         Context $context,
@@ -68,8 +63,7 @@ class ReceivedUrl extends Action
         LogHelper $logHelper,
         CheckoutSession $checkoutSession,
         OrderHelper $orderHelper,
-        BackendUrl $backendUrl,
-        RedirectInterface $redirect
+        BackendUrl $backendUrl
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
@@ -79,17 +73,23 @@ class ReceivedUrl extends Action
         $this->checkoutSession = $checkoutSession;
         $this->orderHelper = $orderHelper;
         $this->backendUrl = $backendUrl;
-        $this->redirect = $redirect;
     }
 
     /**
-     * @param quote Quote
-     * @return boolean
+     * Determines if referrer to the current request is admin order creation page
+     *
+     * @return bool true if request referrer is admin order create page otherwise false
      */
-    private function hasAdminUrlReferer() {
+    private function hasAdminUrlReferer()
+    {
         $this->backendUrl->setScope(0);
-        $refererUrl = $this->redirect->getRefererUrl();
-        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index", []);
+        /**
+         * @see \Magento\Framework\App\Response\RedirectInterface::getRefererUrl can't be used
+         * because {@see \Magento\Store\App\Response\Redirect::_isUrlInternal} check fails
+         * when admin is on a different (sub)domain compared to store
+         */
+        $refererUrl = $this->getRequest()->getServer('HTTP_REFERER');
+        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index", ['_nosecret' => true]);
         return substr($refererUrl, 0, strlen($adminUrl)) === $adminUrl;
     }
 

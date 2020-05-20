@@ -217,19 +217,6 @@ require([
     };
 
     /**
-     * Get the checkout key for backoffice processing.
-     *
-     * return string
-     */
-    var getBackofficeKey = function () {
-        return settings['publishable_key_back_office'];
-    };
-
-    var getPaymentOnlyKey = function() {
-        return settings['publishable_key_payment'];
-    }
-
-    /**
      * Inject connect.js
      * return void
      */
@@ -250,15 +237,6 @@ require([
         scriptTag.setAttribute('data-publishable-key', publishableKey);
         scriptTag.onload = function() {BoltCheckout.configure(cart, hints, callbacks);}
         document.head.appendChild(scriptTag);
-    };
-
-    /**
-     * return void
-     */
-    var processButtons = function () {
-        if (getBackofficeKey() || getPaymentOnlyKey()) {
-            createOrder();
-        }
     };
 
     // The configuration parameters passed from the php block.
@@ -397,16 +375,16 @@ require([
             settings.storeId = data.storeId;
             settings.is_pre_auth = data.isPreAuth;
 
-            if (getBackofficeKey()) {
-                insertConnectScript(data.publishableKey);
+            if (data.backOfficeKey) {
+                insertConnectScript(data.backOfficeKey);
             }
-            if (getPaymentOnlyKey() && settings.pay_by_link_url) {
+            if (data.paymentOnlyKey && settings.pay_by_link_url) {
                 $(".bolt-checkout-pay-by-link").html("Send <a href='"
-                    + settings.pay_by_link_url + "?publishable_key=" + getPaymentOnlyKey()
+                    + settings.pay_by_link_url + "?publishable_key=" + data.paymentOnlyKey
                     + "&token=" + data.cart.orderToken
                     + "'>this link</a> to consumer to receive payment");
             }
-            if (getBackofficeKey() && getPaymentOnlyKey() && settings.pay_by_link_url) {
+            if (data.backOfficeKey && data.paymentOnlyKey && settings.pay_by_link_url) {
                 $(".bolt-checkout-options-separator").show();
             }
         };
@@ -421,19 +399,15 @@ require([
     };
     /////////////////////////////////////////////////////
 
-    /////////////////////////////////////////////////////
-    // Flag that is true if checkout buttons exists on the page
-    var checkout_buttons = false;
     ////////////////////////////////////////////////
     // process the button when available on the page
     ////////////////////////////////////////////////
     onElementReady(bolt_button_selector, function(element) {
-        checkout_buttons = true;
-        processButtons();
+        createOrder();
     });
     ////////////////////////////////////////////////
     onElementReady(".bolt-checkout-pay-by-link", function(element) {
-        processButtons();
+        createOrder();
     });
     ////////////////////////////////////////////////
 
