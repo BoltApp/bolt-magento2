@@ -6,9 +6,9 @@ set -u
 PREVRC=$(git for-each-ref --sort=-creatordate --format="%(refname:short)|%(creatordate:unix)" refs/tags/* | grep "0-rc|" | head -n 1)
 
 taggedDate=$(echo $PREVRC | cut -d"|" -f2)
-threeWeekDate=$(date --date "20 days ago" +"%s")
+deduplicationWindow=$(date --date "18 days ago" +"%s")
 
-if [[ ${taggedDate} -lt ${threeWeekDate} ]]; then
+if [[ ${taggedDate} -lt ${deduplicationWindow} ]]; then
   OLDTAGNAME=$(echo $PREVRC | cut -d"|" -f1)
   NEWTAGNAME=$(echo $OLDTAGNAME | awk -F. '{print $1 "." $2+1 ".0-rc"}')
   echo "export NEWTAGNAME=$NEWTAGNAME" >>$BASH_ENV
