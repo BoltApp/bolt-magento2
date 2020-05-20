@@ -99,6 +99,12 @@ class Config extends AbstractHelper
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
 
     /**
+     * Path for Instant Checkout Button Button
+     */
+    const XML_PATH_INSTANT_CHECKOUT_BUTTON = 'payment/boltpay/instant_checkout_button';
+
+
+    /**
      * Path for Additional Checkout Button Class
      */
     const XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS = 'payment/boltpay/additional_checkout_button_class';
@@ -625,6 +631,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get Replace Selectors from config
+     *
+     * @param int|string $storeId
+     *
+     * @return  string
+     */
+    public function isInstantCheckoutButton($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_INSTANT_CHECKOUT_BUTTON,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -1579,6 +1601,10 @@ class Config extends AbstractHelper
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('track_checkout_funnel')
 		                                                 ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
+		// Bolt Instant Checkout Button
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('instant_checkout_button')
+		                                                 ->setValue(var_export($this->isInstantCheckoutButton(), true));
 
 		return $boltSettings;
 	}

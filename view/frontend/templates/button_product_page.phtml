@@ -27,7 +27,13 @@ if (!$block->isBoltProductPage()) return;
 
 if (!$block->isSupportableType()) return;
 ?>
-    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+    <?php if(!$block->getIsInstantCheckoutButton()){?>
+        <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+    <?php } else { ?>
+        <div data-tid="instant-bolt-checkout-button" style="<?=$block->getButtonCssStyles(); ?>">
+            <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?>"></object>
+        </div>
+    <?php } ?>
     <script>
         require([
             'jquery',

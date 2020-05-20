@@ -154,4 +154,20 @@ trait BlockTrait
         }
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
     }
+
+    /** 
+     * Return checkout cdn url for use in checkout button v2
+     */
+    public function getCheckoutCdnUrl()
+    {
+        return $this->configHelper->getCdnUrl();
+    }
+
+    /** 
+     * Return if instant bolt checkout button should be displayed
+     */
+    public function isInstantCheckoutButton()
+    {
+        return $this->configHelper->isInstantCheckoutButton();
+    }
 }

@@ -198,6 +198,16 @@ class Js extends Template
         $this->checkoutSession->unsBoltInitiateCheckout();
         return (bool)$flag;
     }
+    
+    /**
+     * Return if the instant checkout is enabled
+     *
+     * @return bool
+     */
+    public function getIsInstantCheckoutButton()
+    {
+        return (bool)$this->configHelper->isInstantCheckoutButton();
+    }
 
     /**
      * Get Javascript page settings.
@@ -226,6 +236,8 @@ class Js extends Template
             'is_pre_auth'              => $this->getIsPreAuth(),
             'default_error_message'    => $this->getBoltPopupErrorMessage(),
             'button_css_styles'        => $this->getButtonCssStyles(),
+            'is_instant_checkout_button' => $this->getIsInstantCheckoutButton(),
+            'cdn_url'                  => $this->configHelper->getCdnUrl(),
         ]);
     }
 
