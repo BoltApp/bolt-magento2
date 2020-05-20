@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Test\Unit\Observer;
+namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer;
