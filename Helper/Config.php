@@ -641,11 +641,11 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return  boolean
      */
     public function isInstantCheckoutButton($storeId = null)
     {
-        return $this->getScopeConfig()->getValue(
+        return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_INSTANT_CHECKOUT_BUTTON,
             ScopeInterface::SCOPE_STORE,
             $storeId
