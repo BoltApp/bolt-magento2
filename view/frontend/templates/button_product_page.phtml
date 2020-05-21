@@ -30,7 +30,7 @@ if (!$block->isSupportableType()) return;
     <?php if(!$block->getIsInstantCheckoutButton()){?>
         <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
     <?php } else { ?>
-        <div data-tid="instant-bolt-checkout-button" style="<?=$block->getButtonCssStyles(); ?>">
+        <div data-tid="instant-bolt-checkout-button">
             <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?>"></object>
         </div>
     <?php } ?>
