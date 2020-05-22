@@ -168,7 +168,7 @@ workflows:
   tagger:
     triggers:
       - schedule:
-          cron: "0 5 * * 5"
+          cron: "0 5 * * 4" # Every Thursday at 5AM UTC
           filters:
             branches:
               only:
