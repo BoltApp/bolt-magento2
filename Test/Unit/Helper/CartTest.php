@@ -1441,7 +1441,6 @@ class CartTest extends TestCase
     {
         $currentMock = $this->getCurrentMock(['validateEmail']);
 
-        $extensionAttributes = $this->createMock(\Magento\Quote\Api\Data\CartExtensionInterface::class);
         $this->quoteMock->expects(static::once())->method('getData')->willReturn(
             [
                 'entity_id'          => self::PARENT_QUOTE_ID,
@@ -1453,7 +1452,6 @@ class CartTest extends TestCase
                 'customer_id'        => self::CUSTOMER_ID,
             ]
         );
-        $this->quoteMock->expects(static::once())->method('getExtensionAttributes')->willReturn($extensionAttributes);
 
         $childQuoteMock = $this->createMock(Quote::class);
         $childQuoteMock->expects(static::atLeastOnce())->method('setData')->withConsecutive(
@@ -1462,10 +1460,6 @@ class CartTest extends TestCase
             ['customer_email', self::EMAIL_ADDRESS],
             ['customer_id', self::CUSTOMER_ID]
         );
-        $childQuoteMock->expects(static::once())
-            ->method('setExtensionAttributes')
-            ->with($extensionAttributes)
-            ->willReturnSelf();
         $childQuoteMock->expects(static::once())->method('save');
         $currentMock->expects(static::exactly(2))->method('validateEmail')->withConsecutive(
             [self::EMAIL_ADDRESS],
@@ -1484,26 +1478,12 @@ class CartTest extends TestCase
     {
         $sourceQuote = $this->createMock(Quote::class);
         $destinationQuote = $this->createMock(Quote::class);
-        $quoteExtensionAttributes = $this->createMock(
-            \Magento\Quote\Api\Data\CartExtensionInterface::class
-        );
-        $addressExtensionAttributes = $this->createMock(
-            \Magento\Quote\Api\Data\AddressExtensionInterface::class
-        );
-        $sourceQuote->method('getExtensionAttributes')->willReturn($quoteExtensionAttributes);
-        $destinationQuote->method('setExtensionAttributes')->with($quoteExtensionAttributes)->willReturnSelf();
         $sourceQuoteBillingAddress = $this->createMock(Quote\Address::class);
         $sourceQuoteShippingAddress = $this->createMock(Quote\Address::class);
         $sourceQuote->method('getBillingAddress')->willReturn($sourceQuoteBillingAddress);
         $sourceQuote->method('getShippingAddress')->willReturn($sourceQuoteShippingAddress);
         $destinationQuoteBillingAddress = $this->createMock(Quote\Address::class);
         $destinationQuoteShippingAddress = $this->createMock(Quote\Address::class);
-        $sourceQuoteBillingAddress->method('getExtensionAttributes')->willReturn($addressExtensionAttributes);
-        $destinationQuoteBillingAddress->method('setExtensionAttributes')
-            ->with($addressExtensionAttributes)->willReturnSelf();
-        $sourceQuoteShippingAddress->method('getExtensionAttributes')->willReturn($addressExtensionAttributes);
-        $destinationQuoteShippingAddress->method('setExtensionAttributes')
-            ->with($addressExtensionAttributes)->willReturnSelf();
         $destinationQuote->method('getBillingAddress')->willReturn($destinationQuoteBillingAddress);
         $destinationQuote->method('getShippingAddress')->willReturn($destinationQuoteShippingAddress);
         $currentMock = $this->getCurrentMock(['transferData', 'quoteResourceSave']);
