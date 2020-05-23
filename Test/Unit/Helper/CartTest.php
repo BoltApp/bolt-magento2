@@ -4339,7 +4339,7 @@ ORDER
         );
         $this->bugsnag->expects(static::exactly(2))->method('notifyError')->withConsecutive(
             ['Could not retrieve product from repository', 'SKU: ' . self::PRODUCT_SKU],
-            ['Item image missing', 'SKU: ' . self::PRODUCT_SKU]
+            ['Item image missing', 'ProductId: ' .self::PRODUCT_ID. ', SKU: ' . self::PRODUCT_SKU]
         );
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
 
