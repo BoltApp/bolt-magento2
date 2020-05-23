@@ -1173,14 +1173,14 @@ class Cart extends AbstractHelper
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    $variantProductToGetImage = $this->productRepository->get($item->getSku(), false, $storeId);
+                    $variantProductToGetImage = $this->productRepository->getById($product['reference'], false, $storeId);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
                             'ITEM' => $product
                         ]);
                     });
-                    $this->bugsnag->notifyError('Could not retrieve product from repository', "SKU: {$product['sku']}");
+                    $this->bugsnag->notifyError('Could not retrieve product from repository', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
                 }
                 try {
                     $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
