@@ -1173,7 +1173,12 @@ class Cart extends AbstractHelper
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    $variantProductToGetImage = $this->productRepository->getById($product['reference'], false, $storeId);
+                    // If the cart item is type of bundle product, its SKU is a combination with bundle selections,
+                    // so we need to retrieve the sku of bundle product without bundle selections.
+                    $product_sku = 'bundle' == $item->getProductType()
+                                   ? $_product->getData('sku')
+                                   : $product['sku'];
+                    $variantProductToGetImage = $this->productRepository->get($product_sku, false, $storeId);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
