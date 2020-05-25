@@ -393,7 +393,7 @@ require([
             create_request = null;
         };
         // send create order request
-        create_request = $.post(settings.create_order_url, params)
+        create_request = $.get(settings.create_order_url, params)
                           .done(onSuccess)
                           .fail(onError);
     };
