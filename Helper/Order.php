@@ -708,20 +708,13 @@ class Order extends AbstractHelper
     /**
      * Load Order by quote id
      *
-     * @param string $incrementId
+     * @param string $quoteId
      *
      * @return OrderInterface|false
      */
     public function getOrderByQuoteId($quoteId)
     {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('quote_id', $quoteId, 'eq')
-            ->create();
-        $collection = $this->orderRepository
-            ->getList($searchCriteria)
-            ->getItems();
-
-        return reset($collection);
+        return $this->cartHelper->getOrderByQuoteId($quoteId);
     }
 
     /**
