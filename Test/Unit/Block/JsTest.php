@@ -33,7 +33,7 @@ use Magento\Framework\App\Request\Http;
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 20;
+    const SETTINGS_NUMBER = 21;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
