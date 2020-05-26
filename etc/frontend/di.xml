@@ -65,4 +65,12 @@
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session</argument>
         </arguments>
     </type>
+
+    <type name="Magento\Customer\CustomerData\SectionPoolInterface">
+        <arguments>
+            <argument name="sectionSourceMap" xsi:type="array">
+                <item name="bolthints" xsi:type="string">Bolt\Boltpay\Section\CustomerData\BoltHints</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

@@ -96,6 +96,11 @@ class Definitions {
      */
     const M2_INSTANT_BOLT_CHECKOUT_BUTTON = "M2_INSTANT_BOLT_CHECKOUT_BUTTON";
 
+    /**
+     * Save hints data for PPC in magento sections
+     */
+    const M2_SAVE_HINTS_IN_SECTIONS = "M2_SAVE_HINTS_IN_SECTIONS";
+
     const DEFAULT_SWITCH_VALUES = array(
         self::M2_SAMPLE_SWITCH_NAME =>  array(
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -168,6 +173,12 @@ class Definitions {
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        )
+        ),
+        self::M2_SAVE_HINTS_IN_SECTIONS => array(
+            self::NAME_KEY            => self::M2_SAVE_HINTS_IN_SECTIONS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ),
     );
 }
