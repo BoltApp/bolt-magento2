@@ -226,6 +226,7 @@ class Js extends Template
             'is_pre_auth'              => $this->getIsPreAuth(),
             'default_error_message'    => $this->getBoltPopupErrorMessage(),
             'button_css_styles'        => $this->getButtonCssStyles(),
+            'always_present_checkout' => $this->featureSwitches->isAlwaysPresentCheckoutEnabled(),
         ]);
     }
 

@@ -340,6 +340,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
     public function getSettings()
     {
         $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
+        $this->deciderMock->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
@@ -366,6 +367,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
         $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
         $this->assertArrayHasKey('button_css_styles', $array, $message . 'button_css_styles');
+        $this->assertArrayHasKey('always_present_checkout', $array, $message . 'always_present_checkout');
     }
 
     /**

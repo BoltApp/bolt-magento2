@@ -45,7 +45,6 @@ function($argName) {
 ob_start();
 ?>
 <script type="text/javascript">
-
     // Store the configuration parameters passed from the php block
     // in the global object. Used in this file and on the payment page
     // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
@@ -681,7 +680,7 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var createOrder = function () {
+        var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
             if (!window.BoltCheckout) {
@@ -806,8 +805,12 @@ ob_start();
                         createRequest = false;
                     })
             });
+            // Get number of items in cart from counter element
+            var numItems = $(".counter-number").text();
 
-            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+            // Call config with floatingButtonMode if always present checkout enabled and items were or were not just added to cart (dataChanged)
+            var config = boltConfig.always_present_checkout && (numItems && numItems !=="0" || dataChanged)? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover" } : {};
+            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks, config);
         };
         /////////////////////////////////////////////////////
 
@@ -859,6 +862,9 @@ ob_start();
             checkout_buttons = true;
             processButtons();
         });
+        if (boltConfig.always_present_checkout) {
+            processButtons();
+        }
         ////////////////////////////////////////////////
 
         //////////////////////////////////////////////////////////
@@ -941,8 +947,10 @@ ob_start();
                         onDataChange(selector, function(element) {
                             if (visible_only && element.offsetParent === null) return;
                             if (element.textContent !== value) {
+                                var originalValue = value;
                                 value = element.textContent;
                                 if (non_empty && !value) return;
+                                if (originalValue !== "" && parseInt(originalValue) > -1) return;
                                 fn(element);
                             }
                         });
@@ -984,10 +992,10 @@ ob_start();
         // Monitor DOM element showing grand total / cart item number
         // and trigger Bolt order creation on totals change. This event
         // happens when discounts are added / removed from the page and
-        // totals updated or items added via ajax call.
+        // totals updated or items added via ajax call. Don't ignore empty values (non-empty = false).
         // TODO: add this option to plugin configuration admin page
         ///////////////////////////////////////////////////////////////
-        monitorDataChange(settings.totals_change_selectors, createOrder, true, false);
+        monitorDataChange(settings.totals_change_selectors, createOrder, false, false);
         ///////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
@@ -1103,6 +1111,12 @@ ob_start();
         ///////////////////////////////////////////////////////////
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
+
+        // When item added to cart, refresh order and mark data modified so always present button knows new item added
+        // to cart and can animate cart
+        $(document).on("ajax:addToCart", function () {
+            createOrder(null, true);
+        });
 
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
