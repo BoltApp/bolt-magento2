@@ -824,14 +824,12 @@ class Config extends AbstractHelper
      * @param $url
      * @return bool
      */
-    protected function validateCustomUrl($url) {
-        if (!$url) {
-            return false;
-        }
-
-        $last7Characters = substr($url, -7);
-        $last8Characters = substr($url, -8);
-        return ($last7Characters == 'bolt.me' || $last8Characters == 'bolt.me/');
+    protected function validateCustomUrl($url)
+    {
+        return (
+            $url
+            && preg_match("/^https?:\/\/([a-zA-Z0-9]+\.)?bolt.me\/?$/", $url)
+        );
     }
 
     /**

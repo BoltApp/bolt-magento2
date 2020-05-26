@@ -11,11 +11,8 @@ require([
 
         $.validator.addMethod(
             'validate-custom-url-api', function (v) {
-                var $length = v.length;
-                var last7Characters = v.substr($length - 7);
-                var last8Characters = v.substr($length - 8);
-                return (v == "" || last7Characters ==='bolt.me' || last8Characters === 'bolt.me/');
-            }, $.mage.__('Please enter custom url ends with "bolt.me"')
+                return (v == "" || /^https?:\/\/([a-zA-Z0-9]+\.)?bolt.me\/?$/.test(v));
+            }, $.mage.__('Please enter custom url like "https://test.bolt.me"')
         );
     }
 );
