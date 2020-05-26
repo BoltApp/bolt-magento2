@@ -748,7 +748,7 @@ ob_start();
                 createRequest = true;
 
                 // send create order request
-                $.post(settings.create_order_url, params)
+                $.get(settings.create_order_url, params)
                     .done(function (data) {
 
                         var boltRestricted = !!data.restrict;
