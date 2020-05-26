@@ -880,12 +880,19 @@ ob_start();
                     onElementReady(identifier, function(element) {
                         if (getCheckoutKey() === '') return;
                         var bolt_button = document.createElement('div');
-                        bolt_button.setAttribute('class', bolt_button_css_class);
-                        if (bolt_button_css_styles.length) {
-                            bolt_button.setAttribute('style', bolt_button_css_styles);
-                        }
-                        if (getCheckoutType() === 'checkout') {
-                            bolt_button.classList.add(multi_step_css_class);
+                        if(settings.is_instant_checkout_button){
+                            bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
+                            var button_object = document.createElement('object');
+                            button_object.setAttribute('data',settings.cdn_url+'/v1/checkout_button?publishable_key='+settings.publishable_key_checkout);
+                            bolt_button.appendChild(button_object);
+                        } else {
+                            bolt_button.setAttribute('class', bolt_button_css_class);
+                            if (bolt_button_css_styles.length) {
+                                bolt_button.setAttribute('style', bolt_button_css_styles);
+                            }
+                            if (getCheckoutType() === 'checkout') {
+                                bolt_button.classList.add(multi_step_css_class);
+                            }
                         }
                         // place the button before or after selector element
                         if (position && position.trim().toLowerCase() === 'append') {

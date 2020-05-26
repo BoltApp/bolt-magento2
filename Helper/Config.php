@@ -1599,7 +1599,6 @@ class Config extends AbstractHelper
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('track_checkout_funnel')
 		                                                 ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
-
 		return $boltSettings;
 	}
 
