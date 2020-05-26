@@ -3015,6 +3015,7 @@ class OrderTest extends TestCase
      */
     public function updateOrderPayment_variousTxStates($transactionState, $transactionType, $transactionId)
     {
+        Hook::$fromBolt = true;
         /**
          * @var MockObject|OrderPayment $paymentMock
          */
