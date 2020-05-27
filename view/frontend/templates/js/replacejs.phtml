@@ -806,8 +806,12 @@ ob_start();
                         createRequest = false;
                     })
             });
+            // Get number of items in cart from counter element
+            var numItems = $(".counter-number").text();
 
-            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+            // Call config with floatingButtonMode if always present checkout enabled and items were or were not just added to cart (dataChanged)
+            var config = boltConfig.always_present_checkout && (numItems && numItems !=="0" || dataChanged)? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover" } : {};
+            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks, config);
         };
         /////////////////////////////////////////////////////
 
