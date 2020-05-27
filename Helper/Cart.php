@@ -1339,8 +1339,8 @@ class Cart extends AbstractHelper
         // Trying several possible places.
         $email = $billingAddress->getEmail()
             ?: $shippingAddress->getEmail()
-                ?: $this->customerSession->getCustomer()->getEmail()
-                    ?: $immutableQuote->getCustomerEmail();
+            ?: $this->customerSession->getCustomer()->getEmail()
+            ?: $immutableQuote->getCustomerEmail();
 
         // Billing address
         $cartBillingAddress = [
