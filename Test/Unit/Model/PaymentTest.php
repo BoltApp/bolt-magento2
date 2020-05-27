@@ -50,7 +50,7 @@ use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepo
 use \Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
-
+use Magento\Framework\Event\Manager;
 
 /**
  * Class PaymentTest
@@ -168,6 +168,9 @@ class PaymentTest extends TestCase
      * @var Order\Creditmemo|\PHPUnit\Framework\MockObject\MockObject
      */
     private $creditMemoMock;
+    
+    /** @var MockObject|Manager */
+    private $eventManager;
 
     protected function setUp()
     {
@@ -834,8 +837,10 @@ class PaymentTest extends TestCase
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
+        $this->eventManager = $this->createMock(Manager::class);
         $this->context = $this->createMock(Context::class);
         $this->context->method('getAppState')->willReturn($mockAppState);
+        $this->context->method('getEventManager')->willReturn($this->eventManager);
 
         $this->registry = $this->createMock(Registry::class);
         $this->extensionFactory = $this->createMock(ExtensionAttributesFactory::class);
