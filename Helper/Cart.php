@@ -1305,6 +1305,10 @@ class Cart extends AbstractHelper
         $immutableQuote->collectTotals();
 
         $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
+        if ($cart == []) {
+            // empty cart implies there was an error
+            return $cart;
+        }
 
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way
