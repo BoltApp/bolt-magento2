@@ -1016,9 +1016,6 @@ ob_start();
             }
             var new_hints = JSON.stringify(hints);
             if (old_hints !== new_hints) {
-                // Get number of items in cart from counter element
-                var numItems = $(".counter-number").text();
-
                 BoltCheckout.configure(cart, hints, callbacks);
                 old_hints = new_hints;
             }
