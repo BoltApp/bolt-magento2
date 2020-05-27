@@ -225,6 +225,7 @@ class DataTest extends TestCase
         //replace default set in init
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('hasProductRestrictions')->willReturn(true);
+        $this->bugsnag->expects($this->once())->method('notifyException');
 
         $expected = array(
             'status' => 'success',
@@ -254,6 +255,7 @@ class DataTest extends TestCase
         //replace default set in init
         $cartHelper = $this->createMock(Cart::class);
         $cartHelper->method('isCheckoutAllowed')->willReturn(false);
+        $this->bugsnag->expects($this->once())->method('notifyException');
 
         $expected = array(
             'status' => 'success',
