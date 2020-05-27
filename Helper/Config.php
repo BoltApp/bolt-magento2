@@ -1714,15 +1714,15 @@ class Config extends AbstractHelper
 
     /**
      * Get config value for whether or not always present checkout is enabled
-     * @param int|string|Store $store
+     * @param int|string|Store $storeId
      * @return boolean
      */
-    public function isAlwaysPresentCheckoutEnabled($store = null)
+    public function isAlwaysPresentCheckoutEnabled($storeId = null)
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_ALWAYS_PRESENT_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
-            $store
+            $storeId
         );
     }
 
