@@ -2151,7 +2151,7 @@ ORDER
 
         $this->checkoutSession->expects(static::any())->method('getQuote')->willReturn($quoteMock);
 
-        $this->currentMock->deactivateSessionQuote();
+        $this->currentMock->deactivateSessionQuote($quoteMock);
     }
 
     /**
@@ -2161,7 +2161,7 @@ ORDER
      *
      * @covers ::doesOrderExist
      */
-    public function doesOrderExist_withExistingOrder_returnsOrder()
+    public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
     {
         $currentMock = $this->getCurrentMock(['getOrderByIncrementId']);
         $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
@@ -2169,28 +2169,85 @@ ORDER
         static::assertEquals(
             $this->orderMock,
             $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID]
+                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                $this->quoteMock
             )
         );
     }
 
     /**
      * @test
-     * that doesOrderExists returns false if order cannot by found based on order increment id found in cart display id
-     * @see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId
+     * that doesOrderExists return order from {@see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId}
+     * based on session quote Id
      *
      * @covers ::doesOrderExist
      */
-    public function doesOrderExist_withoutExistingOrder_returnsFalse()
+    public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
     {
-        $currentMock = $this->getCurrentMock(['getOrderByIncrementId']);
+        $currentMock = $this->getCurrentMock(['getOrderByIncrementId','getOrderByQuoteId']);
         $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
             ->willReturn(false);
-        static::assertFalse(
+        $this->quoteMock->expects(static::once())->method('getId')
+            ->willReturn(self::PARENT_QUOTE_ID);
+        $currentMock->expects(static::once())->method('getOrderByQuoteId')->with(self::PARENT_QUOTE_ID)
+            ->willReturn($this->orderMock);
+
+        static::assertEquals(
+            $this->orderMock,
             $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID]
+                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                $this->quoteMock
             )
         );
+    }
+
+    /**
+     * @test
+     * that doesOrderExists returns false if order cannot be found based on order increment id found in cart display id and session quote id
+     * @see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId
+     * @see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId
+     *
+     * @covers ::doesOrderExist
+     */
+    public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
+    {
+        $currentMock = $this->getCurrentMock(['getOrderByIncrementId','getOrderByQuoteId']);
+        $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
+            ->willReturn(false);
+
+        $this->quoteMock->expects(static::once())->method('getId')
+            ->willReturn(self::PARENT_QUOTE_ID);
+        $currentMock->expects(static::once())->method('getOrderByQuoteId')->with(self::PARENT_QUOTE_ID)
+            ->willReturn(false);
+
+        static::assertFalse(
+            $currentMock->doesOrderExist(
+                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                $this->quoteMock
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function getOrderByQuoteId()
+    {
+        $quoteId = self::QUOTE_ID;
+
+        $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
+
+        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
+        $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
+
+        $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+        $collection = [$orderInterface, $orderInterface2];
+        $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
+        $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
+
+        $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
+        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
     }
 
     /**
