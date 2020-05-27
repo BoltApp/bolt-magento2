@@ -101,4 +101,9 @@ class JsProductPage extends Js {
     {
         return $this->_storeManager->getStore()->getCurrentCurrencyCode();
     }
+
+    public function isSaveHintsInSections()
+    {
+        return $this->featureSwitches->isSaveHintsInSections();
+    }
 }

@@ -3668,28 +3668,6 @@ class OrderTest extends TestCase
 
     /**
      * @test
-     */
-    public function getOrderByQuoteId()
-    {
-        $quoteId = self::QUOTE_ID;
-
-        $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
-
-        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
-        $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
-
-        $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-        $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-        $collection = [$orderInterface, $orderInterface2];
-        $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
-        $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
-
-        $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
-        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
-    }
-
-    /**
-     * @test
      * @param $data
      * @dataProvider voidTransactionOnBolt_dataProvider
      * @throws LocalizedException

@@ -97,6 +97,11 @@ class Definitions {
     const M2_INSTANT_BOLT_CHECKOUT_BUTTON = "M2_INSTANT_BOLT_CHECKOUT_BUTTON";
 
     /**
+     * Save hints data for PPC in magento sections
+     */
+    const M2_SAVE_HINTS_IN_SECTIONS = "M2_SAVE_HINTS_IN_SECTIONS";
+
+    /**
      * Enable always present checkout button
      */
     const M2_ALWAYS_PRESENT_CHECKOUT = "M2_ALWAYS_PRESENT_CHECKOUT";
@@ -174,11 +179,17 @@ class Definitions {
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ),
+        self::M2_SAVE_HINTS_IN_SECTIONS => array(
+            self::NAME_KEY            => self::M2_SAVE_HINTS_IN_SECTIONS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ),
         self::M2_ALWAYS_PRESENT_CHECKOUT => array(
             self::NAME_KEY => self::M2_ALWAYS_PRESENT_CHECKOUT,
             self::VAL_KEY => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY => 0,
+            self::ROLLOUT_KEY => 0
         )
     );
 }

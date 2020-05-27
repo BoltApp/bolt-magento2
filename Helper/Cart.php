@@ -394,6 +394,25 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Load Order by quote id
+     *
+     * @param string $quoteId
+     *
+     * @return OrderInterface|false
+     */
+    public function getOrderByQuoteId($quoteId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('quote_id', $quoteId, 'eq')
+            ->create();
+        $collection = $this->orderRepository
+            ->getList($searchCriteria)
+            ->getItems();
+
+        return reset($collection);
+    }
+
+    /**
      * Save quote via repository
      *
      * @param CartInterface $quote
@@ -686,8 +705,10 @@ class Cart extends AbstractHelper
             return;
         }
 
-        if ($this->doesOrderExist($cart)) {
-            $this->deactivateSessionQuote();
+        $quote = $this->checkoutSession->getQuote();
+
+        if ($this->doesOrderExist($cart, $quote)) {
+            $this->deactivateSessionQuote($quote);
             return;
         }
 
@@ -737,10 +758,9 @@ class Cart extends AbstractHelper
         return $boltOrder;
     }
 
-    public function deactivateSessionQuote()
+    public function deactivateSessionQuote($quote)
     {
         try {
-            $quote = $this->checkoutSession->getQuote();
             if ($quote && $quote->getIsActive()) {
                 $quoteId = $quote->getId();
                 $quote->setIsActive(false)->save();
@@ -754,12 +774,17 @@ class Cart extends AbstractHelper
 
     /**
      * @param $cart
+     * @param $quote
      * @return false|OrderInterface
      */
-    public function doesOrderExist($cart)
+    public function doesOrderExist($cart, $quote)
     {
         list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
         $order = $this->getOrderByIncrementId($incrementId);
+
+        if ($quote && !$order) {
+            $order = $this->getOrderByQuoteId($quote->getId());
+        }
 
         return $order;
     }
@@ -1173,14 +1198,19 @@ class Cart extends AbstractHelper
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    $variantProductToGetImage = $this->productRepository->get($item->getSku(), false, $storeId);
+                    // If the cart item is type of bundle product, its SKU is a combination with bundle selections,
+                    // so we need to retrieve the sku of bundle product without bundle selections.
+                    $product_sku = 'bundle' == $item->getProductType()
+                                   ? $_product->getData('sku')
+                                   : $product['sku'];
+                    $variantProductToGetImage = $this->productRepository->get($product_sku, false, $storeId);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
                             'ITEM' => $product
                         ]);
                     });
-                    $this->bugsnag->notifyError('Could not retrieve product from repository', "SKU: {$product['sku']}");
+                    $this->bugsnag->notifyError('Could not retrieve product from repository', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
                 }
                 try {
                     $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
