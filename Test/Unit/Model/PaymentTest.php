@@ -171,7 +171,9 @@ class PaymentTest extends TestCase
 
     protected function setUp()
     {
+        global $boltPaymentTestActive;
         $this->initRequiredMocks();
+        $boltPaymentTestActive = true;
         $this->initCurrentMock();
     }
 
@@ -644,6 +646,20 @@ class PaymentTest extends TestCase
             ->willReturn(false);
         $this->currentMock->isAvailable($quoteMock);
     }
+    
+    /**
+     * @test
+     */
+    public function isAvailable_notActive()
+    {
+        global $boltPaymentTestActive;
+        $boltPaymentTestActive = false;
+        $quoteMock = $this->createMock(Quote::class);
+        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')
+            ->with($quoteMock)
+            ->willReturn(false);
+        $this->assertFalse($this->currentMock->isAvailable($quoteMock));
+    }
 
     /**
      * @test
@@ -870,7 +886,7 @@ class PaymentTest extends TestCase
     protected function initCurrentMock()
     {
         $this->currentMock = $this->getMockBuilder(BoltPayment::class)
-                                  ->setMethods(['getInfoInstance'])
+                                  ->setMethods(['getInfoInstance', 'isActive'])
                                   ->setConstructorArgs([
                                     $this->context,
                                     $this->registry,
@@ -893,6 +909,12 @@ class PaymentTest extends TestCase
 
         $this->currentMock->method('getInfoInstance')
                           ->willReturn($this->paymentInfo);
+        
+        $this->currentMock->method( 'isActive' )
+		                  ->will( $this->returnCallback( function ( $arg ) {
+			                  global $boltPaymentTestActive;
+                              return $boltPaymentTestActive;
+		                  } ) );
 
         return $this->currentMock;
     }

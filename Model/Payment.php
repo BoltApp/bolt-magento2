@@ -555,7 +555,7 @@ class Payment extends AbstractMethod
         if ($this->cartHelper->hasProductRestrictions($quote)) {
             return false;
         }
-        return parent::isAvailable();
+        return parent::isAvailable($quote);
     }
 
     public function getTitle()
