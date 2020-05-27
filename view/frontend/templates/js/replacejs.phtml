@@ -535,6 +535,7 @@ ob_start();
                  * return void
                  */
                 var processSuccess = function (data) {
+                    customerData.invalidate('bolthints')
                     try {
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;

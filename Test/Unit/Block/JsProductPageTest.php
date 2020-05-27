@@ -86,7 +86,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     /**
      * @var Decider
      */
-    private $decider;
+    private $featureSwitches;
 
     /**
      * @inheritdoc
@@ -154,7 +154,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ->getMock();
         $this->productViewMock->method('getProduct')
             ->willReturn($this->product);
-        $this->decider = $this->createMock(Decider::class);
+        $this->featureSwitches = $this->createMock(Decider::class);
 
         $this->block = $this->getMockBuilder(BlockJsProductPage::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
@@ -166,7 +166,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
                     $this->productViewMock,
-                    $this->decider
+                    $this->featureSwitches,
                 ]
             )
             ->getMock();
@@ -252,5 +252,24 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     public function getStoreCurrencyCode() {
         $result = $this->block->getStoreCurrencyCode();
         $this->assertEquals(self::CURRENCY_CODE, $result);
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsSaveHintsInSections
+     */
+    public function isSaveHintsInSections($flag)
+    {
+        $this->featureSwitches->method('isSaveHintsInSections')
+                           ->willReturn($flag);
+        $result = $this->block->isSaveHintsInSections();
+        $this->assertEquals($flag, $result);
+    }
+
+    public function providerIsSaveHintsInSections() {
+        return [
+            [true],
+            [false],
+        ];
     }
 }

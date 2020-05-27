@@ -91,6 +91,7 @@ if (!$block->isSupportableType()) return;
                      * return void
                      */
                     var processSuccess = function (data) {
+                        customerData.invalidate('bolthints')
                         try {
                             if (typeof data !== 'undefined') {
                                 callbacks.success_url = data.success_url;
@@ -174,7 +175,17 @@ if (!$block->isSupportableType()) return;
                 var quantity = Number($('#qty').val());
                 return quantity > 0 ? quantity : 1;
             };
-
+            <?php if ($this->isSaveHintsInSections()): ?>
+            var hintsSection = customerData.get('bolthints');
+            var hints = hintsSection.data !== undefined ? hintsSection.data : {};
+            customerData.get('bolthints').subscribe(function(newValue) {
+                var newHints = newValue.data !== undefined ? newValue.data : {};
+                if (JSON.stringify(newHints) !== JSON.stringify(hints)) {
+                    hints = newHints;
+                    setupProductPage();
+                }
+            });
+            <?php else: ?>
             var hints = new Promise(function (resolve, reject) {
                 $.get(settings.get_hints_url)
                     .done(function(data) {
@@ -188,6 +199,7 @@ if (!$block->isSupportableType()) return;
                         $(document).trigger('ppc-hints-set');
                     });
             });
+            <?php endif; ?>
 
             var setupProductPage = function () {
                 var options = {};
