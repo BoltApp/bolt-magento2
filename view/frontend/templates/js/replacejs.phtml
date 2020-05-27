@@ -1015,8 +1015,6 @@ ob_start();
                 // Get number of items in cart from counter element
                 var numItems = $(".counter-number").text();
 
-                // Call config with floatingButtonMode if always present checkout enabled and items were or were not just added to cart (dataChanged)
-                var config = boltConfig.always_present_checkout && (numItems && numItems !=="0") ? {floatingButtonMode: "show_cart_on_hover" } : {};
                 BoltCheckout.configure(cart, hints, callbacks);
                 old_hints = new_hints;
             }
