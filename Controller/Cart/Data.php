@@ -150,6 +150,7 @@ class Data extends Action
                 'backUrl' => '',
             ]);
         } catch (BoltException $e) {
+            $this->bugsnag->notifyException($e);
             $result->setData([
                 'status' => 'success',
                 'restrict' => true,
