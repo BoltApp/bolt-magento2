@@ -840,7 +840,7 @@ class PaymentTest extends TestCase
         $this->eventManager = $this->createMock(Manager::class);
         $this->context = $this->createMock(Context::class);
         $this->context->method('getAppState')->willReturn($mockAppState);
-        $this->context->method('getEventManager')->willReturn($this->eventManager);
+        $this->context->method('getEventDispatcher')->willReturn($this->eventManager);
 
         $this->registry = $this->createMock(Registry::class);
         $this->extensionFactory = $this->createMock(ExtensionAttributesFactory::class);
@@ -905,7 +905,7 @@ class PaymentTest extends TestCase
                                     $this->apiHelper,
                                     $this->orderHelper,
                                     $this->bugsnag,
-                                      $this->metricsClient,
+                                    $this->metricsClient,
                                     $this->dataObjectFactory,
                                     $this->cartHelper,
                                     $this->transactionRepository,
