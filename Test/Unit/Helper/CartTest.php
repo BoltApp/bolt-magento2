@@ -2589,7 +2589,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
@@ -2979,8 +2979,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
@@ -3279,7 +3277,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
