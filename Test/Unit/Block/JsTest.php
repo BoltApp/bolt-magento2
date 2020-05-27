@@ -33,7 +33,7 @@ use Magento\Framework\App\Request\Http;
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 21;
+    const SETTINGS_NUMBER = 23;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
@@ -108,7 +108,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
-            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor'
+            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -340,7 +340,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
     public function getSettings()
     {
         $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
-        $this->deciderMock->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
         $result = $this->block->getSettings();
 
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
@@ -488,6 +487,18 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($result, 'shouldTrackCheckoutFunnel() returns true when config is set to true');
     }
 
+    /**
+     * @test
+     */
+    public function enableAlwaysPresentCheckoutButton()
+    {
+        $this->configHelper->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
+        $this->deciderMock->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
+
+        $result = $this->block->enableAlwaysPresentCheckoutButton();
+
+        $this->assertTrue($result);
+    }
     /**
      * @test
      * @dataProvider getButtonCssStylesProvider

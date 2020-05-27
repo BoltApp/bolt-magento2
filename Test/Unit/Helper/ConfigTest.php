@@ -567,6 +567,7 @@ JSON;
             ['shouldMinifyJavascript', BoltConfig::XML_PATH_SHOULD_MINIFY_JAVASCRIPT, false],
             ['shouldCaptureMetrics', BoltConfig::XML_PATH_CAPTURE_MERCHANT_METRICS],
             ['isOrderManagementEnabled', BoltConfig::XML_PATH_PRODUCT_ORDER_MANAGEMENT],
+            ['isAlwaysPresentCheckoutButtonEnabled', BoltConfig::XML_PATH_ALWAYS_PRESENT_CHECKOUT, false],
         ];
     }
 

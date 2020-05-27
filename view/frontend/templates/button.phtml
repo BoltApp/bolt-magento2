@@ -22,4 +22,10 @@
  */
 if ($block->shouldDisableBoltCheckout()) return;
 ?>
-<div class="bolt-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass(); ?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+<?php if(!$block->isInstantCheckoutButton()){ ?>
+    <div class="bolt-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass(); ?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+<?php } else { ?>
+    <div data-tid="instant-bolt-checkout-button">
+        <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?>"></object>
+    </div>
+<?php } ?>

@@ -300,6 +300,11 @@ class Config extends AbstractHelper
     const XML_PATH_API_EMULATE_SESSION = 'payment/boltpay/api_emulate_session';
 
     /**
+     * Enable Bolt Always Present Checkout button
+     */
+    const XML_PATH_ALWAYS_PRESENT_CHECKOUT = 'payment/boltpay/always_present_checkout';
+
+    /**
      * Minify JavaScript configuration path
      */
     const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
@@ -1704,6 +1709,20 @@ class Config extends AbstractHelper
             self::XML_PATH_ENABLE_STORE_PICKUP_FEATURE,
             ScopeInterface::SCOPE_STORE,
             $storeId
+        );
+    }
+
+    /**
+     * Get config value for whether or not always present checkout is enabled
+     * @param int|string|Store $store
+     * @return boolean
+     */
+    public function isAlwaysPresentCheckoutEnabled($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_ALWAYS_PRESENT_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
         );
     }
 

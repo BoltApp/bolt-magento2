@@ -91,6 +91,14 @@ class Definitions {
      */
     const M2_MERCHANT_METRICS = "M2_MERCHANT_METRICS";
 
+    /**
+     * Enable Bolt Button V2
+     */
+    const M2_INSTANT_BOLT_CHECKOUT_BUTTON = "M2_INSTANT_BOLT_CHECKOUT_BUTTON";
+
+    /**
+     * Enable always present checkout button
+     */
     const M2_ALWAYS_PRESENT_CHECKOUT = "M2_ALWAYS_PRESENT_CHECKOUT";
 
     const DEFAULT_SWITCH_VALUES = array(
@@ -159,6 +167,12 @@ class Definitions {
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
+        ),
+        self::M2_INSTANT_BOLT_CHECKOUT_BUTTON => array(
+            self::NAME_KEY            => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
         ),
         self::M2_ALWAYS_PRESENT_CHECKOUT => array(
             self::NAME_KEY => self::M2_ALWAYS_PRESENT_CHECKOUT,

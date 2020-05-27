@@ -68,6 +68,7 @@ tr.shipping.totals td.amount span.price,
                 <is_pre_auth>0</is_pre_auth>
                 <track_checkout_funnel>0</track_checkout_funnel>
                 <enable_store_pickup_feature>0</enable_store_pickup_feature>
+                <always_present_checkout>0</always_present_checkout>
             </boltpay>
         </payment>
     </default>

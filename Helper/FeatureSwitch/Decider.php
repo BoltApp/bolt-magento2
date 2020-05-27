@@ -213,6 +213,10 @@ class Decider extends AbstractHelper {
         return $this->isSwitchEnabled(Definitions::M2_MERCHANT_METRICS);
     }
 
+    public function isInstantCheckoutButton() {
+        return $this->isSwitchEnabled(Definitions::M2_INSTANT_BOLT_CHECKOUT_BUTTON);
+    }
+
     public function isAlwaysPresentCheckoutEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_ALWAYS_PRESENT_CHECKOUT);
     }
