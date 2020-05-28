@@ -23,15 +23,29 @@ if (!$block->isBoltOrder($_order)) return;
 <div class="admin__page-section-item-content">
     <table class="admin__table-secondary order-information-table">
         <tbody>
-        <tr>
-            <th><?php echo __('Credit Card Type') ?></th>
-            <td><?php echo strtoupper($_order->getPayment()->getCcType()); ?></td>
-        </tr>
-        <tr>
-            <th><?php echo __('Credit Card Numbe') ?></th>
-            <td><?php echo sprintf('xxxx-%s', $_order->getPayment()->getCcLast4()); ?>
-            </td>
-        </tr>
+		<?php
+		$bolt_processor = $_order->getPayment()->getAdditionalInformation('processor');
+		if ( $bolt_processor == 'vantiv' ) {
+			?>
+            <tr>
+                <th><?php echo __('Credit Card Type') ?></th>
+                <td><?php echo strtoupper($_order->getPayment()->getCcType()); ?></td>
+            </tr>
+            <tr>
+                <th><?php echo __('Credit Card Number') ?></th>
+                <td><?php echo sprintf('xxxx-%s', $_order->getPayment()->getCcLast4()); ?>
+                </td>
+            </tr>
+			<?php
+		}
+		else {
+			?>
+            <tr>
+                <th colspan="2">Paid via <?php echo strtoupper($bolt_processor); ?></th>
+            </tr>
+			<?php
+		}
+		?>
         </tbody>
     </table>
 </div>

@@ -1838,7 +1838,8 @@ class Order extends AbstractHelper
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
             'captures' => implode(',', $processedCaptures),
-            'refunds' => implode(',', $processedRefunds)
+            'refunds' => implode(',', $processedRefunds),
+            'processor' => $transaction->processor
         ];
 
         $message = __(
