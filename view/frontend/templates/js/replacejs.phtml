@@ -863,6 +863,9 @@ ob_start();
             checkout_buttons = true;
             processButtons();
         });
+        if (boltConfig.always_present_checkout) {
+            processButtons();
+        }
         ////////////////////////////////////////////////
 
         //////////////////////////////////////////////////////////

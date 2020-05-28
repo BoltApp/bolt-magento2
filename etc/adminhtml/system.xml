@@ -95,7 +95,7 @@
                         <config_path>payment/boltpay/order_management</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
-                    <field id="always_present_checkout" translate="label" type="select" sortOrder="83" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <field id="always_present_checkout" translate="label" type="select" sortOrder="83" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>(BETA) Enable Always Present Checkout Button</label>
                         <config_path>payment/boltpay/always_present_checkout</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
