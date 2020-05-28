@@ -50,7 +50,7 @@ use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepo
 use \Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
-
+use Magento\Framework\Event\Manager;
 
 /**
  * Class PaymentTest
@@ -168,10 +168,15 @@ class PaymentTest extends TestCase
      * @var Order\Creditmemo|\PHPUnit\Framework\MockObject\MockObject
      */
     private $creditMemoMock;
+    
+    /** @var MockObject|Manager */
+    private $eventManager;
 
     protected function setUp()
     {
+        global $boltPaymentTestActive;
         $this->initRequiredMocks();
+        $boltPaymentTestActive = true;
         $this->initCurrentMock();
     }
 
@@ -644,6 +649,20 @@ class PaymentTest extends TestCase
             ->willReturn(false);
         $this->currentMock->isAvailable($quoteMock);
     }
+    
+    /**
+     * @test
+     */
+    public function isAvailable_notActive()
+    {
+        global $boltPaymentTestActive;
+        $boltPaymentTestActive = false;
+        $quoteMock = $this->createMock(Quote::class);
+        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')
+            ->with($quoteMock)
+            ->willReturn(false);
+        $this->assertFalse($this->currentMock->isAvailable($quoteMock));
+    }
 
     /**
      * @test
@@ -818,8 +837,10 @@ class PaymentTest extends TestCase
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
+        $this->eventManager = $this->createMock(Manager::class);
         $this->context = $this->createMock(Context::class);
         $this->context->method('getAppState')->willReturn($mockAppState);
+        $this->context->method('getEventDispatcher')->willReturn($this->eventManager);
 
         $this->registry = $this->createMock(Registry::class);
         $this->extensionFactory = $this->createMock(ExtensionAttributesFactory::class);
@@ -870,7 +891,7 @@ class PaymentTest extends TestCase
     protected function initCurrentMock()
     {
         $this->currentMock = $this->getMockBuilder(BoltPayment::class)
-                                  ->setMethods(['getInfoInstance'])
+                                  ->setMethods(['getInfoInstance', 'isActive'])
                                   ->setConstructorArgs([
                                     $this->context,
                                     $this->registry,
@@ -884,7 +905,7 @@ class PaymentTest extends TestCase
                                     $this->apiHelper,
                                     $this->orderHelper,
                                     $this->bugsnag,
-                                      $this->metricsClient,
+                                    $this->metricsClient,
                                     $this->dataObjectFactory,
                                     $this->cartHelper,
                                     $this->transactionRepository,
@@ -893,6 +914,12 @@ class PaymentTest extends TestCase
 
         $this->currentMock->method('getInfoInstance')
                           ->willReturn($this->paymentInfo);
+        
+        $this->currentMock->method( 'isActive' )
+		                  ->will( $this->returnCallback( function ( $arg ) {
+			                  global $boltPaymentTestActive;
+                              return $boltPaymentTestActive;
+		                  } ) );
 
         return $this->currentMock;
     }
