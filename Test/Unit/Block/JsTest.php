@@ -33,7 +33,7 @@ use Magento\Framework\App\Request\Http;
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 22;
+    const SETTINGS_NUMBER = 23;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
@@ -108,7 +108,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
-            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor'
+            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -366,6 +366,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('toggle_checkout', $array, $message . 'toggle_checkout');
         $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
         $this->assertArrayHasKey('button_css_styles', $array, $message . 'button_css_styles');
+        $this->assertArrayHasKey('always_present_checkout', $array, $message . 'always_present_checkout');
     }
 
     /**
@@ -486,6 +487,18 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertTrue($result, 'shouldTrackCheckoutFunnel() returns true when config is set to true');
     }
 
+    /**
+     * @test
+     */
+    public function enableAlwaysPresentCheckoutButton()
+    {
+        $this->configHelper->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
+        $this->deciderMock->method('isAlwaysPresentCheckoutEnabled')->willReturn(true);
+
+        $result = $this->block->enableAlwaysPresentCheckoutButton();
+
+        $this->assertTrue($result);
+    }
     /**
      * @test
      * @dataProvider getButtonCssStylesProvider

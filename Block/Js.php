@@ -111,6 +111,16 @@ class Js extends Template
     }
 
     /**
+     * Get M2 Plugin setting for always present checkout button
+     * @return boolean
+     */
+    public function enableAlwaysPresentCheckoutButton()
+    {
+        $storeId = $this->getStoreId();
+        return $this->configHelper->isAlwaysPresentCheckoutEnabled($storeId) && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
+    }
+
+    /**
      * Get account js url
      *
      * @return  string
@@ -198,7 +208,7 @@ class Js extends Template
         $this->checkoutSession->unsBoltInitiateCheckout();
         return (bool)$flag;
     }
-    
+
     /**
      * Return if the instant checkout is enabled
      *
@@ -238,6 +248,7 @@ class Js extends Template
             'button_css_styles'        => $this->getButtonCssStyles(),
             'is_instant_checkout_button' => $this->getIsInstantCheckoutButton(),
             'cdn_url'                  => $this->configHelper->getCdnUrl(),
+            'always_present_checkout'  => $this->enableAlwaysPresentCheckoutButton(),
         ]);
     }
 

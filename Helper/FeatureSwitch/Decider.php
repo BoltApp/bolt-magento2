@@ -221,4 +221,8 @@ class Decider extends AbstractHelper {
     public function isSaveHintsInSections() {
         return $this->isSwitchEnabled(Definitions::M2_SAVE_HINTS_IN_SECTIONS);
     }
+
+    public function isAlwaysPresentCheckoutEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_ALWAYS_PRESENT_CHECKOUT);
+    }
 }
