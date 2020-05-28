@@ -97,6 +97,7 @@ class OrderTest extends TestCase
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
     const DISPLAY_ID = self::INCREMENT_ID . " / " . self::IMMUTABLE_QUOTE_ID;
     const REFERENCE_ID = '1123123123';
+    const PROCESSOR = 'vantiv';
     const STORE_ID = 1;
     const API_KEY = 'aaaabbbbcccc';
     const BOLT_TRACE_ID = 'aaaabbbbcccc';
@@ -2818,6 +2819,7 @@ class OrderTest extends TestCase
                 [
                     'id'        => self::TRANSACTION_ID,
                     'reference' => self::REFERENCE_ID,
+                    'processor' => self::PROCESSOR,
                     'amount'    => [
                         'amount' => 10
                     ],
