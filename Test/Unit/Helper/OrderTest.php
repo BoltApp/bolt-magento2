@@ -2955,6 +2955,7 @@ class OrderTest extends TestCase
                 ['real_transaction_id'],
                 ['authorized'],
                 ['captures'],
+                ['refunds'],
 	            ['processor']
             )->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
@@ -2962,6 +2963,7 @@ class OrderTest extends TestCase
                 self::TRANSACTION_ID,
                 true,
                 '',
+		        0,
 		        'vantiv'
             );
 
