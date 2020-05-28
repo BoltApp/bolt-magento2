@@ -125,3 +125,9 @@
  - Add catalog price rule support for backoffice
  - Unit tests
  - Bug fixes
+## [v2.8.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.8.0) 2020-05-28
+ - Splitting shipping and tax endpoints
+ - Add always-present Bolt checkout button
+ - Added custom url validation
+ - Bug fixes
+ - Unit tests
