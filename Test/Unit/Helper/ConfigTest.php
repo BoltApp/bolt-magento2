@@ -1195,6 +1195,7 @@ Room 4000',
         return [
             ['https://test.bolt.me', true],
             ['https://test.bolt.me/', true],
+            ['https://api.test.bolt.me/', true],
             ['https://test.bolt.com', false],
             ['https://test .bolt.com', false],
             ['https://testbolt.me', false],
