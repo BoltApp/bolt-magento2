@@ -1347,6 +1347,18 @@ class Cart extends AbstractHelper
         return $cart;
     }
 
+    /**
+     * Build cart data from quote.
+     *
+     * @param Quote $quote
+     * @param Quote $immutableQuote
+     * @param array $items
+     * @param bool $paymentOnly             flag that represents the type of checkout
+     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     *
+     * @return array
+     * @throws \Exception
+     */
     public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly)
     {
         $cart = [];
