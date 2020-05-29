@@ -2646,7 +2646,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
@@ -3036,8 +3036,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
@@ -3070,6 +3068,8 @@ ORDER
         $getCartItemsResult = [[$testItem], 12345, 123];
         $collectDiscountsResult = [[], 12345, 123];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
@@ -3171,6 +3171,8 @@ ORDER
         $testDiscount = ['description' => 'Test discount', 'amount' => 22345];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
@@ -3336,7 +3338,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
