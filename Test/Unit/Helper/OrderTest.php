@@ -2820,7 +2820,7 @@ class OrderTest extends TestCase
                 [
                     'id'        => self::TRANSACTION_ID,
                     'reference' => self::REFERENCE_ID,
-                    'processor' => self::PROCESSOR,
+                    'processor' => self::PROCESSOR_VANTIV,
                     'amount'    => [
                         'amount' => 10
                     ],
