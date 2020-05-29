@@ -25,7 +25,7 @@ if (!$block->isBoltOrder($_order)) return;
         <tbody>
 		<?php
 		$bolt_processor = $_order->getPayment()->getAdditionalInformation('processor');
-		if ( $bolt_processor == 'vantiv' ) {
+		if ( $bolt_processor == \Bolt\Boltpay\Helper\Order::TP_VANTIV ) {
 			?>
             <tr>
                 <th><?php echo __('Credit Card Type') ?></th>

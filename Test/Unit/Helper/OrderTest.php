@@ -2099,7 +2099,7 @@ class OrderTest extends TestCase
             ['transaction_reference', '000123'],
             ['real_transaction_id', self::TRANSACTION_ID],
             ['captures', ""],
-	        ['processor', "vantiv"],
+            ['processor', "vantiv"],
         ];
         $this->paymentMock->expects(static::exactly(4))
             ->method('getAdditionalInformation')
@@ -2126,7 +2126,7 @@ class OrderTest extends TestCase
             ['transaction_reference', '000123'],
             ['real_transaction_id', self::TRANSACTION_ID],
             ['captures', ""],
-	        ['processor', "paypal"],
+            ['processor', "paypal"],
         ];
         $this->paymentMock->expects(static::exactly(4))
             ->method('getAdditionalInformation')
@@ -2178,7 +2178,7 @@ class OrderTest extends TestCase
                     ['transaction_reference', null],
                     ['real_transaction_id', null],
                     ['captures', ""],
-	                ['processor', "vantiv"],
+                    ['processor', "vantiv"],
                 ]
             );
 
@@ -2885,7 +2885,7 @@ class OrderTest extends TestCase
                 ['real_transaction_id'],
                 ['authorized'],
                 ['captures'],
-	            ['processor']
+                ['processor']
             )
             ->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
@@ -2893,7 +2893,7 @@ class OrderTest extends TestCase
                 self::TRANSACTION_ID,
                 true,
                 '',
-	            'vantiv'
+                'vantiv'
             );
 
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
@@ -2956,15 +2956,15 @@ class OrderTest extends TestCase
                 ['authorized'],
                 ['captures'],
                 ['refunds'],
-	            ['processor']
+                ['processor']
             )->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
                 $prevTransactionReference,
                 self::TRANSACTION_ID,
                 true,
                 '',
-		        0,
-		        'vantiv'
+                0,
+                'vantiv'
             );
 
         $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
