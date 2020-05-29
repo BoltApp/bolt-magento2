@@ -3623,7 +3623,7 @@ ORDER
             $totalAmount,
             $diff,
             $paymentOnly,
-            $quote
+            $this->immutableQuoteMock
         );
 
         static::assertEquals($diffResult, $diff);
