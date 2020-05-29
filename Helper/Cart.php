@@ -1503,7 +1503,7 @@ class Cart extends AbstractHelper
 
         // add discount data
         list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (
-            $totalAmount, $diff, $paymentOnly
+            $totalAmount, $diff, $paymentOnly, $immutableQuote
         );
         $cart['discounts'] = $discounts;
         /////////////////////////////////////////////////////////////////////////////////
@@ -1581,9 +1581,9 @@ class Cart extends AbstractHelper
     public function collectDiscounts (
         $totalAmount,
         $diff,
-        $paymentOnly
+        $paymentOnly,
+        $quote
     ) {
-        $quote = $this->getLastImmutableQuote();
         $currencyCode = $quote->getQuoteCurrencyCode();
         $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);
