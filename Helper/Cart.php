@@ -488,7 +488,7 @@ class Cart extends AbstractHelper
      *
      * @param $quote
      */
-    protected function setLastImmutableQuote($quote)
+    public function setLastImmutableQuote($quote)
     {
         $this->lastImmutableQuote = $quote;
     }
