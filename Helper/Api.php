@@ -64,7 +64,7 @@ class Api extends AbstractHelper
 
 
     /**
-     * Api create order
+     * Api create non-Bolt order
      */
     const API_CREATE_NON_BOLT_ORDER = 'non_bolt_order';
 
