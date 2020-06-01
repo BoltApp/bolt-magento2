@@ -1,0 +1,30 @@
+{
+  "name": "bolt-magento2",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^7.1.0",
+    "eslint-plugin-exclude-php-tags": "0.0.1",
+    "eslint-plugin-html": "^6.0.2",
+    "husky": "^4.2.5"
+  },
+  "scripts": {
+    "pretest": "./node_modules/.bin/eslint --ignore-path .eslintignore --ext .js,.html,.phtml ."
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "echo 'Checking for ES5 compatibility' && npm run pretest",
+      "post-commit": "echo 'All green ✅'"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BoltApp/bolt-magento2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BoltApp/bolt-magento2/issues"
+  },
+  "homepage": "https://github.com/BoltApp/bolt-magento2#readme"
+}
