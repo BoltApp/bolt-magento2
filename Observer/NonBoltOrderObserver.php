@@ -10,6 +10,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
+use Error;
 use Exception;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\DataObjectFactory;
@@ -133,6 +134,11 @@ class NonBoltOrderObserver implements ObserverInterface
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
+            return;
+        } catch (Error $error) {
+            // catch errors so failures here don't prevent orders from being created
+            $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
+            $this->bugsnag->notifyException($error);
             return;
         }
 
