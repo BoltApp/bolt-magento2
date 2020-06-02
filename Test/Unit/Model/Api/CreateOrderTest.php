@@ -320,6 +320,22 @@ class CreateOrderTest extends TestCase
 
     /**
      * @test
+     * that validateMinimumAmount skips validation if quote checkout type is backoffice
+     *
+     * @covers ::validateMinimumAmount
+     *
+     * @throws BoltException from tested method
+     */
+    public function validateMinimumAmount_withBackofficeCheckoutType_skipsValidation()
+    {
+        $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
+            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
+        $this->quoteMock->expects(static::never())->method('validateMinimumAmount');
+        $this->currentMock->validateMinimumAmount($this->quoteMock);
+    }
+
+    /**
+     * @test
      */
     public function validateTotalAmount_valid()
     {
