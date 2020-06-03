@@ -198,19 +198,16 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteNoOrder()
     {
         $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder', 'getOrders'])
+            ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $event->expects($this->once())
             ->method('getOrder')
             ->willReturn(null);
-        $event->expects($this->once())
-            ->method('getOrders')
-            ->willReturn(null);
         $eventObserver = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->exactly(2))
+        $eventObserver->expects($this->once())
             ->method('getEvent')
             ->willReturn($event);
         $this->apiHelper->expects($this->never())->method('sendRequest');
