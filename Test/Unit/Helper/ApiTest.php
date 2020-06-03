@@ -141,6 +141,32 @@ class ApiTest extends TestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
     }
+    
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new ApiHelper(
+            $this->context,
+            $this->zendClientFactory,
+            $this->configHelper,
+            $this->responseFactory,
+            $this->requestFactory,
+            $this->logHelper,
+            $this->bugsnag
+        );
+        
+        $this->assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
+        $this->assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
+        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+    }
 
     /**
      * @test
@@ -334,6 +360,81 @@ class ApiTest extends TestCase
         $client->expects(static::once())->method('setRawData')->willReturnSelf();
         $client->expects(static::once())->method('request')
             ->willThrowException(new Exception('Expected exception message'));
+        $this->currentMock->sendRequest($request);
+    }
+    
+    /**
+     * @test
+     * that sendRequest throws localized exception if the response body is empty
+     *
+     * @covers ::sendRequest
+     *
+     * @throws \Zend_Http_Client_Exception from tested method
+     */
+    public function sendRequest_withRegularRequest_returnsLocalizedException()
+    {
+        $request = new Request(
+            [
+                'api_data'       => new \stdClass(),
+                'api_url'        => self::API_URL,
+                'api_key'        => self::API_KEY,
+                'request_method' => 'POST'
+            ]
+        );
+        $client = $this->createMock(ZendClient::class);
+
+        $resultMock = $this->createPartialMock(Response::class, ['setResponse']);
+        $responseMock = $this->createPartialMock(Zend_Http_Response::class, ['getBody', 'getHeaders', 'getStatus']);
+
+        $this->zendClientFactory->expects(static::once())->method('create')->willReturn($client);
+        $this->responseFactory->expects(static::once())->method('create')->willReturn($resultMock);
+
+        $client->expects(static::once())->method('setUri')->with(self::API_URL);
+        $client->expects(static::once())->method('setConfig')->with(['maxredirects' => 0, 'timeout' => 30]);
+
+        $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
+        $emptyResponseBody = '';
+        $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
+            [
+                new ArraySubset(
+                    [
+                        'BOLT API REQUEST' => $request->getData()
+                    ]
+                )
+            ],
+            [
+                [
+                    'BOLT API RESPONSE' => [
+                        'headers' => [],
+                        'body'    => $emptyResponseBody,
+                    ]
+                ]
+            ],
+            [
+                [
+                    'META DATA' => [
+                        'bolt_trace_id' => null,
+                    ]
+                ]
+            ]
+        );
+        $this->bugsnag->expects(self::exactly(3))->method('registerCallback')->willReturnCallback(
+            function (callable $callback) use ($reportMock) {
+                $callback($reportMock);
+            }
+        );
+
+        $client->expects(static::once())->method('setRawData')->willReturnSelf();
+
+        $client->expects(static::once())->method('request')->willReturn($responseMock);
+
+        $responseMock->expects(static::exactly(2))->method('getHeaders')->willReturn([]);
+        $responseMock->expects(static::exactly(2))->method('getBody')
+            ->willReturn($emptyResponseBody);
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Something went wrong in the payment gateway.');
+        
         $this->currentMock->sendRequest($request);
     }
 
