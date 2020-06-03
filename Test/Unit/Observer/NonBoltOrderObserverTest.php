@@ -31,9 +31,11 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Event;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Model\Order;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Observer\NonBoltOrderObserver as Observer;
 use \PHPUnit\Framework\TestCase;
@@ -77,24 +79,9 @@ class NonBoltOrderObserverTest extends TestCase
     private $apiHelper;
 
     /**
-     * @var Bugsnag|MockObject
-     */
-    private $bugsnag;
-
-    /**
      * @var CartHelper|MockObject
      */
     private $cartHelper;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var DataObjectFactory
-     */
-    private $dataObjectFactory;
 
     /**
      * @var DataObject|MockObject
@@ -102,14 +89,9 @@ class NonBoltOrderObserverTest extends TestCase
     private $dataObject;
 
     /**
-     * @var LogHelper|MockObject
+     * @var QuoteRepository|MockObject
      */
-    private $logHelper;
-
-    /**
-     * @var MetricsClient
-     */
-    private $metricsClient;
+    private $quoteRepository;
 
     /**
      * @var Observer
@@ -124,28 +106,30 @@ class NonBoltOrderObserverTest extends TestCase
     private function initRequiredMocks()
     {
         $this->apiHelper = $this->createMock(ApiHelper::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag = $this->createMock(Bugsnag::class);
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods(['buildCartFromQuote'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper = $this->createMock(ConfigHelper::class);
         $this->dataObject = $this->getMockBuilder(DataObject::class)
             ->setMethods(['setApiData'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
-        $this->dataObjectFactory->method('create')->willReturn($this->dataObject);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
+        $dataObjectFactory = $this->createMock(DataObjectFactory::class);
+        $dataObjectFactory->method('create')->willReturn($this->dataObject);
+        $logHelper = $this->createMock(LogHelper::class);
+        $metricsClient = $this->createMock(MetricsClient::class);
+        $this->quoteRepository = $this->createMock(QuoteRepository::class);
         $this->observer = new Observer(
             $this->apiHelper,
-            $this->bugsnag,
+            $bugsnag,
             $this->cartHelper,
-            $this->configHelper,
-            $this->dataObjectFactory,
-            $this->logHelper,
-            $this->metricsClient
+            $configHelper,
+            $dataObjectFactory,
+            $logHelper,
+            $metricsClient,
+            $this->quoteRepository
         );
     }
 
@@ -156,28 +140,33 @@ class NonBoltOrderObserverTest extends TestCase
     {
         $order = $this->createMock(Order::class);
         $item = $this->createMock(Item::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $customer = $this->createMock(CustomerInterface::class);
         $customer->method('getEmail')->willReturn(self::EMAIL);
         $customer->method('getFirstname')->willReturn(self::FIRST_NAME);
         $customer->method('getLastname')->willReturn(self::LAST_NAME);
-        $quote = $this->createMock(Quote::class);
-        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $quote->method('getCustomer')->willReturn($customer);
+        $address = $this->createMock(Address::class);
+        $address->method('getFirstname')->willReturn(self::FIRST_NAME);
+        $address->method('getLastname')->willReturn(self::LAST_NAME);
+        $quote->method('getShippingAddress')->willReturn($address);
+
+        $this->quoteRepository->expects($this->once())
+            ->method('get')
+            ->willReturn($quote);
 
         $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder', 'getQuote'])
+            ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $event->expects($this->once())
             ->method('getOrder')
             ->willReturn($order);
-        $event->expects($this->once())
-            ->method('getQuote')
-            ->willReturn($quote);
         $eventObserver = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->exactly(2))
+        $eventObserver->expects($this->once())
             ->method('getEvent')
             ->willReturn($event);
 
@@ -234,20 +223,20 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteNoQuote()
     {
         $order = $this->createMock(Order::class);
+        $this->quoteRepository->expects($this->once())
+            ->method('get')
+            ->willReturn(null);
         $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder', 'getQuote'])
+            ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $event->expects($this->once())
             ->method('getOrder')
             ->willReturn($order);
-        $event->expects($this->once())
-            ->method('getQuote')
-            ->willReturn(null);
         $eventObserver = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->exactly(2))
+        $eventObserver->expects($this->once())
             ->method('getEvent')
             ->willReturn($event);
         $this->apiHelper->expects($this->never())->method('sendRequest');
@@ -294,28 +283,32 @@ class NonBoltOrderObserverTest extends TestCase
     {
         $order = $this->createMock(Order::class);
         $item = $this->createMock(Item::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $customer = $this->createMock(CustomerInterface::class);
         $customer->method('getEmail')->willReturn(self::EMAIL);
         $customer->method('getFirstname')->willReturn(self::FIRST_NAME);
         $customer->method('getLastname')->willReturn(self::LAST_NAME);
-        $quote = $this->createMock(Quote::class);
-        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $quote->method('getCustomer')->willReturn($customer);
+        $address = $this->createMock(Address::class);
+        $address->method('getFirstname')->willReturn(self::FIRST_NAME);
+        $address->method('getLastname')->willReturn(self::LAST_NAME);
+        $quote->method('getShippingAddress')->willReturn($address);
 
+        $this->quoteRepository->expects($this->once())
+            ->method('get')
+            ->willReturn($quote);
         $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder', 'getQuote'])
+            ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $event->expects($this->once())
             ->method('getOrder')
             ->willReturn($order);
-        $event->expects($this->once())
-            ->method('getQuote')
-            ->willReturn($quote);
         $eventObserver = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->exactly(2))
+        $eventObserver->expects($this->once())
             ->method('getEvent')
             ->willReturn($event);
 
@@ -338,28 +331,32 @@ class NonBoltOrderObserverTest extends TestCase
     {
         $order = $this->createMock(Order::class);
         $item = $this->createMock(Item::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $customer = $this->createMock(CustomerInterface::class);
         $customer->method('getEmail')->willReturn(self::EMAIL);
         $customer->method('getFirstname')->willReturn(self::FIRST_NAME);
         $customer->method('getLastname')->willReturn(self::LAST_NAME);
-        $quote = $this->createMock(Quote::class);
-        $quote->method('getAllVisibleItems')->willReturn([$item]);
         $quote->method('getCustomer')->willReturn($customer);
+        $address = $this->createMock(Address::class);
+        $address->method('getFirstname')->willReturn(self::FIRST_NAME);
+        $address->method('getLastname')->willReturn(self::LAST_NAME);
+        $quote->method('getShippingAddress')->willReturn($address);
 
+        $this->quoteRepository->expects($this->once())
+            ->method('get')
+            ->willReturn($quote);
         $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder', 'getQuote'])
+            ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $event->expects($this->once())
             ->method('getOrder')
             ->willReturn($order);
-        $event->expects($this->once())
-            ->method('getQuote')
-            ->willReturn($quote);
         $eventObserver = $this->getMockBuilder(Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $eventObserver->expects($this->exactly(2))
+        $eventObserver->expects($this->once())
             ->method('getEvent')
             ->willReturn($event);
 

@@ -104,10 +104,10 @@ class NonBoltOrderObserver implements ObserverInterface
     {
         try {
             $order = $observer->getEvent()->getOrder();
-            if (!$order) {
+            if ($order == null) {
                 // for multi-address orders, the event will have a list of orders instead
                 $orders = $observer->getEvent()->getOrders();
-                if (!$orders || count($orders) < 1) {
+                if ($orders == null || count($orders) < 1) {
                     $this->metricsClient->processCountMetric("non_bolt_order_creation.no_order", 1);
                     return;
                 }
