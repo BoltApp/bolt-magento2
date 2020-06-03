@@ -366,4 +366,62 @@ class NonBoltOrderObserverTest extends TestCase
         // assert that an error was not thrown by the observer
         $this->assertTrue(true);
     }
+
+    public function testExecuteShipmentsNotSet()
+    {
+        $order = $this->createMock(Order::class);
+        $item = $this->createMock(Item::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->method('getAllVisibleItems')->willReturn([$item]);
+        $customer = $this->createMock(CustomerInterface::class);
+        $customer->method('getEmail')->willReturn(self::EMAIL);
+        $customer->method('getFirstname')->willReturn(self::FIRST_NAME);
+        $customer->method('getLastname')->willReturn(self::LAST_NAME);
+        $quote->method('getCustomer')->willReturn($customer);
+        $address = $this->createMock(Address::class);
+        $address->method('getFirstname')->willReturn(self::FIRST_NAME);
+        $address->method('getLastname')->willReturn(self::LAST_NAME);
+        $quote->method('getShippingAddress')->willReturn($address);
+
+        $this->quoteRepository->expects($this->once())
+            ->method('get')
+            ->willReturn($quote);
+
+        $event = $this->getMockBuilder(Event::class)
+            ->setMethods(['getOrder'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event->expects($this->once())
+            ->method('getOrder')
+            ->willReturn($order);
+        $eventObserver = $this->getMockBuilder(Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($event);
+
+        $cartMissingPhone = self::CART;
+        unset($cartMissingPhone['shipments']);
+        $this->cartHelper->method('buildCartFromQuote')->willReturn($cartMissingPhone);
+        $expectedOrderData = [
+            'cart' => $cartMissingPhone,
+            'user_identifier' => [
+                'email' => self::EMAIL,
+                'phone' => null,
+            ],
+            'user_identity' => [
+                'first_name' => self::FIRST_NAME,
+                'last_name' => self::LAST_NAME,
+            ],
+        ];
+
+        $this->dataObject->expects($this->once())
+            ->method("setApiData")
+            ->with($expectedOrderData);
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
+        $this->observer->execute($eventObserver);
+    }
 }
