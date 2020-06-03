@@ -80,6 +80,7 @@ class RechargeCustomer implements ObserverInterface
                         )
                     );
                 }
+                $order->setData('is_recharged_order',true);
 
                 return true;
             }

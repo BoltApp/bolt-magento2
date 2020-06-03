@@ -38,6 +38,11 @@ class OrderPlugin
         if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$state];
         }
+
+        if ($subject->getIsRechargedOrder()  && $state === Order::STATE_NEW ){
+            return [Order::STATE_PROCESSING];
+        }
+
         if ($state === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW) {
             $state = Order::STATE_NEW;
         }
@@ -60,6 +65,11 @@ class OrderPlugin
         if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$status];
         }
+
+        if ($subject->getIsRechargedOrder() && $status === \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING) {
+            return [Order::STATE_PROCESSING];
+        }
+
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_NEW);
         }

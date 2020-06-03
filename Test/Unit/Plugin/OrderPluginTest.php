@@ -46,7 +46,7 @@ class OrderPluginTest extends TestCase
     public function setUp()
     {
         $this->plugin = (new ObjectManager($this))->getObject(OrderPlugin::class);
-        $this->subject = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'getConfig', 'getStateDefaultStatus', 'getStatus']);
+        $this->subject = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'getConfig', 'getStateDefaultStatus', 'getStatus','getIsRechargedOrder']);
         $this->payment = $this->createPartialMock(Payment::class, ['getMethod']);
     }
 
@@ -103,6 +103,19 @@ class OrderPluginTest extends TestCase
 
     /**
      * @test
+     * @covers ::beforeSetState
+     */
+    public function beforeSetState_withRechargedOrder()
+    {
+        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
+        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
+        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
+        $result = $this->plugin->beforeSetState($this->subject, 'new');
+        $this->assertEquals([Order::STATE_PROCESSING], $result);
+    }
+
+    /**
+     * @test
      * @covers ::beforeSetStatus
      */
     public function beforeSetStatus_withoutPayment()
@@ -153,5 +166,18 @@ class OrderPluginTest extends TestCase
             [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, Order::STATE_NEW, [Order::STATE_COMPLETE]],
             [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, '', [Order::STATE_COMPLETE]],
         ];
+    }
+
+    /**
+     * @test
+     * @covers ::beforeSetStatus
+     */
+    public function beforeSetStatus_withRechargedOrder()
+    {
+        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
+        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
+        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
+        $result = $this->plugin->beforeSetStatus($this->subject, \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING);
+        $this->assertEquals([Order::STATE_PROCESSING], $result);
     }
 }
