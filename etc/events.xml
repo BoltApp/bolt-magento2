@@ -3,7 +3,7 @@
     <event name="sales_order_shipment_track_save_after">
         <observer name="boltTrackSaveObserver" instance="Bolt\Boltpay\Observer\TrackingSaveObserver" />
     </event>
-    <event name="checkout_submit_all_after">
+    <event name="sales_order_place_after">
         <observer name="nonBoltOrderObserver" instance="Bolt\Boltpay\Observer\NonBoltOrderObserver" />
     </event>
     <event name="sales_order_delete_before">

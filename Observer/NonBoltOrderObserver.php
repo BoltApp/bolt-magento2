@@ -17,6 +17,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Zend_Http_Client_Exception;
 
 /**
@@ -62,6 +63,11 @@ class NonBoltOrderObserver implements ObserverInterface
     private $metricsClient;
 
     /**
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
+
+    /**
      * @param ApiHelper $apiHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
@@ -69,6 +75,7 @@ class NonBoltOrderObserver implements ObserverInterface
      * @param DataObjectFactory $dataObjectFactory
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
+     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         ApiHelper $apiHelper,
@@ -77,7 +84,8 @@ class NonBoltOrderObserver implements ObserverInterface
         ConfigHelper $configHelper,
         DataObjectFactory $dataObjectFactory,
         LogHelper $logHelper,
-        MetricsClient $metricsClient
+        MetricsClient $metricsClient,
+        QuoteRepository $quoteRepository
     ) {
         $this->apiHelper = $apiHelper;
         $this->bugsnag = $bugsnag;
@@ -86,6 +94,7 @@ class NonBoltOrderObserver implements ObserverInterface
         $this->dataObjectFactory = $dataObjectFactory;
         $this->logHelper = $logHelper;
         $this->metricsClient = $metricsClient;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -111,7 +120,7 @@ class NonBoltOrderObserver implements ObserverInterface
                 return;
             }
 
-            $quote = $observer->getEvent()->getQuote();
+            $quote = $this->quoteRepository->get($order->getQuoteId());
             if (!$quote) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_quote", 1);
                 return;
@@ -123,7 +132,9 @@ class NonBoltOrderObserver implements ObserverInterface
                 return;
             }
 
-            $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true);
+            $this->handleMissingName($quote);
+
+            $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true,false);
             $customer = $quote->getCustomer();
             $storeId = $order->getStoreId();
             $result = $this->createNonBoltOrder($cart, $customer, $storeId);
@@ -188,14 +199,37 @@ class NonBoltOrderObserver implements ObserverInterface
      */
     protected function getPhone($cart)
     {
+        if (!@$cart['shipments']) {
+            return null;
+        }
+
         if (count($cart['shipments']) < 1) {
             return null;
         }
 
-        if ($cart['shipments'][0]['shipping_address'] == null) {
+        if (!@$cart['shipments'][0]['shipping_address']) {
             return null;
         }
 
         return $cart['shipments'][0]['shipping_address']['phone'];
+    }
+
+    /**
+     * Workaround/hack for PayPal orders that might have first and last name in the address's FirstName attribute
+     *
+     * @param $quote
+     */
+    protected function handleMissingName($quote) {
+        $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+        if ($address->getLastName() == null) {
+            $name = $address->getFirstName();
+            $names = preg_split("/[\s]+/", $name);
+            if (count($names) > 1) {
+                $address->setFirstName($names[0]);
+                $address->setLastName($names[1]);
+            } else {
+                $address->setLastName($name);
+            }
+        }
     }
 }
