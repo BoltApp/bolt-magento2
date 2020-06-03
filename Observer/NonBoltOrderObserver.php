@@ -110,6 +110,7 @@ class NonBoltOrderObserver implements ObserverInterface
 
             $payment = $order->getPayment();
             if ($payment && $payment->getMethod() == Payment::METHOD_CODE) {
+                // ignore Bolt orders
                 return;
             }
 
@@ -127,7 +128,7 @@ class NonBoltOrderObserver implements ObserverInterface
 
             $this->handleMissingName($quote);
 
-            $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true,false);
+            $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true, false);
             $customer = $quote->getCustomer();
             $storeId = $order->getStoreId();
             $result = $this->createNonBoltOrder($cart, $customer, $storeId);
