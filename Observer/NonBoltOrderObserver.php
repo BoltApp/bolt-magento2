@@ -221,6 +221,9 @@ class NonBoltOrderObserver implements ObserverInterface
             if (count($names) > 1) {
                 $address->setFirstName($names[0]);
                 $address->setLastName($names[1]);
+            } else if (count($names) > 2) {
+                $address->setFirstName(array_shift($names));
+                $address->setLastName(join(" ", $names));
             } else {
                 $address->setLastName($name);
             }
