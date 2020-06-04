@@ -1355,11 +1355,12 @@ class Cart extends AbstractHelper
      * @param array $items
      * @param bool $paymentOnly             flag that represents the type of checkout
      * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     * @param bool $requireBillingAddress   require that the billing address is set
      *
      * @return array
      * @throws \Exception
      */
-    public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly)
+    public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress = true)
     {
         $cart = [];
 
@@ -1435,7 +1436,7 @@ class Cart extends AbstractHelper
                 if (@$cart['billing_address']){
                     $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                     $address->save();
-                } else {
+                } else if ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
                     $this->bugsnag->notifyError(
                         'Order create error',
