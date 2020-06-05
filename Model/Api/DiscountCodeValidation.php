@@ -660,11 +660,24 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $immutableQuote->getShippingAddress();
         $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
 
+        $label = $rule->getDescription();
+        try {
+            $discountLabels = $rule->getStoreLabels();
+        } catch (\Exception $e) {
+            /**
+             * Ignore "resource not set" Exception
+             */
+        }
+        if (!empty($discountLabels)) {
+            $storeLabel = $discountLabels[0];
+            $label = $storeLabel->getStoreLabel();
+        }
+
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $immutableQuote->getQuoteCurrencyCode())),
-            'description'     => trim(__('Discount ') . $rule->getDescription()),
+            'description'     => trim(__('Discount ') . $label),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
 
