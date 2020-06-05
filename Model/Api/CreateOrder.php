@@ -434,7 +434,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateMinimumAmount($quote)
     {
-        if (!$quote->validateMinimumAmount()) {
+        if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE && !$quote->validateMinimumAmount()) {
             $minAmount = $this->configHelper->getMinimumOrderAmount($quote->getStoreId());
             $this->bugsnag->registerCallback(function ($report) use ($quote, $minAmount) {
                 $report->setMetaData([
