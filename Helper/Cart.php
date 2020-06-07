@@ -59,6 +59,7 @@ use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Helper\MetricsClient;
 
 /**
  * Boltpay Cart helper
@@ -239,6 +240,11 @@ class Cart extends AbstractHelper
     private $coreRegistry;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -265,6 +271,7 @@ class Cart extends AbstractHelper
      * @param HookHelper $hookHelper
      * @param CustomerRepository $customerRepository
      * @param Registry $coreRegistry
+     * @param MetricsClient $metricsClient
      */
     public function __construct(
         Context $context,
@@ -292,7 +299,8 @@ class Cart extends AbstractHelper
         CartManagementInterface $quoteManagement,
         HookHelper $hookHelper,
         CustomerRepository $customerRepository,
-        Registry $coreRegistry
+        Registry $coreRegistry,
+        MetricsClient $metricsClient
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -320,6 +328,7 @@ class Cart extends AbstractHelper
         $this->hookHelper = $hookHelper;
         $this->customerRepository = $customerRepository;
         $this->coreRegistry = $coreRegistry;
+        $this->metricsClient = $metricsClient;
     }
 
     /**
@@ -2038,5 +2047,76 @@ class Cart extends AbstractHelper
             throw new WebapiException(__('Incorrect user_id'), 6306, 422);
         }
         $quote->assignCustomer($customer); // Assign quote to Customer
+    }
+
+    public function calculateCartAndHints($payment_only=false, $place_order_payload=[])
+    {
+        $startTime = $this->metricsClient->getCurrentTime();
+        $result    = [];
+
+        try {
+            if ($this->hasProductRestrictions()) {
+                throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
+            }
+
+            if ( ! $this->isCheckoutAllowed()) {
+                throw new BoltException(__('Guest checkout is not allowed.'));
+            }
+
+            // call the Bolt API
+            $boltpayOrder = $this->getBoltpayOrder($payment_only, $place_order_payload);
+
+            // format and send the response
+            $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
+
+            if ($response) {
+                $responseData = json_decode(json_encode($response), true);
+                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
+            } else {
+                // Empty cart - order_token not fetched because doesn't exist. Not a failure.
+                $responseData['cart'] = [];
+            }
+
+            // get immutable quote id stored with cart data
+            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+
+            $cart = array_merge($responseData['cart'], [
+                'orderToken'    => $response ? $responseData['token'] : '',
+                'cartReference' => $cartReference,
+            ]);
+
+            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
+                // cart data validation requirement
+                $cart['currency']['currency_code'] = $cart['currency']['currency'];
+            }
+
+            $hints = $this->getHints($cartReference, 'cart');
+
+            $result = [
+                'status'  => 'success',
+                'cart'    => $cart,
+                'hints'   => $hints,
+                'backUrl' => '',
+            ];
+        } catch (BoltException $e) {
+            $result = [
+                'status'   => 'success',
+                'restrict' => true,
+                'message'  => $e->getMessage(),
+                'backUrl'  => '',
+            ];
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+
+            $result = [
+                'status'  => 'failure',
+                'message' => $e->getMessage(),
+                'backUrl' => '',
+            ];
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
+        } finally {
+            return $result;
+        }
     }
 }
