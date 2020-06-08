@@ -264,8 +264,7 @@ class DataTest extends TestCase
                 $this->dataObjectFactory
             ])
             ->getMock();
-
-        $data->method('getRequest')->willThrowException($exception);
+        $this->cartHelper->method('getBoltpayOrder'))->willThrowException($exception);
         $data->execute();
     }
 }
