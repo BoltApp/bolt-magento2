@@ -1072,6 +1072,9 @@ ob_start();
             createOrder(null, true);
         });
 
+        // globally register createOrder to be called from all templates
+        $(document).on("bolt:createOrder", createOrder);
+
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
         // Required for setting check callback which either

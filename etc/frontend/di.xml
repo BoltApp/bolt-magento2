@@ -77,4 +77,9 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="Magento\Reward\Controller\Cart\Remove">
+        <plugin sortOrder="1" name="boltBoltpayRemove"
+                type="Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin"/>
+    </type>
 </config>
