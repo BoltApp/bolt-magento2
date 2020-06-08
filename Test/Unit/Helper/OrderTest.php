@@ -97,6 +97,8 @@ class OrderTest extends TestCase
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
     const DISPLAY_ID = self::INCREMENT_ID . " / " . self::IMMUTABLE_QUOTE_ID;
     const REFERENCE_ID = '1123123123';
+    const PROCESSOR_VANTIV = 'vantiv';
+    const PROCESSOR_PAYPAL = 'paypal';
     const STORE_ID = 1;
     const API_KEY = 'aaaabbbbcccc';
     const BOLT_TRACE_ID = 'aaaabbbbcccc';
@@ -2098,6 +2100,7 @@ class OrderTest extends TestCase
             ['transaction_reference', '000123'],
             ['real_transaction_id', self::TRANSACTION_ID],
             ['captures', ""],
+            ['processor', self::PROCESSOR_VANTIV],
         ];
         $this->paymentMock->expects(static::exactly(4))
             ->method('getAdditionalInformation')
@@ -2124,6 +2127,7 @@ class OrderTest extends TestCase
             ['transaction_reference', '000123'],
             ['real_transaction_id', self::TRANSACTION_ID],
             ['captures', ""],
+            ['processor', self::PROCESSOR_PAYPAL],
         ];
         $this->paymentMock->expects(static::exactly(4))
             ->method('getAdditionalInformation')
@@ -2175,6 +2179,7 @@ class OrderTest extends TestCase
                     ['transaction_reference', null],
                     ['real_transaction_id', null],
                     ['captures', ""],
+                    ['processor', self::PROCESSOR_VANTIV],
                 ]
             );
 
@@ -2815,6 +2820,7 @@ class OrderTest extends TestCase
                 [
                     'id'        => self::TRANSACTION_ID,
                     'reference' => self::REFERENCE_ID,
+                    'processor' => self::PROCESSOR_VANTIV,
                     'amount'    => [
                         'amount' => 10
                     ],
@@ -2879,14 +2885,16 @@ class OrderTest extends TestCase
                 ['transaction_reference'],
                 ['real_transaction_id'],
                 ['authorized'],
-                ['captures']
+                ['captures'],
+                ['processor']
             )
             ->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
                 $prevTransactionReference,
                 self::TRANSACTION_ID,
                 true,
-                ''
+                '',
+                self::PROCESSOR_VANTIV
             );
 
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
@@ -2947,13 +2955,17 @@ class OrderTest extends TestCase
                 ['transaction_reference'],
                 ['real_transaction_id'],
                 ['authorized'],
-                ['captures']
+                ['captures'],
+                ['refunds'],
+                ['processor']
             )->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
                 $prevTransactionReference,
                 self::TRANSACTION_ID,
                 true,
-                ''
+                '',
+                0,
+                self::PROCESSOR_VANTIV
             );
 
         $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();

@@ -99,6 +99,11 @@ class Order extends AbstractHelper
     const TT_APM_REFUND = 'apm_refund';
 
     const VALID_HOOKS_FOR_ORDER_CREATION = [Hook::HT_PENDING, Hook::HT_PAYMENT];
+    
+    // Payment method was used for Bolt transaction
+    const TP_VANTIV = 'vantiv';
+    const TP_PAYPAL = 'paypal';
+    const TP_AFTERPAY = 'afterpay';
 
     /**
      * @var ApiHelper
@@ -1838,7 +1843,8 @@ class Order extends AbstractHelper
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
             'captures' => implode(',', $processedCaptures),
-            'refunds' => implode(',', $processedRefunds)
+            'refunds' => implode(',', $processedRefunds),
+            'processor' => $transaction->processor
         ];
 
         $message = __(
