@@ -62,6 +62,12 @@ class Api extends AbstractHelper
      */
     const API_CREATE_ORDER = 'merchant/orders';
 
+
+    /**
+     * Api create non-Bolt order
+     */
+    const API_CREATE_NON_BOLT_ORDER = 'non_bolt_order';
+
     /**
      * Api create tracking
      */

@@ -61,4 +61,22 @@ class QuotePlugin
         }
         return $result;
     }
+
+    /**
+     * Change result of the validateMinimumAmount method for Bolt backoffice quotes to always return true
+     * @see \Magento\Quote\Model\Quote::validateMinimumAmount
+     *
+     * @param \Magento\Quote\Model\Quote $subject
+     * @param bool                       $result of the parent method call
+     *
+     * @return bool true if Bolt backoffice quote, otherwise parent method result
+     */
+    public function afterValidateMinimumAmount(\Magento\Quote\Model\Quote $subject, $result)
+    {
+        if ($subject->getBoltCheckoutType() == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE
+            && $subject->getPayment()->getMethod() == \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+            return true;
+        }
+        return $result;
+    }
 }

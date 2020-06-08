@@ -2646,7 +2646,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
@@ -3036,8 +3036,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
@@ -3070,6 +3068,8 @@ ORDER
         $getCartItemsResult = [[$testItem], 12345, 123];
         $collectDiscountsResult = [[], 12345, 123];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
@@ -3171,6 +3171,8 @@ ORDER
         $testDiscount = ['description' => 'Test discount', 'amount' => 22345];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
@@ -3336,7 +3338,7 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
             ->willReturn(self::ORDER_INCREMENT_ID);
@@ -3440,7 +3442,6 @@ ORDER
 
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $quote->method('getTotals')->willReturn([]);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn(0);
@@ -3460,7 +3461,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
 
         static::assertEquals($diffResult, $diff);
@@ -3484,7 +3486,6 @@ ORDER
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $quote->method('getTotals')->willReturn([]);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn('123456');
@@ -3505,7 +3506,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
 
         static::assertEquals($diffResult, $diff);
@@ -3531,7 +3533,6 @@ ORDER
         $quote->method('getTotals')->willReturn([]);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3552,7 +3553,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -3575,7 +3577,6 @@ ORDER
             [
                 'getWebsiteId',
                 'getQuoteById',
-                'getLastImmutableQuote',
                 'getCalculationAddress'
             ]
         );
@@ -3583,7 +3584,6 @@ ORDER
 
         $currentMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3622,7 +3622,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $this->immutableQuoteMock
         );
 
         static::assertEquals($diffResult, $diff);
@@ -3650,7 +3651,6 @@ ORDER
             [
                 'getWebsiteId',
                 'getQuoteById',
-                'getLastImmutableQuote',
                 'getCalculationAddress'
             ]
         );
@@ -3658,7 +3658,6 @@ ORDER
 
         $currentMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3692,7 +3691,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $this->immutableQuoteMock
         );
 
         static::assertEquals($diffResult, $diff);
@@ -3722,14 +3722,12 @@ ORDER
             [
                 'getWebsiteId',
                 'getQuoteById',
-                'getLastImmutableQuote',
                 'getCalculationAddress'
             ]
         );
         $shippingAddress = $this->getAddressMock();
 
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3758,7 +3756,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $this->immutableQuoteMock
         );
 
         static::assertEquals($diffResult, $diff);
@@ -3789,7 +3788,6 @@ ORDER
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $quote->method('getTotals')->willReturn([]);
-        $mock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
@@ -3807,7 +3805,7 @@ ORDER
         $appliedDiscount = 10; // $
         $this->discountHelper->expects(static::once())->method('getMirasvitStoreCreditAmount')
             ->with($quote, $paymentOnly)->willReturn($appliedDiscount);
-        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly);
+        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly, $quote);
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
@@ -3831,7 +3829,6 @@ ORDER
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $quote->method('getTotals')->willReturn([]);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3851,7 +3848,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -3877,7 +3875,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3901,7 +3898,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -3927,7 +3925,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -3950,7 +3947,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -3975,7 +3973,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
@@ -4005,7 +4002,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -4031,7 +4029,6 @@ ORDER
 
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
 
@@ -4057,7 +4054,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals(
             ['description' => 'Store Credit', 'amount' => $appliedDiscount * 100, 'type' => 'fixed_amount'],
@@ -4088,7 +4086,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $mock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
@@ -4113,7 +4110,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -4137,7 +4135,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $mock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
@@ -4160,7 +4157,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
@@ -4184,7 +4182,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $mock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
@@ -4207,7 +4204,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
         $expectedGiftVoucherAmount = 100 * $giftVoucherDiscount;
@@ -4234,7 +4232,6 @@ ORDER
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
@@ -4256,7 +4253,8 @@ ORDER
         list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
             $totalAmount,
             $diff,
-            $paymentOnly
+            $paymentOnly,
+            $quote
         );
         static::assertEquals($diffResult, $diff);
 

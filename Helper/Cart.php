@@ -1267,7 +1267,6 @@ class Cart extends AbstractHelper
      */
     public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
     {
-        $cart = [];
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
@@ -1284,7 +1283,7 @@ class Cart extends AbstractHelper
         // In case #1 the empty cart is returned
         // In case #2 the cart generation continues for the cloned quote
         if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
-            return $cart;
+            return [];
         }
 
         ////////////////////////////////////////////////////////
@@ -1298,8 +1297,6 @@ class Cart extends AbstractHelper
             $this->reserveOrderId($immutableQuote, $quote);
         }
 
-        $billingAddress  = $immutableQuote->getBillingAddress();
-        $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
 
         // Get array of all items that can be display directly
@@ -1307,7 +1304,7 @@ class Cart extends AbstractHelper
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            return $cart;
+            return [];
         }
 
         $this->setLastImmutableQuote($immutableQuote);
@@ -1332,10 +1329,43 @@ class Cart extends AbstractHelper
         }
         $immutableQuote->collectTotals();
 
+        $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
+        if ($cart == []) {
+            // empty cart implies there was an error
+            return $cart;
+        }
+
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way
-        // duplicate payments / orders are prevented/
+        // duplicate payments / orders are prevented
         $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+
+        $this->sessionHelper->cacheFormKey($immutableQuote);
+
+        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+
+        return $cart;
+    }
+
+    /**
+     * Build cart data from quote.
+     *
+     * @param Quote $quote
+     * @param Quote $immutableQuote
+     * @param array $items
+     * @param bool $paymentOnly             flag that represents the type of checkout
+     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     * @param bool $requireBillingAddress   require that the billing address is set
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress = true)
+    {
+        $cart = [];
+
+        $billingAddress  = $immutableQuote->getBillingAddress();
+        $shippingAddress = $immutableQuote->getShippingAddress();
 
         //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
         $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
@@ -1406,7 +1436,7 @@ class Cart extends AbstractHelper
                 if (@$cart['billing_address']){
                     $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                     $address->save();
-                } else {
+                } else if ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
                     $this->bugsnag->notifyError(
                         'Order create error',
@@ -1486,7 +1516,7 @@ class Cart extends AbstractHelper
 
         // add discount data
         list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (
-            $totalAmount, $diff, $paymentOnly
+            $totalAmount, $diff, $paymentOnly, $immutableQuote
         );
         $cart['discounts'] = $discounts;
         /////////////////////////////////////////////////////////////////////////////////
@@ -1519,10 +1549,6 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
-
-        $this->sessionHelper->cacheFormKey($immutableQuote);
-
-        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;
     }
@@ -1568,9 +1594,9 @@ class Cart extends AbstractHelper
     public function collectDiscounts (
         $totalAmount,
         $diff,
-        $paymentOnly
+        $paymentOnly,
+        $quote
     ) {
-        $quote = $this->getLastImmutableQuote();
         $currencyCode = $quote->getQuoteCurrencyCode();
         $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);

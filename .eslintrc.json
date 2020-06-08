@@ -1,0 +1,9 @@
+{
+  "plugins": ["html", "exclude-php-tags"],
+  "settings": {
+    "html/html-extensions": [".phtml", ".html"]
+  },
+  "parserOptions": {
+    "ecmaVersion": 5
+  }
+}

@@ -51,7 +51,7 @@ class QuotePluginTest extends TestCase
     public function setUp()
     {
         $this->subject = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId', 'getId'])
+            ->setMethods(['getBoltParentQuoteId', 'getId', 'getIsActive', 'getBoltCheckoutType', 'getPayment', 'getMethod'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -103,4 +103,63 @@ class QuotePluginTest extends TestCase
             [null, null, 1, 0, self::once()]
         ];
     }
+
+    /**
+     * @test
+     * that afterValidateMinimumAmount changes result of the original method call only for Bolt backoffice quotes
+     *
+     * @covers ::afterValidateMinimumAmount
+     *
+     * @dataProvider afterValidateMinimumAmount_withVariousQuoteStates
+     *
+     * @param string $boltCheckoutType quote flag
+     * @param string $paymentMethod set on quote
+     * @param bool $originalResult of the validateMinimumAmount method call
+     * @param bool $expectedResult after the plugin method call
+     */
+    public function afterValidateMinimumAmount_withVariousQuoteStates_overridesResultForBoltBackendOrders(
+        $boltCheckoutType,
+        $paymentMethod,
+        $originalResult,
+        $expectedResult
+    ) {
+        $this->subject->method('getBoltCheckoutType')->willReturn($boltCheckoutType);
+        $this->subject->method('getPayment')->willReturnSelf();
+        $this->subject->method('getMethod')->willReturn($paymentMethod);
+        static::assertEquals(
+            $expectedResult,
+            $this->plugin->afterValidateMinimumAmount($this->subject, $originalResult)
+        );
+    }
+
+    /**
+     * Data provider for {@see afterValidateMinimumAmount_withVariousQuoteStates_overridesResultForBoltBackendOrders}
+     *
+     * @return array[] containing checkout type, payment method, original and expected result
+     */
+    public function afterValidateMinimumAmount_withVariousQuoteStates()
+    {
+        return [
+            'Bolt backoffice quote with invalid minimum amount returns true' => [
+                'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE,
+                'paymentMethod'    => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
+                'originalResult'   => false,
+                'expectedResult'   => true,
+            ],
+            'Checkmo quote with invalid minimum amount returns true'         => [
+                'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE,
+                'paymentMethod'    => \Magento\OfflinePayments\Model\Checkmo::PAYMENT_METHOD_CHECKMO_CODE,
+                'originalResult'   => false,
+                'expectedResult'   => false,
+            ],
+            'Bolt multistep quote with invalid minimum amount returns false' => [
+                'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_MULTISTEP,
+                'paymentMethod'    => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
+                'originalResult'   => false,
+                'expectedResult'   => false,
+            ],
+        ];
+    }
+
+
 }
