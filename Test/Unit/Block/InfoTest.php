@@ -29,22 +29,38 @@ class InfoTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp()
     {
-        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getCcType', 'getCcLast4']);
+        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getCcType', 'getCcLast4', 'getAdditionalInformation']);
     }
 
     /**
      * @test
      */
-    public function prepareSpecificInformation()
+    public function prepareSpecificInformationCreditCard()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
         $this->mock->expects(self::once())->method('getCcType')->willReturn('visa');
         $this->mock->expects(self::once())->method('getCcLast4')->willReturn('1111');
+        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('vantiv');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
             [
                 'Credit Card Type' => 'VISA',
                 'Credit Card Number' => 'xxxx-1111'
+            ], $data->getData()
+        );
+    }
+    
+    /**
+     * @test
+     */
+    public function prepareSpecificInformationPaypal()
+    {
+        $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
+        $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
+        $this->assertEquals(
+            [
+                'Paid via' => 'PAYPAL'
             ], $data->getData()
         );
     }
