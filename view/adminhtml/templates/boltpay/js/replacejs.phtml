@@ -236,6 +236,20 @@ require([
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
         scriptTag.onload = function() {BoltCheckout.configure(cart, hints, callbacks);}
+
+        // Due to a conflict between Magento and Bolt polyfill of Map class we use an intermediary constructor
+        // to negate conflicting change to the class constructor
+        if (window.isMapPolyfilled) {
+            var originalMap = Map;
+            var originalConstructor = Map.prototype.constructor;
+            function boltMap() {
+                this.constructor = originalConstructor;
+                originalMap.apply(this, arguments);
+                this.constructor = boltMap;
+            }
+            boltMap.prototype = originalMap.prototype;
+            Map = boltMap;
+        }
         document.head.appendChild(scriptTag);
     };
 
