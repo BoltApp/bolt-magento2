@@ -105,9 +105,8 @@ class Data extends Action
     {
         $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, '');
 
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
