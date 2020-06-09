@@ -434,6 +434,10 @@ ob_start();
 
         var hints = {prefill:{}};
 
+        var boltCheckoutConfig = {};
+
+        var addedToCart = false;
+
         var callbacks = {
 
             close: function () {
@@ -773,18 +777,23 @@ ob_start();
 
                         hints = deepMergeObjects(hints, data.hints);
                         hints.prefill = prefill;
-                        //////////////////////////
+
                         }
-                        if (oldBoltCartValue === "") {
+
+                        // When we call configure with promises we don't know if cart is empty or not
+                        // If we set always_present_checkout when we call confogure with promises
+                        // always present button is appear even if cart is epmpty
+                        if (oldBoltCartValue === "" && !boltConfig.always_present_checkout) {
                             // resolve promises for initial .configure() call
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
                         } else {
-                            // temporary disable always present checkout button for refactoring reason
-                            // will remove this line in the next PR
-                            var config = {};
+                            if (boltConfig.always_present_checkout) {
+                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: addedToCart ? "show_cart" : "show_cart_on_hover" } : {};
+                                addedToCart = false;
+                            }
                             // reconfigure bolt checkout with new values
-                            BC = BoltCheckout.configure(cart, hints, callbacks, config);
+                            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                         oldBoltCartValue = JSON.stringify(cart);
 
@@ -1092,10 +1101,9 @@ ob_start();
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
 
-        // When item added to cart, refresh order and mark data modified so always present button knows new item added
-        // to cart and can animate cart
+        // When item added to cart, set flag to animate always present button when we catch cart updating
         $(document).on("ajax:addToCart", function () {
-            createOrder(null, true);
+            addedToCart = true;
         });
 
         // globally register createOrder to be called from all templates
