@@ -467,7 +467,7 @@ class Payment extends AbstractMethod
             $orderCurrency = $order->getOrderCurrencyCode();
             // $amount argument of refund method is in store currency,
             // we need to get amount from credit memo to get the value in order's currency.
-            $refundAmount = CurrencyUtils::toMinorWithoutRounding(
+            $refundAmount = CurrencyUtils::toMinor(
                 $payment->getCreditMemo()->getGrandTotal(),
                 $orderCurrency
             );

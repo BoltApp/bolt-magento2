@@ -465,6 +465,47 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
+    public function refundPayment_mustRoundingAmountBeforeCallingRefundApi()
+    {
+        $orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
+        $orderMock->method('getId')->willReturn('order-123');
+        $orderMock->method('getStoreCurrencyCode')->willReturn('USD');
+        $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCreditMemo' ])->getMockForAbstractClass();
+        $paymentMock->method('getId')->willReturn('payment-1');
+        $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        $creditMemoMock = $this->createMock(Order\Creditmemo::class);
+
+        // Passed value is 99.98999999
+        $creditMemoMock->method("getGrandTotal")->willReturn(99.98999999);
+
+        $paymentMock->method('getOrder')->willReturn($orderMock);
+        $paymentMock->method('getCreditMemo')->willReturn($creditMemoMock);
+
+        $orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        ///  Test rounding amount before sending API. The amount will be rounded to 9999
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function($data)  {
+                    $this->assertEquals(9999, $data->getApiData()['amount']);
+                }
+            )
+            );
+        //////////////////////////////////////////////////////////////////////////////////
+
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->refund($paymentMock, 99.98999999);
+    }
+
+    /**
+     * @test
+     */
     public function refundPayment_skipHookNotification(){
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->mockApiResponse(
@@ -569,7 +610,7 @@ class PaymentTest extends TestCase
     public function refund_withAmountsLessThanOneCentProvider()
     {
         return [
-            ['amount' => 0.009],
+            ['amount' => 0.004],
             ['amount' => 0],
             ['amount' => null],
             ['amount' => 0.001],
