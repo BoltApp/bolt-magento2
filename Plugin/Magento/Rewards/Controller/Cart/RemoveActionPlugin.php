@@ -36,7 +36,7 @@ class RemoveActionPlugin
     }
 
     /**
-     * The original behavior, intended for the shopping cart page is to trigger
+     * The original behavior intended for the shopping cart page is to trigger
      * the browser to reload by sending a "Location" header. This is ok
      * from the shopping cart page, but we do not want this from the mini-cart.
      * To improve UX we remove the "Location" header so that the page does not
