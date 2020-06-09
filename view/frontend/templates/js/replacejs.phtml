@@ -922,21 +922,6 @@ ob_start();
             }
         };
         setupReplacement();
-        //////////////////////////////////////////////////////////
-
-        ////////////////////////////////////////////////////////
-        // on hash change reprocess the buttons due to
-        // possible transition from one checkout type to another
-        ////////////////////////////////////////////////////////
-        window.addEventListener('hashchange', function() {
-            if (checkout_buttons) {
-                checkoutButtonApply(function(button) {
-                    button.style.display = '';
-                });
-                processButtons();
-            }
-        });
-        ////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
         // Run function fn on element underlying data change
