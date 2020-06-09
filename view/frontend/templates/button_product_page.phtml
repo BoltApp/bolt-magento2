@@ -226,7 +226,7 @@ if (!$block->isSupportableType()) return;
                     items: [{
                         reference: '<?= $block->getProduct()->getId(); ?>',
                         price: itemPrice,
-                        name: '<?= $block->getProduct()->getName(); ?>',
+                        name: '<?= addcslashes( $block->getProduct()->getName(), "'" ); ?>',
                         quantity: getQty(),
                         options: JSON.stringify(options)
                     }]
