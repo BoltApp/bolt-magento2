@@ -587,7 +587,7 @@ ob_start();
             }
         };
 
-        ////////////////////////////////////
+        if (getCheckoutType()=="payment") {
 
         /////////////////////////////////////////////////////
         // Call Shipping and Tax prefetch & cache endpoint
@@ -620,7 +620,7 @@ ob_start();
                 $.post(settings.shipping_prefetch_url, params);
             }
         };
-        /////////////////////////////////////////////////////
+        }
 
         /////////////////////////////////////////////////////
         // Create Bolt order and configure BoltCheckout
@@ -813,6 +813,7 @@ ob_start();
         }
         /////////////////////////////////////////////////////
 
+        if (getCheckoutType()=="payment") {
         /////////////////////////////////////////////////////
         // Call Bolt order creation Magento endpoint on
         // customer billing address change on payment only page,
@@ -849,6 +850,7 @@ ob_start();
                 createOrder();
             }
         });
+        }
         /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
@@ -1008,6 +1010,7 @@ ob_start();
         };
         ///////////////////////////////////////////////////////////
 
+        if (getCheckoutType()=="payment") {
         // Map from address input field names to hints.prefill keys
         var input_name_to_hints_prefill = {
             'firstname': 'firstName',
@@ -1102,6 +1105,7 @@ ob_start();
         ///////////////////////////////////////////////////////////
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
+        }
 
         // When item added to cart, refresh order and mark data modified so always present button knows new item added
         // to cart and can animate cart
