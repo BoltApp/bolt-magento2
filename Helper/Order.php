@@ -1710,6 +1710,18 @@ class Order extends AbstractHelper
         // Get the transaction state
         $transactionState = $this->getTransactionState($transaction, $payment, $hookType);
 
+        // Place order now because we postponed it when order was created
+        if (($order->getState()=="bolt_pending") && !in_array($transactionState,
+            [
+                self::TS_PARTIAL_VOIDED,
+                self::TS_CANCELED,
+                self::TS_REJECTED_REVERSIBLE,
+                self::TS_REJECTED_IRREVERSIBLE,
+                self::TS_CREDIT_COMPLETED
+            ])) {
+            $order->place();
+        }
+
         $newCapture = in_array($transactionState, [self::TS_CAPTURED, self::TS_COMPLETED])
             ? $this->getUnprocessedCapture($payment, $transaction)
             : null;
