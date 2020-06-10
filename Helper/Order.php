@@ -99,7 +99,7 @@ class Order extends AbstractHelper
     const TT_APM_REFUND = 'apm_refund';
 
     const VALID_HOOKS_FOR_ORDER_CREATION = [Hook::HT_PENDING, Hook::HT_PAYMENT];
-    
+
     // Payment method was used for Bolt transaction
     const TP_VANTIV = 'vantiv';
     const TP_PAYPAL = 'paypal';
@@ -1169,8 +1169,15 @@ class Order extends AbstractHelper
         }
 
         $parentQuoteId = $order->getQuoteId();
-        $this->deleteOrder($order);
         $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        $this->_eventManager->dispatch(
+            'sales_model_service_quote_submit_failure',
+            [
+                'order' => $order,
+                'quote' => $parentQuote
+            ]
+        );
+        $this->deleteOrder($order);
         // reactivate session quote - the condiotion excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));

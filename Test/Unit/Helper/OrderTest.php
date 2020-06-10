@@ -1820,9 +1820,17 @@ class OrderTest extends TestCase
         $state = Order::STATE_PENDING_PAYMENT;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
         $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::QUOTE_ID)
             ->willReturn($this->quoteMock);
+        $this->eventManager->expects(self::once())->method('dispatch')
+            ->with(
+                'sales_model_service_quote_submit_failure',
+                [
+                    'order' => $this->orderMock,
+                    'quote' => $this->quoteMock
+                ]
+            );
+        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
         $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
         $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
