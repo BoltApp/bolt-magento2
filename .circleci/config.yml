@@ -94,6 +94,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
+      - image: selenium/standalone-chrome:3.141.59-20200326     
     environment:
         MAGENTO_DIR: magento
     steps:
