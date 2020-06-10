@@ -285,6 +285,11 @@ class Config extends AbstractHelper
     const XML_PATH_REWARD_POINTS = 'payment/boltpay/reward_points';
 
     /**
+     * Use Reward Points on Minicart configuration path
+     */
+    const XML_PATH_REWARD_POINTS_MINICART = 'payment/boltpay/reward_points_minicart';
+
+    /**
      * Payment Only Checkout Enabled configuration path
      */
     const XML_PATH_PAYMENT_ONLY_CHECKOUT = 'payment/boltpay/enable_payment_only_checkout';
@@ -1290,6 +1295,22 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Use Reward Points on Minicart configuration
+     *
+     * @param int|string|Store $store scope used for retrieving the configuration value
+     *
+     * @return bool Minicart Reward Points configuration flag
+     */
+    public function displayRewardPointsInMinicartConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_REWARD_POINTS_MINICART,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
      * Get Payment Only Checkout Enabled configuration
      *
      * @param int|string|Store $store
@@ -1578,6 +1599,10 @@ class Config extends AbstractHelper
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('reward_points')
 		                                                 ->setValue(var_export($this->useRewardPointsConfig(), true));
+		// Reward Points Minicart
+		$boltSettings[] = $this->boltConfigSettingFactory->create()
+		                                                 ->setName('reward_points_minicart')
+		                                                 ->setValue(var_export($this->displayRewardPointsInMinicartConfig(), true));
 		// Enable Payment Only Checkout
 		$boltSettings[] = $this->boltConfigSettingFactory->create()
 		                                                 ->setName('enable_payment_only_checkout')

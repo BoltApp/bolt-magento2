@@ -232,6 +232,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
                     </field>
+                    <field id="reward_points_minicart" translate="label" type="select" sortOrder="246" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Magento Commerce Reward Points on Minicart</label>
+                        <config_path>payment/boltpay/reward_points_minicart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
                     <field id="amasty_store_credit" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Use Amasty Store Credit on Shopping Cart</label>
                         <config_path>payment/boltpay/amasty_store_credit</config_path>

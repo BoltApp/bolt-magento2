@@ -561,6 +561,7 @@ JSON;
             ['useStoreCreditConfig', BoltConfig::XML_PATH_STORE_CREDIT],
             ['useAmastyStoreCreditConfig', BoltConfig::XML_PATH_AMASTY_STORE_CREDIT],
             ['useRewardPointsConfig', BoltConfig::XML_PATH_REWARD_POINTS, false],
+            ['displayRewardPointsInMinicartConfig', BoltConfig::XML_PATH_REWARD_POINTS_MINICART, false],
             ['isPaymentOnlyCheckoutEnabled', BoltConfig::XML_PATH_PAYMENT_ONLY_CHECKOUT],
             ['isBoltOrderCachingEnabled', BoltConfig::XML_PATH_BOLT_ORDER_CACHING, false],
             ['isSessionEmulationEnabled', BoltConfig::XML_PATH_API_EMULATE_SESSION],
@@ -927,6 +928,7 @@ JSON;
 			'getIPWhitelistArray',
 			'useStoreCreditConfig',
 			'useRewardPointsConfig',
+			'displayRewardPointsInMinicartConfig',
 			'isPaymentOnlyCheckoutEnabled',
 			'isBoltOrderCachingEnabled',
 			'isSessionEmulationEnabled',
@@ -968,6 +970,7 @@ JSON;
 		$this->currentMock->method('getIPWhitelistArray')->willReturn(['127.0.0.1', '0.0.0.0']);
 		$this->currentMock->method('useStoreCreditConfig')->willReturn(false);
 		$this->currentMock->method('useRewardPointsConfig')->willReturn(false);
+		$this->currentMock->method('displayRewardPointsInMinicartConfig')->willReturn(false);
 		$this->currentMock->method('isPaymentOnlyCheckoutEnabled')->willReturn(false);
 		$this->currentMock->method('isBoltOrderCachingEnabled')->willReturn(true);
 		$this->currentMock->method('isSessionEmulationEnabled')->willReturn(true);
@@ -1011,6 +1014,7 @@ JSON;
 			['ip_whitelist', '127.0.0.1, 0.0.0.0'],
 			['store_credit', 'false'],
 			['reward_points', 'false'],
+			['reward_points_minicart', 'false'],
 			['enable_payment_only_checkout', 'false'],
 			['bolt_order_caching', 'true'],
 			['api_emulate_session', 'true'],
@@ -1019,7 +1023,7 @@ JSON;
 			['track_checkout_funnel', 'false'],
 		];
 		$actual = $this->currentMock->getAllConfigSettings();
-		$this->assertEquals(40, count($actual));
+		$this->assertEquals(41, count($actual));
 		for ($i = 0; $i < 2; $i ++) {
 			$this->assertEquals($expected[$i][0], $actual[$i]->getName());
 			$this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
