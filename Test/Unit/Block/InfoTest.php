@@ -59,9 +59,7 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
-            [
-                'Paid via' => 'PAYPAL'
-            ], $data->getData()
+            [], $data->getData()
         );
     }
 }
