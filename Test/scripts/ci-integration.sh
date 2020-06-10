@@ -67,6 +67,6 @@ echo "restarted apache2"
 
 git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 cd integration-tests
-[ -f bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts ] && echo "Found" || echo "Not found"
 npm install
+npm run build
 TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts
