@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Block;
 
 class Info extends \Magento\Payment\Block\Info
 {
+    protected $_template = 'Bolt_Boltpay::info/default.phtml';
+    
     /**
      * @param null $transport
      * @return \Magento\Framework\DataObject|null
@@ -39,8 +41,6 @@ class Info extends \Magento\Payment\Block\Info
             if ($ccLast4 = $info->getCcLast4()) {
                 $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
             }
-        } else {
-            $data[(string)__('Paid via')] = strtoupper($boltProcessor);
         }
 
         if ($data) {
