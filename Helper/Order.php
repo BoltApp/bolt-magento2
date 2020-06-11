@@ -104,6 +104,10 @@ class Order extends AbstractHelper
     const TP_VANTIV = 'vantiv';
     const TP_PAYPAL = 'paypal';
     const TP_AFTERPAY = 'afterpay';
+    const TP_METHOD_DISPLAY = array(
+        'paypal' => 'PayPal',
+        'afterpay' => 'Afterpay',
+    );
 
     /**
      * @var ApiHelper

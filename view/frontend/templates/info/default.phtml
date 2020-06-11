@@ -13,7 +13,7 @@ $boltProcessor = $block->getInfo()->getAdditionalInformation('processor');
 if ( empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV ) {
     $title = $block->getMethod()->getConfigData('title', $block->getInfo()->getOrder()->getStoreId());
 } else {
-    $title = 'Bolt-' . strtoupper($boltProcessor);
+    $title = 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[$boltProcessor];
 }
 $title = $block->escapeHtml($title);
 ?>
