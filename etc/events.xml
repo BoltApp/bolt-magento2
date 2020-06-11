@@ -6,7 +6,4 @@
     <event name="sales_order_place_after">
         <observer name="nonBoltOrderObserver" instance="Bolt\Boltpay\Observer\NonBoltOrderObserver" />
     </event>
-    <event name="sales_order_delete_before">
-        <observer name="magento_giftcardaccount" instance="Magento\GiftCardAccount\Observer\RevertGiftCardAccountBalance"/>
-    </event>
 </config>
