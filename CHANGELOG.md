@@ -131,3 +131,6 @@
  - Added custom url validation
  - Bug fixes
  - Unit tests
+## [v2.8.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.8.1) 2020-06-11
+ - Fix PPC javascript error in Magento 2 version 2.3.5
+ - Fix unknown RevertGiftCardAccountBalance error
