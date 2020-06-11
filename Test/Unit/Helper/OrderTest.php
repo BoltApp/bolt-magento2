@@ -32,6 +32,7 @@ use Bolt\Boltpay\Model\Response;
 use Bolt\Boltpay\Model\Service\InvoiceService;
 use Bugsnag\Report;
 use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
 use Magento\Framework\Event\Manager;
@@ -43,6 +44,7 @@ use Magento\Payment\Model\Info;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\Data\TransactionInterface as TransactionInterface;
+use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Invoice as Invoice;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Directory\Model\Region as RegionModel;
@@ -64,6 +66,7 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
+use Magento\Store\Model\ScopeInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
@@ -241,6 +244,9 @@ class OrderTest extends TestCase
     /** @var MockObject|CreditmemoManagementInterface */
     private $creditmemoManagement;
 
+    /** @var MockObject|ScopeConfigInterface mocked instance of the configuration provider */
+    private $scopeConfigMock;
+
     /**
      * @inheritdoc
      * @throws ReflectionException
@@ -324,6 +330,7 @@ class OrderTest extends TestCase
         $this->currentMock = $currentMockBuilder->getMock();
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'discountHelper', $this->discountHelper);
+        TestHelper::setProperty($this->currentMock, 'scopeConfig', $this->scopeConfigMock);
     }
 
     /**
@@ -399,6 +406,9 @@ class OrderTest extends TestCase
             ->setMethods(['getCustomerId','getReservedOrderId','getId','isVirtual','setUpdatedAt','getStoreId','getBillingAddress','setIsActive','getIsActive'])
             ->getMock();
 
+        $this->scopeConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
+            ->getMockForAbstractClass();
+
         $this->orderMock = $this->createPartialMock(
             Order::class,
             [
@@ -435,6 +445,7 @@ class OrderTest extends TestCase
                 'getAllStatusHistory',
                 'getCustomerId',
                 'getBillingAddress',
+                'getStoreId',
                 'getTotalRefunded'
             ]
         );
@@ -3270,10 +3281,13 @@ class OrderTest extends TestCase
 
     /**
      * @test
+     * that createOrderInvoice only notifies the exception to Bugsnag if one occurs during invoice email sending
+     *
      * @covers ::createOrderInvoice
-     * @throws ReflectionException
+     *
+     * @throws ReflectionException if createOrderInvoice method doesn't exist
      */
-    public function createOrderInvoice_invoiceSenderThrowsException_logsException()
+    public function createOrderInvoice_ifInvoiceSenderThrowsException_notifiesException()
     {
         $invoice = $this->createPartialMock(
             Invoice::class,
@@ -3290,11 +3304,58 @@ class OrderTest extends TestCase
         $exception = new Exception($message);
         $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
         $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(5);
+        $this->orderMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
         $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
         $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+        $this->scopeConfigMock->expects(static::once())->method('isSetFlag')
+            ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
+            ->willReturn(true);
         $this->invoiceSender->expects(static::once())->method('send')->willThrowException($exception);
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        TestHelper::invokeMethod(
+            $this->currentMock,
+            'createOrderInvoice',
+            [$this->orderMock, self::TRANSACTION_ID, 0]
+        );
+    }
+
+    /**
+     * @test
+     * that createOrderInvoice doesn't send invoice email if it is disabled in configuration
+     *
+     * @covers ::createOrderInvoice
+     *
+     * @throws ReflectionException if createOrderInvoice method doesn't exist
+     */
+    public function createOrderInvoice_ifInvoiceEmailSendingIsDisabled_doesNotSendInvoiceEmail()
+    {
+        $invoice = $this->createPartialMock(
+            Invoice::class,
+            [
+                'setRequestedCaptureCase',
+                'setTransactionId',
+                'setBaseGrandTotal',
+                'setGrandTotal',
+                'register',
+                'save',
+            ]
+        );
+        $message = 'Expected exception message';
+        $exception = new Exception($message);
+        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(5);
+        $this->orderMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
+        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
+        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+
+        $this->scopeConfigMock->expects(static::once())->method('isSetFlag')
+            ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
+            ->willReturn(false);
+        $this->invoiceSender->expects(static::never())->method('send')->willThrowException($exception);
+
+        $this->bugsnag->expects(self::never())->method('notifyException')->with($exception);
         TestHelper::invokeMethod(
             $this->currentMock,
             'createOrderInvoice',
