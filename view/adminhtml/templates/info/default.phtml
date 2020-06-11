@@ -9,12 +9,7 @@
  * @see \Magento\Payment\Block\Info
  */
 $specificInfo = $block->getSpecificInformation();
-$boltProcessor = $block->getInfo()->getAdditionalInformation('processor');
-if ( empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV ) {
-    $paymentTitle = $block->getMethod()->getConfigData('title', $block->getInfo()->getOrder()->getStoreId());
-} else {
-    $paymentTitle = 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[$boltProcessor];
-}
+$paymentTitle = $block->displayPaymentMethodTitle();
 ?>
 <?= $block->escapeHtml($paymentTitle) ?>
 

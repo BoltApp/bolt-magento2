@@ -49,4 +49,19 @@ class Info extends \Magento\Payment\Block\Info
 
         return $transport;
     }
+    
+    public function displayPaymentMethodTitle()
+    {
+        $info = $this->getInfo();
+        $boltProcessor = $info->getAdditionalInformation('processor');
+        if ( empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV ) {
+            $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
+        } else {
+            $paymentTitle = array_key_exists( $boltProcessor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY )
+                ? 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[ $boltProcessor ]
+                : 'Bolt-' . strtoupper( $boltProcessor );
+        }
+        
+        return $paymentTitle;
+    }
 }
