@@ -38,11 +38,13 @@ use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as OrderModel;
+use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
@@ -1969,7 +1971,11 @@ class Order extends AbstractHelper
 
         $order->addRelatedObject($invoice);
 
-        if (!$invoice->getEmailSent()) {
+        if ($this->scopeConfig->isSetFlag(
+                InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
+                ScopeInterface::SCOPE_STORE,
+                $order->getStoreId()
+            ) && !$invoice->getEmailSent()) {
             try {
                 $this->invoiceSender->send($invoice);
             } catch (\Exception $e) {
