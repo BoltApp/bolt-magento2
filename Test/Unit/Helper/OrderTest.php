@@ -2976,7 +2976,7 @@ class OrderTest extends TestCase
                 ['authorized'],
                 ['captures'],
                 ['refunds'],
-                ['processor']
+                [null]
             )->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
                 $prevTransactionReference,
@@ -2984,7 +2984,7 @@ class OrderTest extends TestCase
                 true,
                 '',
                 0,
-                self::PROCESSOR_VANTIV
+                ''
             );
 
         $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
