@@ -53,6 +53,7 @@ class NonBoltOrderObserverTest extends TestCase
     const LAST_NAME = 'BoltTest';
     const EMAIL = 'integration@bolt.com';
     const PHONE = '132 231 1234';
+    const PAYMENT_METHOD = 'paypal_express';
     const EXPECTED_SHIPMENT = [
         'cost'             => 0,
         'tax_amount'       => 0,
@@ -139,6 +140,7 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecute()
     {
         $order = $this->createMock(Order::class);
+        $payment = $this->createMock(OrderPaymentInterface::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
         $quote->method('getAllVisibleItems')->willReturn([$item]);
@@ -155,7 +157,12 @@ class NonBoltOrderObserverTest extends TestCase
         $this->quoteRepository->expects($this->once())
             ->method('get')
             ->willReturn($quote);
-
+        $order->expects($this->once())
+            ->method('getPayment')
+            ->willReturn($payment);
+        $payment->expects($this->once())
+            ->method('getMethod')
+            ->willReturn(SELF::PAYMENT_METHOD);
         $event = $this->getMockBuilder(Event::class)
             ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
@@ -181,6 +188,7 @@ class NonBoltOrderObserverTest extends TestCase
                 'first_name' => self::FIRST_NAME,
                 'last_name' => self::LAST_NAME,
             ],
+            'payment_method' => self::PAYMENT_METHOD,
         ];
 
         $this->dataObject->expects($this->once())
@@ -370,6 +378,7 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteShipmentsNotSet()
     {
         $order = $this->createMock(Order::class);
+        $payment = $this->createMock(OrderPaymentInterface::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
         $quote->method('getAllVisibleItems')->willReturn([$item]);
@@ -386,7 +395,12 @@ class NonBoltOrderObserverTest extends TestCase
         $this->quoteRepository->expects($this->once())
             ->method('get')
             ->willReturn($quote);
-
+        $order->expects($this->once())
+            ->method('getPayment')
+            ->willReturn($payment);
+        $payment->expects($this->once())
+            ->method('getMethod')
+            ->willReturn(SELF::PAYMENT_METHOD);
         $event = $this->getMockBuilder(Event::class)
             ->setMethods(['getOrder'])
             ->disableOriginalConstructor()
@@ -414,6 +428,7 @@ class NonBoltOrderObserverTest extends TestCase
                 'first_name' => self::FIRST_NAME,
                 'last_name' => self::LAST_NAME,
             ],
+            'payment_method' => self::PAYMENT_METHOD,
         ];
 
         $this->dataObject->expects($this->once())

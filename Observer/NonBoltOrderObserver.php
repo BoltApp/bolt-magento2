@@ -109,7 +109,8 @@ class NonBoltOrderObserver implements ObserverInterface
             }
 
             $payment = $order->getPayment();
-            if ($payment && $payment->getMethod() == Payment::METHOD_CODE) {
+            $paymentMethod = $payment ? $payment->getMethod() : "unknown";
+            if ($paymentMethod == Payment::METHOD_CODE) {
                 // ignore Bolt orders
                 return;
             }
@@ -131,11 +132,15 @@ class NonBoltOrderObserver implements ObserverInterface
             $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true, false);
             $customer = $quote->getCustomer();
             $storeId = $order->getStoreId();
-            $result = $this->createNonBoltOrder($cart, $customer, $storeId);
-            if ($result != 200) {
+            $result = $this->createNonBoltOrder($cart, $customer, $storeId, $paymentMethod);
+            $response = $result->getResponse();
+            if (empty($response)) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
                 return;
             }
+
+            $payment->setAdditionalInformation("transaction_reference", $response->reference);
+            $payment->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
@@ -156,30 +161,34 @@ class NonBoltOrderObserver implements ObserverInterface
      * @param array $cart
      * @param CustomerInterface $customer
      * @param int $storeId
+     * @param string $paymentMethod
      * @return Response|int
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    protected function createNonBoltOrder($cart, $customer, $storeId)
+    protected function createNonBoltOrder($cart, $customer, $storeId, $paymentMethod)
     {
         $apiKey = $this->configHelper->getApiKey($storeId);
 
         $phone = $this->getPhone($cart);
+        $email = $this->getEmail($cart, $customer);
+        $firstName = $this->getFirstName($cart, $customer);
+        $lastName = $this->getLastName($cart, $customer);
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData([
             'cart' => $cart,
             'user_identifier' => [
-                'email' => $customer->getEmail(),
+                'email' => $email,
                 'phone' => $phone,
             ],
             'user_identity' => [
-                'first_name' => $customer->getFirstname(),
-                'last_name' => $customer->getLastname(),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
             ],
+            'payment_method' => $paymentMethod,
         ]);
         $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_NON_BOLT_ORDER);
         $requestData->setApiKey($apiKey);
-        $requestData->setStatusOnly(true);
 
         $request = $this->apiHelper->buildRequest($requestData);
         return $this->apiHelper->sendRequest($request);
@@ -206,6 +215,84 @@ class NonBoltOrderObserver implements ObserverInterface
         }
 
         return $cart['shipments'][0]['shipping_address']['phone'];
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getEmail($cart, $customer)
+    {
+        if (!is_null($customer->getEmail())) {
+            return $customer->getEmail();
+        }
+
+        if (!@$cart['shipments']) {
+            return null;
+        }
+
+        if (count($cart['shipments']) < 1) {
+            return null;
+        }
+
+        if (!@$cart['shipments'][0]['shipping_address']) {
+            return null;
+        }
+
+        return $cart['shipments'][0]['shipping_address']['email'];
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getFirstName($cart, $customer)
+    {
+        if (!is_null($customer->getFirstname())) {
+            return $customer->getFirstname();
+        }
+
+        if (!@$cart['shipments']) {
+            return null;
+        }
+
+        if (count($cart['shipments']) < 1) {
+            return null;
+        }
+
+        if (!@$cart['shipments'][0]['shipping_address']) {
+            return null;
+        }
+
+        return $cart['shipments'][0]['shipping_address']['first_name'];
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getLastName($cart, $customer)
+    {
+        if (!is_null($customer->getLastname())) {
+            return $customer->getLastname();
+        }
+
+        if (!@$cart['shipments']) {
+            return null;
+        }
+
+        if (count($cart['shipments']) < 1) {
+            return null;
+        }
+
+        if (!@$cart['shipments'][0]['shipping_address']) {
+            return null;
+        }
+
+        return $cart['shipments'][0]['shipping_address']['last_name'];
     }
 
     /**
