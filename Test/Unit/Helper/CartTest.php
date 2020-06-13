@@ -636,7 +636,8 @@ class CartTest extends TestCase
             $this->quoteManagement,
             $this->hookHelper,
             $this->customerRepository,
-            $this->coreRegistry
+            $this->coreRegistry,
+            $this->metricsClient
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -662,7 +663,7 @@ class CartTest extends TestCase
         static::assertAttributeEquals($this->quoteManagement, 'quoteManagement', $instance);
         static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
         static::assertAttributeEquals($this->customerRepository, 'customerRepository', $instance);
-        static::assertAttributeEquals($this->coreRegistry, 'coreRegistry', $instance);
+        static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
     }
 
     /**
