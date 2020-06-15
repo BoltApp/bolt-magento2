@@ -139,7 +139,7 @@ class NonBoltOrderObserver implements ObserverInterface
                 return;
             }
 
-            $payment->setAdditionalInformation("bolt_transaction_reference", $response->reference);
+            $payment->setAdditionalInformation("transaction_reference", $response->reference);
             $payment->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
@@ -206,15 +206,11 @@ class NonBoltOrderObserver implements ObserverInterface
             return null;
         }
 
-        if (count($cart['shipments']) < 1) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['phone'];
         }
 
-        if (!@$cart['shipments'][0]['shipping_address']) {
-            return null;
-        }
-
-        return $cart['shipments'][0]['shipping_address']['phone'];
+        return null;
     }
 
     /**
@@ -228,19 +224,11 @@ class NonBoltOrderObserver implements ObserverInterface
             return $customer->getEmail();
         }
 
-        if (!@$cart['shipments']) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['email'];
         }
 
-        if (count($cart['shipments']) < 1) {
-            return null;
-        }
-
-        if (!@$cart['shipments'][0]['shipping_address']) {
-            return null;
-        }
-
-        return $cart['shipments'][0]['shipping_address']['email'];
+        return null;
     }
 
     /**
@@ -254,19 +242,11 @@ class NonBoltOrderObserver implements ObserverInterface
             return $customer->getFirstname();
         }
 
-        if (!@$cart['shipments']) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['first_name'];
         }
 
-        if (count($cart['shipments']) < 1) {
-            return null;
-        }
-
-        if (!@$cart['shipments'][0]['shipping_address']) {
-            return null;
-        }
-
-        return $cart['shipments'][0]['shipping_address']['first_name'];
+        return null;
     }
 
     /**
@@ -280,19 +260,11 @@ class NonBoltOrderObserver implements ObserverInterface
             return $customer->getLastname();
         }
 
-        if (!@$cart['shipments']) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['last_name'];
         }
 
-        if (count($cart['shipments']) < 1) {
-            return null;
-        }
-
-        if (!@$cart['shipments'][0]['shipping_address']) {
-            return null;
-        }
-
-        return $cart['shipments'][0]['shipping_address']['last_name'];
+        return null;
     }
 
     /**
