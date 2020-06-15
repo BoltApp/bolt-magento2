@@ -183,7 +183,8 @@ class CreateOrderTest extends TestCase
                 'isVirtual',
                 'getShippingAddress',
                 'getQuoteCurrencyCode',
-                'getBoltCheckoutType'
+                'getBoltCheckoutType',
+                'getTotals'
             ]);
         $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
@@ -512,6 +513,8 @@ class CreateOrderTest extends TestCase
         $this->quoteMock->expects(self::once())->method('validateMinimumAmount')
             ->willReturn(true);
         $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(74);
+        $this->quoteMock->expects(self::once())->method('getTotals')->willReturnSelf();
+
         $this->orderHelper->expects(self::once())->method('processNewOrder')
             ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
 

@@ -259,6 +259,14 @@ class ShippingMethods implements ShippingMethodsInterface
             @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
+        $total = $this->quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $sku = trim($giftWrapping->getCode());
+            @$quoteItems['quantity'][$sku] += 1;
+            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
+        }
+
         if (!$quoteItems) {
             throw new BoltException (
                 __('The cart is empty. Please reload the page and checkout again.'),
@@ -271,8 +279,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
                 list($quoteItemData) = $this->cartHelper->getCartItems(
-                    $this->quote->getQuoteCurrencyCode(),
-                    $this->quote->getAllVisibleItems(),
+                    $this->quote,
                     $this->quote->getStoreId()
                 );
 

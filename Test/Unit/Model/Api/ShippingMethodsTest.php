@@ -1178,8 +1178,9 @@ Room 4000',
     public function checkCartItems_noQuoteItems()
     {
         $this->initCurrentMock();
-        $quote = $this->createPartialMock(Quote::class, ['getAllVisibleItems']);
+        $quote = $this->createPartialMock(Quote::class, ['getAllVisibleItems','getTotals']);
         $quote->expects(self::once())->method('getAllVisibleItems')->willReturn([]);
+        $quote->expects(self::once())->method('getTotals')->willReturnSelf();
         self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(BoltException::class);
@@ -1337,7 +1338,7 @@ Room 4000',
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore'
+            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore','getTotals'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -1364,6 +1365,8 @@ Room 4000',
             ->willReturnSelf();
         $quote->method('save')
               ->willReturnSelf();
+        $quote->method('getTotals')
+            ->willReturnSelf();
         $quote->method('getStore')
               ->willReturn($this->storeMock);
 
