@@ -470,4 +470,13 @@ class Js extends Template
         static::$blockAlreadyShown[$blockType] = true;
         return false;
     }
+
+    /**
+     * Return true if we need code specific for merchant espresso part
+     * @return bool
+     */
+    public function isMerchantEspressoParts()
+    {
+        return $this->configHelper->isMerchantEspressoParts();
+    }
 }
