@@ -89,4 +89,7 @@
         <plugin sortOrder="1" name="boltBoltpayRemove"
                 type="Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin"/>
     </type>
+    <type name="Magento\Customer\Block\SectionConfig">
+        <plugin sortOrder="1" name="boltBoltpaySectionConfigBlock" type="Bolt\Boltpay\Plugin\Block\SectionConfigPlugin"/>
+    </type>
 </config>
