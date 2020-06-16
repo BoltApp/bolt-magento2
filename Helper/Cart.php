@@ -2049,7 +2049,7 @@ class Cart extends AbstractHelper
         $quote->assignCustomer($customer); // Assign quote to Customer
     }
 
-    public function calculateCartAndHints($payment_only=false, $place_order_payload=[])
+    public function calculateCartAndHints($paymentOnly=false, $placeOrderPayload=[])
     {
         $startTime = $this->metricsClient->getCurrentTime();
         $result    = [];
@@ -2064,7 +2064,7 @@ class Cart extends AbstractHelper
             }
 
             // call the Bolt API
-            $boltpayOrder = $this->getBoltpayOrder($payment_only, $place_order_payload);
+            $boltpayOrder = $this->getBoltpayOrder($paymentOnly, $placeOrderPayload);
 
             // format and send the response
             $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
