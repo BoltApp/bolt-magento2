@@ -627,7 +627,7 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var isFirstCall = true;
+        var hasConfigureCalled = false;
         var oldBoltCartValue = "";
         var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
@@ -785,8 +785,10 @@ ob_start();
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
                         } else {
-                            // reconfigure bolt checkout with new values
+                            // temporary disable always present checkout button for refactoring reason
+                            // will remove this line in the next PR
                             config = {};
+                            // reconfigure bolt checkout with new values
                             BoltCheckout.configure(cart, hints, callbacks, config);
                         }
                         oldBoltCartValue = JSON.stringify(cart);
@@ -799,9 +801,9 @@ ob_start();
                         }
                     });
 
-            if (isFirstCall) {
+            if (!hasConfigureCalled) {
                 var BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, boltCheckoutConfig);
-                isFirstCall = false;
+                hasConfigureCalled = true;
             }
         }
         }
