@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Plugin;
@@ -152,16 +152,9 @@ class OrderPlugin
         if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return $result;
         }
-        // Place the order it it had just been moved to the Order::STATE_NEW state
+        // Place the order if it had just been moved to the Order::STATE_NEW state
         if ($result->getState() == Order::STATE_NEW && $this->oldState == Order::STATE_PENDING_PAYMENT) {
-            $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/bolt.log');
-            $logger = new \Zend\Log\Logger();
-            $logger->addWriter($writer);
-            $logger->info("===============================================================");
-            $logger->info("=== OrderPlugin::afterSetState before Order::place ============");
             $subject->place();
-            $logger->info("=== OrderPlugin::afterSetState after Order::place =============");
-            $logger->info("===============================================================");
         }
         return $result;
     }
