@@ -21,4 +21,76 @@
     <action name="checkout/onepage/saveOrder">
         <section name="bolthints"/>
     </action>
+    <action name="checkout/cart/add">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/delete">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/updatePost">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/updateItemOptions">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/couponPost">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/estimatePost">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/cart/estimateUpdatePost">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/onepage/saveOrder">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/sidebar/removeItem">
+        <section name="boltcart"/>
+    </action>
+    <action name="checkout/sidebar/updateItemQty">
+        <section name="boltcart"/>
+    </action>
+    <action name="rest/*/V1/carts/*/payment-information">
+        <section name="boltcart"/>
+    </action>
+    <action name="rest/*/V1/guest-carts/*/payment-information">
+        <section name="boltcart"/>
+    </action>
+    <action name="rest/*/V1/guest-carts/*/selected-payment-method">
+        <section name="boltcart"/>
+    </action>
+    <action name="rest/*/V1/carts/*/selected-payment-method">
+        <section name="boltcart"/>
+    </action>
+    <action name="customer/ajax/login">
+        <section name="boltcart"/>
+    </action>
+    <action name="sales/order/reorder">
+        <section name="boltcart"/>
+    </action>
+    <action name="customer/ajax/login">
+        <section name="boltcart"/>
+    </action>
+    <action name="sales/guest/reorder">
+        <section name="boltcart"/>
+    </action>
+    <action name="sales/order/reorder">
+        <section name="boltcart"/>
+    </action>
+    <action name="wishlist/index/cart">
+        <section name="boltcart"/>
+    </action>
+    <action name="wishlist/index/fromcart">
+        <section name="boltcart"/>
+    </action>
+    <action name="wishlist/index/allcart">
+        <section name="boltcart"/>
+    </action>
+    <action name="wishlist/shared/allcart">
+        <section name="boltcart"/>
+    </action>
+    <action name="wishlist/shared/cart">
+        <section name="boltcart"/>
+    </action>
 </config>
