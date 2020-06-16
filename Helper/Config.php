@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
+use Codeception\Module\OrderHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -1180,6 +1181,22 @@ class Config extends AbstractHelper
     public function shouldAdjustTaxMismatch($storeId = null)
     {
         return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch', $storeId);
+    }
+
+    /**
+     * Get Bolt additional configuration for Price Mismatch adjustment, stored in the following format:
+     *
+     * {
+     *    "priceFaultTolerance": "1"
+     * }
+     *
+     * @param null $storeId
+     *
+     * @return string
+     */
+    public function getPriceFaultTolerance($storeId = null)
+    {
+        return (int) $this->getAdditionalConfigProperty('priceFaultTolerance', $storeId) ?: Order::MISMATCH_TOLERANCE;
     }
 
     /**

@@ -564,12 +564,13 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateItemPrice($itemSku, $itemPrice, &$transactionItems)
     {
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
         foreach ($transactionItems as $index => $transactionItem) {
             $transactionItemSku = $this->getSkuFromTransaction($transactionItem);
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
             if ($transactionItemSku === $itemSku &&
-                abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
+                abs($itemPrice - $transactionUnitPrice) <= $priceFaultTolerance
             ) {
                 unset ($transactionItems[$index]);
                 return true;
@@ -602,8 +603,8 @@ class CreateOrder implements CreateOrderInterface
         /** @var Quote\Address $address */
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         $tax = CurrencyUtils::toMinor($address->getTaxAmount(), $quote->getQuoteCurrencyCode());
-
-        if (abs($transactionTax - $tax) > OrderHelper::MISMATCH_TOLERANCE) {
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
+        if (abs($transactionTax - $tax) > $priceFaultTolerance) {
             $this->bugsnag->registerCallback(function ($report) use ($tax, $transactionTax) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -644,8 +645,8 @@ class CreateOrder implements CreateOrderInterface
         }
 
         $boltCost = $this->getShippingAmountFromTransaction($transaction);
-
-        if (abs($storeCost - $boltCost) > OrderHelper::MISMATCH_TOLERANCE) {
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
+        if (abs($storeCost - $boltCost) > $priceFaultTolerance) {
             $this->bugsnag->registerCallback(function ($report) use ($storeCost, $boltCost) {
                 $report->setMetaData([
                     'Pre Auth' => [
@@ -671,14 +672,15 @@ class CreateOrder implements CreateOrderInterface
     public function validateTotalAmount($quote, $transaction)
     {
         $quoteTotal = CurrencyUtils::toMinor($quote->getGrandTotal(), $quote->getQuoteCurrencyCode());
-        $transactionTotal = $this->getTotalAmountFromTransaction($transaction);
+        $boltTotal = $this->getTotalAmountFromTransaction($transaction);
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
 
-        if ($quoteTotal != $transactionTotal) {
-            $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $transactionTotal) {
+        if (abs($quoteTotal - $boltTotal) > $priceFaultTolerance ) {
+            $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $boltTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [
                         'quote.total_amount' => $quoteTotal,
-                        'transaction.total_amount' => $transactionTotal,
+                        'transaction.total_amount' => $boltTotal,
                     ]
                 ]);
             });

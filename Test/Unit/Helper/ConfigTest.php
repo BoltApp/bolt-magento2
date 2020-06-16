@@ -79,7 +79,8 @@ class ConfigTest extends TestCase
     },
     "ignoredShippingAddressCoupons": [
         "IGNORED_SHIPPING_ADDRESS_COUPON"
-    ]
+    ],
+     "priceFaultTolerance": "10"  
 }
 JSON;
 
@@ -765,6 +766,20 @@ JSON;
             ->willReturn(self::ADDITIONAL_CONFIG);
         $adjustTaxMismatch = $this->currentMock->shouldAdjustTaxMismatch();
         $this->assertFalse($adjustTaxMismatch);
+    }
+
+    /**
+     * @test
+     */
+    public function getPriceFaultTolerance()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(self::ADDITIONAL_CONFIG);
+        $priceFaultTolerance = $this->currentMock->getPriceFaultTolerance();
+        $this->assertEquals(10, $priceFaultTolerance);
     }
 
     /**

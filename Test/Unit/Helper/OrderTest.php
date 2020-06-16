@@ -1535,6 +1535,7 @@ class OrderTest extends TestCase
      */
     public function hasSamePrice($orderTax, $orderShipping, $orderTotal, $txTax, $txShipping, $txTotal, $expectedResult)
     {
+        $this->configHelper->expects(self::once())->method('getPriceFaultTolerance')->willReturn(1);
         $this->orderMock->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
         $this->orderMock->expects(self::once())->method('getTaxAmount')->willReturn($orderTax);
         $this->orderMock->expects(self::once())->method('getShippingAmount')->willReturn($orderShipping);
@@ -4013,5 +4014,22 @@ class OrderTest extends TestCase
         $this->expectExceptionMessage('Refund amount is invalid: refund amount [1000], available refund [500]');
 
         TestHelper::invokeMethod($this->currentMock, 'validateRefundAmount', [$this->orderMock, $refundAmount]);
+    }
+
+    /**
+     * @test
+     * @covers ::adjustPriceMismatch
+     */
+    public function adjustPriceMismatch() {
+        $transaction = new \stdClass();
+        @$transaction->order->cart->total_amount->amount = 10000;
+        $this->orderMock->expects(self::once())->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->orderMock->expects(self::once())->method('getGrandTotal')->willReturn(99.99);
+        $this->configHelper->method('getPriceFaultTolerance')->willReturn(2);
+
+        $this->orderMock->expects(self::once())->method('setBaseGrandTotal')->willReturnSelf();
+        $this->orderMock->expects(self::once())->method('setGrandTotal')->willReturnSelf();
+
+        TestHelper::invokeMethod($this->currentMock, 'adjustPriceMismatch', [$transaction, $this->orderMock, $this->quoteMock]);
     }
 }
