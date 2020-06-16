@@ -436,7 +436,7 @@ ob_start();
 
         var boltCheckoutConfig = {};
 
-        var addedToCart = false;
+        var newItemAddedToCart = false;
 
         var callbacks = {
 
@@ -781,16 +781,16 @@ ob_start();
                         }
 
                         // When we call configure with promises we don't know if cart is empty or not
-                        // If we set always_present_checkout when we call confogure with promises
-                        // always present button is appear even if cart is epmpty
+                        // If we set always_present_checkout when we call configure with promises
+                        // always present button is appear even if cart is empty
                         if (oldBoltCartValue === "" && !boltConfig.always_present_checkout) {
                             // resolve promises for initial .configure() call
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
                         } else {
                             if (boltConfig.always_present_checkout) {
-                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: addedToCart ? "show_cart" : "show_cart_on_hover" } : {};
-                                addedToCart = false;
+                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
+                                newItemAddedToCart = false;
                             }
                             // reconfigure bolt checkout with new values
                             BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
@@ -1102,9 +1102,11 @@ ob_start();
         ///////////////////////////////////////////////////////////
 
         // When item added to cart, set flag to animate always present button when we catch cart updating
-        $(document).on("ajax:addToCart", function () {
-            addedToCart = true;
-        });
+        if (boltConfig.always_present_checkout) {
+            $(document).on("ajax:addToCart", function () {
+                newItemAddedToCart = true;
+            });
+        }
 
         // globally register createOrder to be called from all templates
         $(document).on("bolt:createOrder", createOrder);
