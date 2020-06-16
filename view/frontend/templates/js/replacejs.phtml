@@ -922,7 +922,7 @@ ob_start();
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout) {
-                            BoltCheckout.configure(cart, hints, callbacks);
+                            BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -1000,7 +1000,7 @@ ob_start();
             }
             var new_hints = JSON.stringify(hints);
             if (old_hints !== new_hints) {
-                BoltCheckout.configure(cart, hints, callbacks);
+                BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
         };
