@@ -21,6 +21,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -129,6 +130,10 @@ class CartTest extends TestCase
 
     /** @var string Test Bolt API signature */
     const SIGNATURE = 'ZGEvY22bckLNUuZJZguEt2qZvrsyK8C6';
+
+    const TOKEN = 'token';
+
+    const HINT = 'hint!';
 
     /** @var array Address data containing all required fields */
     const COMPLETE_ADDRESS_DATA = [
@@ -265,6 +270,11 @@ class CartTest extends TestCase
     private $coreRegistry;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * Setup test dependencies, called before each test
      */
     protected function setUp()
@@ -384,6 +394,7 @@ class CartTest extends TestCase
             ->getMockForAbstractClass();
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
+        $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -425,7 +436,8 @@ class CartTest extends TestCase
                     $this->quoteManagement,
                     $this->hookHelper,
                     $this->customerRepository,
-                    $this->coreRegistry
+                    $this->coreRegistry,
+                    $this->metricsClient
                 ]
             )
             ->getMock();
@@ -624,7 +636,8 @@ class CartTest extends TestCase
             $this->quoteManagement,
             $this->hookHelper,
             $this->customerRepository,
-            $this->coreRegistry
+            $this->coreRegistry,
+            $this->metricsClient
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -650,7 +663,7 @@ class CartTest extends TestCase
         static::assertAttributeEquals($this->quoteManagement, 'quoteManagement', $instance);
         static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
         static::assertAttributeEquals($this->customerRepository, 'customerRepository', $instance);
-        static::assertAttributeEquals($this->coreRegistry, 'coreRegistry', $instance);
+        static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
     }
 
     /**
@@ -5282,5 +5295,237 @@ ORDER
             'assignQuoteCustomerByEncryptedUserId',
             [$this->quoteMock, $encryptedUserId]
         );
+    }
+
+    private function calculateCartAndHints_initResponseData()
+    {
+        $requestShippingAddress = 'String';
+
+        $response = (object) ( array(
+            'cart' =>
+                (object) ( array(
+                    'order_reference' => self::QUOTE_ID,
+                    'display_id'      => '100050001 / 1234',
+                    'shipments'       =>
+                        array(
+                            0 =>
+                                (object) ( array(
+                                    'shipping_address' => $requestShippingAddress,
+                                    'shipping_method' => 'unknown',
+                                    'service'         => 'Flat Rate - Fixed',
+                                    'cost'            =>
+                                        (object) ( array(
+                                            'amount'          => 500,
+                                            'currency'        => 'USD',
+                                            'currency_symbol' => '$',
+                                        ) ),
+                                    'tax_amount'      =>
+                                        (object) ( array(
+                                            'amount'          => 0,
+                                            'currency'        => 'USD',
+                                            'currency_symbol' => '$',
+                                        ) ),
+                                    'reference'       => 'flatrate_flatrate'
+                                ) ),
+                        ),
+                ) ),
+            'token' => self::TOKEN
+        ) );
+
+        //weird bit of stuff here, copied from the code under test
+        $responseData = json_decode(json_encode($response), true);
+
+        $expectedCart = array_merge($responseData['cart'], [
+            'orderToken' => self::TOKEN,
+            'cartReference' => self::QUOTE_ID
+        ]);
+
+        return [$response,$expectedCart];
+    }
+
+    /**
+     * @test
+     */
+    public function calculateCartAndHints_happyPath()
+    {
+        list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
+        $expected = array(
+            'status' => 'success',
+            'cart' => $expectedCart,
+            'hints' => self::HINT,
+            'backUrl' => ''
+        );
+
+        $boltpayOrder = $this->getMockBuilder(Response::class)
+                                   ->setMethods(['getResponse'])
+                                   ->disableOriginalConstructor()
+                                   ->getMock();
+        $boltpayOrder->method('getResponse')->willReturn($response);
+        $currentMock = $this->getCurrentMock(
+            [
+                'isCheckoutAllowed',
+                'hasProductRestrictions',
+                'getBoltpayOrder',
+                'getHints',
+            ]
+        );
+
+        $currentMock->method('isCheckoutAllowed')->willReturn(true);
+        $currentMock->method('hasProductRestrictions')->willReturn(false);
+        $currentMock->method('getHints')->willReturn(self::HINT);
+        $currentMock->method('getBoltpayOrder')
+                   ->withAnyParameters()
+                   ->willReturn($boltpayOrder);
+
+        $this->assertEquals($expected,$currentMock->calculateCartAndHints());
+    }
+
+    /**
+     * @test
+     */
+    public function calculateCartAndHints_HasProductRestrictions()
+    {
+        list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
+
+        $expected = array(
+            'status' => 'success',
+            'restrict' => true,
+            'message' => 'The cart has products not allowed for Bolt checkout',
+            'backUrl' => ''
+        );
+
+        $boltpayOrder = $this->getMockBuilder(Response::class)
+                             ->setMethods(['getResponse'])
+                             ->disableOriginalConstructor()
+                             ->getMock();
+        $boltpayOrder->method('getResponse')->willReturn($response);
+
+        $currentMock = $this->getCurrentMock(
+            [
+                'isCheckoutAllowed',
+                'hasProductRestrictions',
+                'getBoltpayOrder',
+                'getHints',
+            ]
+        );
+
+        $currentMock->method('isCheckoutAllowed')->willReturn(true);
+        $currentMock->method('hasProductRestrictions')->willReturn(true);
+        $currentMock->method('getHints')->willReturn(self::HINT);
+        $currentMock->method('getBoltpayOrder')
+                    ->withAnyParameters()
+                    ->willReturn($boltpayOrder);
+
+        $this->assertEquals($expected,$currentMock->calculateCartAndHints());
+    }
+
+    /**
+     * @test
+     */
+    public function calculateCartAndHints_DisallowedCheckout()
+    {
+        list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
+        $expected = array(
+            'status' => 'success',
+            'restrict' => true,
+            'message' => 'Guest checkout is not allowed.',
+            'backUrl' => ''
+        );
+
+        $boltpayOrder = $this->getMockBuilder(Response::class)
+                             ->setMethods(['getResponse'])
+                             ->disableOriginalConstructor()
+                             ->getMock();
+        $boltpayOrder->method('getResponse')->willReturn($response);
+        $currentMock = $this->getCurrentMock(
+            [
+                'isCheckoutAllowed',
+                'hasProductRestrictions',
+                'getBoltpayOrder',
+                'getHints',
+            ]
+        );
+
+        $currentMock->method('isCheckoutAllowed')->willReturn(false);
+        $currentMock->method('hasProductRestrictions')->willReturn(false);
+        $currentMock->method('getHints')->willReturn(self::HINT);
+        $currentMock->method('getBoltpayOrder')
+                    ->withAnyParameters()
+                    ->willReturn($boltpayOrder);
+
+        $this->assertEquals($expected,$currentMock->calculateCartAndHints());
+    }
+
+    /**
+     * @test
+     */
+    public function calculateCartAndHints_GeneralException()
+    {
+        $exceptionMessage = 'Test exception message';
+        $exception = new \Exception($exceptionMessage);
+        list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
+        $expected = array(
+            'status' => 'failure',
+            'message' => $exceptionMessage,
+            'backUrl' => '',
+        );
+
+        $boltpayOrder = $this->getMockBuilder(Response::class)
+                             ->setMethods(['getResponse'])
+                             ->disableOriginalConstructor()
+                             ->getMock();
+        $boltpayOrder->method('getResponse')->willReturn($response);
+        $currentMock = $this->getCurrentMock(
+            [
+                'isCheckoutAllowed',
+                'hasProductRestrictions',
+                'getBoltpayOrder',
+                'getHints',
+            ]
+        );
+
+        $currentMock->method('isCheckoutAllowed')->willReturn(true);
+        $currentMock->method('hasProductRestrictions')->willReturn(false);
+        $currentMock->method('getHints')->willReturn(self::HINT);
+        $currentMock->method('getBoltpayOrder')->willThrowException($exception);
+
+        $this->assertEquals($expected,$currentMock->calculateCartAndHints());
+    }
+
+    /**
+     * @test
+     */
+    public function calculateCartAndHints_NullResponse()
+    {
+        list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
+        $expected = array(
+            'status' => 'success',
+            'cart' => array(
+                'orderToken' => '',
+                'cartReference' => ''
+            ),
+            'hints' => null,
+            'backUrl' => ''
+        );
+
+        $boltpayOrder = $this->getMockBuilder(Response::class)
+                             ->setMethods(['getResponse'])
+                             ->disableOriginalConstructor()
+                             ->getMock();
+        $boltpayOrder->method('getResponse')->willReturn($response);
+        $currentMock = $this->getCurrentMock(
+            [
+                'isCheckoutAllowed',
+                'hasProductRestrictions',
+                'getBoltpayOrder',
+                'getHints',
+            ]
+        );
+
+        $currentMock->method('isCheckoutAllowed')->willReturn(true);
+        $currentMock->method('hasProductRestrictions')->willReturn(false);
+        $currentMock->method('getBoltpayOrder')->willReturn(null);
+
+        $this->assertEquals($expected,$currentMock->calculateCartAndHints());
     }
 }
