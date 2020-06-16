@@ -587,8 +587,6 @@ ob_start();
             }
         };
 
-        if (getCheckoutType()=="payment") {
-
         /////////////////////////////////////////////////////
         // Call Shipping and Tax prefetch & cache endpoint
         /////////////////////////////////////////////////////
@@ -620,7 +618,6 @@ ob_start();
                 $.post(settings.shipping_prefetch_url, params);
             }
         };
-        }
 
         /////////////////////////////////////////////////////
         // Create Bolt order and configure BoltCheckout
@@ -743,9 +740,6 @@ ob_start();
                                 BC.open();
                                 allowAutoOpen = false;
                             }
-
-                            // prefetch Shipping and Tax for multi-step checkout
-                            if (getCheckoutType() === 'checkout') prefetchShipping();
                         })
                         .fail(function(jqXHR, textStatus, errorThrown) {
                             reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
@@ -801,6 +795,8 @@ ob_start();
                             allowAutoOpen = false;
                         }
                     });
+            // prefetch Shipping and Tax for multi-step checkout
+            prefetchShipping();
 
             if (!wasConfigureCalled) {
                 // temporary disable always present checkout button for refactoring reason
@@ -1000,7 +996,6 @@ ob_start();
         };
         ///////////////////////////////////////////////////////////
 
-        if (getCheckoutType()=="payment") {
         // Map from address input field names to hints.prefill keys
         var input_name_to_hints_prefill = {
             'firstname': 'firstName',
@@ -1095,7 +1090,6 @@ ob_start();
         ///////////////////////////////////////////////////////////
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
-        }
 
         // When item added to cart, refresh order and mark data modified so always present button knows new item added
         // to cart and can animate cart
