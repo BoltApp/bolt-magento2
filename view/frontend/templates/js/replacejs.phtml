@@ -420,7 +420,7 @@ ob_start();
         };
         //////////////////////////////////////////////
 
-        // flag that repesents should the checkout auto-open
+        // flag that represents should the checkout auto-open
         var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
         unsetInitiateCheckoutCookie();
 
@@ -587,8 +587,6 @@ ob_start();
             }
         };
 
-        ////////////////////////////////////
-
         /////////////////////////////////////////////////////
         // Call Shipping and Tax prefetch & cache endpoint
         /////////////////////////////////////////////////////
@@ -617,10 +615,9 @@ ob_start();
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
-                $.post(settings.shipping_prefetch_url, params);
+                $.get(settings.shipping_prefetch_url, params);
             }
         };
-        /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
         // Create Bolt order and configure BoltCheckout
@@ -743,9 +740,6 @@ ob_start();
                                 BC.open();
                                 allowAutoOpen = false;
                             }
-
-                            // prefetch Shipping and Tax for multi-step checkout
-                            if (getCheckoutType() === 'checkout') prefetchShipping();
                         })
                         .fail(function(jqXHR, textStatus, errorThrown) {
                             reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
@@ -800,6 +794,9 @@ ob_start();
                             BC.open();
                             allowAutoOpen = false;
                         }
+
+                        // prefetch Shipping and Tax for multi-step checkout
+                        prefetchShipping();
                     });
 
             if (!wasConfigureCalled) {
@@ -813,6 +810,7 @@ ob_start();
         }
         /////////////////////////////////////////////////////
 
+        if (getCheckoutType()=="payment") {
         /////////////////////////////////////////////////////
         // Call Bolt order creation Magento endpoint on
         // customer billing address change on payment only page,
@@ -849,6 +847,7 @@ ob_start();
                 createOrder();
             }
         });
+        }
         /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
@@ -922,21 +921,6 @@ ob_start();
             }
         };
         setupReplacement();
-        //////////////////////////////////////////////////////////
-
-        ////////////////////////////////////////////////////////
-        // on hash change reprocess the buttons due to
-        // possible transition from one checkout type to another
-        ////////////////////////////////////////////////////////
-        window.addEventListener('hashchange', function() {
-            if (checkout_buttons) {
-                checkoutButtonApply(function(button) {
-                    button.style.display = '';
-                });
-                processButtons();
-            }
-        });
-        ////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
         // Run function fn on element underlying data change
@@ -993,16 +977,6 @@ ob_start();
             }
         };
         ///////////////////////////////////////////////////////////
-
-        ///////////////////////////////////////////////////////////////
-        // Monitor DOM element showing grand total / cart item number
-        // and trigger Bolt order creation on totals change. This event
-        // happens when discounts are added / removed from the page and
-        // totals updated or items added via ajax call. Don't ignore empty values (non-empty = false).
-        // TODO: add this option to plugin configuration admin page
-        ///////////////////////////////////////////////////////////////
-        monitorDataChange(settings.totals_change_selectors, createOrder, false, false);
-        ///////////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
         // Reconfigure BoltCheckout with page collected hints data
