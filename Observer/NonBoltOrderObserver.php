@@ -202,10 +202,6 @@ class NonBoltOrderObserver implements ObserverInterface
      */
     protected function getPhone($cart)
     {
-        if (!@$cart['shipments']) {
-            return null;
-        }
-
         if (isset($cart['shipments'][0]['shipping_address'])) {
             return $cart['shipments'][0]['shipping_address']['phone'];
         }
