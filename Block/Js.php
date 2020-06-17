@@ -473,4 +473,13 @@ class Js extends Template
         static::$blockAlreadyShown[$blockType] = true;
         return false;
     }
+
+    /**
+     * Return true if we need to show terms payment button
+     * @return bool
+     */
+    public function isShowTermsPaymentButton()
+    {
+        return $this->configHelper->isShowTermsPaymentButton();
+    }
 }

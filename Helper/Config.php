@@ -335,6 +335,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_PICKUP_SHIPPING_METHOD_CODE = 'payment/boltpay/pickup_shipping_method_code';
 
+    const XML_PATH_SHOW_TERMS_PAYMENT_BUTTON = 'payment/boltpay/show_terms_payment_button';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1805,5 +1807,19 @@ class Config extends AbstractHelper
     public function isTestEnvSet()
     {
         return isset($_SERVER['TEST_ENV']);
+    }
+
+    /**
+     * Get config value for if we need to show terms payments button
+     * @param int|string|Store $storeId
+     * @return boolean
+     */
+    public function isShowTermsPaymentButton($storeId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SHOW_TERMS_PAYMENT_BUTTON,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
     }
 }
