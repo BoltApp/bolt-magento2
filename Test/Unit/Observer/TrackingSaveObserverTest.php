@@ -202,6 +202,7 @@ class TrackingSaveObserverTest extends TestCase
                     ]],
                 ],
             ],
+            'is_non_bolt_order' => false,
         ];
 
         $this->dataObject->expects($this->once())
@@ -301,7 +302,7 @@ class TrackingSaveObserverTest extends TestCase
                     ]],
                 ],
             ],
-            'is_non_bolt_order' => true
+            'is_non_bolt_order' => true,
         ];
 
         $this->dataObject->expects($this->once())
