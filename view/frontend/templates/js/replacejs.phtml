@@ -627,8 +627,9 @@ ob_start();
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var hasConfigureCalled = false;
+        var wasConfigureCalled = false;
         var oldBoltCartValue = "";
+        var BC;
         var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
@@ -752,7 +753,7 @@ ob_start();
                         .always(function() {
                             createRequest = false;
                         })
-                        var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+                        BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
             var hintBarrier = boltBarrier();
@@ -787,9 +788,9 @@ ob_start();
                         } else {
                             // temporary disable always present checkout button for refactoring reason
                             // will remove this line in the next PR
-                            config = {};
+                            var config = {};
                             // reconfigure bolt checkout with new values
-                            BoltCheckout.configure(cart, hints, callbacks, config);
+                            BC = BoltCheckout.configure(cart, hints, callbacks, config);
                         }
                         oldBoltCartValue = JSON.stringify(cart);
 
@@ -801,9 +802,12 @@ ob_start();
                         }
                     });
 
-            if (!hasConfigureCalled) {
-                var BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, boltCheckoutConfig);
-                hasConfigureCalled = true;
+            if (!wasConfigureCalled) {
+                // temporary disable always present checkout button for refactoring reason
+                // will remove this line in the next PR
+                var config = {};
+                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, config);
+                wasConfigureCalled = true;
             }
         }
         }
