@@ -26,7 +26,8 @@ use Magento\Framework\App\State;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 
-class Decider extends AbstractHelper {
+class Decider extends AbstractHelper
+{
     /**
      * @var Manager
      */
@@ -87,7 +88,8 @@ class Decider extends AbstractHelper {
      * @param int $rolloutPercentage
      * @return bool
      */
-    private function _isInBucket(string $switchName, int $rolloutPercentage) {
+    private function _isInBucket(string $switchName, int $rolloutPercentage)
+    {
         $this->_session->start();
         $boltFeatureSwitchId = $this->_session->getBoltFeatureSwitchId();
         if (!$boltFeatureSwitchId) {
@@ -104,7 +106,8 @@ class Decider extends AbstractHelper {
         return $position < $rolloutPercentage;
     }
 
-    private function _switchFromConst($switchDef) {
+    private function _switchFromConst($switchDef)
+    {
         $switch = $this->_fsFactory->create();
         $switch->setName($switchDef[Definitions::NAME_KEY]);
         $switch->setValue($switchDef[Definitions::VAL_KEY]);
@@ -121,7 +124,8 @@ class Decider extends AbstractHelper {
      * @throws LocalizedException
      * @return bool
      */
-    public function isSwitchEnabled($switchName) {
+    public function isSwitchEnabled($switchName)
+    {
         $defaultDef = @Definitions::DEFAULT_SWITCH_VALUES[$switchName];
         if (!$defaultDef) {
             throw new LocalizedException(__("Unknown feature switch"));
@@ -142,7 +146,7 @@ class Decider extends AbstractHelper {
 
         if ($switch->getRolloutPercentage() == 0) {
             return $switch->getDefaultValue();
-        } else if ($switch->getRolloutPercentage() == 100) {
+        } elseif ($switch->getRolloutPercentage() == 100) {
             return $switch->getValue();
         } else {
             $isInBucket = $this
@@ -166,22 +170,26 @@ class Decider extends AbstractHelper {
     /**
      * Checks whether the feature switch for enabling/disabling bolt is enabled
      */
-    public function isBoltEnabled() {
+    public function isBoltEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ENABLED);
     }
 
     /**
      * Checks whether the feature switch for logging missing quote failed hook is enabled
      */
-    public function isLogMissingQuoteFailedHooksEnabled() {
+    public function isLogMissingQuoteFailedHooksEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS);
     }
 
-    public function isCreatingCreditMemoFromWebHookEnabled(){
+    public function isCreatingCreditMemoFromWebHookEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED);
     }
 
-    public function isAdminReorderForLoggedInCustomerFeatureEnabled() {
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER);
     }
 
@@ -193,23 +201,28 @@ class Decider extends AbstractHelper {
         return $this->isSwitchEnabled(Definitions::M2_TRACK_SHIPMENT);
     }
 
-    public function isOrderManagementEnabled() {
+    public function isOrderManagementEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_ORDER_MANAGEMENT);
     }
 
-    public function isPayByLinkEnabled() {
+    public function isPayByLinkEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_PAY_BY_LINK);
     }
 
-    public function isIgnoreHookForCreditMemoCreationEnabled() {
+    public function isIgnoreHookForCreditMemoCreationEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION);
     }
 
-    public function isIgnoreHookForInvoiceCreationEnabled() {
+    public function isIgnoreHookForInvoiceCreationEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_IGNORE_HOOK_FOR_INVOICE_CREATION);
     }
 
-    public function isMerchantMetricsEnabled() {
+    public function isMerchantMetricsEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_MERCHANT_METRICS);
     }
 
@@ -218,11 +231,13 @@ class Decider extends AbstractHelper {
         return $this->isSwitchEnabled(Definitions::M2_INSTANT_BOLT_CHECKOUT_BUTTON);
     }
 
-    public function isSaveHintsInSections() {
+    public function isSaveHintsInSections()
+    {
         return $this->isSwitchEnabled(Definitions::M2_SAVE_HINTS_IN_SECTIONS);
     }
 
-    public function isAlwaysPresentCheckoutEnabled() {
+    public function isAlwaysPresentCheckoutEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_ALWAYS_PRESENT_CHECKOUT);
     }
 }

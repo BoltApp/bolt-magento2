@@ -90,7 +90,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->endSetup();
     }
 
-    private function setupFeatureSwitchTable(SchemaSetupInterface $setup) {
+    private function setupFeatureSwitchTable(SchemaSetupInterface $setup)
+    {
         // If the table exists we do nothing. In the future, we can add migrations here based on
         // current version from context, however for now just move on.
         // The reason we do ugrade schema instead of install schema is that install schema is triggered *only*
@@ -141,7 +142,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function setupWebhookLogTable($setup){
+    private function setupWebhookLogTable($setup)
+    {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
         if ($tableCreated) {
             return;
@@ -180,7 +182,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup){
+    private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup)
+    {
         // If the table exists we do nothing. In the future, we can add migrations here based on
         // current version from context, however for now just move on.
         // The reason we do upgrade schema instead of install schema is that install schema is triggered *only*
@@ -244,7 +247,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function updateWebhookLogTable($setup){
+    private function updateWebhookLogTable($setup)
+    {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
 
         if (!$tableCreated) {
@@ -255,11 +259,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $connection->addColumn(
             $setup->getTable('bolt_webhook_log'),
-            'updated_at', [
+            'updated_at',
+            [
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
                 'comment' => 'Updated At'
             ]
         );
-
     }
 }

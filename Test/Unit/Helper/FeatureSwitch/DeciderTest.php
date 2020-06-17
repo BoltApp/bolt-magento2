@@ -3,7 +3,6 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 
-
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
@@ -18,7 +17,7 @@ use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
-class DeciderTest  extends TestCase
+class DeciderTest extends TestCase
 {
     /**
      * @var Context
@@ -79,7 +78,8 @@ class DeciderTest  extends TestCase
     /**
      * @test
      */
-    public function isSwitchEnabled_nothingInDbNoRollout() {
+    public function isSwitchEnabled_nothingInDbNoRollout()
+    {
         $this->fsRepo
             ->expects($this->once())
             ->method('getByName')
@@ -93,7 +93,8 @@ class DeciderTest  extends TestCase
     /**
      * @test
      */
-    public function isSwitchEnabled_ValInDbNoRollout() {
+    public function isSwitchEnabled_ValInDbNoRollout()
+    {
         $fs = $this->createMock(FeatureSwitch::class);
         $fs->expects($this->once())->method('getDefaultValue')->willReturn(true);
         $fs->expects($this->once())->method('getRolloutPercentage')->willReturn(0);
@@ -110,7 +111,8 @@ class DeciderTest  extends TestCase
     /**
      * @test
      */
-    public function isSwitchEnabled_ValInDbFullRollout() {
+    public function isSwitchEnabled_ValInDbFullRollout()
+    {
         $fs = $this->createMock(FeatureSwitch::class);
         $fs->expects($this->once())->method('getValue')->willReturn(true);
         $fs->expects($this->exactly(2))
@@ -129,7 +131,8 @@ class DeciderTest  extends TestCase
     /**
      * @test
      */
-    public function isSwitchEnabled_ValInDbPartialRollout() {
+    public function isSwitchEnabled_ValInDbPartialRollout()
+    {
         $fs = $this->createMock(FeatureSwitch::class);
         $fs->expects($this->once())->method('getValue')->willReturn(true);
         $fs->expects($this->exactly(2))
@@ -148,7 +151,8 @@ class DeciderTest  extends TestCase
     /**
      * @test
      */
-    public function isSwitchEnabled_throwsIfBadSwitchName() {
+    public function isSwitchEnabled_throwsIfBadSwitchName()
+    {
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage("Unknown feature switch");
         $this->decider->isSwitchEnabled("SECRET_FEATURE_SWITCH");

@@ -16,8 +16,8 @@
  */
 
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
-use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CreditCard;
 
+use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CreditCard;
 
 class CreditCardTest extends \PHPUnit\Framework\TestCase
 {

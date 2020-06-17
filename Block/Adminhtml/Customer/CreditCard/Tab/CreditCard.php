@@ -16,10 +16,12 @@
  */
 
 namespace Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab;
+
 use Magento\Customer\Controller\RegistryConstants;
 use Magento\Ui\Component\Layout\Tabs\TabInterface;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Registry;
+
 /**
  * Class CreditCard
  * @package Bolt\Boltpay\Block\Adminhtml\Edit\Tab

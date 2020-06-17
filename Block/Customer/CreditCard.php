@@ -71,8 +71,7 @@ class CreditCard extends Template
         Config $configHelper,
         Decider $featureSwitches,
         array $data = []
-    )
-    {
+    ) {
         $this->formKey = $formKey;
         $this->collectionFactory = $collectionFactory;
         $this->customerSession = $customerSession;
@@ -133,7 +132,8 @@ class CreditCard extends Template
     /**
      * @return string
      */
-    public function getFormKey(){
+    public function getFormKey()
+    {
         return $this->formKey->getFormKey();
     }
 }

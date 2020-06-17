@@ -77,7 +77,8 @@ class OrderSenderPluginTest extends TestCase
     {
         $this->order->expects(self::once())->method('getPayment')->willReturnSelf();
         $this->order->expects(self::once())->method('getMethod')->willReturn(false);
-        $this->callback->expects(self::once())->method('__invoke')->with($this->order, false)->willReturnSelf();;
+        $this->callback->expects(self::once())->method('__invoke')->with($this->order, false)->willReturnSelf();
+        ;
         $this->plugin->aroundSend($this->subject, $this->proceed, $this->order, false);
     }
 

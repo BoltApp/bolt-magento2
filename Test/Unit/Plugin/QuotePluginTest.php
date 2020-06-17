@@ -160,6 +160,4 @@ class QuotePluginTest extends TestCase
             ],
         ];
     }
-
-
 }

@@ -86,13 +86,13 @@ class CheckboxesHandlerTest extends TestCase
             )
             ->setMethods($methods);
 
-        if($enableOriginalConstructor) {
+        if ($enableOriginalConstructor) {
             $builder->enableOriginalConstructor();
         } else {
             $builder->disableOriginalConstructor();
         }
 
-        if($enableProxyingToOriginalMethods) {
+        if ($enableProxyingToOriginalMethods) {
             $builder->enableProxyingToOriginalMethods();
         } else {
             $builder->disableProxyingToOriginalMethods();
@@ -103,7 +103,7 @@ class CheckboxesHandlerTest extends TestCase
 
     private function subscribeToNewsletter_setup()
     {
-        $this->initCurrentMock([],true,true);
+        $this->initCurrentMock([], true, true);
         $this->orderMock = $this->createMock(Order::class);
         $this->subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
         $this->subscriberFactory->method('create')->willReturn($this->subscriber);
@@ -119,10 +119,10 @@ class CheckboxesHandlerTest extends TestCase
         $this->orderMock->expects(self::once())->method('getCustomerId')->willReturn(null);
 
         $addressMock = $this->createMock(Address::class);
-        $addressMock->method('getEmail')->willReturn(SELF::EMAIL);
+        $addressMock->method('getEmail')->willReturn(self::EMAIL);
         $this->orderMock->method('getBillingAddress')->willReturn($addressMock);
 
-        $this->subscriber->expects($this->once())->method('subscribe')->with(SELF::EMAIL);
+        $this->subscriber->expects($this->once())->method('subscribe')->with(self::EMAIL);
 
         $this->currentMock->subscribeToNewsletter($this->orderMock);
     }
@@ -148,7 +148,8 @@ class CheckboxesHandlerTest extends TestCase
      * @dataProvider handleCheckboxesDataProvider
      * @covers ::handle
      */
-    public function handle($checkboxes, $comment, $needSubscribe) {
+    public function handle($checkboxes, $comment, $needSubscribe)
+    {
         $this->initCurrentMock(['subscribeToNewsletter']);
         $this->orderMock = $this->createPartialMock(
             Order::class,
@@ -173,10 +174,11 @@ class CheckboxesHandlerTest extends TestCase
         } else {
             $this->currentMock->expects($this->never())->method('subscribeToNewsletter');
         }
-        $this->currentMock->handle($this->orderMock,$checkboxes);
+        $this->currentMock->handle($this->orderMock, $checkboxes);
     }
 
-    public function handleCheckboxesDataProvider() {
+    public function handleCheckboxesDataProvider()
+    {
         $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true,'features'=>['unknown']];
         $comment1 = '<br>Subscribe for our newsletter: Yes';
         $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false];

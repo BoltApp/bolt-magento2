@@ -135,7 +135,8 @@ class ShippingTaxContextTest extends TestCase
                     $this->regionModel,
                     $this->response,
                     $this->shippingOptionFactory
-                ])
+                ]
+            )
             ->enableProxyingToOriginalMethods()
             ->getMock();
     }
@@ -165,18 +166,19 @@ class ShippingTaxContextTest extends TestCase
         );
 
         $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
-        $this->assertAttributeInstanceOf(CartHelper::class,'cartHelper', $instance);
-        $this->assertAttributeInstanceOf(LogHelper::class,'logHelper', $instance);
-        $this->assertAttributeInstanceOf(ConfigHelper::class,'configHelper', $instance);
-        $this->assertAttributeInstanceOf(SessionHelper::class,'sessionHelper', $instance);
-        $this->assertAttributeInstanceOf(DiscountHelper::class,'discountHelper', $instance);
-        $this->assertAttributeInstanceOf(Bugsnag::class,'bugsnag', $instance);
-        $this->assertAttributeInstanceOf(MetricsClient::class,'metricsClient', $instance);
-        $this->assertAttributeInstanceOf(BoltErrorResponse::class,'errorResponse', $instance);
-        $this->assertAttributeInstanceOf(RegionModel::class,'regionModel', $instance);
-        $this->assertAttributeInstanceOf(Response::class,'response', $instance);
+        $this->assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
+        $this->assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
+        $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+        $this->assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
+        $this->assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
+        $this->assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
+        $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
+        $this->assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
+        $this->assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
+        $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
         $this->assertAttributeInstanceOf(
-            ShippingOptionInterfaceFactory::class,'shippingOptionFactory',
+            ShippingOptionInterfaceFactory::class,
+            'shippingOptionFactory',
             $instance
         );
     }

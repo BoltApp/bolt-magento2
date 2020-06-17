@@ -426,4 +426,3 @@ class SectionConfigPluginTest extends TestCase
         ];
     }
 }
-

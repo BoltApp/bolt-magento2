@@ -52,8 +52,7 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
-    )
-    {
+    ) {
         $this->_coreDate = $coreDate;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }

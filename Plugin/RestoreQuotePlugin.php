@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Plugin;
 
 use Magento\Checkout\Model\Session;
 use Bolt\Boltpay\Helper\Bugsnag;
+
 /**
  * Class RestoreQuotePlugin
  *
@@ -44,9 +45,7 @@ class RestoreQuotePlugin
     public function __construct(
         Session $checkoutSession,
         Bugsnag $bugsnag
-
-    )
-    {
+    ) {
         $this->bugsnag = $bugsnag;
         $this->checkoutSession = $checkoutSession;
     }
@@ -59,12 +58,11 @@ class RestoreQuotePlugin
     public function aroundRestoreQuote(
         Session $subject,
         callable $proceed
-    )
-    {
+    ) {
         $order = $this->checkoutSession->getLastRealOrder();
         if ($order->getPayment() && $order->getPayment()->getMethod() == \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             $quoteId = $order->getQuoteId();
-            $this->bugsnag->notifyError('Ignore restoring quote if payment method is Boltpay',"Quote Id: {$quoteId}");
+            $this->bugsnag->notifyError('Ignore restoring quote if payment method is Boltpay', "Quote Id: {$quoteId}");
             return false;
         }
 

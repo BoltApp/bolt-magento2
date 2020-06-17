@@ -26,7 +26,8 @@ use PHPUnit\Framework\TestCase;
  *
  * @package Bolt\Boltpay\Test\Unit\Helper\Shared
  */
-class CurrencyUtilsTest extends TestCase {
+class CurrencyUtilsTest extends TestCase
+{
     /**
      * @test
      * @param code currency code
@@ -34,45 +35,51 @@ class CurrencyUtilsTest extends TestCase {
      * @dataProvider currencyAndPrecisions
      * @throws \Exception
      */
-    public function precisionCurrenciesForKnownCurrency( $code, $precision ) {
-        $this->assertEquals( $precision, CurrencyUtils::getPrecisionForCurrencyCode( $code ) );
+    public function precisionCurrenciesForKnownCurrency($code, $precision)
+    {
+        $this->assertEquals($precision, CurrencyUtils::getPrecisionForCurrencyCode($code));
     }
 
     /**
      * @test
      * @throws \Exception
      */
-    public function precisionForUnknown() {
-        $this->expectException( \Exception::class );
+    public function precisionForUnknown()
+    {
+        $this->expectException(\Exception::class);
 
-        CurrencyUtils::getPrecisionForCurrencyCode( "XXX" );
+        CurrencyUtils::getPrecisionForCurrencyCode("XXX");
     }
 
     /**
      * @test
      * @dataProvider toMinorData
      */
-    public function toMinor( $code, $amount, $expected, $unused ) {
-        $this->assertEquals( $expected, CurrencyUtils::toMinor( $amount, $code ) );
+    public function toMinor($code, $amount, $expected, $unused)
+    {
+        $this->assertEquals($expected, CurrencyUtils::toMinor($amount, $code));
     }
 
     /**
      * @test
      * @dataProvider toMinorData
      */
-    public function toMinorWithoutRounding( $code, $amount, $unused, $expected ) {
-        $this->assertEquals( $expected, CurrencyUtils::toMinorWithoutRounding( $amount, $code ) );
+    public function toMinorWithoutRounding($code, $amount, $unused, $expected)
+    {
+        $this->assertEquals($expected, CurrencyUtils::toMinorWithoutRounding($amount, $code));
     }
 
     /**
      * @test
      * @dataProvider toMajorData
      */
-    public function toMajor( $code, $amount, $expected ) {
-        $this->assertEquals( $expected, CurrencyUtils::toMajor( $amount, $code ) );
+    public function toMajor($code, $amount, $expected)
+    {
+        $this->assertEquals($expected, CurrencyUtils::toMajor($amount, $code));
     }
 
-    public function currencyAndPrecisions() {
+    public function currencyAndPrecisions()
+    {
         return [
             [ "USD", 2 ],
             [ "JPY", 0 ],
@@ -81,7 +88,8 @@ class CurrencyUtilsTest extends TestCase {
         ];
     }
 
-    public function toMinorData() {
+    public function toMinorData()
+    {
         return [
             // code, amount, toMinor, toMinorWithoutRounding
             [ "USD", 12.34, 1234, 1234 ],
@@ -93,7 +101,8 @@ class CurrencyUtilsTest extends TestCase {
         ];
     }
 
-    public function toMajorData() {
+    public function toMajorData()
+    {
         return [
             [ "USD", 1234, 12.34 ],
             [ "JPY", 1234, 1234 ],

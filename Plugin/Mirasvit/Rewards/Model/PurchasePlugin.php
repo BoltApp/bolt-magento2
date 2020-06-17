@@ -72,8 +72,7 @@ class PurchasePlugin
      */
     public function aroundRefreshPointsNumber(\Mirasvit\Rewards\Model\Purchase $subject, callable $proceed, ...$args)
     {
-        if (
-            stripos($this->urlInterface->getCurrentUrl(), '/rewards/checkout/updatePaymentMethodPost') !== false
+        if (stripos($this->urlInterface->getCurrentUrl(), '/rewards/checkout/updatePaymentMethodPost') !== false
         ) {
             return $subject;
         }

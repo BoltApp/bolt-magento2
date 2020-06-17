@@ -159,7 +159,8 @@ class DeleteCreditCardTest extends TestCase
         $this->assertSame($this->redirectMock, $this->currentMock->execute());
     }
 
-    public function dataProvider_execute_withInvalidIdParameter(){
+    public function dataProvider_execute_withInvalidIdParameter()
+    {
         return [
             [self::ID, 'test', self::CUSTOMER_ID],
             [null, self::CUSTOMER_ID, self::CUSTOMER_ID]
@@ -184,7 +185,7 @@ class DeleteCreditCardTest extends TestCase
             ->willReturnSelf();
         $this->redirectMock->expects(self::once())->method('getRefererUrl')->willReturnSelf();
         $this->currentMock->expects(self::any())->method('getRequest')->willReturn($this->requestMock);
-        if ($id){
+        if ($id) {
             $this->customerSession->expects(self::once())->method('getCustomerId')->willReturn($customerSessionId);
             $this->customerCreditCardFactoryMock->expects(self::once())->method('getCustomerId')->willReturn($customerId);
         }

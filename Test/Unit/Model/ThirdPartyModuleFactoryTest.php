@@ -108,7 +108,8 @@ class ThirdPartyModuleFactoryTest extends TestCase
 
         $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
             ->withConsecutive(
-                ['# Module is Enabled: Bolt_Boltpay'], ['# Class: Bolt\Boltpay\Model\ClassName']
+                ['# Module is Enabled: Bolt_Boltpay'],
+                ['# Class: Bolt\Boltpay\Model\ClassName']
             );
 
         $this->_objectManager->expects(self::once())->method('create')->willReturnSelf();
@@ -127,5 +128,4 @@ class ThirdPartyModuleFactoryTest extends TestCase
 
         $this->assertTrue($this->currentMock->isAvailable());
     }
-
 }

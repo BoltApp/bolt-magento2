@@ -427,7 +427,8 @@ class ShippingMethodsTest extends TestCase
         $this->assertEquals($shippingOptions, $result);
     }
 
-    public function getShippingMethods_dataProvider() {
+    public function getShippingMethods_dataProvider()
+    {
         return [
             // common case
             [[
@@ -749,7 +750,8 @@ class ShippingMethodsTest extends TestCase
         $this->setupShippingOptionFactory(
             "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
             'flatrate_flatrate',
-            500, 0
+            500,
+            0
         );
 
         $quote = $this->getQuoteMock($shippingAddress);
@@ -881,7 +883,8 @@ class ShippingMethodsTest extends TestCase
         $this->setupShippingOptionFactory(
             "Flate Rate - Fixed [free shipping discount]",
             'flatrate_flatrate',
-            0, 0
+            0,
+            0
         );
 
         $quote = $this->getQuoteMock($shippingAddress);
@@ -1227,8 +1230,8 @@ Room 4000',
                     ->method('setMetaData')->with(
                         [
                             'CART_MISMATCH' => [
-                                'cart_total' => array( 'TestProduct2' => 100 ),
-                                'quote_total' => array('TestProduct' => 60000 ),
+                                'cart_total' => [ 'TestProduct2' => 100 ],
+                                'quote_total' => ['TestProduct' => 60000 ],
                                 'cart_items'  => $cart['items'],
                                 'quote_items' => null,
                             ]
@@ -1277,7 +1280,6 @@ Room 4000',
                 $cart
             ]
         );
-
     }
 
     /**
@@ -1452,7 +1454,7 @@ Room 4000',
             )
             ->setMethods($methods);
 
-        if($enableProxyingToOriginalMethods) {
+        if ($enableProxyingToOriginalMethods) {
             $builder->enableProxyingToOriginalMethods();
         }
 

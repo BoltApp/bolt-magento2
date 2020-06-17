@@ -48,7 +48,7 @@ class MethodPlugin
         MethodFactory $resultMethodFactory,
         State   $appState,
         Request $restRequest
-    ){
+    ) {
         $this->_rateResultFactory = $rateResultFactory;
         $this->_resultMethodFactory = $resultMethodFactory;
         $this->_appState = $appState;
@@ -65,13 +65,13 @@ class MethodPlugin
         if ($this->_appState->getAreaCode() !== 'webapi_rest') {
             return false;
         }
-        if( !empty($this->_restRequest) ){
+        if (!empty($this->_restRequest)) {
             $payload = $this->_restRequest->getContent();
-            if(!empty($payload)){
+            if (!empty($payload)) {
                 $transaction = json_decode($payload);
-                if( isset($transaction->order->cart->shipments[0]->reference)
+                if (isset($transaction->order->cart->shipments[0]->reference)
                     && $transaction->order->cart->shipments[0]->reference == 'freeshippingadmin_freeshippingadmin'
-                ){
+                ) {
                     return true;
                 }
             }

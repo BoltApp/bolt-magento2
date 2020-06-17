@@ -97,8 +97,7 @@ class TaxTest extends TestCase
         $methods = [],
         $enableProxyingToOriginalMethods = false,
         $enableOriginalConstructor = true
-    )
-    {
+    ) {
         $builder = $this->getMockBuilder(Tax::class)
             ->setConstructorArgs(
                 [
@@ -135,10 +134,14 @@ class TaxTest extends TestCase
         $this->initCurrentMock();
 
         $this->assertAttributeInstanceOf(
-            TaxDataInterfaceFactory::class, 'taxDataFactory', $this->currentMock
+            TaxDataInterfaceFactory::class,
+            'taxDataFactory',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            TaxResultInterfaceFactory::class, 'taxResultFactory', $this->currentMock
+            TaxResultInterfaceFactory::class,
+            'taxResultFactory',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
             TotalsInformationManagementInterface::class,
@@ -146,7 +149,9 @@ class TaxTest extends TestCase
             $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            TotalsInformationInterface::class, 'addressInformation', $this->currentMock
+            TotalsInformationInterface::class,
+            'addressInformation',
+            $this->currentMock
         );
     }
 
@@ -242,7 +247,8 @@ class TaxTest extends TestCase
         $taxResult->expects(self::once())->method('setSubtotalAmount')->with(1000);
 
         $this->assertEquals(
-            $taxResult, $this->currentMock->createTaxResult($totalsInformation, self::CURRENCY_CODE)
+            $taxResult,
+            $this->currentMock->createTaxResult($totalsInformation, self::CURRENCY_CODE)
         );
     }
 
@@ -280,9 +286,12 @@ class TaxTest extends TestCase
         $shippingOption->expects(self::once())->method('setReference')->with('carrierCode_methodCode');
 
         $this->assertEquals(
-            $shippingOption, $this->currentMock->createShippingOption(
-            $totalsInformation, self::CURRENCY_CODE, $shipping_option
-        )
+            $shippingOption,
+            $this->currentMock->createShippingOption(
+                $totalsInformation,
+                self::CURRENCY_CODE,
+                $shipping_option
+            )
         );
     }
 
@@ -319,9 +328,12 @@ class TaxTest extends TestCase
         $shippingOption->expects(self::once())->method('setReference')->with(null);
 
         $this->assertEquals(
-            $shippingOption, $this->currentMock->createShippingOption(
-            $totalsInformation, self::CURRENCY_CODE, $shipping_option
-        )
+            $shippingOption,
+            $this->currentMock->createShippingOption(
+                $totalsInformation,
+                self::CURRENCY_CODE,
+                $shipping_option
+            )
         );
     }
 

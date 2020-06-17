@@ -73,36 +73,36 @@ class DataTest extends TestCase
     {
         $this->requestShippingAddress = 'String';
 
-        $this->response = (object) ( array(
+        $this->response = (object) ( [
             'cart' =>
-                (object) ( array(
+                (object) ( [
                     'order_reference' => self::ORDER_REFERENCE,
                     'display_id'      => '100050001 / 1234',
                     'shipments'       =>
-                        array(
+                        [
                             0 =>
-                                (object) ( array(
+                                (object) ( [
                                     'shipping_address' => $this->requestShippingAddress,
                                     'shipping_method' => 'unknown',
                                     'service'         => 'Flat Rate - Fixed',
                                     'cost'            =>
-                                        (object) ( array(
+                                        (object) ( [
                                             'amount'          => 500,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        ) ),
+                                        ] ),
                                     'tax_amount'      =>
-                                        (object) ( array(
+                                        (object) ( [
                                             'amount'          => 0,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        ) ),
+                                        ] ),
                                     'reference'       => 'flatrate_flatrate'
-                                ) ),
-                        ),
-                ) ),
+                                ] ),
+                        ],
+                ] ),
             'token' => self::TOKEN
-        ) );
+        ] );
 
         //weird bit of stuff here, copied from the code under test
         $this->responseData = json_decode(json_encode($this->response), true);
@@ -145,12 +145,12 @@ class DataTest extends TestCase
      */
     public function execute_happyPath()
     {
-        $expected = array(
+        $expected = [
             'status' => 'success',
             'cart' => $this->expectedCart,
             'hints' => self::HINT,
             'backUrl' => ''
-        );
+        ];
         $this->cartHelper->method('calculateCartAndHints')->willReturn($expected);
         $jsonFactoryMock = $this->buildJsonMock($expected);
 

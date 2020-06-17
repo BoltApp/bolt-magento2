@@ -95,7 +95,8 @@ class ShippingOptions implements ShippingOptionsInterface
      *
      * @return $this
      */
-    public function addAmountToShippingOptions($amount){
+    public function addAmountToShippingOptions($amount)
+    {
         foreach ($this->getShippingOptions() as $option) {
             $option->setCost($option->getCost() + $amount);
         }

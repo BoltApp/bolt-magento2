@@ -22,12 +22,14 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
+}
 
 ob_start();
 ?>

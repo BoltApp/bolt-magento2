@@ -18,7 +18,8 @@
 /** @var \Magento\Framework\View\Element\Template $block */
 /** @var \Bolt\Boltpay\ViewModel\MinicartAddons $miniCartView */
 $miniCartView = $block->getViewModel();
-if (!$miniCartView->shouldShow()) return;
+if (!$miniCartView->shouldShow()) { return;
+}
 ?>
 <script>
     require([
@@ -28,7 +29,7 @@ if (!$miniCartView->shouldShow()) return;
             require(['uiLayout'], function (layout) {
                 layout(<?php echo $miniCartView->getLayoutJSON(); ?>);
 
-                <?php if($miniCartView->configHelper->displayRewardPointsInMinicartConfig()):?>
+                <?php if ($miniCartView->configHelper->displayRewardPointsInMinicartConfig()):?>
                 $('#minicart-content-wrapper').on('click', '.totals.rewardpoints .action.delete', function (e) {
                     e.preventDefault();
                     $.ajax({

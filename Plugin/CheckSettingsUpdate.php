@@ -66,8 +66,7 @@ class CheckSettingsUpdate
         ConfigHelper $configHelper,
         FeatureSwitchManager $fsManager,
         Bugsnag $bugsnag
-    )
-    {
+    ) {
         $this->cartHelper = $cartHelper;
         $this->configHelper = $configHelper;
         $this->fsManager = $fsManager;
@@ -101,4 +100,3 @@ class CheckSettingsUpdate
         return $result;
     }
 }
-

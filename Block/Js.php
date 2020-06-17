@@ -410,7 +410,8 @@ class Js extends Template
     /**
      * Return true if we are on cart page or checkout page
      */
-    public function isOnPageFromWhiteList() {
+    public function isOnPageFromWhiteList()
+    {
         $currentPage = $this->getRequest()->getFullActionName();
         return in_array($currentPage, $this->getPageWhitelist());
     }
@@ -418,14 +419,16 @@ class Js extends Template
     /**
      * Return true if bolt on minicart is enabled
      */
-    public function isMinicartEnabled() {
+    public function isMinicartEnabled()
+    {
         return $this->configHelper->getMinicartSupport();
     }
 
     /**
      * Return true if we are on product page, and bolt on product page is enabled
      */
-    public function isBoltProductPage() {
+    public function isBoltProductPage()
+    {
         if (!$this->configHelper->getProductPageCheckoutFlag()) {
             return false;
         }

@@ -309,7 +309,7 @@ class NonBoltOrderObserverTest extends TestCase
             ->method('getEvent')
             ->willReturn($event);
 
-        $this->cartHelper->method('buildCartFromQuote')->willReturnCallback(function() {
+        $this->cartHelper->method('buildCartFromQuote')->willReturnCallback(function () {
             trigger_error("Error", E_ERROR);
         });
         $this->dataObject->expects($this->never())->method("setApiData");

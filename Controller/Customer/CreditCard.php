@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Controller\Customer;
+
 use Magento\Customer\Controller\AbstractAccount;
 
 /**

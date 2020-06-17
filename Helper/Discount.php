@@ -31,7 +31,6 @@ use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 
-
 /**
  * Boltpay Discount helper class
  *
@@ -588,7 +587,7 @@ class Discount extends AbstractHelper
      */
     public function getBssStoreCreditAmount($immutableQuote, $parentQuote)
     {
-        try{
+        try {
             $bssStoreCreditHelper = $this->bssStoreCreditHelper->getInstance();
             $isAppliedToShippingAndTax = $bssStoreCreditHelper->getGeneralConfig('used_shipping') || $bssStoreCreditHelper->getGeneralConfig('used_tax');
 
@@ -596,11 +595,12 @@ class Discount extends AbstractHelper
             if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {
                 $storeCreditAmount = $this->getBssStoreCreditBalanceAmount($parentQuote);
                 $parentQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
-                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();;
+                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
+                ;
             }
 
             return $storeCreditAmount;
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             $this->bugsnag->notifyException($exception);
             return 0;
         }
@@ -646,10 +646,10 @@ class Discount extends AbstractHelper
     public function getMirasvitStoreCreditAmount($quote, $paymentOnly = false)
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
-        if(!$paymentOnly){
+        if (!$paymentOnly) {
             /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
             $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()){
+            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;
             }
         }
@@ -697,8 +697,9 @@ class Discount extends AbstractHelper
      *
      * @return bool
      */
-    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer){
-        if(!$this->mirasvitStoreCreditConfig->isAvailable()){
+    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer)
+    {
+        if (!$this->mirasvitStoreCreditConfig->isAvailable()) {
             return false;
         }
 
@@ -712,7 +713,9 @@ class Discount extends AbstractHelper
             ) {
                 return true;
             }
-        }catch (\Exception $e){}
+        } catch (\Exception $e) {
+
+        }
 
         return false;
     }
@@ -729,7 +732,9 @@ class Discount extends AbstractHelper
         /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
         $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
 
-        if (!$mirasvitRewardsPurchaseHelper) { return 0; }
+        if (!$mirasvitRewardsPurchaseHelper) {
+            return 0;
+        }
 
         $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
         return $miravitRewardsPurchase->getSpendAmount();
@@ -824,10 +829,10 @@ class Discount extends AbstractHelper
             $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
             $code = $accountModel->getCode();
 
-            if($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
+            if ($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
                 unset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code]);
                 $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
-                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, NULL);
+                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, null);
                 $this->updateTotals($quote);
             }
 
@@ -882,7 +887,7 @@ class Discount extends AbstractHelper
                     }
                 }
             }
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
     }
@@ -1016,7 +1021,8 @@ class Discount extends AbstractHelper
      *
      * @param Quote $quote
      */
-    public function applyExternalDiscountData($quote) {
+    public function applyExternalDiscountData($quote)
+    {
         // Amasty reward points are held in a separate table
         // and are not assigned to the quote / totals directly out of the customer session.
         $this->setAmastyRewardPoints($quote);
@@ -1045,7 +1051,7 @@ class Discount extends AbstractHelper
 
         try {
             $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
-            if(abs($parentPurchase->getSpendAmount()) > 0){
+            if (abs($parentPurchase->getSpendAmount()) > 0) {
                 $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
                     ->setSpendPoints($parentPurchase->getSpendPoints())
                     ->setSpendMinAmount($parentPurchase->getSpendMinAmount())
