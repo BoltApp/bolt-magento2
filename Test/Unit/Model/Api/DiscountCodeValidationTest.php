@@ -55,7 +55,6 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\TotalsCollector;
 
-
 /**
  * Class DiscountCodeValidationTest
  *
@@ -769,8 +768,7 @@ class DiscountCodeValidationTest extends TestCase
             'loadByCode' => [
                 'returnMethod' => 'willReturn',
                 'returnValue' => null
-            ]]
-        );
+            ]]);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_CODE_INVALID,
@@ -811,8 +809,7 @@ class DiscountCodeValidationTest extends TestCase
                 'loadByCode' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn(true);
@@ -864,8 +861,7 @@ class DiscountCodeValidationTest extends TestCase
                 'loadByCode' => [
                     'expects' => 'atLeastOnce'
                 ]
-            ]
-        );
+            ]);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
@@ -896,8 +892,7 @@ class DiscountCodeValidationTest extends TestCase
                 'loadByCode' => [
                     'expects' => 'atLeastOnce'
                 ]
-            ]
-        );
+            ]);
 
         $this->immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(0);
 
@@ -1001,8 +996,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'atLeastOnce'
                 ]
-            ]
-        );
+            ]);
 
         $immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
         $parentQuoteMock->expects(self::atLeastOnce())->method('getCouponCode')->willReturn(self::COUPON_CODE);
@@ -1041,7 +1035,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
-            null ,
+            null,
             false,
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID
@@ -1113,7 +1107,7 @@ class DiscountCodeValidationTest extends TestCase
             [self::PARENT_QUOTE_ID, $this->getQuoteMock(
                 self::COUPON_CODE,
                 null,
-                null ,
+                null,
                 false,
                 self::PARENT_QUOTE_ID,
                 self::PARENT_QUOTE_ID
@@ -1167,11 +1161,12 @@ class DiscountCodeValidationTest extends TestCase
                 $this->getQuoteMock(
                     '',
                     null,
-                    null ,
+                    null,
                     false,
                     self::PARENT_QUOTE_ID,
                     self::PARENT_QUOTE_ID
-                ));
+                )
+            );
 
         $this->hookHelper->expects(self::once())->method('preProcessWebhook')
             ->willThrowException(new LocalizedException(__('Localized Exception')));
@@ -1229,8 +1224,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $discountDesctiption = 'Test Discount';
         $this->ruleMock->method('getDescription')->willReturn($discountDesctiption);
@@ -1248,7 +1242,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
-            null ,
+            null,
             false,
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID
@@ -1264,7 +1258,8 @@ class DiscountCodeValidationTest extends TestCase
         ];
 
         $result = $this->invokeNonAccessibleMethod(
-            'applyingCouponCode', [
+            'applyingCouponCode',
+            [
                 self::COUPON_CODE,
                 $this->couponMock,
                 $immutableQuoteMock,
@@ -1286,8 +1281,7 @@ class DiscountCodeValidationTest extends TestCase
                     'returnMethod' => 'willThrowException',
                     'returnValue' => new NoSuchEntityException()
                 ]
-            ]
-        );
+            ]);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_CODE_INVALID,
@@ -1297,7 +1291,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $this->immutableQuoteMock,
@@ -1319,8 +1314,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1337,7 +1331,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
-            null ,
+            null,
             false,
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID
@@ -1345,7 +1339,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $this->immutableQuoteMock,
@@ -1367,8 +1362,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1395,7 +1389,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
-            null ,
+            null,
             false,
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID
@@ -1403,7 +1397,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $this->immutableQuoteMock,
@@ -1434,8 +1429,7 @@ class DiscountCodeValidationTest extends TestCase
                     'expects' => 'once',
                     'returnValue' => 2
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1454,7 +1448,7 @@ class DiscountCodeValidationTest extends TestCase
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
-            null ,
+            null,
             false,
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID
@@ -1462,7 +1456,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $this->immutableQuoteMock,
@@ -1487,8 +1482,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getUsagePerCustomer' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1525,7 +1519,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $immutableQuoteMock,
@@ -1550,8 +1545,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getUsagePerCustomer' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1587,7 +1581,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $immutableQuoteMock,
@@ -1620,8 +1615,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getSimpleAction')->willReturn('cart_fixed');
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
@@ -1650,7 +1644,8 @@ class DiscountCodeValidationTest extends TestCase
         );
 
         $result = $this->invokeNonAccessibleMethod(
-            'applyingCouponCode', [
+            'applyingCouponCode',
+            [
                 self::COUPON_CODE,
                 $this->couponMock,
                 $immutableQuoteMock,
@@ -1673,8 +1668,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1708,7 +1702,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $immutableQuoteMock,
@@ -1730,8 +1725,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1763,7 +1757,8 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->assertFalse(
             $this->invokeNonAccessibleMethod(
-                'applyingCouponCode', [
+                'applyingCouponCode',
+                [
                     self::COUPON_CODE,
                     $this->couponMock,
                     $immutableQuoteMock,
@@ -2073,8 +2068,7 @@ class DiscountCodeValidationTest extends TestCase
                 'getRuleId' => [
                     'expects' => 'once'
                 ]
-            ]
-        );
+            ]);
 
         $this->ruleRepositoryMock->expects(self::once())->method('getById')->with(self::RULE_ID)
             ->willThrowException(new NoSuchEntityException());

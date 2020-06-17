@@ -16,12 +16,9 @@
  */
 
 namespace Bolt\Boltpay\Controller\Customer;
+
 use Magento\Customer\Controller\AbstractAccount;
 
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Controller\Customer
- */
 class CreditCard extends AbstractAccount
 {
     /**

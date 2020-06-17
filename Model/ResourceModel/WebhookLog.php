@@ -32,8 +32,7 @@ class WebhookLog extends AbstractDb
         \Magento\Framework\Stdlib\DateTime\DateTime $coreDate,
         \Magento\Framework\Model\ResourceModel\Db\Context $context,
         $connectionName = null
-    )
-    {
+    ) {
         $this->_coreDate = $coreDate;
         parent::__construct($context, $connectionName);
     }

@@ -76,12 +76,13 @@ class CollectionTest extends TestCase
     /**
      * @test
      */
-    public function getCreditCardInfosByCustomerId(){
+    public function getCreditCardInfosByCustomerId()
+    {
         $this->mockCustomerCreditCardCollection->expects($this->once())->method('addFilter')
             ->with('customer_id', self::CUSTOMER_ID)
             ->willReturn([$this->mockCustomerCreditCard]);
 
         $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals([$this->mockCustomerCreditCard],$result);
+        $this->assertEquals([$this->mockCustomerCreditCard], $result);
     }
 }

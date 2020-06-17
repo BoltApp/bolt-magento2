@@ -19,105 +19,107 @@ namespace Bolt\Boltpay\Model\Api\Data;
 
 class DebugInfo implements \JsonSerializable
 {
-	/**
-	 * @var string
-	 */
-	private $phpVersion;
+    /**
+     * @var string
+     */
+    private $phpVersion;
 
-	/**
-	 * @var string
-	 */
-	private $platformVersion;
+    /**
+     * @var string
+     */
+    private $platformVersion;
 
-	/**
-	 * @var BoltConfigSetting[]
-	 */
-	private $boltConfigSettings;
+    /**
+     * @var BoltConfigSetting[]
+     */
+    private $boltConfigSettings;
 
-	/**
-	 * @var PluginVersion[]
-	 */
-	private $otherPluginVersions;
+    /**
+     * @var PluginVersion[]
+     */
+    private $otherPluginVersions;
 
     /**
      * @var array
      */
     private $logs;
 
-	/**
-	 * @return string
-	 */
-	public function getPhpVersion()
-	{
-		return $this->phpVersion;
-	}
+    /**
+     * @return string
+     */
+    public function getPhpVersion()
+    {
+        return $this->phpVersion;
+    }
 
-	/**
-	 * @param string $phpVersion
-	 * @return $this
-	 */
-	public function setPhpVersion($phpVersion)
-	{
-		$this->phpVersion = $phpVersion;
-		return $this;
-	}
+    /**
+     * @param string $phpVersion
+     * @return $this
+     */
+    public function setPhpVersion($phpVersion)
+    {
+        $this->phpVersion = $phpVersion;
+        return $this;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getPlatformVersion()
-	{
-		return $this->platformVersion;
-	}
+    /**
+     * @return string
+     */
+    public function getPlatformVersion()
+    {
+        return $this->platformVersion;
+    }
 
-	/**
-	 * @param string $platformVersion
-	 * @return $this
-	 */
-	public function setPlatformVersion($platformVersion)
-	{
-		$this->platformVersion = $platformVersion;
-		return $this;
-	}
+    /**
+     * @param string $platformVersion
+     * @return $this
+     */
+    public function setPlatformVersion($platformVersion)
+    {
+        $this->platformVersion = $platformVersion;
+        return $this;
+    }
 
-	/**
-	 * @return \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
-	 */
-	public function getBoltConfigSettings(){
-		return $this->boltConfigSettings;
-	}
+    /**
+     * @return \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
+     */
+    public function getBoltConfigSettings()
+    {
+        return $this->boltConfigSettings;
+    }
 
-	/**
-	 * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
-	 * @return $this
-	 */
-	public function setBoltConfigSettings($boltConfigSettings)
-	{
-		$this->boltConfigSettings = $boltConfigSettings;
-		return $this;
-	}
+    /**
+     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
+     * @return $this
+     */
+    public function setBoltConfigSettings($boltConfigSettings)
+    {
+        $this->boltConfigSettings = $boltConfigSettings;
+        return $this;
+    }
 
-	/**
-	 * @return \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
-	 */
-	public function getOtherPluginVersions(){
-		return $this->otherPluginVersions;
-	}
+    /**
+     * @return \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
+     */
+    public function getOtherPluginVersions()
+    {
+        return $this->otherPluginVersions;
+    }
 
-	/**
-	 * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
-	 * @return $this
-	 */
-	public function setOtherPluginVersions($otherPluginVersions)
-	{
-		$this->otherPluginVersions = $otherPluginVersions;
-		return $this;
-	}
+    /**
+     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
+     * @return $this
+     */
+    public function setOtherPluginVersions($otherPluginVersions)
+    {
+        $this->otherPluginVersions = $otherPluginVersions;
+        return $this;
+    }
 
     /**
      * @return array
      */
-	public function getLogs()
+    public function getLogs()
     {
         return $this->logs;
     }
@@ -127,24 +129,23 @@ class DebugInfo implements \JsonSerializable
      * @return $this
      */
 
-	public function setLogs($logs)
+    public function setLogs($logs)
     {
         $this->logs = $logs;
         return $this;
     }
 
-	/**
-	 * @inheritDoc
-	 */
-	public function jsonSerialize()
-	{
-		return [
-			'php_version' => $this->phpVersion,
-			'platform_version' => $this->platformVersion,
-			'bolt_config_settings' => $this->boltConfigSettings,
-			'other_plugin_versions' => $this->otherPluginVersions,
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'php_version' => $this->phpVersion,
+            'platform_version' => $this->platformVersion,
+            'bolt_config_settings' => $this->boltConfigSettings,
+            'other_plugin_versions' => $this->otherPluginVersions,
             'logs' => $this->logs
-		];
-
-	}
+        ];
+    }
 }

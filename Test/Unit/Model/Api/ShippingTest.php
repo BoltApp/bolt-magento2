@@ -126,10 +126,14 @@ class ShippingTest extends TestCase
         $this->initCurrentMock();
 
         $this->assertAttributeInstanceOf(
-            ShippingDataInterfaceFactory::class, 'shippingDataFactory', $this->currentMock
+            ShippingDataInterfaceFactory::class,
+            'shippingDataFactory',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            ShippingMethodManagementInterface::class, 'shippingMethodManagement', $this->currentMock
+            ShippingMethodManagementInterface::class,
+            'shippingMethodManagement',
+            $this->currentMock
         );
     }
 

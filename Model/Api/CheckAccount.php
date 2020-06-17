@@ -91,8 +91,7 @@ class CheckAccount implements CheckAccountInterface
         MetricsClient $metricsClient,
         BoltErrorResponse $errorResponse,
         AccountManagementInterface $accountManagement
-    )
-    {
+    ) {
         $this->accountInfoFactory = $accountInfoFactory;
         $this->response = $response;
         $this->hookHelper = $hookHelper;
@@ -124,15 +123,18 @@ class CheckAccount implements CheckAccountInterface
             $result->setAccountExists($this->checkIfUserExistsByEmail($email));
         } catch (\Exception $e) {
             $encodedError = $this->errorResponse->prepareErrorMessage(
-                BoltErrorResponse::ERR_SERVICE, $e->getMessage()
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage()
             );
             $this->logHelper
                 ->addInfoLog('CheckAccount: failed checking email');
             $this->logHelper->addInfoLog($encodedError);
             $this->metricsClient
                 ->processMetric(
-                    "check_account.webhook.failure", 1,
-                    "check_account.webhook.latency", $startTime
+                    "check_account.webhook.failure",
+                    1,
+                    "check_account.webhook.latency",
+                    $startTime
                 );
 
             $this->response->setHttpResponseCode(Exception::HTTP_INTERNAL_ERROR);
@@ -141,8 +143,11 @@ class CheckAccount implements CheckAccountInterface
             return;
         }
         $this->metricsClient
-            ->processMetric("check_account.webhook.success", 1,
-                "check_account.webhook.latency", $startTime
+            ->processMetric(
+                "check_account.webhook.success",
+                1,
+                "check_account.webhook.latency",
+                $startTime
             );
         return $result;
     }

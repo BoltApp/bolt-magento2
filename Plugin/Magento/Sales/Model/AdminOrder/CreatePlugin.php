@@ -39,8 +39,7 @@ class CreatePlugin
     public function __construct(
         ConfigHelper $configHelper,
         AdminCheckoutSession $adminCheckoutSession
-    )
-    {
+    ) {
         $this->adminCheckoutSession = $adminCheckoutSession;
         $this->configHelper = $configHelper;
     }

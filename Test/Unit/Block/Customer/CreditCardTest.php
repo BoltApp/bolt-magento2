@@ -96,7 +96,8 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
         $this->collectionFactoryMock = $this->getMockBuilder(CollectionFactory::class)
             ->disableOriginalConstructor()
             ->setMethods(['add', 'create', 'getCreditCardInfosByCustomerId', 'setPageSize', 'setCurPage'])
-            ->getMock();;
+            ->getMock();
+        ;
         $this->customerSessionMock = $this->createMock(Session::class);
         $this->customerSessionMock->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
         $this->deciderMock = $this->createMock(Decider::class);

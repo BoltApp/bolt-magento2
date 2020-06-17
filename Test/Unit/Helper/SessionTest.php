@@ -110,46 +110,47 @@ class SessionTest extends TestCase
         $this->context = $this->createMock(Context::class);
 
         $this->checkoutSession = $this->createPartialMock(
-            CheckoutSession::class
-            , ['getSessionId', 'replaceQuote', 'writeClose', 'setSessionId', 'start']
+            CheckoutSession::class,
+            ['getSessionId', 'replaceQuote', 'writeClose', 'setSessionId', 'start']
         );
 
         $this->adminCheckoutSession = $this->createPartialMock(
-            AdminCheckoutSession::class
-            , ['isDebugModeOn']
+            AdminCheckoutSession::class,
+            ['isDebugModeOn']
         );
 
         $this->customerSession = $this->createPartialMock(
-            CustomerSession::class
-            , ['loginById']
+            CustomerSession::class,
+            ['loginById']
         );
 
         $this->logHelper = $this->createPartialMock(
-            LogHelper::class
-            , ['isDebugModeOn']
+            LogHelper::class,
+            ['isDebugModeOn']
         );
 
         $this->cache = $this->createPartialMock(
-            Cache::class
-            , ['save', 'load']
+            Cache::class,
+            ['save', 'load']
         );
 
         $this->appState = $this->createPartialMock(
-            State::class
-            , ['getAreaCode']
+            State::class,
+            ['getAreaCode']
         );
 
         $this->formKey = $this->createPartialMock(
-            FormKey::class
-            , ['set', 'getFormKey']
+            FormKey::class,
+            ['set', 'getFormKey']
         );
-        $this->quote = $this->createPartialMock(Quote::class,
+        $this->quote = $this->createPartialMock(
+            Quote::class,
             ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID']
         );
 
         $this->configHelper = $this->createPartialMock(
-            ConfigHelper::class
-            , ['isSessionEmulationEnabled']
+            ConfigHelper::class,
+            ['isSessionEmulationEnabled']
         );
     }
 
@@ -184,7 +185,8 @@ class SessionTest extends TestCase
         $this->cache->expects(self::once())->method('save')->will($this->returnCallback(
             function ($data) {
                 $this->assertEquals('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}', $data);
-            }));
+            }
+        ));
 
         $this->currentMock->saveSession(self::QUOTE_ID, $this->checkoutSession);
     }
@@ -282,8 +284,8 @@ class SessionTest extends TestCase
         $this->cache->expects(self::once())->method('load')->will($this->returnCallback(
             function ($data) {
                 $this->assertEquals('BOLT_SESSION_FORM_KEY_1111', $data);
-            })
-        );
+            }
+        ));
 
         $this->formKey->expects(self::once())->method('set')->withAnyParameters()->willReturnSelf();
         $this->currentMock->setFormKey($this->quote);
@@ -304,8 +306,8 @@ class SessionTest extends TestCase
         )->will($this->returnCallback(
             function ($data) {
                 $this->assertEquals(self::FORM_KEY, $data);
-            })
-        );
+            }
+        ));
 
         $this->currentMock->cacheFormKey($this->quote);
     }
@@ -341,4 +343,3 @@ class SessionTest extends TestCase
         ];
     }
 }
-

@@ -5,7 +5,8 @@ namespace Bolt\Boltpay\Api;
 
 use Bolt\Boltpay\Api\Data\FeatureSwitchInterface;
 
-interface FeatureSwitchRepositoryInterface {
+interface FeatureSwitchRepositoryInterface
+{
     /**
      * @param string $name
      * @return \Bolt\Boltpay\Api\Data\FeatureSwitchInterface

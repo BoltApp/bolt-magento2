@@ -113,5 +113,4 @@ class RecurringDataTest extends TestCase
 
         $this->currentMock->install($this->setup, $this->context);
     }
-
 }

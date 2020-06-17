@@ -30,7 +30,6 @@ use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 
-
 /**
  * Class ShippingTaxContext
  * Common DI objects for Shipping Aand Tax endpoint handlers

@@ -16,8 +16,8 @@
  */
 
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
-use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\DeleteAction;
 
+use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\DeleteAction;
 
 class DeleteActionTest extends \PHPUnit\Framework\TestCase
 {

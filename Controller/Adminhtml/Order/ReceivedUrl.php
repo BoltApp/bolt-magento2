@@ -28,11 +28,6 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 
-/**
- * Class ReceivedUrl
- *
- * @package Bolt\Boltpay\Controller\Adminhtml\Order
- */
 class ReceivedUrl extends Action
 {
     use ReceivedUrlTrait;

@@ -133,7 +133,8 @@ class DeleteCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function execute_withInvalidIdParameter(){
+    public function execute_withInvalidIdParameter()
+    {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(self::ID);
         $this->messageMock->expects(self::once())
             ->method('addErrorMessage')
@@ -153,7 +154,8 @@ class DeleteCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function execute_withMissingIdParameter(){
+    public function execute_withMissingIdParameter()
+    {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(null);
         $this->messageMock->expects(self::once())
             ->method('addErrorMessage')
@@ -191,6 +193,4 @@ class DeleteCreditCardTest extends TestCase
 
         $this->currentMock->execute();
     }
-
-
 }

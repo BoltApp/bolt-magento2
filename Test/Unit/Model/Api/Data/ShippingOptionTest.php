@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
+
 /**
  * Class ShippingOptionTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data

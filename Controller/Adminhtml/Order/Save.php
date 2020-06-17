@@ -24,8 +24,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * Class Save.
  * Converts / saves the quote into an order.
  * Updates the order payment/transaction info. Closes the quote / order session.
- *
- * @package Bolt\Boltpay\Controller\Adminhtml\Order
  */
 class Save extends Action
 {

@@ -199,5 +199,4 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->isAjaxLoaded();
         $this->assertTrue($result);
     }
-
 }

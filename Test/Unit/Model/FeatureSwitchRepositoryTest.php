@@ -3,7 +3,6 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
-
 use Bolt\Boltpay\Api\Data\FeatureSwitchInterface;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Model\FeatureSwitchFactory;
@@ -79,7 +78,8 @@ class FeatureSwitchRepositoryTest extends TestCase
 
         $this->assertEquals(
             $foundSwitch->getName(),
-            $this->switchRepo->getByName("SOME_SWITCH")->getName());
+            $this->switchRepo->getByName("SOME_SWITCH")->getName()
+        );
     }
 
     /**
@@ -113,7 +113,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
         $this->mockSwitch->expects($this->once())
@@ -143,7 +144,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
         $this->mockSwitch->expects($this->once())
@@ -167,7 +169,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->switchRepo->save($this->mockSwitch);
     }
@@ -185,7 +188,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('delete')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->switchRepo->delete($this->mockSwitch);
     }

@@ -160,7 +160,8 @@ class ShippingTaxTest extends TestCase
                     $this->regionModel,
                     $this->response,
                     $this->shippingOptionFactory
-                ])
+                ]
+            )
             ->enableProxyingToOriginalMethods()
             ->getMock();
 
@@ -198,40 +199,64 @@ class ShippingTaxTest extends TestCase
         $this->initCurrentMock();
 
         $this->assertAttributeInstanceOf(
-            HookHelper::class, 'hookHelper', $this->currentMock
+            HookHelper::class,
+            'hookHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            CartHelper::class,'cartHelper', $this->currentMock
+            CartHelper::class,
+            'cartHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            LogHelper::class,'logHelper', $this->currentMock
+            LogHelper::class,
+            'logHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            ConfigHelper::class,'configHelper', $this->currentMock
+            ConfigHelper::class,
+            'configHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            SessionHelper::class,'sessionHelper', $this->currentMock
+            SessionHelper::class,
+            'sessionHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            DiscountHelper::class,'discountHelper', $this->currentMock
+            DiscountHelper::class,
+            'discountHelper',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            Bugsnag::class,'bugsnag', $this->currentMock
+            Bugsnag::class,
+            'bugsnag',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            MetricsClient::class,'metricsClient', $this->currentMock
+            MetricsClient::class,
+            'metricsClient',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            BoltErrorResponse::class,'errorResponse', $this->currentMock
+            BoltErrorResponse::class,
+            'errorResponse',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            RegionModel::class,'regionModel', $this->currentMock
+            RegionModel::class,
+            'regionModel',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            Response::class,'response', $this->currentMock
+            Response::class,
+            'response',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            ShippingOptionInterfaceFactory::class,'shippingOptionFactory', $this->currentMock
+            ShippingOptionInterfaceFactory::class,
+            'shippingOptionFactory',
+            $this->currentMock
         );
     }
 
@@ -599,7 +624,7 @@ class ShippingTaxTest extends TestCase
         $this->currentMock->expects(self::once())->method('preprocessHook')
             ->with(self::STORE_ID);
         $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID],[self::PARENT_QUOTE_ID])
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
             ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($immutableQuote, $parentQuote);
@@ -678,7 +703,7 @@ class ShippingTaxTest extends TestCase
         $this->currentMock->expects(self::once())->method('preprocessHook')
             ->with(self::STORE_ID);
         $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID],[self::PARENT_QUOTE_ID])
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
             ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($immutableQuote, $parentQuote);

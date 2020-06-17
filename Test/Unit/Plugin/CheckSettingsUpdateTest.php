@@ -167,5 +167,4 @@ class CheckSettingsUpdateTest extends TestCase
             ->method('notifyException')->with($e);
         $this->callBeforeSaveAndAfterSave();
     }
-
 }

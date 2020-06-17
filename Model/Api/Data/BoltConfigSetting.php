@@ -24,71 +24,71 @@ namespace Bolt\Boltpay\Model\Api\Data;
  */
 class BoltConfigSetting implements \JsonSerializable
 {
-	/**
-	 * @var string
-	 */
-	private $name;
+    /**
+     * @var string
+     */
+    private $name;
 
-	/**
-	 * @var string
-	 */
-	private $value;
+    /**
+     * @var string
+     */
+    private $value;
 
-	/**
-	 * Get Bolt setting name.
-	 *
-	 * @api
-	 * @return string
-	 */
-	public function getName()
-	{
-		return $this->name;
-	}
+    /**
+     * Get Bolt setting name.
+     *
+     * @api
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
 
-	/**
-	 * Set Bolt setting name.
-	 *
-	 * @api
-	 * @param string $name
-	 *
-	 * @return $this
-	 */
-	public function setName($name)
-	{
-		$this->name = $name;
-		return $this;
-	}
+    /**
+     * Set Bolt setting name.
+     *
+     * @api
+     * @param string $name
+     *
+     * @return $this
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
+    }
 
-	/**
-	 * Get Bolt setting value.
-	 *
-	 * @api
-	 * @return string
-	 */
-	public function getValue()
-	{
-		return $this->value;
-	}
+    /**
+     * Get Bolt setting value.
+     *
+     * @api
+     * @return string
+     */
+    public function getValue()
+    {
+        return $this->value;
+    }
 
-	/**
-	 * Set Bolt setting value.
-	 *
-	 * @api
-	 * @param string $value
-	 *
-	 * @return $this
-	 */
-	public function setValue($value)
-	{
-		$this->value = $value;
-		return $this;
-	}
+    /**
+     * Set Bolt setting value.
+     *
+     * @api
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function setValue($value)
+    {
+        $this->value = $value;
+        return $this;
+    }
 
-	/**
-	 * @inheritDoc
-	 */
-	public function jsonSerialize()
-	{
-		return get_object_vars($this);
-	}
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return get_object_vars($this);
+    }
 }

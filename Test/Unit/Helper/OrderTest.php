@@ -386,9 +386,9 @@ class OrderTest extends TestCase
             ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey'])
             ->getMock();
 
-        $this->responseFactory = $this->createPartialMock(ResponseFactory::class,['getResponse']);
+        $this->responseFactory = $this->createPartialMock(ResponseFactory::class, ['getResponse']);
         $this->boltRequest = $this->createMock(BoltRequest::class);
-        $this->webhookLogCollectionFactory = $this->createPartialMock(WebhookLogCollectionFactory::class,['create','getWebhookLogByTransactionId']);
+        $this->webhookLogCollectionFactory = $this->createPartialMock(WebhookLogCollectionFactory::class, ['create','getWebhookLogByTransactionId']);
         $this->webhookLogFactory = $this->createPartialMock(WebhookLogFactory::class, ['getNumberOfMissingQuoteFailedHooks','incrementAttemptCount','recordAttempt','create','getId']);
 
         $this->customerCreditCardFactory = $this->getMockBuilder(CustomerCreditCardFactory::class)
@@ -549,7 +549,9 @@ class OrderTest extends TestCase
         $shippingAddress->expects(static::never())->method('save');
 
         TestHelper::invokeMethod(
-            $this->currentMock, 'setShippingMethod', [$quote, new stdClass()]
+            $this->currentMock,
+            'setShippingMethod',
+            [$quote, new stdClass()]
         );
     }
 
@@ -651,7 +653,9 @@ class OrderTest extends TestCase
         $quoteAddress->expects(static::once())->method('save');
 
         TestHelper::invokeMethod(
-            $this->currentMock, 'setAddress', [$quoteAddress, $addressObject]
+            $this->currentMock,
+            'setAddress',
+            [$quoteAddress, $addressObject]
         );
     }
 
@@ -735,7 +739,9 @@ class OrderTest extends TestCase
         static::assertSame(
             $this->orderMock,
             TestHelper::invokeMethod(
-                $this->currentMock, 'checkExistingOrder', [self::INCREMENT_ID]
+                $this->currentMock,
+                'checkExistingOrder',
+                [self::INCREMENT_ID]
             )
         );
     }
@@ -756,7 +762,9 @@ class OrderTest extends TestCase
 
         static::assertFalse(
             TestHelper::invokeMethod(
-                $this->currentMock, 'checkExistingOrder', [self::INCREMENT_ID]
+                $this->currentMock,
+                'checkExistingOrder',
+                [self::INCREMENT_ID]
             )
         );
     }
@@ -883,7 +891,9 @@ class OrderTest extends TestCase
         static::assertSame(
             $this->orderMock,
             TestHelper::invokeMethod(
-                $this->currentMock, 'createOrder', [$this->quoteMock, $transaction]
+                $this->currentMock,
+                'createOrder',
+                [$this->quoteMock, $transaction]
             )
         );
     }
@@ -1061,7 +1071,11 @@ class OrderTest extends TestCase
         static::assertEquals(
             [$this->quoteMock, $this->orderMock],
             $this->currentMock->saveUpdateOrder(
-                self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID, self::HOOK_TYPE_PENDING, self::HOOK_PAYLOAD
+                self::REFERENCE_ID,
+                self::STORE_ID,
+                self::BOLT_TRACE_ID,
+                self::HOOK_TYPE_PENDING,
+                self::HOOK_PAYLOAD
             )
         );
     }
@@ -1103,7 +1117,9 @@ class OrderTest extends TestCase
         $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
 
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1134,7 +1150,6 @@ class OrderTest extends TestCase
             ->with(self::INCREMENT_ID)->willReturn(null);
         $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
         $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
-
     }
 
     /**
@@ -1156,7 +1171,9 @@ class OrderTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1179,7 +1196,9 @@ class OrderTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1203,7 +1222,9 @@ class OrderTest extends TestCase
         $this->webhookLogFactory->expects(self::never())->method('recordAttempt')->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1221,7 +1242,9 @@ class OrderTest extends TestCase
         $this->webhookLogFactory->expects(self::never())->method('create')->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1258,7 +1281,10 @@ class OrderTest extends TestCase
             ->with($this->orderMock, $transaction, null, $type = 'pending')->willReturn($this->orderMock);
 
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID, $type
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID,
+            $type
         );
     }
 
@@ -2044,7 +2070,9 @@ class OrderTest extends TestCase
      * @throws ReflectionException
      */
     public function getProcessedItems_withVariousItemTypes_returnsFromPaymentAdditionalInformation(
-        $itemType, $itemTypeAdditionalInformation, $expectedResult
+        $itemType,
+        $itemTypeAdditionalInformation,
+        $expectedResult
     ) {
         $paymentMock = $this->createMock(OrderPaymentInterface::class);
         $paymentMock->expects(self::once())->method('getAdditionalInformation')->with($itemType)->willReturn(
@@ -2167,7 +2195,10 @@ class OrderTest extends TestCase
     public function getTransactionState_APMInitialAuthorized()
     {
         list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
-            null, OrderHelper::TT_APM_PAYMENT, 'authorized', []
+            null,
+            OrderHelper::TT_APM_PAYMENT,
+            'authorized',
+            []
         );
         static::assertEquals(
             $this->currentMock->getTransactionState($transaction, $paymentMock, null),
@@ -2947,9 +2978,9 @@ class OrderTest extends TestCase
         $this->orderMock->expects(self::any())->method('getState')
             ->willReturn('pending_payment');
         $this->checkboxesHandler->expects(self::once())->method('handle')
-            ->with($this->orderMock, SELF::HOOK_PAYLOAD['checkboxes']);
+            ->with($this->orderMock, self::HOOK_PAYLOAD['checkboxes']);
 
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, SELF::HOOK_PAYLOAD);
+        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
     }
 
     /**
@@ -2976,7 +3007,7 @@ class OrderTest extends TestCase
                 ['authorized'],
                 ['captures'],
                 ['refunds'],
-                ['processor']
+                [null]
             )->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
                 $prevTransactionReference,
@@ -2984,7 +3015,7 @@ class OrderTest extends TestCase
                 true,
                 '',
                 0,
-                self::PROCESSOR_VANTIV
+                ''
             );
 
         $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
@@ -3060,7 +3091,7 @@ class OrderTest extends TestCase
             $this->orderMock->method('getTotalRefunded')->willReturn(0);
             $this->orderMock->method('getTotalPaid')->willReturn(1);
 
-            $creditMemoMock = $this->createPartialMock(Creditmemo::class,['setAutomaticallyCreated','addComment']);
+            $creditMemoMock = $this->createPartialMock(Creditmemo::class, ['setAutomaticallyCreated','addComment']);
             $this->creditmemoFactory->expects(self::once())->method('createByOrder')->with($this->orderMock, [])->willReturn($creditMemoMock);
             $creditMemoMock->expects(self::once())->method('setAutomaticallyCreated')->with(true)->willReturnSelf();
             $creditMemoMock->expects(self::once())->method('addComment')->with(__('The credit memo has been created automatically.'))->willReturnSelf();
@@ -3460,8 +3491,10 @@ class OrderTest extends TestCase
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage(sprintf(
-                'Capture amount is invalid: captured [%s], grand total [%s]', 2000, 500)
-        );
+            'Capture amount is invalid: captured [%s], grand total [%s]',
+            2000,
+            500
+        ));
         TestHelper::invokeMethod($this->currentMock, 'validateCaptureAmount', [$this->orderMock, 10]);
     }
 
@@ -3496,7 +3529,10 @@ class OrderTest extends TestCase
      * @throws ReflectionException
      */
     public function isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResult(
-        $isHookFromBolt, $txState, $orderState, $expectedResult
+        $isHookFromBolt,
+        $txState,
+        $orderState,
+        $expectedResult
     ) {
         Hook::$fromBolt = $isHookFromBolt;
         $this->orderMock->method('getState')->willReturn($orderState);
@@ -3719,7 +3755,7 @@ class OrderTest extends TestCase
     public function verifyOrderCreationHookType($hookFromBolt, $hookType, $expectException = false)
     {
         Hook::$fromBolt = $hookFromBolt;
-        if ( $expectException ) {
+        if ($expectException) {
             $this->expectException(BoltException::class);
             $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_REJECTED_ORDER);
             $this->expectExceptionMessage(
@@ -3754,7 +3790,8 @@ class OrderTest extends TestCase
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function voidTransactionOnBolt($data){
+    public function voidTransactionOnBolt($data)
+    {
         $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
         $this->responseFactory->expects(self::once())->method('getResponse')->willReturn(json_decode($data['response']));
 
@@ -3767,7 +3804,7 @@ class OrderTest extends TestCase
         $this->apiHelper->expects(self::once())->method('sendRequest')
             ->withAnyParameters()->willReturn($this->responseFactory);
 
-        if($data['exception']){
+        if ($data['exception']) {
             $this->expectException(LocalizedException::class);
             $this->expectExceptionMessage($data['exception_message']);
         }
@@ -3775,7 +3812,8 @@ class OrderTest extends TestCase
         $this->currentMock->voidTransactionOnBolt(self::TRANSACTION_ID, self::STORE_ID);
     }
 
-    public function voidTransactionOnBolt_dataProvider(){
+    public function voidTransactionOnBolt_dataProvider()
+    {
         return [
             ['data' => [
                 'response' => '{"status": "completed", "reference": "ABCD-1234-XXXX"}',
@@ -3804,7 +3842,8 @@ class OrderTest extends TestCase
      * @dataProvider providerTestSaveCustomerCreditCard_invalidData
      *
      */
-    public function testSaveCustomerCreditCard_invalidData($data){
+    public function testSaveCustomerCreditCard_invalidData($data)
+    {
         $this->initCurrentMock(['fetchTransactionInfo']);
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($data['transaction']);
@@ -3816,12 +3855,12 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
-
     }
 
-    public function providerTestSaveCustomerCreditCard_invalidData(){
+    public function providerTestSaveCustomerCreditCard_invalidData()
+    {
         return [
             ['data' => [
                 'transaction' => '',
@@ -3844,7 +3883,8 @@ class OrderTest extends TestCase
     /**
      * @test
      */
-    public function testSaveCustomerCreditCard_validData(){
+    public function testSaveCustomerCreditCard_validData()
+    {
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = new \stdClass();
         @$transaction->from_consumer->id = 1;
@@ -3864,14 +3904,15 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
     }
 
     /**
      * @test
      */
-    public function testSaveCustomerCreditCard_IfParentQuoteDoesNotExist(){
+    public function testSaveCustomerCreditCard_IfParentQuoteDoesNotExist()
+    {
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = new \stdClass();
         @$transaction->from_consumer->id = 1;
@@ -3893,14 +3934,15 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
     }
 
     /**
      * @test
      */
-    public function testSaveCustomerCreditCard_IfQuoteDoesNotExist(){
+    public function testSaveCustomerCreditCard_IfQuoteDoesNotExist()
+    {
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = new \stdClass();
         @$transaction->from_consumer->id = 1;
@@ -3916,14 +3958,15 @@ class OrderTest extends TestCase
             ->willReturnOnConsecutiveCalls(null, null);
 
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 
     /**
      * @test
      */
-    public function testSaveCustomerCreditCard_withException(){
+    public function testSaveCustomerCreditCard_withException()
+    {
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = new \stdClass();
         @$transaction->from_consumer->id = 1;
@@ -3943,7 +3986,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willThrowException(new \Exception());
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -3972,7 +4015,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID,OrderManagementTest::REFERENCE,OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 

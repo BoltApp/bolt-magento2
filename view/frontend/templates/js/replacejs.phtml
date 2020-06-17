@@ -22,12 +22,14 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
+}
 
 ob_start();
 ?>
@@ -420,7 +422,7 @@ ob_start();
         };
         //////////////////////////////////////////////
 
-        // flag that repesents should the checkout auto-open
+        // flag that represents should the checkout auto-open
         var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
         unsetInitiateCheckoutCookie();
 
@@ -433,6 +435,10 @@ ob_start();
         var cart = {};
 
         var hints = {prefill:{}};
+
+        var boltCheckoutConfig = {};
+
+        var newItemAddedToCart = false;
 
         var callbacks = {
 
@@ -587,8 +593,6 @@ ob_start();
             }
         };
 
-        ////////////////////////////////////
-
         /////////////////////////////////////////////////////
         // Call Shipping and Tax prefetch & cache endpoint
         /////////////////////////////////////////////////////
@@ -617,16 +621,18 @@ ob_start();
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
-                $.post(settings.shipping_prefetch_url, params);
+                $.get(settings.shipping_prefetch_url, params);
             }
         };
-        /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
         // Create Bolt order and configure BoltCheckout
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
+        var wasConfigureCalled = false;
+        var oldBoltCartValue = "";
+        var BC;
         var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
@@ -638,13 +644,13 @@ ob_start();
             // skip if there is already an ongoing request
             if (createRequest) return;
 
-            // define the params sent with the request variable
-            var params = [];
-
-            params.push('form_key=' + $('[name="form_key"]').val());
-
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
+
+                // define the params sent with the request variable
+                var params = [];
+
+                params.push('form_key=' + $('[name="form_key"]').val());
 
                 // stop if customer email field is present and invalid
                 var customer_email = $(customer_email_selector);
@@ -684,18 +690,80 @@ ob_start();
 
                     params.push('place_order_payload=' + place_order_payload.value);
                 }
-            }
-            params = params.join('&');
+                params = params.join('&');
 
+                var hintBarrier = boltBarrier();
+
+                cart = new Promise(function (resolve, reject) {
+
+                    createRequest = true;
+
+                    // send create order request
+                    $.get(settings.create_order_url, params)
+                        .done(function (data) {
+
+                            var boltRestricted = !!data.restrict;
+
+                            toggleCheckoutIfNeeded(boltRestricted);
+
+                            // Stop if Bolt checkout is restricted
+                            if (boltRestricted) {
+                                if (popUpOpen) reject(new Error(data.message));
+                                hintBarrier.resolve(hints);
+                                return;
+                            }
+
+                            if (data.status !== 'success') {
+                                reject(new Error(data.message || 'Network request failed'));
+                                hintBarrier.resolve(hints);
+                                return;
+                            }
+
+                            if (!data.cart) {
+                                reject(new Error('The cart info is missing.'));
+                                hintBarrier.resolve(hints);
+                                return;
+                            }
+
+                            if (!data.cart.orderToken) {
+                                reject(new Error('The cart is empty.'));
+                                hintBarrier.resolve(hints);
+                                return;
+                            }
+
+                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+
+                            hints = deepMergeObjects(hints, data.hints);
+                            hints.prefill = prefill;
+                            //////////////////////////
+
+                            resolve(data.cart);
+                            hintBarrier.resolve(hints);
+
+                            // open the checkout if auto-open flag is set
+                            // one time only on page load
+                            if (initiateCheckout && allowAutoOpen) {
+                                BC.open();
+                                allowAutoOpen = false;
+                            }
+                        })
+                        .fail(function(jqXHR, textStatus, errorThrown) {
+                            reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
+                        })
+                        .always(function() {
+                            createRequest = false;
+                        })
+                        BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+                });
+            } else {
             var hintBarrier = boltBarrier();
+            var cartBarrier = boltBarrier();
 
-            cart = new Promise(function (resolve, reject) {
-
-                createRequest = true;
-
-                // send create order request
-                $.get(settings.create_order_url, params)
-                    .done(function (data) {
+            customerData.get('boltcart').subscribe(function(data) {
+                cart = data.cart !== undefined ? data.cart : {};
+                if (JSON.stringify(cart) === oldBoltCartValue) {
+                    return;
+                }
 
                         var boltRestricted = !!data.restrict;
 
@@ -703,37 +771,33 @@ ob_start();
 
                         // Stop if Bolt checkout is restricted
                         if (boltRestricted) {
-                            if (popUpOpen) reject(new Error(data.message));
-                            hintBarrier.resolve(hints);
-                            return;
-                        }
-
-                        if (data.status !== 'success') {
-                            reject(new Error(data.message || 'Network request failed'));
-                            hintBarrier.resolve(hints);
-                            return;
-                        }
-
-                        if (!data.cart) {
-                            reject(new Error('The cart info is missing.'));
-                            hintBarrier.resolve(hints);
-                            return;
-                        }
-
-                        if (!data.cart.orderToken) {
-                            reject(new Error('The cart is empty.'));
-                            hintBarrier.resolve(hints);
-                            return;
-                        }
+                            cart = {};
+                            hints = {};
+                        } else {
 
                         var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
                         hints = deepMergeObjects(hints, data.hints);
                         hints.prefill = prefill;
-                        //////////////////////////
 
-                        resolve(data.cart);
-                        hintBarrier.resolve(hints);
+                        }
+
+                        // When we call configure with promises we don't know if cart is empty or not
+                        // If we set always_present_checkout when we call configure with promises
+                        // always present button is appear even if cart is empty
+                        if (oldBoltCartValue === "" && !boltConfig.always_present_checkout) {
+                            // resolve promises for initial .configure() call
+                            cartBarrier.resolve(cart);
+                            hintBarrier.resolve(hints);
+                        } else {
+                            if (boltConfig.always_present_checkout) {
+                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
+                                newItemAddedToCart = false;
+                            }
+                            // reconfigure bolt checkout with new values
+                            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                        }
+                        oldBoltCartValue = JSON.stringify(cart);
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
@@ -743,24 +807,18 @@ ob_start();
                         }
 
                         // prefetch Shipping and Tax for multi-step checkout
-                        if (getCheckoutType() === 'checkout') prefetchShipping();
-                    })
-                    .fail(function(jqXHR, textStatus, errorThrown) {
-                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
-                    })
-                    .always(function() {
-                        createRequest = false;
-                    })
-            });
-            // Get number of items in cart from counter element
-            var numItems = $(".counter-number").text();
+                        prefetchShipping();
+                    });
 
-            // Call config with floatingButtonMode if always present checkout enabled and items were or were not just added to cart (dataChanged)
-            var config = boltConfig.always_present_checkout && (numItems && numItems !=="0" || dataChanged)? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover" } : {};
-            var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks, config);
-        };
+            if (!wasConfigureCalled) {
+                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, boltCheckoutConfig);
+                wasConfigureCalled = true;
+            }
+        }
+        }
         /////////////////////////////////////////////////////
 
+        if (getCheckoutType()=="payment") {
         /////////////////////////////////////////////////////
         // Call Bolt order creation Magento endpoint on
         // customer billing address change on payment only page,
@@ -797,6 +855,7 @@ ob_start();
                 createOrder();
             }
         });
+        }
         /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
@@ -862,7 +921,7 @@ ob_start();
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout) {
-                            BoltCheckout.configure(cart, hints, callbacks);
+                            BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -870,21 +929,6 @@ ob_start();
             }
         };
         setupReplacement();
-        //////////////////////////////////////////////////////////
-
-        ////////////////////////////////////////////////////////
-        // on hash change reprocess the buttons due to
-        // possible transition from one checkout type to another
-        ////////////////////////////////////////////////////////
-        window.addEventListener('hashchange', function() {
-            if (checkout_buttons) {
-                checkoutButtonApply(function(button) {
-                    button.style.display = '';
-                });
-                processButtons();
-            }
-        });
-        ////////////////////////////////////////////////////////
 
         ///////////////////////////////////////////////////////////
         // Run function fn on element underlying data change
@@ -942,16 +986,6 @@ ob_start();
         };
         ///////////////////////////////////////////////////////////
 
-        ///////////////////////////////////////////////////////////////
-        // Monitor DOM element showing grand total / cart item number
-        // and trigger Bolt order creation on totals change. This event
-        // happens when discounts are added / removed from the page and
-        // totals updated or items added via ajax call. Don't ignore empty values (non-empty = false).
-        // TODO: add this option to plugin configuration admin page
-        ///////////////////////////////////////////////////////////////
-        monitorDataChange(settings.totals_change_selectors, createOrder, false, false);
-        ///////////////////////////////////////////////////////////////
-
         ///////////////////////////////////////////////////////////
         // Reconfigure BoltCheckout with page collected hints data
         ///////////////////////////////////////////////////////////
@@ -965,7 +999,7 @@ ob_start();
             }
             var new_hints = JSON.stringify(hints);
             if (old_hints !== new_hints) {
-                BoltCheckout.configure(cart, hints, callbacks);
+                BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
         };
@@ -1066,11 +1100,12 @@ ob_start();
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
 
-        // When item added to cart, refresh order and mark data modified so always present button knows new item added
-        // to cart and can animate cart
-        $(document).on("ajax:addToCart", function () {
-            createOrder(null, true);
-        });
+        // When item added to cart, set flag to animate always present button when we catch cart updating
+        if (boltConfig.always_present_checkout) {
+            $(document).on("ajax:addToCart", function () {
+                newItemAddedToCart = true;
+            });
+        }
 
         // globally register createOrder to be called from all templates
         $(document).on("bolt:createOrder", createOrder);
@@ -1084,6 +1119,30 @@ ob_start();
         createOrder();
         ////////////////////////////////////////////////////
         <?php echo $block->getAdditionalJavascript(); ?>
+        // Merchant specific code
+        <?php
+            if ($block->isShowTermsPaymentButton()) {
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $customerSession = $objectManager->create('Magento\Customer\Model\Session');
+                if ($customerSession->isLoggedIn() && $customerSession->getCustomerGroupId() == 2) {
+                    $customerRepository = $objectManager->get('Magento\Customer\Api\CustomerRepositoryInterface');
+                    $customer_id = $customerSession->getCustomer()->getId();
+                    $customer = $customerRepository->getById($customer_id);
+                    $cattrValue = ($termsAllowed = $customer->getCustomAttribute('terms_allowed')) ? $termsAllowed->getValue() : '';
+                    if($cattrValue == '414'){
+                    ?>
+                ready('button[data-role=proceed-to-checkout]', function(element) {
+                    var default_checkout_btn = document.querySelectorAll('button[data-role=proceed-to-checkout]')[0];
+                    default_checkout_btn.setAttribute("style", "display: block !important;font-size: 1.6rem;");
+                    default_checkout_btn.setAttribute("title", "Proceed to Terms Payment");
+                    var default_checkout_btn_span = document.querySelectorAll('button[data-role=proceed-to-checkout] > span')[0];
+                    default_checkout_btn_span.innerText = "Proceed to Terms Payment";
+                });
+                <?php
+                    }
+                }
+            }
+        ?>
     });
 </script>
 <?php
