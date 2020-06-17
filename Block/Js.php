@@ -216,7 +216,7 @@ class Js extends Template
      */
     public function getIsInstantCheckoutButton()
     {
-        return (bool)$this->featureSwitches->isInstantCheckoutButton();
+        return $this->featureSwitches->isInstantCheckoutButton();
     }
 
     /**

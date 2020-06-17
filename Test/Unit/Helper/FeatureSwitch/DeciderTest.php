@@ -18,6 +18,11 @@ use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class DeciderTest
+ * @package Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch
+ * @coversDefaultClass \Bolt\Boltpay\Helper\FeatureSwitch\Decider
+ */
 class DeciderTest  extends TestCase
 {
     /**
@@ -78,6 +83,7 @@ class DeciderTest  extends TestCase
 
     /**
      * @test
+     * @covers ::isSwitchEnabled
      */
     public function isSwitchEnabled_nothingInDbNoRollout() {
         $this->fsRepo
@@ -92,6 +98,7 @@ class DeciderTest  extends TestCase
 
     /**
      * @test
+     * @covers ::isSwitchEnabled
      */
     public function isSwitchEnabled_ValInDbNoRollout() {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -109,6 +116,7 @@ class DeciderTest  extends TestCase
 
     /**
      * @test
+     * @covers ::isSwitchEnabled
      */
     public function isSwitchEnabled_ValInDbFullRollout() {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -128,6 +136,7 @@ class DeciderTest  extends TestCase
 
     /**
      * @test
+     * @covers ::isSwitchEnabled
      */
     public function isSwitchEnabled_ValInDbPartialRollout() {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -147,6 +156,7 @@ class DeciderTest  extends TestCase
 
     /**
      * @test
+     * @covers ::isSwitchEnabled
      */
     public function isSwitchEnabled_throwsIfBadSwitchName() {
         $this->expectException(LocalizedException::class);
@@ -155,4 +165,40 @@ class DeciderTest  extends TestCase
     }
 
     // TODO(roopakv): Figure out how to mock globals to test rollout.
+
+    /**
+     * @test
+     * @covers ::isSwitchEnabled
+     * @dataProvider dataProvider_isSwitchEnabled_willReturnBoolean
+     * @param $result
+     * @param $expected
+     * @throws LocalizedException
+     */
+    public function isSwitchEnabled_willReturnBoolean($result, $expected) {
+        $fs = $this->createMock(FeatureSwitch::class);
+        $fs->expects($this->once())->method('getValue')->willReturn($result);
+        $fs->expects($this->exactly(2))
+            ->method('getRolloutPercentage')->willReturn(100);
+
+        $this->fsRepo
+            ->expects($this->once())
+            ->method('getByName')
+            ->willReturn($fs);
+
+        $fsVal = $this->decider->isSwitchEnabled(Definitions::M2_SAMPLE_SWITCH_NAME);
+
+        $this->assertEquals($expected, $fsVal);
+    }
+
+    public function dataProvider_isSwitchEnabled_willReturnBoolean()
+    {
+        return [
+            ['0', false],
+            ['1', true],
+            [1, true],
+            [0, false],
+            [true, true],
+            [false, false],
+        ];
+    }
 }
