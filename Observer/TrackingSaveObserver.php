@@ -119,6 +119,13 @@ class TrackingSaveObserver implements ObserverInterface
                 $transactionReference = $payment->getAdditionalInformation('transaction_reference');
             }
 
+            if (is_null($transactionReference)) {
+                $quoteId = $order->getQuoteId();
+                $this->bugsnag->notifyError("Missing transaction reference", "QuoteID: {$quoteId}");
+                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                return;
+            }
+
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
                 $orderItem = $item->getOrderItem();

@@ -218,7 +218,7 @@ class TrackingSaveObserverTest extends TestCase
     /**
      * @test
      */
-    public function testExecuteNoTransactionReference()
+    public function testExecuteNonBoltOrder()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
@@ -371,6 +371,65 @@ class TrackingSaveObserverTest extends TestCase
             ->willReturn([$shipmentItem]);
 
         $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(false);
+        $this->apiHelper->expects($this->never())->method('sendRequest');
+        $this->observer->execute($eventObserver);
+    }
+
+    /**
+     * @test
+     */
+    public function testExecuteMissingTransactionReference()
+    {
+        $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
+        $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
+        $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
+        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
+        $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
+
+        $map = [
+        ];
+        $payment->expects($this->once())
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
+        $payment->expects($this->once())
+            ->method('getMethod')
+            ->willReturn('otherpay');
+        $order->expects($this->once())
+            ->method('getPayment')
+            ->willReturn($payment);
+        $shipment->expects($this->once())
+            ->method('getOrder')
+            ->willReturn($order);
+        $track->expects($this->once())
+            ->method('getShipment')
+            ->willReturn($shipment);
+
+        $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
+            ->setMethods(['getTrack'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($event);
+        $event->expects($this->once())
+            ->method('getTrack')
+            ->willReturn($track);
+
+        $shipmentItem->expects($this->never())
+            ->method('getOrderItem')
+            ->willReturn($orderItem);
+        $orderItem->expects($this->never())
+            ->method('getProductId')
+            ->willReturn(12345);
+        $shipment->expects($this->never())
+            ->method('getItemsCollection')
+            ->willReturn([$shipmentItem]);
+
+        $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
         $this->apiHelper->expects($this->never())->method('sendRequest');
         $this->observer->execute($eventObserver);
     }
