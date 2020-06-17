@@ -1086,7 +1086,7 @@ ob_start();
         <?php echo $block->getAdditionalJavascript(); ?>
         // Merchant specific code
         <?php
-            if ($block->isMerchantEspressoParts()) {
+            if ($block->isShowTermsPaymentButton()) {
                 $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
                 $customerSession = $objectManager->create('Magento\Customer\Model\Session');
                 if ($customerSession->isLoggedIn() && $customerSession->getCustomerGroupId() == 2) {

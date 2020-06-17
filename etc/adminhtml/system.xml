@@ -343,10 +343,9 @@
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
                     </field>
-                    <field id="merchant_espresso_parts" translate="label" type="text" sortOrder="310" showInDefault="0" showInWebsite="0" showInStore="0">
-                        <label>Enable setting specific for merchant Espresso parts</label>
-                        <config_path>payment/boltpay/merchant_espresso_parts</config_path>
-                        <validate>validate-custom-url-api</validate>
+                    <field id="show_terms_payment_button" translate="label" type="text" sortOrder="310" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Show terms payment button</label>
+                        <config_path>payment/boltpay/show_terms_payment_button</config_path>
                     </field>
                 </group>
             </group>

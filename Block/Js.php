@@ -475,8 +475,8 @@ class Js extends Template
      * Return true if we need code specific for merchant espresso part
      * @return bool
      */
-    public function isMerchantEspressoParts()
+    public function isShowTermsPaymentButton()
     {
-        return $this->configHelper->isMerchantEspressoParts();
+        return $this->configHelper->isShowTermsPaymentButton();
     }
 }
