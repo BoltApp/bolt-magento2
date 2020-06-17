@@ -227,9 +227,9 @@ class TrackingSaveObserverTest extends TestCase
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
         $map = [
-            ['transaction_reference', '000123'],
+            ['bolt_transaction_reference', '000123'],
         ];
-        $payment->expects($this->never())
+        $payment->expects($this->once())
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));
         $payment->expects($this->once())
@@ -245,6 +245,13 @@ class TrackingSaveObserverTest extends TestCase
             ->method('getShipment')
             ->willReturn($shipment);
 
+        $track->expects($this->once())
+            ->method('getTrackNumber')
+            ->willReturn("EZ4000000004");
+        $track->expects($this->once())
+            ->method("getCarrierCode")
+            ->willReturn("United States Postal Service");
+
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -259,18 +266,51 @@ class TrackingSaveObserverTest extends TestCase
             ->method('getTrack')
             ->willReturn($track);
 
-        $shipmentItem->expects($this->never())
+        $shipmentItem->expects($this->once())
             ->method('getOrderItem')
             ->willReturn($orderItem);
-        $orderItem->expects($this->never())
+        $orderItem->expects($this->once())
             ->method('getProductId')
             ->willReturn(12345);
-        $shipment->expects($this->never())
+        $orderItem->expects($this->once())
+            ->method('getParentItem')
+            ->willReturn(false);
+        $orderItem->expects($this->once())
+            ->method('getProductOptions')
+            ->willReturn([
+                'attributes_info' => [[
+                    "label"  => "Size",
+                    "value" => "XS" ,
+                ]]
+            ]);
+
+        $shipment->expects($this->once())
             ->method('getItemsCollection')
             ->willReturn([$shipmentItem]);
 
+        $expectedData = [
+            "transaction_reference" => "000123",
+            "tracking_number"       => "EZ4000000004",
+            "carrier"               => "United States Postal Service",
+            "items"                 => [
+                (object)[
+                    'reference'=>'12345',
+                    'options'=>[(object)[
+                        "name"  => "Size",
+                        "value" => "XS",
+                    ]],
+                ],
+            ],
+            'is_non_bolt_order' => true
+        ];
+
+        $this->dataObject->expects($this->once())
+            ->method("setApiData")
+            ->with($expectedData);
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
         $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
-        $this->apiHelper->expects($this->never())->method('sendRequest');
         $this->observer->execute($eventObserver);
     }
 
