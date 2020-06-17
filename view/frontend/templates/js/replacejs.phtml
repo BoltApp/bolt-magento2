@@ -809,10 +809,7 @@ ob_start();
                     });
 
             if (!wasConfigureCalled) {
-                // temporary disable always present checkout button for refactoring reason
-                // will remove this line in the next PR
-                var config = {};
-                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, config);
+                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, boltCheckoutConfig);
                 wasConfigureCalled = true;
             }
         }
