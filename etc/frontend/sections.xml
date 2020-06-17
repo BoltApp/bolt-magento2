@@ -21,4 +21,15 @@
     <action name="checkout/onepage/saveOrder">
         <section name="bolthints"/>
     </action>
+    <!--
+    /**
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     * We explictly configure Magento_Reward minicart support which is not implicitly done via the "cart" section
+     * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     */
+    -->
+    <action name="rest/*/V1/reward/mine/use-reward">
+        <section name="boltcart"/>
+    </action>
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 </config>
