@@ -472,7 +472,7 @@ class Js extends Template
     }
 
     /**
-     * Return true if we need code specific for merchant espresso part
+     * Return true if we need to show terms payment button
      * @return bool
      */
     public function isShowTermsPaymentButton()
