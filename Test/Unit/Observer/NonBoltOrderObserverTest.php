@@ -42,8 +42,8 @@ use \PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Request;
 
 /**
- * Class TrackingSaveObserverTest
- * @coversDefaultClass \Bolt\Boltpay\Observer\TrackingSaveObserver
+ * Class NonBoltOrderObserverTest
+ * @coversDefaultClass \Bolt\Boltpay\Observer\NonBoltOrderObserver
  */
 class NonBoltOrderObserverTest extends TestCase
 {

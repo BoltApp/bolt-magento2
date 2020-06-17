@@ -112,12 +112,19 @@ class TrackingSaveObserver implements ObserverInterface
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
 
-            // If this is not a bolt payment, ignore it
-            if (!$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
-                return;
+            $isNonBoltOrder = !$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE;
+            if ($isNonBoltOrder) {
+                $transactionReference = $payment->getAdditionalInformation('bolt_transaction_reference');
+            } else {
+                $transactionReference = $payment->getAdditionalInformation('transaction_reference');
             }
 
-            $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+            if (is_null($transactionReference)) {
+                $quoteId = $order->getQuoteId();
+                $this->bugsnag->notifyError("Missing transaction reference", "QuoteID: {$quoteId}");
+                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                return;
+            }
 
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
@@ -138,7 +145,8 @@ class TrackingSaveObserver implements ObserverInterface
                 'transaction_reference' => $transactionReference,
                 'tracking_number'       => $tracking->getTrackNumber(),
                 'carrier'               => $tracking->getCarrierCode(),
-                'items'                 => $items
+                'items'                 => $items,
+                'is_non_bolt_order'     => $isNonBoltOrder,
             ];
 
             //Request Data
