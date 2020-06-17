@@ -218,43 +218,4 @@ class MinicartAddonsTest extends TestCase
             ],
         ];
     }
-
-    /**
-     * @test
-     * that getOrderCreationTriggers returns expected selector(s) based on configuration state
-     *
-     * @dataProvider getOrderCreationTriggers_withVariousConfigurationsProvider
-     *
-     * @covers ::getOrderCreationTriggers
-     *
-     * @param bool   $displayRewardPointsInMinicartConfig value flag
-     * @param string $expectedResult of the method call
-     */
-    public function getOrderCreationTriggers_withVariousConfigurations_returnsElementSelector(
-        $displayRewardPointsInMinicartConfig,
-        $expectedResult
-    ) {
-        $this->configHelper->expects(static::once())->method('displayRewardPointsInMinicartConfig')
-            ->willReturn($displayRewardPointsInMinicartConfig);
-        static::assertEquals($expectedResult, $this->currentMock->getOrderCreationTriggers());
-    }
-
-    /**
-     * Data provider for {@see getOrderCreationTriggers_withVariousConfigurations}
-     *
-     * @return array[] containing configuration value for minicart reward points and expected result of the method call
-     */
-    public function getOrderCreationTriggers_withVariousConfigurationsProvider()
-    {
-        return [
-            [
-                'displayRewardPointsInMinicartConfig' => true,
-                'expectedResult'                      => '.totals.rewardpoints'
-            ],
-            [
-                'displayRewardPointsInMinicartConfig' => false,
-                'expectedResult'                      => ''
-            ],
-        ];
-    }
 }

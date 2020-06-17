@@ -805,6 +805,7 @@ ob_start();
                             BC.open();
                             allowAutoOpen = false;
                         }
+                    });
 
                         // prefetch Shipping and Tax for multi-step checkout
                         prefetchShipping();
@@ -1107,8 +1108,8 @@ ob_start();
             });
         }
 
-        // globally register createOrder to be called from all templates
-        $(document).on("bolt:createOrder", createOrder);
+        // globally register createOrder to be called from all templates, which is triggered by invalidating the customer section
+        $(document).on('bolt:createOrder', function () {customerData.reload(['boltcart'], true);});
 
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.

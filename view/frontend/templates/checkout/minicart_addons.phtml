@@ -23,8 +23,8 @@ if (!$miniCartView->shouldShow()) { return;
 ?>
 <script>
     require([
-        'jquery', 'Magento_Customer/js/model/customer',
-    ], function ($, customer) {
+        'jquery', 'Magento_Customer/js/model/customer', 'Magento_Customer/js/customer-data'
+    ], function ($, customer, customerData) {
         function append_minicart_addons () {
             require(['uiLayout'], function (layout) {
                 layout(<?php echo $miniCartView->getLayoutJSON(); ?>);
@@ -39,13 +39,10 @@ if (!$miniCartView->shouldShow()) { return;
                         dataType:   'json',
                         showLoader: true,
                         success:    function (response) {
-                            $(document).trigger('bolt:createOrder');
-                            require(
-                                [
-                                    'Magento_Checkout/js/action/get-payment-information',
-                                    'Magento_Customer/js/customer-data'
-                                ],
-                                function (getPaymentInformationAction, customerData) {
+                            customerData.reload(['boltcart'], true);
+                            require([
+                                    'Magento_Checkout/js/action/get-payment-information'
+                                ], function (getPaymentInformationAction) {
                                     getPaymentInformationAction().always(function () {
                                         customerData.reload(['messages'], true);
                                     });
@@ -73,11 +70,5 @@ if (!$miniCartView->shouldShow()) { return;
         } else {
             append_minicart_addons();
         }
-        require(['Magento_Ui/js/lib/view/utils/dom-observer'], function (domObserver) {
-            domObserver.get(
-                '<?php echo $miniCartView->getOrderCreationTriggers(); ?>',
-                function () {$(document).trigger('bolt:createOrder');}
-            );
-        });
     });
 </script>
