@@ -2011,7 +2011,8 @@ class CartTest extends TestCase
         $orderId = CartTest::ORDER_INCREMENT_ID;
 
         $order = json_decode(
-        /** @lang JSON */            <<<ORDER
+        /** @lang JSON */
+<<<ORDER
         {
           "token": "f34fff50f8b89db7cbe867326404d782fb688bdd8b26ab3affe8c0ba22b2ced5",
           "cart": {
@@ -2075,7 +2076,7 @@ class CartTest extends TestCase
             ]
           }
         }
-           ORDER
+ORDER
         );
         $boltOrderResponse = new Response();
         $boltOrderResponse->setResponse($order);
