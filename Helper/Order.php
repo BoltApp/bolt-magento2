@@ -1855,7 +1855,6 @@ class Order extends AbstractHelper
             'transaction_reference' => $transaction->reference,
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
-            'captures' => implode(',', $processedCaptures),
             'refunds' => implode(',', $processedRefunds),
             'processor' => $transaction->processor
         ];
@@ -1871,7 +1870,7 @@ class Order extends AbstractHelper
         $payment->setParentTransactionId($parentTransactionId);
         $payment->setTransactionId($transactionId);
         $payment->setLastTransId($transactionId);
-        $payment->setAdditionalInformation($paymentData);
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
         $this->setOrderPaymentInfoData($payment, $transaction);
@@ -1901,6 +1900,9 @@ class Order extends AbstractHelper
             $currencyCode = $order->getOrderCurrencyCode();
             $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
             $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
+            $payment->setAdditionalInformation(
+                array_merge((array)$payment->getAdditionalInformation(), ['captures' => implode(',', $processedCaptures)])
+            );
         }
 
         if (!$order->getTotalDue()) {
