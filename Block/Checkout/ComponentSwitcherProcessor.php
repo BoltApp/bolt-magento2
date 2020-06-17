@@ -21,8 +21,6 @@ use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
 /**
  * Class ComponentSwitcherProcessor
  * Enable / disable components in the checkout page layout depending on the configuration.
- *
- * @package Bolt\Boltpay\Block\Checkout\Cart
  */
 class ComponentSwitcherProcessor extends LayoutProcessor
 {

@@ -28,9 +28,7 @@ use Magento\Framework\Controller\Result\Json;
  * Class Data.
  * Create Bolt order controller.
  *
- * Called from the replace.phtml javascript block on checklout button click.
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * Called from the replace.phtml javascript block on checkout button click.
  */
 class Data extends Action
 {

@@ -18,8 +18,6 @@
 namespace Bolt\Boltpay\Api;
 
 /**
- * Create Order interface.
- *
  * @api
  */
 interface CreateOrderInterface

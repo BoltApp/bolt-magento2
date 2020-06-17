@@ -17,10 +17,6 @@
 
 namespace Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
-/**
- * Class DeleteAction
- * @package Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View
- */
 class DeleteAction extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Action
 {
     /**

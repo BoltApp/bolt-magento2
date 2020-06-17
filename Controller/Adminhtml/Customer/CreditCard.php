@@ -17,10 +17,6 @@
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Customer;
 
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Controller\Adminhtml\Customer
- */
 class CreditCard extends \Magento\Customer\Controller\Adminhtml\Index
 {
     /**
