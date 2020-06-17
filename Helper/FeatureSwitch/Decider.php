@@ -145,14 +145,16 @@ class Decider extends AbstractHelper
         }
 
         if ($switch->getRolloutPercentage() == 0) {
-            return $switch->getDefaultValue();
-        } elseif ($switch->getRolloutPercentage() == 100) {
-            return $switch->getValue();
+            $isSwitchEnabled = $switch->getDefaultValue();
+        } else if ($switch->getRolloutPercentage() == 100) {
+            $isSwitchEnabled = $switch->getValue();
         } else {
             $isInBucket = $this
                 ->_isInBucket($switchName, $switch->getRolloutPercentage());
-            return $isInBucket ? $switch->getValue() : $switch->getDefaultValue();
+            $isSwitchEnabled =$isInBucket ? $switch->getValue() : $switch->getDefaultValue();
         }
+
+        return (bool) $isSwitchEnabled;
     }
 
     /***************************************************
