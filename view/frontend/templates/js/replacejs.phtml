@@ -615,7 +615,7 @@ ob_start();
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
-                $.post(settings.shipping_prefetch_url, params);
+                $.get(settings.shipping_prefetch_url, params);
             }
         };
 
@@ -794,9 +794,10 @@ ob_start();
                             BC.open();
                             allowAutoOpen = false;
                         }
+
+                        // prefetch Shipping and Tax for multi-step checkout
+                        prefetchShipping();
                     });
-            // prefetch Shipping and Tax for multi-step checkout
-            prefetchShipping();
 
             if (!wasConfigureCalled) {
                 // temporary disable always present checkout button for refactoring reason
