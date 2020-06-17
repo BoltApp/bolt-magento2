@@ -119,9 +119,9 @@ class TrackingSaveObserverTest extends TestCase
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
-        $map = array(
-            array('transaction_reference', '000123'),
-        );
+        $map = [
+            ['transaction_reference', '000123'],
+        ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));
@@ -226,9 +226,9 @@ class TrackingSaveObserverTest extends TestCase
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
-        $map = array(
-            array('transaction_reference', '000123'),
-        );
+        $map = [
+            ['transaction_reference', '000123'],
+        ];
         $payment->expects($this->never())
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));
@@ -286,9 +286,9 @@ class TrackingSaveObserverTest extends TestCase
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
-        $map = array(
-            array('transaction_reference', '000123'),
-        );
+        $map = [
+            ['transaction_reference', '000123'],
+        ];
         $payment->expects($this->never())
             ->method('getAdditionalInformation')
             ->will($this->returnValueMap($map));

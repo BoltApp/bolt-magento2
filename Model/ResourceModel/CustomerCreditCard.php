@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Model\ResourceModel;
+
 use \Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
 /**

@@ -78,12 +78,13 @@ class TrackingSaveObserver implements ObserverInterface
      * @param array item options
      * @return array
      */
-    private function getPropertiesByProductOptions ($itemOptions) {
+    private function getPropertiesByProductOptions($itemOptions)
+    {
         if (!isset($itemOptions['attributes_info'])) {
             return [];
         }
         $properties = [];
-        foreach($itemOptions['attributes_info'] as $attributeInfo){
+        foreach ($itemOptions['attributes_info'] as $attributeInfo) {
             // Convert attribute to string if it's a boolean before sending to the Bolt API
             $attributeValue = is_bool($attributeInfo['value']) ? var_export($attributeInfo['value'], true) : $attributeInfo['value'];
             $attributeLabel = $attributeInfo['label'];

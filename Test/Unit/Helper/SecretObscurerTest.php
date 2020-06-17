@@ -22,28 +22,27 @@ use PHPUnit\Framework\TestCase;
 
 class SecretObscurerTest extends TestCase
 {
-	/**
-	 * @test
-	 */
-	public function obscure_empty()
-	{
-		$this->assertEquals('', SecretObscurer::obscure(''));
-	}
+    /**
+     * @test
+     */
+    public function obscure_empty()
+    {
+        $this->assertEquals('', SecretObscurer::obscure(''));
+    }
 
-	/**
-	 * @test
-	 */
-	public function obscure_short_string()
-	{
-		$this->assertEquals('***', SecretObscurer::obscure('abcde'));
-	}
+    /**
+     * @test
+     */
+    public function obscure_short_string()
+    {
+        $this->assertEquals('***', SecretObscurer::obscure('abcde'));
+    }
 
-	/**
-	 * @test
-	 */
-	public function obscure_long_string()
-	{
-		$this->assertEquals('aaa***bbb', SecretObscurer::obscure('aaaabbbb'));
-	}
-
+    /**
+     * @test
+     */
+    public function obscure_long_string()
+    {
+        $this->assertEquals('aaa***bbb', SecretObscurer::obscure('aaaabbbb'));
+    }
 }

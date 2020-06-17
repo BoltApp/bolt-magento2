@@ -21,7 +21,8 @@ namespace Bolt\Boltpay\Api;
  * Feature Switches Interface
  * @api
  */
-interface FeatureSwitchesHookInterface {
+interface FeatureSwitchesHookInterface
+{
     /**
      * @api
      * @return void

@@ -118,12 +118,14 @@ class InvoiceServiceTest extends TestCase
                 'setGrandTotal'
             ]
         );
-        $this->order = $this->createPartialMock(OrderModel::class,
+        $this->order = $this->createPartialMock(
+            OrderModel::class,
             ['getInvoiceCollection']
         );
 
 
-        $this->orderItem = $this->createPartialMock(Item::class,
+        $this->orderItem = $this->createPartialMock(
+            Item::class,
             ['addItem']
         );
 

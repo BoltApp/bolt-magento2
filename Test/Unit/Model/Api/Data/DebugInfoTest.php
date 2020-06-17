@@ -94,6 +94,7 @@ class DebugInfoTest extends TestCase
                 'php_version' => '7.1',
                 'platform_version' => 'magento231',
             ],
-            $this->debugInfo->jsonSerialize());
+            $this->debugInfo->jsonSerialize()
+        );
     }
 }

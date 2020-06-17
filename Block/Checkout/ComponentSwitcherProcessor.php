@@ -32,7 +32,8 @@ class ComponentSwitcherProcessor extends LayoutProcessor
      * @param array $jsLayout
      * @return array
      */
-    public function process($jsLayout) {
+    public function process($jsLayout)
+    {
         // Payment only checkout based on Magento default one-page checkpout
         // (one-page checkout, Mageplaza one-step checkout etc.)
         $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']

@@ -213,12 +213,13 @@ class NonBoltOrderObserver implements ObserverInterface
      *
      * @param $quote
      */
-    protected function handleMissingName($quote) {
+    protected function handleMissingName($quote)
+    {
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         if ($address->getLastName() == null) {
             $name = $address->getFirstName();
             $names = preg_split("/[\s]+/", $name);
-           if (count($names) > 1) {
+            if (count($names) > 1) {
                 $address->setFirstName(array_shift($names));
                 $address->setLastName(join(" ", $names));
             } else {

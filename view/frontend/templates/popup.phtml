@@ -20,7 +20,8 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 ?>
 <div id="bolt-modal" style="display:none;">
     <div class="bolt-modal-content" data-role="content"></div>

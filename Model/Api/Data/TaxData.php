@@ -69,7 +69,8 @@ class TaxData implements TaxDataInterface, \JsonSerializable
      * @api
      * @return ShippingOptionInterface
      */
-    public function getShippingOption() {
+    public function getShippingOption()
+    {
         return $this->shippingOption;
     }
 
@@ -89,7 +90,8 @@ class TaxData implements TaxDataInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize () {
+    public function jsonSerialize()
+    {
         return [
             'tax_result' => $this->taxResult,
             'shipping_option' => $this->shippingOption

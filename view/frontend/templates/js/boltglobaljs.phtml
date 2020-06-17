@@ -22,15 +22,18 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 
 //check if we need Bolt on this page
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) { return;
+}
 
 $trackCallbackCode = $block->getTrackCallbacks();
 
-function wrapWithCatch($jsCode, $argName='') {
-echo "
+function wrapWithCatch($jsCode, $argName = '')
+{
+    echo "
 function($argName) {
     try {
         $jsCode
@@ -54,7 +57,7 @@ ob_start();
         onShippingDetailsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_details_complete']); ?>,
         onShippingOptionsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_options_complete']); ?>,
         onPaymentSubmit: <?php wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
-        onSuccess: <?php wrapWithCatch( $block->getJavascriptSuccess() . $trackCallbackCode['success'], 'data') ?>,
+        onSuccess: <?php wrapWithCatch($block->getJavascriptSuccess() . $trackCallbackCode['success'], 'data') ?>,
         onClose: <?php wrapWithCatch($trackCallbackCode['close']); ?>,
     };
     

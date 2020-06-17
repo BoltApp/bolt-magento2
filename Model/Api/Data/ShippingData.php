@@ -59,7 +59,8 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize () {
+    public function jsonSerialize()
+    {
         return [
             'shipping_options' => $this->shippingOptions
         ];

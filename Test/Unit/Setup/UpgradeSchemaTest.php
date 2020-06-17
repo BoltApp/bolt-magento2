@@ -16,11 +16,13 @@
  */
 
 namespace Bolt\Boltpay\Test\Unit\Setup;
+
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Setup\UpgradeSchema;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\DB\Ddl\Table;
+
 /**
  * Class PaymentTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Payment
@@ -70,7 +72,8 @@ class UpgradeSchemaTest extends TestCase
      * @test
      * @throws \ReflectionException
      */
-    public function testSetupFeatureBoltCustomerCreditCardsTable(){
+    public function testSetupFeatureBoltCustomerCreditCardsTable()
+    {
         $this->dbAdapter
             ->expects($this->once())
             ->method('newTable')
@@ -109,7 +112,7 @@ class UpgradeSchemaTest extends TestCase
 
         $testMethod = new \ReflectionMethod(UpgradeSchema::class, 'setupFeatureBoltCustomerCreditCardsTable');
         $testMethod->setAccessible(true);
-        $testMethod->invokeArgs($this->upgradeObject,[$this->schemaSetup]);
+        $testMethod->invokeArgs($this->upgradeObject, [$this->schemaSetup]);
     }
 
     /**
@@ -122,5 +125,4 @@ class UpgradeSchemaTest extends TestCase
     {
         return $tableName;
     }
-
 }

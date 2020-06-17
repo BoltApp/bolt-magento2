@@ -15,6 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Section\CustomerData;
+
 use Magento\Customer\CustomerData\SectionSourceInterface;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 

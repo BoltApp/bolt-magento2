@@ -40,8 +40,7 @@ class OrderPlugin
         }
         if ($state === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW) {
             $state = Order::STATE_NEW;
-        }
-        elseif (!$subject->getState() || $state === Order::STATE_NEW) {
+        } elseif (!$subject->getState() || $state === Order::STATE_NEW) {
             $state = Order::STATE_PENDING_PAYMENT;
         }
         return [$state];
@@ -62,8 +61,7 @@ class OrderPlugin
         }
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_NEW);
-        }
-        elseif ((
+        } elseif ((
             !  $subject->getStatus()
             || $subject->getStatus() == Order::STATE_PENDING_PAYMENT
             || $subject->getStatus() == Order::STATE_NEW

@@ -142,10 +142,11 @@ class Form extends PaymentForm
     /**
      * @return array|bool
      */
-    public function getCustomerCreditCardInfo(){
+    public function getCustomerCreditCardInfo()
+    {
         /** @var \Magento\Quote\Model\Quote\Address $billingAddress */
         $billingAddress = $this->getQuoteData()->getBillingAddress();
-        if($customerId = $billingAddress->getCustomerId()){
+        if ($customerId = $billingAddress->getCustomerId()) {
             /** @var \Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection $customerCreditCardCollection */
             $customerCreditCardCollection = $this->customerCreditCardCollectionFactory->create();
             return $customerCreditCardCollection->getCreditCardInfosByCustomerId($customerId);
@@ -157,21 +158,24 @@ class Form extends PaymentForm
     /**
      * @return bool
      */
-    public function isAdminReorderForLoggedInCustomerFeatureEnabled(){
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled()
+    {
         return $this->featureSwitch->isAdminReorderForLoggedInCustomerFeatureEnabled();
     }
 
     /**
      * @return string
      */
-    public function getPublishableKeyBackOffice(){
+    public function getPublishableKeyBackOffice()
+    {
         return $this->configHelper->getPublishableKeyBackOffice();
     }
 
     /**
      * @return string
      */
-    public function getPublishableKeyPaymentOnly(){
+    public function getPublishableKeyPaymentOnly()
+    {
         return $this->configHelper->getPublishableKeyPayment();
     }
 }
