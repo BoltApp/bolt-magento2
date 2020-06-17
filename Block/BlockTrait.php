@@ -45,7 +45,8 @@ trait BlockTrait
      */
     public function getCheckoutKey()
     {
-        if ($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION) {
+        if ($this->configHelper->isPaymentOnlyCheckoutEnabled()
+            && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION) {
             return $this->configHelper->getPublishableKeyPayment();
         }
 
@@ -58,7 +59,9 @@ trait BlockTrait
      */
     public function isKeyMissing()
     {
-        return !$this->getCheckoutKey() || !$this->configHelper->getApiKey() || !$this->configHelper->getSigningSecret();
+        return !$this->getCheckoutKey()
+            || !$this->configHelper->getApiKey()
+            || !$this->configHelper->getSigningSecret();
     }
 
     /**

@@ -26,9 +26,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 
 /**
  * Class Hints
- * Return Hints data for Product page checkout
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * Return Hints data for Product Page Checkout
  */
 class Hints extends Action
 {

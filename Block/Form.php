@@ -9,9 +9,6 @@ use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-/**
- * Class Form
- */
 class Form extends PaymentForm
 {
     /**

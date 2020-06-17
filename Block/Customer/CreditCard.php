@@ -26,10 +26,6 @@ use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
 
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Block\Customer
- */
 class CreditCard extends Template
 {
     use BlockTrait;
