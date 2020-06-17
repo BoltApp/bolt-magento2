@@ -1969,7 +1969,6 @@ class Order extends AbstractHelper
         $invoice->setBaseGrandTotal($amount);
         $invoice->setGrandTotal($amount);
         $invoice->register();
-        $invoice->save();
 
         $order->addRelatedObject($invoice);
 
