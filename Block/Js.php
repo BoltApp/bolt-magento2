@@ -54,7 +54,7 @@ class Js extends Template
      * @param Config $configHelper
      * @param CheckoutSession $checkoutSession
      * @param CartHelper $cartHelper
-     * @param Bugsnag $bugsnag ;
+     * @param Bugsnag $bugsnag
      * @param Decider $featureSwitches
      * @param array $data
      */
