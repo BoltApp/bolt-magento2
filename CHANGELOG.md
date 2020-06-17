@@ -136,5 +136,8 @@
  - Fix unknown RevertGiftCardAccountBalance error
 ## [v2.9.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.9.0) 2020-06-17
  - Fix display of APM/Paypal transactions within Magento 2 dashboard
+ - Always-present checkout button improvements
+ - Update to method to save Bolt cart in to be more robust
+ - Added support for tracking non-Bolt order shipments.
  - Code maintainability refactoring
  - Bug fixes
