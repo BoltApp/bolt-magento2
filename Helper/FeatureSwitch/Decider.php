@@ -240,4 +240,8 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ALWAYS_PRESENT_CHECKOUT);
     }
+
+    public function isSaveCartInSections() {
+        return $this->isSwitchEnabled(Definitions::M2_SAVE_CART_IN_SECTIONS);
+    }
 }

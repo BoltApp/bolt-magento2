@@ -524,4 +524,16 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ["#AA00AA","--bolt-primary-action-color:#AA00AA"]
         ];
     }
+
+    /**
+     * @test
+     */
+    public function isSaveCartInSections()
+    {
+        $this->deciderMock->method('isSaveCartInSections')->willReturn(true);
+
+        $result = $this->block->isSaveCartInSections();
+
+        $this->assertTrue($result);
+    }
 }

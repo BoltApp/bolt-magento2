@@ -107,6 +107,11 @@ class Definitions
      */
     const M2_ALWAYS_PRESENT_CHECKOUT = "M2_ALWAYS_PRESENT_CHECKOUT";
 
+    /**
+     * Use magento sections to save bolt cart in browser local storage
+     */
+    const M2_SAVE_CART_IN_SECTIONS = "M2_SAVE_CART_IN_SECTIONS";
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -191,6 +196,18 @@ class Definitions
             self::VAL_KEY => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY => 0
-        ]
+        ],
+        self::M2_ALWAYS_PRESENT_CHECKOUT => [
+            self::NAME_KEY            => self::M2_ALWAYS_PRESENT_CHECKOUT,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_SAVE_CART_IN_SECTIONS => [
+            self::NAME_KEY            => self::M2_SAVE_CART_IN_SECTIONS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ],
     ];
 }
