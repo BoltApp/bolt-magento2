@@ -264,6 +264,9 @@ class CartTest extends TestCase
     /** @var array */
     private $testAddressData;
 
+    /** @var array */
+    private $giftwrapping;
+
     /**
      * @var Registry|\PHPUnit\Framework\MockObject\MockObject
      */
@@ -345,7 +348,13 @@ class CartTest extends TestCase
         $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->contextHelper = $this->createMock(ContextHelper::class);
-        $this->quoteMock = $this->createMock(Quote::class);
+        $this->quoteMock = $this->createPartialMock(Quote::class,[
+            'getQuoteCurrencyCode','getAllVisibleItems',
+            'getTotals','getStore','getStoreId',
+            'getData','isVirtual','getId','getShippingAddress',
+            'getBillingAddress','reserveOrderId','addProduct',
+            'assignCustomer','setIsActive'
+        ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
 
@@ -4311,13 +4320,16 @@ ORDER
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
 
         $quoteItemMock = $this->getQuoteItemMock();
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getTotals')->willReturnSelf();
+
 
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
-            self::CURRENCY_CODE,
-            [$quoteItemMock],
+            $this->quoteMock,
             self::STORE_ID
         );
 
@@ -4412,9 +4424,12 @@ ORDER
         );
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
 
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getTotals')->willReturnSelf();
+
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
-            self::CURRENCY_CODE,
-            [$quoteItem],
+            $this->quoteMock,
             self::STORE_ID
         );
         static::assertEquals(
@@ -4436,11 +4451,107 @@ ORDER
         static::assertEquals(0, $diff);
         }
 
-        /**
-        * @return MockObject
-        */
-        private function getQuoteItemMock()
-        {
+
+      /**
+       * @test
+       *
+       * @covers ::getCartItems
+       */
+      public function getCartItems_withGiftWrapping()
+      {
+          $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
+              ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
+          $quoteItem = $this->createPartialMock(
+              Item::class,
+              [
+                  'getCalculationPrice',
+                  'getQty',
+                  'getProduct',
+                  'getProductId',
+                  'getName',
+                  'getSku',
+                  'getIsVirtual',
+              ]
+          );
+          $productMock = $this->createMock(Product::class);
+          $quoteItem->method('getName')->willReturn('Test Product');
+          $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
+          $quoteItem->method('getQty')->willReturn(1);
+          $quoteItem->method('getCalculationPrice')->willReturn(self::PRODUCT_PRICE);
+          $quoteItem->method('getIsVirtual')->willReturn(false);
+          $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
+          $quoteItem->method('getProduct')->willReturn($productMock);
+          $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+
+          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
+              ->willThrowException(
+                  new NotFoundException(
+                      __("The product that was requested doesn't exist. Verify the product and try again.")
+                  )
+              );
+
+          $this->imageHelper->method('init')
+              ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+              ->willThrowException(new Exception());
+
+          $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
+
+          $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+          $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+
+          $this->giftwrapping = $this->getMockBuilder('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping')
+              ->disableOriginalConstructor()
+              ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode'])
+              ->getMock();
+
+          $this->giftwrapping->method('getGwId')->willReturn(1);
+          $this->giftwrapping->method('getGwItemsPrice')->willReturn('10');
+          $this->giftwrapping->method('getGwCardPrice')->willReturn('0');
+          $this->giftwrapping->method('getGwPrice')->willReturn('5');
+          $this->giftwrapping->method('getTitle')->willReturnSelf();
+          $this->giftwrapping->method('getText')->willReturn('Gift Wrapping');
+          $this->giftwrapping->method('getCode')->willReturn('gift_id');
+          $this->quoteMock->method('getTotals')->willReturn(['giftwrapping' => $this->giftwrapping]);
+
+          list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
+              $this->quoteMock,
+              self::STORE_ID
+          );
+          static::assertEquals(
+              [
+                  [
+                      'reference'    => 20102,
+                      'name'         => 'Test Product',
+                      'total_amount' => 10000,
+                      'unit_price'   => 10000,
+                      'quantity'     => 1.0,
+                      'sku'          => self::PRODUCT_SKU,
+                      'type'         => 'physical',
+                      'description'  => '',
+                  ],
+                  [
+                      'reference' => 1,
+                      'name' => 'Gift Wrapping',
+                      'total_amount' => 1500,
+                      'unit_price' => 1500,
+                      'quantity' => 1,
+                      'sku' => 'gift_id',
+                      'type' => 'physical',
+                  ]
+              ],
+              $products
+          );
+          static::assertEquals(11500, $totalAmount);
+          static::assertEquals(0, $diff);
+      }
+
+
+
+      /**
+       * @return MockObject
+       */
+      private function getQuoteItemMock()
+      {
         $quoteItem = $this->getMockBuilder(Item::class)
             ->setMethods(
                 [
