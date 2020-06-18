@@ -34,7 +34,7 @@ class TestHelper extends TestCase
      * @return mixed
      * @throws \ReflectionException
      */
-    public static function invokeMethod($object, $methodName, array $parameters = array())
+    public static function invokeMethod($object, $methodName, array $parameters = [])
     {
         try {
             $reflectedMethod = self::getReflectedClass($object)->getMethod($methodName);
@@ -42,7 +42,7 @@ class TestHelper extends TestCase
 
             return $reflectedMethod->invokeArgs(is_object($object) ? $object : null, $parameters);
         } finally {
-            if ( $reflectedMethod && ($reflectedMethod->isProtected() || $reflectedMethod->isPrivate()) ) {
+            if ($reflectedMethod && ($reflectedMethod->isProtected() || $reflectedMethod->isPrivate())) {
                 $reflectedMethod->setAccessible(false);
             }
         }
@@ -102,5 +102,4 @@ class TestHelper extends TestCase
             }
         }
     }
-
 }

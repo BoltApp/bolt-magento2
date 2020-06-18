@@ -160,7 +160,7 @@ workflows:
   version: 2
   build:
     jobs:
-      - phpcs
+#      - phpcs
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22

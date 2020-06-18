@@ -427,7 +427,8 @@ class ShippingMethodsTest extends TestCase
         $this->assertEquals($shippingOptions, $result);
     }
 
-    public function getShippingMethods_dataProvider() {
+    public function getShippingMethods_dataProvider()
+    {
         return [
             // common case
             [[
@@ -749,7 +750,8 @@ class ShippingMethodsTest extends TestCase
         $this->setupShippingOptionFactory(
             "Flate Rate - Fixed [{$shippingDiscountAmount} discount]",
             'flatrate_flatrate',
-            500, 0
+            500,
+            0
         );
 
         $quote = $this->getQuoteMock($shippingAddress);
@@ -881,7 +883,8 @@ class ShippingMethodsTest extends TestCase
         $this->setupShippingOptionFactory(
             "Flate Rate - Fixed [free shipping discount]",
             'flatrate_flatrate',
-            0, 0
+            0,
+            0
         );
 
         $quote = $this->getQuoteMock($shippingAddress);
@@ -1178,8 +1181,9 @@ Room 4000',
     public function checkCartItems_noQuoteItems()
     {
         $this->initCurrentMock();
-        $quote = $this->createPartialMock(Quote::class, ['getAllVisibleItems']);
+        $quote = $this->createPartialMock(Quote::class, ['getAllVisibleItems','getTotals']);
         $quote->expects(self::once())->method('getAllVisibleItems')->willReturn([]);
+        $quote->expects(self::once())->method('getTotals')->willReturnSelf();
         self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(BoltException::class);
@@ -1227,8 +1231,8 @@ Room 4000',
                     ->method('setMetaData')->with(
                         [
                             'CART_MISMATCH' => [
-                                'cart_total' => array( 'TestProduct2' => 100 ),
-                                'quote_total' => array('TestProduct' => 60000 ),
+                                'cart_total' => [ 'TestProduct2' => 100 ],
+                                'quote_total' => ['TestProduct' => 60000 ],
                                 'cart_items'  => $cart['items'],
                                 'quote_items' => null,
                             ]
@@ -1277,7 +1281,6 @@ Room 4000',
                 $cart
             ]
         );
-
     }
 
     /**
@@ -1337,7 +1340,7 @@ Room 4000',
         $quoteMethods = [
             'getId', 'getBoltParentQuoteId', 'getSubtotal', 'getAllVisibleItems',
             'getAppliedRuleIds', 'isVirtual', 'getShippingAddress', 'collectTotals',
-            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore'
+            'getQuoteCurrencyCode', 'getStoreId', 'setCouponCode', 'save', 'getCouponCode', 'getStore','getTotals'
         ];
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods($quoteMethods)
@@ -1364,6 +1367,8 @@ Room 4000',
             ->willReturnSelf();
         $quote->method('save')
               ->willReturnSelf();
+        $quote->method('getTotals')
+            ->willReturnSelf();
         $quote->method('getStore')
               ->willReturn($this->storeMock);
 
@@ -1452,7 +1457,7 @@ Room 4000',
             )
             ->setMethods($methods);
 
-        if($enableProxyingToOriginalMethods) {
+        if ($enableProxyingToOriginalMethods) {
             $builder->enableProxyingToOriginalMethods();
         }
 

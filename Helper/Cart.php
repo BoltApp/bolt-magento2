@@ -59,6 +59,7 @@ use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Helper\MetricsClient;
 
 /**
  * Boltpay Cart helper
@@ -239,6 +240,11 @@ class Cart extends AbstractHelper
     private $coreRegistry;
 
     /**
+     * @var MetricsClient
+     */
+    private $metricsClient;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -265,6 +271,7 @@ class Cart extends AbstractHelper
      * @param HookHelper $hookHelper
      * @param CustomerRepository $customerRepository
      * @param Registry $coreRegistry
+     * @param MetricsClient $metricsClient
      */
     public function __construct(
         Context $context,
@@ -292,7 +299,8 @@ class Cart extends AbstractHelper
         CartManagementInterface $quoteManagement,
         HookHelper $hookHelper,
         CustomerRepository $customerRepository,
-        Registry $coreRegistry
+        Registry $coreRegistry,
+        MetricsClient $metricsClient
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -320,6 +328,7 @@ class Cart extends AbstractHelper
         $this->hookHelper = $hookHelper;
         $this->customerRepository = $customerRepository;
         $this->coreRegistry = $coreRegistry;
+        $this->metricsClient = $metricsClient;
     }
 
     /**
@@ -464,7 +473,9 @@ class Cart extends AbstractHelper
     protected function loadFromCache($identifier, $unserialize = true)
     {
         $cached = $this->cache->load($identifier);
-        if (!$cached) return false;
+        if (!$cached) {
+            return false;
+        }
         return $unserialize ? unserialize($cached) : $cached;
     }
 
@@ -562,7 +573,7 @@ class Cart extends AbstractHelper
     {
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
-        unset ($cart['display_id']);
+        unset($cart['display_id']);
         $identifier  = json_encode($cart);
         // extend cache identifier with custom address fields
         $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($this->getLastImmutableQuote());
@@ -581,7 +592,8 @@ class Cart extends AbstractHelper
     {
         // get custom address fields from config
         $customAddressFields = explode(
-            ',', $this->configHelper->getPrefetchAddressFields($storeId)
+            ',',
+            $this->configHelper->getPrefetchAddressFields($storeId)
         );
         // trim values and filter out empty strings
         $customAddressFields = array_filter(array_map('trim', $customAddressFields));
@@ -940,13 +952,13 @@ class Cart extends AbstractHelper
     private function getEncodeUserId()
     {
         $user_id = $this->customerSession->getCustomer()->getId();
-        $result = array(
+        $result = [
             'user_id'   => $user_id,
             'timestamp' => time()
-        );
-        $result['signature'] = $this->hookHelper->computeSignature( json_encode( $result ) );
+        ];
+        $result['signature'] = $this->hookHelper->computeSignature(json_encode($result));
 
-        return json_encode( $result );
+        return json_encode($result);
     }
 
     /**
@@ -968,12 +980,18 @@ class Cart extends AbstractHelper
             'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
     ) {
         foreach ($parent->getData() as $key => $value) {
-            if (in_array($key, $excludeFields)) continue;
-            if (in_array($key, $emailFields) && !$this->validateEmail($value)) continue;
+            if (in_array($key, $excludeFields)) {
+                continue;
+            }
+            if (in_array($key, $emailFields) && !$this->validateEmail($value)) {
+                continue;
+            }
 
             $child->setData($key, $value);
         }
-        if ($save) $child->save();
+        if ($save) {
+            $child->save();
+        }
     }
 
     /**
@@ -1098,7 +1116,8 @@ class Cart extends AbstractHelper
      *
      * @param array $addressData
      */
-    private function logAddressData($addressData) {
+    private function logAddressData($addressData)
+    {
         $this->bugsnag->registerCallback(function ($report) use ($addressData) {
             $report->setMetaData([
                 'ADDRESS_DATA' => $addressData
@@ -1118,16 +1137,18 @@ class Cart extends AbstractHelper
 
     /**
      * Create cart data items array
-     *
-     * @param string $currencyCode
-     * @param \Magento\Quote\Model\Quote\Item[] $items
-     * @param null|int $storeId
+     * @param $quote
+     * @param null $storeId
      * @param int $totalAmount
      * @param int $diff
      * @return array
+     * @throws \Exception
      */
-    public function getCartItems($currencyCode, $items, $storeId = null, $totalAmount = 0, $diff = 0)
+    public function getCartItems($quote, $storeId = null, $totalAmount = 0, $diff = 0)
     {
+        $items = $quote->getAllVisibleItems();
+        $currencyCode = $quote->getQuoteCurrencyCode();
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // The "appEmulation" is necessary for geting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1170,9 +1191,9 @@ class Cart extends AbstractHelper
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
                 $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
-                if(isset($item_options['attributes_info'])){
+                if (isset($item_options['attributes_info'])) {
                     $properties = [];
-                    foreach($item_options['attributes_info'] as $attribute_info){
+                    foreach ($item_options['attributes_info'] as $attribute_info) {
                         // Convert attribute to string if it's a boolean before sending to the Bolt API
                         $attributeValue = is_bool($attribute_info['value']) ? var_export($attribute_info['value'], true) : $attribute_info['value'];
                         $attributeLabel = $attribute_info['label'];
@@ -1227,13 +1248,31 @@ class Cart extends AbstractHelper
                     }
                 }
                 if (@$productImageUrl) {
-                    $product['image_url'] = ltrim($productImageUrl,'/');
+                    $product['image_url'] = ltrim($productImageUrl, '/');
                 }
                 ////////////////////////////////////
                 return  $product;
             },
             $items
         );
+
+        $total = $quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
+            $product = [];
+            $product['reference']    = $giftWrapping->getGwId();
+            $product['name']         = $giftWrapping->getTitle()->getText();
+            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['quantity']     = 1;
+            $product['sku']          = trim($giftWrapping->getCode());
+            $product['type']         =  self::ITEM_TYPE_PHYSICAL;
+
+            $totalAmount +=  $product['total_amount'];
+            $products[] = $product;
+        }
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1267,7 +1306,6 @@ class Cart extends AbstractHelper
      */
     public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
     {
-        $cart = [];
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
@@ -1284,7 +1322,7 @@ class Cart extends AbstractHelper
         // In case #1 the empty cart is returned
         // In case #2 the cart generation continues for the cloned quote
         if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
-            return $cart;
+            return [];
         }
 
         ////////////////////////////////////////////////////////
@@ -1298,8 +1336,6 @@ class Cart extends AbstractHelper
             $this->reserveOrderId($immutableQuote, $quote);
         }
 
-        $billingAddress  = $immutableQuote->getBillingAddress();
-        $shippingAddress = $immutableQuote->getShippingAddress();
         ////////////////////////////////////////////////////////
 
         // Get array of all items that can be display directly
@@ -1307,7 +1343,7 @@ class Cart extends AbstractHelper
 
         if (!$items) {
             // This is the case when customer empties the cart.
-            return $cart;
+            return [];
         }
 
         $this->setLastImmutableQuote($immutableQuote);
@@ -1332,10 +1368,43 @@ class Cart extends AbstractHelper
         }
         $immutableQuote->collectTotals();
 
+        $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
+        if ($cart == []) {
+            // empty cart implies there was an error
+            return $cart;
+        }
+
         // Set order_reference to parent quote id.
         // This is the constraint field on Bolt side and this way
-        // duplicate payments / orders are prevented/
+        // duplicate payments / orders are prevented
         $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+
+        $this->sessionHelper->cacheFormKey($immutableQuote);
+
+        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
+
+        return $cart;
+    }
+
+    /**
+     * Build cart data from quote.
+     *
+     * @param Quote $quote
+     * @param Quote $immutableQuote
+     * @param array $items
+     * @param bool $paymentOnly             flag that represents the type of checkout
+     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
+     * @param bool $requireBillingAddress   require that the billing address is set
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress = true)
+    {
+        $cart = [];
+
+        $billingAddress  = $immutableQuote->getBillingAddress();
+        $shippingAddress = $immutableQuote->getShippingAddress();
 
         //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
         $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
@@ -1344,7 +1413,7 @@ class Cart extends AbstractHelper
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
         $cart['currency'] = $currencyCode;
 
-        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($currencyCode, $items, $immutableQuote->getStoreId());
+        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($immutableQuote, $immutableQuote->getStoreId());
 
         // Email field is mandatory for saving the address.
         // For back-office orders (payment only) we need to get it from the store.
@@ -1403,10 +1472,10 @@ class Cart extends AbstractHelper
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
-                if (@$cart['billing_address']){
+                if (@$cart['billing_address']) {
                     $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                     $address->save();
-                } else {
+                } elseif ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
                     $this->bugsnag->notifyError(
                         'Order create error',
@@ -1485,8 +1554,11 @@ class Cart extends AbstractHelper
         }
 
         // add discount data
-        list ($discounts, $totalAmount, $diff) = $this->collectDiscounts (
-            $totalAmount, $diff, $paymentOnly
+        list ($discounts, $totalAmount, $diff) = $this->collectDiscounts(
+            $totalAmount,
+            $diff,
+            $paymentOnly,
+            $immutableQuote
         );
         $cart['discounts'] = $discounts;
         /////////////////////////////////////////////////////////////////////////////////
@@ -1519,10 +1591,6 @@ class Cart extends AbstractHelper
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
-
-        $this->sessionHelper->cacheFormKey($immutableQuote);
-
-        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;
     }
@@ -1565,12 +1633,12 @@ class Cart extends AbstractHelper
      * @return array
      * @throws NoSuchEntityException
      */
-    public function collectDiscounts (
+    public function collectDiscounts(
         $totalAmount,
         $diff,
-        $paymentOnly
+        $paymentOnly,
+        $quote
     ) {
-        $quote = $this->getLastImmutableQuote();
         $currencyCode = $quote->getQuoteCurrencyCode();
         $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
         $address = $this->getCalculationAddress($quote);
@@ -1584,7 +1652,7 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ( ( $amount = abs( $address->getDiscountAmount() ) ) || $address->getCouponCode() ) {
+        if (( $amount = abs($address->getDiscountAmount()) ) || $address->getCouponCode()) {
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
@@ -1642,7 +1710,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Mirasvit Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if ($this->discountHelper->isMirasvitStoreCreditAllowed($quote)){
+        if ($this->discountHelper->isMirasvitStoreCreditAllowed($quote)) {
             $amount = abs($this->discountHelper->getMirasvitStoreCreditAmount($quote, $paymentOnly));
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
@@ -1678,8 +1746,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process BSS Store Credit
         /////////////////////////////////////////////////////////////////////////////////
-        if (
-            array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
+        if (array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
             && $this->discountHelper->isBssStoreCreditAllowed()
         ) {
             $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
@@ -1739,7 +1806,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process Mirasvit Rewards Points
         /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))){
+        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))) {
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
@@ -1761,8 +1828,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
-        foreach ($this->discountTypes as $discount => $description)
-        {
+        foreach ($this->discountTypes as $discount => $description) {
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
                 ///////////////////////////////////////////////////////////////////////////
                 // If Amasty gift cards can be used for shipping and tax (PayForEverything)
@@ -1928,15 +1994,15 @@ class Cart extends AbstractHelper
         $quote->setBoltParentQuoteId($quoteId);
         $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_PPC);
 
-        if ( isset( $request['metadata']['encrypted_user_id'] ) ) {
-            $this->assignQuoteCustomerByEncryptedUserId( $quote, $request['metadata']['encrypted_user_id'] );
+        if (isset($request['metadata']['encrypted_user_id'])) {
+            $this->assignQuoteCustomerByEncryptedUserId($quote, $request['metadata']['encrypted_user_id']);
         }
 
         //add item to quote
         $item = $request['items'][0];
         $product = $this->productRepository->getbyId($item['reference']);
 
-        $options = json_decode($item['options'],true);
+        $options = json_decode($item['options'], true);
         if (isset($options['storeId']) && $options['storeId']) {
             $quote->setStoreId($options['storeId']);
         }
@@ -1974,7 +2040,7 @@ class Cart extends AbstractHelper
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
         $quote->setIsActive(false);
 
-        $cart_data = $this->getCartData(false,'', $quote);
+        $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
 
         return $cart_data;
@@ -1988,21 +2054,21 @@ class Cart extends AbstractHelper
      */
     private function assignQuoteCustomerByEncryptedUserId($quote, $encrypted_user_id)
     {
-        $metadata = json_decode( $encrypted_user_id );
-        if ( ! $metadata || ! isset( $metadata->user_id ) || ! isset( $metadata->timestamp ) || ! isset( $metadata->signature ) ) {
+        $metadata = json_decode($encrypted_user_id);
+        if (! $metadata || ! isset($metadata->user_id) || ! isset($metadata->timestamp) || ! isset($metadata->signature)) {
             throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
         }
 
-        $payload = array(
+        $payload = [
             'user_id'   => $metadata->user_id,
             'timestamp' => $metadata->timestamp
-        );
+        ];
 
-        if ( !$this->hookHelper->verifySignature( json_encode( $payload ), $metadata->signature ) ) {
+        if (!$this->hookHelper->verifySignature(json_encode($payload), $metadata->signature)) {
             throw new WebapiException(__('Incorrect signature'), 6306, 422);
         }
 
-        if ( time() - $metadata->timestamp > 3600 ) {
+        if (time() - $metadata->timestamp > 3600) {
             throw new WebapiException(__('Outdated encrypted_user_id'), 6306, 422);
         }
 
@@ -2012,5 +2078,76 @@ class Cart extends AbstractHelper
             throw new WebapiException(__('Incorrect user_id'), 6306, 422);
         }
         $quote->assignCustomer($customer); // Assign quote to Customer
+    }
+
+    public function calculateCartAndHints($paymentOnly = false, $placeOrderPayload = [])
+    {
+        $startTime = $this->metricsClient->getCurrentTime();
+        $result    = [];
+
+        try {
+            if ($this->hasProductRestrictions()) {
+                throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
+            }
+
+            if (! $this->isCheckoutAllowed()) {
+                throw new BoltException(__('Guest checkout is not allowed.'));
+            }
+
+            // call the Bolt API
+            $boltpayOrder = $this->getBoltpayOrder($paymentOnly, $placeOrderPayload);
+
+            // format and send the response
+            $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
+
+            if ($response) {
+                $responseData = json_decode(json_encode($response), true);
+                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
+            } else {
+                // Empty cart - order_token not fetched because doesn't exist. Not a failure.
+                $responseData['cart'] = [];
+            }
+
+            // get immutable quote id stored with cart data
+            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+
+            $cart = array_merge($responseData['cart'], [
+                'orderToken'    => $response ? $responseData['token'] : '',
+                'cartReference' => $cartReference,
+            ]);
+
+            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
+                // cart data validation requirement
+                $cart['currency']['currency_code'] = $cart['currency']['currency'];
+            }
+
+            $hints = $this->getHints($cartReference, 'cart');
+
+            $result = [
+                'status'  => 'success',
+                'cart'    => $cart,
+                'hints'   => $hints,
+                'backUrl' => '',
+            ];
+        } catch (BoltException $e) {
+            $result = [
+                'status'   => 'success',
+                'restrict' => true,
+                'message'  => $e->getMessage(),
+                'backUrl'  => '',
+            ];
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+
+            $result = [
+                'status'  => 'failure',
+                'message' => $e->getMessage(),
+                'backUrl' => '',
+            ];
+            $this->metricsClient->processMetric("order_token.failure", 1, "order_token.latency", $startTime);
+        } finally {
+            return $result;
+        }
     }
 }

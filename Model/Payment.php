@@ -74,6 +74,8 @@ class Payment extends AbstractMethod
      */
     protected $_formBlockType = \Bolt\Boltpay\Block\Form::class;
 
+    protected $_infoBlockType = \Bolt\Boltpay\Block\Info::class;
+
     /**
      * Payment Method feature
      *
@@ -310,7 +312,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (!in_array(@$response->status,['cancelled','completed'])) {
+            if (!in_array(@$response->status, ['cancelled','completed'])) {
                 throw new LocalizedException(__('Payment void error.'));
             }
 
@@ -337,7 +339,8 @@ class Payment extends AbstractMethod
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
+    {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
 
@@ -347,17 +350,17 @@ class Payment extends AbstractMethod
                 $payment->getOrder()->getId()
             );
 
-            $transactionDetails   = $transaction->getAdditionalInformation( Transaction::RAW_DETAILS );
+            $transactionDetails   = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
             $transactionReference = $transactionDetails['Reference'];
 
-            if ( ! empty( $transactionReference ) ) {
+            if (! empty($transactionReference)) {
                 $order = $payment->getOrder();
-                $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
+                $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
             }
             $this->metricsClient->processMetric("order_fetch.success", 1, "order_fetch.latency", $startTime);
-        } catch ( \Exception $e ) {
+        } catch (\Exception $e) {
             $this->metricsClient->processMetric("order_fetch.failure", 1, "order_fetch.latency", $startTime);
-            $this->bugsnag->notifyException( $e );
+            $this->bugsnag->notifyException($e);
         } finally {
             return [];
         }
@@ -436,11 +439,11 @@ class Payment extends AbstractMethod
     {
         $orderCurrency = $order->getOrderCurrencyCode();
         if ($order->getStoreCurrencyCode() == $orderCurrency) {
-            return CurrencyUtils::toMinor( $amountInStoreCurrency, $orderCurrency );
+            return CurrencyUtils::toMinor($amountInStoreCurrency, $orderCurrency);
         } else {
             // Magento passes $amount in store currency but not in order currency - we have to grab amount from invoice
             $latestInvoice = $order->getInvoiceCollection()->getLastItem();
-            return CurrencyUtils::toMinor( $latestInvoice->getGrandTotal(),$orderCurrency );
+            return CurrencyUtils::toMinor($latestInvoice->getGrandTotal(), $orderCurrency);
         }
     }
 
@@ -467,7 +470,7 @@ class Payment extends AbstractMethod
             $orderCurrency = $order->getOrderCurrencyCode();
             // $amount argument of refund method is in store currency,
             // we need to get amount from credit memo to get the value in order's currency.
-            $refundAmount = CurrencyUtils::toMinorWithoutRounding(
+            $refundAmount = CurrencyUtils::toMinor(
                 $payment->getCreditMemo()->getGrandTotal(),
                 $orderCurrency
             );
@@ -555,7 +558,7 @@ class Payment extends AbstractMethod
         if ($this->cartHelper->hasProductRestrictions($quote)) {
             return false;
         }
-        return parent::isAvailable();
+        return parent::isAvailable($quote);
     }
 
     public function getTitle()

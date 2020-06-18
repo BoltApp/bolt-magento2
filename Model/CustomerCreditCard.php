@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Model;
+
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -24,6 +25,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+
 /**
  * Class CustomerCreditCard
  * @package Bolt\Boltpay\Model
@@ -76,8 +78,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
         \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
         \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
-    )
-    {
+    ) {
         $this->cartHelper = $cartHelper;
         $this->apiHelper = $apiHelper;
         $this->dataObjectFactory = $dataObjectFactory;
@@ -144,7 +145,8 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
     /**
      * @return object
      */
-    public function getCardInfoObject(){
+    public function getCardInfoObject()
+    {
         $cardInfoArray = json_decode($this->getCardInfo(), true);
         $cartInfo = $this->dataObjectFactory->create();
         $cartInfo->setData($cardInfoArray);
@@ -155,14 +157,16 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
     /**
      * @return string
      */
-    public function getCardType(){
+    public function getCardType()
+    {
         return $this->getCardInfoObject()->getData('display_network');
     }
 
     /**
      * @return string
      */
-    public function getCardLast4Digit(){
+    public function getCardLast4Digit()
+    {
         return ($last4 = $this->getCardInfoObject()->getData('last4')) ? 'XXXX-'.$last4 : '';
     }
 
@@ -173,7 +177,8 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
      * @param $cardInfo
      * @return $this
      */
-    public function saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $cardInfo){
+    public function saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $cardInfo)
+    {
         $this->setCustomerId($customerId)
             ->setConsumerId($boltConsumerId)
             ->setCreditCardId($boltCreditCardId)

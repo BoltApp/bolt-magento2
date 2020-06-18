@@ -116,8 +116,7 @@ class LoadTestCartData implements LoadTestCartDataInterface
         CartItemInterfaceFactory $cartItemFactory,
         Product $product,
         QuoteFactory $quoteFactory
-    )
-    {
+    ) {
         $this->product = $product;
         $this->quoteFactory = $quoteFactory;
         $this->checkoutSession = $checkoutSession;
@@ -137,7 +136,8 @@ class LoadTestCartData implements LoadTestCartDataInterface
      * @inheritDoc
      * @see CartDataInterface
      */
-    public function execute($cart = null) {
+    public function execute($cart = null)
+    {
         try {
             $payload = $this->request->getContent();
 
@@ -213,5 +213,4 @@ class LoadTestCartData implements LoadTestCartDataInterface
         $this->response->setHttpResponseCode($code);
         $this->response->setBody(json_encode($body));
     }
-
 }

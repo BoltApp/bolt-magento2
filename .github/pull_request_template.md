@@ -20,6 +20,8 @@ Please validate that you have tested your change in at least one of the followin
 - [ ] Successfully tested on a staging or sandbox server
 - [ ] Successfully tested on a merchant's staging server
 
+# For PR Reviewer 
+- [ ] Reviewed unit tests to make sure we are using real components rather than mocks as much as possible?
 
 # Checklist:
 

@@ -39,8 +39,7 @@ class RequireJs
      */
     public function __construct(
         ProductMetadataInterface $productMetadata
-    )
-    {
+    ) {
         $this->productMetadata = $productMetadata;
     }
 

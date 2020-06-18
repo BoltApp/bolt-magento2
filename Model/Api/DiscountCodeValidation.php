@@ -272,7 +272,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     }
 
                     /** @var Quote $parentQuote */
-                    If ($immutableQuoteId == $parentQuoteId) {
+                    if ($immutableQuoteId == $parentQuoteId) {
                         // Product Page Checkout - quotes are created as inactive
                         $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
                     } else {
@@ -725,7 +725,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 );
 
                 $giftAmount = $giftCard->getBalance();
-            }elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
+            } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
                 // Remove Mageplaza Gift Card if it was already applied
                 // to avoid errors on multiple calls to the discount validation API
                 // (e.g. changing the address, going back and forth)

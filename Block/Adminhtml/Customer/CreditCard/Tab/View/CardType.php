@@ -17,10 +17,6 @@
 
 namespace Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
-/**
- * Class CardType
- * @package Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View
- */
 class CardType extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Action
 {
     /**

@@ -20,8 +20,7 @@ class LogRetriever
     {
         //Open file, return informative error string if doesn't exist
         $file = @fopen($logPath, "rb");
-        if ($file === false)
-        {
+        if ($file === false) {
             return "No file found at " . $logPath;
         }
 
@@ -30,15 +29,13 @@ class LogRetriever
         fseek($file, -1, SEEK_END);
 
         //Correct for blank line at end of file
-        if (fread($file, 1) != "\n")
-        {
+        if (fread($file, 1) != "\n") {
             $lines -= 1;
         }
 
         $output = '';
 
-        while (ftell($file) > 0 && $lines >= 0)
-        {
+        while (ftell($file) > 0 && $lines >= 0) {
             $seek = min(ftell($file), $buffer);
             fseek($file, -$seek, SEEK_CUR);
             $chunk = fread($file, $seek);
@@ -49,8 +46,7 @@ class LogRetriever
 
         //possible that with the buffer we read too many lines.
         //find first newline char and remove all text before that
-        while ($lines++ < 0)
-        {
+        while ($lines++ < 0) {
             $output = substr($output, strpos($output, "\n") + 1);
         }
 

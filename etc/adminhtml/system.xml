@@ -95,6 +95,11 @@
                         <config_path>payment/boltpay/order_management</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="always_present_checkout" translate="label" type="select" sortOrder="83" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>(BETA) Enable Always Present Checkout Button</label>
+                        <config_path>payment/boltpay/always_present_checkout</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                     <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Primary Color</label>
                         <config_path>payment/boltpay/button_color</config_path>
@@ -227,6 +232,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
                     </field>
+                    <field id="reward_points_minicart" translate="label" type="select" sortOrder="246" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Magento Commerce Reward Points on Minicart</label>
+                        <config_path>payment/boltpay/reward_points_minicart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
                     <field id="amasty_store_credit" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Use Amasty Store Credit on Shopping Cart</label>
                         <config_path>payment/boltpay/amasty_store_credit</config_path>
@@ -331,6 +342,10 @@
                         <config_path>payment/boltpay/pickup_shipping_method_code</config_path>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="show_terms_payment_button" translate="label" type="text" sortOrder="310" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Show terms payment button</label>
+                        <config_path>payment/boltpay/show_terms_payment_button</config_path>
                     </field>
                 </group>
             </group>

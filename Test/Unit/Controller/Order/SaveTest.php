@@ -242,6 +242,5 @@ class SaveTest extends TestCase
         $this->quoteMock->method('getId')->willReturn(self::QUOTE_ID);
 
         $this->configHelper->method('getSuccessPageRedirect')->willReturn(self::SUCCESS_URL);
-
     }
 }

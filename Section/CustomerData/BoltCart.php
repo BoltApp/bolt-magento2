@@ -14,19 +14,26 @@
  * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-namespace Bolt\Boltpay\Block\Adminhtml\Order\View\Tab;
+namespace Bolt\Boltpay\Section\CustomerData;
 
-/**
- * Class Info
- * @package Bolt\Boltpay\Block\Adminhtml\Order\View\Tab
- */
-class Info extends \Magento\Sales\Block\Adminhtml\Order\View\Tab\Info
+use Magento\Customer\CustomerData\SectionSourceInterface;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+
+class BoltCart implements SectionSourceInterface
 {
     /**
-     * @param $order
-     * @return mixed
+     * @var CartHelper
      */
-    public function isBoltOrder($order){
-        return ($order->getPayment() && $order->getPayment()->getMethod() === \Bolt\Boltpay\Model\Payment::METHOD_CODE);
+    private $cartHelper;
+
+    public function __construct(
+        CartHelper $cartHelper
+    ) {
+        $this->cartHelper = $cartHelper;
+    }
+
+    public function getSectionData()
+    {
+        return $this->cartHelper->calculateCartAndHints();
     }
 }

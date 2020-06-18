@@ -125,3 +125,19 @@
  - Add catalog price rule support for backoffice
  - Unit tests
  - Bug fixes
+## [v2.8.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.8.0) 2020-05-28
+ - Splitting shipping and tax endpoints
+ - Add always-present Bolt checkout button
+ - Added custom url validation
+ - Bug fixes
+ - Unit tests
+## [v2.8.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.8.1) 2020-06-11
+ - Fix PPC javascript error in Magento 2 version 2.3.5
+ - Fix unknown RevertGiftCardAccountBalance error
+## [v2.9.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.9.0) 2020-06-17
+ - Fix display of APM/Paypal transactions within Magento 2 dashboard
+ - Always-present checkout button improvements
+ - Update to method to save Bolt cart in to be more robust
+ - Added support for tracking non-Bolt order shipments.
+ - Code maintainability refactoring
+ - Bug fixes

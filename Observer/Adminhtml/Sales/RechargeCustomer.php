@@ -47,8 +47,7 @@ class RechargeCustomer implements ObserverInterface
         RequestInterface $request,
         CustomerCreditCardFactory $boltCustomerCreditCardFactory,
         OrderHelper $orderHelper
-    )
-    {
+    ) {
         $this->orderHelper = $orderHelper;
         $this->bugsnag = $bugsnag;
         $this->request = $request;

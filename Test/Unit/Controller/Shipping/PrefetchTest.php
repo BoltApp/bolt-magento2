@@ -101,7 +101,6 @@ class PrefetchTest extends TestCase
             ->getMock();
 
         return $this->currentMock;
-
     }
 
     /**

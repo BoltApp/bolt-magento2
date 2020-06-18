@@ -42,14 +42,14 @@ class DeactivateQuote
     public function __construct(
         ResourceConnection $resourceConnection,
         Bugsnag $bugsnag
-    )
-    {
+    ) {
         $this->bugsnag = $bugsnag;
         $this->resourceConnection = $resourceConnection;
     }
 
-    public function execute() {
-        try{
+    public function execute()
+    {
+        try {
             $connection = $this->resourceConnection->getConnection();
             $sql = sprintf(
                 'UPDATE %s SET is_active = 0 ' .
@@ -71,5 +71,4 @@ class DeactivateQuote
             $this->bugsnag->notifyException($e);
         }
     }
-
 }

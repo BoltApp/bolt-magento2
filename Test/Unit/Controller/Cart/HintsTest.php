@@ -46,8 +46,6 @@ class HintsTest extends TestCase
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
         $this->resultJsonFactory = $this->createMock(JsonFactory::class);
-
-
     }
 
     private function initCurrentMock()
@@ -90,7 +88,7 @@ class HintsTest extends TestCase
         ];
         $expected = ['hints'=>$hints];
         $this->cartHelper->method('getHints')
-            ->with(null,'product')->willReturn($hints);
+            ->with(null, 'product')->willReturn($hints);
 
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()
@@ -115,7 +113,7 @@ class HintsTest extends TestCase
         ];
 
         $this->cartHelper->method('getHints')
-            ->with(null,'product')->willThrowException(new \Exception('General exception'));
+            ->with(null, 'product')->willThrowException(new \Exception('General exception'));
 
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()

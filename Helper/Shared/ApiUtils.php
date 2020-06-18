@@ -17,11 +17,10 @@
 
 namespace Bolt\Boltpay\Helper\Shared;
 
-
 use Magento\Framework\Exception\LocalizedException;
 
-
-class ApiUtils {
+class ApiUtils
+{
     /**
      * A helper method for checking errors in JSON object.
      *
@@ -53,14 +52,16 @@ class ApiUtils {
         }
     }
 
-    private static function isApiError($response) {
+    private static function isApiError($response)
+    {
         $arr = (array)$response;
         return array_key_exists('errors', $arr) ||
             array_key_exists('error_code', $arr) ||
             array_key_exists('error', $arr);
     }
 
-    public static function getJSONFromResponseBody($responseBody) {
+    public static function getJSONFromResponseBody($responseBody)
+    {
         $resultFromJSON = json_decode($responseBody);
         $jsonError  = self::handleJsonParseError();
         if ($jsonError != null) {
@@ -80,7 +81,8 @@ class ApiUtils {
         $moduleVersion,
         $requestData,
         $apiKey,
-        $additionalHeaders = array()) {
+        $additionalHeaders = []
+    ) {
 
         return [
                 'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,

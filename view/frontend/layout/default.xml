@@ -22,6 +22,7 @@
         <referenceBlock name="head.additional">
             <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
+            <block class="Bolt\Boltpay\Block\Js" name="boltglobaljs" template="Bolt_Boltpay::js/boltglobaljs.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>
         <!-- for blank theme-->
@@ -35,5 +36,13 @@
         <referenceBlock name="after.body.start">
             <block class="Bolt\Boltpay\Block\Js" name="bolt_popup" template="Bolt_Boltpay::popup.phtml" />
         </referenceBlock>
+        <referenceContainer name="header-wrapper">
+            <block name="bolt_minicart_additions" as="bolt_minicart_additions"
+                   before="minicart" template="Bolt_Boltpay::checkout/minicart_addons.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Bolt\Boltpay\ViewModel\MinicartAddons</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
     </body>
 </page>

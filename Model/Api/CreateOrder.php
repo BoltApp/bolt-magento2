@@ -434,7 +434,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateMinimumAmount($quote)
     {
-        if (!$quote->validateMinimumAmount()) {
+        if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE && !$quote->validateMinimumAmount()) {
             $minAmount = $this->configHelper->getMinimumOrderAmount($quote->getStoreId());
             $this->bugsnag->registerCallback(function ($report) use ($quote, $minAmount) {
                 $report->setMetaData([
@@ -490,6 +490,13 @@ class CreateOrder implements CreateOrderInterface
             },
             $quoteItems
         );
+
+        $total = $quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $sku = trim($giftWrapping->getCode());
+            $quoteSkus[] = $sku;
+        }
 
         $transactionSkus = array_keys($transactionItemsSkuQty);
 
@@ -571,7 +578,7 @@ class CreateOrder implements CreateOrderInterface
             if ($transactionItemSku === $itemSku &&
                 abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
             ) {
-                unset ($transactionItems[$index]);
+                unset($transactionItems[$index]);
                 return true;
             }
         }

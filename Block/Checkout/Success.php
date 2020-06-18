@@ -24,11 +24,6 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-/**
- * Class Success
- *
- * @package Bolt\Boltpay\Block\Checkout
- */
 class Success extends Template
 {
     use BlockTrait;

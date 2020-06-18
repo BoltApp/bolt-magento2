@@ -50,7 +50,7 @@ use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepo
 use \Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
-
+use Magento\Framework\Event\Manager;
 
 /**
  * Class PaymentTest
@@ -168,10 +168,15 @@ class PaymentTest extends TestCase
      * @var Order\Creditmemo|\PHPUnit\Framework\MockObject\MockObject
      */
     private $creditMemoMock;
+    
+    /** @var MockObject|Manager */
+    private $eventManager;
 
     protected function setUp()
     {
+        global $boltPaymentTestActive;
         $this->initRequiredMocks();
+        $boltPaymentTestActive = true;
         $this->initCurrentMock();
     }
 
@@ -229,7 +234,8 @@ class PaymentTest extends TestCase
         $this->currentMock->void($this->paymentMock);
     }
 
-    public function provider_voidPayment_success(){
+    public function provider_voidPayment_success()
+    {
         return [
             ['cancelled'],
             ['completed']
@@ -247,11 +253,10 @@ class PaymentTest extends TestCase
         );
         $this->apiHelper->expects($this->once())->method('buildRequest')
             ->will($this->returnCallback(
-                function($data)  {
+                function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
                 }
-            )
-        );
+            ));
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->void($this->paymentMock);
@@ -306,56 +311,57 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function capturePayment_success() {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+    public function capturePayment_success()
+    {
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->mockApiResponse(
             "merchant/transactions/capture",
             '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
         );
-        $this->orderHelper->expects( $this->once() )->method( 'updateOrderPayment' );
-        $this->apiHelper->expects( $this->once() )->method( 'buildRequest' )
-                        ->will( $this->returnCallback(
-                            function ( $data ) {
-                                $this->assertEquals( "USD", $data->getApiData()['currency'] );
-                                $this->assertEquals( "10000", $data->getApiData()['amount'] );
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+                        ->will($this->returnCallback(
+                            function ($data) {
+                                $this->assertEquals("USD", $data->getApiData()['currency']);
+                                $this->assertEquals("10000", $data->getApiData()['amount']);
                             }
-                        )
-                        );
+                        ));
 
-        $this->currentMock->capture( $this->paymentMock, 100 );
+        $this->currentMock->capture($this->paymentMock, 100);
     }
 
     /**
      * @test
      */
-    public function capturePayment_withDifferentCurrency_success() {
-        $this->orderMock->method( "getOrderCurrencyCode" )->willReturn( "CAD" );
-        $invoiceMock = $this->createMock( Invoice::class );
-        $invoiceMock->method( "getGrandTotal" )->willReturn( 123.45 );
-        $collectionMock = $this->createMock( Collection::class );
-        $collectionMock->method( "getLastItem" )->willReturn( $invoiceMock );
-        $this->orderMock->method( "getInvoiceCollection" )->willReturn( $collectionMock );
+    public function capturePayment_withDifferentCurrency_success()
+    {
+        $this->orderMock->method("getOrderCurrencyCode")->willReturn("CAD");
+        $invoiceMock = $this->createMock(Invoice::class);
+        $invoiceMock->method("getGrandTotal")->willReturn(123.45);
+        $collectionMock = $this->createMock(Collection::class);
+        $collectionMock->method("getLastItem")->willReturn($invoiceMock);
+        $this->orderMock->method("getInvoiceCollection")->willReturn($collectionMock);
         $this->mockApiResponse(
             "merchant/transactions/capture",
             '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
         );
-        $this->orderHelper->expects( $this->once() )->method( 'updateOrderPayment' );
-        $this->apiHelper->expects( $this->once() )->method( 'buildRequest' )
-                        ->will( $this->returnCallback(
-                            function ( $data ) {
-                                $this->assertEquals( "CAD", $data->getApiData()['currency'] );
-                                $this->assertEquals( "12345", $data->getApiData()['amount'] );
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+                        ->will($this->returnCallback(
+                            function ($data) {
+                                $this->assertEquals("CAD", $data->getApiData()['currency']);
+                                $this->assertEquals("12345", $data->getApiData()['amount']);
                             }
-                        )
-                        );
+                        ));
 
-        $this->currentMock->capture( $this->paymentMock, 100 );
+        $this->currentMock->capture($this->paymentMock, 100);
     }
 
     /**
      * @test
      */
-    public function capturePayment_skipHookNotification(){
+    public function capturePayment_skipHookNotification()
+    {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->mockApiResponse(
             "merchant/transactions/capture",
@@ -364,11 +370,10 @@ class PaymentTest extends TestCase
 
         $this->apiHelper->expects($this->once())->method('buildRequest')
             ->will($this->returnCallback(
-                function($data)  {
+                function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
-                    }
-                )
-            );
+                }
+            ));
         $this->currentMock->capture($this->paymentMock, 100);
     }
 
@@ -452,7 +457,7 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_success()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->mockApiResponse(
             "merchant/transactions/credit",
             '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
@@ -465,7 +470,48 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
-    public function refundPayment_skipHookNotification(){
+    public function refundPayment_mustRoundingAmountBeforeCallingRefundApi()
+    {
+        $orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
+        $orderMock->method('getId')->willReturn('order-123');
+        $orderMock->method('getStoreCurrencyCode')->willReturn('USD');
+        $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCreditMemo' ])->getMockForAbstractClass();
+        $paymentMock->method('getId')->willReturn('payment-1');
+        $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
+        $creditMemoMock = $this->createMock(Order\Creditmemo::class);
+
+        // Passed value is 99.98999999
+        $creditMemoMock->method("getGrandTotal")->willReturn(99.98999999);
+
+        $paymentMock->method('getOrder')->willReturn($orderMock);
+        $paymentMock->method('getCreditMemo')->willReturn($creditMemoMock);
+
+        $orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
+        );
+
+        ///////////////////////////////////////////////////////////////////////////////////
+        ///  Test rounding amount before sending API. The amount will be rounded to 9999
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+            ->will($this->returnCallback(
+                function ($data) {
+                    $this->assertEquals(9999, $data->getApiData()['amount']);
+                }
+            ));
+        //////////////////////////////////////////////////////////////////////////////////
+
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->refund($paymentMock, 99.98999999);
+    }
+
+    /**
+     * @test
+     */
+    public function refundPayment_skipHookNotification()
+    {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->mockApiResponse(
             "merchant/transactions/credit",
@@ -474,11 +520,10 @@ class PaymentTest extends TestCase
 
         $this->apiHelper->expects($this->once())->method('buildRequest')
             ->will($this->returnCallback(
-                function($data)  {
+                function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
                 }
-            )
-        );
+            ));
 
         $this->currentMock->refund($this->paymentMock, 100);
     }
@@ -488,20 +533,19 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_withDifferentCurrency_success()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'CAD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('CAD');
         $this->mockApiResponse(
             "merchant/transactions/credit",
             '{"status": "completed", "reference": "ABCD-1234-XXXX"}'
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
-        $this->apiHelper->expects( $this->once() )->method( 'buildRequest' )
-                        ->will( $this->returnCallback(
-                            function ( $data ) {
-                                $this->assertEquals( "CAD", $data->getApiData()['currency'] );
-                                $this->assertEquals( "20000", $data->getApiData()['amount'] );
+        $this->apiHelper->expects($this->once())->method('buildRequest')
+                        ->will($this->returnCallback(
+                            function ($data) {
+                                $this->assertEquals("CAD", $data->getApiData()['currency']);
+                                $this->assertEquals("20000", $data->getApiData()['amount']);
                             }
-                        )
-                        );
+                        ));
 
         $this->currentMock->refund($this->paymentMock, 100);
     }
@@ -511,7 +555,7 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_throwExceptionWhenBoltRespondWithError()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
 
         $this->mockApiResponse(
@@ -528,7 +572,7 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_invalidAmount()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Invalid amount for refund.');
         $this->currentMock->refund($this->paymentMock, -1);
@@ -569,7 +613,7 @@ class PaymentTest extends TestCase
     public function refund_withAmountsLessThanOneCentProvider()
     {
         return [
-            ['amount' => 0.009],
+            ['amount' => 0.004],
             ['amount' => 0],
             ['amount' => null],
             ['amount' => 0.001],
@@ -581,7 +625,7 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_noTransactionId()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction get updated from Bolt.');
 
@@ -600,7 +644,7 @@ class PaymentTest extends TestCase
      */
     public function refundPayment_noResponse()
     {
-        $this->orderMock->method( 'getOrderCurrencyCode' )->willReturn( 'USD' );
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Bad refund response from boltpay');
 
@@ -643,6 +687,20 @@ class PaymentTest extends TestCase
             ->with($quoteMock)
             ->willReturn(false);
         $this->currentMock->isAvailable($quoteMock);
+    }
+    
+    /**
+     * @test
+     */
+    public function isAvailable_notActive()
+    {
+        global $boltPaymentTestActive;
+        $boltPaymentTestActive = false;
+        $quoteMock = $this->createMock(Quote::class);
+        $this->cartHelper->expects($this->once())->method('hasProductRestrictions')
+            ->with($quoteMock)
+            ->willReturn(false);
+        $this->assertFalse($this->currentMock->isAvailable($quoteMock));
     }
 
     /**
@@ -784,7 +842,7 @@ class PaymentTest extends TestCase
     public function fetchTransactionInfo_success()
     {
         $magentoTxnMock = $this->createMock(Transaction::class);
-        $magentoTxnMock->method('getAdditionalInformation')->willReturn(array('Reference' => 'ABCD-XXXX-1234'));
+        $magentoTxnMock->method('getAdditionalInformation')->willReturn(['Reference' => 'ABCD-XXXX-1234']);
         $this->transactionRepository->method('getByTransactionId')->willReturn($magentoTxnMock);
 
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
@@ -818,8 +876,10 @@ class PaymentTest extends TestCase
     private function initRequiredMocks()
     {
         $mockAppState = $this->createMock(State::class);
+        $this->eventManager = $this->createMock(Manager::class);
         $this->context = $this->createMock(Context::class);
         $this->context->method('getAppState')->willReturn($mockAppState);
+        $this->context->method('getEventDispatcher')->willReturn($this->eventManager);
 
         $this->registry = $this->createMock(Registry::class);
         $this->extensionFactory = $this->createMock(ExtensionAttributesFactory::class);
@@ -870,7 +930,7 @@ class PaymentTest extends TestCase
     protected function initCurrentMock()
     {
         $this->currentMock = $this->getMockBuilder(BoltPayment::class)
-                                  ->setMethods(['getInfoInstance'])
+                                  ->setMethods(['getInfoInstance', 'isActive'])
                                   ->setConstructorArgs([
                                     $this->context,
                                     $this->registry,
@@ -884,7 +944,7 @@ class PaymentTest extends TestCase
                                     $this->apiHelper,
                                     $this->orderHelper,
                                     $this->bugsnag,
-                                      $this->metricsClient,
+                                    $this->metricsClient,
                                     $this->dataObjectFactory,
                                     $this->cartHelper,
                                     $this->transactionRepository,
@@ -893,6 +953,12 @@ class PaymentTest extends TestCase
 
         $this->currentMock->method('getInfoInstance')
                           ->willReturn($this->paymentInfo);
+        
+        $this->currentMock->method('isActive')
+                          ->will($this->returnCallback(function ($arg) {
+                              global $boltPaymentTestActive;
+                              return $boltPaymentTestActive;
+                          }));
 
         return $this->currentMock;
     }
@@ -901,13 +967,15 @@ class PaymentTest extends TestCase
      * @param string $path
      * @param string $responseJSON
      */
-    private function mockApiResponse($path, $responseJSON) {
+    private function mockApiResponse($path, $responseJSON)
+    {
         $this->apiHelper->expects($this->once())->method('buildRequest')
             ->will($this->returnCallback(
-                function($data) use ($path) {
+                function ($data) use ($path) {
                     $this->assertEquals($path, $data->getDynamicApiUrl());
                     return new Request();
-                }));
+                }
+            ));
         $response = new Response();
         $response->setResponse(json_decode($responseJSON));
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);

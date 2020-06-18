@@ -22,6 +22,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin;
 use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin
  */
@@ -106,5 +107,4 @@ class PurchasePluginTest extends TestCase
             ['/rewards/checkout/updatePaymentMethodPost', 0],
         ];
     }
-
 }

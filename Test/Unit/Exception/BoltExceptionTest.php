@@ -41,8 +41,10 @@ class BoltExceptionTest extends \PHPUnit\Framework\TestCase
      */
     public function construct($phrase, $code)
     {
-        $exception = new BoltException (
-            __($phrase), null, $code
+        $exception = new BoltException(
+            __($phrase),
+            null,
+            $code
         );
 
         $this->assertEquals($code, $exception->getCode());

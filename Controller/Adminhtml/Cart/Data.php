@@ -30,9 +30,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
  * Class Data.
  * Create Bolt order controller.
  *
- * Called from the replace.phtml javascript block on checklout button click.
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * Called from the replace.phtml javascript block on checkout button click.
  */
 class Data extends Action
 {
@@ -105,14 +103,18 @@ class Data extends Action
     {
         $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $place_order_payload = $this->getRequest()->getParam('place_order_payload');
             // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, $place_order_payload);
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, '');
 
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
-                $this->metricsClient->processMetric("back_office_order_token.success", 1, "back_office_order_token.latency", $startTime);
+                $this->metricsClient->processMetric(
+                    "back_office_order_token.success",
+                    1,
+                    "back_office_order_token.latency",
+                    $startTime
+                );
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
@@ -138,7 +140,12 @@ class Data extends Action
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->metricsClient->processMetric("back_office_order_token.failure", 1, "back_office_order_token.latency", $startTime);
+            $this->metricsClient->processMetric(
+                "back_office_order_token.failure",
+                1,
+                "back_office_order_token.latency",
+                $startTime
+            );
             throw $e;
         }
     }
