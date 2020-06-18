@@ -17,7 +17,8 @@
 
 /** @var  $block \Bolt\Boltpay\Block\Customer\CreditCard */
 
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 $creditCards = $block->getCreditCardCollection();
 ?>
 <div class="block">
@@ -41,8 +42,8 @@ $creditCards = $block->getCreditCardCollection();
                 </tr>
                 </thead>
                 <tbody>
-                <?php if (!empty($creditCards)) : ?>
-                    <?php foreach ($creditCards as $creditCard) : ?>
+                <?php if (!empty($creditCards)): ?>
+                    <?php foreach ($creditCards as $creditCard): ?>
                         <tr>
                             <td data-th="<?php /* @noEscape */ echo $block->escapeHtml(__('Credit Card ID')); ?>"
                                 class="col actions">
@@ -57,7 +58,7 @@ $creditCards = $block->getCreditCardCollection();
                                 <?php /* @noEscape */ echo $creditCard->getCardLast4Digit(); ?>
                             </td>
                             <td data-th="<?php /* @noEscape */ echo $block->escapeHtml(__('Delete')); ?>" class="col actions">
-                               <a id="remove_bolt_credit_card" href="<?php echo $block->getUrl('boltpay/customer/deletecreditcard',[
+                               <a id="remove_bolt_credit_card" href="<?php echo $block->getUrl('boltpay/customer/deletecreditcard', [
                                     'id'=> $creditCard->getId(),
                                     'form_key'=> $block->getFormKey()
                                ]) ?>">

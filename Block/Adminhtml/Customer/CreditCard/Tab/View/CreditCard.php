@@ -23,10 +23,6 @@ use Magento\Backend\Helper\Data as BackenHelper;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Framework\Registry;
 
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View
- */
 class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
 {
     /**
@@ -53,13 +49,11 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
         Context $context,
         BackenHelper $backendHelper,
         array $data = []
-    )
-    {
+    ) {
         $this->_collectionFactory = $collectionFactory;
         $this->_coreRegistry = $coreRegistry;
         parent::__construct($context, $backendHelper, $data);
     }
-
 
     protected function _construct()
     {
@@ -76,8 +70,9 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
     {
         $collection = $this->_collectionFactory->create()
             ->addFilter(
-            'customer_id', $this->_coreRegistry->registry(RegistryConstants::CURRENT_CUSTOMER_ID)
-        );
+                'customer_id',
+                $this->_coreRegistry->registry(RegistryConstants::CURRENT_CUSTOMER_ID)
+            );
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }
@@ -127,5 +122,4 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
 
         return parent::_prepareColumns();
     }
-
 }

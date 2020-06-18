@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard;
+
 use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 /**
@@ -38,10 +39,11 @@ class Collection extends AbstractCollection
      * @param $boltCreditCardId
      * @return Collection
      */
-    public function getCreditCards($customerId, $boltConsumerId, $boltCreditCardId){
+    public function getCreditCards($customerId, $boltConsumerId, $boltCreditCardId)
+    {
         return $this->addFilter('customer_id', $customerId)
             ->addFilter('consumer_id', $boltConsumerId)
-            ->addFilter('credit_card_id',$boltCreditCardId);
+            ->addFilter('credit_card_id', $boltCreditCardId);
     }
 
     /**
@@ -50,7 +52,8 @@ class Collection extends AbstractCollection
      * @param $boltCreditCardId
      * @return bool
      */
-    public function doesCardExist($customerId, $boltConsumerId, $boltCreditCardId){
+    public function doesCardExist($customerId, $boltConsumerId, $boltCreditCardId)
+    {
         return $this->getCreditCards($customerId, $boltConsumerId, $boltCreditCardId)->getSize() > 0;
     }
 

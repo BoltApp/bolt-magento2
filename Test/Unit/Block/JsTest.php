@@ -119,7 +119,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-	                $this->createMock(BoltConfigSettingFactory::class),
+                    $this->createMock(BoltConfigSettingFactory::class),
                     $this->createMock(\Magento\Directory\Model\RegionFactory::class)
                 ]
             )
@@ -227,7 +227,6 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $result = $this->block->getCheckoutKey();
         $this->assertStringStartsWith('pKv_', $result, 'Publishable Key doesn\'t work properly');
         $this->assertEquals(strlen($data['expected']), strlen($result), 'Publishable Key has an invalid length');
-
     }
 
     public function providerTestGetCheckoutKey()
@@ -290,7 +289,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($data['expected'], $result, 'getReplaceSelectors() method: not working properly');
     }
 
-    public function providerGetReplaceSelectors(){
+    public function providerGetReplaceSelectors()
+    {
         return [
             ['data' => [
                 'value' => '.replaceable-example-selector1|append .replaceable-example-selector2|prepend,.replaceable-example-selector3',
@@ -345,7 +345,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertJson($result, 'The Settings config do not have a proper JSON format.');
 
         $array = json_decode($result, true);
-        $this->assertCount(SELF::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
+        $this->assertCount(self::SETTINGS_NUMBER, $array, 'The number of keys in the settings is not correct');
 
         $message = 'Cannot find in the Settings the key: ';
         $this->assertArrayHasKey('connect_url', $array, $message . 'connect_url');
@@ -372,7 +372,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
     /**
      * @test
      */
-    public function getSettings_payByLinkUrlIsNullWhenFeatureIsOff() {
+    public function getSettings_payByLinkUrlIsNullWhenFeatureIsOff()
+    {
         $this->deciderMock->method('isPayByLinkEnabled')->willReturn(false);
         $result = $this->block->getSettings();
 
@@ -382,7 +383,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
     /**
      * @test
      */
-    public function getSettings_payByLinkUrlExistsWhenFeatureIsOn() {
+    public function getSettings_payByLinkUrlExistsWhenFeatureIsOn()
+    {
         $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
         $result = $this->block->getSettings();
 
@@ -464,9 +466,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->configHelper->method('isActive')->willReturn(true);
         $this->configHelper->method('isIPRestricted')->willReturn(false);
         $this->requestMock->method('getFullActionName')->willReturn('unrestrictedPage');
-        $this->configHelper->method('getPageBlacklist')->willReturn(array('anotherPage', 'restrictedPage'));
+        $this->configHelper->method('getPageBlacklist')->willReturn(['anotherPage', 'restrictedPage']);
         $this->configHelper->method('getMinicartSupport')->willReturn(true);
-        $this->configHelper->method('getIPWhitelistArray')->willReturn(array());
+        $this->configHelper->method('getIPWhitelistArray')->willReturn([]);
         $this->configHelper->method('getApiKey')->willReturn(self::CONFIG_API_KEY);
         $this->configHelper->method('getSigningSecret')->willReturn(self::CONFIG_SIGNING_SECRET);
         $this->configHelper->method('getPublishableKeyCheckout')->willReturn(self::CONFIG_PUBLISHABLE_KEY);
@@ -503,7 +505,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @test
      * @dataProvider getButtonCssStylesProvider
      */
-    public function getButtonCssStyles($settingValue,$resultValue)
+    public function getButtonCssStyles($settingValue, $resultValue)
     {
         $this->configHelper->expects($this->any())
             ->method('getButtonColor')
@@ -521,5 +523,17 @@ class JsTest extends \PHPUnit\Framework\TestCase
             ["",""],
             ["#AA00AA","--bolt-primary-action-color:#AA00AA"]
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function isSaveCartInSections()
+    {
+        $this->deciderMock->method('isSaveCartInSections')->willReturn(true);
+
+        $result = $this->block->isSaveCartInSections();
+
+        $this->assertTrue($result);
     }
 }

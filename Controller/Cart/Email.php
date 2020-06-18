@@ -29,9 +29,7 @@ use Magento\Quote\Model\Quote;
 /**
  * Class Email.
  * Associate email to current quote
- * so the email notiffication system can react on abandoned cart event.
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * so the email notification system can react on abandoned cart event.
  */
 class Email extends Action
 {

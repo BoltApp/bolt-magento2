@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Api;
 
 /**
- * Discount Code Validation interface
  * @api
  */
 interface DiscountCodeValidationInterface

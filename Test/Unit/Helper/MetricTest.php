@@ -17,10 +17,8 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Metric;
-
 
 class MetricTest extends TestCase
 {

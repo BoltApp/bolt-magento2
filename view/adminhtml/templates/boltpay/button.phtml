@@ -32,7 +32,7 @@ $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLogg
     <input type="hidden" class="required-entry" id="bolt-required-field">
 </fieldset>
 
-<?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
+    <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
     <script>
         require(['jquery', 'jquery/ui'], function($){
             $(document).on('change', 'select[name="bolt-credit-cards"]', function(){

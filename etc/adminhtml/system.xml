@@ -343,6 +343,10 @@
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
                     </field>
+                    <field id="show_terms_payment_button" translate="label" type="text" sortOrder="310" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Show terms payment button</label>
+                        <config_path>payment/boltpay/show_terms_payment_button</config_path>
+                    </field>
                 </group>
             </group>
         </section>

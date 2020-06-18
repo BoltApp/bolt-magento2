@@ -64,5 +64,4 @@ class AccountInfo
         $this->accountExists = $accountExists;
         return $this;
     }
-
 }

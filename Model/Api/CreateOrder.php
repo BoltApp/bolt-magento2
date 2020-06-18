@@ -578,7 +578,7 @@ class CreateOrder implements CreateOrderInterface
             if ($transactionItemSku === $itemSku &&
                 abs($itemPrice - $transactionUnitPrice) <= OrderHelper::MISMATCH_TOLERANCE
             ) {
-                unset ($transactionItems[$index]);
+                unset($transactionItems[$index]);
                 return true;
             }
         }

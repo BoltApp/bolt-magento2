@@ -71,15 +71,18 @@ class RecurringData implements InstallDataInterface
             $this->_fsManager->updateSwitchesFromBolt();
         } catch (\Exception $e) {
             $encodedError =  $this->_errorResponse->prepareErrorMessage(
-                BoltErrorResponse::ERR_SERVICE, $e->getMessage()
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage()
             );
             $this->_logHelper
                 ->addInfoLog('RecurringData: failed updating feature switches');
             $this->_logHelper->addInfoLog($encodedError);
             $this->_metricsClient
                 ->processMetric(
-                    "feature_switch.recurring.failure", 1,
-                    "feature_switch.recurring.latency", $startTime
+                    "feature_switch.recurring.failure",
+                    1,
+                    "feature_switch.recurring.latency",
+                    $startTime
                 );
             return;
         }

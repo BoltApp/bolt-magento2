@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Customer;
+
 use Magento\Backend\App\Action;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -42,8 +43,7 @@ class DeleteCreditCard extends Action
         Action\Context $context,
         Bugsnag $bugsnag,
         CustomerCreditCardFactory $customerCreditCardFactory
-    )
-    {
+    ) {
         $this->bugsnag = $bugsnag;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
         parent::__construct($context);
@@ -54,21 +54,21 @@ class DeleteCreditCard extends Action
      */
     public function execute()
     {
-        try{
+        try {
             $id = $this->getRequest()->getParam('id');
-            if($id){
+            if ($id) {
                 $creditCard = $this->customerCreditCardFactory->create()->load($id);
 
-                if($creditCard && $creditCard->getId()){
+                if ($creditCard && $creditCard->getId()) {
                     $creditCard->delete();
                     $this->messageManager->addSuccessMessage('Deleted bolt credit card successfully');
-                }else{
+                } else {
                     $this->messageManager->addErrorMessage("Credit Card doesn't exist");
                 }
-            }else{
+            } else {
                 $this->messageManager->addErrorMessage('Missing id parameter');
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->messageManager->addExceptionMessage($e);
         }

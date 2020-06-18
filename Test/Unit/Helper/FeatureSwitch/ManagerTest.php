@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 
-
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
 use Bolt\Boltpay\Model\FeatureSwitch;
@@ -74,7 +73,8 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_EmptyResponse() {
+    public function updateSwitchesFromBolt_EmptyResponse()
+    {
         $this->gql
             ->expects($this->once())
             ->method('getFeatureSwitches')
@@ -90,9 +90,10 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseWithOnlyResponse() {
+    public function updateSwitchesFromBolt_ResponseWithOnlyResponse()
+    {
         $response = new BoltResponse();
-        $respObj = array("response" => "ok");
+        $respObj = ["response" => "ok"];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())
@@ -109,9 +110,10 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseUptoData() {
+    public function updateSwitchesFromBolt_ResponseUptoData()
+    {
         $response = new BoltResponse();
-        $respObj = array("response" => (object)array("data" => "plugin"));
+        $respObj = ["response" => (object)["data" => "plugin"]];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())
@@ -128,13 +130,14 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseUptoPlugin() {
+    public function updateSwitchesFromBolt_ResponseUptoPlugin()
+    {
         $response = new BoltResponse();
-        $respObj = array(
-            "response" => (object)array(
-                "data" => (object)array("plugin"=>"ok")
-            )
-        );
+        $respObj = [
+            "response" => (object)[
+                "data" => (object)["plugin"=>"ok"]
+            ]
+        ];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())
@@ -151,14 +154,15 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseUptoFeatures() {
+    public function updateSwitchesFromBolt_ResponseUptoFeatures()
+    {
         $response = new BoltResponse();
-        $respObj = array(
-            "response" => (object)array(
-                "data" => (object)array(
-                    "plugin"=> (object)array("features" => "something"))
-            )
-        );
+        $respObj = [
+            "response" => (object)[
+                "data" => (object)[
+                    "plugin"=> (object)["features" => "something"]]
+            ]
+        ];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())
@@ -175,24 +179,25 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseWithSwitches() {
+    public function updateSwitchesFromBolt_ResponseWithSwitches()
+    {
         $response = new BoltResponse();
-        $respObj = array(
-            "response" => (object)array(
-                "data" => (object)array(
-                    "plugin"=> (object)array(
-                        "features" => array(
-                            "1" => (object) array(
+        $respObj = [
+            "response" => (object)[
+                "data" => (object)[
+                    "plugin"=> (object)[
+                        "features" => [
+                            "1" => (object) [
                                 "name" => "thename",
                                 "value" => true,
                                 "defaultValue"=> false,
                                 "rolloutPercentage" => 37
-                            )
-                        )
-                    )
-                )
-            )
-        );
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())
@@ -210,30 +215,31 @@ class ManagerTest extends TestCase
     /**
      * @test
      */
-    public function updateSwitchesFromBolt_ResponseWithMultipleSwitches() {
+    public function updateSwitchesFromBolt_ResponseWithMultipleSwitches()
+    {
         $response = new BoltResponse();
-        $respObj = array(
-            "response" => (object)array(
-                "data" => (object)array(
-                    "plugin"=> (object)array(
-                        "features" => array(
-                            "1" => (object) array(
+        $respObj = [
+            "response" => (object)[
+                "data" => (object)[
+                    "plugin"=> (object)[
+                        "features" => [
+                            "1" => (object) [
                                 "name" => "thename",
                                 "value" => true,
                                 "defaultValue"=> false,
                                 "rolloutPercentage" => 37
-                            ),
-                            "2" => (object) array(
+                            ],
+                            "2" => (object) [
                                 "name" => "thename2",
                                 "value" => false,
                                 "defaultValue"=> true,
                                 "rolloutPercentage" => 100
-                            )
-                        )
-                    )
-                )
-            )
-        );
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
         $response->setData($respObj);
         $this->gql
             ->expects($this->once())

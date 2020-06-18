@@ -20,7 +20,8 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 ?>
 <style>
     <?php echo $block->getGlobalCSS(); ?>

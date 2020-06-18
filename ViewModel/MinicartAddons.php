@@ -113,18 +113,4 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
         return $this->configHelper->getMinicartSupport() && !empty($this->getLayout());
     }
 
-    /**
-     * Gets element selector to be used in DOM observer. Appearance of these elements signifies a change to
-     * the Magento cart data and, therefore, requires an ajax call to create a new Bolt order.
-     *
-     * @return string element selector
-     */
-    public function getOrderCreationTriggers()
-    {
-        $selectors = [];
-        if ($this->configHelper->displayRewardPointsInMinicartConfig()) {
-            $selectors[] = '.totals.rewardpoints';
-        }
-        return implode(',', $selectors);
-    }
 }

@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper\GraphQL;
 
-
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\GraphQL\Client;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -113,7 +112,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function getFeatureSwitches_success() {
+    public function getFeatureSwitches_success()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -139,7 +139,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function getFeatureSwitches_fail() {
+    public function getFeatureSwitches_fail()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -165,7 +166,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function sendLogs_success() {
+    public function sendLogs_success()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -191,7 +193,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function sendLogs_fail() {
+    public function sendLogs_fail()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -214,4 +217,3 @@ class ClientTest extends TestCase
         $this->graphQLClient->sendLogs("[{}]");
     }
 }
-

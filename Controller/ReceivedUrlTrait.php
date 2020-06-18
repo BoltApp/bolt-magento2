@@ -65,6 +65,7 @@ trait ReceivedUrlTrait
         $boltPayload = $this->getRequest()->getParam('bolt_payload');
         $storeId = $this->getRequest()->getParam('store_id');
 
+        // phpcs:ignore
         $signature = base64_decode($boltSignature);
 
         $signingSecret = $this->configHelper->getSigningSecret($storeId);
@@ -74,6 +75,7 @@ trait ReceivedUrlTrait
 
         if ($signature === $hash) {
             try {
+                // phpcs:ignore
                 $payload = base64_decode($boltPayload);
                 $payloadArray = json_decode($payload, true);
                 $incrementId = $this->getIncrementIdFromPayload($payloadArray);

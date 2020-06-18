@@ -16,7 +16,8 @@
  */
 
 /* @var $block Bolt\Boltpay\Block\Checkout\Success */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 ?>
 
 <?php if ($block->isAllowInvalidateQuote()): ?>

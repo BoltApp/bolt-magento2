@@ -671,7 +671,8 @@ class ReceivedUrlTest extends TestCase
         $this->redirect = $this->createMock(RedirectInterface::class);
     }
 
-    private function createOrderMock($state) {
+    private function createOrderMock($state)
+    {
         $order = $this->createMock(Order::class);
         $order->method('getState')
               ->wilLReturn($state);

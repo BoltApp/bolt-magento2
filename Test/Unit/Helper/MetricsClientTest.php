@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Metric;
@@ -41,9 +40,9 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 class MetricsClientTest extends TestCase
 {
     /**
-    * @var \GuzzleHttp\Client
-    */
-   private $guzzleClient;
+     * @var \GuzzleHttp\Client
+     */
+    private $guzzleClient;
 
     /**
      * @var MetricsClient
@@ -53,27 +52,27 @@ class MetricsClientTest extends TestCase
    /**
     * @var ConfigHelper
     */
-   private $configHelper;
+    private $configHelper;
 
    /**
     * @var StoreManagerInterface
     */
-   protected $storeManager;
+    protected $storeManager;
 
    /**
     * @var string
     */
-   private $metricsFile;
+    private $metricsFile;
 
    /**
     * @var LogHelper
     */
-   private $logHelper;
+    private $logHelper;
 
    /**
     * @var Bugsnag
     */
-   private $bugsnag;
+    private $bugsnag;
 
     /**
      * @var int
@@ -180,8 +179,6 @@ class MetricsClientTest extends TestCase
 
         $this->currentMock->method('getCurrentTime')
             ->will($this->returnValue($this->timeStamp));
-
-
     }
 
     /**
@@ -198,7 +195,7 @@ class MetricsClientTest extends TestCase
         $result = $this->currentMock->formatCountMetric($this->countKey, $this->countValue);
 
 
-        $this->assertEquals($expectedMetric,  $result);
+        $this->assertEquals($expectedMetric, $result);
     }
 
     /**
@@ -215,7 +212,7 @@ class MetricsClientTest extends TestCase
         $expectedMetric = new Metric($this->latencyKey, $data);
         $result = $this->currentMock->formatLatencyMetric($this->latencyKey, $this->latencyValue);
 
-        $this->assertEquals($expectedMetric,  $result);
+        $this->assertEquals($expectedMetric, $result);
     }
 
     /**
@@ -228,7 +225,7 @@ class MetricsClientTest extends TestCase
                 'valid.json' => $this->fileInput,
             ]
         ];
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
 
         $methods = ['getFilePath'];
@@ -254,7 +251,7 @@ class MetricsClientTest extends TestCase
 
         $outputFile = $this->currentMock->waitForFile();
 
-        $this->assertNotNull( $outputFile);
+        $this->assertNotNull($outputFile);
         fclose($outputFile);
     }
 
@@ -269,7 +266,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
 
         $methods = ['getFilePath', 'lockFile'];
@@ -295,8 +292,7 @@ class MetricsClientTest extends TestCase
 
         $this->currentMock->method('getFilePath')
             ->will($this->returnValue($root->url() . '/test/valid.json'));
-        $this->assertNull( $this->currentMock->waitForFile());
-
+        $this->assertNull($this->currentMock->waitForFile());
     }
 
     /**
@@ -308,7 +304,7 @@ class MetricsClientTest extends TestCase
             'test' => []
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
 
         $methods = ['getFilePath'];
@@ -334,9 +330,8 @@ class MetricsClientTest extends TestCase
 
         $outputFile = $this->currentMock->waitForFile();
 
-        $this->assertNotNull( $outputFile);
+        $this->assertNotNull($outputFile);
         fclose($outputFile);
-
     }
 
     /**
@@ -348,7 +343,7 @@ class MetricsClientTest extends TestCase
             'test' => []
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/metrics.json', "a+");
 
@@ -373,10 +368,9 @@ class MetricsClientTest extends TestCase
         $this->currentMock->writeMetricToFile($testMetric);
 
         $this->assertEquals(
-        $this->fileInput,
-        $root->getChild('test/metrics.json')->getContent()
-    );
-
+            $this->fileInput,
+            $root->getChild('test/metrics.json')->getContent()
+        );
     }
 
     /**
@@ -388,7 +382,7 @@ class MetricsClientTest extends TestCase
             'test' => []
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $this->initWriteMetricToFile();
 
@@ -414,7 +408,6 @@ class MetricsClientTest extends TestCase
         $this->assertNull(
             $root->getChild('test/metrics.json')
         );
-
     }
 
 
@@ -500,7 +493,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -510,7 +503,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -525,7 +518,7 @@ class MetricsClientTest extends TestCase
 
 
 
-        $this->assertEquals(200,  $this->currentMock->postMetrics());
+        $this->assertEquals(200, $this->currentMock->postMetrics());
         $this->assertEquals(
             "",
             $root->getChild('test/valid.json')->getContent()
@@ -544,7 +537,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -554,7 +547,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -581,7 +574,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -591,7 +584,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
@@ -607,7 +600,7 @@ class MetricsClientTest extends TestCase
 
 
 
-        $this->assertEquals(200,  $this->currentMock->postMetrics());
+        $this->assertEquals(200, $this->currentMock->postMetrics());
         $this->assertEquals(
             "",
             $root->getChild('test/valid.json')->getContent()
@@ -626,7 +619,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -636,7 +629,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
@@ -652,7 +645,7 @@ class MetricsClientTest extends TestCase
 
 
 
-        $this->assertEquals(200,  $this->currentMock->postMetrics());
+        $this->assertEquals(200, $this->currentMock->postMetrics());
         $this->assertEquals(
             "",
             $root->getChild('test/valid.json')->getContent()
@@ -671,7 +664,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -681,7 +674,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->method('shouldCaptureMetrics')
             ->will($this->returnValue(true));
@@ -717,7 +710,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -727,7 +720,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -746,7 +739,6 @@ class MetricsClientTest extends TestCase
             $this->fileInput,
             $root->getChild('test/valid.json')->getContent()
         );
-
     }
 
     /**
@@ -767,7 +759,7 @@ class MetricsClientTest extends TestCase
             ]
         ];
 
-        $root = vfsStream::setup('root',null,$structure);
+        $root = vfsStream::setup('root', null, $structure);
 
         $workingFile = fopen($root->url() . '/test/valid.json', "a+");
 
@@ -777,7 +769,7 @@ class MetricsClientTest extends TestCase
             ->will($this->returnValue($root->url() . '/test/valid.json'));
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue( $this->guzzleClient));
+            ->will($this->returnValue($this->guzzleClient));
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
@@ -923,10 +915,10 @@ class MetricsClientTest extends TestCase
         $this->currentMock
             ->expects(self::once())
             ->method('processLatencyMetric')
-            ->with($this->latencyKey,$this->latencyValue);
+            ->with($this->latencyKey, $this->latencyValue);
         $this->currentMock->expects(self::once())->method('postMetrics');
 
-        $this->currentMock->processMetric($this->countKey, $this->countValue,$this->latencyKey,$this->latencyValue);
+        $this->currentMock->processMetric($this->countKey, $this->countValue, $this->latencyKey, $this->latencyValue);
     }
 
     /**
@@ -962,7 +954,7 @@ class MetricsClientTest extends TestCase
             ->method('processLatencyMetric');
         $this->currentMock->expects(self::never())->method('postMetrics');
 
-        $this->currentMock->processMetric($this->countKey, $this->countValue,$this->latencyKey,$this->latencyValue);
+        $this->currentMock->processMetric($this->countKey, $this->countValue, $this->latencyKey, $this->latencyValue);
     }
 
     /**
@@ -1002,7 +994,8 @@ class MetricsClientTest extends TestCase
         $this->assertGreaterThan($this->timeStamp, $time);
     }
 
-    private function initWriteMetricToFile() {
+    private function initWriteMetricToFile()
+    {
         $methods = ['getFilePath', 'waitForFile', 'getCurrentTime'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
@@ -1022,7 +1015,8 @@ class MetricsClientTest extends TestCase
             ->getMock();
     }
 
-    private function initProcessMetrics() {
+    private function initProcessMetrics()
+    {
         $methods = ['formatCountMetric', 'formatLatencyMetric', 'writeMetricToFile'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)
@@ -1042,7 +1036,8 @@ class MetricsClientTest extends TestCase
             ->getMock();
     }
 
-    private function initPostMetrics() {
+    private function initPostMetrics()
+    {
         $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'setClient', 'loadFromCache'];
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)
             ->setMethods($methods)

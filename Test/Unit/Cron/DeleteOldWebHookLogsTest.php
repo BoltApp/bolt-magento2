@@ -59,7 +59,8 @@ class DeleteOldWebHookLogsTest extends TestCase
     public function execute()
     {
         $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogFactory->expects(self::once())->method('deleteOldAttempts')->willReturnSelf();;
+        $this->webhookLogFactory->expects(self::once())->method('deleteOldAttempts')->willReturnSelf();
+        ;
         $this->currentMock->execute();
     }
 }

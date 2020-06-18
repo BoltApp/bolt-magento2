@@ -48,6 +48,6 @@ class FeatureSwitchTest extends TestCase
             ->with('bolt_feature_switches', 'id')
             ->willReturnSelf();
 
-        TestHelper::invokeMethod($this->mockFeatureSwitch,'_construct');
+        TestHelper::invokeMethod($this->mockFeatureSwitch, '_construct');
     }
 }

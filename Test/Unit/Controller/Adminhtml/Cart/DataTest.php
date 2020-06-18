@@ -82,27 +82,27 @@ class DataTest extends TestCase
 
     private function initData()
     {
-        $this->happyCartArray = array('orderToken' => self::RESPONSE_TOKEN);
-        $this->happyCartData = array(
-            'cart' => array(
+        $this->happyCartArray = ['orderToken' => self::RESPONSE_TOKEN];
+        $this->happyCartData = [
+            'cart' => [
                 'orderToken' => self::RESPONSE_TOKEN
-                ),
+                ],
             'hints' => self::HINT,
             'publishableKey' => self::PUBLISHABLE_KEY,
             'storeId' => self::STORE_ID,
             'isPreAuth' => self::IS_PREAUTH
-        );
+        ];
 
-        $this->noTokenCartArray = array('orderToken' => '');
-        $this->noTokenCartData = array(
-            'cart' => array(
+        $this->noTokenCartArray = ['orderToken' => ''];
+        $this->noTokenCartData = [
+            'cart' => [
                 'orderToken' => ''
-            ),
+            ],
             'hints' => self::HINT,
             'publishableKey' => self::PUBLISHABLE_KEY,
             'storeId' => self::STORE_ID,
             'isPreAuth' => self::IS_PREAUTH
-        );
+        ];
 
         $this->map = [
             ['place_order_payload', null, self::PLACE_ORDER_PAYLOAD]
@@ -204,7 +204,7 @@ class DataTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $boltpayOrder->method('getResponse')
-            ->willReturn(array('token' => self::RESPONSE_TOKEN));
+            ->willReturn(['token' => self::RESPONSE_TOKEN]);
 
         $this->cartHelper->method('getBoltpayOrder')
             ->willReturn($boltpayOrder);

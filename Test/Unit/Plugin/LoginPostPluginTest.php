@@ -56,11 +56,13 @@ class LoginPostPluginTest extends TestCase
     {
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->resultFactory = $this->createPartialMock(ResultFactory::class,
+        $this->resultFactory = $this->createPartialMock(
+            ResultFactory::class,
             [
                 'create',
                 'setPath'
-            ]);
+            ]
+        );
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->loginPost = $this->createMock(LoginPost::class);
         $this->plugin = $this->getMockBuilder(LoginPostPlugin::class)

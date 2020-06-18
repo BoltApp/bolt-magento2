@@ -25,7 +25,8 @@ namespace Bolt\Boltpay\Helper\FeatureSwitch;
  * Class Definitions
  * @package Bolt\Boltpay\Helper\FeatureSwitch
  */
-class Definitions {
+class Definitions
+{
     const NAME_KEY="name";
     const VAL_KEY="value";
     const DEFAULT_VAL_KEY="default_value";
@@ -106,90 +107,107 @@ class Definitions {
      */
     const M2_ALWAYS_PRESENT_CHECKOUT = "M2_ALWAYS_PRESENT_CHECKOUT";
 
-    const DEFAULT_SWITCH_VALUES = array(
-        self::M2_SAMPLE_SWITCH_NAME =>  array(
+    /**
+     * Use magento sections to save bolt cart in browser local storage
+     */
+    const M2_SAVE_CART_IN_SECTIONS = "M2_SAVE_CART_IN_SECTIONS";
+
+    const DEFAULT_SWITCH_VALUES = [
+        self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
           self::VAL_KEY             => true,
           self::DEFAULT_VAL_KEY     => false,
           self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_BOLT_ENABLED =>  array(
+        ],
+        self::M2_BOLT_ENABLED =>  [
           self::NAME_KEY            => self::M2_BOLT_ENABLED,
           self::VAL_KEY             => true,
           self::DEFAULT_VAL_KEY     => false,
           self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS =>  array(
+        ],
+        self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS =>  [
             self::NAME_KEY            => self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER =>  array(
+        ],
+        self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER =>  [
             self::NAME_KEY            => self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED =>  array(
+        ],
+        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED =>  [
             self::NAME_KEY            => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_TRACK_SHIPMENT => array(
+        ],
+        self::M2_TRACK_SHIPMENT => [
             self::NAME_KEY            => self::M2_TRACK_SHIPMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_ORDER_MANAGEMENT =>  array(
+        ],
+        self::M2_ORDER_MANAGEMENT =>  [
             self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_PAY_BY_LINK =>  array(
+        ],
+        self::M2_PAY_BY_LINK =>  [
             self::NAME_KEY            => self::M2_PAY_BY_LINK,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION =>  array(
+        ],
+        self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION =>  [
             self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION =>  array(
+        ],
+        self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION =>  [
             self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_MERCHANT_METRICS => array(
+        ],
+        self::M2_MERCHANT_METRICS => [
             self::NAME_KEY            => self::M2_MERCHANT_METRICS,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_INSTANT_BOLT_CHECKOUT_BUTTON => array(
+        ],
+        self::M2_INSTANT_BOLT_CHECKOUT_BUTTON => [
             self::NAME_KEY            => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ),
-        self::M2_SAVE_HINTS_IN_SECTIONS => array(
+        ],
+        self::M2_SAVE_HINTS_IN_SECTIONS => [
             self::NAME_KEY            => self::M2_SAVE_HINTS_IN_SECTIONS,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
-        ),
-        self::M2_ALWAYS_PRESENT_CHECKOUT => array(
+        ],
+        self::M2_ALWAYS_PRESENT_CHECKOUT => [
             self::NAME_KEY => self::M2_ALWAYS_PRESENT_CHECKOUT,
             self::VAL_KEY => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY => 0
-        )
-    );
+        ],
+        self::M2_ALWAYS_PRESENT_CHECKOUT => [
+            self::NAME_KEY            => self::M2_ALWAYS_PRESENT_CHECKOUT,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_SAVE_CART_IN_SECTIONS => [
+            self::NAME_KEY            => self::M2_SAVE_CART_IN_SECTIONS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
+        ],
+    ];
 }

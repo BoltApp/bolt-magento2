@@ -43,8 +43,7 @@ class ClearQuote
      */
     public function __construct(
         CartHelper $cartHelper
-    )
-    {
+    ) {
         $this->cartHelper = $cartHelper;
     }
 
