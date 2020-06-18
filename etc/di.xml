@@ -298,4 +298,22 @@
         </arguments>
     </type>
 
+    <type name="Magento\GiftCardAccount\Observer\TogglePaymentMethods">
+        <plugin name="BoltTogglePaymentMethodsPlugin"
+                type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
+                sortOrder="1"/>
+    </type>
+
+    <type name="Magento\CustomerBalance\Observer\TogglePaymentMethodsObserver">
+        <plugin name="BoltTogglePaymentMethodsObserverPlugin"
+                type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
+                sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Reward\Observer\PreparePaymentMethod">
+        <plugin name="BoltPreparePaymentMethodPlugin"
+                type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
+                sortOrder="1"/>
+    </type>
+
 </config>
