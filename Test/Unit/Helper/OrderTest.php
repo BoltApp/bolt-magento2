@@ -3248,7 +3248,6 @@ class OrderTest extends TestCase
                 'setBaseGrandTotal',
                 'setGrandTotal',
                 'register',
-                'save',
             ]
         );
         $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
@@ -3328,7 +3327,6 @@ class OrderTest extends TestCase
                 'setBaseGrandTotal',
                 'setGrandTotal',
                 'register',
-                'save',
             ]
         );
         $message = 'Expected exception message';
@@ -3369,7 +3367,6 @@ class OrderTest extends TestCase
                 'setBaseGrandTotal',
                 'setGrandTotal',
                 'register',
-                'save',
             ]
         );
         $message = 'Expected exception message';
