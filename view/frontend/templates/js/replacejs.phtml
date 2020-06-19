@@ -1511,7 +1511,7 @@ if (!$block->isSaveCartInSections()) { ?>
                     // re-create order in case checkout was closed
                     // after order was changed from inside the checkout,
                     // i.e. the discount was applied
-                    createOrder();
+                    customerData.reload(['boltcart'], true);
                 }
             },
 
