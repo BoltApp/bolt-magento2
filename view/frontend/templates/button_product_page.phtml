@@ -94,7 +94,7 @@ if (!$block->isSupportableType()) { return;
                      * return void
                      */
                     var processSuccess = function (data) {
-                        customerData.invalidate('bolthints')
+                        customerData.invalidate(['bolthints']);
                         try {
                             if (typeof data !== 'undefined') {
                                 callbacks.success_url = data.success_url;
