@@ -1693,7 +1693,7 @@ class DiscountCodeValidationTest extends TestCase
     public function applyingCouponCode_virtualImmutableQuote()
     {
         $discountAmount = 15;
-        $this->shippingAddressMock->method('getDiscountAmount')->willReturn($discountAmount);
+        $this->billingAddressMock->method('getDiscountAmount')->willReturn($discountAmount);
 
         $expected = [
             'status' => 'success',
@@ -2463,13 +2463,17 @@ class DiscountCodeValidationTest extends TestCase
             ->setMethods(
                 [
                     'addData',
-                    'save'
+                    'save',
+                    'setShouldIgnoreValidation',
+                    'getDiscountAmount'
                 ]
             )
             ->disableOriginalConstructor()
             ->getMock();
     
         $this->billingAddressMock->method('save')->willReturnSelf();
+        $this->billingAddressMock->method('addData')->willReturnSelf();
+        $this->billingAddressMock->method('setShouldIgnoreValidation')->willReturnSelf();
 
         $this->couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
             ->setMethods(
