@@ -1229,6 +1229,7 @@ class DiscountCodeValidationTest extends TestCase
             ->willReturn($giftcardMock);
 
         $this->immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
+        $this->immutableQuoteMock->method('isVirtual')->willReturn(false);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_SERVICE,
@@ -2199,10 +2200,14 @@ class DiscountCodeValidationTest extends TestCase
         $customerId = null,
         $isVirtual = false,
         $quoteId = self::IMMUTABLE_QUOTE_ID,
-        $parentQuoteId = self::PARENT_QUOTE_ID
+        $parentQuoteId = self::PARENT_QUOTE_ID,
+        $billingAddress = null
     ) {
         if (is_null($shippingAddress)) {
             $shippingAddress = $this->shippingAddressMock;
+        }
+        if (is_null($billingAddress)) {
+            $billingAddress = $this->billingAddressMock;
         }
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
             ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
@@ -2245,7 +2250,7 @@ class DiscountCodeValidationTest extends TestCase
         $quote->method('getAppliedRuleIds')->willReturn('2,3');
         $quote->method('isVirtual')->willReturn($isVirtual);
         $quote->method('getShippingAddress')->willReturn($shippingAddress);
-        $quote->method('getBillingAddress')->willReturn($shippingAddress);
+        $quote->method('getBillingAddress')->willReturn($billingAddress);
         $quote->method('getQuoteCurrencyCode')->willReturn('USD');
         $quote->method('collectTotals')->willReturnSelf();
         $quote->method('getItemsCount')->willReturn(1);
@@ -2453,6 +2458,18 @@ class DiscountCodeValidationTest extends TestCase
         $this->shippingAddressMock->method('setCollectShippingRates')->with(true)->willReturnSelf();
         $this->shippingAddressMock->method('getShippingDiscountAmount')->willReturn(0);
         $this->shippingAddressMock->method('getShippingAmount')->willReturn(5);
+        
+        $this->billingAddressMock = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
+            ->setMethods(
+                [
+                    'addData',
+                    'save'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+    
+        $this->billingAddressMock->method('save')->willReturnSelf();
 
         $this->couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
             ->setMethods(
@@ -2476,7 +2493,7 @@ class DiscountCodeValidationTest extends TestCase
             ->getMock();
 
         $this->immutableQuoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getItemsCount', 'getCouponCode'])
+            ->setMethods(['getItemsCount', 'getCouponCode', 'isVirtual'])
             ->disableOriginalConstructor()
             ->getMock();
 
