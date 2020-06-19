@@ -401,6 +401,100 @@ class DiscountCodeValidationTest extends TestCase
         // If another exception happens, the test will fail.
         $this->assertTrue($result);
     }
+    
+    /**
+     * @test
+     */
+    public function validate_simpleCoupon_virtualQuote()
+    {
+        $couponCode = 'FIXED20';
+        
+        $request_billing_addr = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'first_name'      => "Bolt",
+            'last_name'       => "Test",
+            'locality'        => "New York",
+            'phone'           => "+1 231 231 1234",
+            'postal_code'     => "10001",
+            'region'          => "New York",
+            'street_address1' => "228 5th Avenue",
+            'street_address2' => "",
+            'email_address'   => 'test@bolt.com',
+        ];
+        $request_shipping_addr = $request_billing_addr;
+        $request_data = [
+            'discount_code' => $couponCode,
+            'cart' => [
+                'order_reference' => self::PARENT_QUOTE_ID,
+                'display_id'  => self::DISPLAY_ID,
+                'billing_address' => $request_billing_addr,
+                'shipments' => [
+                    0 => [
+                        'shipping_address' => $request_shipping_addr,
+                        'shipping_method' => 'unknown',
+                        'service' => 'No Shipping Required',
+                        'cost' => [
+                            'amount' => 0,
+                            'currency' => 'USD',
+                            'currency_symbol' => '$',
+                        ],
+                        'tax_amount' => [
+                            'amount' => 0,
+                            'currency' => 'USD',
+                            'currency_symbol' => '$',
+                        ],
+                        'reference' => 'noshipping',
+                    ],
+                ],
+            ]
+        ];
+
+        $this->request->method('getContent')->willReturn(json_encode($request_data));
+
+        $this->configureCouponMockMethods();
+
+        $this->moduleUnirgyGiftCertMock->method('getInstance')->willReturn(null);
+
+        $this->ruleMock->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->method('getDescription')->willReturn('Simple discount code');
+        $this->ruleMock->method('getSimpleAction')->willReturn('cart_fixed');
+        $this->ruleMock->method('getFromDate')->willReturn(null);
+        $this->ruleMock->method('getWebsiteIds')->will($this->returnValue([self::WEBSITE_ID]));
+
+        $this->configHelper->method('getIgnoredShippingAddressCoupons')->willReturn([]);
+
+        $getQuoteByIdMap = [
+            [self::PARENT_QUOTE_ID, $this->getQuoteMock(
+                $couponCode,
+                null,
+                null,
+                true,
+                self::PARENT_QUOTE_ID,
+                self::PARENT_QUOTE_ID
+            )],
+            [self::IMMUTABLE_QUOTE_ID, $this->getQuoteMock(
+                $couponCode,
+                null,
+                null,
+                true,
+                self::IMMUTABLE_QUOTE_ID,
+                self::PARENT_QUOTE_ID
+            )],
+        ];
+
+        $this->cartHelper->method('getActiveQuoteById')
+            ->willReturnMap($getQuoteByIdMap);
+
+        $this->cartHelper->method('getQuoteById')
+            ->willReturnMap($getQuoteByIdMap);
+
+        $result = $this->currentMock->validate();
+
+        // If another exception happens, the test will fail.
+        $this->assertTrue($result);
+    }
 
     /**
      * @test

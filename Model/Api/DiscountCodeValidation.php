@@ -404,26 +404,16 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Set the shipment if request payload has that info.
-            if (isset($request->cart->shipments[0]->reference)) {
+            if ( $immutableQuote->isVirtual() && isset($request->cart->billing_address) ) {
+                $billingAddress = $immutableQuote->getBillingAddress();
+                $addressData = $this->prepareAddressData($request->cart->billing_address);
+                
+                $billingAddress->setShouldIgnoreValidation(true)
+                               ->addData($addressData)
+                               ->save();
+            } elseif ( isset($request->cart->shipments[0]->reference) ) {
                 $shippingAddress = $immutableQuote->getShippingAddress();
-                $address = $request->cart->shipments[0]->shipping_address;
-                $address = $this->cartHelper->handleSpecialAddressCases($address);
-                $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
-                $addressData = [
-                            'firstname'    => @$address->first_name,
-                            'lastname'     => @$address->last_name,
-                            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
-                            'city'         => @$address->locality,
-                            'country_id'   => @$address->country_code,
-                            'region'       => @$address->region,
-                            'postcode'     => @$address->postal_code,
-                            'telephone'    => @$address->phone_number,
-                            'region_id'    => $region ? $region->getId() : null,
-                            'company'      => @$address->company,
-                        ];
-                if ($this->cartHelper->validateEmail(@$address->email_address)) {
-                    $addressData['email'] = $address->email_address;
-                }
+                $addressData = $this->prepareAddressData($request->cart->shipments[0]->shipping_address);
 
                 $shippingAddress->setShouldIgnoreValidation(true);
                 $shippingAddress->addData($addressData);
@@ -800,7 +790,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         $request = $this->getRequestContent();
         $is_has_shipment = isset($request->cart->shipments[0]->reference);
-        $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
+        $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote, false);
         return [
             'total_amount' => $cart['total_amount'],
             'tax_amount'   => $cart['tax_amount'],
@@ -1023,5 +1013,33 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'description'     =>  __('Discount ') . $address->getDiscountDescription(),
             'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
         ];
+    }
+    
+    /**
+     * @param object $address
+     *
+     * @return array
+     */
+    private function prepareAddressData($address)
+    {
+        $address = $this->cartHelper->handleSpecialAddressCases($address);
+        $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
+        $addressData = [
+                    'firstname'    => @$address->first_name,
+                    'lastname'     => @$address->last_name,
+                    'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
+                    'city'         => @$address->locality,
+                    'country_id'   => @$address->country_code,
+                    'region'       => @$address->region,
+                    'postcode'     => @$address->postal_code,
+                    'telephone'    => @$address->phone_number,
+                    'region_id'    => $region ? $region->getId() : null,
+                    'company'      => @$address->company,
+                ];
+        if ($this->cartHelper->validateEmail(@$address->email_address)) {
+            $addressData['email'] = $address->email_address;
+        }
+        
+        return $addressData;
     }
 }

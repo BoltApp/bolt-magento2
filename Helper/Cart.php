@@ -1304,7 +1304,7 @@ class Cart extends AbstractHelper
      * @return array
      * @throws \Exception
      */
-    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
+    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null, $requireBillingAddress = true)
     {
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
@@ -1368,7 +1368,7 @@ class Cart extends AbstractHelper
         }
         $immutableQuote->collectTotals();
 
-        $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
+        $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress);
         if ($cart == []) {
             // empty cart implies there was an error
             return $cart;
