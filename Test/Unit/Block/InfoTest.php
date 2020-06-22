@@ -48,7 +48,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
             [
                 'Credit Card Type' => 'VISA',
                 'Credit Card Number' => 'xxxx-1111'
-            ], $data->getData()
+            ],
+            $data->getData()
         );
     }
     
@@ -61,7 +62,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
-            [], $data->getData()
+            [],
+            $data->getData()
         );
     }
     
@@ -90,7 +92,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getOrder')->willReturn($orderMock);
         $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
         $this->assertEquals(
-            'Bolt Pay', $data
+            'Bolt Pay',
+            $data
         );
     }
     
@@ -103,7 +106,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
         $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
         $this->assertEquals(
-            'Bolt-PayPal', $data
+            'Bolt-PayPal',
+            $data
         );
     }
 }

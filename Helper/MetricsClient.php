@@ -27,7 +27,6 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-
 /**
  * Boltpay Metric Client Helper
  */
@@ -64,8 +63,8 @@ class MetricsClient extends AbstractHelper
     private $logHelper;
 
      /**
-     * @var array
-     */
+      * @var array
+      */
     private $headers;
 
     /**
@@ -134,7 +133,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return bool
      */
-    protected function lockFile($workingFile){
+    protected function lockFile($workingFile)
+    {
         return flock($workingFile, LOCK_EX | LOCK_NB);
     }
 
@@ -145,7 +145,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return void
      */
-    protected function unlockFile($workingFile){
+    protected function unlockFile($workingFile)
+    {
         flock($workingFile, LOCK_UN);    // release the lock
     }
 
@@ -155,7 +156,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return int
      */
-    public function getCurrentTime() {
+    public function getCurrentTime()
+    {
         return microtime(true) * 1000;
     }
 
@@ -164,7 +166,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return \GuzzleHttp\Client
      */
-    protected function setClient() {
+    protected function setClient()
+    {
         // determines if we are in the Sandbox env or not
         $base_uri = $this->configHelper->getApiUrl();
 
@@ -177,7 +180,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return array
      */
-    protected function setHeaders() {
+    protected function setHeaders()
+    {
         return [
             'Content-Type' => 'application/json',
             'x-api-key' =>  $this->configHelper->getApiKey()
@@ -189,7 +193,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return int
      */
-    public function getElapsedTime($startTime) {
+    public function getElapsedTime($startTime)
+    {
         return round((microtime(true) * 1000) - $startTime);
     }
 
@@ -198,7 +203,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return string
      */
-    protected function getFilePath() {
+    protected function getFilePath()
+    {
         // determine root directory and add create a metrics file there
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
@@ -211,7 +217,8 @@ class MetricsClient extends AbstractHelper
      *
      * @return Stream
      */
-    public function waitForFile(){
+    public function waitForFile()
+    {
         $count = 0;
         $maxRetryCount = 10; //number of miliseconds of timeout (10 * 500) so 5 seconds
 
@@ -237,7 +244,7 @@ class MetricsClient extends AbstractHelper
      * Add a count metric to the array of metrics being stored
      *
      * @param string        $key    name of count metric
-     * @param int           $value  count hit 
+     * @param int           $value  count hit
      *
      * @return Metric
      */
@@ -252,13 +259,13 @@ class MetricsClient extends AbstractHelper
     }
 
      /**
-     * Add a latency metric to the array of metrics being stored
-     *
-     * @param string        $key     name of latency metric
-     * @param int           $value  the total time of the metric
-     *
-     * @return Metric
-     */
+      * Add a latency metric to the array of metrics being stored
+      *
+      * @param string        $key     name of latency metric
+      * @param int           $value  the total time of the metric
+      *
+      * @return Metric
+      */
     public function formatLatencyMetric($key, $value)
     {
         $data = [
@@ -267,7 +274,6 @@ class MetricsClient extends AbstractHelper
                 "timestamp" => round($this->getCurrentTime()),
             ];
         return new Metric($key, $data);
-
     }
 
     /**
@@ -341,8 +347,7 @@ class MetricsClient extends AbstractHelper
      */
     public function processMetric($countKey, $countValue, $latencyKey, $latencyStartTime)
     {
-        if (!$this->featureSwitches->isMerchantMetricsEnabled())
-        {
+        if (!$this->featureSwitches->isMerchantMetricsEnabled()) {
             return;
         }
         $this->processCountMetric($countKey, $countValue);
@@ -372,7 +377,7 @@ class MetricsClient extends AbstractHelper
             }
         }
         $workingFile = null;
-        try{
+        try {
             if ($this->metricsFile == null) {
                 $this->metricsFile = $this->getFilePath();
             }
@@ -422,7 +427,9 @@ class MetricsClient extends AbstractHelper
     protected function loadFromCache($identifier, $decode = true)
     {
         $cached = $this->cache->load($identifier);
-        if (!$cached) return false;
+        if (!$cached) {
+            return false;
+        }
         return $decode ? json_decode($cached) : $cached;
     }
     /**

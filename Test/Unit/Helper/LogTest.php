@@ -59,12 +59,12 @@ class LogTest extends TestCase
     {
         $this->context = $this->createMock(Context::class);
         $this->boltLoger = $this->createPartialMock(
-            BoltLogger::class
-            , ['info']
+            BoltLogger::class,
+            ['info']
         );
         $this->configHelper = $this->createPartialMock(
-            ConfigHelper::class
-            , ['isDebugModeOn']
+            ConfigHelper::class,
+            ['isDebugModeOn']
         );
 
 

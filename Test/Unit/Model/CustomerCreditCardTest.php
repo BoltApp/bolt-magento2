@@ -163,7 +163,8 @@ class CustomerCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function recharge_withException(){
+    public function recharge_withException()
+    {
         $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
 
         $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
@@ -187,7 +188,8 @@ class CustomerCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function recharge(){
+    public function recharge()
+    {
         $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
 
         $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
@@ -210,7 +212,8 @@ class CustomerCreditCardTest extends TestCase
      * @param $data
      * @dataProvider providerGetCardInfoObject
      */
-    public function getCardInfoObject($data){
+    public function getCardInfoObject($data)
+    {
         $mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
             ->setConstructorArgs([
                 $this->context,
@@ -230,15 +233,16 @@ class CustomerCreditCardTest extends TestCase
 
         $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
         $this->dataObjectFactory->expects(self::once())->method('setData')->will($this->returnCallback(
-            function($result) use ($data)  {
-                $this->assertEquals($data['expected'],$result);
+            function ($result) use ($data) {
+                $this->assertEquals($data['expected'], $result);
             }
         ));
 
         $mockCustomerCreditCard->getCardInfoObject();
     }
 
-    public function providerGetCardInfoObject(){
+    public function providerGetCardInfoObject()
+    {
         return [
             ['data' =>
                 [
@@ -265,7 +269,7 @@ class CustomerCreditCardTest extends TestCase
                         'display_network' => 'Visa'
                     ]
                 ]
-        ]
+            ]
 
         ];
     }
@@ -275,13 +279,15 @@ class CustomerCreditCardTest extends TestCase
      * @param $data
      * @dataProvider providerGetCardType
      */
-    public function getCardType($data){
+    public function getCardType($data)
+    {
         $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
         $result = $this->mockCustomerCreditCard->getCardType();
-        $this->assertEquals($data['expected'],$result);
+        $this->assertEquals($data['expected'], $result);
     }
 
-    public function providerGetCardType(){
+    public function providerGetCardType()
+    {
         return [
             ['data' =>
                 [
@@ -308,13 +314,15 @@ class CustomerCreditCardTest extends TestCase
      * @param $data
      * @dataProvider providerGetCardLast4Digit
      */
-    public function getCardLast4Digit($data){
+    public function getCardLast4Digit($data)
+    {
         $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
         $result = $this->mockCustomerCreditCard->getCardLast4Digit();
-        $this->assertEquals($data['expected'],$result);
+        $this->assertEquals($data['expected'], $result);
     }
 
-    public function providerGetCardLast4Digit(){
+    public function providerGetCardLast4Digit()
+    {
         return [
             ['data' =>
                 [
@@ -339,7 +347,8 @@ class CustomerCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function getIdentities(){
+    public function getIdentities()
+    {
         $this->mockCustomerCreditCard->expects(self::once())->method('getId')->willReturn(self::ENTITY_ID);
         $result = $this->mockCustomerCreditCard->getIdentities();
         $this->assertEquals(['bolt_customer_credit_cards_1'], $result);
@@ -348,13 +357,14 @@ class CustomerCreditCardTest extends TestCase
     /**
      * @test
      */
-    public function saveCreditCard(){
+    public function saveCreditCard()
+    {
         $this->mockCustomerCreditCard->expects(self::once())->method('setCustomerId')->willReturnSelf();
         $this->mockCustomerCreditCard->expects(self::once())->method('setConsumerId')->willReturnSelf();
         $this->mockCustomerCreditCard->expects(self::once())->method('setCreditCardId')->willReturnSelf();
         $this->mockCustomerCreditCard->expects(self::once())->method('setCardInfo')->willReturnSelf();
         $this->mockCustomerCreditCard->expects(self::once())->method('save')->willReturn($this->mockCustomerCreditCard);
-        $result = $this->mockCustomerCreditCard->saveCreditCard(self::CUSTOMER_ID,self::CONSUMER_ID, self::CREDIT_CARD_ID,self::CARD_INFO);
+        $result = $this->mockCustomerCreditCard->saveCreditCard(self::CUSTOMER_ID, self::CONSUMER_ID, self::CREDIT_CARD_ID, self::CARD_INFO);
         $this->assertEquals($this->mockCustomerCreditCard, $result);
     }
 }

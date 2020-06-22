@@ -47,7 +47,8 @@ class CreditCardTest extends TestCase
     protected function setUp()
     {
         $this->_context = $this->createPartialMock(Context::class, ['getView']);
-        $this->_view = $this->createPartialMock(ViewInterface::class,
+        $this->_view = $this->createPartialMock(
+            ViewInterface::class,
             [
                 'loadLayout', 'renderLayout', 'loadLayoutUpdates',
                 'getDefaultLayoutHandle', 'generateLayoutXml', 'addPageLayoutHandles',

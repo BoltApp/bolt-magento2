@@ -16,8 +16,7 @@ class OrderCreateProcessDataObserver implements ObserverInterface
 
     public function __construct(
         ProductMetadataInterface $productMetadata
-    )
-    {
+    ) {
         $this->productMetadata = $productMetadata;
     }
 
@@ -27,7 +26,7 @@ class OrderCreateProcessDataObserver implements ObserverInterface
     public function execute(Observer $observer)
     {
         $magentoVersion = $this->productMetadata->getVersion() ;
-        if (version_compare($magentoVersion, '2.1.4') < 0 ) {
+        if (version_compare($magentoVersion, '2.1.4') < 0) {
             $event = $observer->getEvent();
             $orderCreateModel = $event->getData('order_create_model');
             /** @var \Magento\Quote\Model\Quote $quote */

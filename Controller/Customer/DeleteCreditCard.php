@@ -60,8 +60,7 @@ class DeleteCreditCard extends Action
         CustomerCreditCardFactory $customerCreditCardFactory,
         Validator $formKeyValidator,
         Session $customerSession
-    )
-    {
+    ) {
         $this->formKeyValidator = $formKeyValidator;
         $this->bugsnag = $bugsnag;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
@@ -81,22 +80,21 @@ class DeleteCreditCard extends Action
             }
 
             $id = $this->getRequest()->getParam('id');
-            if($id){
+            if ($id) {
                 $creditCard = $this->customerCreditCardFactory->create()->load($id);
-                if (
-                    $creditCard
+                if ($creditCard
                     && $creditCard->getId()
                     && $this->customerSession->getCustomerId() == $creditCard->getCustomerId()
                 ) {
                     $creditCard->delete();
                     $this->messageManager->addSuccessMessage(__('You deleted the Bolt credit card'));
-                }else{
+                } else {
                     $this->messageManager->addErrorMessage(__("Credit Card doesn't exist"));
                 }
-            }else{
+            } else {
                 $this->messageManager->addErrorMessage(__('Missing id parameter'));
             }
-        }catch (\Exception $e){
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->messageManager->addExceptionMessage($e);
         }

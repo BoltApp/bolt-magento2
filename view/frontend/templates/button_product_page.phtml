@@ -20,12 +20,15 @@
  *
  * @var $block \Bolt\Boltpay\Block\JsProductPage
  */
-if ($block->shouldDisableBoltCheckout()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
 
 // return if PPC option is disabled or we aren't on product page
-if (!$block->isBoltProductPage()) return;
+if (!$block->isBoltProductPage()) { return;
+}
 
-if (!$block->isSupportableType()) return;
+if (!$block->isSupportableType()) { return;
+}
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
     <script>
@@ -91,7 +94,7 @@ if (!$block->isSupportableType()) return;
                      * return void
                      */
                     var processSuccess = function (data) {
-                        customerData.invalidate('bolthints')
+                        customerData.invalidate(['bolthints']);
                         try {
                             if (typeof data !== 'undefined') {
                                 callbacks.success_url = data.success_url;
@@ -226,7 +229,7 @@ if (!$block->isSupportableType()) return;
                     items: [{
                         reference: '<?= $block->getProduct()->getId(); ?>',
                         price: itemPrice,
-                        name: '<?= addcslashes( $block->getProduct()->getName(), "'" ); ?>',
+                        name: '<?= addcslashes($block->getProduct()->getName(), "'"); ?>',
                         quantity: getQty(),
                         options: JSON.stringify(options)
                     }]

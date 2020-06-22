@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
@@ -121,82 +122,82 @@ JSON;
 
     private $regionFactory;
 
-	/**
-	 * @inheritdoc
-	 */
-	public function setUp()
-	{
-		$this->encryptor = $this->createMock(EncryptorInterface::class);
-		$this->moduleResource = $this->createMock(ModuleResource::class);
+    /**
+     * @inheritdoc
+     */
+    public function setUp()
+    {
+        $this->encryptor = $this->createMock(EncryptorInterface::class);
+        $this->moduleResource = $this->createMock(ModuleResource::class);
 
-		$this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
-		                          ->disableOriginalConstructor()
-		                          ->getMock();
+        $this->scopeConfig = $this->getMockBuilder(ScopeConfigInterface::class)
+                                  ->disableOriginalConstructor()
+                                  ->getMock();
 
-		$this->context = $this->getMockBuilder(Context::class)
-		                      ->disableOriginalConstructor()
-		                      ->setMethods(['getScopeConfig'])
-		                      ->getMock();
-		$this->context->method('getScopeConfig')->willReturn($this->scopeConfig);
+        $this->context = $this->getMockBuilder(Context::class)
+                              ->disableOriginalConstructor()
+                              ->setMethods(['getScopeConfig'])
+                              ->getMock();
+        $this->context->method('getScopeConfig')->willReturn($this->scopeConfig);
 
-		$this->productMetadata = $this->createMock(ProductMetadataInterface::class);
-		$this->request = $this->createMock(Request::class);
+        $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
+        $this->request = $this->createMock(Request::class);
 
-		$this->regionFactory = $this->createPartialMock(
-		    RegionFactory::class,
-                            ['create', 'load', 'getCode']
+        $this->regionFactory = $this->createPartialMock(
+            RegionFactory::class,
+            ['create', 'load', 'getCode']
         );
 
-		// prepare bolt config setting factory
-		$this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
-		$this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
-			return new BoltConfigSetting();
-		});
+        // prepare bolt config setting factory
+        $this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
+        $this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
+            return new BoltConfigSetting();
+        });
 
-		$methods = ['getScopeConfig'];
-		$this->initCurrentMock($methods);
+        $methods = ['getScopeConfig'];
+        $this->initCurrentMock($methods);
 
-		$this->currentMock->method('getScopeConfig')
-		                  ->willReturn($this->scopeConfig);
-	}
+        $this->currentMock->method('getScopeConfig')
+                          ->willReturn($this->scopeConfig);
+    }
 
-	/**
-	 * @param array $methods
-	 * @param bool $enableOriginalConstructor
-	 * @param bool $enableProxyingToOriginalMethods
-	 */
-	private function initCurrentMock(
-		$methods = [],
-		$enableOriginalConstructor = true,
-		$enableProxyingToOriginalMethods = false
-	) {
-		$builder = $this->getMockBuilder(BoltConfig::class)
-		                ->setConstructorArgs(
-			                [
-				                $this->context,
-				                $this->encryptor,
-				                $this->moduleResource,
-				                $this->productMetadata,
-				                $this->boltConfigSettingFactoryMock,
-				                $this->regionFactory
-			                ]
-		                )
-		                ->setMethods($methods);
+    /**
+     * @param array $methods
+     * @param bool $enableOriginalConstructor
+     * @param bool $enableProxyingToOriginalMethods
+     */
+    private function initCurrentMock(
+        $methods = [],
+        $enableOriginalConstructor = true,
+        $enableProxyingToOriginalMethods = false
+    ) {
+        $builder = $this->getMockBuilder(BoltConfig::class)
+                        ->setConstructorArgs(
+                            [
+                                $this->context,
+                                $this->encryptor,
+                                $this->moduleResource,
+                                $this->productMetadata,
+                                $this->boltConfigSettingFactoryMock,
+                                $this->regionFactory
+                            ]
+                        )
+                        ->setMethods($methods);
 
-		if ($enableOriginalConstructor) {
-			$builder->enableOriginalConstructor();
-		} else {
-			$builder->disableOriginalConstructor();
-		}
+        if ($enableOriginalConstructor) {
+            $builder->enableOriginalConstructor();
+        } else {
+            $builder->disableOriginalConstructor();
+        }
 
-		if ($enableProxyingToOriginalMethods) {
-			$builder->enableProxyingToOriginalMethods();
-		} else {
-			$builder->disableProxyingToOriginalMethods();
-		}
+        if ($enableProxyingToOriginalMethods) {
+            $builder->enableProxyingToOriginalMethods();
+        } else {
+            $builder->disableProxyingToOriginalMethods();
+        }
 
-		$this->currentMock = $builder->getMock();
-	}
+        $this->currentMock = $builder->getMock();
+    }
 
     /**
      * @test
@@ -209,7 +210,7 @@ JSON;
         $this->assertEquals($expected, $this->currentMock->getMerchantDashboardUrl());
     }
 
-    public function getMerchantDashboardUrlProvider ()
+    public function getMerchantDashboardUrlProvider()
     {
         return [
             [true, BoltConfig::MERCHANT_DASH_SANDBOX],
@@ -222,7 +223,7 @@ JSON;
      */
     public function getStoreVersion()
     {
-        $this->initCurrentMock([],true, true);
+        $this->initCurrentMock([], true, true);
 
         $magentoVersion = '2.2.3';
 
@@ -270,22 +271,22 @@ JSON;
         ];
     }
 
-	/**
-	 * @test
-	 */
-	public function getTitle()
-	{
-		$expected = 'Bolt Pay';
-		$this->scopeConfig
-			->expects(self::once())
-			->method('getValue')
-			->with(BoltConfig::XML_PATH_TITLE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-			->willReturn($expected);
-		$result = $this->currentMock->getTitle();
-		$this->assertEquals($expected, $result);
-	}
+    /**
+     * @test
+     */
+    public function getTitle()
+    {
+        $expected = 'Bolt Pay';
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_TITLE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn($expected);
+        $result = $this->currentMock->getTitle();
+        $this->assertEquals($expected, $result);
+    }
 
-	/**
+    /**
      * @test
      */
     public function getAnyPublishableKey()
@@ -364,7 +365,7 @@ JSON;
      * @param $validateCustomUrl
      * @param $expected
      */
-    public function getCdnUrl_devModeSet($validateCustomUrl,$expected)
+    public function getCdnUrl_devModeSet($validateCustomUrl, $expected)
     {
         $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
 
@@ -393,7 +394,8 @@ JSON;
         );
     }
 
-    public function dataProvider_getCdnUrl_devModeSet(){
+    public function dataProvider_getCdnUrl_devModeSet()
+    {
         return [
             [true, 'https://connect.bolt.me/'],
             [false,'https://connect-sandbox.bolt.com'],
@@ -522,7 +524,8 @@ JSON;
         );
     }
 
-    public function dataProvider_getApiUrl_devMode(){
+    public function dataProvider_getApiUrl_devMode()
+    {
         return [
             [true, 'https://api.bolt.me/'],
             [false,'https://api-sandbox.bolt.com/'],
@@ -874,7 +877,7 @@ JSON;
      *
      * @return mixed Method return.
      */
-    public function invokeInaccessibleMethod($object, $methodName, array $parameters = array())
+    public function invokeInaccessibleMethod($object, $methodName, array $parameters = [])
     {
         $reflection = new \ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);
@@ -890,160 +893,161 @@ JSON;
     public function isGuestCheckoutAllowed($boolean_value)
     {
         $this->scopeConfig->method('isSetFlag')
-            ->with('checkout/options/guest_checkout','store')
+            ->with('checkout/options/guest_checkout', 'store')
             ->willReturn($boolean_value);
         $result = $this->currentMock->isGuestCheckoutAllowed();
         $this->assertEquals($boolean_value, $result);
     }
 
-	public function providerTrueAndFalse() {
-		return [
-			[true],
-			[false],
-		];
-	}
+    public function providerTrueAndFalse()
+    {
+        return [
+            [true],
+            [false],
+        ];
+    }
 
-	/**
-	 * @test
-	 */
-	public function getAllConfigSettings()
-	{
-		$this->initCurrentMock([
-			'isActive',
-			'getTitle',
-			'getApiKey',
-			'getSigningSecret',
-			'getPublishableKeyCheckout',
-			'getPublishableKeyPayment',
-			'getPublishableKeyBackOffice',
-			'isSandboxModeSet',
-			'getIsPreAuth',
-			'getProductPageCheckoutFlag',
-			'getGeolocationApiKey',
-			'getReplaceSelectors',
-			'getTotalsChangeSelectors',
-			'getGlobalCSS',
-			'getAdditionalCheckoutButtonClass',
-			'getSuccessPageRedirect',
-			'getPrefetchShipping',
-			'getPrefetchAddressFields',
-			'getResetShippingCalculation',
-			'getJavascriptSuccess',
-			'isDebugModeOn',
-			'getAdditionalJS',
-			'getOnCheckoutStart',
-			'getOnEmailEnter',
-			'getOnShippingDetailsComplete',
-			'getOnShippingOptionsComplete',
-			'getOnPaymentSubmit',
-			'getOnSuccess',
-			'getOnClose',
-			'getAdditionalConfigString',
-			'getMinicartSupport',
-			'getIPWhitelistArray',
-			'useStoreCreditConfig',
-			'useRewardPointsConfig',
-			'displayRewardPointsInMinicartConfig',
-			'isPaymentOnlyCheckoutEnabled',
-			'isBoltOrderCachingEnabled',
-			'isSessionEmulationEnabled',
-			'shouldMinifyJavascript',
-			'shouldCaptureMetrics',
-			'shouldTrackCheckoutFunnel'
-		]);
-		$this->currentMock->method('isActive')->willReturn(true);
-		$this->currentMock->method('getTitle')->willReturn('bolt test title');
-		$this->currentMock->method('getApiKey')->willReturn('bolt test api key');
-		$this->currentMock->method('getSigningSecret')->willReturn('bolt test signing secret');
-		$this->currentMock->method('getPublishableKeyCheckout')->willReturn('bolt test publishable key - checkout');
-		$this->currentMock->method('getPublishableKeyPayment')->willReturn('bolt test publishable key - payment');
-		$this->currentMock->method('getPublishableKeyBackOffice')->willReturn('bolt test publishable key - back office');
-		$this->currentMock->method('isSandboxModeSet')->willReturn(true);
-		$this->currentMock->method('getIsPreAuth')->willReturn(true);
-		$this->currentMock->method('getProductPageCheckoutFlag')->willReturn(true);
-		$this->currentMock->method('getGeolocationApiKey')->willReturn('geolocation api key');
-		$this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
-		$this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
-		$this->currentMock->method('getGlobalCSS')->willReturn('#customerbalance-placer {width: 210px;}');
-		$this->currentMock->method('getAdditionalCheckoutButtonClass')->willReturn('with-cards');
-		$this->currentMock->method('getSuccessPageRedirect')->willReturn('checkout/onepage/success');
-		$this->currentMock->method('getPrefetchShipping')->willReturn(true);
-		$this->currentMock->method('getPrefetchAddressFields')->willReturn('77 Geary Street');
-		$this->currentMock->method('getResetShippingCalculation')->willReturn(false);
-		$this->currentMock->method('getJavascriptSuccess')->willReturn('// do nothing');
-		$this->currentMock->method('isDebugModeOn')->willReturn(false);
-		$this->currentMock->method('getAdditionalJS')->willReturn('// none');
-		$this->currentMock->method('getOnCheckoutStart')->willReturn('// on checkout start');
-		$this->currentMock->method('getOnEmailEnter')->willReturn('// on email enter');
-		$this->currentMock->method('getOnShippingDetailsComplete')->willReturn('// on shipping details complete');
-		$this->currentMock->method('getOnShippingOptionsComplete')->willReturn('// on shipping options complete');
-		$this->currentMock->method('getOnPaymentSubmit')->willReturn('// on payment submit');
-		$this->currentMock->method('getOnSuccess')->willReturn('// on success');
-		$this->currentMock->method('getOnClose')->willReturn('// on close');
-		$this->currentMock->method('getAdditionalConfigString')->willReturn('bolt additional config');
-		$this->currentMock->method('getMinicartSupport')->willReturn(true);
-		$this->currentMock->method('getIPWhitelistArray')->willReturn(['127.0.0.1', '0.0.0.0']);
-		$this->currentMock->method('useStoreCreditConfig')->willReturn(false);
-		$this->currentMock->method('useRewardPointsConfig')->willReturn(false);
-		$this->currentMock->method('displayRewardPointsInMinicartConfig')->willReturn(false);
-		$this->currentMock->method('isPaymentOnlyCheckoutEnabled')->willReturn(false);
-		$this->currentMock->method('isBoltOrderCachingEnabled')->willReturn(true);
-		$this->currentMock->method('isSessionEmulationEnabled')->willReturn(true);
-		$this->currentMock->method('shouldMinifyJavascript')->willReturn(true);
-		$this->currentMock->method('shouldCaptureMetrics')->willReturn(false);
-		$this->currentMock->method('shouldTrackCheckoutFunnel')->willReturn(false);
+    /**
+     * @test
+     */
+    public function getAllConfigSettings()
+    {
+        $this->initCurrentMock([
+            'isActive',
+            'getTitle',
+            'getApiKey',
+            'getSigningSecret',
+            'getPublishableKeyCheckout',
+            'getPublishableKeyPayment',
+            'getPublishableKeyBackOffice',
+            'isSandboxModeSet',
+            'getIsPreAuth',
+            'getProductPageCheckoutFlag',
+            'getGeolocationApiKey',
+            'getReplaceSelectors',
+            'getTotalsChangeSelectors',
+            'getGlobalCSS',
+            'getAdditionalCheckoutButtonClass',
+            'getSuccessPageRedirect',
+            'getPrefetchShipping',
+            'getPrefetchAddressFields',
+            'getResetShippingCalculation',
+            'getJavascriptSuccess',
+            'isDebugModeOn',
+            'getAdditionalJS',
+            'getOnCheckoutStart',
+            'getOnEmailEnter',
+            'getOnShippingDetailsComplete',
+            'getOnShippingOptionsComplete',
+            'getOnPaymentSubmit',
+            'getOnSuccess',
+            'getOnClose',
+            'getAdditionalConfigString',
+            'getMinicartSupport',
+            'getIPWhitelistArray',
+            'useStoreCreditConfig',
+            'useRewardPointsConfig',
+            'displayRewardPointsInMinicartConfig',
+            'isPaymentOnlyCheckoutEnabled',
+            'isBoltOrderCachingEnabled',
+            'isSessionEmulationEnabled',
+            'shouldMinifyJavascript',
+            'shouldCaptureMetrics',
+            'shouldTrackCheckoutFunnel'
+        ]);
+        $this->currentMock->method('isActive')->willReturn(true);
+        $this->currentMock->method('getTitle')->willReturn('bolt test title');
+        $this->currentMock->method('getApiKey')->willReturn('bolt test api key');
+        $this->currentMock->method('getSigningSecret')->willReturn('bolt test signing secret');
+        $this->currentMock->method('getPublishableKeyCheckout')->willReturn('bolt test publishable key - checkout');
+        $this->currentMock->method('getPublishableKeyPayment')->willReturn('bolt test publishable key - payment');
+        $this->currentMock->method('getPublishableKeyBackOffice')->willReturn('bolt test publishable key - back office');
+        $this->currentMock->method('isSandboxModeSet')->willReturn(true);
+        $this->currentMock->method('getIsPreAuth')->willReturn(true);
+        $this->currentMock->method('getProductPageCheckoutFlag')->willReturn(true);
+        $this->currentMock->method('getGeolocationApiKey')->willReturn('geolocation api key');
+        $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
+        $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
+        $this->currentMock->method('getGlobalCSS')->willReturn('#customerbalance-placer {width: 210px;}');
+        $this->currentMock->method('getAdditionalCheckoutButtonClass')->willReturn('with-cards');
+        $this->currentMock->method('getSuccessPageRedirect')->willReturn('checkout/onepage/success');
+        $this->currentMock->method('getPrefetchShipping')->willReturn(true);
+        $this->currentMock->method('getPrefetchAddressFields')->willReturn('77 Geary Street');
+        $this->currentMock->method('getResetShippingCalculation')->willReturn(false);
+        $this->currentMock->method('getJavascriptSuccess')->willReturn('// do nothing');
+        $this->currentMock->method('isDebugModeOn')->willReturn(false);
+        $this->currentMock->method('getAdditionalJS')->willReturn('// none');
+        $this->currentMock->method('getOnCheckoutStart')->willReturn('// on checkout start');
+        $this->currentMock->method('getOnEmailEnter')->willReturn('// on email enter');
+        $this->currentMock->method('getOnShippingDetailsComplete')->willReturn('// on shipping details complete');
+        $this->currentMock->method('getOnShippingOptionsComplete')->willReturn('// on shipping options complete');
+        $this->currentMock->method('getOnPaymentSubmit')->willReturn('// on payment submit');
+        $this->currentMock->method('getOnSuccess')->willReturn('// on success');
+        $this->currentMock->method('getOnClose')->willReturn('// on close');
+        $this->currentMock->method('getAdditionalConfigString')->willReturn('bolt additional config');
+        $this->currentMock->method('getMinicartSupport')->willReturn(true);
+        $this->currentMock->method('getIPWhitelistArray')->willReturn(['127.0.0.1', '0.0.0.0']);
+        $this->currentMock->method('useStoreCreditConfig')->willReturn(false);
+        $this->currentMock->method('useRewardPointsConfig')->willReturn(false);
+        $this->currentMock->method('displayRewardPointsInMinicartConfig')->willReturn(false);
+        $this->currentMock->method('isPaymentOnlyCheckoutEnabled')->willReturn(false);
+        $this->currentMock->method('isBoltOrderCachingEnabled')->willReturn(true);
+        $this->currentMock->method('isSessionEmulationEnabled')->willReturn(true);
+        $this->currentMock->method('shouldMinifyJavascript')->willReturn(true);
+        $this->currentMock->method('shouldCaptureMetrics')->willReturn(false);
+        $this->currentMock->method('shouldTrackCheckoutFunnel')->willReturn(false);
 
-		// check bolt settings
-		$expected = [
-			['active', 'true'],
-			['title', 'bolt test title'],
-			['api_key', 'bol***key'],
-			['signing_secret', 'bol***ret'],
-			['publishable_key_checkout', 'bolt test publishable key - checkout'],
-			['publishable_key_payment', 'bolt test publishable key - payment'],
-			['publishable_key_back_office', 'bolt test publishable key - back office'],
-			['sandbox_mode', 'true'],
-			['is_pre_auth', 'true'],
-			['product_page_checkout', 'true'],
-			['geolocation_api_key', 'geo***key'],
-			['replace_selectors', '#replace'],
-			['totals_change_selectors', '.totals'],
-			['global_css', '#customerbalance-placer {width: 210px;}'],
-			['additional_checkout_button_class', 'with-cards'],
-			['success_page', 'checkout/onepage/success'],
-			['prefetch_shipping', 'true'],
-			['prefetch_address_fields', '77 Geary Street'],
-			['reset_shipping_calculation', 'false'],
-			['javascript_success', '// do nothing'],
-			['debug', 'false'],
-			['additional_js', '// none'],
-			['track_on_checkout_start', '// on checkout start'],
-			['track_on_email_enter', '// on email enter'],
-			['track_on_shipping_details_complete', '// on shipping details complete'],
-			['track_on_shipping_options_complete', '// on shipping options complete'],
-			['track_on_payment_submit', '// on payment submit'],
-			['track_on_success', '// on success'],
-			['track_on_close', '// on close'],
-			['additional_config', 'bolt additional config'],
-			['minicart_support', 'true'],
-			['ip_whitelist', '127.0.0.1, 0.0.0.0'],
-			['store_credit', 'false'],
-			['reward_points', 'false'],
-			['reward_points_minicart', 'false'],
-			['enable_payment_only_checkout', 'false'],
-			['bolt_order_caching', 'true'],
-			['api_emulate_session', 'true'],
-			['should_minify_javascript', 'true'],
-			['capture_merchant_metrics', 'false'],
-			['track_checkout_funnel', 'false'],
-		];
-		$actual = $this->currentMock->getAllConfigSettings();
-		$this->assertEquals(41, count($actual));
-		for ($i = 0; $i < 2; $i ++) {
-			$this->assertEquals($expected[$i][0], $actual[$i]->getName());
-			$this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
-		}
-	}
+        // check bolt settings
+        $expected = [
+            ['active', 'true'],
+            ['title', 'bolt test title'],
+            ['api_key', 'bol***key'],
+            ['signing_secret', 'bol***ret'],
+            ['publishable_key_checkout', 'bolt test publishable key - checkout'],
+            ['publishable_key_payment', 'bolt test publishable key - payment'],
+            ['publishable_key_back_office', 'bolt test publishable key - back office'],
+            ['sandbox_mode', 'true'],
+            ['is_pre_auth', 'true'],
+            ['product_page_checkout', 'true'],
+            ['geolocation_api_key', 'geo***key'],
+            ['replace_selectors', '#replace'],
+            ['totals_change_selectors', '.totals'],
+            ['global_css', '#customerbalance-placer {width: 210px;}'],
+            ['additional_checkout_button_class', 'with-cards'],
+            ['success_page', 'checkout/onepage/success'],
+            ['prefetch_shipping', 'true'],
+            ['prefetch_address_fields', '77 Geary Street'],
+            ['reset_shipping_calculation', 'false'],
+            ['javascript_success', '// do nothing'],
+            ['debug', 'false'],
+            ['additional_js', '// none'],
+            ['track_on_checkout_start', '// on checkout start'],
+            ['track_on_email_enter', '// on email enter'],
+            ['track_on_shipping_details_complete', '// on shipping details complete'],
+            ['track_on_shipping_options_complete', '// on shipping options complete'],
+            ['track_on_payment_submit', '// on payment submit'],
+            ['track_on_success', '// on success'],
+            ['track_on_close', '// on close'],
+            ['additional_config', 'bolt additional config'],
+            ['minicart_support', 'true'],
+            ['ip_whitelist', '127.0.0.1, 0.0.0.0'],
+            ['store_credit', 'false'],
+            ['reward_points', 'false'],
+            ['reward_points_minicart', 'false'],
+            ['enable_payment_only_checkout', 'false'],
+            ['bolt_order_caching', 'true'],
+            ['api_emulate_session', 'true'],
+            ['should_minify_javascript', 'true'],
+            ['capture_merchant_metrics', 'false'],
+            ['track_checkout_funnel', 'false'],
+        ];
+        $actual = $this->currentMock->getAllConfigSettings();
+        $this->assertEquals(41, count($actual));
+        for ($i = 0; $i < 2; $i ++) {
+            $this->assertEquals($expected[$i][0], $actual[$i]->getName());
+            $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
+        }
+    }
 
     /**
      * @test
@@ -1064,7 +1068,8 @@ JSON;
      * @test
      * @covers ::getPickupCityConfiguration
      */
-    public function getPickupCityConfiguration() {
+    public function getPickupCityConfiguration()
+    {
         $this->scopeConfig
             ->expects(self::once())
             ->method('getValue')
@@ -1112,7 +1117,8 @@ JSON;
      * @covers ::isPickupInStoreShippingMethodCode
      * @dataProvider providerGetPickupShippingMethodCode
      */
-    public function isPickupInStoreShippingMethodCode($isStorePickFeatureEnabled , $method, $expected) {
+    public function isPickupInStoreShippingMethodCode($isStorePickFeatureEnabled, $method, $expected)
+    {
         $this->scopeConfig
             ->expects(self::any())
             ->method('getValue')
@@ -1129,7 +1135,8 @@ JSON;
         $this->assertEquals($expected, $result);
     }
 
-    public function providerGetPickupShippingMethodCode() {
+    public function providerGetPickupShippingMethodCode()
+    {
         return [
             [false, 'instorepickup_instorepickup', false],
             [true, 'instorepickup_instorepickup', true],
@@ -1157,7 +1164,8 @@ JSON;
      * @test
      * @covers ::getPickupAddressData
      */
-    public function getPickupAddressData() {
+    public function getPickupAddressData()
+    {
         $this->scopeConfig
             ->expects(self::exactly(6))
             ->method('getValue')
@@ -1193,7 +1201,9 @@ JSON;
                 'region_id' => '56',
                 'street' => '4535 ANNALEE Way
 Room 4000',
-            ], $result);
+            ],
+            $result
+        );
     }
 
     /**
@@ -1205,12 +1215,14 @@ Room 4000',
      * @param $expected
      * @throws \ReflectionException
      */
-    public function validateCustomUrl($url, $expected){
-       $result = TestHelper::invokeMethod($this->currentMock,'validateCustomUrl', [$url]);
-       $this->assertEquals($expected, $result);
+    public function validateCustomUrl($url, $expected)
+    {
+        $result = TestHelper::invokeMethod($this->currentMock, 'validateCustomUrl', [$url]);
+        $this->assertEquals($expected, $result);
     }
 
-    public function providerValidateCustomUrl(){
+    public function providerValidateCustomUrl()
+    {
         return [
             ['https://test.bolt.me', true],
             ['https://test.bolt.me/', true],

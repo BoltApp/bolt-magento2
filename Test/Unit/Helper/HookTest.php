@@ -90,7 +90,7 @@ class HookTest extends TestCase
      */
     private $response;
 
-    public function initCurrentMock($methods=null)
+    public function initCurrentMock($methods = null)
     {
         $this->context = $this->createMock(Context::class);
         $this->request = $this->createMock(Request::class);
@@ -124,10 +124,10 @@ class HookTest extends TestCase
      */
     public function verifySignature_correctSignature()
     {
-        $hmac_header = SELF::CORRECT_HMAC;
+        $hmac_header = self::CORRECT_HMAC;
         $this->initCurrentMock(['computeSignature']);
-        $this->currentMock->method('computeSignature')->with(SELF::PAYLOAD)->willReturn(SELF::CORRECT_HMAC);
-        $this->assertTrue($this->currentMock->verifySignature(SELF::PAYLOAD, $hmac_header));
+        $this->currentMock->method('computeSignature')->with(self::PAYLOAD)->willReturn(self::CORRECT_HMAC);
+        $this->assertTrue($this->currentMock->verifySignature(self::PAYLOAD, $hmac_header));
     }
 
     /**
@@ -135,10 +135,10 @@ class HookTest extends TestCase
      */
     public function verifySignature_incorrectSignature()
     {
-        $hmac_header = SELF::INCORRECT_HMAC;
+        $hmac_header = self::INCORRECT_HMAC;
         $this->initCurrentMock(['computeSignature']);
-        $this->currentMock->method('computeSignature')->with(SELF::PAYLOAD)->willReturn(SELF::CORRECT_HMAC);
-        $this->assertFalse($this->currentMock->verifySignature(SELF::PAYLOAD, $hmac_header));
+        $this->currentMock->method('computeSignature')->with(self::PAYLOAD)->willReturn(self::CORRECT_HMAC);
+        $this->assertFalse($this->currentMock->verifySignature(self::PAYLOAD, $hmac_header));
     }
 
     /**
@@ -151,12 +151,13 @@ class HookTest extends TestCase
         $this->configHelper->method('getSigningSecret')->with(self::STORE_ID)->willReturn('signing_secret');
 
         $expected_signature = base64_encode(hash_hmac('sha256', self::PAYLOAD, 'signing_secret', true));
-        $this->assertEquals($expected_signature,$this->currentMock->computeSignature(self::PAYLOAD));
+        $this->assertEquals($expected_signature, $this->currentMock->computeSignature(self::PAYLOAD));
     }
 
-    private function verifyWebhook_adjustRequestMock() {
-        $this->request->expects($this->once())->method('getContent')->willReturn(SELF::PAYLOAD);
-        $this->request->expects($this->once())->method('getHeader')->with('X-Bolt-Hmac-Sha256')->willReturn(SELF::CORRECT_HMAC);
+    private function verifyWebhook_adjustRequestMock()
+    {
+        $this->request->expects($this->once())->method('getContent')->willReturn(self::PAYLOAD);
+        $this->request->expects($this->once())->method('getHeader')->with('X-Bolt-Hmac-Sha256')->willReturn(self::CORRECT_HMAC);
     }
 
     /**
@@ -165,13 +166,14 @@ class HookTest extends TestCase
     public function verifyWebhook_whenVerifySignatureIsTrue()
     {
         $this->initCurrentMock(['verifySignature']);
-        $this->currentMock->method('verifySignature')->with(SELF::PAYLOAD,SELF::CORRECT_HMAC)->willReturn(true);
+        $this->currentMock->method('verifySignature')->with(self::PAYLOAD, self::CORRECT_HMAC)->willReturn(true);
         $this->verifyWebhook_adjustRequestMock();
         $this->currentMock->verifyWebhook();
         // no exception
     }
 
-    public function verifyWebhook_dataProvider() {
+    public function verifyWebhook_dataProvider()
+    {
         return [
             [200],
             [422]
@@ -185,7 +187,7 @@ class HookTest extends TestCase
     public function verifyWebhook_whenVerifySignatureIsFalse($answerCode)
     {
         $this->initCurrentMock(['verifySignature','getStoreId']);
-        $this->currentMock->method('verifySignature')->with(SELF::PAYLOAD,SELF::CORRECT_HMAC)->willReturn(false);
+        $this->currentMock->method('verifySignature')->with(self::PAYLOAD, self::CORRECT_HMAC)->willReturn(false);
         $this->currentMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $this->verifyWebhook_adjustRequestMock();
@@ -196,11 +198,11 @@ class HookTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory->method('create')->willReturn($requestData);
-        $requestData->expects($this->once())->method('setApiData')->with(json_decode(SELF::PAYLOAD));
+        $requestData->expects($this->once())->method('setApiData')->with(json_decode(self::PAYLOAD));
         $requestData->expects($this->once())->method('setDynamicApiUrl')->with('merchant/verify_signature');
         $this->configHelper->method('getApiKey')->with(self::STORE_ID)->willReturn('ApiKey');
         $requestData->expects($this->once())->method('setApiKey')->with('ApiKey');
-        $requestData->expects($this->once())->method('setHeaders')->with(['X-Bolt-Hmac-Sha256'=>SELF::CORRECT_HMAC]);
+        $requestData->expects($this->once())->method('setHeaders')->with(['X-Bolt-Hmac-Sha256'=>self::CORRECT_HMAC]);
         $requestData->expects($this->once())->method('setStatusOnly')->with(true);
 
         $request =  $this->createMock(BoltRequest::class);
@@ -209,12 +211,12 @@ class HookTest extends TestCase
 
         $this->verifyWebhook_adjustRequestMock();
         // should return exception for any answerCode except 200
-        try{
+        try {
             $this->currentMock->verifyWebhook();
             if ($answerCode<>200) {
                 $this->fail("Expected exception not thrown");
             }
-        }catch(WebapiException $e){
+        } catch (WebapiException $e) {
             if ($answerCode==200) {
                 $this->fail("Unexpected exception");
             }
@@ -226,7 +228,8 @@ class HookTest extends TestCase
     /**
      * @test
      */
-    public function setCommonMetaData() {
+    public function setCommonMetaData()
+    {
         $this->initCurrentMock(null);
         $this->request->method('getHeader')->with('X-bolt-trace-id')->willReturn(self::BOLT_TRACE_ID);
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
@@ -238,7 +241,8 @@ class HookTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->currentMock->setCommonMetaData();
     }
 
@@ -264,11 +268,12 @@ class HookTest extends TestCase
     /**
      * @test
      */
-    public function setAndGetStoreId() {
+    public function setAndGetStoreId()
+    {
         $this->initCurrentMock(null);
         $this->assertNull($this->currentMock->getStoreId());
         $this->currentMock->setStoreId(self::STORE_ID);
-        $this->assertEquals(self::STORE_ID,$this->currentMock->getStoreId());
+        $this->assertEquals(self::STORE_ID, $this->currentMock->getStoreId());
     }
 
     /**
@@ -286,4 +291,3 @@ class HookTest extends TestCase
         $this->currentMock->preProcessWebhook(self::STORE_ID);
     }
 }
-

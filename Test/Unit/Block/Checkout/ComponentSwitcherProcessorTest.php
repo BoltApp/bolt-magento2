@@ -63,6 +63,4 @@ class ComponentSwitcherProcessorTest extends TestCase
             ['children']['renders']['children']['boltpay-payments']['config']['componentDisabled']
         );
     }
-
-
 }

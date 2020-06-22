@@ -18,8 +18,10 @@
 /**
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
-if (!$block->shouldTrackCheckoutFunnel()) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
+if (!$block->shouldTrackCheckoutFunnel()) { return;
+}
 ?>
 
 <script type="text/x-magento-init"> { "*" : { "Bolt_Boltpay/js/track-checkout" : {} } } </script>

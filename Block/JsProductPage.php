@@ -32,7 +32,8 @@ use Magento\Catalog\Block\Product\View as ProductView;
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
-class JsProductPage extends Js {
+class JsProductPage extends Js
+{
 
     /**
      * @var \Magento\Catalog\Model\Product
@@ -51,7 +52,7 @@ class JsProductPage extends Js {
     ) {
         $this->_product = $productView->getProduct();
 
-        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
+        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
     }
 
     /**

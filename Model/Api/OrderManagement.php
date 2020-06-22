@@ -30,6 +30,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+
 /**
  * Class OrderManagement
  * Web hook endpoint. Save the order / Update order and payment status.
@@ -171,7 +172,7 @@ class OrderManagement implements OrderManagementInterface
             $this->hookHelper->preProcessWebhook($storeId);
 
             if ($type === 'pending') {
-                $this->orderHelper->saveCustomerCreditCard($display_id, $reference,$storeId);
+                $this->orderHelper->saveCustomerCreditCard($display_id, $reference, $storeId);
             }
 
             if ($type == 'cart.create') {
@@ -267,7 +268,8 @@ class OrderManagement implements OrderManagementInterface
     /**
      * @param $message
      */
-    private function setSuccessResponse($message) {
+    private function setSuccessResponse($message)
+    {
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',

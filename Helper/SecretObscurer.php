@@ -24,20 +24,20 @@ namespace Bolt\Boltpay\Helper;
  */
 class SecretObscurer
 {
-	/**
-	 * Obscures the input string.
-	 *
-	 * @param string $input
-	 * @return string
-	 */
-	public static function obscure($input)
-	{
-		if (strlen($input) == 0) {
-			return '';
-		}
-		if (strlen($input) < 6) {
-			return '***';
-		}
-		return substr($input, 0, 3) . '***' . substr($input, -3);
-	}
+    /**
+     * Obscures the input string.
+     *
+     * @param string $input
+     * @return string
+     */
+    public static function obscure($input)
+    {
+        if (strlen($input) == 0) {
+            return '';
+        }
+        if (strlen($input) < 6) {
+            return '***';
+        }
+        return substr($input, 0, 3) . '***' . substr($input, -3);
+    }
 }

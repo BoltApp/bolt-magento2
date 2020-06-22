@@ -20,8 +20,6 @@ namespace Bolt\Boltpay\Controller\Cart;
 /**
  * Class CheckoutConfig
  * Retrieve checkout config consumed by minicart addons {@see \Bolt\Boltpay\ViewModel\MinicartAddons}
- *
- * @package Bolt\Boltpay\Controller\Cart
  */
 class CheckoutConfig extends \Magento\Framework\App\Action\Action
 {

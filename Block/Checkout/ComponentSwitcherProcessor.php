@@ -21,8 +21,6 @@ use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
 /**
  * Class ComponentSwitcherProcessor
  * Enable / disable components in the checkout page layout depending on the configuration.
- *
- * @package Bolt\Boltpay\Block\Checkout\Cart
  */
 class ComponentSwitcherProcessor extends LayoutProcessor
 {
@@ -32,7 +30,8 @@ class ComponentSwitcherProcessor extends LayoutProcessor
      * @param array $jsLayout
      * @return array
      */
-    public function process($jsLayout) {
+    public function process($jsLayout)
+    {
         // Payment only checkout based on Magento default one-page checkpout
         // (one-page checkout, Mageplaza one-step checkout etc.)
         $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']

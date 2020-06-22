@@ -259,8 +259,16 @@ class ShippingMethods implements ShippingMethodsInterface
             @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
+        $total = $this->quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $sku = trim($giftWrapping->getCode());
+            @$quoteItems['quantity'][$sku] += 1;
+            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
+        }
+
         if (!$quoteItems) {
-            throw new BoltException (
+            throw new BoltException(
                 __('The cart is empty. Please reload the page and checkout again.'),
                 null,
                 6103
@@ -271,8 +279,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->bugsnag->registerCallback(function ($report) use ($cart, $cartItems, $quoteItems) {
 
                 list($quoteItemData) = $this->cartHelper->getCartItems(
-                    $this->quote->getQuoteCurrencyCode(),
-                    $this->quote->getAllVisibleItems(),
+                    $this->quote,
                     $this->quote->getStoreId()
                 );
 
@@ -285,7 +292,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     ]
                 ]);
             });
-            throw new BoltException (
+            throw new BoltException(
                 __('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
                 null,
                 6103
@@ -383,7 +390,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             /** @var \Magento\Quote\Model\Quote $parentQuote */
             $parentQuote = $this->getQuoteById($cart['order_reference']);
-            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())){
+            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())) {
                 $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
                 $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
 
@@ -463,7 +470,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($quote->getAmrewardsPoint()) {
             $data .= $quote->getAmrewardsPoint();
         }
-        if($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)){
+        if ($rewardsAmount = $this->discountHelper->getMirasvitRewardsAmount($quote)) {
             $data .=$rewardsAmount;
         }
         return $data;
@@ -678,7 +685,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $shippingAddress->setShippingMethod($method);
             // Since some types of coupon only work with specific shipping options,
             // for each shipping option, it need to recalculate the shipping discount amount
-            if( ! empty($appliedQuoteCouponCode) ){
+            if (! empty($appliedQuoteCouponCode)) {
                 $shippingAddress->setCollectShippingRates(true)
                                 ->collectShippingRates()->save();
                 $quote->setCouponCode('')->collectTotals()->save();
@@ -686,7 +693,7 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
-            if($this->doesDiscountApplyToShipping($quote)){
+            if ($this->doesDiscountApplyToShipping($quote)) {
                 /**
                  * Unset values for shipping_amount_for_discount and base_shipping_amount_for_discount to allow
                  * @see \Magento\SalesRule\Model\Validator::processShippingAmount
@@ -814,16 +821,17 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param $quote
      * @return bool
      */
-    protected function doesDiscountApplyToShipping($quote){
+    protected function doesDiscountApplyToShipping($quote)
+    {
         $appliedRuleIds = $quote->getAppliedRuleIds();
         if ($appliedRuleIds) {
             foreach (explode(',', $appliedRuleIds) as $appliedRuleId) {
-                try{
+                try {
                     $rule = $this->ruleFactory->create()->load($appliedRuleId);
                     if ($rule->getApplyToShipping()) {
                         return true;
                     }
-                }catch (\Throwable $exception){
+                } catch (\Throwable $exception) {
                     $this->bugsnag->notifyException($exception);
                 }
             }

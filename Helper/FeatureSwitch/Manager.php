@@ -33,7 +33,8 @@ use \Magento\Framework\Exception\LocalizedException;
  *
  * @package Bolt\Boltpay\Helper\FeatureSwitch
  */
-class Manager extends AbstractHelper {
+class Manager extends AbstractHelper
+{
 
     /**
      * @var GQL
@@ -67,10 +68,11 @@ class Manager extends AbstractHelper {
      *
      * @throws LocalizedException
      */
-    public function updateSwitchesFromBolt() {
+    public function updateSwitchesFromBolt()
+    {
         $switchesResponse = $this->gql->getFeatureSwitches();
 
-        $switches = array();
+        $switches = [];
         if ($switchesResponse->getData()) {
             $data = $switchesResponse->getData();
             $switches = @$data["response"]->data->plugin->features;

@@ -83,7 +83,8 @@ class RechargeCustomerTest extends TestCase
         $this->initCurrentMock();
     }
 
-    private function initRequiredMocks(){
+    private function initRequiredMocks()
+    {
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getParam'])
@@ -125,7 +126,8 @@ class RechargeCustomerTest extends TestCase
             ->getMock();
     }
 
-    private function initCurrentMock(){
+    private function initCurrentMock()
+    {
         $this->rechargeCustomerMock = $this->getMockBuilder(RechargeCustomer::class)
             ->setConstructorArgs([
                 $this->bugsnagMock,
@@ -209,5 +211,4 @@ class RechargeCustomerTest extends TestCase
         $this->expectExceptionMessage('Error');
         $this->rechargeCustomerMock->execute($this->observerMock);
     }
-
 }

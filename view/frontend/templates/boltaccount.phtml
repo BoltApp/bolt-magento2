@@ -20,9 +20,12 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) return;
-if (!$block->isOrderManagementEnabled()) return;
-if ($block->isBlockAlreadyShown('account')) return;
+if ($block->shouldDisableBoltCheckout()) { return;
+}
+if (!$block->isOrderManagementEnabled()) { return;
+}
+if ($block->isBlockAlreadyShown('account')) { return;
+}
 $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>

@@ -17,10 +17,6 @@
 
 namespace Bolt\Boltpay\Cron;
 
-/**
- * Class DeleteOldWebHookLogs
- * @package Bolt\Boltpay\Cron
- */
 class DeleteOldWebHookLogs
 {
     /**

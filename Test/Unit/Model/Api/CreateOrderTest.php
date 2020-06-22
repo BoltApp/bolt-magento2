@@ -183,7 +183,8 @@ class CreateOrderTest extends TestCase
                 'isVirtual',
                 'getShippingAddress',
                 'getQuoteCurrencyCode',
-                'getBoltCheckoutType'
+                'getBoltCheckoutType',
+                'getTotals'
             ]);
         $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
@@ -220,7 +221,8 @@ class CreateOrderTest extends TestCase
                 'getGrandTotal',
                 'getStore',
                 'getStoreId',
-            ]);
+            ]
+        );
         $storeMock = $this->getMockBuilder(Store::class)
             ->setMethods(['setCurrentCurrencyCode'])
             ->disableOriginalConstructor()
@@ -235,7 +237,7 @@ class CreateOrderTest extends TestCase
             [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
         ]);
 
-        $this->orderMock = $this->createPartialMock(Order::class,['getData','getIncrementId','getGrandTotal']);
+        $this->orderMock = $this->createPartialMock(Order::class, ['getData','getIncrementId','getGrandTotal']);
 
         $this->request->expects(self::any())->method('getContent')->willReturn($this->getRequestContent());
     }
@@ -307,12 +309,14 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_MINIMUM_PRICE_NOT_MET);
         $this->expectExceptionMessage(
             sprintf(
-                'The minimum order amount: %s has not being met.', static::MINIMUM_ORDER_AMOUNT
+                'The minimum order amount: %s has not being met.',
+                static::MINIMUM_ORDER_AMOUNT
             )
         );
         $this->currentMock->validateMinimumAmount($this->quoteMock);
@@ -359,7 +363,8 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Total amount does not match.');
@@ -383,7 +388,10 @@ class CreateOrderTest extends TestCase
         $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
         $this->logHelper->expects(self::any())->method('addInfoLog')
             ->withConsecutive(
-                ['[-= Pre-Auth CreateOrder =-]'], [$this->getRequestContent()], ['[-= getReceivedUrl =-]'], ['---> ']
+                ['[-= Pre-Auth CreateOrder =-]'],
+                [$this->getRequestContent()],
+                ['[-= getReceivedUrl =-]'],
+                ['---> ']
             );
         $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
         $this->orderHelper->expects(self::once())->method('prepareQuote')
@@ -408,7 +416,8 @@ class CreateOrderTest extends TestCase
 
 
         $this->currentMock->expects(self::once())->method('sendResponse')->with(
-            200, [
+            200,
+            [
                 'display_id'   => 'XXXXX / 456',
                 'message'   => 'Order create was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"11.00"}',
                 'order_received_url'   => '',
@@ -512,6 +521,8 @@ class CreateOrderTest extends TestCase
         $this->quoteMock->expects(self::once())->method('validateMinimumAmount')
             ->willReturn(true);
         $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(74);
+        $this->quoteMock->expects(self::once())->method('getTotals')->willReturnSelf();
+
         $this->orderHelper->expects(self::once())->method('processNewOrder')
             ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
 
@@ -725,7 +736,8 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
         $this->expectExceptionMessage(sprintf('There is no quote with ID: %s', $quoteId));
@@ -779,7 +791,8 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_OUT_OF_INVENTORY);
         $this->expectExceptionMessage($message);
@@ -834,7 +847,8 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
         $this->expectExceptionMessage('Price does not match. Item sku: ' . $itemSku);
@@ -863,7 +877,8 @@ class CreateOrderTest extends TestCase
                     ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Cart Tax mismatched.');
@@ -893,7 +908,8 @@ class CreateOrderTest extends TestCase
                         ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
         $this->expectExceptionMessage(
@@ -946,7 +962,8 @@ class CreateOrderTest extends TestCase
                         ]
                 ]);
                 $fn($reportMock);
-            });
+            }
+        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
         $this->expectExceptionMessage(
