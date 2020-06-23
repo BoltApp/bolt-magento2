@@ -1518,7 +1518,7 @@ if (!$block->isSaveCartInSections()) { ?>
                     // re-create order in case checkout was closed
                     // after order was changed from inside the checkout,
                     // i.e. the discount was applied
-                    customerData.reload(['boltcart'], true);
+                    invalidateBoltCart();
                 }
             },
 
@@ -1695,9 +1695,37 @@ if (!$block->isSaveCartInSections()) { ?>
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var wasConfigureCalled = false;
+        var waitingForResolvingPromises = false;
         var oldBoltCartValue = "";
         var BC;
+        var hintBarrier;
+        var cartBarrier;
+        var countConfigureCalls = 0;
+
+        var callConfigureWithPromises = function() {
+            cartBarrier = boltBarrier();
+            hintBarrier = boltBarrier();
+            BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+            waitingForResolvingPromises = true;
+            countConfigureCalls++;
+            var localCallNumber = countConfigureCalls;
+            // invalidate bolt cart if we didn't resolve promises for some reasons
+            setTimeout(function () {
+                if (waitingForResolvingPromises && (localCallNumber === countConfigureCalls)) {
+                    customerData.reload(['boltcart'], true);
+                }
+            }, 5000);
+        }
+
+        var invalidateBoltCart = function() {
+            customerData.reload(['boltcart'], true);
+            callConfigureWithPromises();
+        }
+
+        if (getCheckoutType() !== 'payment') {
+            callConfigureWithPromises();
+        }
+
         var createOrder = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
@@ -1757,7 +1785,7 @@ if (!$block->isSaveCartInSections()) { ?>
                 }
                 params = params.join('&');
 
-                var hintBarrier = boltBarrier();
+                hintBarrier = boltBarrier();
 
                 cart = new Promise(function (resolve, reject) {
 
@@ -1821,9 +1849,6 @@ if (!$block->isSaveCartInSections()) { ?>
                         BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
-            var hintBarrier = boltBarrier();
-            var cartBarrier = boltBarrier();
-
             customerData.get('boltcart').subscribe(function(data) {
                 cart = data.cart !== undefined ? data.cart : {};
                 if (JSON.stringify(cart) === oldBoltCartValue) {
@@ -1850,10 +1875,10 @@ if (!$block->isSaveCartInSections()) { ?>
                         // When we call configure with promises we don't know if cart is empty or not
                         // If we set always_present_checkout when we call configure with promises
                         // always present button is appear even if cart is empty
-                        if (oldBoltCartValue === "" && !boltConfig.always_present_checkout) {
-                            // resolve promises for initial .configure() call
+                        if (waitingForResolvingPromises && !boltConfig.always_present_checkout) {
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
+                            waitingForResolvingPromises = false;
                         } else {
                             if (boltConfig.always_present_checkout) {
                                 boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
@@ -1874,11 +1899,6 @@ if (!$block->isSaveCartInSections()) { ?>
                         // prefetch Shipping and Tax for multi-step checkout
                         prefetchShipping();
                     });
-
-            if (!wasConfigureCalled) {
-                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks, boltCheckoutConfig);
-                wasConfigureCalled = true;
-            }
         }
         }
         /////////////////////////////////////////////////////
@@ -1985,7 +2005,7 @@ if (!$block->isSaveCartInSections()) { ?>
                         // call it again to set up the button. Skip if BoltCheckout is not available,
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
-                        if (window.BoltCheckout) {
+                        if (window.BoltCheckout && !waitingForResolvingPromises) {
                             BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
@@ -2063,7 +2083,7 @@ if (!$block->isSaveCartInSections()) { ?>
                 return;
             }
             var new_hints = JSON.stringify(hints);
-            if (old_hints !== new_hints) {
+            if ((old_hints !== new_hints) && !waitingForResolvingPromises) {
                 BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
@@ -2165,15 +2185,29 @@ if (!$block->isSaveCartInSections()) { ?>
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
 
-        // When item added to cart, set flag to animate always present button when we catch cart updating
-        if (boltConfig.always_present_checkout) {
-            $(document).on("ajax:addToCart", function () {
+        // When we know that cart will be updated soon we call configure with promises
+        // to make sure bolt checkout with outdated cart isn't available for user
+        $(document).on("ajax:addToCart", function () {
+            callConfigureWithPromises();
+            // set flag to animate always present button when we catch cart updating
+            if (boltConfig.always_present_checkout) {
                 newItemAddedToCart = true;
-            });
-        }
+            }
+        });
+        $(document).on("ajax:addToCart:error", function () {
+            invalidateBoltCart();
+        });
+        $(document).on("ajax:updateCartItemQty", function () {
+            callConfigureWithPromises();
+        });
+        $(document).on("ajax:removeFromCart", function () {
+            callConfigureWithPromises();
+        });
 
         // globally register createOrder to be called from all templates, which is triggered by invalidating the customer section
-        $(document).on('bolt:createOrder', function () {customerData.reload(['boltcart'], true);});
+        $(document).on('bolt:createOrder', function () {
+            invalidateBoltCart();
+        });
 
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
