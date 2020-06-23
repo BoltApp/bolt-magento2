@@ -1878,7 +1878,6 @@ if (!$block->isSaveCartInSections()) { ?>
                         if (waitingForResolvingPromises && !boltConfig.always_present_checkout) {
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
-                            waitingForResolvingPromises = false;
                         } else {
                             if (boltConfig.always_present_checkout) {
                                 boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
@@ -1887,6 +1886,7 @@ if (!$block->isSaveCartInSections()) { ?>
                             // reconfigure bolt checkout with new values
                             BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
+                        waitingForResolvingPromises = false;
                         oldBoltCartValue = JSON.stringify(cart);
 
                         // open the checkout if auto-open flag is set
