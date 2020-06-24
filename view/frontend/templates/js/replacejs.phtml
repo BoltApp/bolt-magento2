@@ -1851,7 +1851,7 @@ if (!$block->isSaveCartInSections()) { ?>
             } else {
             customerData.get('boltcart').subscribe(function(data) {
                 cart = data.cart !== undefined ? data.cart : {};
-                if (JSON.stringify(cart) === oldBoltCartValue) {
+                if ((JSON.stringify(cart) === oldBoltCartValue) && !waitingForResolvingPromises) {
                     return;
                 }
 
