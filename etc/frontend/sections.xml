@@ -43,4 +43,11 @@
         <section name="boltcart"/>
     </action>
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <action name="rest/*/V1/guest-carts/*/gift-message">
+        <section name="boltcart"/>
+    </action>
+    <action name="rest/*/V1/carts/mine/gift-message">
+        <section name="boltcart"/>
+    </action>
+
 </config>

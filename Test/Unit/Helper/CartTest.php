@@ -135,6 +135,8 @@ class CartTest extends TestCase
 
     const HINT = 'hint!';
 
+    const GIFT_MESSAGE_ID = '122';
+
     /** @var array Address data containing all required fields */
     const COMPLETE_ADDRESS_DATA = [
         'first_name'      => "Bolt",
@@ -353,7 +355,7 @@ class CartTest extends TestCase
             'getTotals','getStore','getStoreId',
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
-            'assignCustomer','setIsActive'
+            'assignCustomer','setIsActive','getGiftMessageId'
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -1172,6 +1174,31 @@ class CartTest extends TestCase
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
         static::assertEquals(md5(json_encode($testCartData) . $addressCacheIdentifier), $result);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getCartCacheIdentifier
+     * @throws ReflectionException
+     */
+    public function getCartCacheIdentifier_withGiftMessageID_returnsCartCacheIdentifier()
+    {
+        $currentMock = $this->getCurrentMock(
+            [
+                'convertCustomAddressFieldsToCacheIdentifier',
+                'getLastImmutableQuote',
+            ]
+        );
+        $testCartData = $this->getTestCartData();
+        $addressCacheIdentifier = 'Test_Test_Test';
+        $this->quoteMock->expects(static::once())->method('getGiftMessageId')->willReturn(self::GIFT_MESSAGE_ID);
+        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
+        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
+        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        unset($testCartData['display_id']);
+        static::assertEquals(md5(json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
     }
 
     /**
