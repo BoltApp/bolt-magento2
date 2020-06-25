@@ -1703,6 +1703,9 @@ if (!$block->isSaveCartInSections()) { ?>
         var countConfigureCalls = 0;
 
         var callConfigureWithPromises = function() {
+            if (waitingForResolvingPromises) {
+                return;
+            }
             cartBarrier = boltBarrier();
             hintBarrier = boltBarrier();
             BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
@@ -1719,9 +1722,7 @@ if (!$block->isSaveCartInSections()) { ?>
 
         var invalidateBoltCart = function() {
             customerData.reload(['boltcart'], true);
-            if (!waitingForResolvingPromises) {
-                callConfigureWithPromises();
-            }
+            callConfigureWithPromises();
         }
 
         var magentoCart;
