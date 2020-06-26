@@ -1184,6 +1184,22 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Bolt additional configuration for Price Mismatch adjustment, stored in the following format:
+     *
+     * {
+     *    "priceFaultTolerance": "1"
+     * }
+     *
+     * @param null $storeId
+     *
+     * @return string
+     */
+    public function getPriceFaultTolerance($storeId = null)
+    {
+        return (int) $this->getAdditionalConfigProperty('priceFaultTolerance', $storeId) ?: Order::MISMATCH_TOLERANCE;
+    }
+
+    /**
      * Get Client IP Whitelist from config
      *
      * @param int|string $storeId

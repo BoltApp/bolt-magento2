@@ -627,6 +627,17 @@ class Order extends AbstractHelper
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
+
+        if ($this->configHelper->getPriceFaultTolerance()) {
+            /////////////////////////////////////////////////////////////////////////
+            /// Historically, we have honored a price tolerance of 1 cent on
+            /// an order due calculations outside of the Magento framework context
+            /// for discounts, shipping and tax.  We must still respect this feature
+            /// and adjust the order final price according to fault tolerance which
+            /// will now default to 1 cent unless a hidden option overrides this value
+            /////////////////////////////////////////////////////////////////////////
+            $this->adjustPriceMismatch($transaction, $order, $quote);
+        }
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
@@ -638,6 +649,42 @@ class Order extends AbstractHelper
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
         $order->save();
+    }
+
+    /**
+     * @param $transaction
+     * @param OrderModel $order
+     * @param Quote $quote
+     * @throws \Exception
+     */
+    private function adjustPriceMismatch($transaction, $order, $quote)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
+        $boltTotalAmount = $transaction->order->cart->total_amount->amount;
+        $magentoTotalAmount = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
+        $totalMismatch = $boltTotalAmount - $magentoTotalAmount;
+
+        if (abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance) {
+            $boltGrandTotal = CurrencyUtils::toMajor($boltTotalAmount, $currencyCode);
+            $order->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
+
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTotalAmount, $magentoTotalAmount) {
+
+                $report->setMetaData([
+                    'TOTAL MISMATCH' => [
+                        'Bolt Total Amount' => $boltTotalAmount,
+                        'Magento Total Amount' => $magentoTotalAmount,
+                        'Order #' => $quote->getReservedOrderId(),
+                        'Quote ID' => $quote->getId(),
+
+                    ]
+                ]);
+            });
+
+            $diff = round(CurrencyUtils::toMajor($totalMismatch, $currencyCode), 2);
+            $this->bugsnag->notifyError('Total Mismatch', "Totals adjusted by $diff");
+        }
     }
 
     /**
@@ -1091,9 +1138,9 @@ class Order extends AbstractHelper
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
         $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
-
-        return abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
-            && abs($shippingAmount - $transactionShippingAmount) <= self::MISMATCH_TOLERANCE
+        $priceFaultTolerance =  $this->configHelper->getPriceFaultTolerance();
+        return abs($taxAmount - $transactionTaxAmount) <= $priceFaultTolerance
+            && abs($shippingAmount - $transactionShippingAmount) <= $priceFaultTolerance
             && $grandTotalAmount == $transactionGrandTotalAmount;
     }
 
