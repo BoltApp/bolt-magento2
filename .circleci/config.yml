@@ -74,6 +74,20 @@ commands:
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
 jobs:
+  auto-rebase:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Auto-rebase
+          command: |
+            ls -al .circleci/scripts/auto-rebase.sh
+            bash .circleci/scripts/auto-rebase.sh
+
   tag-release-candidate:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -175,3 +189,10 @@ workflows:
                 - master
     jobs:
       - tag-release-candidate
+  auto-rebase:
+    jobs:
+      - auto-rebase:
+          filters:
+            branches:
+              only:
+                - master
