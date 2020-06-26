@@ -213,8 +213,6 @@ class Discount extends AbstractHelper
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
