@@ -1729,35 +1729,36 @@ if (!$block->isSaveCartInSections()) { ?>
         var boltCartDataID;
 
         var invalidateBoltCartIfOutdated = function() {
-            setTimeout(function () {
-                if (magentoCart === undefined || magentoCart.data_id === undefined || boltCartDataID === undefined) {
+            if (magentoCart === undefined || magentoCart.data_id === undefined || boltCartDataID === undefined) {
+                return;
+            }
+            if (magentoCart.data_id > boltCartDataID) {
+                invalidateBoltCart();
+                return;
+            }
+            if (magentoCart.data_id == boltCartDataID) {
+                var magentoTotal = magentoCart.subtotalAmount;
+                if (magentoTotal === undefined) {
                     return;
                 }
-                if (magentoCart.data_id > boltCartDataID) {
+                if ((cart.total_amount === undefined) || (cart.total_amount.amount === undefined)) {
+                    return;
+                }
+                var boltTotal = cart.total_amount.amount;
+                if (Math.round(parseFloat(magentoTotal) * 100) != boltTotal) {
                     invalidateBoltCart();
-                    return;
                 }
-                if (magentoCart.data_id == boltCartDataID) {
-                    var magentoTotal = magentoCart.subtotalAmount;
-                    if (magentoTotal === undefined) {
-                        return;
-                    }
-                    if ((cart.total_amount === undefined) || (cart.total_amount.amount === undefined)) {
-                        return;
-                    }
-                    var boltTotal = cart.total_amount.amount;
-                    if (Math.round(parseFloat(magentoTotal) * 100) != boltTotal) {
-                        invalidateBoltCart();
-                    }
-                }
-            },1);
+            }
         }
 
         if (getCheckoutType() !== 'payment') {
             callConfigureWithPromises();
             customerData.get('cart').subscribe(function(data) {
                 magentoCart = data;
-                invalidateBoltCartIfOutdated();
+                // Call invalidateBoltCartIfOutdated with zero delay to make sure that it is added into the end of event loop.
+                // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
+                // After zero delay boltCartDataID will have actual value anyway.
+                setTimeout(invalidateBoltCartIfOutdated, 0);
             })
         }
 
@@ -1925,8 +1926,6 @@ if (!$block->isSaveCartInSections()) { ?>
                         }
                         waitingForResolvingPromises = false;
                         oldBoltCartValue = JSON.stringify(cart);
-
-                        invalidateBoltCartIfOutdated();
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
