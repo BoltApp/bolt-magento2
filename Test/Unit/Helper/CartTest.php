@@ -1549,9 +1549,24 @@ class CartTest extends TestCase
         $destinationQuote->expects(self::atLeastOnce())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
         $destinationQuote->expects(self::atLeastOnce())->method('getIsActive')->willReturn(true);
         $destinationQuote->expects(self::once())->method('removeAllItems');
-        $quoteItem = $this->createMock(Item::class);
+        $quoteItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'getHasChildren',
+                    'getChildren'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
         $quoteItem->expects(self::atLeastOnce())->method('getHasChildren')->willReturn(true);
-        $quoteChildItem = $this->createMock(Item::class);
+        $quoteChildItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'setParentItem'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
         $quoteChildItem->expects(self::atLeastOnce())->method('setParentItem')->willReturn($quoteChildItem);
         $quoteItem->expects(self::atLeastOnce())->method('getChildren')->willReturn([$quoteChildItem]);
         $sourceQuote->method('getAllVisibleItems')->willReturn([$quoteItem]);
