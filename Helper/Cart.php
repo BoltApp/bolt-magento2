@@ -1015,7 +1015,17 @@ class Cart extends AbstractHelper
 
         $destination->removeAllItems();
 
-        $destination->merge($source);
+        foreach ($source->getAllVisibleItems() as $item) {
+            $newItem = clone $item;
+            $destination->addItem($newItem);
+            if ($item->getHasChildren()) {
+                foreach ($item->getChildren() as $child) {
+                    $newChild = clone $child;
+                    $newChild->setParentItem($newItem);
+                    $destination->addItem($newChild);
+                }
+            }
+        }
 
         $destination->getBillingAddress()->setShouldIgnoreValidation(true);
         $this->transferData($source->getBillingAddress(), $destination->getBillingAddress());
