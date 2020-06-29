@@ -381,8 +381,19 @@ class Payment extends AbstractMethod
             $startTime = $this->metricsClient->getCurrentTime();
             $order = $payment->getOrder();
 
-            if ($amount <= 0) {
+            if ($amount < 0) {
                 throw new LocalizedException(__('Invalid amount for capture.'));
+            }
+
+            $captureAmount = $this->getCaptureAmount($order, $amount);
+
+            if ($captureAmount < 1) {
+                ////////////////////////////////////////////////////////////////////////////////
+                // In certain circumstances, an amount's value of zero can be sent.
+                // This will then result in an exception by the Bolt API.
+                // In these instances, there is no need to call the Bolt API, so we simply return
+                ////////////////////////////////////////////////////////////////////////////////
+                return $this;
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -396,7 +407,7 @@ class Payment extends AbstractMethod
             //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
-                'amount'         => $this->getCaptureAmount($order, $amount),
+                'amount'         => $captureAmount,
                 'currency'       => $order->getOrderCurrencyCode(),
                 'skip_hook_notification' => true
             ];
