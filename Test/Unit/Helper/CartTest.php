@@ -1527,7 +1527,7 @@ class CartTest extends TestCase
         $sourceQuote->expects(self::once())->method('getId')->willReturn(self::PARENT_QUOTE_ID);
         $destinationQuote->expects(self::once())->method('getId')->willReturn(self::PARENT_QUOTE_ID);
         $destinationQuote->expects(self::never())->method('removeAllItems');
-        $destinationQuote->expects(self::never())->method('merge');
+        $sourceQuote->expects(self::never())->method('getAllVisibleItems');
         $currentMock->expects(static::never())->method('transferData');
         $currentMock->expects(static::never())->method('quoteResourceSave');
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
@@ -1549,7 +1549,28 @@ class CartTest extends TestCase
         $destinationQuote->expects(self::atLeastOnce())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
         $destinationQuote->expects(self::atLeastOnce())->method('getIsActive')->willReturn(true);
         $destinationQuote->expects(self::once())->method('removeAllItems');
-        $destinationQuote->expects(self::once())->method('merge')->with($sourceQuote);
+        $quoteItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'getHasChildren',
+                    'getChildren'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->expects(self::atLeastOnce())->method('getHasChildren')->willReturn(true);
+        $quoteChildItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'setParentItem'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteChildItem->expects(self::atLeastOnce())->method('setParentItem')->willReturn($quoteChildItem);
+        $quoteItem->expects(self::atLeastOnce())->method('getChildren')->willReturn([$quoteChildItem]);
+        $sourceQuote->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $destinationQuote->expects(self::atLeastOnce())->method('addItem');
         $sourceQuote->method('getData')->willReturn([]);
         $sourceQuote->getBillingAddress()->method('getData')->willReturn([]);
         $sourceQuote->getShippingAddress()->method('getData')->willReturn([]);
