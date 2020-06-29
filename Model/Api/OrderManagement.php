@@ -240,7 +240,7 @@ class OrderManagement implements OrderManagementInterface
         }
 
         if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
-            $this->setSuccessResponse('Ignore the credit hook for the invoice creation');
+            $this->setSuccessResponse('Ignore the capture hook for the invoice creation');
             return;
         }
 
