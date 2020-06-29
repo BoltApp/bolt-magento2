@@ -84,9 +84,7 @@ jobs:
       - checkout
       - run:
           name: Auto-rebase
-          command: |
-            ls -al .circleci/scripts/auto-rebase.sh
-            bash .circleci/scripts/auto-rebase.sh
+          command: bash .circleci/scripts/auto-rebase.sh
 
   tag-release-candidate:
     docker:
