@@ -65,6 +65,7 @@ class OrderPlugin
         }
 
         if ($subject->getIsRechargedOrder()){
+            // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
         }
 
@@ -91,6 +92,7 @@ class OrderPlugin
         }
 
         if ($subject->getIsRechargedOrder()) {
+            // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
         }
 
