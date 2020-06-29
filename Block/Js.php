@@ -485,12 +485,4 @@ class Js extends Template
     {
         return $this->configHelper->isShowTermsPaymentButton();
     }
-
-    /**
-     * Return if we should use JS code that uses bolt cart from magento sections
-     */
-    public function isSaveCartInSections()
-    {
-        return $this->featureSwitches->isSaveCartInSections();
-    }
 }
