@@ -26,7 +26,7 @@ auto-rebase () {
     git reset --hard HEAD
     exit 1
   fi
-  printf "Auto-rebasing %s to %s is done.\n\n" $branchName $baseBranch
+  printf "Auto-rebasing %s to %s is done.\n" $branchName $baseBranch
 }
 
 failedBranches=()
@@ -41,8 +41,8 @@ if [ "${#failedBranches[@]}" -eq 0 ]; then
   printf "\nSuccessfully auto-rebased all specifed branches\n"
 else
   printf "\nFailed to auto-rebase the following branches:\n"
-  for branchName in "${autoRebaseBranches[@]}"; do
+  for branchName in "${failedBranches[@]}"; do
     echo "$branchName"
   done
+  exit 1
 fi
-
