@@ -1933,8 +1933,6 @@ class DiscountCodeValidationTest extends TestCase
         {
             const GIFTCERT_CODE = 'GIFTCERT_CODE';
         };
-        $class = get_class($giftCard);
-        class_alias($class, '\Unirgy\Giftcert\Model\Cert');
 
         $giftCardMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
             ->setMethods(['getCertNumber', 'getBalance'])
@@ -1944,7 +1942,6 @@ class DiscountCodeValidationTest extends TestCase
         $certNumber = 1;
         $giftCardMock->expects(self::any())->method('getCertNumber')->willReturn($certNumber);
         $giftCardMock->expects(self::once())->method('getBalance')->willReturn($discountAmount);
-
 
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
