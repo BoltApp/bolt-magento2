@@ -332,6 +332,37 @@ class PaymentTest extends TestCase
 
     /**
      * @test
+     * @param $amount
+     * @throws \Exception
+     * @covers ::capture
+     *
+     * @dataProvider provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi
+     */
+    public function capture_withAmountsLessThanOneCent_doesNotCallBoltApi($amount)
+    {
+        $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->orderMock->expects($this->once())->method("getStoreCurrencyCode")->willReturn("USD");
+        $this->apiHelper->expects($this->never())->method('buildRequest');
+        $this->apiHelper->expects($this->never())->method('sendRequest');
+        $paymentMock = $this->getMockBuilder(InfoInterface::class)
+            ->setMethods(['getOrder' ])
+            ->getMockForAbstractClass();
+        $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
+
+        $this->currentMock->capture($paymentMock, $amount);
+    }
+
+    public function provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi(){
+        return [
+            ['amount' => 0],
+            ['amount' => null],
+            ['amount' => 0.001],
+        ];
+    }
+
+
+    /**
+     * @test
      */
     public function capturePayment_withDifferentCurrency_success()
     {
@@ -419,7 +450,7 @@ class PaymentTest extends TestCase
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Invalid amount for capture.');
-        $this->currentMock->capture($this->paymentMock, 0);
+        $this->currentMock->capture($this->paymentMock, -1);
     }
 
     /**
@@ -428,6 +459,7 @@ class PaymentTest extends TestCase
     public function capturePayment_noTransactionId()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->orderMock->method('getStoreCurrencyCode')->willReturn('USD');
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction get updated from Bolt.');
 
@@ -435,6 +467,7 @@ class PaymentTest extends TestCase
             ->getMockForAbstractClass();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
+        $paymentInfoMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
         $this->currentMock->capture($paymentInfoMock, 100);
     }
 
