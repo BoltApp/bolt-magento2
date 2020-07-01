@@ -576,7 +576,12 @@ class Cart extends AbstractHelper
         unset($cart['display_id']);
         $identifier  = json_encode($cart);
         // extend cache identifier with custom address fields
-        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($this->getLastImmutableQuote());
+        $immutableQuote = $this->getLastImmutableQuote();
+        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
+
+        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
+            $identifier .= $giftMessageId;
+        }
 
         return md5($identifier);
     }
