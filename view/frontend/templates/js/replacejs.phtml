@@ -1699,7 +1699,6 @@ if (!$block->isSaveCartInSections()) { ?>
         var createRequest = false;
         var allowAutoOpen = true;
         var waitingForResolvingPromises = false;
-        var reconfigureBoltWhenResolvePromises = false;
         var oldBoltCartValue = "";
         var BC;
         var hintBarrier;
@@ -1759,7 +1758,11 @@ if (!$block->isSaveCartInSections()) { ?>
             // Bolt button is added into DOM so we need to call Configure() again
             // we rely on current bolt cart
             if (waitingForResolvingPromises) {
-                reconfigureBoltWhenResolvePromises = true;
+                // if bolt checkout is opened we can't show new button now and will show it only if user close bolt checkout
+                if (popUpOpen) {
+                    return;
+                }
+                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
                 return;
             }
             if (!cart) {
@@ -1933,11 +1936,6 @@ if (!$block->isSaveCartInSections()) { ?>
                         if (waitingForResolvingPromises && !boltConfig.always_present_checkout) {
                             cartBarrier.resolve(cart);
                             hintBarrier.resolve(hints);
-                            if (reconfigureBoltWhenResolvePromises) {
-                                // new bolt button was added to DOM after last configure call
-                                // so we need to reconfigure
-                                BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
-                            }
                         } else {
                             if (boltConfig.always_present_checkout) {
                                 boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
@@ -1947,7 +1945,6 @@ if (!$block->isSaveCartInSections()) { ?>
                             BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                         waitingForResolvingPromises = false;
-                        reconfigureBoltWhenResolvePromises = false;
                         oldBoltCartValue = JSON.stringify(cart);
 
                         // open the checkout if auto-open flag is set
