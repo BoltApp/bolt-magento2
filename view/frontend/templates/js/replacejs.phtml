@@ -1514,6 +1514,8 @@ if (!$block->isSaveCartInSections()) { ?>
                 if (callbacks.success_url) {
                     // redirect on success order save
                     location.href = callbacks.success_url;
+                    // invalidate bolt cart to prevent bolt initialization on thank you page
+                    customerData.reload(['boltcart'], true);
                 } else {
                     // re-create order in case checkout was closed
                     // after order was changed from inside the checkout,
