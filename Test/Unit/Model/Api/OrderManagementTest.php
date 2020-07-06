@@ -793,7 +793,7 @@ class OrderManagementTest extends TestCase
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Ignore the credit hook for the invoice creation',
+            'message' => 'Ignore the capture hook for the invoice creation',
         ]));
 
 

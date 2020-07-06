@@ -460,7 +460,7 @@ class OrderTest extends TestCase
 
         $this->context->method('getEventManager')->willReturn($this->eventManager);
         $this->resourceConnection->method('getConnection')->willReturn($this->connection);
-        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled','isCreatingCreditMemoFromWebHookEnabled']);
+        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled','isCreatingCreditMemoFromWebHookEnabled','isIgnoreHookForInvoiceCreationEnabled']);
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
         $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class, ['refund']);
     }
@@ -3222,6 +3222,34 @@ class OrderTest extends TestCase
         $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
         $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
 
+        $this->currentMock->updateOrderPayment($this->orderMock, null, self::REFERENCE_ID);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::updateOrderPayment
+     */
+    public function updateOrderPayment_withIgnoreInvoiceCreationEnabled_DoesNotCreateInvoice()
+    {
+        /**
+         * @var MockObject|OrderPayment $paymentMock
+         */
+        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_ZERO_AMOUNT);
+        $this->featureSwitches->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
+        $invoiceMock = $this->createMock(Invoice::class);
+        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
+            ->willReturnMap([['authorized', true]]);
+        $this->currentMock->expects(self::once())->method('fetchTransactionInfo')->willReturn($transaction);
+
+        $this->currentMock->expects(self::never())->method('createOrderInvoice')->willReturn($invoiceMock);
+
+        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
         $this->currentMock->updateOrderPayment($this->orderMock, null, self::REFERENCE_ID);
     }
 
