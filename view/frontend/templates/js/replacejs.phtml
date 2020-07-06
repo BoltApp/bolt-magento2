@@ -2256,30 +2256,6 @@ if (!$block->isSaveCartInSections()) { ?>
         createOrder();
         ////////////////////////////////////////////////////
         <?php echo $block->getAdditionalJavascript(); ?>
-        // Merchant specific code
-        <?php
-            if ($block->isShowTermsPaymentButton()) {
-                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-                $customerSession = $objectManager->create('Magento\Customer\Model\Session');
-                if ($customerSession->isLoggedIn() && $customerSession->getCustomerGroupId() == 2) {
-                    $customerRepository = $objectManager->get('Magento\Customer\Api\CustomerRepositoryInterface');
-                    $customer_id = $customerSession->getCustomer()->getId();
-                    $customer = $customerRepository->getById($customer_id);
-                    $cattrValue = ($termsAllowed = $customer->getCustomAttribute('terms_allowed')) ? $termsAllowed->getValue() : '';
-                    if($cattrValue == '414'){
-                    ?>
-                ready('button[data-role=proceed-to-checkout]', function(element) {
-                    var default_checkout_btn = document.querySelectorAll('button[data-role=proceed-to-checkout]')[0];
-                    default_checkout_btn.setAttribute("style", "display: block !important;font-size: 1.6rem;");
-                    default_checkout_btn.setAttribute("title", "Proceed to Terms Payment");
-                    var default_checkout_btn_span = document.querySelectorAll('button[data-role=proceed-to-checkout] > span')[0];
-                    default_checkout_btn_span.innerText = "Proceed to Terms Payment";
-                });
-                <?php
-                    }
-                }
-            }
-        ?>
     });
 </script>
 <?php

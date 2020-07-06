@@ -478,15 +478,6 @@ class Js extends Template
     }
 
     /**
-     * Return true if we need to show terms payment button
-     * @return bool
-     */
-    public function isShowTermsPaymentButton()
-    {
-        return $this->configHelper->isShowTermsPaymentButton();
-    }
-
-    /**
      * Return if we should use JS code that uses bolt cart from magento sections
      */
     public function isSaveCartInSections()
