@@ -343,6 +343,11 @@
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
                     </field>
+                    <field id="product_attributes_list" translate="label" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Product attributes</label>
+                        <config_path>payment/boltpay/product_attributes_list</config_path>
+                        <comment>Comma separated list of product attributes that we send to bolt server. Leave empty for include only standard attributes.</comment>
+                    </field>
                 </group>
             </group>
         </section>
