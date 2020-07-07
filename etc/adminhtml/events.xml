@@ -6,4 +6,8 @@
     <event name="sales_order_place_before">
         <observer name="recharge_customer_if_an_existing_Bolt_credit_card_is_used" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer" />
     </event>
+
+    <event name="checkout_submit_all_after">
+        <observer name="create_invoice_for_recharged_order" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder" />
+    </event>
 </config>

@@ -57,7 +57,7 @@ class OrderPluginTest extends TestCase
     {
         $this->plugin = (new ObjectManager($this))->getObject(OrderPlugin::class);
         $this->subject = $this->createPartialMock(Order::class, [
-            'getPayment', 'getState', 'getConfig', 'getStateDefaultStatus', 'getStatus', 'setState', 'setStatus', 'place'
+            'getPayment', 'getState', 'getConfig', 'getStateDefaultStatus', 'getStatus', 'setState', 'setStatus', 'place','getIsRechargedOrder'
         ]);
         $this->payment = $this->createPartialMock(Payment::class, ['getMethod']);
         /** @var callable $callback */
@@ -119,6 +119,19 @@ class OrderPluginTest extends TestCase
             [Order::STATE_NEW, Order::STATE_NEW, [Order::STATE_PENDING_PAYMENT]],
             [Order::STATE_COMPLETE, Order::STATE_COMPLETE, [Order::STATE_COMPLETE]],
         ];
+    }
+
+    /**
+     * @test
+     * @covers ::beforeSetState
+     */
+    public function beforeSetState_withRechargedOrder()
+    {
+        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
+        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
+        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
+        $result = $this->plugin->beforeSetState($this->subject, 'new');
+        $this->assertEquals([Order::STATE_PROCESSING], $result);
     }
 
     /**
@@ -323,5 +336,18 @@ class OrderPluginTest extends TestCase
         $this->subject->expects(self::once())->method('place');
         $result = $this->plugin->afterSetState($this->subject, $this->subject);
         $this->assertEquals($result, $this->subject);
+    }
+
+    /**
+     * @test
+     * @covers ::beforeSetStatus
+     */
+    public function beforeSetStatus_withRechargedOrder()
+    {
+        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
+        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
+        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
+        $result = $this->plugin->beforeSetStatus($this->subject, \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING);
+        $this->assertEquals([Order::STATE_PROCESSING], $result);
     }
 }

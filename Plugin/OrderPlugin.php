@@ -31,6 +31,21 @@ class OrderPlugin
     private $oldState;
 
     /**
+     * @var \Magento\Framework\App\RequestInterface
+     */
+    private $request;
+
+    /**
+     * OrderPlugin constructor.
+     * @param \Magento\Framework\App\RequestInterface $request
+     */
+    public function __construct(
+        \Magento\Framework\App\RequestInterface $request
+    ){
+        $this->request = $request;
+    }
+
+    /**
      * Override the default "new" order state with the "pending_payment"
      * unless the special "bolt_new" state is received in which case state "new" is used.
      *
@@ -48,6 +63,12 @@ class OrderPlugin
         if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$state];
         }
+
+        if ($subject->getIsRechargedOrder()){
+            // Check and set the recharged order state to processing
+            return [Order::STATE_PROCESSING];
+        }
+
         if ($state === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW) {
             $state = Order::STATE_NEW;
         } elseif (!$subject->getState() || $state === Order::STATE_NEW) {
@@ -69,6 +90,12 @@ class OrderPlugin
         if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return [$status];
         }
+
+        if ($subject->getIsRechargedOrder()) {
+            // Check and set the recharged order state to processing
+            return [Order::STATE_PROCESSING];
+        }
+
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_NEW);
         } elseif ((
@@ -93,8 +120,9 @@ class OrderPlugin
      */
     public function aroundPlace(Order $subject, callable $proceed)
     {
+        $isRechargedOrder = $this->request->getParam('bolt-credit-cards');
         // Move on if the order payment method is not Bolt
-        if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+        if (!$subject->getPayment() || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE || $isRechargedOrder) {
             return $proceed();
         }
         // Skip if the order did not reach Order::STATE_NEW state
