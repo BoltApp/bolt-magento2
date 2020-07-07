@@ -105,7 +105,7 @@ class Tax extends ShippingTax implements TaxInterface
         }
 
         $selectedOption = $shipping_option['reference'];
-        list($carrierCode, $methodCode) = explode('_', $selectedOption);
+        list($carrierCode, $methodCode) = explode('_', $selectedOption,2 );
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
