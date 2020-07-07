@@ -1236,4 +1236,32 @@ Room 4000',
 
         ];
     }
+
+    /**
+     * @param $commaSeparatedList
+     * @param $expected
+     * @test
+     * @covers ::getProductAttributesList
+     * @dataProvider providerGetProductAttributesList
+     */
+    public function getProductAttributesList($commaSeparatedList, $expected)
+    {
+        $this->scopeConfig
+            ->expects(self::any())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PRODUCT_ATTRIBUTES_LIST, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn($commaSeparatedList);
+
+        $result = $this->currentMock->getProductAttributesList();
+        $this->assertEquals($expected, $result);
+    }
+
+    public function providerGetProductAttributesList()
+    {
+        return [
+            ['', []],
+            ['value', ['value']],
+            ['value1,value2', ['value1','value2']],
+        ];
+    }
 }

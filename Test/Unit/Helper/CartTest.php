@@ -4400,6 +4400,72 @@ ORDER
         static::assertEquals($color, $products[0]['color']);
         }
 
+    /**
+     * @test
+     * that getCartItems returns additional product attributes
+     *
+     * @covers ::getCartItems
+     */
+    public function getCartItems_withAdditionalAttributes_returnPropertiesAndAttributes()
+    {
+        $attributeName = 'test_attribute';
+
+        $color                       = 'Blue';
+        $size                        = 'S';
+        $quoteItemOptions            = [
+            'attributes_info' => [
+                ['label' => 'Size', 'value' => 'S'],
+            ]
+        ];
+        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
+                                            ->setMethods(['getOrderOptions'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
+
+        $this->productMock = $this->getMockBuilder(Product::class)
+                                  ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+                                  ->disableOriginalConstructor()
+                                  ->getMock();
+        $this->productMock->method('getDescription')->willReturn('Product Description');
+        $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+
+        $quoteItemMock = $this->getQuoteItemMock();
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getTotals')->willReturnSelf();
+
+
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
+
+        $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
+        $productMock = $this->getMockBuilder(Product::class)
+                                          ->setMethods(['getData', 'getAttributeText'])
+                                          ->disableOriginalConstructor()
+                                          ->getMock();
+        $productMock->method('getData')->with($attributeName)->willReturn(true);
+        $productMock->method('getAttributeText')->with($attributeName)->willReturn('Yes');
+
+        $this->productRepository->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)->willReturn($productMock);
+
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
+            $this->quoteMock,
+            self::STORE_ID
+        );
+
+        static::assertCount(1, $products);
+        static::assertArrayHasKey('properties', $products[0]);
+        $resultProductProperties = $products[0]['properties'];
+        static::assertEquals(
+            [
+                (object)['name' => 'Size', 'value' => 'S'],
+                (object)['name' => 'test_attribute', 'value' => 'Yes', 'type' => 'attribute'],
+            ],
+            $resultProductProperties
+        );
+    }
+
         /**
         * @test
         * that getCartItems will notify 'Item image missing' error if both attempts to retrieve image url fail
