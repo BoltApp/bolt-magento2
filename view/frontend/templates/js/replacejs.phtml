@@ -1426,6 +1426,9 @@ if (!$block->isSaveCartInSections()) { ?>
             if (getCheckoutKey() !== '') {
                 setCheckoutTypeStyle();
                 insertConnectScript();
+                if (getCheckoutType() !== 'payment') {
+                    callConfigureAfterAddingNewButton();
+                }
             }
         };
 
@@ -1749,6 +1752,23 @@ if (!$block->isSaveCartInSections()) { ?>
                     invalidateBoltCart();
                 }
             }
+        }
+
+        var callConfigureAfterAddingNewButton = function() {
+            // Bolt button is added into DOM so we need to call Configure() again
+            // we rely on current bolt cart
+            if (waitingForResolvingPromises) {
+                // if bolt checkout is opened we can't show new button now and will show it only if user close bolt checkout
+                if (popUpOpen) {
+                    return;
+                }
+                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+                return;
+            }
+            if (!cart) {
+                return;
+            }
+            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
         }
 
         if (getCheckoutType() !== 'payment') {
@@ -2226,7 +2246,9 @@ if (!$block->isSaveCartInSections()) { ?>
         // When we know that cart will be updated soon we call configure with promises
         // to make sure bolt checkout with outdated cart isn't available for user
         $(document).on("ajax:addToCart", function () {
-            callConfigureWithPromises();
+            // If merchant shows popup after add to cart
+            // delay 0 allows to render bolt button before we call configure
+            setTimeout(callConfigureWithPromises, 0);
             // set flag to animate always present button when we catch cart updating
             if (boltConfig.always_present_checkout) {
                 newItemAddedToCart = true;
