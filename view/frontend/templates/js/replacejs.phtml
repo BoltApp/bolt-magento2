@@ -1554,7 +1554,7 @@ if (!$block->isSaveCartInSections()) { ?>
                  * return void
                  */
                 var processSuccess = function (data) {
-                    customerData.invalidate(['bolthints']);
+                    customerData.invalidate(['cart','boltcart','bolthints']);
                     try {
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;

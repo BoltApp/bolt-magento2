@@ -20,17 +20,6 @@ if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
 
-<?php if ($block->isAllowInvalidateQuote()): ?>
-<script>
-    require([
-        'Magento_Customer/js/customer-data'
-    ], function (customerData) {
-        var sections = ['cart'];
-        customerData.invalidate(sections);
-    });
-</script>
-<?php endif; ?>
-
 <?php if ($block->shouldTrackCheckoutFunnel()): ?>
     <script type="text/javascript">
         BoltTrack.recordEvent("OrderConfirmationView");
