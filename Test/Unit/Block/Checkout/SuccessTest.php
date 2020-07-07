@@ -63,8 +63,7 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
             )
             ->getMock();
         $deciderMock = $this->createMock(Decider::class);
-        $productMetadataMock = $this->createMock(\Magento\Framework\App\ProductMetadata::class);
-        $this->block = new Success($productMetadataMock, $this->configHelper, $contextMock, $deciderMock);
+        $this->block = new Success($this->configHelper, $contextMock, $deciderMock);
     }
 
     /**

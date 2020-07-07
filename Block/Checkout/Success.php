@@ -29,11 +29,6 @@ class Success extends Template
     use BlockTrait;
 
     /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadata;
-
-    /**
      * Success constructor.
      *
      * @param Config                   $configHelper
@@ -42,7 +37,6 @@ class Success extends Template
      * @param array                    $data
      */
     public function __construct(
-        ProductMetadataInterface $productMetadata,
         Config $configHelper,
         Context $context,
         Decider $featureSwitches,
