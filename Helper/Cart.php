@@ -1151,6 +1151,39 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Get additional attributes value by product SKU
+     *
+     * @param string $sku product SKU
+     * @param string $storeId storeId
+     * @param array $additionalAttributes array of attribute names
+     *
+     * @return array
+     */
+    private function getAdditionalAttributes($sku, $storeId, $additionalAttributes) {
+        if (!$additionalAttributes) {
+            return [];
+        }
+        try {
+            $product = $this->productRepository->get($sku, false, $storeId);
+        } catch (NoSuchEntityException $e) {
+            $this->bugsnag->notifyException($e);
+            return [];
+        }
+        $properties = [];
+        foreach ($additionalAttributes as $attributeName) {
+            if ($product->getData($attributeName)) {
+                $attributeValue = (string) $product->getAttributeText($attributeName);
+                $properties[]   = (object)[
+                    'name'  => $attributeName,
+                    'value' => $attributeValue,
+                    'type'  => 'attribute',
+                ];
+            }
+        }
+        return $properties;
+    }
+
+    /**
      * Create cart data items array
      * @param $quote
      * @param null $storeId
@@ -1175,8 +1208,10 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $imageHelper = $this->imageHelperFactory->create();
 
+        $additionalAttributes = $this->configHelper->getProductAttributesList($storeId);
+
         $products = array_map(
-            function ($item) use ($imageHelper, &$totalAmount, &$diff, $storeId, $currencyCode) {
+            function ($item) use ($imageHelper, &$totalAmount, &$diff, $storeId, $currencyCode, $additionalAttributes) {
                 $product = [];
 
                 $unitPrice   = $item->getCalculationPrice();
@@ -1206,8 +1241,8 @@ class Cart extends AbstractHelper
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
                 $item_options = $_product->getTypeInstance()->getOrderOptions($_product);
+                $properties = [];
                 if (isset($item_options['attributes_info'])) {
-                    $properties = [];
                     foreach ($item_options['attributes_info'] as $attribute_info) {
                         // Convert attribute to string if it's a boolean before sending to the Bolt API
                         $attributeValue = is_bool($attribute_info['value']) ? var_export($attribute_info['value'], true) : $attribute_info['value'];
@@ -1224,6 +1259,12 @@ class Cart extends AbstractHelper
                             $product['size'] = $attributeValue;
                         }
                     }
+                }
+                foreach ($this->getAdditionalAttributes($item->getSku(),$storeId, $additionalAttributes) as $attribute ) {
+                    $properties[] = $attribute;
+                }
+
+                if ($properties) {
                     $product['properties'] = $properties;
                 }
                 ////////////////////////////////////

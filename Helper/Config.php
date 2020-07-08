@@ -335,6 +335,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_PICKUP_SHIPPING_METHOD_CODE = 'payment/boltpay/pickup_shipping_method_code';
 
+    const XML_PATH_PRODUCT_ATTRIBUTES_LIST = 'payment/boltpay/product_attributes_list';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1821,5 +1823,22 @@ class Config extends AbstractHelper
     public function isTestEnvSet()
     {
         return isset($_SERVER['TEST_ENV']);
+    }
+
+    /**
+     * @param null $storeId
+     * @return array
+     */
+    public function getProductAttributesList($storeId = null)
+    {
+        $commaSeparateList =  $this->getScopeConfig()->getValue(
+            self::XML_PATH_PRODUCT_ATTRIBUTES_LIST,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+        if (!$commaSeparateList) {
+            return [];
+        }
+        return explode(",", $commaSeparateList);
     }
 }
