@@ -29,21 +29,14 @@ class Success extends Template
     use BlockTrait;
 
     /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadata;
-
-    /**
      * Success constructor.
      *
-     * @param ProductMetadataInterface $productMetadata
      * @param Config                   $configHelper
      * @param Context                  $context
      * @param Decider                  $featureSwitches
      * @param array                    $data
      */
     public function __construct(
-        ProductMetadataInterface $productMetadata,
         Config $configHelper,
         Context $context,
         Decider $featureSwitches,
@@ -51,28 +44,7 @@ class Success extends Template
     ) {
         parent::__construct($context, $data);
 
-        $this->productMetadata = $productMetadata;
         $this->configHelper = $configHelper;
         $this->featureSwitches = $featureSwitches;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isAllowInvalidateQuote()
-    {
-        // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
-        return (bool) (version_compare($this->getMagentoVersion(), '2.2.0', '<'))
-            || (bool) (version_compare($this->getMagentoVersion(), '2.3.4', '>='));
-    }
-
-    /**
-     * Get magento version
-     *
-     * @return string
-     */
-    private function getMagentoVersion()
-    {
-        return $this->productMetadata->getVersion();
     }
 }
