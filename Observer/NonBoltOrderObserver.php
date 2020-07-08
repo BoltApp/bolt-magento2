@@ -139,7 +139,10 @@ class NonBoltOrderObserver implements ObserverInterface
                 return;
             }
 
-            $payment->setAdditionalInformation("transaction_reference", $response->reference);
+            $boltTransactionData = ['bolt_transaction_reference' => $response->reference];
+            $payment->setAdditionalInformation(
+                array_merge((array)$payment->getAdditionalInformation(), $boltTransactionData)
+            );
             $payment->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
