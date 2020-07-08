@@ -154,9 +154,14 @@ class TaxTest extends TestCase
      * @test
      * that setAddressInformation would return set shipping method code and set shipping carrier code
      *
+     * @dataProvider provider_setAddressInformation_happyPath
      * @covers ::setAddressInformation
+     * @param $shippingReference
+     * @param $carrierCode
+     * @param $methodCode
+     *
      */
-    public function setAddressInformation_happyPath()
+    public function setAddressInformation_happyPath($shippingReference, $carrierCode, $methodCode)
     {
         $addressData = [
             'region' => 'California',
@@ -169,7 +174,7 @@ class TaxTest extends TestCase
         ];
 
         $shipping_option = [
-            'reference' => 'carrierCode_methodCode'
+            'reference' => $shippingReference
         ];
 
         $this->initCurrentMock(['populateAddress']);
@@ -182,10 +187,17 @@ class TaxTest extends TestCase
             ->with($address);
 
         $this->addressInformation->expects(self::once())->method('setShippingCarrierCode')
-            ->with('carrierCode');
-        $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with('methodCode');
+            ->with($carrierCode);
+        $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with($methodCode);
 
         $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+    }
+
+    public function provider_setAddressInformation_happyPath(){
+        return [
+          ['carrierCode_methodCode','carrierCode', 'methodCode'],
+          ['shqshared_GROUND_HOME_DELIVERY', 'shqshared', 'GROUND_HOME_DELIVERY']
+        ];
     }
 
     /**
