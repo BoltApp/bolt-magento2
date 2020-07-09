@@ -67,11 +67,18 @@ commands:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
-      - slack/status:
-          fail_only: true
-          failure_message: '[TEST] :red_circle: M2: A $CIRCLE_JOB job has failed!'
-          only_for_branches: ${tr '\n' ',' < './.circleci/scripts/auto-rebase-branches.txt'}
-          webhook: $SLACK_GREENKEEPER_WEBHOOK
+      - when:
+          condition:
+            or:
+              - equal: ["jz/rebase-custom1", << pipeline.git.branch >>]
+              - equal: ["jz/rebase-custom2", << pipeline.git.branch >>]
+              - equal: ["jz/rebase-custom3", << pipeline.git.branch >>]
+              - equal: ["vincent/circleci/notify-on-branch-changes", << pipeline.git.branch >>]
+          steps:
+            - slack/status:
+                fail_only: true
+                failure_message: '[TEST] :red_circle: M2: A $CIRCLE_JOB job has failed!'
+                webhook: $SLACK_GREENKEEPER_WEBHOOK
 
 jobs:
   auto-rebase:
