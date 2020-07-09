@@ -69,7 +69,7 @@ commands:
           path: ./artifacts
       - run:
           name: "Setup branch string"
-          command: echo 'export TEST_VAR="test data"' >> $BASH_ENV
+          command: echo 'export TEST_VAR=cat ./circleci/scripts/auto-rebase-branches.txt' >> $BASH_ENV
       - run:
           name: "Is it working?"
           command: echo $TEST_VAR
