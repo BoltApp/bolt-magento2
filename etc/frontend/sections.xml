@@ -50,4 +50,12 @@
         <section name="boltcart"/>
     </action>
 
+    <action name="rest/*/V1/guest-carts/*/shipping-information">
+        <section name="boltcart"/>
+    </action>
+
+    <action name="rest/*/V1/carts/mine/shipping-information">
+        <section name="boltcart"/>
+    </action>
+
 </config>
