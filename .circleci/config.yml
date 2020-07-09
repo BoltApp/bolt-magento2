@@ -67,6 +67,12 @@ commands:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
+      - run:
+          name: "Setup branch string"
+          command: echo 'export TEST_VAR="test data"' >> $BASH_ENV
+      - run:
+          name: "Is it working?"
+          command: echo $TEST_VAR
       - when:
           condition:
             or:
