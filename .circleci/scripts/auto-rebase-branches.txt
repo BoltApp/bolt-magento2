@@ -1,4 +1,3 @@
 jz/rebase-custom1
 jz/rebase-custom2
 jz/rebase-custom3
-vincent/circleci/notify-on-branch-changes
