@@ -70,11 +70,13 @@ commands:
       - run:
           name: "Setup branch string"
           command: |
-            echo 'export FILTER_BRANCHES=$(<./.circleci/scripts/auto-rebase-branches.txt)' >> $BASH_ENV
+            export FILTER_BRANCHES=$(<./.circleci/scripts/auto-rebase-branches.txt)
+            echo $FILTER_BRANCHES
+            echo $CIRCLE_BRANCH
             if [[ "$FILTER_BRANCHES" == *"$CIRCLE_BRANCH"* ]]; then
-              echo 'export NOTIFY_FLAG=1' >> $BASH_ENV
+              export NOTIFY_FLAG=1
             else
-              echo 'export NOTIFY_FLAG=0' >> $BASH_ENV
+              export NOTIFY_FLAG=0
             fi
             echo $NOTIFY_FLAG
       - when:
