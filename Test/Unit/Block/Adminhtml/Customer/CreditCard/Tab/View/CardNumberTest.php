@@ -25,7 +25,7 @@ use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CardNumber;
  */
 class CardNumberTest extends \PHPUnit\Framework\TestCase
 {
-    const LAST_4_DIGIT_CARD = 'XXXX-4444';
+    const LAST_4_DIGIT_CARD = 'XXXX-444';
 
     /** @var CardNumber */
     private $block;
