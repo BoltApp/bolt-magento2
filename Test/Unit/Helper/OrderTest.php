@@ -2817,12 +2817,18 @@ class OrderTest extends TestCase
      * @param string $orderState
      * @param bool   $isHookFromBolt
      * @param bool   $isCreatingCreditMemoFromWebHookEnabled
+     * @param int $orderTotalRefunded
+     * @param int $orderGrandTotal
+     * @param int $orderTotalPaid
      */
-    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false)
+    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10 , $orderTotalPaid = 10)
     {
         Hook::$fromBolt = $isHookFromBolt;
         $this->featureSwitches->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn($isCreatingCreditMemoFromWebHookEnabled);
-        static::assertEquals($orderState, $this->currentMock->transactionToOrderState($transactionState));
+        $this->orderMock->method('getTotalRefunded')->willReturn($orderTotalRefunded);
+        $this->orderMock->method('getGrandTotal')->willReturn($orderGrandTotal);
+        $this->orderMock->method('getTotalPaid')->willReturn($orderTotalPaid);
+        static::assertEquals($orderState, $this->currentMock->transactionToOrderState($transactionState, $this->orderMock));
     }
 
     /**
@@ -2839,8 +2845,10 @@ class OrderTest extends TestCase
             [OrderHelper::TS_CANCELED, OrderModel::STATE_CANCELED],
             [OrderHelper::TS_REJECTED_REVERSIBLE, OrderModel::STATE_PAYMENT_REVIEW],
             [OrderHelper::TS_REJECTED_IRREVERSIBLE, OrderModel::STATE_CANCELED],
-            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, true, true],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_CLOSED, true, true, 10, 10 ,10],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, true, true, 8, 10 ,10],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, false, true],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_HOLDED, true, false],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_HOLDED, true, false],
         ];
     }
