@@ -69,10 +69,10 @@ commands:
           path: ./artifacts
       - run:
           name: "Setup branch string"
-          command: echo 'export TEST_VAR=$(<./.circleci/scripts/auto-rebase-branches.txt)' >> $BASH_ENV
-      - run:
-          name: "Is it working?"
-          command: echo $TEST_VAR
+          command: |
+            echo 'export FILTER_BRANCHES=$(<./.circleci/scripts/auto-rebase-branches.txt)' >> $BASH_ENV
+            echo $TEST_VAR
+            echo $CIRCLE_BRANCH
       - when:
           condition:
             or:
