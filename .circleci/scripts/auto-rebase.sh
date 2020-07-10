@@ -32,8 +32,8 @@ auto-rebase () {
     git rebase --abort
     return 1
   fi
-  if ! (git push --force-with-lease origin "$branchName"); then
-    echo "Failed to push $branchName"
+  if ! (git push --force-with-lease origin "$branchName":ci/"$branchName"); then
+    echo "Failed to push the auto-rebase result to ci/$branchName"
     git reset --hard HEAD
     return 1
   fi
