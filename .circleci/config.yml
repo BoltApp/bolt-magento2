@@ -73,15 +73,13 @@ commands:
           command: |
             export FILTER_BRANCHES=$(<./.circleci/scripts/auto-rebase-branches.txt)
             if [[ "$FILTER_BRANCHES" == *"$CIRCLE_BRANCH"* ]]; then
-              export NOTIFY_FLAG=1
+              export NOTIFY_FLAG=true
             else
-              export NOTIFY_FLAG=0
+              export NOTIFY_FLAG=false
             fi
             echo $NOTIFY_FLAG
       - when:
-          condition:
-            or:
-              - equal: [$NOTIFY_FLAG, 1]
+          condition: $NOTIFY_FLAG
           steps:
             - slack/status:
                 fail_only: true
