@@ -71,13 +71,14 @@ commands:
           name: "Setup branch string"
           when: on_fail
           command: |
-            if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./auto-rebase-branchess.txt >> /dev/null ; then
-              export NOTIFY_FLAG=true
-            else
-              export NOTIFY_FLAG=false
-            fi
             if [[ ${CIRCLE_BRANCH} == "master" ]]
               export NOTIFY_FLAG=true
+            else
+              if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./auto-rebase-branchess.txt >> /dev/null ; then
+                export NOTIFY_FLAG=true
+              else
+                export NOTIFY_FLAG=false
+              fi
             fi
       - when:
           condition: $NOTIFY_FLAG
