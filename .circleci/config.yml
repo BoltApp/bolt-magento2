@@ -77,7 +77,9 @@ commands:
             else
               export NOTIFY_FLAG=0
             fi
-      - when:
+      - run:
+          name: "Notify Slack"
+          when: on_fail
           condition:
             or:
               - equal: [$FILTER_BRANCHES, 1]
