@@ -77,6 +77,7 @@ commands:
             else
               export NOTIFY_FLAG=0
             fi
+            echo $NOTIFY_FLAG
       - when:
           condition:
             or:
