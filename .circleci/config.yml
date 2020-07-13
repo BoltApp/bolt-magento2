@@ -68,7 +68,7 @@ commands:
       - store_artifacts:
           path: ./artifacts
       - run:
-          name: "Setup branch string"
+          name: "Conditionally Notify Greenkeeper"
           when: on_fail
           command: |
             if [[ ${CIRCLE_BRANCH} == "master" ]]
