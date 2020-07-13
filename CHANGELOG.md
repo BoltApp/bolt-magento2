@@ -141,3 +141,8 @@
  - Added support for tracking non-Bolt order shipments.
  - Code maintainability refactoring
  - Bug fixes
+## [v2.10.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.10.0) 2020-07-08
+ - Fixes for latency regressions introduced in 2.9.0
+ - Refactoring to optimize number of calls made on page loading
+ - Customization branch restructuring
+ - Bug fixes
