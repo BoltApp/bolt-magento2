@@ -69,6 +69,7 @@ commands:
           path: ./artifacts
       - run:
           name: "Setup branch string"
+          when: on_fail
           command: |
             export FILTER_BRANCHES=$(<./.circleci/scripts/auto-rebase-branches.txt)
             if [[ "$FILTER_BRANCHES" == *"$CIRCLE_BRANCH"* ]]; then
