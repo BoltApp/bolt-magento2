@@ -269,7 +269,6 @@ jobs:
       - image: circleci/mysql:5.7
     steps:
       - m2-php-test-for-merchant-branches:
-          cache_key_separator: php70mag22installed
           m2_version: "2.2.0"
           php_version: "php70"
           is_integration: false
