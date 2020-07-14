@@ -41,6 +41,6 @@ for branchName in "${merchantBranches[@]}"; do
     echo "Start unit tests..."
     ./Test/scripts/ci-unit.sh
   fi
-
+  git reset --hard HEAD
 done
 
