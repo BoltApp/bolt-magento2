@@ -19,6 +19,21 @@ commands:
           include_job_number_field: false
           include_project_field: false
           include_visit_job_action: false
+  rebase-current-branch:
+    description: 'Rebase current branch against the specified branch.'
+    parameters:
+      base_branch:
+        type: string
+        default: ''
+    steps:
+      - slack/notify:
+          color: '#58a359'
+          mentions: 'Pavel,oleksii,'
+          message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
+          webhook: $SLACK_MAGENTO2_WEBHOOK
+          include_job_number_field: false
+          include_project_field: false
+          include_visit_job_action: false
   m2-php-test-without-checkout:
     description: PHP Unit tests for M2
     parameters:
@@ -194,7 +209,7 @@ jobs:
           php_version: "php70"
           is_integration: false
 
-  unit-php70-magento22-without-checkout:
+  unit-php70-magento22-for-merchant-branches:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
         auth:
@@ -202,11 +217,11 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - m2-php-test-without-checkout:
-          cache_key_separator: php70mag22installed
-          m2_version: "2.2.0"
-          php_version: "php70"
-          is_integration: false
+      - checkout
+      - run:
+          name: Auto-rebase
+          command: bash .circleci/scripts/test-merchant-branches.sh ${CIRCLE_BRANCH}
+
   phpcs:
     docker:
       - image: circleci/php:7.2-cli
@@ -239,7 +254,7 @@ workflows:
       - tag-release-candidate
   merchant-branch-test:
     jobs:
-      - unit-php70-magento22-without-checkout
+      - unit-php70-magento22-for-merchant-branches
   auto-rebase:
     jobs:
       - auto-rebase:
