@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
-if [ "$#" -ne 1 ]; then
-    echo "usage: $0 <base_branch>\n"
+if [ "$#" -ne 2 ]; then
+    echo "usage: $0 <base_branch> <is_integration>\n"
     exit 1
 fi
 
 baseBranch="$1"
+isIntegration="$2"
 merchantBranches=()
 # load auto-rebasing branches
 configFile="./.circleci/scripts/auto-rebase-branches.txt"
@@ -33,7 +34,13 @@ for branchName in "${merchantBranches[@]}"; do
     git rebase --abort
     return 1
   fi
-  echo "Start testing..."
-  ./Test/scripts/ci-unit.sh
+  if [ "$isIntegration" = true ]; then
+    echo "Start integration tests..."
+    ./Test/scripts/ci-integration.sh
+  else
+    echo "Start unit tests..."
+    ./Test/scripts/ci-unit.sh
+  fi
+
 done
 
