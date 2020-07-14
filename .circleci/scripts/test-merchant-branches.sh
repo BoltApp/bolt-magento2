@@ -22,4 +22,18 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   fi
 done < "$configFile"
 
-./Test/scripts/ci-integration.sh
+# rebase
+for branchName in "${merchantBranches[@]}"; do
+  if ! (git checkout "$branchName"); then
+    echo "Failed to checkout branch $branchName"
+    exit 1
+  fi
+  if ! (git rebase origin/$baseBranch); then
+    echo "Failed to rebase branch $branchName on $baseBranch"
+    git rebase --abort
+    return 1
+  fi
+  echo "Start testing..."
+  ./Test/scripts/ci-unit.sh
+done
+

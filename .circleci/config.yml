@@ -19,21 +19,6 @@ commands:
           include_job_number_field: false
           include_project_field: false
           include_visit_job_action: false
-  rebase-current-branch:
-    description: 'Rebase current branch against the specified branch.'
-    parameters:
-      base_branch:
-        type: string
-        default: ''
-    steps:
-      - slack/notify:
-          color: '#58a359'
-          mentions: 'Pavel,oleksii,'
-          message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
-          webhook: $SLACK_MAGENTO2_WEBHOOK
-          include_job_number_field: false
-          include_project_field: false
-          include_visit_job_action: false
   m2-php-test-without-checkout:
     description: PHP Unit tests for M2
     parameters:
