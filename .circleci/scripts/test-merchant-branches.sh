@@ -23,7 +23,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   fi
 done < "$configFile"
 
-# TODO: rebase and run tests for the first merchant branch in the config
+# TODO: Add support to rebase and run tests for all merchant branches in the config
 # For now, we only rebase and run tests for the first merchant branch in the config
 branchName=${merchantBranches[0]}
 if ! (git checkout "$branchName"); then
