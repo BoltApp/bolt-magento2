@@ -32,14 +32,20 @@ for branchName in "${merchantBranches[@]}"; do
   if ! (git rebase origin/$baseBranch); then
     echo "Failed to rebase branch $branchName on $baseBranch"
     git rebase --abort
-    return 1
+    exit 1
   fi
   if [ "$isIntegration" = true ]; then
     echo "Start integration tests..."
-    ./Test/scripts/ci-integration.sh
+    if ! ./Test/scripts/ci-integration.sh; then
+      echo "integration tests failed"
+      exit 1
+    fi
   else
     echo "Start unit tests..."
-    ./Test/scripts/ci-unit.sh
+    if ! ./Test/scripts/ci-unit.sh; then
+      echo "unit tests failed"
+      exit 1
+    fi
   fi
   git reset --hard HEAD
 done
