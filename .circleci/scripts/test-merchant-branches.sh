@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [ -z "$1" ]; then
+if [ "$#" -ne 1 ]; then
     echo "usage: $0 <base_branch>\n"
     exit 1
 fi
@@ -14,7 +14,7 @@ if ! test -f "$configFile"; then
     exit 1
 fi
 
-echo "The following branches will be tested"
+echo "The following branches will be tested after rebasing against $baseBranch"
 while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
     merchantBranches+=("ci/$branchName")
@@ -22,4 +22,4 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   fi
 done < "$configFile"
 
-
+./Test/scripts/ci-integration.sh
