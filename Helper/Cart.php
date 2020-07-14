@@ -60,6 +60,7 @@ use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 
 /**
  * Boltpay Cart helper
@@ -245,6 +246,11 @@ class Cart extends AbstractHelper
     private $metricsClient;
 
     /**
+     * @var DeciderHelper
+     */
+    private $deciderHelper;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -272,6 +278,7 @@ class Cart extends AbstractHelper
      * @param CustomerRepository $customerRepository
      * @param Registry $coreRegistry
      * @param MetricsClient $metricsClient
+     * @param DeciderHelper $deciderHelper
      */
     public function __construct(
         Context $context,
@@ -300,7 +307,8 @@ class Cart extends AbstractHelper
         HookHelper $hookHelper,
         CustomerRepository $customerRepository,
         Registry $coreRegistry,
-        MetricsClient $metricsClient
+        MetricsClient $metricsClient,
+        DeciderHelper $deciderHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -329,6 +337,7 @@ class Cart extends AbstractHelper
         $this->customerRepository = $customerRepository;
         $this->coreRegistry = $coreRegistry;
         $this->metricsClient = $metricsClient;
+        $this->deciderHelper = $deciderHelper;
     }
 
     /**
@@ -902,20 +911,22 @@ class Cart extends AbstractHelper
         if ($this->customerSession->isLoggedIn()) {
             $customer = $this->customerSession->getCustomer();
 
-            $signRequest = [
-                'merchant_user_id' => $customer->getId(),
-            ];
-            $signResponse = $this->getSignResponse(
-                $signRequest,
-                $quote ? $quote->getStoreId() : null
-            )->getResponse();
-
-            if ($signResponse) {
-                $hints['signed_merchant_user_id'] = [
-                    "merchant_user_id" => $signResponse->merchant_user_id,
-                    "signature"        => $signResponse->signature,
-                    "nonce"            => $signResponse->nonce,
+            if (!$this->deciderHelper->ifShouldDisablePrefillAddressForLoggedInCustomer()) {
+                $signRequest = [
+                    'merchant_user_id' => $customer->getId(),
                 ];
+                $signResponse = $this->getSignResponse(
+                    $signRequest,
+                    $quote ? $quote->getStoreId() : null
+                )->getResponse();
+
+                if ($signResponse) {
+                    $hints['signed_merchant_user_id'] = [
+                        "merchant_user_id" => $signResponse->merchant_user_id,
+                        "signature"        => $signResponse->signature,
+                        "nonce"            => $signResponse->nonce,
+                    ];
+                }
             }
 
             if ($quote && $quote->isVirtual()) {

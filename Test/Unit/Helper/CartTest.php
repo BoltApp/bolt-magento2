@@ -83,6 +83,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use ReflectionException;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -279,6 +280,9 @@ class CartTest extends TestCase
      */
     private $metricsClient;
 
+    /** @var MockObject|DeciderHelper */
+    private $deciderHelper;
+
     /**
      * Setup test dependencies, called before each test
      */
@@ -406,6 +410,7 @@ class CartTest extends TestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
+        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -448,7 +453,8 @@ class CartTest extends TestCase
                     $this->hookHelper,
                     $this->customerRepository,
                     $this->coreRegistry,
-                    $this->metricsClient
+                    $this->metricsClient,
+                    $this->deciderHelper
                 ]
             )
             ->getMock();
@@ -648,7 +654,8 @@ class CartTest extends TestCase
             $this->hookHelper,
             $this->customerRepository,
             $this->coreRegistry,
-            $this->metricsClient
+            $this->metricsClient,
+            $this->deciderHelper
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -5038,6 +5045,7 @@ ORDER
                 'getDefaultShippingAddress'
             ]
         );
+        $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
         $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
         $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn('test@bolt.com');
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
@@ -5072,10 +5080,11 @@ ORDER
         * that getHints will return hints from customer default shipping address when quote is not virtual
         *
         * @covers ::getHints
-        *
+        * @dataProvider provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints
+        * @param bool $ifShouldDisablePrefillAddressForLoggedInCustomer
         * @throws NoSuchEntityException from tested method
         */
-        public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints()
+        public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints($ifShouldDisablePrefillAddressForLoggedInCustomer)
         {
         $customerMock = $this->createPartialMock(
             Customer::class,
@@ -5086,28 +5095,34 @@ ORDER
                 'getDefaultShippingAddress'
             ]
         );
+        $this->deciderHelper->expects(self::any())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn($ifShouldDisablePrefillAddressForLoggedInCustomer);
         $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
         $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
         $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
-        $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
         $requestMock = $this->createMock(Request::class);
         $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
-        $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
         $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
-        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
-        $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
-        $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
-        $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
-        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
-            ->willReturn($requestMock);
-        $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
-        $signedMerchantUserId = [
-            'merchant_user_id' => self::CUSTOMER_ID,
-            'signature'        => self::SIGNATURE,
-            'nonce'            => 999999
-        ];
-        $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
+        if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
+            $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
+
+            $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
+
+            $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
+            $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
+            $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
+            $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
+            $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
+                ->willReturn($requestMock);
+            $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
+            $signedMerchantUserId = [
+                'merchant_user_id' => self::CUSTOMER_ID,
+                'signature'        => self::SIGNATURE,
+                'nonce'            => 999999
+            ];
+            $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
+        }
+
         $shippingAddressMock = $this->createPartialMock(
             Address::class,
             [
@@ -5153,9 +5168,19 @@ ORDER
             $hints['prefill']
         );
 
-        static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
+
+        if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
+            static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
+        }
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
+        }
+
+        public function provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints(){
+            return [
+                [true],
+                [false],
+            ];
         }
 
         /**
@@ -5177,6 +5202,7 @@ ORDER
                 'getDefaultShippingAddress'
             ]
         );
+        $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
         $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
         $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
