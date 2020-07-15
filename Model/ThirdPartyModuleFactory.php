@@ -70,6 +70,15 @@ class ThirdPartyModuleFactory
     {
         return $this->_moduleManager->isEnabled($this->moduleName);
     }
+    
+    /**
+     * Check whether the class exists
+     * @return bool
+     */
+    public function isExists()
+    {
+        return class_exists($this->className);
+    }
 
     /**
      * @param array $data
@@ -77,7 +86,7 @@ class ThirdPartyModuleFactory
      */
     public function getInstance(array $data = [])
     {
-        if ($this->isAvailable()) {
+        if ($this->isAvailable() && $this->isExists()) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);
             $this->logHelper->addInfoLog('# Class: ' . $this->className);
             return $this->_objectManager->create($this->className, $data);
