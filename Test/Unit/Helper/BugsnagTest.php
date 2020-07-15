@@ -39,6 +39,7 @@ class BugsnagTest extends TestCase
 {
     /** @var string Dummy store url */
     const STORE_URL = 'http://store.local/';
+    const COMPOSER_VERSION = 'composer_version';
 
     /** @var MockObject|Bugsnag mocked instance of the class tested */
     private $currentMock;
@@ -66,7 +67,7 @@ class BugsnagTest extends TestCase
     protected function setUp()
     {
         $this->contextMock = $this->createMock(Context::class);
-        $this->configHelperMock = $this->createMock(Config::class);
+        $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);
         $this->directoryListMock = $this->createMock(DirectoryList::class);
         $this->storeManagerMock = $this->createPartialMock(StoreManager::class, ['getStore', 'getBaseUrl']);
         $this->bugsnagMock = $this->createMock(BugsnagClient::class);
@@ -77,6 +78,12 @@ class BugsnagTest extends TestCase
             $this->currentMock,
             'storeManager',
             $this->storeManagerMock
+        );
+
+        TestHelper::setProperty(
+            $this->currentMock,
+            'configHelper',
+            $this->configHelperMock
         );
     }
 
@@ -205,6 +212,7 @@ class BugsnagTest extends TestCase
         $this->storeManagerMock->expects(static::once())->method('getStore')->willReturnSelf();
         $this->storeManagerMock->expects(static::once())->method('getBaseUrl')->with(UrlInterface::URL_TYPE_WEB)
             ->willReturn(self::STORE_URL);
+        $this->configHelperMock->expects(static::once())->method('getComposerVersion')->willReturn(self::COMPOSER_VERSION);
         $this->bugsnagMock->expects(static::once())->method('registerCallback')->with(
             static::callback(
                 function ($callback) {
@@ -212,7 +220,8 @@ class BugsnagTest extends TestCase
                     $reportMock->expects(static::once())->method('addMetaData')->with(
                         [
                             'META DATA' => [
-                                'store_url' => self::STORE_URL
+                                'store_url' => self::STORE_URL,
+                                'composer_version' => self::COMPOSER_VERSION
                             ]
                         ]
                     );

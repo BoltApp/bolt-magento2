@@ -119,11 +119,11 @@ class Debug implements DebugInterface
         # populate php version
         $result->setPhpVersion(PHP_VERSION);
 
+        # populate bolt config settings
+        $result->setComposerVersion($this->configHelper->getComposerVersion());
+
         # populate platform version
         $result->setPlatformVersion($this->productMetadata->getVersion());
-
-        # populate bolt config settings
-        $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
 
         # populate bolt config settings
         $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
