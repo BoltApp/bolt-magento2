@@ -1258,6 +1258,9 @@ if (!$block->isSaveCartInSections()) { ?>
         return { promise: promise, resolve: function(t){resolveHolder(t)}};
     };
 
+    var expectCartRendering = true;
+    var waitingForResolvingPromises = false;
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -1698,7 +1701,6 @@ if (!$block->isSaveCartInSections()) { ?>
         /////////////////////////////////////////////////////
         var createRequest = false;
         var allowAutoOpen = true;
-        var waitingForResolvingPromises = false;
         var oldBoltCartValue = "";
         var BC;
         var hintBarrier;
@@ -2246,6 +2248,7 @@ if (!$block->isSaveCartInSections()) { ?>
         // When we know that cart will be updated soon we call configure with promises
         // to make sure bolt checkout with outdated cart isn't available for user
         $(document).on("ajax:addToCart", function () {
+            expectCartRendering = true;
             // If merchant shows popup after add to cart
             // delay 0 allows to render bolt button before we call configure
             setTimeout(callConfigureWithPromises, 0);
@@ -2258,9 +2261,11 @@ if (!$block->isSaveCartInSections()) { ?>
             invalidateBoltCart();
         });
         $(document).on("ajax:updateCartItemQty", function () {
+            expectCartRendering = true;
             callConfigureWithPromises();
         });
         $(document).on("ajax:removeFromCart", function () {
+            expectCartRendering = true;
             callConfigureWithPromises();
         });
 
@@ -2279,6 +2284,30 @@ if (!$block->isSaveCartInSections()) { ?>
         ////////////////////////////////////////////////////
         <?php echo $block->getAdditionalJavascript(); ?>
     });
+
+    if (trim(location.pathname, '/') === 'checkout/cart') {
+        require([
+        'jquery',
+        'Magento_Customer/js/customer-data',
+        'Magento_Checkout/js/model/quote',
+        'domReady!'
+        ], function ($, customerData, quote) {
+            quote.totals.subscribe(function (newValue) {
+                if (expectCartRendering) {
+                    expectCartRendering = false;
+                    return;
+                }
+
+                // If we don't expect cart rendering possible it caused by any third party plugin (for example, 3p coupon is applied)
+                // Bolt cart can be changes, it worth to invalidate
+                expectCartRendering = false;
+                if (waitingForResolvingPromises) {
+                    return;
+                }
+                customerData.reload(['boltcart'], true);
+            });
+       })
+    }
 </script>
 <?php
 }
