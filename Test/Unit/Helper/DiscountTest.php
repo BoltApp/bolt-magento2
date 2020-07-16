@@ -417,7 +417,8 @@ class DiscountTest extends TestCase
     ) {
         $this->initCurrentMock();
         $this->amastyAccountFactory->expects(static::once())->method('isAvailable')->willReturn($amastyModuleAvailable);
-        $this->amastyLegacyAccountFactory->expects(static::once())->method('isAvailable')->willReturn($amastyLegacyModuleAvailable);
+        $this->amastyLegacyAccountFactory->expects(!$amastyModuleAvailable ? static::once() : static::never())
+             ->method('isAvailable')->willReturn($amastyLegacyModuleAvailable);
 
         static::assertEquals($expectedResult, $this->currentMock->isAmastyGiftCardAvailable());
     }
@@ -698,7 +699,10 @@ class DiscountTest extends TestCase
         $quoteGiftAmount,
         $expectedExceptionMessage
     ) {
-        $this->initCurrentMock(['getAmastyPayForEverything']);
+        $this->initCurrentMock(['isAmastyGiftCardAvailable', 'isAmastyGiftCardLegacyVersion', 'getAmastyPayForEverything']);
+        $this->currentMock->expects(static::once())->method('isAmastyGiftCardAvailable')->willReturn(true);
+        $this->currentMock->expects(static::once())->method('isAmastyGiftCardLegacyVersion')->willReturn(true);
+        
         $giftTestAmount = 1322;
         $quoteId = 2;
 
@@ -1161,9 +1165,9 @@ class DiscountTest extends TestCase
 
         $deleteSql = "DELETE FROM {$testTableName} WHERE quote_id = :destination_quote_id";
 
-        $sqlInsert = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) 
+        $sqlInsert = "INSERT INTO {$testTableName} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) 
                     SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
-                    FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+                    FROM {$testTableName} WHERE quote_id = :source_quote_id";
 
         $this->connectionMock->expects(static::exactly(2))->method('query')->withConsecutive(
             [$deleteSql, ['destination_quote_id' => $destinationQuoteId]],
@@ -1201,8 +1205,8 @@ class DiscountTest extends TestCase
         $deleteSql = "DELETE FROM {$testTableName} WHERE quote_id = :destination_quote_id";
 
         $sqlInsert = "INSERT INTO {$testTableName} (quote_id, code_id, account_id, base_gift_amount, code) 
-                    SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
-                    FROM {$testTableName} WHERE quote_id = :source_quote_id";
+                      SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
+                      FROM {$testTableName} WHERE quote_id = :source_quote_id";
 
         $this->connectionMock->expects(static::exactly(2))->method('query')->withConsecutive(
             [$deleteSql, ['destination_quote_id' => $destinationQuoteId]],
@@ -1642,7 +1646,7 @@ class DiscountTest extends TestCase
             ->willReturn($gCardQuote);        
         
         $quoteMock->expects(static::once())->method('getId')->willReturn($quoteId);
-        $quote->expects($this->atLeastOnce())->method('getExtensionAttributes')
+        $quoteMock->expects($this->atLeastOnce())->method('getExtensionAttributes')
             ->willReturn($extensionAttributes);
 
         $amastyGiftCardMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)

@@ -31,7 +31,7 @@ use Magento\Framework\Module\Manager;
 class ThirdPartyModuleFactoryTest extends TestCase
 {
     const MODULE_NAME = 'Bolt_Boltpay';
-    const CLASS_NAME = 'Bolt\Boltpay\Model\ClassName';
+    const CLASS_NAME = 'Bolt\Boltpay\Model\ThirdPartyModuleFactory';
 
     /**
      * @var Manager
@@ -109,7 +109,7 @@ class ThirdPartyModuleFactoryTest extends TestCase
         $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
             ->withConsecutive(
                 ['# Module is Enabled: Bolt_Boltpay'],
-                ['# Class: Bolt\Boltpay\Model\ClassName']
+                ['# Class: Bolt\Boltpay\Model\ThirdPartyModuleFactory']
             );
 
         $this->_objectManager->expects(self::once())->method('create')->willReturnSelf();
@@ -127,5 +127,14 @@ class ThirdPartyModuleFactoryTest extends TestCase
             ->willReturn(true);
 
         $this->assertTrue($this->currentMock->isAvailable());
+    }
+    
+    /**
+     * @test
+     * @covers ::isExists
+     */
+    public function isExists()
+    {
+        $this->assertTrue($this->currentMock->isExists());
     }
 }
