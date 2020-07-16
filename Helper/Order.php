@@ -1730,10 +1730,17 @@ class Order extends AbstractHelper
      * Map class internal Bolt transaction state representation to Magento order state
      *
      * @param string $transactionState
+     * @param OrderModel $order
      * @return string
      */
-    public function transactionToOrderState($transactionState)
+    public function transactionToOrderState($transactionState, $order)
     {
+        $orderStateForCredit = (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING;
+
+        if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid()) {
+            $orderStateForCredit = OrderModel::STATE_CLOSED;
+        }
+
         return [
             self::TS_ZERO_AMOUNT => OrderModel::STATE_PROCESSING,
             self::TS_PENDING => OrderModel::STATE_PAYMENT_REVIEW,
@@ -1745,7 +1752,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
             // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
             // If called from Bolt merchant dashboard there is no enough info to sync the totals
-            self::TS_CREDIT_COMPLETED => (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+            self::TS_CREDIT_COMPLETED => $orderStateForCredit
         ][$transactionState];
     }
 
@@ -1949,7 +1956,8 @@ class Order extends AbstractHelper
             // set order state and status
             $this->resetOrderState($order);
         }
-        $orderState = $this->transactionToOrderState($transactionState);
+        $orderState = $this->transactionToOrderState($transactionState, $order);
+
         $this->setOrderState($order, $orderState);
 
         // Send order confirmation email to customer.
