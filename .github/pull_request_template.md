@@ -22,6 +22,7 @@ Please validate that you have tested your change in at least one of the followin
 
 # For PR Reviewer 
 - [ ] Reviewed unit tests to make sure we are using real components rather than mocks as much as possible?
+- [ ] If a new observer is added we must add a feature switch, did you verify this?
 
 # Checklist:
 
