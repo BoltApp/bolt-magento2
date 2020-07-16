@@ -726,8 +726,8 @@ class DiscountTest extends TestCase
             ->setMethods(['getInstance', 'validateCode'])
             ->disableOriginalConstructor()
             ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'amastyGiftCardManagement', $amastyGiftCardMock);
+                                                     
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyGiftCardManagement', $amastyGiftCardMock);
 
         $amastyGiftCardMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $amastyGiftCardMock->expects(static::once())->method('validateCode')->with($quote, $code)->willReturn($isValid);
@@ -755,7 +755,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyQuoteFactory', $quoteGiftCard);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyQuoteFactory', $quoteGiftCard);
 
         $quoteGiftCard->expects($applyForQuote ? static::once() : static::never())
             ->method('getInstance')
@@ -767,7 +767,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyQuoteResource', $amastyResourceMock);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyQuoteResource', $amastyResourceMock);
 
         $amastyResourceMock->expects($applyForQuote ? static::once() : static::never())
             ->method('getInstance')
@@ -995,7 +995,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyGiftCardManagement', $amastyGiftCardMock);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyGiftCardManagement', $amastyGiftCardMock);
 
         $amastyGiftCardMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $amastyGiftCardMock->expects(static::once())->method('validateCode')->with($quote, $code)->willReturn(true);
@@ -1020,7 +1020,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyQuoteFactory', $quoteGiftCard);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyQuoteFactory', $quoteGiftCard);
 
         $quoteGiftCard->expects(static::once())->method('getInstance')->willReturnSelf();
         $quoteGiftCard->expects(static::once())->method('create')->willReturnSelf();
@@ -1030,7 +1030,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyQuoteResource', $amastyResourceMock);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyQuoteResource', $amastyResourceMock);
 
         $amastyResourceMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $amastyResourceMock->expects(static::once())
@@ -1071,7 +1071,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'amastyQuoteRepository', $amastyQuoteMock);
+        TestHelper::setProperty($this->currentMock, 'amastyLegacyQuoteRepository', $amastyQuoteMock);
 
         $amastyQuoteMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $amastyQuoteMock->expects(static::once())->method('save')->with($quoteGiftCard)->willReturnSelf();
