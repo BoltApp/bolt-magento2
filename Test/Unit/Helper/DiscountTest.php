@@ -1166,8 +1166,8 @@ class DiscountTest extends TestCase
         $deleteSql = "DELETE FROM {$testTableName} WHERE quote_id = :destination_quote_id";
 
         $sqlInsert = "INSERT INTO {$testTableName} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) 
-                    SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
-                    FROM {$testTableName} WHERE quote_id = :source_quote_id";
+                        SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
+                        FROM {$testTableName} WHERE quote_id = :source_quote_id";
 
         $this->connectionMock->expects(static::exactly(2))->method('query')->withConsecutive(
             [$deleteSql, ['destination_quote_id' => $destinationQuoteId]],
@@ -1205,8 +1205,8 @@ class DiscountTest extends TestCase
         $deleteSql = "DELETE FROM {$testTableName} WHERE quote_id = :destination_quote_id";
 
         $sqlInsert = "INSERT INTO {$testTableName} (quote_id, code_id, account_id, base_gift_amount, code) 
-                      SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
-                      FROM {$testTableName} WHERE quote_id = :source_quote_id";
+                        SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
+                        FROM {$testTableName} WHERE quote_id = :source_quote_id";
 
         $this->connectionMock->expects(static::exactly(2))->method('query')->withConsecutive(
             [$deleteSql, ['destination_quote_id' => $destinationQuoteId]],
