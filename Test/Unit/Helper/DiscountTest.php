@@ -69,40 +69,7 @@ class DiscountTest extends TestCase
     /**
      * @var MockObject|ResourceConnection mocked instance of the resource collection
      */
-    private $resource;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard account factory
-     */
-    private $amastyAccountFactory;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard quote management model
-     */
-    private $amastyGiftCardManagement;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard quote factory
-     */
-    private $amastyQuoteFactory;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard quote resouce model
-     */
-    private $amastyQuoteResource;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard quote repository
-     */
-    private $amastyQuoteRepository;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty GiftCard Account collection
-     */
-    private $amastyAccountCollection;
-    
-    
-    
+    private $resource;    
     
     /**
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the legacy Amasty GiftCard model Account factory
