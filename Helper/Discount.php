@@ -30,7 +30,6 @@ use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\Customer\Model\Session as CustomerSession;
 
 /**
  * Boltpay Discount helper class
@@ -198,11 +197,6 @@ class Discount extends AbstractHelper
      * @var LogHelper
      */
     private $logHelper;
-    
-    /**
-     * @var CustomerSession
-     */
-    private $customerSession;
 
     /**
      * Discount constructor.
@@ -237,7 +231,6 @@ class Discount extends AbstractHelper
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
-     * @param CustomerSession         $customerSession
      */
     public function __construct(
         Context $context,
@@ -269,8 +262,7 @@ class Discount extends AbstractHelper
         Bugsnag $bugsnag,
         AppState $appState,
         Session $sessionHelper,
-        LogHelper $logHelper,
-        CustomerSession $customerSession
+        LogHelper $logHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -302,7 +294,6 @@ class Discount extends AbstractHelper
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
-        $this->customerSession = $customerSession;
     }
     
     /**
