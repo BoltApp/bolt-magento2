@@ -41,7 +41,7 @@ use Zend_Db_Statement_Exception;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Api\Data\CartExtension;
-use Magento\Framework\Api\ExtensibleDataInterface; as GiftCardQuote;
+use Magento\Framework\Api\ExtensibleDataInterface as GiftCardQuote;
 
 /**
  * Class DiscountTest
