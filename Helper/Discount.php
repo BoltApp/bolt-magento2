@@ -327,6 +327,10 @@ class Discount extends AbstractHelper
         return ($this->amastyAccountFactory->isAvailable() || $this->amastyLegacyAccountFactory->isAvailable());
     }
     
+    /**
+     * Check whether the Amasty Gift Card module is legacy version
+     * @return bool
+     */
     public function isAmastyGiftCardLegacyVersion()
     {
         return $this->amastyLegacyAccountFactory->isExists();
