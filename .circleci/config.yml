@@ -73,7 +73,7 @@ commands:
           name: "Conditionally Notify Greenkeeper"
           when: on_fail
           command: |
-            if [[ ${CIRCLE_BRANCH} == "master" ]]
+            if [[ ${CIRCLE_BRANCH} == "master" ]] ; then
               export NOTIFY_FLAG=true
             else
               if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
