@@ -211,8 +211,7 @@ trait ReceivedUrlTrait
 
     /**
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return false|Quote
      */
     private function getQuoteById($quoteId)
     {
