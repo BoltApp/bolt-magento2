@@ -474,7 +474,7 @@ class CartTest extends TestCase
         $addressMock->method('getStreetLine')
             ->willReturnMap(
                 [
-                    [1, $this->testAddressData['street_address1']],
+                    [-1, $this->testAddressData['street_address1']],
                     [2, $this->testAddressData['street_address2']]
                 ]
             );
