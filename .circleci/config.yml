@@ -264,13 +264,30 @@ jobs:
 
 workflows:
   version: 2
+  build-test-and-deploy:
+    jobs:
+      - build
+      - test1:
+          requires:
+            - build
+      - test2:
+          requires:
+            - test1
+      - deploy:
+          requires:
+            - test2
   build:
     jobs:
-#      - phpcs
       - unit-php72-magento23
       - unit-php71-magento22
+          requires:
+            - unit-php72-magento23
       - unit-php70-magento22
+          requires:
+            - unit-php71-magento22
       - integration-php72-magento23
+          requires:
+            - unit-php70-magento22
   tagger:
     triggers:
       - schedule:
