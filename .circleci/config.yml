@@ -85,10 +85,9 @@ commands:
       - when:
           condition: $NOTIFY_FLAG
           steps:
-            - slack/status:
-                fail_only: true
-                failure_message: '[TEST] :red_circle: M2: A $CIRCLE_JOB job has failed on branch $CIRCLE_BRANCH!'
-                webhook: $SLACK_GREENKEEPER_WEBHOOK
+            - run:
+                command: |
+                  echo "sending notification"
 
   m2-php-test-for-merchant-branches:
     description: PHP Unit tests for M2 on all merchant branches
