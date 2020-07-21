@@ -161,11 +161,6 @@ class NonBoltOrderObserver implements ObserverInterface
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
             return;
-        } catch (Error $error) {
-            // catch errors so failures here don't prevent orders from being created
-            $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
-            $this->bugsnag->notifyException($error);
-            return;
         }
 
         $this->metricsClient->processCountMetric("non_bolt_order_creation.success", 1);
