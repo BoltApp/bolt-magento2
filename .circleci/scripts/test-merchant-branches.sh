@@ -5,6 +5,10 @@ if [ "$#" -ne 2 ]; then
     exit 1
 fi
 
+# init git
+git config user.email "circleci@bolt.com"
+git config user.name "Circle CI"
+
 baseBranch="$1"
 isIntegration="$2"
 merchantBranches=()
