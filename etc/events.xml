@@ -4,11 +4,4 @@
     <event name="sales_order_shipment_track_save_after">
         <observer name="boltTrackSaveObserver" instance="Bolt\Boltpay\Observer\TrackingSaveObserver" />
     </event>
-    <!-- Need both events because PayPal does not emit the checkout_submit_all_after event -->
-    <event name="checkout_submit_all_after">
-        <observer name="nonBoltOrderObserver" instance="Bolt\Boltpay\Observer\NonBoltOrderObserver" />
-    </event>
-    <event name="paypal_express_place_order_success">
-        <observer name="nonBoltOrderObserver" instance="Bolt\Boltpay\Observer\NonBoltOrderObserver" />
-    </event>
 </config>
