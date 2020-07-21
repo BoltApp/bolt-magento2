@@ -2288,9 +2288,10 @@ if (!$block->isSaveCartInSections()) { ?>
     if (trim(location.pathname, '/') === 'checkout/cart') {
         require([
         'jquery',
+        'Magento_Customer/js/customer-data',
         'Magento_Checkout/js/model/quote',
         'domReady!'
-        ], function ($, quote) {
+        ], function ($, customerData, quote) {
             // If quote total was changed through a method we didn't create,
             // we should reload the bolt cart since totals are probably now out of sync.
             quote.totals.subscribe(function (newValue) {
