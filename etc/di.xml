@@ -261,6 +261,7 @@
         </arguments>
     </type>
 
+    <!-- When adding any plugin, you MUST wrap the plugin in a feature switch -->
     <type name="Magento\Quote\Model\Quote">
         <plugin name="Bolt_Boltpay_Quote_Plugin" type="Bolt\Boltpay\Plugin\QuotePlugin" sortOrder="1" />
     </type>
@@ -282,6 +283,12 @@
     <type name="Magento\Checkout\Model\Session">
         <plugin name="BoltBoltpayRestoreQuotePlugin"
                 type="Bolt\Boltpay\Plugin\RestoreQuotePlugin"
+                sortOrder="1"/>
+    </type>
+
+    <type name="Magento\Sales\Api\OrderManagementInterface">
+        <plugin name="BoltNonBoltOrderPlugin"
+                type="Bolt\Boltpay\Plugin\NonBoltOrderPlugin"
                 sortOrder="1"/>
     </type>
 
