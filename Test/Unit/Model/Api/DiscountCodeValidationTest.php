@@ -74,6 +74,7 @@ class DiscountCodeValidationTest extends TestCase
     const USAGE_LIMIT = 100;
     const COUPON_CODE = 'TEST_COUPON';
     const STORE_ID = 1;
+    const CACHE_IDENTIFIER = 'de6571d30123102e4a49a9483881a05f';
 
     /**
      * @var CouponFactory
@@ -395,6 +396,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
+        
+        $this->cartHelper->method('getQuoteCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $result = $this->currentMock->validate();
 
@@ -500,6 +504,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
+        
+        $this->cartHelper->method('getQuoteCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $this->cartHelper->method('handleSpecialAddressCases')
             ->willReturn((object)$request_shipping_addr);
@@ -623,6 +630,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
+        
+        $this->cartHelper->method('getQuoteCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_CODE_INVALID,
@@ -983,6 +993,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
+            
+        $this->cartHelper->method('getQuoteCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $this->ruleMock->expects(self::once())->method('getSimpleAction')->willReturn('cart_fixed');
 
@@ -1059,6 +1072,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
+        
+        $this->cartHelper->method('getQuoteCacheIdentifier')
+            ->willReturn(self::CACHE_IDENTIFIER);
 
         $this->moduleGiftCardAccountMock->method('getInstance')->willReturnSelf();
 
@@ -1812,6 +1828,7 @@ class DiscountCodeValidationTest extends TestCase
                 $giftCard,
                 $immutableQuoteMock,
                 $parentQuoteMock,
+                self::CACHE_IDENTIFIER
             ]
         );
 
@@ -1859,6 +1876,7 @@ class DiscountCodeValidationTest extends TestCase
                     $giftCard,
                     $immutableQuoteMock,
                     $parentQuoteMock,
+                    self::CACHE_IDENTIFIER
                 ]
             )
         );
@@ -1916,6 +1934,7 @@ class DiscountCodeValidationTest extends TestCase
                 $giftCardMock,
                 $immutableQuoteMock,
                 $parentQuoteMock,
+                self::CACHE_IDENTIFIER
             ]
         );
 
@@ -1978,6 +1997,7 @@ class DiscountCodeValidationTest extends TestCase
                 $giftCardMock,
                 $immutableQuoteMock,
                 $parentQuoteMock,
+                self::CACHE_IDENTIFIER
             ]
         );
 
@@ -2253,7 +2273,9 @@ class DiscountCodeValidationTest extends TestCase
                     'getQuoteById',
                     'handleSpecialAddressCases',
                     'validateEmail',
-                    'getCartData'
+                    'getCartData',
+                    'getQuoteCacheIdentifier',
+                    'removeFromCache'
                 ]
             )
             ->disableOriginalConstructor()
