@@ -5780,4 +5780,128 @@ ORDER
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
+        
+        /**
+        * @test
+        * that getQuoteCacheIdentifier always return empty string when caching is disabled
+        *
+        * @covers ::getQuoteCacheIdentifier
+        *
+        */
+        public function getQuoteCacheIdentifier_withCachingDisabled_returnEmptyString()
+        {
+            $this->currentMock = $this->getCurrentMock(
+                [
+                    'getSessionQuoteStoreId',
+                    'isBoltOrderCachingEnabled',
+                ]
+            );
+
+            $this->currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
+            $this->currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+                ->willReturn(false);
+
+            $result = $this->currentMock->getQuoteCacheIdentifier(false, '', $this->quoteMock);
+            static::assertEquals('', $result);
+        }
+
+        /**
+        * @test
+        * that getQuoteCacheIdentifier always return empty string if cart data is empty
+        *
+        * @covers ::getQuoteCacheIdentifier
+        *
+        */
+        public function getQuoteCacheIdentifier_withEmptyCartData_returnEmptyString()
+        {
+            $this->currentMock = $this->getCurrentMock(
+                [
+                    'getSessionQuoteStoreId',
+                    'isBoltOrderCachingEnabled',
+                    'getCartData',
+                ]
+            );
+
+            $this->currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
+            $this->currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+                ->willReturn(true);
+            $this->currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+                ->willReturn([]);
+
+            $result = $this->currentMock->getQuoteCacheIdentifier(false, '', $this->quoteMock);
+            static::assertEquals('', $result);
+        }
+
+        /**
+        * @test
+        * that getQuoteCacheIdentifier always return empty string if order for the quote already exists
+        *
+        * @covers ::getQuoteCacheIdentifier
+        *
+        */
+        public function getQuoteCacheIdentifier_ifOrderExists_returnEmptyString()
+        {
+            list($currentMock, $cart) = $this->getBoltpayOrderSetUp();
+            
+            $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
+            $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+                ->willReturn(true);
+            $currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+                ->willReturn($cart);
+            $currentMock->expects(static::once())->method('doesOrderExist')->with($cart,$this->quoteMock)->willReturn(true);
+            $currentMock->expects(static::once())->method('deactivateSessionQuote')->willReturnSelf();
+    
+            $result = $currentMock->getQuoteCacheIdentifier(false, '', $this->quoteMock);
+            static::assertEquals('', $result);
+        }
+        
+        /**
+        * @test
+        * that getQuoteCacheIdentifier always return cache identifier if cache for the quote exists
+        *
+        * @covers ::getQuoteCacheIdentifier
+        *
+        */
+        public function getQuoteCacheIdentifier_whenCacheExist_returnCacheIdentifier()
+        {
+            list($currentMock, $cart) = $this->getBoltpayOrderSetUp();
+            
+            $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
+            $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+                ->willReturn(true);
+            $currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+                ->willReturn($cart);
+            $currentMock->expects(static::once())->method('doesOrderExist')->with($cart,$this->quoteMock)->willReturn(false);
+            $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
+    
+            $result = $currentMock->getQuoteCacheIdentifier(false, '', $this->quoteMock);
+            static::assertEquals(self::CACHE_IDENTIFIER, $result);
+        }
+        
+        /**
+         * @test
+         * that removeFromCache do nothing if identifier is empty
+         *
+         * @covers ::removeFromCache
+         *
+         */
+        public function removeFromCache_whenIdentifierIsEmpty_doNothing()
+        {
+            $this->cache->expects(static::never())->method('remove');
+            $this->currentMock->removeFromCache('');
+        }
+        
+        /**
+         * @test
+         * that removeFromCache remove cache if identifier is non-empty
+         *
+         * @covers ::removeFromCache
+         *
+         */
+        public function removeFromCache_whenIdentifierNonEmpty_removeCache()
+        {
+            $this->cache->expects(static::once())->method('remove');
+            $this->currentMock->removeFromCache(self::CACHE_IDENTIFIER);
+        }  
+        
         }

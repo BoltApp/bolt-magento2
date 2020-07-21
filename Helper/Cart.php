@@ -487,6 +487,18 @@ class Cart extends AbstractHelper
         }
         return $unserialize ? unserialize($cached) : $cached;
     }
+    
+    /**
+     * Remove data from Magento cache
+     *
+     * @param string $identifier
+     */
+    public function removeFromCache($identifier)
+    {
+        if (!empty($identifier)) {
+            $this->cache->remove($identifier);
+        }
+    }
 
     /**
      * Save data to Magento cache
@@ -2216,5 +2228,43 @@ class Cart extends AbstractHelper
         } finally {
             return $result;
         }
+    }
+    
+    /**
+     * Get the hash of the quote to be used as cache identifier
+     *
+     * @param bool   $paymentOnly              flag that represents the type of checkout
+     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
+     *                                         i.e. billing address to be saved with the order
+     * @param Quote $quote
+     * @param null|int    $storeId             The ID of the Magento store
+     *
+     * @return string
+     */
+    public function getQuoteCacheIdentifier($paymentOnly, $placeOrderPayload, $quote, $storeId = null)
+    {
+        // If storeId was missed through request, then try to get it from the session quote.
+        if ($storeId === null) {
+            $storeId = $this->getSessionQuoteStoreId();
+        }
+
+        // Try fetching data from cache
+        if (!$this->isBoltOrderCachingEnabled($storeId)) {
+            return '';
+        }
+        
+        //Get cart data
+        $cart = $this->getCartData($paymentOnly, $placeOrderPayload, $quote);
+
+        if (!$cart) {
+            return '';
+        }
+
+        if ($this->doesOrderExist($cart, $quote)) {
+            $this->deactivateSessionQuote($quote);
+            return '';
+        }
+
+        return $this->getCartCacheIdentifier($cart);
     }
 }

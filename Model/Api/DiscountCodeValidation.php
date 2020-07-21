@@ -402,6 +402,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 return false;
             }
+            
+            $quoteCacheIdentifier = $this->getQuoteCacheIdentifier($immutableQuote, $storeId, $request);
 
             // Set the shipment if request payload has that info.
             if (isset($request->cart->shipments[0]->reference)) {
@@ -442,7 +444,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
                 }
             } elseif ($giftCard && $giftCard->getId()) {
-                $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
+                $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote, $quoteCacheIdentifier);
             } else {
                 throw new WebApiException(__('Something happened with current code.'));
             }
@@ -682,7 +684,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return array
      * @throws \Exception
      */
-    private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
+    private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote, $quoteCacheIdentifier)
     {
         try {
             if ($giftCard instanceof \Amasty\GiftCard\Model\Account) {
@@ -692,7 +694,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $parentQuote);
                 // Apply Amasty Gift Card to the parent quote
                 $giftAmount = $this->discountHelper->applyAmastyGiftCard($code, $giftCard, $parentQuote);
-                // Reset and apply Amasty Gift Cards to the immutable quote
+                // Clear the quote data from Magento cache, so when the customer remove the gift card from cart page,
+                // it can force to refresh the cart in Bolt side.
+                $this->clearQuoteCache($quoteCacheIdentifier);
+                // Reset and apply Amasty Gift Cards to the immutable quote                
                 $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
             } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
@@ -806,6 +811,31 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'tax_amount'   => $cart['tax_amount'],
             'discounts'    => $cart['discounts'],
         ];
+    }
+    
+    /**
+     * Remove data from Magento cache
+     *
+     * @param string $quoteCacheIdentifier
+     */
+    private function clearQuoteCache($quoteCacheIdentifier)
+    {
+        $this->cartHelper->removeFromCache($quoteCacheIdentifier);
+    }
+    
+    /**
+     * Get the hash of the quote to be used as cache identifier
+     *
+     * @param Quote       $quote
+     * @param null|int    $storeId
+     * @param Object      $request
+     *
+     * @return string
+     */
+    private function getQuoteCacheIdentifier($quote, $storeId, $request)
+    {
+        $is_has_shipment = isset($request->cart->shipments[0]->reference);
+        return $this->cartHelper->getQuoteCacheIdentifier($is_has_shipment, null, $quote, $storeId);
     }
 
     /**
