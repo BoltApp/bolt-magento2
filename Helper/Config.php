@@ -127,6 +127,11 @@ class Config extends AbstractHelper
      */
     const XML_PATH_PRODUCT_ORDER_MANAGEMENT = 'payment/boltpay/order_management';
 
+    /**
+     * Enable Bolt order management CSS selector
+     */
+    const XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR = 'payment/boltpay/order_management_selector';
+
 
     /**
      * Prefetch shipping
@@ -732,6 +737,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PRODUCT_ORDER_MANAGEMENT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get Order management CSS selector from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return  string
+     */
+    public function getOrderManagementSelector($store = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR,
             ScopeInterface::SCOPE_STORE,
             $store
         );

@@ -20,11 +20,18 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) { return;
+if ($block->shouldDisableBoltCheckout()) {
+    return;
 }
-if (!$block->isOrderManagementEnabled()) { return;
+if (!$block->isOrderManagementEnabled()) {
+    return;
 }
-if ($block->isBlockAlreadyShown('account')) { return;
+// If CSS selector is set we want to insert button via fronend after this selector.
+if ($block->getOrderManagementSelector()) {
+    return;
+}
+if ($block->isBlockAlreadyShown('account')) {
+    return;
 }
 $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
