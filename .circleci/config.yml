@@ -69,26 +69,6 @@ commands:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
-      - run:
-          name: "Conditionally Notify Greenkeeper"
-          when: on_fail
-          command: |
-            if [[ ${CIRCLE_BRANCH} == "master" ]] ; then
-              export NOTIFY_FLAG=true
-            else
-              if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
-                export NOTIFY_FLAG=true
-              else
-                export NOTIFY_FLAG=false
-              fi
-            fi
-      - when:
-          condition: $NOTIFY_FLAG
-          steps:
-            - slack/status:
-                fail_only: true
-                failure_message: ':red_circle: M2: A $CIRCLE_JOB job has failed on branch $CIRCLE_BRANCH!'
-                webhook: $SLACK_GREENKEEPER_WEBHOOK
 
   m2-php-test-for-merchant-branches:
     description: PHP Unit tests for M2 on all merchant branches
@@ -262,21 +242,43 @@ jobs:
           command: |
             Test/scripts/phpcs_meqp2.sh
 
+  notify-slack:
+    - steps:
+      - run:
+          name: "Conditionally Notify Greenkeeper"
+          command: |
+            if [[ ${CIRCLE_BRANCH} == "master" ]] ; then
+              export NOTIFY_FLAG=true
+            else
+              if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
+                export NOTIFY_FLAG=true
+              else
+                export NOTIFY_FLAG=false
+              fi
+            fi
+      - when:
+          condition: $NOTIFY_FLAG
+          steps:
+            - slack/status:
+                failure_message: ':red_circle: M2: A $CIRCLE_JOB job has failed on branch $CIRCLE_BRANCH!'
+                webhook: $SLACK_GREENKEEPER_WEBHOOK
+
+
 
 workflows:
   version: 2
   build:
     jobs:
       - unit-php72-magento23
-      - unit-php71-magento22:
-          requires:
-            - unit-php72-magento23
-      - unit-php70-magento22:
-          requires:
-            - unit-php71-magento22
-      - integration-php72-magento23:
+      - unit-php71-magento22
+      - unit-php70-magento22
+      - integration-php72-magento23
+      - notify-slack
           requires:
             - unit-php70-magento22
+            - unit-php71-magento22
+            - unit-php72-magento23
+            - integration-php72-magento23
   tagger:
     triggers:
       - schedule:
