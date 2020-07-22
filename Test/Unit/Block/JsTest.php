@@ -109,7 +109,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
             'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled',
-            'getOrderManagementSelector',
+            'getOrderManagementSelector','isOrderManagementEnabled',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
