@@ -6,7 +6,7 @@ set -u
 PREVRC=$(git for-each-ref --sort=-creatordate --format="%(refname:short)|%(creatordate:unix)" refs/tags/* | grep "0-rc|" | head -n 1)
 
 taggedDate=$(echo $PREVRC | cut -d"|" -f2)
-deduplicationWindow=$(date --date "18 days ago" +"%s")
+deduplicationWindow=$(date --date "11 days ago" +"%s")
 
 if [[ ${taggedDate} -lt ${deduplicationWindow} ]]; then
   OLDTAGNAME=$(echo $PREVRC | cut -d"|" -f1)
