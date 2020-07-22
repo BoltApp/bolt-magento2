@@ -296,15 +296,9 @@ workflows:
   merchant-branch-test:
     jobs:
       - unit-php72-magento23-for-merchant-branches
-      - unit-php71-magento22-for-merchant-branches:
-          requires:
-            - unit-php72-magento23-for-merchant-branches
-      - unit-php70-magento22-for-merchant-branches:
-          requires:
-            - unit-php71-magento22-for-merchant-branches
-      - integration-php72-magento23-for-merchant-branches:
-          requires:
-            - unit-php70-magento22-for-merchant-branches
+      - unit-php71-magento22-for-merchant-branches
+      - unit-php70-magento22-for-merchant-branches
+      - integration-php72-magento23-for-merchant-branches
   auto-rebase:
     jobs:
       - auto-rebase:
