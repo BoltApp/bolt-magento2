@@ -2274,6 +2274,41 @@ if (!$block->isSaveCartInSections()) { ?>
             invalidateBoltCart();
         });
 
+        // insert Bolt order managenent button into DOM
+        if (settings.order_management_selector) {
+            var insertAccountScript = function () {
+                var scriptTag = document.getElementById('bolt-account');
+                if (scriptTag) {
+                    return;
+                }
+                var publishableKey = getCheckoutKey();
+                scriptTag = document.createElement('script');
+                scriptTag.setAttribute('type', 'text/javascript');
+                scriptTag.setAttribute('async', '');
+                scriptTag.setAttribute('src', settings.account_url);
+                scriptTag.setAttribute('id', 'bolt-account');
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                document.head.appendChild(scriptTag);
+            }
+            var insertManagementButtonDivAfterElement = function(element) {
+                var orderMagagementButton = document.createElement('div');
+                orderMagagementButton.setAttribute('class', 'bolt-account-login');
+                element.parentNode.insertBefore(orderMagagementButton, element.nextSibling);
+                insertAccountScript();
+            }
+            var setupOrderManagementReplacement = function() {
+                element = document.querySelector(settings.order_management_selector);
+                if (element) {
+                    insertManagementButtonDivAfterElement(element);
+                } else {
+                    onElementReady(settings.order_management_selector, function(element) {
+                        insertManagementButtonDivAfterElement(element);
+                    });
+                }
+            }
+            setupOrderManagementReplacement();
+        };
+
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
         // Required for setting check callback which either
