@@ -611,6 +611,7 @@ JSON;
             ['getOnClose', BoltConfig::XML_PATH_TRACK_CLOSE],
             ['getMinimumOrderAmount', BoltConfig::XML_PATH_MINIMUM_ORDER_AMOUNT],
             ['getOnShippingOptionsComplete', BoltConfig::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE],
+            ['getOrderManagementSelector', BoltConfig::XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR],
         ];
     }
 
