@@ -6,6 +6,7 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Payment;
@@ -68,6 +69,11 @@ class NonBoltOrderObserver implements ObserverInterface
     private $quoteRepository;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @param ApiHelper $apiHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
@@ -76,6 +82,7 @@ class NonBoltOrderObserver implements ObserverInterface
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
      * @param QuoteRepository $quoteRepository
+     * @param Decider $decider
      */
     public function __construct(
         ApiHelper $apiHelper,
@@ -85,7 +92,8 @@ class NonBoltOrderObserver implements ObserverInterface
         DataObjectFactory $dataObjectFactory,
         LogHelper $logHelper,
         MetricsClient $metricsClient,
-        QuoteRepository $quoteRepository
+        QuoteRepository $quoteRepository,
+        Decider $decider
     ) {
         $this->apiHelper = $apiHelper;
         $this->bugsnag = $bugsnag;
@@ -95,6 +103,7 @@ class NonBoltOrderObserver implements ObserverInterface
         $this->logHelper = $logHelper;
         $this->metricsClient = $metricsClient;
         $this->quoteRepository = $quoteRepository;
+        $this->decider = $decider;
     }
 
     /**
@@ -102,6 +111,10 @@ class NonBoltOrderObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        if (!$this->decider->isNonBoltTrackingEnabled()) {
+            return;
+        }
+
         try {
             $order = $observer->getEvent()->getOrder();
             if ($order == null) {
@@ -147,11 +160,6 @@ class NonBoltOrderObserver implements ObserverInterface
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
-            return;
-        } catch (Error $error) {
-            // catch errors so failures here don't prevent orders from being created
-            $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
-            $this->bugsnag->notifyException($error);
             return;
         }
 

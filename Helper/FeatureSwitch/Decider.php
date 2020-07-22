@@ -203,6 +203,14 @@ class Decider extends AbstractHelper
         return $this->isSwitchEnabled(Definitions::M2_TRACK_SHIPMENT);
     }
 
+    /**
+     * Checks whether the feature switch for ingesting Non-Bolt order information is enabled
+     */
+    public function isNonBoltTrackingEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_TRACK_NON_BOLT);
+    }
+
     public function isOrderManagementEnabled()
     {
         return $this->isSwitchEnabled(Definitions::M2_ORDER_MANAGEMENT);

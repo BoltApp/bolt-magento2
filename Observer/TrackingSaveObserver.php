@@ -55,6 +55,7 @@ class TrackingSaveObserver implements ObserverInterface
      * @param ApiHelper $apiHelper
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
+     * @param Decider $decider
      *
      */
     public function __construct(
