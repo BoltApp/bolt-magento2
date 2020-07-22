@@ -137,7 +137,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Tag master as release candidate every 3 weeks
+          name: Tag master as release candidate every 2 weeks
           command: .circleci/scripts/tag-rc-if-necessary.sh
       - notify-rc-tag:
           tag: $NEWTAGNAME
