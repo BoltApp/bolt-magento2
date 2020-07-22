@@ -292,7 +292,7 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteBoltOrder()
     {
         $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(true);
-        $payment = $this->getMockForAbstractClass(Payment::class);
+        $payment = $this->createMock(Payment::class);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
