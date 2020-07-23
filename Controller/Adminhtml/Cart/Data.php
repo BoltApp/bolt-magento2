@@ -9,7 +9,7 @@
  * http://opensource.org/licenses/osl-3.0.php
  * @category Bolt
  * @Package Bolt_Boltpay
- * @copyright Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 
