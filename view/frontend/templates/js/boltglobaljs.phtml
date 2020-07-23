@@ -30,35 +30,25 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block-
 }
 
 $trackCallbackCode = $block->getTrackCallbacks();
-
-function wrapWithCatch($jsCode, $argName = '')
-{
-    echo "
-function($argName) {
-    try {
-        $jsCode
-    } catch (error) {
-        console.error(error);
-    }
-}";
-}
-
+$onShippingDetailsCompleteCode = $trackCallbackCode['shipping_details_complete'];
+$onShippingOptionsCompleteCode = $trackCallbackCode['shipping_options_complete'];
+$onSuccessCode = $block->getJavascriptSuccess() . $trackCallbackCode['success'];
 ob_start();
 ?>
 <script type="text/javascript">
     // Store the configuration parameters passed from the php block
-    // in the global object. Used in this file and on the payment page
-    // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-    window.boltConfig = <?php echo $block->getSettings(); ?>;
+    // in the global object. Used in this file and on the payment page in payment method renderer,
+    // vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
+    window.boltConfig = <?= /* @noEscape */ $block->getSettings(); ?>;
 
     window.boltConfig.trackCallbacks = {
-        onCheckoutStart: <?php wrapWithCatch($trackCallbackCode['checkout_start']); ?>,
-        onEmailEnter: <?php wrapWithCatch($trackCallbackCode['email_enter'], 'email'); ?>,
-        onShippingDetailsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_details_complete']); ?>,
-        onShippingOptionsComplete: <?php wrapWithCatch($trackCallbackCode['shipping_options_complete']); ?>,
-        onPaymentSubmit: <?php wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
-        onSuccess: <?php wrapWithCatch($block->getJavascriptSuccess() . $trackCallbackCode['success'], 'data') ?>,
-        onClose: <?php wrapWithCatch($trackCallbackCode['close']); ?>,
+        onCheckoutStart: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['checkout_start']); ?>,
+        onEmailEnter: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['email_enter'], 'email'); ?>,
+        onShippingDetailsComplete: <?= /* @noEscape */ $block->wrapWithCatch($onShippingDetailsCompleteCode); ?>,
+        onShippingOptionsComplete: <?= /* @noEscape */ $block->wrapWithCatch($onShippingOptionsCompleteCode); ?>,
+        onPaymentSubmit: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
+        onSuccess: <?= /* @noEscape */ $block->wrapWithCatch($onSuccessCode, 'data') ?>,
+        onClose: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['close']); ?>,
     };
     
     ////////////////////////////////////////////////////////////////////////
@@ -89,5 +79,5 @@ ob_start();
 </script>
 <?php
 $js = ob_get_clean();
-echo $block->minifyJs($js);
 ?>
+<?= /* @noEscape */ $block->minifyJs($js); ?>

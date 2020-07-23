@@ -498,4 +498,21 @@ class Js extends Template
     {
         return $this->featureSwitches->isSaveCartInSections();
     }
+
+    /**
+     * @param $jsCode
+     * @param string $argName
+     * @return string
+     */
+    public function wrapWithCatch ($jsCode, $argName = '')
+    {
+        return "
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}";
+    }
 }

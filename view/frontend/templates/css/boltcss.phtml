@@ -24,6 +24,6 @@ if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
 <style>
-    <?php echo $block->getGlobalCSS(); ?>
+    <?= /* @noEscape */ $block->getGlobalCSS(); ?>
 </style>
 

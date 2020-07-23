@@ -50,9 +50,9 @@ $checkoutKey = $block->getCheckoutKey();
             scriptTag = document.createElement('script');
             scriptTag.setAttribute('type', 'text/javascript');
             scriptTag.setAttribute('async', '');
-            scriptTag.setAttribute('src', '<?php echo $accountJsUrl; ?>');
+            scriptTag.setAttribute('src', '<?= /* @noEscape */ $accountJsUrl; ?>');
             scriptTag.setAttribute('id', 'bolt-account');
-            scriptTag.setAttribute('data-publishable-key', '<?php echo $checkoutKey; ?>');
+            scriptTag.setAttribute('data-publishable-key', '<?= /* @noEscape */ $checkoutKey; ?>');
             document.head.appendChild(scriptTag);
         }
         mediaCheck({

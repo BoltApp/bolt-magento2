@@ -20,30 +20,36 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) { return;
+if ($block->shouldDisableBoltCheckout()) {
+    return;
 }
 //check if we need Bolt on this page
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) { return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) {
+    return;
 }
 
-$trackJsUrl   = $block->getTrackJsUrl();
+$trackJsUrl = $block->getTrackJsUrl();
 $connectJsUrl = $block->getConnectJsUrl();
-$checkoutKey  = $block->getCheckoutKey();
+$checkoutKey = $block->getCheckoutKey();
 ?>
-<script>console.log("Bolt M2 Version: <?=$this->getModuleVersion()?>");</script>
+<script>console.log("Bolt M2 Version: <?= /* @noEscape */ $block->getModuleVersion()?>");</script>
 <script
-    id="bolt-track"
-    type="text/javascript"
-    src="<?php echo $trackJsUrl; ?>"
-    data-shopping-cart-id="magento2"
-    async
-    data-publishable-key="<?php echo $checkoutKey; ?>">
+        id="bolt-track"
+        type="text/javascript"
+        src="<?= /* @noEscape */
+        $trackJsUrl; ?>"
+        data-shopping-cart-id="magento2"
+        async
+        data-publishable-key="<?= /* @noEscape */
+        $checkoutKey; ?>">
 </script>
 <script
-    id="bolt-connect"
-    type="text/javascript"
-    src="<?php echo $connectJsUrl; ?>"
-    data-shopping-cart-id="magento2"
-    async
-    data-publishable-key="<?php echo $checkoutKey; ?>">
+        id="bolt-connect"
+        type="text/javascript"
+        src="<?= /* @noEscape */
+        $connectJsUrl; ?>"
+        data-shopping-cart-id="magento2"
+        async
+        data-publishable-key="<?= /* @noEscape */
+        $checkoutKey; ?>">
 </script>
