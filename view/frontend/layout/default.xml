@@ -22,8 +22,8 @@
         <referenceBlock name="head.additional">
             <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
-            <block class="Bolt\Boltpay\Block\Js" name="boltglobaljs" template="Bolt_Boltpay::js/boltglobaljs.phtml"/>
-            <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
+            <block class="Bolt\Boltpay\Block\MinifiedJs" name="boltglobaljs" template="Bolt_Boltpay::js/boltglobaljs.phtml"/>
+            <block class="Bolt\Boltpay\Block\MinifiedJs" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>
         <!-- for blank theme-->
         <referenceBlock name="top.links">

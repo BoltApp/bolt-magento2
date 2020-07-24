@@ -20,7 +20,7 @@
  * Puts / replaces the checkout buttons according to defined selectors.
  * Maintains Bolt checkout functionality.
  *
- * @var $block \Bolt\Boltpay\Block\Js
+ * @var $block \Bolt\Boltpay\Block\MinifiedJs
  */
 if ($block->shouldDisableBoltCheckout()) { return;
 }
@@ -30,8 +30,6 @@ if ($block->shouldDisableBoltCheckout()) { return;
 //product page checkout has its own JS script
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 }
-
-ob_start();
 
 if (!$block->isSaveCartInSections()) { ?>
     <script type="text/javascript">
@@ -2370,5 +2368,4 @@ if (!$block->isSaveCartInSections()) { ?>
        })
     }
 </script>
-<?php } $js = ob_get_clean(); ?>
-<?= /* @noEscape */ $block->minifyJs($js);?>
+<?php } ?>
