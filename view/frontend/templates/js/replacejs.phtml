@@ -1734,7 +1734,11 @@ if (!$block->isSaveCartInSections()) { ?>
         var boltCartDataID;
 
         var invalidateBoltCartIfOutdated = function() {
-            if (magentoCart === undefined || magentoCart.data_id === undefined || boltCartDataID === undefined) {
+            if (magentoCart === undefined || magentoCart.data_id === undefined) {
+                return;
+            }
+            if (boltCartDataID === undefined) {
+                invalidateBoltCart();
                 return;
             }
             if (magentoCart.data_id > boltCartDataID) {
