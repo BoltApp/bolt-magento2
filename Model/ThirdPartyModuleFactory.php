@@ -77,7 +77,17 @@ class ThirdPartyModuleFactory
      */
     public function isExists()
     {
-        return class_exists($this->className);
+        ///////////////////////////////////////////////////////////////
+        // Due to a known bug https://github.com/magento/magento2/pull/21435,
+        // the autoloader throws an exception on class_exists.
+        // Add try-catch block to avoid uncaught exceptions during autoloading.
+        // Return false instead if any uncaught exceptions.
+        ///////////////////////////////////////////////////////////////
+        try {
+            return class_exists($this->className);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
