@@ -295,3 +295,4 @@ workflows:
             branches:
               only:
                 - master
+                - vincent/circleci/test-multiple-branches-pr
