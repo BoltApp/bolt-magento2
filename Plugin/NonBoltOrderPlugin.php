@@ -149,8 +149,8 @@ class NonBoltOrderPlugin
                 return $order;
             }
 
-            $payment->setBoltTransactionReference($response->reference);
-            $payment->save();
+            $order->setBoltTransactionReference($response->reference);
+            $order->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);

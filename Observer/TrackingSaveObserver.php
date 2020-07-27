@@ -115,7 +115,7 @@ class TrackingSaveObserver implements ObserverInterface
 
             $isNonBoltOrder = !$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE;
             if ($isNonBoltOrder) {
-                $transactionReference = $payment->getBoltTransactionReference();
+                $transactionReference = $order->getBoltTransactionReference();
             } else {
                 $transactionReference = $payment->getAdditionalInformation('transaction_reference');
             }

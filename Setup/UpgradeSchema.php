@@ -80,7 +80,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
 
         $setup->getConnection()->addColumn(
-            $setup->getTable('sales_order_payment'),
+            $setup->getTable('sales_order'),
             'bolt_transaction_reference',
             [
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
