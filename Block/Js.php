@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -251,6 +251,8 @@ class Js extends Template
             'is_instant_checkout_button' => $this->getIsInstantCheckoutButton(),
             'cdn_url' => $this->configHelper->getCdnUrl(),
             'always_present_checkout' => $this->enableAlwaysPresentCheckoutButton(),
+            'account_url' => $this->getAccountJsUrl(),
+            'order_management_selector' => $this->getOrderManagementSelector(),
         ]);
     }
 
@@ -460,6 +462,18 @@ class Js extends Template
     {
         return $this->configHelper->isOrderManagementEnabled() &&
             $this->featureSwitches->isOrderManagementEnabled();
+    }
+
+    /**
+     * Return true if Order Management is enabled
+     * @return bool
+     */
+    public function getOrderManagementSelector()
+    {
+        if (!$this->configHelper->isOrderManagementEnabled() || !$this->featureSwitches->isOrderManagementEnabled()) {
+            return '';
+        }
+        return $this->configHelper->getOrderManagementSelector();
     }
 
     /**

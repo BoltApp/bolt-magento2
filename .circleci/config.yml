@@ -13,7 +13,7 @@ commands:
     steps:
       - slack/notify:
           color: '#58a359'
-          mentions: 'Pavel,oleksii,'
+          mentions: 'pavel,oleksii,'
           message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
           webhook: $SLACK_MAGENTO2_WEBHOOK
           include_job_number_field: false
@@ -73,7 +73,7 @@ commands:
           name: "Conditionally Notify Greenkeeper"
           when: on_fail
           command: |
-            if [[ ${CIRCLE_BRANCH} == "master" ]]
+            if [[ ${CIRCLE_BRANCH} == "master" ]]; then
               export NOTIFY_FLAG=true
             else
               if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then

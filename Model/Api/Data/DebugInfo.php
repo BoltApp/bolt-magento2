@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -23,6 +23,11 @@ class DebugInfo implements \JsonSerializable
      * @var string
      */
     private $phpVersion;
+
+    /**
+     * @var string
+     */
+    private $composerVersion;
 
     /**
      * @var string
@@ -60,6 +65,24 @@ class DebugInfo implements \JsonSerializable
     {
         $this->phpVersion = $phpVersion;
         return $this;
+    }
+
+    /**
+     * @param string $composerVersion
+     * @return $this
+     */
+    public function setComposerVersion($composerVersion)
+    {
+        $this->composerVersion = $composerVersion;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComposerVersion()
+    {
+        return $this->composerVersion;
     }
 
     /**
@@ -142,6 +165,7 @@ class DebugInfo implements \JsonSerializable
     {
         return [
             'php_version' => $this->phpVersion,
+            'composer_version' => $this->composerVersion,
             'platform_version' => $this->platformVersion,
             'bolt_config_settings' => $this->boltConfigSettings,
             'other_plugin_versions' => $this->otherPluginVersions,

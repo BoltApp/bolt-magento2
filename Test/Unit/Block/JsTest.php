@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Composer\ComposerFactory;
 
 /**
  * Class JsTest
@@ -33,7 +34,7 @@ use Magento\Framework\App\Request\Http;
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 23;
+    const SETTINGS_NUMBER = 25;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
@@ -108,7 +109,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
-            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled'
+            'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled',
+            'getOrderManagementSelector','isOrderManagementEnabled',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -120,7 +122,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
                     $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(\Magento\Directory\Model\RegionFactory::class)
+                    $this->createMock(\Magento\Directory\Model\RegionFactory::class),
+                    $this->createMock(ComposerFactory::class),
                 ]
             )
             ->getMock();
@@ -367,6 +370,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $this->assertArrayHasKey('default_error_message', $array, $message . 'default_error_message');
         $this->assertArrayHasKey('button_css_styles', $array, $message . 'button_css_styles');
         $this->assertArrayHasKey('always_present_checkout', $array, $message . 'always_present_checkout');
+        $this->assertArrayHasKey('account_url', $array, $message . 'account_url');
+        $this->assertArrayHasKey('order_management_selector', $array, $message . 'order_management_selector');
     }
 
     /**

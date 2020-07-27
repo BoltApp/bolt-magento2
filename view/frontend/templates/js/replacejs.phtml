@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -1707,13 +1707,26 @@ if (!$block->isSaveCartInSections()) { ?>
         var cartBarrier;
         var countConfigureCalls = 0;
 
+        var boltCheckoutConfigure = function(cart, hints, callback, parameters = undefined) {
+            var callConfigure = function() {
+                BC = BoltCheckout.configure(cart, hints, callback, parameters);
+            }
+            // Check if BoltCheckout is defined (connect.js executed).
+            // If not, postpone processing until it is
+            if (!window.BoltCheckout) {
+                whenDefined(window, 'BoltCheckout', callConfigure);
+                return;
+            }
+            callConfigure();
+        }
+
         var callConfigureWithPromises = function() {
             if (waitingForResolvingPromises) {
                 return;
             }
             cartBarrier = boltBarrier();
             hintBarrier = boltBarrier();
-            BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+            boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
             waitingForResolvingPromises = true;
             countConfigureCalls++;
             var localCallNumber = countConfigureCalls;
@@ -1734,7 +1747,14 @@ if (!$block->isSaveCartInSections()) { ?>
         var boltCartDataID;
 
         var invalidateBoltCartIfOutdated = function() {
-            if (magentoCart === undefined || magentoCart.data_id === undefined || boltCartDataID === undefined) {
+            if (magentoCart === undefined || magentoCart.data_id === undefined) {
+                return;
+            }
+            if (boltCartDataID === undefined) {
+                // Usually Magento retrieves all sections data from backend, so boltCartDataID shouldn't be undefined.
+                // But if the first call was unsuccesful (user closed the page before answer was saved) Magento doesn't
+                // try to get data again. In this case we need manually invalidate bolt cart.
+                invalidateBoltCart();
                 return;
             }
             if (magentoCart.data_id > boltCartDataID) {
@@ -1764,13 +1784,13 @@ if (!$block->isSaveCartInSections()) { ?>
                 if (popUpOpen) {
                     return;
                 }
-                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+                boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
                 return;
             }
             if (!cart) {
                 return;
             }
-            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
         }
 
         if (getCheckoutType() !== 'payment') {
@@ -1904,7 +1924,7 @@ if (!$block->isSaveCartInSections()) { ?>
                         .always(function() {
                             createRequest = false;
                         })
-                        BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+                        boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
             customerData.get('boltcart').subscribe(function(data) {
@@ -1944,7 +1964,7 @@ if (!$block->isSaveCartInSections()) { ?>
                                 newItemAddedToCart = false;
                             }
                             // reconfigure bolt checkout with new values
-                            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                         waitingForResolvingPromises = false;
                         oldBoltCartValue = JSON.stringify(cart);
@@ -2066,7 +2086,7 @@ if (!$block->isSaveCartInSections()) { ?>
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout && !waitingForResolvingPromises) {
-                            BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -2144,7 +2164,7 @@ if (!$block->isSaveCartInSections()) { ?>
             }
             var new_hints = JSON.stringify(hints);
             if ((old_hints !== new_hints) && !waitingForResolvingPromises) {
-                BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
         };
@@ -2274,6 +2294,41 @@ if (!$block->isSaveCartInSections()) { ?>
             invalidateBoltCart();
         });
 
+        // insert Bolt order managenent button into DOM
+        if (settings.order_management_selector) {
+            var insertAccountScript = function () {
+                var scriptTag = document.getElementById('bolt-account');
+                if (scriptTag) {
+                    return;
+                }
+                var publishableKey = getCheckoutKey();
+                scriptTag = document.createElement('script');
+                scriptTag.setAttribute('type', 'text/javascript');
+                scriptTag.setAttribute('async', '');
+                scriptTag.setAttribute('src', settings.account_url);
+                scriptTag.setAttribute('id', 'bolt-account');
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                document.head.appendChild(scriptTag);
+            }
+            var insertManagementButtonDivAfterElement = function(element) {
+                var orderMagagementButton = document.createElement('div');
+                orderMagagementButton.setAttribute('class', 'bolt-account-login');
+                element.parentNode.insertBefore(orderMagagementButton, element.nextSibling);
+                insertAccountScript();
+            }
+            var setupOrderManagementReplacement = function() {
+                element = document.querySelector(settings.order_management_selector);
+                if (element) {
+                    insertManagementButtonDivAfterElement(element);
+                } else {
+                    onElementReady(settings.order_management_selector, function(element) {
+                        insertManagementButtonDivAfterElement(element);
+                    });
+                }
+            }
+            setupOrderManagementReplacement();
+        };
+
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
         // Required for setting check callback which either
@@ -2286,25 +2341,26 @@ if (!$block->isSaveCartInSections()) { ?>
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
-        require([
-        'jquery',
-        'Magento_Checkout/js/model/quote',
-        'domReady!'
-        ], function ($, quote) {
-            // If quote total was changed through a method we didn't create,
-            // we should reload the bolt cart since totals are probably now out of sync.
-            quote.totals.subscribe(function (newValue) {
-                if (expectCartRendering) {
-                    expectCartRendering = false;
-                    return;
-                }
+        require(['domReady!'], function() {
+            require([
+            'jquery',
+            'Magento_Checkout/js/model/quote',
+            ], function ($, quote) {
+                // If quote total was changed through a method we didn't create,
+                // we should reload the bolt cart since totals are probably now out of sync.
+                quote.totals.subscribe(function (newValue) {
+                    if (expectCartRendering) {
+                        expectCartRendering = false;
+                        return;
+                    }
 
-                expectCartRendering = false;
-                if (waitingForResolvingPromises) {
-                    return;
-                }
-                $(document).trigger('bolt:createOrder');
-            });
+                    expectCartRendering = false;
+                    if (waitingForResolvingPromises) {
+                        return;
+                    }
+                    $(document).trigger('bolt:createOrder');
+                });
+            })
        })
     }
 </script>
