@@ -24,35 +24,8 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
     merchantBranches+=("ci/$branchName")
     echo "ci/$branchName"
-    curl -X POST https://circleci.com/api/v2/project/vcs-slug/BoltApp/bolt-magento2/pipeline \
-      -H 'Content-Type: application/json' \
-      -H 'Accept: application/json' \
-      -H 'x-attribution-login: string' \
-      -H 'x-attribution-actor-id: string'
+    
+    #TODO: set run_rebase_and_unit_test parameter to "true" for $branchName
+
   fi
 done < "$configFile"
-
-branchName=${merchantBranches[0]}
-echo "running $branchName"
-if ! (git checkout "$branchName"); then
-  echo "Failed to checkout branch $branchName"
-  exit 1
-fi
-if ! (git rebase origin/$baseBranch); then
-  echo "Failed to rebase branch $branchName on $baseBranch"
-  git rebase --abort
-  exit 1
-fi
-if [ "$isIntegration" = true ]; then
-  echo "Start integration tests..."
-  if ! ./Test/scripts/ci-integration.sh; then
-    echo "integration tests failed"
-    exit 1
-  fi
-else
-  echo "Start unit tests..."
-  if ! ./Test/scripts/ci-unit.sh; then
-    echo "unit tests failed"
-    exit 1
-  fi
-fi
