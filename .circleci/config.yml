@@ -3,6 +3,11 @@ version: 2.1
 orbs:
   slack: circleci/slack@3.4.2
 
+parameters:
+  run_rebase_and_unit_test:
+    type: boolean
+    default: false
+
 commands:
   notify-rc-tag:
     description: 'Notify #eng-magento2 after a release candidate is tagged.'

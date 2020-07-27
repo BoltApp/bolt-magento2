@@ -24,7 +24,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
     merchantBranches+=("ci/$branchName")
     echo "ci/$branchName"
-    
+
     #TODO: set run_rebase_and_unit_test parameter to "true" for $branchName
 
   fi
