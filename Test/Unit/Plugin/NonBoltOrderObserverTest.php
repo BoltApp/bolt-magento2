@@ -159,7 +159,9 @@ class NonBoltOrderObserverTest extends TestCase
      */
     public function testExecute()
     {
-        $order = $this->createMock(Order::class);
+        $order = $this->getMockBuilder("BoltOrder")
+            ->setMethods(['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
@@ -181,13 +183,13 @@ class NonBoltOrderObserverTest extends TestCase
         $order->expects($this->once())
             ->method('getPayment')
             ->willReturn($payment);
+        $order->expects($this->once())
+            ->method('setBoltTransactionReference');
+        $order->expects($this->once())
+            ->method('save');
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(self::PAYMENT_METHOD);
-        $payment->expects($this->once())
-            ->method('setAdditionalInformation');
-        $payment->expects($this->once())
-            ->method('save');
 
         $this->cartHelper->method('buildCartFromQuote')->willReturn(self::CART);
         $expectedOrderData = [
@@ -333,7 +335,9 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteShipmentsNotSet()
     {
         $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(true);
-        $order = $this->createMock(Order::class);
+        $order = $this->getMockBuilder("BoltOrder")
+            ->setMethods(['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
@@ -357,10 +361,6 @@ class NonBoltOrderObserverTest extends TestCase
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(self::PAYMENT_METHOD);
-        $payment->expects($this->once())
-            ->method('setAdditionalInformation');
-        $payment->expects($this->once())
-            ->method('save');
 
         $cartMissingPhone = self::CART;
         unset($cartMissingPhone['shipments']);
