@@ -27,7 +27,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
- * Js Block. The block class used in replace.phtml and track.phtml blocks.
+ * Js Block. The block class used in track.phtml block.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
