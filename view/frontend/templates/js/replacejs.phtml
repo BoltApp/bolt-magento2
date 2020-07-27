@@ -2341,26 +2341,26 @@ if (!$block->isSaveCartInSections()) { ?>
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
-        require([
-        'jquery',
-        'Magento_Customer/js/customer-data',
-        'Magento_Checkout/js/model/quote',
-        'domReady!'
-        ], function ($, customerData, quote) {
-            // If quote total was changed through a method we didn't create,
-            // we should reload the bolt cart since totals are probably now out of sync.
-            quote.totals.subscribe(function (newValue) {
-                if (expectCartRendering) {
-                    expectCartRendering = false;
-                    return;
-                }
+        require(['domReady!'], function() {
+            require([
+            'jquery',
+            'Magento_Checkout/js/model/quote',
+            ], function ($, quote) {
+                // If quote total was changed through a method we didn't create,
+                // we should reload the bolt cart since totals are probably now out of sync.
+                quote.totals.subscribe(function (newValue) {
+                    if (expectCartRendering) {
+                        expectCartRendering = false;
+                        return;
+                    }
 
-                expectCartRendering = false;
-                if (waitingForResolvingPromises) {
-                    return;
-                }
-                $(document).trigger('bolt:createOrder');
-            });
+                    expectCartRendering = false;
+                    if (waitingForResolvingPromises) {
+                        return;
+                    }
+                    $(document).trigger('bolt:createOrder');
+                });
+            })
        })
     }
 </script>
