@@ -1707,13 +1707,26 @@ if (!$block->isSaveCartInSections()) { ?>
         var cartBarrier;
         var countConfigureCalls = 0;
 
+        var boltCheckoutConfigure = function(cart, hints, callback, parameters = undefined) {
+            var callConfigure = function() {
+                BC = BoltCheckout.configure(cart, hints, callback, parameters);
+            }
+            // Check if BoltCheckout is defined (connect.js executed).
+            // If not, postpone processing until it is
+            if (!window.BoltCheckout) {
+                whenDefined(window, 'BoltCheckout', callConfigure);
+                return;
+            }
+            callConfigure();
+        }
+
         var callConfigureWithPromises = function() {
             if (waitingForResolvingPromises) {
                 return;
             }
             cartBarrier = boltBarrier();
             hintBarrier = boltBarrier();
-            BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+            boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
             waitingForResolvingPromises = true;
             countConfigureCalls++;
             var localCallNumber = countConfigureCalls;
@@ -1764,13 +1777,13 @@ if (!$block->isSaveCartInSections()) { ?>
                 if (popUpOpen) {
                     return;
                 }
-                BC = BoltCheckout.configure(cartBarrier.promise, hintBarrier.promise, callbacks);
+                boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
                 return;
             }
             if (!cart) {
                 return;
             }
-            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
         }
 
         if (getCheckoutType() !== 'payment') {
@@ -1904,7 +1917,7 @@ if (!$block->isSaveCartInSections()) { ?>
                         .always(function() {
                             createRequest = false;
                         })
-                        BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks);
+                        boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
             customerData.get('boltcart').subscribe(function(data) {
@@ -1944,7 +1957,7 @@ if (!$block->isSaveCartInSections()) { ?>
                                 newItemAddedToCart = false;
                             }
                             // reconfigure bolt checkout with new values
-                            BC = BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                         waitingForResolvingPromises = false;
                         oldBoltCartValue = JSON.stringify(cart);
@@ -2066,7 +2079,7 @@ if (!$block->isSaveCartInSections()) { ?>
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout && !waitingForResolvingPromises) {
-                            BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -2144,7 +2157,7 @@ if (!$block->isSaveCartInSections()) { ?>
             }
             var new_hints = JSON.stringify(hints);
             if ((old_hints !== new_hints) && !waitingForResolvingPromises) {
-                BoltCheckout.configure(cart, hints, callbacks, boltCheckoutConfig);
+                boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
         };
