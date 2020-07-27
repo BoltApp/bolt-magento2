@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\ShippingMethods as BoltShippingMethods;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Phrase;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use PHPUnit\Framework\TestCase;
@@ -807,8 +808,10 @@ class ShippingMethodsTest extends TestCase
         $this->setUpRuleFactoryMock();
         $this->initCurrentMock();
 
+
+
         $this->cache->expects(self::once())->method('load')->with(self::anything())
-            ->willReturn(serialize($this->factoryShippingOptionsMock));
+            ->willReturn(TestHelper::serialize($this, $this->factoryShippingOptionsMock));
 
         $result = $this->currentMock->shippingEstimation($quote, $shippingAddressData);
 

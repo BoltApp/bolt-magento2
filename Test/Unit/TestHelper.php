@@ -102,29 +102,15 @@ class TestHelper extends TestCase
             }
         }
     }
+
+    /**
+     * @param $class
+     * @param $data
+     * @return mixed
+     */
+    public static function serialize ($class, $data){
+        return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
+            ->getObject(\Magento\Framework\Serialize\Serializer\Serialize::class)->serialize($data);
+    }
 }
-
-/**
- * Mock class for \Unirgy\Giftcert\Model\Cert
- * @package Bolt\Boltpay\Test\Unit
- */
-class UnirgyMock {
-    const GIFTCERT_CODE = 'GIFTCERT_CODE';
-
-    /**
-     * Stub for original {@see \Unirgy\Giftcert\Model\Cert::get} method
-     */
-    public function get() {}
-
-    /**
-     * Stub for original {@see \Unirgy\Giftcert\Model\Cert::getCertNumber} method
-     */
-    public function getCertNumber() {}
-
-    /**
-     * Stub for original {@see \Unirgy\Giftcert\Model\Cert::getBalance} method
-     */
-    public function getBalance() {}
-}
-
 class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');

@@ -156,7 +156,9 @@ class RechargeCustomerTest extends TestCase
         $this->customerCreditCardFactoryMock->expects(self::once())->method('recharge')->with($this->orderMock)->willReturn($this->responseFactory);
 
         $responseData = new \stdClass();
-        @$responseData->transaction->reference = self::REFERENCE;
+        $responseData->transaction = new \stdClass();
+        $responseData->transaction->reference = self::REFERENCE;
+
 
         $this->responseFactory->expects(self::once())->method('getResponse')->willReturn($responseData);
         $this->orderHelper->expects(self::once())->method('formatReferenceUrl')->with(self::REFERENCE)->willReturn(self::REFERENCE_URL);
