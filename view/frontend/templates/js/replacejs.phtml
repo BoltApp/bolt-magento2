@@ -1747,7 +1747,14 @@ if (!$block->isSaveCartInSections()) { ?>
         var boltCartDataID;
 
         var invalidateBoltCartIfOutdated = function() {
-            if (magentoCart === undefined || magentoCart.data_id === undefined || boltCartDataID === undefined) {
+            if (magentoCart === undefined || magentoCart.data_id === undefined) {
+                return;
+            }
+            if (boltCartDataID === undefined) {
+                // Usually Magento retrieves all sections data from backend, so boltCartDataID shouldn't be undefined.
+                // But if the first call was unsuccesful (user closed the page before answer was saved) Magento doesn't
+                // try to get data again. In this case we need manually invalidate bolt cart.
+                invalidateBoltCart();
                 return;
             }
             if (magentoCart.data_id > boltCartDataID) {
