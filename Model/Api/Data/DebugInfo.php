@@ -27,6 +27,11 @@ class DebugInfo implements \JsonSerializable
     /**
      * @var string
      */
+    private $composerVersion;
+
+    /**
+     * @var string
+     */
     private $platformVersion;
 
     /**
@@ -60,6 +65,24 @@ class DebugInfo implements \JsonSerializable
     {
         $this->phpVersion = $phpVersion;
         return $this;
+    }
+
+    /**
+     * @param string $composerVersion
+     * @return $this
+     */
+    public function setComposerVersion($composerVersion)
+    {
+        $this->composerVersion = $composerVersion;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComposerVersion()
+    {
+        return $this->composerVersion;
     }
 
     /**
@@ -142,6 +165,7 @@ class DebugInfo implements \JsonSerializable
     {
         return [
             'php_version' => $this->phpVersion,
+            'composer_version' => $this->composerVersion,
             'platform_version' => $this->platformVersion,
             'bolt_config_settings' => $this->boltConfigSettings,
             'other_plugin_versions' => $this->otherPluginVersions,

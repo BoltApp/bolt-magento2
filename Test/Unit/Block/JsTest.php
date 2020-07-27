@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Composer\ComposerFactory;
 
 /**
  * Class JsTest
@@ -121,7 +122,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
                     $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(\Magento\Directory\Model\RegionFactory::class)
+                    $this->createMock(\Magento\Directory\Model\RegionFactory::class),
+                    $this->createMock(ComposerFactory::class),
                 ]
             )
             ->getMock();

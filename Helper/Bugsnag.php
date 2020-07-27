@@ -156,7 +156,8 @@ class Bugsnag extends AbstractHelper
                 'META DATA' => [
                     'store_url' => $this->storeManager->getStore()->getBaseUrl(
                         \Magento\Framework\UrlInterface::URL_TYPE_WEB
-                    )
+                    ),
+                    'composer_version' => $this->configHelper->getComposerVersion()
                 ]
             ]);
         });

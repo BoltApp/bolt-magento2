@@ -173,6 +173,7 @@ class DebugTest extends TestCase
                                                              ->setName('config_name2')
                                                              ->setValue('config_value2');
         $this->configHelperMock->method('getAllConfigSettings')->willReturn($boltSettings);
+        $this->configHelperMock->method('getComposerVersion')->willReturn('composer_version');
     }
 
     /**
@@ -189,6 +190,7 @@ class DebugTest extends TestCase
             'event' => 'integration.debug',
             'data' => [
                 'php_version' => PHP_VERSION,
+                'composer_version' => 'composer_version',
                 'platform_version' => '2.3.0',
                 'bolt_config_settings' => [
                     [

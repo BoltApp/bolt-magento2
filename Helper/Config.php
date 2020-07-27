@@ -26,6 +26,7 @@ use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Directory\Model\RegionFactory;
+use Magento\Framework\Composer\ComposerFactory;
 
 /**
  * Boltpay Configuration helper
@@ -36,6 +37,7 @@ use Magento\Directory\Model\RegionFactory;
 class Config extends AbstractHelper
 {
     const BOLT_TRACE_ID_HEADER = 'X-bolt-trace-id';
+    const BOLT_COMPOSER_NAME = 'boltpay/bolt-magento2';
 
     /**
      * @var BoltConfigSettingFactory
@@ -377,12 +379,18 @@ class Config extends AbstractHelper
     private $regionFactory;
 
     /**
-     * @param Context                  $context
-     * @param EncryptorInterface       $encryptor
-     * @param ResourceInterface        $moduleResource
+     * @var ComposerFactory
+     */
+    private $composerFactory;
+
+    /**
+     * @param Context $context
+     * @param EncryptorInterface $encryptor
+     * @param ResourceInterface $moduleResource
      * @param ProductMetadataInterface $productMetadata
      * @param BoltConfigSettingFactory $boltConfigSettingFactory
-     * @param RegionFactory            $regionFactory
+     * @param RegionFactory $regionFactory
+     * @param ComposerFactory $composerFactory
      *
      * @codeCoverageIgnore
      */
@@ -392,7 +400,8 @@ class Config extends AbstractHelper
         ResourceInterface $moduleResource,
         ProductMetadataInterface $productMetadata,
         BoltConfigSettingFactory $boltConfigSettingFactory,
-        RegionFactory $regionFactory
+        RegionFactory $regionFactory,
+        ComposerFactory $composerFactory
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -400,6 +409,7 @@ class Config extends AbstractHelper
         $this->productMetadata = $productMetadata;
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
         $this->regionFactory = $regionFactory;
+        $this->composerFactory = $composerFactory;
     }
 
     /**
@@ -460,6 +470,25 @@ class Config extends AbstractHelper
     public function getModuleVersion()
     {
         return $this->moduleResource->getDataVersion('Bolt_Boltpay');
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function getComposerVersion()
+    {
+        try {
+            $boltComposerVersion = $this->composerFactory->create()
+                ->getLocker()
+                ->getLockedRepository()
+                ->findPackage(self::BOLT_COMPOSER_NAME, '*')
+                ->getVersion();
+        }catch (\Exception $exception) {
+            return null;
+        }
+
+        return $boltComposerVersion;
     }
 
     /**
@@ -1148,7 +1177,7 @@ class Config extends AbstractHelper
     /**
      * Get filter specified by name from "pageFilters" additional configuration
      *
-     * @param string $filterName   'whitelist'|'blacklist'
+     * @param string $filterName 'whitelist'|'blacklist'
      * @param int|string $storeId
      * @return array
      */
