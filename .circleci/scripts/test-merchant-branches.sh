@@ -17,13 +17,12 @@ if ! test -f "$configFile"; then
     exit 1
 fi
 
-echo "The following branches will be tested after rebasing against $baseBranch"
 while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
     merchantBranch="ci/$branchName"
-    echo "$merchantBranch"
+    echo "Beginning testing on branch: $merchantBranch"
 
-    echo curl -X POST \
+    res=$(curl -X POST \
       "https://circleci.com/api/v2/project/<< parameters.vcs-type >>/$<< parameters.user >>/$<< parameters.repo-name >>/pipeline?circle-token=${CIRCLE_TOKEN}" \
       -H 'Accept: */*' \
       -H 'Content-Type: application/json' \
@@ -32,7 +31,8 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
         "parameters": {
           "run_rebase_and_unit_test": true
         }
-      }'
+      }')
+    echo $res
 
   fi
 done < "$configFile"
