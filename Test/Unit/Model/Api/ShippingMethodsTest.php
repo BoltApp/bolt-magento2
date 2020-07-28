@@ -1078,7 +1078,7 @@ Room 4000',
         $this->currentMock->expects(static::once())->method('doesDiscountApplyToShipping')->with($quote)
             ->willReturn(true);
 
-        $this->totalsCollector->expects(static::exactly(3))->method('collectAddressTotals')
+        $this->totalsCollector->expects(static::exactly(4))->method('collectAddressTotals')
             ->with($quote, $shippingAddress);
 
         $addressData = [
@@ -1091,6 +1091,111 @@ Room 4000',
         $this->currentMock->getShippingOptions($quote, $addressData);
     }
 
+    /**
+     * Setup method for {@see getShippingOptions_afterShippingEstimation_collectsAddressTotalsWithEmptyShippingMethod}
+     *
+     * @return MockObject[]|\Magento\Quote\Model\Quote\Address[]|Quote[] containing shipping address and quote mocks
+     */
+    private function getShippingOptions_afterShippingEstimationSetUp()
+    {
+        $this->initCurrentMock();
+
+        $shippingAddress = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
+            ->setMethods(
+                [
+                    'addData',
+                    'setCollectShippingRates',
+                    'setShippingMethod',
+                    'getGroupedAllShippingRates',
+                    'getShippingDiscountAmount',
+                    'getShippingAmount',
+                    'unsShippingAmountForDiscount',
+                    'unsBaseShippingAmountForDiscount',
+                    'save'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+        $shippingAddress->method('save')->willReturnSelf();
+        $shippingAddress->method('setCollectShippingRates')->with(true)->willReturnSelf();
+        $shippingAddress->method('getShippingDiscountAmount')->willReturn(0);
+        $shippingAddress->method('getShippingAmount')->willReturn(5);
+
+        $addressRate = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address\Rate::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $shippingRates = [['flatrate' => $addressRate]];
+        $shippingAddress->expects(static::once())->method('getGroupedAllShippingRates')->willReturn($shippingRates);
+        $this->setupShippingOptionFactory(
+            'Flate Rate - Fixed',
+            'flatrate_flatrate',
+            500,
+            0
+        );
+        $quote = $this->getQuoteMock($shippingAddress);
+        return [$shippingAddress, $quote];
+    }
+
+    /**
+     * @test
+     * that getShippingOptions collects address totals after setting it back to null after shipping estimation.
+     * After totals collection the address is saved.
+     *
+     * @covers ::getShippingOptions
+     */
+    public function getShippingOptions_afterShippingEstimation_collectsAddressTotalsWithEmptyShippingMethod()
+    {
+        list($shippingAddress, $quote) = $this->getShippingOptions_afterShippingEstimationSetUp();
+
+        //used to communicate between callback closures
+        $storage = new \Magento\Framework\DataObject();
+
+        $shippingAddress->expects(static::exactly(3))->method('setShippingMethod')
+            ->withConsecutive([null], ['flatrate_flatrate'], [null])
+            ->willReturnCallback(
+                function ($shippingMethod) use ($storage) {
+                    $storage->setCurrentShippingMethod($shippingMethod);
+                }
+            );
+
+        $collectAddressTotalsMatcher = self::exactly(3);
+        $this->totalsCollector->expects($collectAddressTotalsMatcher)->method('collectAddressTotals')
+            ->willReturnCallback(
+                function () use ($storage, $collectAddressTotalsMatcher) {
+                    $invocationCountToShippingMethod = [
+                        1 => null,
+                        2 => 'flatrate_flatrate',
+                        3 => null
+                    ];
+
+                    $invocationCount = $collectAddressTotalsMatcher->getInvocationCount();
+                    if ($invocationCountToShippingMethod[$invocationCount] !== $storage->getCurrentShippingMethod()) {
+                        throw new \PHPUnit\Framework\ExpectationFailedException(
+                            'Wrong shipping method during address total collection'
+                        );
+                    }
+                }
+            );
+        $shippingAddress->expects(static::once())->method('save')->willReturnCallback(
+            function () use ($collectAddressTotalsMatcher) {
+                if ($collectAddressTotalsMatcher->getInvocationCount() !== 3) {
+                    throw new \PHPUnit\Framework\ExpectationFailedException(
+                        'Shipping address save called too early'
+                    );
+                }
+            }
+        );
+
+        $this->currentMock->getShippingOptions(
+            $quote,
+            [
+                'country_id' => 'US',
+                'postcode'   => '10001',
+                'region'     => 'New York',
+                'city'       => 'New York',
+            ]
+        );
+    }
 
     /**
      * @test
