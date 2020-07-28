@@ -6187,4 +6187,12 @@ ORDER
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
-        }
+    /**
+     * @test
+     */
+    public function integrationCartTest()
+    {
+        $product = \Bolt\Boltpay\Test\Unit\TestUtils::createSimpleProduct();
+        static::assertEquals($product->getSku(),'Simple Product 1 sku');
+    }
+}
