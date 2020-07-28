@@ -32,7 +32,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
           "run_rebase_and_unit_test": true
         }
       }')
-    echo $res
+    echo "$res"
 
   fi
 done < "$configFile"
