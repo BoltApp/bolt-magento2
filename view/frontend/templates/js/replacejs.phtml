@@ -1707,7 +1707,7 @@ if (!$block->isSaveCartInSections()) { ?>
         var cartBarrier;
         var countConfigureCalls = 0;
 
-        var boltCheckoutConfigure = function(cart, hints, callback, parameters = undefined) {
+        var boltCheckoutConfigure = function(cart, hints, callback, parameters) {
             var callConfigure = function() {
                 BC = BoltCheckout.configure(cart, hints, callback, parameters);
             }
