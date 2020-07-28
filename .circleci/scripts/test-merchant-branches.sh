@@ -10,8 +10,6 @@ git config user.email "circleci@bolt.com"
 git config user.name "Circle CI"
 
 baseBranch="$1"
-isIntegration="$2"
-merchantBranches=()
 # load auto-rebasing branches
 configFile="./.circleci/scripts/auto-rebase-branches.txt"
 if ! test -f "$configFile"; then
@@ -22,10 +20,19 @@ fi
 echo "The following branches will be tested after rebasing against $baseBranch"
 while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
-    merchantBranches+=("ci/$branchName")
-    echo "ci/$branchName"
+    merchantBranch="ci/$branchName"
+    echo "$merchantBranch"
 
-    #TODO: set run_rebase_and_unit_test parameter to "true" for $branchName
+    curl --silent -X POST \
+      "https://circleci.com/api/v2/project/<< parameters.vcs-type >>/$<< parameters.user >>/$<< parameters.repo-name >>/pipeline?circle-token=${CIRCLE_TOKEN}" \
+      -H 'Accept: */*' \
+      -H 'Content-Type: application/json' \
+      -d '{
+        "branch": "'$merchantBranch'",
+        "parameters": {
+          "run_rebase_and_unit_test": true
+        }
+      }'
 
   fi
 done < "$configFile"
