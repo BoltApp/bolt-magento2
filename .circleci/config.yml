@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@3.4.2
-  swissknife: roopakv/swissknife@0.48.0
+  swissknife: swissknife@dev:alpha
 
 parameters:
   run_rebase_and_unit_test:
