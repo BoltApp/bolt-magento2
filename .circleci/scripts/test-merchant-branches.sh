@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-if [ "$#" -ne 2 ]; then
-    echo "usage: $0 <base_branch> <is_integration>\n"
+if [ "$#" -ne 3 ]; then
+    echo "usage: $0 <vcsType> <user> <repoName>\n"
     exit 1
 fi
 
