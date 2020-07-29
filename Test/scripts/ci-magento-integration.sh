@@ -22,10 +22,14 @@ cp magento/app/code/Bolt/Boltpay/Test/Unit/integration_phpunit.xml magento/dev/t
 
 echo "Creating DB for integration tests"
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento_integration_tests;'
-cd dev/tests/integration/ 
-#cp etc/install_config-mysql.php.dist etc/install_config-mysql.php
-#sed -i 's/123123q//g' etc/install_config.php
+
+
+cd magento/dev/tests/integration/
+cp etc/install-config-mysql.php.dist etc/install-config-mysql.php
+sed -i 's/localhost/127.0.0.1/g' etc/install-config-mysql.php
+sed -i 's/123123q//g' etc/install-config-mysql.php
+sed -i '/amqp/d' etc/install-config-mysql.php
 
 echo "Starting Bolt Integration Tests"
-#php magento/vendor/phpunit/phpunit/phpunit --verbose -c magento/dev/tests/unit/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
-#bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV
+../../../vendor/bin/phpunit -dmemory_limit=5G -c bolt_phpunit.xml
+bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV

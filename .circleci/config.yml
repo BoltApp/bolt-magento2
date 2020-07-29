@@ -279,7 +279,7 @@ workflows:
     jobs:
 #      - phpcs
       - integration-magento-php72-magento23
-      #- unit-php72-magento23
+      - unit-php72-magento23
       #- unit-php71-magento22
       #- unit-php70-magento22
       #- integration-php72-magento23
