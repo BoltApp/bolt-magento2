@@ -1,4 +1,7 @@
 
+baseBranch=$1
+echo "Rebasing from branch: $baseBranch"
+
 if ! (git rebase $CIRCLE_BRANCH); then
   echo "Failed to rebase branch $CIRCLE_BRANCH"
   git rebase --abort

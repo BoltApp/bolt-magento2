@@ -8,6 +8,9 @@ parameters:
   run_rebase_and_unit_test:
     type: boolean
     default: false
+  rebase_and_unit_test_branch_name:
+    type: string
+    default: ""
 
 commands:
   notify-rc-tag:
@@ -112,6 +115,8 @@ commands:
         default: false
     steps:
       - checkout
+      - swissknife/trigger-pipeline:
+          install-skip-trigger: true
       - run:
           name: Tests
           command: |
@@ -119,7 +124,7 @@ commands:
             export COMPOSER_MEMORY_LIMIT=3G
             export TEST_ENV=<< parameters.php_version >>
             export MAGENTO_VERSION=<< parameters.m2_version >>
-            .circleci/scripts/test-merchant-branches.sh ${CIRCLE_BRANCH} << parameters.is_integration >>
+            .circleci/scripts/test-merchant-branches.sh << parameters.vcs-type >> << parameters.user >> << parameters.repo-name >>
 
 jobs:
   auto-rebase:
@@ -143,7 +148,7 @@ jobs:
     steps:
       - run:
           name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-unit-test.sh
+          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.run_rebase_and_unit_test >>
 
   tag-release-candidate:
     docker:
@@ -225,9 +230,6 @@ jobs:
     environment:
       MAGENTO_DIR: magento
     steps:
-      - checkout
-      - swissknife/trigger-pipeline:
-          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.3.0"
           php_version: "php72"
@@ -241,9 +243,6 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - checkout
-      - swissknife/trigger-pipeline:
-          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.3.0"
           php_version: "php72"
@@ -257,9 +256,6 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - checkout
-      - swissknife/trigger-pipeline:
-          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.2.0"
           php_version: "php71"
@@ -273,9 +269,6 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - checkout
-      - swissknife/trigger-pipeline:
-          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.2.0"
           php_version: "php70"

@@ -9,7 +9,14 @@ fi
 git config user.email "circleci@bolt.com"
 git config user.name "Circle CI"
 
-baseBranch="$1"
+vcsType=$1
+user=$2
+repoName=$3
+
+echo "vcsType: $vcsType"
+echo "user: $user"
+echo "repoName: $repoName"
+
 # load auto-rebasing branches
 configFile="./.circleci/scripts/auto-rebase-branches.txt"
 if ! test -f "$configFile"; then
@@ -22,7 +29,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
     merchantBranch="ci/$branchName"
     echo "Beginning testing on branch: $merchantBranch"
 
-    /tmp/swissknife/trigger_pipeline.sh "<< parameters.vcs-type >>" "<< parameters.user >>" "<< parameters.repo-name >>" "$merchantBranch" '"parameters": { "run_rebase_and_unit_test": true }'
+    /tmp/swissknife/trigger_pipeline.sh "$vcsType" "$user" "$repoName" "$merchantBranch" '"parameters": { "run_rebase_and_unit_test": true, "rebase_and_unit_test_branch_name": '"$CIRCLE_BRANCH"' }'
 
   fi
 done < "$configFile"
