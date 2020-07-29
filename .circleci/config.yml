@@ -319,10 +319,10 @@ workflows:
     jobs:
 #      - phpcs
       - integration-magento-php72-magento23
-      - unit-php72-magento23
-      - unit-php71-magento22
-      - unit-php70-magento22
-      - integration-php72-magento23
+      #- unit-php72-magento23
+      #- unit-php71-magento22
+      #- unit-php70-magento22
+      #- integration-php72-magento23
   tagger:
     triggers:
       - schedule:
@@ -336,7 +336,8 @@ workflows:
   merchant-branch-test:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
-      - unit-php72-magento23-for-merchant-branches
+      #- unit-php72-magento23-for-merchant-branches
+      #- integration-php72-magento23-for-merchant-branches
   auto-rebase:
     jobs:
       - auto-rebase:
