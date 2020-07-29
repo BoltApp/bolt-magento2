@@ -225,6 +225,7 @@ jobs:
     environment:
       MAGENTO_DIR: magento
     steps:
+      - checkout
       - swissknife/trigger-pipeline:
           install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
@@ -240,6 +241,7 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - checkout
       - swissknife/trigger-pipeline:
           install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
@@ -255,6 +257,7 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - checkout
       - swissknife/trigger-pipeline:
           install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
@@ -270,6 +273,7 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - checkout
       - swissknife/trigger-pipeline:
           install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
