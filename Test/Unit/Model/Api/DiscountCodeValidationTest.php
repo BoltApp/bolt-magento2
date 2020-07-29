@@ -1929,12 +1929,7 @@ class DiscountCodeValidationTest extends TestCase
     {
         $discountAmount = 100;
 
-        $giftCard = new class
-        {
-            const GIFTCERT_CODE = 'GIFTCERT_CODE';
-        };
-
-        $giftCardMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
+        $giftCardMock = $this->getMockBuilder(\Bolt\Boltpay\Test\Unit\UnirgyMock::class)
             ->setMethods(['getCertNumber', 'getBalance'])
             ->disableOriginalConstructor()
             ->getMock();
