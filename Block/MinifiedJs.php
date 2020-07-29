@@ -15,15 +15,14 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
+namespace Bolt\Boltpay\Block;
 /**
- * Global CSS placeholder / template file
- *
- * @var $block \Bolt\Boltpay\Block\Js
+ * MinifiedJs Block. The block class used in replace.phtml and boltglobaljs blocks.
  */
-if ($block->shouldDisableBoltCheckout()) { return;
+class MinifiedJs extends Js
+{
+    protected function _toHtml()
+    {
+        return $this->minifyJs(parent::_toHtml());
+    }
 }
-?>
-<style>
-    <?= /* @noEscape */ $block->getGlobalCSS(); ?>
-</style>
-

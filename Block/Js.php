@@ -27,7 +27,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
- * Js Block. The block class used in replace.phtml and track.phtml blocks.
+ * Js Block. The block class used in track.phtml block.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
@@ -497,5 +497,22 @@ class Js extends Template
     public function isSaveCartInSections()
     {
         return $this->featureSwitches->isSaveCartInSections();
+    }
+
+    /**
+     * @param $jsCode
+     * @param string $argName
+     * @return string
+     */
+    public function wrapWithCatch ($jsCode, $argName = '')
+    {
+        return "
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}";
     }
 }

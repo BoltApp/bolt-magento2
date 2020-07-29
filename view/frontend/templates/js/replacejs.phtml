@@ -20,7 +20,7 @@
  * Puts / replaces the checkout buttons according to defined selectors.
  * Maintains Bolt checkout functionality.
  *
- * @var $block \Bolt\Boltpay\Block\Js
+ * @var $block \Bolt\Boltpay\Block\MinifiedJs
  */
 if ($block->shouldDisableBoltCheckout()) { return;
 }
@@ -30,8 +30,6 @@ if ($block->shouldDisableBoltCheckout()) { return;
 //product page checkout has its own JS script
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 }
-
-ob_start();
 
 if (!$block->isSaveCartInSections()) { ?>
     <script type="text/javascript">
@@ -193,12 +191,16 @@ if (!$block->isSaveCartInSections()) { ?>
         ////////////////////////////////////////////////////////////////////////
 
         // barrier is externally-resolved promise
-        var boltBarrier = function() {
+        var boltBarrier = function () {
             var resolveHolder;
-            var promise = new Promise(function(resolve){
+            var promise = new Promise(function (resolve) {
                 resolveHolder = resolve;
             });
-            return { promise: promise, resolve: function(t){resolveHolder(t)}};
+            return {
+                promise: promise, resolve: function (t) {
+                    resolveHolder(t)
+                }
+            };
         };
 
         ////////////////////////////////////////////////////
@@ -219,9 +221,10 @@ if (!$block->isSaveCartInSections()) { ?>
             var customer = customerData.get('customer');
             var shoppingCart = customerData.get('cart');
 
-            var showBoltErrorMessage = function(messsage, order_reference) {
+            var showBoltErrorMessage = function (messsage, order_reference) {
                 var boltModal = $('#bolt-modal'),
-                    errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
+                    errorMsg = messsage
+                        || window.boltConfig.default_error_message + " Order reference: " + order_reference;
 
                 boltModal.find('.bolt-modal-content').html(errorMsg);
                 boltModal.modal("openModal");
@@ -273,8 +276,10 @@ if (!$block->isSaveCartInSections()) { ?>
              *
              * return string
              */
-            var getCheckoutType = function() {
-                return trim(location.pathname, '/') === 'checkout' && (settings.quote_is_virtual || location.hash === '#payment') ? 'payment' : 'checkout';
+            var getCheckoutType = function () {
+                return trim(location.pathname, '/') === 'checkout'
+                && (settings.quote_is_virtual || location.hash === '#payment')
+                    ? 'payment' : 'checkout';
             };
 
             /**
@@ -729,7 +734,9 @@ if (!$block->isSaveCartInSections()) { ?>
                                 return;
                             }
 
-                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                            var prefill = isObject(data.hints.prefill)
+                                ? deepMergeObjects(hints.prefill, data.hints.prefill)
+                                : hints.prefill;
 
                             hints = deepMergeObjects(hints, data.hints);
                             hints.prefill = prefill;
@@ -758,8 +765,10 @@ if (!$block->isSaveCartInSections()) { ?>
                 // Get number of items in cart from counter element
                 var numItems = $(".counter-number").text();
 
-                // Call config with floatingButtonMode if always present checkout enabled and items were or were not just added to cart (dataChanged)
-                var config = boltConfig.always_present_checkout && (numItems && numItems !=="0" || dataChanged)? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover" } : {};
+                // Call config with floatingButtonMode if always present checkout enabled
+                // and items were or were not just added to cart (dataChanged)
+                var config = boltConfig.always_present_checkout && (numItems && numItems !== "0" || dataChanged)
+                    ? {floatingButtonMode: dataChanged ? "show_cart" : "show_cart_on_hover"} : {};
                 var BC = BoltCheckout.configure(cart, hintBarrier.promise, callbacks, config);
             };
             /////////////////////////////////////////////////////
@@ -839,7 +848,10 @@ if (!$block->isSaveCartInSections()) { ?>
                             if(settings.is_instant_checkout_button){
                                 bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
                                 var button_object = document.createElement('object');
-                                button_object.setAttribute('data',settings.cdn_url+'/v1/checkout_button?publishable_key='+settings.publishable_key_checkout);
+                                var checkout_button_url = settings.cdn_url
+                                    + '/v1/checkout_button?publishable_key='
+                                    + settings.publishable_key_checkout;
+                                button_object.setAttribute('data', checkout_button_url);
                                 bolt_button.appendChild(button_object);
                             } else {
                                 bolt_button.setAttribute('class', bolt_button_css_class);
@@ -1013,7 +1025,8 @@ if (!$block->isSaveCartInSections()) { ?>
 
                                 monitorAttributesChange(input_selectors, function(element) {
                                     if (element.value) {
-                                        // set the hints prefill if the correlated input field value is not an empty string
+                                        // set the hints prefill
+                                        // if the correlated input field value is not an empty string
                                         hints.prefill[prefill_key] = element.value;
                                     } else {
                                         // delete hints prefill key if the value is empty
@@ -1069,8 +1082,8 @@ if (!$block->isSaveCartInSections()) { ?>
             monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
             ///////////////////////////////////////////////////////////
 
-            // When item added to cart, refresh order and mark data modified so always present button knows new item added
-            // to cart and can animate cart
+            // When item added to cart, refresh order and mark data modified
+            // so always present button knows new item added to cart and can animate cart
             $(document).on("ajax:addToCart", function () {
                 createOrder(null, true);
             });
@@ -1086,11 +1099,10 @@ if (!$block->isSaveCartInSections()) { ?>
             ////////////////////////////////////////////////////
             createOrder();
             ////////////////////////////////////////////////////
-            <?php echo $block->getAdditionalJavascript(); ?>
+            <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
         });
     </script>
-<?php } else {
-?>
+<?php } else {?>
 <script type="text/javascript">
     ///////////////////////
     // String.trim Polyfill
@@ -1286,9 +1298,10 @@ if (!$block->isSaveCartInSections()) { ?>
         var customer = customerData.get('customer');
         var shoppingCart = customerData.get('cart');
 
-        var showBoltErrorMessage = function(messsage, order_reference) {
-            var boltModal = $('#bolt-modal'),
-                errorMsg = messsage || window.boltConfig.default_error_message + " Order reference: " + order_reference;
+            var showBoltErrorMessage = function (messsage, order_reference) {
+                var boltModal = $('#bolt-modal'),
+                    errorMsg = messsage
+                        || window.boltConfig.default_error_message + " Order reference: " + order_reference;
 
             boltModal.find('.bolt-modal-content').html(errorMsg);
             boltModal.modal("openModal");
@@ -1341,7 +1354,9 @@ if (!$block->isSaveCartInSections()) { ?>
          * return string
          */
         var getCheckoutType = function() {
-            return trim(location.pathname, '/') === 'checkout' && (settings.quote_is_virtual || location.hash === '#payment') ? 'payment' : 'checkout';
+            return trim(location.pathname, '/') === 'checkout'
+            && (settings.quote_is_virtual || location.hash === '#payment')
+                ? 'payment' : 'checkout';
         };
 
         /**
@@ -1780,7 +1795,8 @@ if (!$block->isSaveCartInSections()) { ?>
             // Bolt button is added into DOM so we need to call Configure() again
             // we rely on current bolt cart
             if (waitingForResolvingPromises) {
-                // if bolt checkout is opened we can't show new button now and will show it only if user close bolt checkout
+                // if bolt checkout is opened we can't show new button now
+                // and will show it only if user close bolt checkout
                 if (popUpOpen) {
                     return;
                 }
@@ -1797,7 +1813,8 @@ if (!$block->isSaveCartInSections()) { ?>
             callConfigureWithPromises();
             customerData.get('cart').subscribe(function(data) {
                 magentoCart = data;
-                // Call invalidateBoltCartIfOutdated with zero delay to make sure that it is added into the end of event loop.
+                // Call invalidateBoltCartIfOutdated with zero delay
+                // to make sure that it is added into the end of event loop.
                 // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
                 // After zero delay boltCartDataID will have actual value anyway.
                 setTimeout(invalidateBoltCartIfOutdated, 0);
@@ -1902,7 +1919,8 @@ if (!$block->isSaveCartInSections()) { ?>
                                 return;
                             }
 
-                            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                                var prefill = isObject(data.hints.prefill)
+                                    ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
                             hints = deepMergeObjects(hints, data.hints);
                             hints.prefill = prefill;
@@ -1945,10 +1963,11 @@ if (!$block->isSaveCartInSections()) { ?>
                             hints = {};
                         } else {
 
-                        var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+                            var prefill = isObject(data.hints.prefill)
+                                ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
-                        hints = deepMergeObjects(hints, data.hints);
-                        hints.prefill = prefill;
+                            hints = deepMergeObjects(hints, data.hints);
+                            hints.prefill = prefill;
 
                         }
 
@@ -1960,7 +1979,8 @@ if (!$block->isSaveCartInSections()) { ?>
                             hintBarrier.resolve(hints);
                         } else {
                             if (boltConfig.always_present_checkout) {
-                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ? {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover" } : {};
+                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ?
+                                    {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover"} : {};
                                 newItemAddedToCart = false;
                             }
                             // reconfigure bolt checkout with new values
@@ -2060,7 +2080,10 @@ if (!$block->isSaveCartInSections()) { ?>
                         if(settings.is_instant_checkout_button){
                             bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
                             var button_object = document.createElement('object');
-                            button_object.setAttribute('data',settings.cdn_url+'/v1/checkout_button?publishable_key='+settings.publishable_key_checkout);
+                            var checkout_button_url = settings.cdn_url
+                                +'/v1/checkout_button?publishable_key='
+                                +settings.publishable_key_checkout
+                            button_object.setAttribute('data',checkout_button_url);
                             bolt_button.appendChild(button_object);
                         } else {
                             bolt_button.setAttribute('class', bolt_button_css_class);
@@ -2289,7 +2312,8 @@ if (!$block->isSaveCartInSections()) { ?>
             callConfigureWithPromises();
         });
 
-        // globally register createOrder to be called from all templates, which is triggered by invalidating the customer section
+        // globally register createOrder to be called from all templates,
+        // which is triggered by invalidating the customer section
         $(document).on('bolt:createOrder', function () {
             invalidateBoltCart();
         });
@@ -2337,7 +2361,7 @@ if (!$block->isSaveCartInSections()) { ?>
         ////////////////////////////////////////////////////
         createOrder();
         ////////////////////////////////////////////////////
-        <?php echo $block->getAdditionalJavascript(); ?>
+        <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
@@ -2364,8 +2388,4 @@ if (!$block->isSaveCartInSections()) { ?>
        })
     }
 </script>
-<?php
-}
-$js = ob_get_clean();
-echo $block->minifyJs($js);
-?>
+<?php } ?>
