@@ -124,7 +124,7 @@ commands:
             export COMPOSER_MEMORY_LIMIT=3G
             export TEST_ENV=<< parameters.php_version >>
             export MAGENTO_VERSION=<< parameters.m2_version >>
-            .circleci/scripts/test-merchant-branches.sh << parameters.vcs-type >> << parameters.user >> << parameters.repo-name >>
+            .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
   auto-rebase:
