@@ -2356,7 +2356,7 @@ ORDER
         $currentMock->expects(static::once())->method('saveToCache')->with(
             $boltOrder,
             self::CACHE_IDENTIFIER,
-            [BoltHelperCart::BOLT_ORDER_TAG],
+            [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
             3600
         );
         $result = $currentMock->getBoltpayOrder(false, '');
@@ -2429,7 +2429,12 @@ ORDER
         $currentMock->expects(static::once())->method('boltCreateOrder')->with($cart, self::STORE_ID)
             ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('saveToCache')
-            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
+            ->with(
+                $boltOrder,
+                self::CACHE_IDENTIFIER,
+                [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
+                3600
+            );
         $result = $currentMock->getBoltpayOrder(false, '');
         static::assertEquals($result, $boltOrder);
         }
