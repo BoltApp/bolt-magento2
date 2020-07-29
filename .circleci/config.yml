@@ -224,6 +224,8 @@ jobs:
     environment:
       MAGENTO_DIR: magento
     steps:
+      - swissknife/trigger_pipeline:
+          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.3.0"
           php_version: "php72"
@@ -237,6 +239,8 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - swissknife/trigger_pipeline:
+          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.3.0"
           php_version: "php72"
@@ -250,6 +254,8 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - swissknife/trigger_pipeline:
+          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.2.0"
           php_version: "php71"
@@ -263,6 +269,8 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
+      - swissknife/trigger_pipeline:
+          install-skip-trigger: true
       - m2-php-test-for-merchant-branches:
           m2_version: "2.2.0"
           php_version: "php70"
@@ -277,7 +285,6 @@ jobs:
           name: phpcs MEQP2 standard test
           command: |
             Test/scripts/phpcs_meqp2.sh
-
 
 workflows:
   version: 2
@@ -311,7 +318,7 @@ workflows:
             branches:
               only:
                 - master
-  rebase-and-unit-test:
+  rebase-and-unit-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
     when: << pipeline.parameters.run_rebase_and_unit_test >>
     jobs:
       - rebase-and-unit-test

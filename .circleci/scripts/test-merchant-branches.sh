@@ -22,17 +22,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
     merchantBranch="ci/$branchName"
     echo "Beginning testing on branch: $merchantBranch"
 
-    res=$(curl -i -s -X POST \
-      "https://circleci.com/api/v2/project/$<< parameters.vcs-type >>/$<< parameters.user >>/$<< parameters.repo-name >>/pipeline?circle-token=${CIRCLE_TOKEN}" \
-      -H 'Accept: */*' \
-      -H 'Content-Type: application/json' \
-      -d '{
-        "branch": "'"$merchantBranch"'",
-        "parameters": {
-          "run_rebase_and_unit_test": true
-        }
-      }')
-    echo "$res"
+    /tmp/swissknife/trigger_pipeline.sh "<< parameters.vcs-type >>" "<< parameters.user >>" "<< parameters.repo-name >>" "$merchantBranch" '"parameters": { "run_rebase_and_unit_test": true }'
 
   fi
 done < "$configFile"
