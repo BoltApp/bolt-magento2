@@ -30,11 +30,12 @@ use Magento\Framework\Composer\ComposerFactory;
  * Class JsTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
+ * @coversDefaultClass \Bolt\Boltpay\Block\Js
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
     // Number of settings in method getSettings()
-    const SETTINGS_NUMBER = 25;
+    const SETTINGS_NUMBER = 26;
     const STORE_ID = 1;
     const CONFIG_API_KEY = 'test_api_key';
     const CONFIG_SIGNING_SECRET = 'test_signing_secret';
@@ -110,7 +111,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
             'shouldTrackCheckoutFunnel','isPaymentOnlyCheckoutEnabled', 'isIPRestricted', 'getPageBlacklist',
             'getMinicartSupport', 'getIPWhitelistArray', 'getApiKey', 'getSigningSecret', 'getButtonColor', 'isAlwaysPresentCheckoutEnabled',
-            'getOrderManagementSelector','isOrderManagementEnabled',
+            'getOrderManagementSelector','isOrderManagementEnabled', 'getAdditionalCheckoutButtonAttributes'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -317,6 +318,26 @@ class JsTest extends \PHPUnit\Framework\TestCase
                 ]
             ]
         ];
+    }
+
+    /**
+     * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes from
+     * @see \Bolt\Boltpay\Helper\Config::getAdditionalCheckoutButtonAttributes
+     *
+     * @covers ::getAdditionalCheckoutButtonAttributes
+     */
+    public function getAdditionalCheckoutButtonAttributes_always_returnsAdditionalCheckoutButtonAttributesFromConfig()
+    {
+        $additionalCheckoutButtonAttributes = (object)["data-btn-txt" => "Pay now"];
+        $this->configHelper->expects(static::once())
+            ->method('getAdditionalCheckoutButtonAttributes')
+            ->willReturn($additionalCheckoutButtonAttributes);
+
+        static::assertEquals(
+            $additionalCheckoutButtonAttributes,
+            $this->block->getAdditionalCheckoutButtonAttributes()
+        );
     }
 
     /**

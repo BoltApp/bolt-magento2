@@ -170,6 +170,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional button attributes
+     *
+     * @return object|array Button attributes object or empty array if not provided
+     */
+    public function getAdditionalCheckoutButtonAttributes()
+    {
+        return $this->configHelper->getAdditionalCheckoutButtonAttributes();
+    }
+
+    /**
      * Get Replace Button Selectors.
      *
      * @return string
@@ -243,6 +253,7 @@ class Js extends Template
             'quote_is_virtual' => $this->getQuoteIsVirtual(),
             'totals_change_selectors' => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
+            'additional_checkout_button_attributes' => $this->getAdditionalCheckoutButtonAttributes(),
             'initiate_checkout' => $this->getInitiateCheckout(),
             'toggle_checkout' => $this->getToggleCheckout(),
             'is_pre_auth' => $this->getIsPreAuth(),
