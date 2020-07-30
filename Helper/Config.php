@@ -479,16 +479,15 @@ class Config extends AbstractHelper
     public function getComposerVersion()
     {
         try {
-            $boltComposerVersion = $this->composerFactory->create()
+            $boltPackage = $this->composerFactory->create()
                 ->getLocker()
                 ->getLockedRepository()
-                ->findPackage(self::BOLT_COMPOSER_NAME, '*')
-                ->getVersion();
+                ->findPackage(self::BOLT_COMPOSER_NAME, '*');
+
+            return ($boltPackage) ? $boltPackage->getVersion() : null;
         }catch (\Exception $exception) {
             return null;
         }
-
-        return $boltComposerVersion;
     }
 
     /**
