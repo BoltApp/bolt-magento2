@@ -248,7 +248,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->regionModel = $regionModel;
         $this->totalsCollector = $totalsCollector;
         $this->orderHelper = $orderHelper;
-        $this->cache = $cache ?? \Magento\Framework\App\ObjectManager::getInstance()
+        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Magento\Framework\App\CacheInterface::class);
     }
 
