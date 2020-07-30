@@ -29,7 +29,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
     merchantBranch="ci/$branchName"
     echo "Beginning testing on branch: $merchantBranch"
 
-    params='"parameters": { "run_rebase_and_unit_test": true, "rebase_and_unit_test_branch_name": "'"$CIRCLE_BRANCH"'" }'
+    params='"parameters":{"run_rebase_and_unit_test":true,"rebase_and_unit_test_branch_name":"'"$CIRCLE_BRANCH"'"}'
     echo "params: $params"
     /tmp/swissknife/trigger_pipeline.sh "$vcsType" "$user" "$repoName" "$merchantBranch" "$params"
 
