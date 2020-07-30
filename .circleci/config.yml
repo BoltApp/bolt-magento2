@@ -146,9 +146,10 @@ jobs:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
     steps:
+      - checkout
       - run:
           name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.run_rebase_and_unit_test >>
+          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
 
   tag-release-candidate:
     docker:
