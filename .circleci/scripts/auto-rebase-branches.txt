@@ -1,4 +1,3 @@
 jz/rebase-custom1
 yogibo
 nmwa
-vincent/circleci/test-multiple-branches-pr

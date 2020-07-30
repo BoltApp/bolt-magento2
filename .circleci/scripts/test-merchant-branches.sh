@@ -26,8 +26,7 @@ fi
 
 while IFS= read -r branchName || [[ -n "$branchName" ]]; do
   if [ ${#branchName} -gt 0 ]; then
-    #merchantBranch="ci/$branchName" TEMPORARILY DISABLED
-    merchantBranch="$branchName"
+    merchantBranch="ci/$branchName"
     echo "Beginning testing on branch: $merchantBranch"
 
     params='{"run_rebase_and_unit_test":true,"rebase_and_unit_test_branch_name":"'"$CIRCLE_BRANCH"'"}'
