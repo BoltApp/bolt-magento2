@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -156,7 +156,9 @@ class RechargeCustomerTest extends TestCase
         $this->customerCreditCardFactoryMock->expects(self::once())->method('recharge')->with($this->orderMock)->willReturn($this->responseFactory);
 
         $responseData = new \stdClass();
-        @$responseData->transaction->reference = self::REFERENCE;
+        $responseData->transaction = new \stdClass();
+        $responseData->transaction->reference = self::REFERENCE;
+
 
         $this->responseFactory->expects(self::once())->method('getResponse')->willReturn($responseData);
         $this->orderHelper->expects(self::once())->method('formatReferenceUrl')->with(self::REFERENCE)->willReturn(self::REFERENCE_URL);

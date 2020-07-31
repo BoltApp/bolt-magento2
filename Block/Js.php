@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -27,7 +27,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
- * Js Block. The block class used in replace.phtml and track.phtml blocks.
+ * Js Block. The block class used in track.phtml block.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
@@ -497,5 +497,22 @@ class Js extends Template
     public function isSaveCartInSections()
     {
         return $this->featureSwitches->isSaveCartInSections();
+    }
+
+    /**
+     * @param $jsCode
+     * @param string $argName
+     * @return string
+     */
+    public function wrapWithCatch ($jsCode, $argName = '')
+    {
+        return "
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}";
     }
 }

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -29,8 +29,11 @@ if (!$block->isBoltProductPage()) { return;
 
 if (!$block->isSupportableType()) { return;
 }
+
+$additionalClass = $block->getAdditionalCheckoutButtonClass();
 ?>
-    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?=$block->getAdditionalCheckoutButtonClass();?>" style="<?=$block->getButtonCssStyles(); ?>"></div>
+    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
+         style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>"></div>
     <script>
         require([
             'jquery',
@@ -42,8 +45,8 @@ if (!$block->isSupportableType()) { return;
         ], function ($, authenticationPopup, customerData) {
 
             var customer = customerData.get('customer');
-            var isGuestCheckoutAllowed = <?= $block->isGuestCheckoutAllowed(); ?>;
-            var itemPrice = <?= $block->getProduct()->getFinalPrice(); ?>;
+            var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
+            var itemPrice = <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -178,7 +181,7 @@ if (!$block->isSupportableType()) { return;
                 var quantity = Number($('#qty').val());
                 return quantity > 0 ? quantity : 1;
             };
-            <?php if ($this->isSaveHintsInSections()): ?>
+            <?php if ($block->isSaveHintsInSections()): ?>
             var hintsSection = customerData.get('bolthints');
             var hints = hintsSection.data !== undefined ? hintsSection.data : {};
             customerData.get('bolthints').subscribe(function(newValue) {
@@ -223,13 +226,13 @@ if (!$block->isSupportableType()) { return;
                     }
                     options[name] = value;
                 });
-                options['storeId'] = '<?= $block->getStoreId(); ?>';
+                options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
                 var cart = {
-                    currency: "<?= $block->getStoreCurrencyCode(); ?>",
+                    currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
                     items: [{
-                        reference: '<?= $block->getProduct()->getId(); ?>',
+                        reference: '<?= /* @noEscape */ $block->getProduct()->getId(); ?>',
                         price: itemPrice,
-                        name: '<?= addcslashes($block->getProduct()->getName(), "'"); ?>',
+                        name: '<?= /* @noEscape */ addcslashes($block->getProduct()->getName(), "'"); ?>',
                         quantity: getQty(),
                         options: JSON.stringify(options)
                     }]
@@ -250,7 +253,7 @@ if (!$block->isSupportableType()) { return;
             // options change in updatePrice event listened below.
             // The final item price is the sum of all prices stored here.
             var itemPrices = {
-                basePrice: <?= $block->getProduct()->getFinalPrice(); ?>
+                basePrice: <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>
             };
 
             /**

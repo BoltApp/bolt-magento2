@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -986,7 +986,7 @@ class CartTest extends TestCase
     {
         $cachedValue = $this->getTestCartData();
         $this->cache->expects(static::once())->method('load')->with(self::CACHE_IDENTIFIER)
-            ->willReturn(serialize($cachedValue));
+            ->willReturn(TestHelper::serialize($this, $cachedValue));
         static::assertEquals(
             $cachedValue,
             TestHelper::invokeMethod(
@@ -1009,7 +1009,7 @@ class CartTest extends TestCase
     {
         $testCartData = $this->getTestCartData();
         $this->cache->expects(static::once())->method('save')->with(
-            serialize($testCartData),
+            TestHelper::serialize($this, $testCartData),
             self::CACHE_IDENTIFIER,
             [],
             null
@@ -1180,7 +1180,7 @@ class CartTest extends TestCase
             ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(md5(json_encode($testCartData) . $addressCacheIdentifier), $result);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier), $result);
     }
 
     /**
@@ -1205,7 +1205,7 @@ class CartTest extends TestCase
             ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(md5(json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
     }
 
     /**

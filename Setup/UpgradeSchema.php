@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Setup;
@@ -77,6 +77,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             $setup->getIdxName('quote', ['bolt_parent_quote_id']),
             ['bolt_parent_quote_id']
+        );
+
+        $setup->getConnection()->addColumn(
+            $setup->getTable('sales_order'),
+            'bolt_transaction_reference',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 64,
+                'nullable' => true,
+                'comment' => 'Bolt Transaction Reference'
+            ]
         );
 
         $this->setupFeatureSwitchTable($setup);
