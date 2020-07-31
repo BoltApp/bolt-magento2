@@ -16,7 +16,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Test\Unit\Observer;
+namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -24,27 +24,29 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Response;
+use Bolt\Boltpay\Plugin\NonBoltOrderPlugin;
 use Exception;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\DataObject;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Framework\Event;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Item;
+use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Model\Order\Payment;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Bolt\Boltpay\Observer\NonBoltOrderObserver as Observer;
+use Bolt\Boltpay\Plugin\NonBoltOrderPlugin as Plugin;
 use \PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Model\Request;
 
 /**
- * Class NonBoltOrderObserverTest
- * @coversDefaultClass \Bolt\Boltpay\Observer\NonBoltOrderObserver
+ * Class NonBoltOrderPluginTest
+ * @coversDefaultClass \Bolt\Boltpay\Plugin\NonBoltOrderPlugin
  */
 class NonBoltOrderObserverTest extends TestCase
 {
@@ -101,9 +103,14 @@ class NonBoltOrderObserverTest extends TestCase
     private $decider;
 
     /**
-     * @var Observer
+     * @var Plugin
      */
-    protected $observer;
+    protected $plugin;
+
+    /**
+     * @var OrderManagementInterface
+     */
+    protected $orderManagementInterface;
 
     protected function setUp()
     {
@@ -129,16 +136,21 @@ class NonBoltOrderObserverTest extends TestCase
         $logHelper = $this->createMock(LogHelper::class);
         $metricsClient = $this->createMock(MetricsClient::class);
         $this->quoteRepository = $this->createMock(QuoteRepository::class);
-        $this->observer = new Observer(
-            $this->apiHelper,
-            $bugsnag,
-            $this->cartHelper,
-            $configHelper,
-            $dataObjectFactory,
-            $logHelper,
-            $metricsClient,
-            $this->quoteRepository,
-            $this->decider
+        $this->orderManagementInterface = $this->createMock(OrderManagementInterface::class);
+        $objectManager = new ObjectManager($this);
+        $this->plugin = $objectManager->getObject(
+            NonBoltOrderPlugin::class,
+            [
+                'apiHelper' => $this->apiHelper,
+                'bugsnag' => $bugsnag,
+                'cartHelper' => $this->cartHelper,
+                'configHelper' => $configHelper,
+                'dataObjectFactory' => $dataObjectFactory,
+                'logHelper' => $logHelper,
+                'metricsClient' => $metricsClient,
+                'quoteRepository' => $this->quoteRepository,
+                'decider' => $this->decider
+            ]
         );
     }
 
@@ -147,7 +159,9 @@ class NonBoltOrderObserverTest extends TestCase
      */
     public function testExecute()
     {
-        $order = $this->createMock(Order::class);
+        $order = $this->getMockBuilder("BoltOrder")
+            ->setMethods(['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
@@ -169,26 +183,13 @@ class NonBoltOrderObserverTest extends TestCase
         $order->expects($this->once())
             ->method('getPayment')
             ->willReturn($payment);
+        $order->expects($this->once())
+            ->method('setBoltTransactionReference');
+        $order->expects($this->once())
+            ->method('save');
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(self::PAYMENT_METHOD);
-        $payment->expects($this->once())
-            ->method('setAdditionalInformation');
-        $payment->expects($this->once())
-            ->method('save');
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
 
         $this->cartHelper->method('buildCartFromQuote')->willReturn(self::CART);
         $expectedOrderData = [
@@ -212,30 +213,7 @@ class NonBoltOrderObserverTest extends TestCase
         $response = new Response();
         $response->setResponse(json_decode('{"reference": "ABCD-EFGH-1234"}'));
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
-        $this->observer->execute($eventObserver);
-    }
-
-    /**
-     * @test
-     */
-    public function testExecuteNoOrder()
-    {
-        $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(true);
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn(null);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
-        $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
     }
 
     /**
@@ -248,21 +226,8 @@ class NonBoltOrderObserverTest extends TestCase
         $this->quoteRepository->expects($this->once())
             ->method('get')
             ->willReturn(null);
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
     }
 
 
@@ -273,17 +238,9 @@ class NonBoltOrderObserverTest extends TestCase
     {
         $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(false);
         $this->quoteRepository->expects($this->never())->method('get');
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->never())->method('getOrder');
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->never())->method('getEvent');
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+        $order = $this->createMock(Order::class);
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
     }
 
     /**
@@ -303,21 +260,8 @@ class NonBoltOrderObserverTest extends TestCase
         $order->expects($this->once())
             ->method('getPayment')
             ->willReturn($payment);
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->exactly(1))
-            ->method('getEvent')
-            ->willReturn($event);
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
     }
 
     /**
@@ -339,31 +283,17 @@ class NonBoltOrderObserverTest extends TestCase
         $address->method('getFirstname')->willReturn(self::FIRST_NAME);
         $address->method('getLastname')->willReturn(self::LAST_NAME);
         $quote->method('getShippingAddress')->willReturn($address);
-
         $this->quoteRepository->expects($this->once())
             ->method('get')
             ->willReturn($quote);
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
-
         $this->cartHelper->method('buildCartFromQuote')->willReturnCallback(function () {
             trigger_error("Error", E_ERROR);
         });
         $this->dataObject->expects($this->never())->method("setApiData");
         $this->apiHelper->expects($this->never())->method('buildRequest');
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
 
         // assert that an error was not thrown by the observer
         $this->assertTrue(true);
@@ -388,29 +318,15 @@ class NonBoltOrderObserverTest extends TestCase
         $address->method('getFirstname')->willReturn(self::FIRST_NAME);
         $address->method('getLastname')->willReturn(self::LAST_NAME);
         $quote->method('getShippingAddress')->willReturn($address);
-
         $this->quoteRepository->expects($this->once())
             ->method('get')
             ->willReturn($quote);
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
-
         $this->cartHelper->method('buildCartFromQuote')->willThrowException(new Exception());
         $this->dataObject->expects($this->never())->method("setApiData");
         $this->apiHelper->expects($this->never())->method('buildRequest');
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $this->observer->execute($eventObserver);
+
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
 
         // assert that an error was not thrown by the observer
         $this->assertTrue(true);
@@ -419,7 +335,9 @@ class NonBoltOrderObserverTest extends TestCase
     public function testExecuteShipmentsNotSet()
     {
         $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(true);
-        $order = $this->createMock(Order::class);
+        $order = $this->getMockBuilder("BoltOrder")
+            ->setMethods(['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);
         $quote = $this->createMock(Quote::class);
@@ -443,23 +361,6 @@ class NonBoltOrderObserverTest extends TestCase
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(self::PAYMENT_METHOD);
-        $payment->expects($this->once())
-            ->method('setAdditionalInformation');
-        $payment->expects($this->once())
-            ->method('save');
-        $event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getOrder'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $event->expects($this->once())
-            ->method('getOrder')
-            ->willReturn($order);
-        $eventObserver = $this->getMockBuilder(Event\Observer::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $eventObserver->expects($this->once())
-            ->method('getEvent')
-            ->willReturn($event);
 
         $cartMissingPhone = self::CART;
         unset($cartMissingPhone['shipments']);
@@ -485,6 +386,7 @@ class NonBoltOrderObserverTest extends TestCase
         $response = new Response();
         $response->setResponse(json_decode('{"reference": "ABCD-EFGH-1234"}'));
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);
-        $this->observer->execute($eventObserver);
+
+        $this->plugin->afterPlace($this->orderManagementInterface, $order);
     }
 }

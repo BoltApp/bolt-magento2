@@ -1,6 +1,6 @@
 <?php
 
-namespace Bolt\Boltpay\Observer;
+namespace Bolt\Boltpay\Plugin;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -9,24 +9,23 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Order;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
-use Error;
 use Exception;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Sales\Api\OrderManagementInterface;
 use Zend_Http_Client_Exception;
 
 /**
- * Class NonBoltOrderObserver
+ * Class NonBoltOrderPlugin
  *
- * @package Bolt\Boltpay\Observer
+ * @package Bolt\Boltpay\Plugin
  */
-class NonBoltOrderObserver implements ObserverInterface
+class NonBoltOrderPlugin
 {
     /**
      * @var ApiHelper
@@ -107,37 +106,35 @@ class NonBoltOrderObserver implements ObserverInterface
     }
 
     /**
-     * @param Observer $observer
+     * @param OrderManagementInterface $orderManagementInterface
+     * @param Order
+     *
+     * @return Order
      */
-    public function execute(Observer $observer)
+    public function afterPlace(OrderManagementInterface $orderManagementInterface, $order)
     {
         if (!$this->decider->isNonBoltTrackingEnabled()) {
-            return;
+            return $order;
         }
 
         try {
-            $order = $observer->getEvent()->getOrder();
-            if ($order == null) {
-                return;
-            }
-
             $payment = $order->getPayment();
             $paymentMethod = $payment ? $payment->getMethod() : "unknown";
             if ($paymentMethod == Payment::METHOD_CODE) {
                 // ignore Bolt orders
-                return;
+                return $order;
             }
 
             $quote = $this->quoteRepository->get($order->getQuoteId());
             if (!$quote) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_quote", 1);
-                return;
+                return $order;
             }
 
             $items = $quote->getAllVisibleItems();
             if (!$items) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_items", 1);
-                return;
+                return $order;
             }
 
             $this->handleMissingName($quote);
@@ -149,21 +146,19 @@ class NonBoltOrderObserver implements ObserverInterface
             $response = $result->getResponse();
             if (empty($response)) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
-                return;
+                return $order;
             }
 
-            $boltTransactionData = ['bolt_transaction_reference' => $response->reference];
-            $payment->setAdditionalInformation(
-                array_merge((array)$payment->getAdditionalInformation(), $boltTransactionData)
-            );
-            $payment->save();
+            $order->setBoltTransactionReference($response->reference);
+            $order->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
-            return;
+            return $order;
         }
 
         $this->metricsClient->processCountMetric("non_bolt_order_creation.success", 1);
+        return $order;
     }
 
     /**
