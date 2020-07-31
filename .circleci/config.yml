@@ -5,6 +5,9 @@ orbs:
   swissknife: roopakv/swissknife@0.48.0
 
 parameters:
+  run_default_workflow:
+    type: boolean
+    default: true
   run_rebase_and_unit_test:
     type: boolean
     default: false
@@ -288,6 +291,7 @@ jobs:
 workflows:
   version: 2
   build:
+    when: << pipeline.parameters.run_default_workflow >>
     jobs:
 #      - phpcs
       - unit-php72-magento23
@@ -305,6 +309,7 @@ workflows:
     jobs:
       - tag-release-candidate
   merchant-branch-test:
+    when: << pipeline.parameters.run_default_workflow >>
     jobs:
       - unit-php72-magento23-for-merchant-branches
       - unit-php71-magento22-for-merchant-branches

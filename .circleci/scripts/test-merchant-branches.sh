@@ -5,6 +5,11 @@ if [ "$#" -ne 3 ]; then
     exit 1
 fi
 
+if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
+  echo "test-merchant-branches.sh Cannot be called from a merchant branch (this will cause an infinite loop)"
+  exit 1
+fi
+
 # init git
 git config user.email "circleci@bolt.com"
 git config user.name "Circle CI"
@@ -29,7 +34,7 @@ while IFS= read -r branchName || [[ -n "$branchName" ]]; do
     merchantBranch="ci/$branchName"
     echo "Beginning testing on branch: $merchantBranch"
 
-    params='{"run_rebase_and_unit_test":true,"rebase_and_unit_test_branch_name":"'"$CIRCLE_BRANCH"'"}'
+    params='{"run_rebase_and_unit_test":true,"rebase_and_unit_test_branch_name":"'"$CIRCLE_BRANCH"'","run_default_workflow":false}'
     echo "params: $params"
     /tmp/swissknife/trigger_pipeline.sh "$vcsType" "$user" "$repoName" "$merchantBranch" "$params"
 
