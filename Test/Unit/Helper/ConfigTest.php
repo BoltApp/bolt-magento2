@@ -1287,6 +1287,7 @@ Room 4000',
 
     /**
      * @test
+     * @covers ::getComposerVersion
      */
     public function getComposerVersion() {
         $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
@@ -1299,6 +1300,7 @@ Room 4000',
 
     /**
      * @test
+     * @covers ::getComposerVersion
      */
     public function getComposerVersion_withException_returnNull() {
         $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
@@ -1379,5 +1381,17 @@ Room 4000',
                 'expectedResult'   => (object)[],
             ],
         ];
+  
+    /**
+     * @test
+     * @covers ::getComposerVersion
+     */
+    public function getComposerVersion_withFindPackageWillReturnNull() {
+        $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturn(null);
+        $this->composerFactory->expects(self::never())->method('getVersion');
+        $this->assertNull($this->currentMock->getComposerVersion());
     }
 }
