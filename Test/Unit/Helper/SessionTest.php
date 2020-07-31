@@ -33,6 +33,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\Serialize\Serializer\Serialize;
 
 /**
  * Class SessionTest
@@ -102,6 +103,11 @@ class SessionTest extends TestCase
     protected $quote;
 
     /**
+     * @var Serialize
+     */
+    private $serialize;
+
+    /**
      * @inheritdoc
      */
     public function setUp()
@@ -161,6 +167,8 @@ class SessionTest extends TestCase
             ConfigHelper::class,
             ['isSessionEmulationEnabled']
         );
+
+        $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
     }
 
     private function initCurrentMock()
@@ -179,7 +187,8 @@ class SessionTest extends TestCase
                     $this->appState,
                     $this->formKey,
                     $this->configHelper,
-                    $this->eventsForThirdPartyModules
+                    $this->eventsForThirdPartyModules,
+                    $this->serialize
                 ]
             )
             ->getMock();
@@ -203,7 +212,8 @@ class SessionTest extends TestCase
             $this->appState,
             $this->formKey,
             $this->configHelper,
-            $this->eventsForThirdPartyModules
+            $this->eventsForThirdPartyModules,
+            $this->serialize
         );
         
         $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
@@ -215,6 +225,7 @@ class SessionTest extends TestCase
         $this->assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
         $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
         $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->serialize, 'serialize', $instance);
     }
 
     /**

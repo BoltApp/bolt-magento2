@@ -74,7 +74,7 @@ class Manager extends AbstractHelper
         $switches = [];
         if ($switchesResponse->getData()) {
             $data = $switchesResponse->getData();
-            $switches = @$data["response"]->data->plugin->features;
+            $switches = $data["response"]->data->plugin->features ?? null;
         }
 
         if (!is_array($switches) || count($switches) == 0) {

@@ -398,23 +398,35 @@ class Order extends AbstractHelper
     {
         $address = $this->cartHelper->handleSpecialAddressCases($address);
 
-        $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
+        $regionName = $address->region ?? null;
+        $countryCode = $address->country_code ?? null;
+        $firstName = $address->first_name ?? null;
+        $lastName = $address->last_name ?? null;
+        $streetAddress1 = $address->street_address1 ?? null;
+        $streetAddress2 = $address->street_address2 ?? null;
+        $locality = $address->locality ?? null;
+        $postalCode = $address->postal_code ?? null;
+        $phoneNumber = $address->phone_number ?? null;
+        $company = $address->company ?? null;
+        $emailAddress = $address->email_address ?? null;
+
+        $region = $this->regionModel->loadByName($regionName, $countryCode);
 
         $addressData = [
-            'firstname'    => @$address->first_name,
-            'lastname'     => @$address->last_name,
-            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
-            'city'         => @$address->locality,
-            'country_id'   => @$address->country_code,
-            'region'       => @$address->region,
-            'postcode'     => @$address->postal_code,
-            'telephone'    => @$address->phone_number,
+            'firstname'    => $firstName,
+            'lastname'     => $lastName,
+            'street'       => trim($streetAddress1 . "\n" . $streetAddress2),
+            'city'         => $locality,
+            'country_id'   => $countryCode,
+            'region'       => $regionName,
+            'postcode'     => $postalCode,
+            'telephone'    => $phoneNumber,
             'region_id'    => $region ? $region->getId() : null,
-            'company'      => @$address->company,
+            'company'      => $company,
         ];
 
-        if ($this->cartHelper->validateEmail(@$address->email_address)) {
-            $addressData['email'] = $address->email_address;
+        if ($this->cartHelper->validateEmail($emailAddress)) {
+            $addressData['email'] = $emailAddress;
         }
 
         // discard empty address fields
@@ -439,8 +451,8 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        $address = @$transaction->order->cart->shipments[0]->shipping_address;
-        $referenceShipmentMethod = (@$transaction->order->cart->shipments[0]->reference) ?: false;
+        $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
+        $referenceShipmentMethod = $transaction->order->cart->shipments[0]->reference ?? null;
 
         if ($address) {
             $this->setAddress($quote->getShippingAddress(), $address);
@@ -461,7 +473,7 @@ class Order extends AbstractHelper
      */
     protected function setBillingAddress($quote, $transaction)
     {
-        $address = @$transaction->order->cart->billing_address;
+        $address = $transaction->order->cart->billing_address ?? null;
         if ($address) {
             $this->setAddress($quote->getBillingAddress(), $address);
         }
@@ -939,7 +951,8 @@ class Order extends AbstractHelper
             );
         }
 
-        if (@$response->status != 'cancelled') {
+        $status = $response->status ?? null;
+        if ($status != 'cancelled') {
             throw new LocalizedException(__('Payment void error.'));
         }
 
@@ -958,7 +971,7 @@ class Order extends AbstractHelper
     {
         try {
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
-            $parentQuoteId = @$transaction->order->cart->order_reference;
+            $parentQuoteId = $transaction->order->cart->order_reference ?? false;
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
@@ -970,9 +983,9 @@ class Order extends AbstractHelper
             }
 
             $customerId = $quote->getCustomerId();
-            $boltConsumerId = @$transaction->from_consumer->id;
-            $boltCreditCard = @$transaction->from_credit_card;
-            $boltCreditCardId = @$boltCreditCard->id;
+            $boltConsumerId = $transaction->from_consumer->id ?? false;
+            $boltCreditCard = $transaction->from_credit_card ?? false;
+            $boltCreditCardId = $boltCreditCard->id ?? false;
 
             if (!$customerId || !$boltConsumerId || !$boltCreditCardId) {
                 return false;
@@ -1338,8 +1351,8 @@ class Order extends AbstractHelper
         $this->setPaymentMethod($quote);
         $this->quoteAfterChange($quote);
 
-        $email = @$transaction->order->cart->billing_address->email_address ?:
-            @$transaction->order->cart->shipments[0]->shipping_address->email_address;
+        $email = $transaction->order->cart->billing_address->email_address ??
+            $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
         $this->addCustomerDetails($quote, $email);
 
         $quote->setReservedOrderId($quote->getBoltReservedOrderId());
@@ -1652,15 +1665,19 @@ class Order extends AbstractHelper
      */
     private function getUnprocessedCapture($payment, $transaction)
     {
-        $processedCaptures = $this->getProcessedCaptures($payment);
-        return @end(
-            array_filter(
+        try {
+            $processedCaptures = $this->getProcessedCaptures($payment);
+            $unprocessedCaptures = array_filter(
                 $transaction->captures,
                 function ($capture) use ($processedCaptures) {
                     return !in_array($capture->id, $processedCaptures) && $capture->status == 'succeeded';
                 }
-            )
-        );
+            );
+            return end($unprocessedCaptures);
+        }catch (\Exception $exception) {
+            $this->bugsnag->notifyException($exception);
+            return false;
+        }
     }
 
     /**
@@ -1995,7 +2012,7 @@ class Order extends AbstractHelper
             $payment->setShouldCloseParentTransaction(true);
         }
 
-        if ($newCapture && @$invoice) {
+        if ($newCapture && !empty($invoice)) {
             $this->_eventManager->dispatch(
                 'sales_order_payment_capture',
                 ['payment' => $payment, 'invoice' => $invoice]

@@ -134,7 +134,7 @@ class Geolocation extends AbstractHelper
         $ip = $this->configHelper->getClientIp();
 
         // try getting location from cache
-        $cacheIdentifier = md5(self::CACHE_PREFIX.$ip);
+        $cacheIdentifier = hash('md5', self::CACHE_PREFIX.$ip);
         $locationJson = $this->cache->load($cacheIdentifier);
 
         // if found return it

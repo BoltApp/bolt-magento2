@@ -638,7 +638,7 @@ class Discount extends AbstractHelper
     public function getAmastyPayForEverything()
     {
         $amastyGiftCardConfig = $this->configHelper->getAmastyGiftCardConfig();
-        if ($amastyGiftCardConfig && @$amastyGiftCardConfig->payForEverything === false) {
+        if ($amastyGiftCardConfig && empty($amastyGiftCardConfig->payForEverything)) {
             return false;
         }
         return true;

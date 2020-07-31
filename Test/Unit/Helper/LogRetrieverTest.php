@@ -20,6 +20,8 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 use Bolt\Boltpay\Helper\LogRetriever;
 use PHPUnit\Framework\TestCase;
 use org\bovigo\vfs\vfsStream;
+use Magento\Framework\Filesystem\Driver\File;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Class LogRetrieverTest
@@ -43,6 +45,9 @@ class LogRetrieverTest extends TestCase
      */
     private $root;
 
+    private $bugsnag;
+    private $file;
+
     protected function setUp()
     {
         $structure = [
@@ -50,10 +55,18 @@ class LogRetrieverTest extends TestCase
                 'exception.log' => "Line 1 of log\nLine 2 of log\nLine 3 of log"
             ]
         ];
+        $this->file = $this->getMockBuilder(File::class)->enableProxyingToOriginalMethods()->getMock();
+        $this->bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException']);
         $this->root = vfsStream::setup('root', null, $structure);
         $this->virtualLogPath = "/log/exception.log";
         $this->logRetriever = $this->getMockBuilder(LogRetriever::class)
             ->setMethods(['getLogs'])
+            ->setConstructorArgs(
+                [
+                    $this->file,
+                    $this->bugsnag
+                ]
+            )
             ->enableProxyingToOriginalMethods()
             ->getMock();
     }
@@ -93,6 +106,7 @@ class LogRetrieverTest extends TestCase
         $invalidPath = "invalid/path";
         $expected = ['No file found at ' . $this->root->url() . $invalidPath];
 
+        $this->bugsnag->expects(self::once())->method('notifyException');
         $result = $this->logRetriever->getLogs(
             $this->root->url() . $invalidPath
         );

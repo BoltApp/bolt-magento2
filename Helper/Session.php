@@ -30,6 +30,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\Serialize\Serializer\Serialize;
 
 /**
  * Boltpay Session helper
@@ -68,6 +69,9 @@ class Session extends AbstractHelper
     /** @var ConfigHelper */
     private $configHelper;
 
+    /** @var Serialize */
+    private $serialize;
+
     /** @var EventsForThirdPartyModules */
     private $eventsForThirdPartyModules;
 
@@ -80,6 +84,7 @@ class Session extends AbstractHelper
      * @param State                      $appState
      * @param FormKey                    $formKey
      * @param ConfigHelper               $configHelper
+     * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
@@ -92,7 +97,8 @@ class Session extends AbstractHelper
         State $appState,
         FormKey $formKey,
         ConfigHelper $configHelper,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        Serialize $serialize
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -104,6 +110,7 @@ class Session extends AbstractHelper
         $this->formKey = $formKey;
         $this->configHelper = $configHelper;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->serialize = $serialize;
     }
 
     /**
@@ -120,7 +127,7 @@ class Session extends AbstractHelper
             "sessionType" => $checkoutSession instanceof \Magento\Checkout\Model\Session ? "frontend" : "admin",
             "sessionID"   => $checkoutSession->getSessionId()
         ];
-        $this->cache->save(serialize($sessionData), $cacheIdentifier, [], 86400);
+        $this->cache->save($this->serialize->serialize($sessionData), $cacheIdentifier, [], 86400);
     }
 
     /**
@@ -170,7 +177,9 @@ class Session extends AbstractHelper
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
         if ($serialized = $this->cache->load($cacheIdentifier)) {
-            $sessionData = unserialize($serialized);
+            // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
+            // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
+            $sessionData = unserialize($serialized); // @codingStandardsIgnoreLine
             $sessionID = $sessionData["sessionID"];
             $storeId = $quote->getStoreId();
 

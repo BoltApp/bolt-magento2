@@ -62,6 +62,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
+use Magento\Framework\Serialize\Serializer\Serialize;
 
 /**
  * Boltpay Cart helper
@@ -252,6 +253,11 @@ class Cart extends AbstractHelper
     private $deciderHelper;
 
     /**
+     * @var Serialize
+     */
+    private $serialize;
+
+    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -280,6 +286,7 @@ class Cart extends AbstractHelper
      * @param Registry $coreRegistry
      * @param MetricsClient $metricsClient
      * @param DeciderHelper $deciderHelper
+     * @param Serialize $serialize
      */
     public function __construct(
         Context $context,
@@ -309,7 +316,8 @@ class Cart extends AbstractHelper
         CustomerRepository $customerRepository,
         Registry $coreRegistry,
         MetricsClient $metricsClient,
-        DeciderHelper $deciderHelper
+        DeciderHelper $deciderHelper,
+        Serialize $serialize
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -339,6 +347,7 @@ class Cart extends AbstractHelper
         $this->coreRegistry = $coreRegistry;
         $this->metricsClient = $metricsClient;
         $this->deciderHelper = $deciderHelper;
+        $this->serialize = $serialize;
     }
 
     /**
@@ -486,7 +495,9 @@ class Cart extends AbstractHelper
         if (!$cached) {
             return false;
         }
-        return $unserialize ? unserialize($cached) : $cached;
+        // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
+        // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
+        return $unserialize ? unserialize($cached) : $cached; //@codingStandardsIgnoreLine
     }
 
     /**
@@ -500,7 +511,7 @@ class Cart extends AbstractHelper
      */
     protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
     {
-        $data = $serialize ? serialize($data) : $data;
+        $data = $serialize ? $this->serialize->serialize($data) : $data;
         $this->cache->save($data, $identifier, $tags, $lifeTime);
     }
 
@@ -590,7 +601,7 @@ class Cart extends AbstractHelper
         $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
         $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
 
-        return md5($identifier);
+        return hash('md5', $identifier);
     }
 
     /**
@@ -1358,7 +1369,7 @@ class Cart extends AbstractHelper
                         $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
                     }
                 }
-                if (@$productImageUrl) {
+                if (isset($productImageUrl) && $productImageUrl) {
                     $product['image_url'] = ltrim($productImageUrl, '/');
                 }
                 ////////////////////////////////////
@@ -1643,22 +1654,22 @@ class Cart extends AbstractHelper
         if ($placeOrderPayload) {
             $placeOrderPayload = json_decode($placeOrderPayload);
 
-            $billAddress          = @$placeOrderPayload->billingAddress;
-            $billingStreetAddress = (array)@$billAddress->street;
+            $billAddress          = $placeOrderPayload->billingAddress ?? null;
+            $billingStreetAddress = $billAddress->street ?? [];
 
             if ($billAddress) {
                 $cartBillingAddress = [
-                    'first_name'      => @$billAddress->firstname,
-                    'last_name'       => @$billAddress->lastname,
-                    'company'         => @$billAddress->company,
-                    'phone'           => @$billAddress->telephone,
-                    'street_address1' => (string)@$billingStreetAddress[0],
-                    'street_address2' => (string)@$billingStreetAddress[1],
-                    'locality'        => @$billAddress->city,
-                    'region'          => @$billAddress->region,
-                    'postal_code'     => @$billAddress->postcode,
-                    'country_code'    => @$billAddress->countryId,
-                    'email'           => @$placeOrderPayload->email ?: $email
+                    'first_name'      => $billAddress->firstname ?? null,
+                    'last_name'       => $billAddress->lastname ?? null,
+                    'company'         => $billAddress->company ?? null,
+                    'phone'           => $billAddress->telephone ?? null,
+                    'street_address1' => (string) $billingStreetAddress[0] ?? null,
+                    'street_address2' => (string) $billingStreetAddress[1] ?? null,
+                    'locality'        => $billAddress->city ?? null,
+                    'region'          => $billAddress->region ?? null,
+                    'postal_code'     => $billAddress->postcode ?? null,
+                    'country_code'    => $billAddress->countryId ?? null,
+                    'email'           => $placeOrderPayload->email ?? $email
                 ];
             }
         }
@@ -1673,7 +1684,7 @@ class Cart extends AbstractHelper
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
-                if (@$cart['billing_address']) {
+                if (!empty($cart['billing_address'])) {
                     $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
                     $address->save();
                 } elseif ($requireBillingAddress) {
@@ -2052,10 +2063,11 @@ class Cart extends AbstractHelper
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description) {
-            if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+            $totalDiscount = $totals[$discount] ?? null;
+            if ($totalDiscount && $amount = $totalDiscount->getValue()) {
                 $roundedDiscountAmount = 0;
                 $discountAmount = 0;
-                
+
                 ///////////////////////////////////////////////////////////////////////////
                 // If Amasty gift cards can be used for shipping and tax (PayForEverything)
                 // accumulate all the applied gift cards balance as discount amount. If the
@@ -2105,7 +2117,7 @@ class Cart extends AbstractHelper
                     /// The GiftCert accumulate correct balance only after each collectTotals.
                     ///  The Unirgy_Giftcert add the only discount which covers only product price.
                     ///  We should get the whole balance at first of the Giftcert.
-                    /////////////////////////////////////////////////////////////////////////// 
+                    ///////////////////////////////////////////////////////////////////////////
                     $gcCode = $quote->getData('giftcert_code');
                     $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
                     if ($giftCertBalance > 0) {
@@ -2114,7 +2126,7 @@ class Cart extends AbstractHelper
                     $discountAmount = abs($amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                     $discountItem = [
-                        'description'       => $description . @$totals[$discount]->getTitle(),
+                        'description'       => $description . $totalDiscount->getTitle(),
                         'amount'            => $roundedDiscountAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $gcCode,
@@ -2139,16 +2151,16 @@ class Cart extends AbstractHelper
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
                         $discounts[] = $discountItem;
-                    }                    
+                    }
                 } else {
                     $discountAmount = abs($amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
-    
+
                     $discountItem = [
                         'description' => $description . @$totals[$discount]->getTitle(),
                         'amount'      => $roundedDiscountAmount,
                     ];
-    
+
                     if ($discount == Discount::AMASTY_STORECREDIT) {
                         $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
                         $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
