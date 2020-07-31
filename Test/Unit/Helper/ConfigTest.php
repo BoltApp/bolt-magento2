@@ -1381,6 +1381,7 @@ Room 4000',
                 'expectedResult'   => (object)[],
             ],
         ];
+    }
   
     /**
      * @test
