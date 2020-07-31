@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -119,11 +119,11 @@ class Debug implements DebugInterface
         # populate php version
         $result->setPhpVersion(PHP_VERSION);
 
+        # populate bolt config settings
+        $result->setComposerVersion($this->configHelper->getComposerVersion());
+
         # populate platform version
         $result->setPlatformVersion($this->productMetadata->getVersion());
-
-        # populate bolt config settings
-        $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
 
         # populate bolt config settings
         $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());

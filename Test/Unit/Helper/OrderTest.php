@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -3914,16 +3914,27 @@ class OrderTest extends TestCase
         ];
     }
 
+    private function mockTransactionData() {
+        $transactionData = new \stdClass();
+        $transactionData->from_consumer = new \stdClass();
+        $transactionData->from_credit_card = new \stdClass();
+        $transactionData->order = new \stdClass();
+        $transactionData->order->cart = new \stdClass();
+
+        $transactionData->from_consumer->id = 1;
+        $transactionData->from_credit_card->id = 1;
+        $transactionData->order->cart->order_reference = self::QUOTE_ID;
+
+        return $transactionData;
+    }
+
     /**
      * @test
      */
     public function testSaveCustomerCreditCard_validData()
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $transaction = new \stdClass();
-        @$transaction->from_consumer->id = 1;
-        @$transaction->from_credit_card->id = 1;
-        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+        $transaction = $this->mockTransactionData();
 
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($transaction);
@@ -3948,10 +3959,7 @@ class OrderTest extends TestCase
     public function testSaveCustomerCreditCard_IfParentQuoteDoesNotExist()
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $transaction = new \stdClass();
-        @$transaction->from_consumer->id = 1;
-        @$transaction->from_credit_card->id = 1;
-        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+        $transaction = $this->mockTransactionData();
 
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($transaction);
@@ -3978,10 +3986,7 @@ class OrderTest extends TestCase
     public function testSaveCustomerCreditCard_IfQuoteDoesNotExist()
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $transaction = new \stdClass();
-        @$transaction->from_consumer->id = 1;
-        @$transaction->from_credit_card->id = 1;
-        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+        $transaction = $this->mockTransactionData();
 
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($transaction);
@@ -4002,10 +4007,7 @@ class OrderTest extends TestCase
     public function testSaveCustomerCreditCard_withException()
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $transaction = new \stdClass();
-        @$transaction->from_consumer->id = 1;
-        @$transaction->from_credit_card->id = 1;
-        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+        $transaction = $this->mockTransactionData();
 
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($transaction);
@@ -4030,10 +4032,7 @@ class OrderTest extends TestCase
     public function testSaveCustomerCreditCard_ignoreCreditCardCreationLogicIfCardExists()
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $transaction = new \stdClass();
-        @$transaction->from_consumer->id = 1;
-        @$transaction->from_credit_card->id = 1;
-        @$transaction->order->cart->order_reference = self::QUOTE_ID;
+        $transaction = $this->mockTransactionData();
 
         $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
             ->willReturn($transaction);
@@ -4099,7 +4098,10 @@ class OrderTest extends TestCase
     public function adjustPriceMismatch()
     {
         $transaction = new \stdClass();
-        @$transaction->order->cart->total_amount->amount = 10000;
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->total_amount = new \stdClass();
+        $transaction->order->cart->total_amount->amount = 10000;
         $this->orderMock->expects(self::once())->method('getOrderCurrencyCode')->willReturn('USD');
         $this->orderMock->expects(self::once())->method('getGrandTotal')->willReturn(99.99);
         $this->configHelper->method('getPriceFaultTolerance')->willReturn(2);

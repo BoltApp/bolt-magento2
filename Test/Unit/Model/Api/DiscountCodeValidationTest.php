@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -1929,12 +1929,7 @@ class DiscountCodeValidationTest extends TestCase
     {
         $discountAmount = 100;
 
-        $giftCard = new class
-        {
-            const GIFTCERT_CODE = 'GIFTCERT_CODE';
-        };
-
-        $giftCardMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
+        $giftCardMock = $this->getMockBuilder(\Bolt\Boltpay\Test\Unit\UnirgyMock::class)
             ->setMethods(['getCertNumber', 'getBalance'])
             ->disableOriginalConstructor()
             ->getMock();
