@@ -1952,10 +1952,14 @@ class Cart extends AbstractHelper
                 ];
                 
                 if ($discount == Discount::GIFT_CARD_ACCOUNT
-                    || $discount == Discount::AMASTY_STORECREDIT
                     || $discount == Discount::AMASTY_GIFTCARD
                     || $discount == Discount::MAGEPLAZA_GIFTCARD
                     || $discount == Discount::UNIRGY_GIFT_CERT) {
+                    $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
+                    $discountItem['discount_category'] = 'giftcard';
+                }
+                
+                if ($discount == Discount::AMASTY_STORECREDIT) {
                     $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
                     $discountItem['discount_category'] = 'store_credit';
                 }
