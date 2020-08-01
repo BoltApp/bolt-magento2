@@ -70,6 +70,25 @@ class ThirdPartyModuleFactory
     {
         return $this->_moduleManager->isEnabled($this->moduleName);
     }
+    
+    /**
+     * Check whether the class exists
+     * @return bool
+     */
+    public function isExists()
+    {
+        ///////////////////////////////////////////////////////////////
+        // Due to a known bug https://github.com/magento/magento2/pull/21435,
+        // the autoloader throws an exception on class_exists.
+        // Add try-catch block to avoid uncaught exceptions during autoloading.
+        // Return false instead if any uncaught exceptions.
+        ///////////////////////////////////////////////////////////////
+        try {
+            return class_exists($this->className);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 
     /**
      * @param array $data
@@ -77,7 +96,7 @@ class ThirdPartyModuleFactory
      */
     public function getInstance(array $data = [])
     {
-        if ($this->isAvailable()) {
+        if ($this->isAvailable() && $this->isExists()) {
             $this->logHelper->addInfoLog('# Module is Enabled: ' . $this->moduleName);
             $this->logHelper->addInfoLog('# Class: ' . $this->className);
             return $this->_objectManager->create($this->className, $data);
