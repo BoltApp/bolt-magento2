@@ -1725,7 +1725,9 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
-                'reference'   => $address->getCouponCode()
+                'reference'   => $address->getCouponCode(),
+                'discount_category' => 'coupon',
+                'discount_type'   => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1743,6 +1745,8 @@ class Cart extends AbstractHelper
                 $discounts[] = [
                     'description' => 'Store Credit',
                     'amount'      => $roundedAmount,
+                    'discount_category' => 'store_credit',
+                    'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1764,7 +1768,8 @@ class Cart extends AbstractHelper
                     $discounts[] = [
                         'description' => 'Store Credit',
                         'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
+                        'discount_category' => 'store_credit',
+                        'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1783,7 +1788,8 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'discount_category' => 'store_credit',
+                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1800,7 +1806,8 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'discount_category' => 'store_credit',
+                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1821,7 +1828,8 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'discount_category' => 'store_credit',
+                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1839,6 +1847,8 @@ class Cart extends AbstractHelper
                 $discounts[] = [
                     'description' => 'Reward Points',
                     'amount'      => $roundedAmount,
+                    'discount_category' => 'store_credit',
+                    'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1860,7 +1870,8 @@ class Cart extends AbstractHelper
                     $discounts[] = [
                         'description' => 'Reward Points',
                         'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
+                        'discount_category' => 'store_credit',
+                        'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1884,7 +1895,8 @@ class Cart extends AbstractHelper
                         $quote->getStoreId()
                     ),
                 'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'discount_category' => 'store_credit',
+                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1938,9 +1950,14 @@ class Cart extends AbstractHelper
                     'description' => $description . @$totals[$discount]->getTitle(),
                     'amount'      => $roundedAmount,
                 ];
-
-                if ($discount == Discount::AMASTY_STORECREDIT) {
-                    $discountItem['type'] = 'fixed_amount';
+                
+                if ($discount == Discount::GIFT_CARD_ACCOUNT
+                    || $discount == Discount::AMASTY_STORECREDIT
+                    || $discount == Discount::AMASTY_GIFTCARD
+                    || $discount == Discount::MAGEPLAZA_GIFTCARD
+                    || $discount == Discount::UNIRGY_GIFT_CERT) {
+                    $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
+                    $discountItem['discount_category'] = 'store_credit';
                 }
 
                 $discounts[] = $discountItem;
