@@ -1414,12 +1414,21 @@ class Discount extends AbstractHelper
      */
     public function convertToBoltDiscountType($couponCode)
     {
-        $coupon = $this->loadCouponCodeData($couponCode);
-        // Load the coupon discount rule
-        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
-        $type = $rule->getSimpleAction();
+        if(empty($couponCode)) {
+            return '';
+        }
         
-        return $this->getBoltDiscountType($type);
+        try {
+            $coupon = $this->loadCouponCodeData($couponCode);
+            // Load the coupon discount rule
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+            $type = $rule->getSimpleAction();
+            
+            return $this->getBoltDiscountType($type);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }        
     }
     
     /**
