@@ -1320,9 +1320,6 @@ class Order extends AbstractHelper
         $this->setShippingMethod($quote, $transaction);
         $this->quoteAfterChange($quote);
 
-        // Check if Mageplaza Gift Card data exist and apply it to the parent quote
-        $this->discountHelper->applyMageplazaDiscountToQuote($quote);
-
         $this->setPaymentMethod($quote);
         $this->quoteAfterChange($quote);
 

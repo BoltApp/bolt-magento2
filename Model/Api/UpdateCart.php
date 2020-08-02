@@ -125,7 +125,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
                 $this->setShipment($cart['shipments'][0], $parentQuote);
             }
-            // TODO : add/remove giftcard 
             
             // Add discounts
             if( !empty($discount_codes_to_add) ){
@@ -133,13 +132,15 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $discount_code = $discount_codes_to_add[0];
                 $couponCode = trim($discount_code);
                 
-                $coupon = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
-                if( ! $coupon ){
+                $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+                if( ! $result ){
                     // Already sent a response with error, so just return.
                     return false;
-                }              
+                }
+    
+                list($coupon, $giftCard) = $result;                
 
-                $result = $this->applyDiscount($couponCode, $coupon, $parentQuote);
+                $result = $this->applyDiscount($couponCode, $coupon, $giftCard, $parentQuote);
     
                 if (!$result) {
                     // Already sent a response with error, so just return.
