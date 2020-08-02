@@ -17,64 +17,36 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\SalesRule\Model\CouponFactory;
-use Magento\SalesRule\Model\RuleRepository;
+use Magento\Framework\Webapi\Exception as WebApiException;
+use Magento\Quote\Model\Quote;
 use Magento\SalesRule\Model\Coupon;
-use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\SalesRule\Model\RuleRepository;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
+use Bolt\Boltpay\Model\Api\UpdateCartCommon;
+use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
-use Magento\Framework\Webapi\Exception as WebApiException;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Magento\Directory\Model\Region as RegionModel;
-use Magento\Quote\Model\Quote\TotalsCollector;
-use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Discount Code Validation class
  * @api
  */
-class DiscountCodeValidation implements DiscountCodeValidationInterface
+class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeValidationInterface
 {
-    /**
-     * @var Request
-     */
-    private $request;
-
-    /**
-     * @var Response
-     */
-    private $response;
-
-    /**
-     * @var CouponFactory
-     */
-    protected $couponFactory;
-
     /**
      * @var RuleRepository
      */
     protected $ruleRepository;
-
-    /**
-     * @var LogHelper
-     */
-    private $logHelper;
 
     /**
      * @var UsageFactory
@@ -97,29 +69,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     protected $customerFactory;
 
     /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var CartHelper
-     */
-    private $cartHelper;
-
-    /**
      * @var ConfigHelper
      */
     private $configHelper;
-
-    /**
-     * @var HookHelper
-     */
-    private $hookHelper;
-
-    /**
-     * @var BoltErrorResponse
-     */
-    private $errorResponse;
 
     /**
      * @var CheckoutSession
@@ -132,83 +84,38 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $discountHelper;
 
     /**
-     * @var RegionModel
-     */
-    private $regionModel;
-
-    /**
      * @var TotalsCollector
      */
     private $totalsCollector;
 
     /**
-     * @var OrderHelper
-     */
-    protected $orderHelper;
-
-    /**
      * DiscountCodeValidation constructor.
      *
-     * @param Request                 $request
-     * @param Response                $response
-     * @param CouponFactory           $couponFactory
      * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
      * @param RuleRepository          $ruleRepository
-     * @param LogHelper               $logHelper
-     * @param BoltErrorResponse       $errorResponse
      * @param UsageFactory            $usageFactory
      * @param DataObjectFactory       $objectFactory
      * @param TimezoneInterface       $timezone
      * @param CustomerFactory         $customerFactory
-     * @param Bugsnag                 $bugsnag
-     * @param CartHelper              $cartHelper
      * @param ConfigHelper            $configHelper
-     * @param HookHelper              $hookHelper
      * @param DiscountHelper          $discountHelper
-     * @param RegionModel             $regionModel
      * @param TotalsCollector         $totalsCollector
-     * @param OrderHelper             $orderHelper
+     * @param UpdateCartContext       $updateCartContext
      */
     public function __construct(
-        Request $request,
-        Response $response,
-        CouponFactory $couponFactory,
         CheckoutSession $checkoutSessionForUnirgyGiftCert,
-        RuleRepository $ruleRepository,
-        LogHelper $logHelper,
-        BoltErrorResponse $errorResponse,
-        UsageFactory $usageFactory,
-        DataObjectFactory $objectFactory,
-        TimezoneInterface $timezone,
-        CustomerFactory $customerFactory,
-        Bugsnag $bugsnag,
-        CartHelper $cartHelper,
-        ConfigHelper $configHelper,
-        HookHelper $hookHelper,
-        DiscountHelper $discountHelper,
-        RegionModel $regionModel,
-        TotalsCollector $totalsCollector,
-        OrderHelper $orderHelper
+        UpdateCartContext $updateCartContext
     ) {
-        $this->request = $request;
-        $this->response = $response;
-        $this->couponFactory = $couponFactory;
+        parent::__construct($updateCartContext);
         $this->checkoutSessionForUnirgyGiftCert = $checkoutSessionForUnirgyGiftCert;
-        $this->ruleRepository = $ruleRepository;
-        $this->logHelper = $logHelper;
-        $this->usageFactory = $usageFactory;
-        $this->objectFactory = $objectFactory;
-        $this->timezone = $timezone;
-        $this->customerFactory = $customerFactory;
-        $this->bugsnag = $bugsnag;
-        $this->cartHelper = $cartHelper;
-        $this->configHelper = $configHelper;
-        $this->hookHelper = $hookHelper;
-        $this->errorResponse = $errorResponse;
-        $this->discountHelper = $discountHelper;
-        $this->regionModel = $regionModel;
-        $this->totalsCollector = $totalsCollector;
-        $this->orderHelper = $orderHelper;
+        $this->ruleRepository = $updateCartContext->getRuleRepository();
+        $this->usageFactory = $updateCartContext->getUsageFactory();
+        $this->objectFactory = $updateCartContext->getObjectFactory();
+        $this->timezone = $updateCartContext->getTimezone();
+        $this->customerFactory = $updateCartContext->getCustomerFactory();
+        $this->configHelper = $updateCartContext->getConfigHelper();
+        $this->discountHelper = $updateCartContext->getDiscountHelper();
+        $this->totalsCollector = $updateCartContext->getTotalsCollector();
     }
 
     /**
@@ -350,8 +257,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 // Already sent a response with error, so just return.
                 return false;
             }
-
-            $this->sendSuccessResponse($result, $immutableQuote);
+            
+            $result['cart'] = $this->getCartTotals($immutableQuote);
+            $this->sendSuccessResponse($result);
         } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -381,162 +289,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
 
         return true;
-    }
-    
-    /**
-     * Validate the related quote.
-     *
-     * @param  object $request
-     * @return bool
-     */
-    protected function validateQuote( $parentQuoteId, $immutableQuoteId, $incrementId )
-    {
-        if (!empty($parentQuoteId)) {
-            // check if the cart / quote exists and it is active
-            try {
-                if (!$immutableQuoteId) {
-                    $immutableQuoteId = $parentQuoteId;
-                }
-
-                /** @var Quote $parentQuote */
-                if ($immutableQuoteId == $parentQuoteId) {
-                    // Product Page Checkout - quotes are created as inactive
-                    $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-                } else {
-                    $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
-                }
-
-                // check if cart identification data is sent
-                if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        'The order reference is invalid.',
-                        422
-                    );
-
-                    return false;
-                }
-                
-                // check if the order has already been created
-                if ($this->orderHelper->getExistingOrder($incrementId)) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The order #%s has already been created.', $incrementId),
-                        422
-                    );
-                    return false;
-                }
-    
-                // check the existence of child quote
-                $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
-                if (!$immutableQuote) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
-                        404
-                    );
-                    return false;
-                }
-    
-                // check if cart is empty
-                if (!$immutableQuote->getItemsCount()) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
-                        422
-                    );
-    
-                    return false;
-                }
-                
-                return [
-                    $parentQuote,
-                    $immutableQuote,
-                ];
-
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] is not found.', $parentQuoteId),
-                    404
-                );
-                return false;
-            }
-        } else {
-            $this->bugsnag->notifyError(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart.order_reference is not set or empty.'
-            );
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart reference is not found.',
-                404
-            );
-            return false;
-        }
-    }
-    
-    /**
-     *
-     * Set the shipment if request payload has that info.
-     * 
-     * @param array $shipment
-     * @param Quote $immutableQuote
-     * 
-     * @throws LocalizedException
-     * @throws WebApiException
-     */
-    protected function setShipment($shipment, $immutableQuote)
-    {
-        $shippingAddress = $immutableQuote->getShippingAddress();
-        $address = $shipment['shipping_address'];
-        $address = $this->cartHelper->handleSpecialAddressCases($address);
-        $region = $this->regionModel->loadByName(ArrayHelper::getValueFromArray($address, 'region', ''), ArrayHelper::getValueFromArray($address, 'country_code', ''));
-        $addressData = [
-                    'firstname'    => ArrayHelper::getValueFromArray($address, 'first_name', ''),
-                    'lastname'     => ArrayHelper::getValueFromArray($address, 'last_name', ''),
-                    'street'       => trim(ArrayHelper::getValueFromArray($address, 'street_address1', '') . "\n" . ArrayHelper::getValueFromArray($address, 'street_address2', '')),
-                    'city'         => ArrayHelper::getValueFromArray($address, 'locality', ''),
-                    'country_id'   => ArrayHelper::getValueFromArray($address, 'country_code', ''),
-                    'region'       => ArrayHelper::getValueFromArray($address, 'region', ''),
-                    'postcode'     => ArrayHelper::getValueFromArray($address, 'postal_code', ''),
-                    'telephone'    => ArrayHelper::getValueFromArray($address, 'phone_number', ''),
-                    'region_id'    => $region ? $region->getId() : null,
-                    'company'      => ArrayHelper::getValueFromArray($address, 'company', ''),
-                ];
-        if ($this->cartHelper->validateEmail(ArrayHelper::getValueFromArray($address, 'email_address', ''))) {
-            $addressData['email'] = $address['email_address'];
-        }
-
-        $shippingAddress->setShouldIgnoreValidation(true);
-        $shippingAddress->addData($addressData);
-
-        $shippingAddress
-            ->setShippingMethod($shipment['reference'])
-            ->setCollectShippingRates(true)
-            ->collectShippingRates()
-            ->save();
-    }
-
-    /**
-     * @param null|int $storeId
-     * @throws LocalizedException
-     * @throws WebApiException
-     */
-    public function preProcessWebhook($storeId = null)
-    {
-        $this->hookHelper->preProcessWebhook($storeId);
-    }
-
-    /**
-     * @return array
-     */
-    private function getRequestContent()
-    {
-        $this->logHelper->addInfoLog($this->request->getContent());
-
-        return json_decode($this->request->getContent());
     }
 
     /**
@@ -830,7 +582,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return void
      * @throws \Exception
      */
-    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    protected function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
         $additionalErrorResponseData = [];
         if ($quote) {
@@ -854,10 +606,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return array
      * @throws \Exception
      */
-    private function sendSuccessResponse($result, $quote)
-    {
-        $result['cart'] = $this->getCartTotals($quote);
-
+    protected function sendSuccessResponse($result)
+    {  
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
 
