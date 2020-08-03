@@ -56,7 +56,6 @@ class Decider extends AbstractHelper
      * @param Manager              $manager
      * @param FeatureSwitchFactory $fsFactory
      * @param FeatureSwitchRepository $fsRepo
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

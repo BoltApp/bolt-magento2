@@ -31,6 +31,11 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend\Log\Filter\Mock;
 
+/**
+ * Class PrefetchTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Shipping
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Shipping\Prefetch
+ */
 class PrefetchTest extends TestCase
 {
     const COUNTRY = 'Canada';
@@ -116,6 +121,30 @@ class PrefetchTest extends TestCase
             ->getMock();
 
         return $this->currentMock;
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Prefetch(
+            $this->context,
+            $this->shippingMethods,
+            $this->cartHelper,
+            $this->bugsnag,
+            $this->configHelper,
+            $this->customerSession,
+            $this->geolocation
+        );
+        
+        $this->assertAttributeEquals($this->shippingMethods, 'shippingMethods', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**

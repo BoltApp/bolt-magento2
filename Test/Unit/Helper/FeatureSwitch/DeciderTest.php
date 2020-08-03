@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\FeatureSwitchFactory;
@@ -57,6 +58,26 @@ class DeciderTest  extends TestCase
      * @var Decider
      */
     private $decider;
+    
+    /**
+     * @var MockObject|State mocked instance of State
+     */
+    private $state;
+    
+    /**
+     * @var MockObject|CoreSession mocked instance of CoreSession
+     */
+    private $session;
+    
+    /**
+     * @var MockObject|FeatureSwitchFactory mocked instance of FeatureSwitchFactory
+     */
+    private $fsFactory;
+    
+    /**
+     * @var MockObject|Manager mocked instance of Manager
+     */
+    private $manager;
 
     /**
      * @inheritdoc
@@ -67,31 +88,56 @@ class DeciderTest  extends TestCase
         $this->context = $this->createMock(Context::class);
         $this->gql = $this->createMock(GQL::class);
         $this->fsRepo = $this->createMock(FeatureSwitchRepository::class);
+        $this->manager = $this->createMock(Manager::class);
 
         $mockSwitch = $this
             ->getMockBuilder(FeatureSwitch::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $factory = $this->createMock(FeatureSwitchFactory::class);
-        $factory
+        $this->fsFactory = $this->createMock(FeatureSwitchFactory::class);
+        $this->fsFactory
             ->method('create')
             ->willReturn($mockSwitch);
 
-        $session = $this->createMock(CoreSession::class);
-        $state = $this->createMock(State::class);
+        $this->session = $this->createMock(CoreSession::class);
+        $this->state = $this->createMock(State::class);
 
 
         $this->decider = (new ObjectManager($this))->getObject(
             Decider::class,
             [
                 'context' => $this->context,
-                'session' => $session,
-                'state' => $state,
+                'session' => $this->session,
+                'state' => $this->state,
                 'gql' => $this->gql,
                 'fsRepo' => $this->fsRepo,
-                'fsFactory' => $factory
+                'fsFactory' => $this->fsFactory
             ]
         );
+    }
+    
+     /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Decider(
+            $this->context,
+            $this->session,
+            $this->state,
+            $this->manager,
+            $this->fsRepo,
+            $this->fsFactory
+        );
+        
+        $this->assertAttributeEquals($this->session, '_session', $instance);
+        $this->assertAttributeEquals($this->state, '_state', $instance);
+        $this->assertAttributeEquals($this->manager, '_manager', $instance);
+        $this->assertAttributeEquals($this->fsRepo, '_fsRepo', $instance);
+        $this->assertAttributeEquals($this->fsFactory, '_fsFactory', $instance);
     }
 
     /**
