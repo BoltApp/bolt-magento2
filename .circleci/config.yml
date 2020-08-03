@@ -37,7 +37,9 @@ commands:
         default: false
     steps:
       - checkout
-      - add_ssh_keys
+      - add_ssh_keys:
+          fingerprints:
+            - "c6:72:6d:28:51:e0:7e:9f:ac:4c:fa:76:b5:14:c2:9a"
       - restore_cache:
           keys:
             - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
