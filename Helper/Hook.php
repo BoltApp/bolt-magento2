@@ -95,8 +95,6 @@ class Hook extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param Bugsnag $bugsnag
      * @param Response $response
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
