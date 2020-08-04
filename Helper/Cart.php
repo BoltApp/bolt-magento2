@@ -587,12 +587,39 @@ class Cart extends AbstractHelper
         // extend cache identifier with custom address fields
         $immutableQuote = $this->getLastImmutableQuote();
         $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
-
-        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
-            $identifier .= $giftMessageId;
-        }
+        $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
 
         return md5($identifier);
+    }
+
+    /**
+     * @param $immutableQuote
+     * @return string
+     */
+    private function convertExternalFieldsToCacheIdentifier($immutableQuote)
+    {
+        $cacheIdentifier = "";
+        // add gift message id into cart cache identifier
+        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
+            $cacheIdentifier .= $giftMessageId;
+        }
+
+        // add gift wrapping id into cart cache identifier
+        if ($giftWrappingId = $immutableQuote->getGwId()) {
+            $cacheIdentifier .= $giftWrappingId;
+        }
+
+        // add gift wrapping item ids into cart cache identifier
+        $quoteItems = $immutableQuote->getAllVisibleItems();
+        if ($quoteItems) {
+            foreach ($quoteItems as $item) {
+                if ($item->getGwId()) {
+                    $cacheIdentifier .= $item->getItemId() . '-' . $item->getGwId();
+                }
+            }
+        }
+
+        return $cacheIdentifier;
     }
 
     /**

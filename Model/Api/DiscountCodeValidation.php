@@ -697,7 +697,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account) {
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)

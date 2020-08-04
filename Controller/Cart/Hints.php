@@ -44,8 +44,6 @@ class Hints extends Action
      * @param JsonFactory $resultJsonFactory,
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

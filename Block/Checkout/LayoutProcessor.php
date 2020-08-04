@@ -35,7 +35,6 @@ abstract class LayoutProcessor implements LayoutProcessorInterface
 
     /**
      * @param ConfigHelper      $configHelper
-     * @codeCoverageIgnore
      */
     public function __construct(
         ConfigHelper $configHelper

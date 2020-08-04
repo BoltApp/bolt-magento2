@@ -109,6 +109,7 @@ class Order extends AbstractHelper
     const TP_METHOD_DISPLAY = [
         'paypal' => 'PayPal',
         'afterpay' => 'Afterpay',
+        'affirm' => 'Affirm',
     ];
 
     /**
