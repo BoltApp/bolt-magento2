@@ -60,6 +60,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\DataObjectFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
@@ -83,8 +84,6 @@ use ReflectionException;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Block\Product\ImageBuilder;
-use Magento\Catalog\Model\Product\Configuration\Item\ItemResolverInterface;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -179,6 +178,9 @@ class CartTest extends TestCase
 
     /** @var Bugsnag|MockObject */
     private $bugsnag;
+
+    /** @var ImageFactory|MockObject */
+    private $imageHelperFactory;
 
     /** @var ProductRepository|MockObject */
     private $productRepository;
@@ -284,16 +286,6 @@ class CartTest extends TestCase
     private $deciderHelper;
 
     /**
-     * @var MockObject|ImageBuilder
-     */
-    private $imageBuilder;
-
-    /**
-     * @var MockObject|ItemResolverInterface
-     */
-    private $itemResolver;
-
-    /**
      * Setup test dependencies, called before each test
      */
     protected function setUp()
@@ -385,6 +377,11 @@ class CartTest extends TestCase
             ['notifyError', 'notifyException', 'registerCallback']
         );
 
+        $this->imageHelper = $this->createMock(Image::class);
+
+        $this->imageHelperFactory = $this->createMock(ImageFactory::class);
+        $this->imageHelperFactory->method('create')->willReturn($this->imageHelper);
+
         $this->appEmulation = $this->createPartialMock(
             Emulation::class,
             ['stopEnvironmentEmulation', 'startEnvironmentEmulation']
@@ -417,8 +414,6 @@ class CartTest extends TestCase
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
-        $this->imageBuilder = $this->createPartialMock(ImageBuilder::class, ['create','getImageUrl']);
-        $this->itemResolver = $this->createPartialMock(ItemResolverInterface::class, ['getFinalProduct']);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -444,6 +439,7 @@ class CartTest extends TestCase
                     $this->logHelper,
                     $this->bugsnag,
                     $this->dataObjectFactory,
+                    $this->imageHelperFactory,
                     $this->appEmulation,
                     $this->quoteFactory,
                     $this->totalsCollector,
@@ -461,9 +457,7 @@ class CartTest extends TestCase
                     $this->customerRepository,
                     $this->coreRegistry,
                     $this->metricsClient,
-                    $this->deciderHelper,
-                    $this->imageBuilder,
-                    $this->itemResolver
+                    $this->deciderHelper
                 ]
             )
             ->getMock();
@@ -646,6 +640,7 @@ class CartTest extends TestCase
             $this->logHelper,
             $this->bugsnag,
             $this->dataObjectFactory,
+            $this->imageHelperFactory,
             $this->appEmulation,
             $this->quoteFactory,
             $this->totalsCollector,
@@ -663,9 +658,7 @@ class CartTest extends TestCase
             $this->customerRepository,
             $this->coreRegistry,
             $this->metricsClient,
-            $this->deciderHelper,
-            $this->imageBuilder,
-            $this->itemResolver
+            $this->deciderHelper
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -674,6 +667,7 @@ class CartTest extends TestCase
         static::assertAttributeEquals($this->customerSession, 'customerSession', $instance);
         static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->imageHelperFactory, 'imageHelperFactory', $instance);
         static::assertAttributeEquals($this->appEmulation, 'appEmulation', $instance);
         static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
         static::assertAttributeEquals($this->quoteFactory, 'quoteFactory', $instance);
@@ -691,8 +685,6 @@ class CartTest extends TestCase
         static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
         static::assertAttributeEquals($this->customerRepository, 'customerRepository', $instance);
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
-        static::assertAttributeEquals($this->imageBuilder, 'imageBuilder', $instance);
-        static::assertAttributeEquals($this->itemResolver, 'itemResolver', $instance);
     }
 
     /**
@@ -713,6 +705,7 @@ class CartTest extends TestCase
         static::assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
         static::assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
         static::assertAttributeInstanceOf(DataObjectFactory::class, 'dataObjectFactory', $instance);
+        static::assertAttributeInstanceOf(ImageFactory::class, 'imageHelperFactory', $instance);
         static::assertAttributeInstanceOf(Emulation::class, 'appEmulation', $instance);
         static::assertAttributeInstanceOf(QuoteFactory::class, 'quoteFactory', $instance);
         static::assertAttributeInstanceOf(TotalsCollector::class, 'totalsCollector', $instance);
@@ -729,8 +722,6 @@ class CartTest extends TestCase
         static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         static::assertAttributeInstanceOf(CustomerRepository::class, 'customerRepository', $instance);
         static::assertAttributeInstanceOf(Registry::class, 'coreRegistry', $instance);
-        static::assertAttributeInstanceOf(ImageBuilder::class, 'imageBuilder', $instance);
-        static::assertAttributeInstanceOf(ItemResolverInterface::class, 'itemResolver', $instance);
     }
 
     /**
@@ -2558,9 +2549,8 @@ ORDER
         $placeOrderPayload = '';
         $immutableQuote = $quote;
 
-        $this->itemResolver->method('getFinalProduct')->willReturn($this->productMock);
-        $this->imageBuilder->method('create')->willReturnSelf();
-        $this->imageBuilder->method('getImageUrl')->willReturn('no-image');
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         $this->productMock->method('getDescription')->willReturn('Product Description');
 
@@ -4456,10 +4446,8 @@ ORDER
         $this->quoteMock->method('getTotals')->willReturnSelf();
 
 
-        $this->itemResolver->method('getFinalProduct')->willReturn($this->productMock);
-        $this->imageBuilder->method('create')->willReturnSelf();
-        $this->imageBuilder->method('getImageUrl')->willReturn('no-image');
-
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4520,9 +4508,9 @@ ORDER
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
         $this->quoteMock->method('getTotals')->willReturnSelf();
 
-        $this->itemResolver->method('getFinalProduct')->willReturn($this->productMock);
-        $this->imageBuilder->method('create')->willReturnSelf();
-        $this->imageBuilder->method('getImageUrl')->willReturn('no-image');
+
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
         $productMock = $this->getMockBuilder(Product::class)
@@ -4583,10 +4571,18 @@ ORDER
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-        $this->itemResolver->method('getFinalProduct')->willReturn($this->productMock);
-        $this->imageBuilder->method('create')->willReturnSelf()->willThrowException(new Exception());
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
+            ->willThrowException(
+                new NotFoundException(
+                    __("The product that was requested doesn't exist. Verify the product and try again.")
+                )
+            );
 
-        $this->bugsnag->expects(static::once())->method('registerCallback')->with(
+        $this->imageHelper->method('init')
+            ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+            ->willThrowException(new Exception());
+
+        $this->bugsnag->expects(static::exactly(2))->method('registerCallback')->with(
             static::callback(
                 function ($callback) {
                     $reportMock = $this->createMock(Report::class);
@@ -4609,7 +4605,8 @@ ORDER
                 }
             )
         );
-        $this->bugsnag->expects(static::once())->method('notifyError')->withConsecutive(
+        $this->bugsnag->expects(static::exactly(2))->method('notifyError')->withConsecutive(
+            ['Could not retrieve product from repository', 'ProductId: ' .self::PRODUCT_ID. ', SKU: ' . self::PRODUCT_SKU],
             ['Item image missing', 'SKU: ' . self::PRODUCT_SKU]
         );
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
@@ -4673,8 +4670,16 @@ ORDER
           $quoteItem->method('getProduct')->willReturn($productMock);
           $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-          $this->itemResolver->method('getFinalProduct')->willReturn($this->productMock);
-          $this->imageBuilder->method('create')->willReturnSelf()->willThrowException(new Exception());
+          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
+              ->willThrowException(
+                  new NotFoundException(
+                      __("The product that was requested doesn't exist. Verify the product and try again.")
+                  )
+              );
+
+          $this->imageHelper->method('init')
+              ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+              ->willThrowException(new Exception());
 
           $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
 
