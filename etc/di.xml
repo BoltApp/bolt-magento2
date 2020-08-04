@@ -63,7 +63,7 @@
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
 
-    <virtualType name="boltGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+    <virtualType name="boltMagentoGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
             <argument name="className" xsi:type="string">Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection</argument>
@@ -86,7 +86,6 @@
 
     <type name="Bolt\Boltpay\Model\Api\DiscountCodeValidation">
         <arguments>
-            <argument name="moduleGiftCardAccount" xsi:type="object">boltGiftCardAccount</argument>
             <argument name="moduleUnirgyGiftCert" xsi:type="object">boltUnirgyGiftCert</argument>
             <argument name="moduleUnirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
@@ -284,6 +283,7 @@
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
             <argument name="bssStoreCreditCollection" xsi:type="object">boltBssStoreCreditCollection</argument>
             <argument name="bssStoreCreditHelper" xsi:type="object">boltBssStoreCreditHelper</argument>
+            <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
         </arguments>
     </type>
 

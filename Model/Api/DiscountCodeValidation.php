@@ -70,11 +70,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     /**
      * @var ThirdPartyModuleFactory
      */
-    private $moduleGiftCardAccount;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
     private $moduleUnirgyGiftCert;
 
     /**
@@ -172,7 +167,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param Request                 $request
      * @param Response                $response
      * @param CouponFactory           $couponFactory
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
@@ -197,7 +191,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         Request $request,
         Response $response,
         CouponFactory $couponFactory,
-        ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleUnirgyGiftCert,
         ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
@@ -221,7 +214,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->request = $request;
         $this->response = $response;
         $this->couponFactory = $couponFactory;
-        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
         $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
         $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
         $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
@@ -333,8 +325,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return false;
             }
 
-            // Load the gift card by code
-            $giftCard = $this->loadGiftCardData($couponCode, $websiteId);
+            // Load the Magento_GiftCardAccount object
+            $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
 
             // Apply Unirgy_GiftCert
             if (empty($giftCard)) {
@@ -895,41 +887,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function loadCouponCodeData($couponCode)
     {
         return $this->couponFactory->create()->loadByCode($couponCode);
-    }
-
-    /**
-     * Load the gift card data by code
-     *
-     * @param string $code
-     * @param string|int $websiteId
-     *
-     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
-     */
-    public function loadGiftCardData($code, $websiteId)
-    {
-        $result = null;
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
-        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
-
-        if ($giftCardAccountResource) {
-            $this->logHelper->addInfoLog('### GiftCard ###');
-            $this->logHelper->addInfoLog('# Code: ' . $code);
-
-            /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
-            $giftCardsCollection = $giftCardAccountResource
-                ->addFieldToFilter('code', ['eq' => $code])
-                ->addWebsiteFilter([0, $websiteId]);
-
-            /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
-            $giftCard = $giftCardsCollection->getFirstItem();
-
-            $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
-        }
-
-        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
-
-        return $result;
     }
 
     /**

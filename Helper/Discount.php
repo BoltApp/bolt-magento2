@@ -197,6 +197,16 @@ class Discount extends AbstractHelper
      * @var LogHelper
      */
     private $logHelper;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $moduleGiftCardAccount;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $moduleGiftCardAccountHelper;
 
     /**
      * Discount constructor.
@@ -225,6 +235,8 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -257,6 +269,8 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
+        ThirdPartyModuleFactory $moduleGiftCardAccount,
+        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -294,6 +308,8 @@ class Discount extends AbstractHelper
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
+        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
+        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
     }
     
     /**
@@ -1184,5 +1200,54 @@ class Discount extends AbstractHelper
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
+    }
+    
+    /**
+     * Check if Magento_GiftCardAccount module is available
+     *
+     * @return bool true if module is available, else false
+     */
+    public function isMagentoGiftCardAccountAvailable()
+    {
+        return $this->moduleGiftCardAccount->isAvailable();
+    }
+    
+    /**
+     * Load the Magento_GiftCardAccount by code
+     *
+     * @param string $code
+     * @param string|int $websiteId
+     *
+     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
+     */
+    public function loadMagentoGiftCardAccount($code, $websiteId)
+    {
+        if (!$this->isMagentoGiftCardAccountAvailable()) {
+            return null;
+        }
+
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
+        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
+        
+        if (!$giftCardAccountResource) {
+            return null;
+        }
+
+        $this->logHelper->addInfoLog('### GiftCard ###');
+        $this->logHelper->addInfoLog('# Code: ' . $code);
+
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
+        $giftCardsCollection = $giftCardAccountResource
+            ->addFieldToFilter('code', ['eq' => $code])
+            ->addWebsiteFilter([0, $websiteId]);
+
+        /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
+        $giftCard = $giftCardsCollection->getFirstItem();
+
+        $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
+
+        $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
+
+        return $result;
     }
 }
