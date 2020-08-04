@@ -30,6 +30,8 @@ use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\SalesRule\Model\CouponFactory;
+use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Boltpay Discount helper class
@@ -207,6 +209,16 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     protected $moduleGiftCardAccountHelper;
+    
+    /**
+     * @var CouponFactory
+     */
+    protected $couponFactory;
+    
+    /**
+     * @var RuleRepository
+     */
+    protected $ruleRepository;
 
     /**
      * Discount constructor.
@@ -243,6 +255,8 @@ class Discount extends AbstractHelper
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
+     * @param CouponFactory           $couponFactory
+     * @param RuleRepository          $ruleRepository
      */
     public function __construct(
         Context $context,
@@ -276,7 +290,9 @@ class Discount extends AbstractHelper
         Bugsnag $bugsnag,
         AppState $appState,
         Session $sessionHelper,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        CouponFactory $couponFactory,
+        RuleRepository $ruleRepository
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -310,6 +326,8 @@ class Discount extends AbstractHelper
         $this->logHelper = $logHelper;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
         $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
+        $this->couponFactory = $couponFactory;
+        $this->ruleRepository = $ruleRepository;
     }
     
     /**
@@ -1249,5 +1267,63 @@ class Discount extends AbstractHelper
         $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
+    }
+    
+    /**
+     * Load the coupon data by code
+     *
+     * @param $couponCode
+     *
+     * @return Coupon
+     */
+    public function loadCouponCodeData($couponCode)
+    {
+        return $this->couponFactory->create()->loadByCode($couponCode);
+    }
+    
+    /**
+     * @param string $couponCode
+     * @return string
+     */
+    public function convertToBoltDiscountType($couponCode)
+    {
+        $coupon = $this->loadCouponCodeData($couponCode);
+        // Load the coupon discount rule
+        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+        $type = $rule->getSimpleAction();
+        
+        return $this->getBoltDiscountType($type);
+    }
+    
+    /**
+     * @param string $type
+     * @return string
+     */
+    public function getBoltDiscountType($type)
+    {
+        switch ($type) {
+            case "by_fixed":
+            case "cart_fixed":
+                return "fixed_amount";
+            case "by_percent":
+                return "percentage";
+            case "by_shipping":
+                return "shipping";
+        }
+
+        return "";
+    }
+    
+    /**
+     * Set applied coupon code
+     *
+     * @param Quote  $quote
+     * @param string $couponCode
+     * @throws \Exception
+     */
+    public function setCouponCode($quote, $couponCode)
+    {
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->setCouponCode($couponCode)->collectTotals()->save();
     }
 }
