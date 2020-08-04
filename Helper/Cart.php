@@ -34,6 +34,7 @@ use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\DataObjectFactory;
+use Magento\Catalog\Helper\ImageFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Customer\Model\Address;
 use Magento\Quote\Model\QuoteFactory;
@@ -60,9 +61,6 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Block\Product\ImageBuilder;
-use Magento\Catalog\Model\Product\Configuration\Item\ItemResolverInterface;
-use Magento\Framework\App\ObjectManager;
 
 /**
  * Boltpay Cart helper
@@ -123,6 +121,11 @@ class Cart extends AbstractHelper
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
+
+    /**
+     * @var ImageFactory
+     */
+    private $imageHelperFactory;
 
     /**
      * @var Emulation
@@ -248,14 +251,6 @@ class Cart extends AbstractHelper
     private $deciderHelper;
 
     /**
-     * @var ImageBuilder
-     */
-    private $imageBuilder;
-
-    /** @var ItemResolverInterface */
-    private $itemResolver;
-
-    /**
      * @param Context           $context
      * @param CheckoutSession   $checkoutSession
      * @param ProductRepository $productRepository
@@ -265,6 +260,7 @@ class Cart extends AbstractHelper
      * @param LogHelper         $logHelper
      * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
+     * @param ImageFactory      $imageHelperFactory
      * @param Emulation         $appEmulation
      * @param QuoteFactory      $quoteFactory
      * @param TotalsCollector   $totalsCollector
@@ -283,8 +279,6 @@ class Cart extends AbstractHelper
      * @param Registry $coreRegistry
      * @param MetricsClient $metricsClient
      * @param DeciderHelper $deciderHelper
-     * @param ImageBuilder $imageBuilder
-     * @param ItemResolverInterface $itemResolver
      */
     public function __construct(
         Context $context,
@@ -296,6 +290,7 @@ class Cart extends AbstractHelper
         LogHelper $logHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory,
+        ImageFactory $imageHelperFactory,
         Emulation $appEmulation,
         QuoteFactory $quoteFactory,
         TotalsCollector $totalsCollector,
@@ -313,9 +308,7 @@ class Cart extends AbstractHelper
         CustomerRepository $customerRepository,
         Registry $coreRegistry,
         MetricsClient $metricsClient,
-        DeciderHelper $deciderHelper,
-        ImageBuilder $imageBuilder,
-        ItemResolverInterface $itemResolver = null
+        DeciderHelper $deciderHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -325,6 +318,7 @@ class Cart extends AbstractHelper
         $this->customerSession = $customerSession;
         $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
+        $this->imageHelperFactory = $imageHelperFactory;
         $this->appEmulation = $appEmulation;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->quoteFactory = $quoteFactory;
@@ -344,8 +338,6 @@ class Cart extends AbstractHelper
         $this->coreRegistry = $coreRegistry;
         $this->metricsClient = $metricsClient;
         $this->deciderHelper = $deciderHelper;
-        $this->imageBuilder = $imageBuilder;
-        $this->itemResolver = $itemResolver ?: ObjectManager::getInstance()->get(ItemResolverInterface::class);
     }
 
     /**
@@ -1252,11 +1244,12 @@ class Cart extends AbstractHelper
             true
         );
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        $imageHelper = $this->imageHelperFactory->create();
 
         $additionalAttributes = $this->configHelper->getProductAttributesList($storeId);
 
         $products = array_map(
-            function ($item) use (&$totalAmount, &$diff, $storeId, $currencyCode, $additionalAttributes) {
+            function ($item) use ($imageHelper, &$totalAmount, &$diff, $storeId, $currencyCode, $additionalAttributes) {
                 $product = [];
 
                 $unitPrice   = $item->getCalculationPrice();
@@ -1316,24 +1309,41 @@ class Cart extends AbstractHelper
                 // Get product description and image
                 ////////////////////////////////////
                 $product['description'] = strip_tags($_product->getDescription());
+                $variantProductToGetImage = $_product;
 
+                // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    $productToGetImage = $this->itemResolver->getFinalProduct($item);
-                    $image = $this->imageBuilder->create($productToGetImage,'cart_page_product_thumbnail');
-
-                    if ($image) {
-                        $product['image_url'] = ltrim($image->getImageUrl(), '/');
-                    }
+                    // If the cart item is type of bundle product, its SKU is a combination with bundle selections,
+                    // so we need to retrieve the sku of bundle product without bundle selections.
+                    $product_sku = 'bundle' == $item->getProductType()
+                                   ? $_product->getData('sku')
+                                   : $product['sku'];
+                    $variantProductToGetImage = $this->productRepository->get($product_sku, false, $storeId);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
                             'ITEM' => $product
                         ]);
                     });
-                    $this->bugsnag->notifyException($e);
-                    $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
+                    $this->bugsnag->notifyError('Could not retrieve product from repository', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
                 }
-
+                try {
+                    $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
+                } catch (\Exception $e) {
+                    try {
+                        $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_base_image')->getUrl();
+                    } catch (\Exception $e) {
+                        $this->bugsnag->registerCallback(function ($report) use ($product) {
+                            $report->setMetaData([
+                                'ITEM' => $product
+                            ]);
+                        });
+                        $this->bugsnag->notifyError('Item image missing', "SKU: {$product['sku']}");
+                    }
+                }
+                if (@$productImageUrl) {
+                    $product['image_url'] = ltrim($productImageUrl, '/');
+                }
                 ////////////////////////////////////
                 return  $product;
             },
