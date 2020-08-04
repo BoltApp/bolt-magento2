@@ -26,6 +26,8 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\OrderManagement;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Phrase;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Request;
@@ -36,6 +38,7 @@ use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use ReflectionException;
 
 /**
  * Class OrderManagementTest
@@ -58,73 +61,43 @@ class OrderManagementTest extends TestCase
     const STATUS = 'pending';
     const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
 
-    /**
-     * @var MockObject|HookHelper
-     */
+    /** @var MockObject|HookHelper mocked instance of the Bolt hook helper */
     private $hookHelper;
 
-    /**
-     * @var MockObject|OrderHelper
-     */
+    /** @var MockObject|OrderHelper mocked instance of the Bolt order helper */
     private $orderHelperMock;
 
-    /**
-     * @var MockObject|LogHelper
-     */
+    /** @var MockObject|LogHelper mocked instance of the Bolt log helper */
     private $logHelper;
 
-    /**
-     * @var MockObject|Request
-     */
+    /** @var MockObject|Request mocked instance of the Webapi Rest Request */
     private $request;
 
-    /**
-     * @var MockObject|Bugsnag
-     */
+    /** @var MockObject|Bugsnag  mocked instance of the Bugsnag class */
     private $bugsnag;
 
-    /**
-     * @var MockObject|MetricsClient
-     */
+    /** @var MockObject|MetricsClient mocked instance of the Bolt metrics client helper */
     private $metricsClient;
 
-    /**
-     * @var MockObject|Response
-     */
+    /** @var MockObject|Response mocked instance of the Webapi Response */
     private $response;
 
-    /**
-     * @var MockObject|ConfigHelper
-     */
+    /** @var MockObject|ConfigHelper mocked instance of the Bolt configuration helper */
     private $configHelper;
 
-    /**
-     * @var MockObject|OrderManagement
-     */
+    /** @var MockObject|OrderManagement  mocked instance of the tested class */
     private $currentMock;
 
-    /**
-     * @var MockObject|Quote
-     */
-    private $quoteMock;
-    /**
-     * @var string
-     */
+    /** @var MockObject|CartHelper mocked instance of the Bolt cart helper */
+    private $cartHelper;
+    
+    /** @var string stubbed json string response for {@see \Zend\Http\PhpEnvironment\Request::getContent} */
     private $requestContent;
 
-    /**
-     * @var cartHelper
-     */
-    private $cartHelper;
-
-    /**
-     * @var Order
-     */
+    /** @var MockObject|Order mocked instance of the Order Model */
     private $order;
 
-    /**
-     * @var Decider
-     */
+    /** @var MockObject|Decider mocked instance of the Bolt feature switch helper */
     private $decider;
 
     /**
@@ -621,9 +594,11 @@ class OrderManagementTest extends TestCase
 
     /**
      * @test
+     * that __construct sets internal properties
+     * 
      * @covers ::__construct
      */
-    public function construct()
+    public function __construct_always_setsInternalProperties()
     {
         $instance = new OrderManagement(
             $this->hookHelper,
@@ -637,14 +612,17 @@ class OrderManagementTest extends TestCase
             $this->cartHelper,
             $this->decider
         );
-        $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
-        $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
-        $this->assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
-        $this->assertAttributeInstanceOf(Request::class, 'request', $instance);
-        $this->assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
-        $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
-        $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
-        $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+
+        static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
+        static::assertAttributeEquals($this->orderHelperMock, 'orderHelper', $instance);
+        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        static::assertAttributeEquals($this->request, 'request', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
+        static::assertAttributeEquals($this->response, 'response', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->decider, 'decider', $instance);
     }
 
     private function manage_cartCreate_basicAssertion()
@@ -857,5 +835,43 @@ class OrderManagementTest extends TestCase
             null,
             self::DISPLAY_ID
         );
+    }
+
+    /**
+     * @test
+     * that setSuccessResponse sets response code to 200 and body to JSON containing success status and provided message
+     *
+     * @covers ::setSuccessResponse
+     *
+     * @throws ReflectionException if setSuccessResponse method doesn't exist
+     */
+    public function setSuccessResponse_always_setsSuccessResponse()
+    {
+        $message = 'Test message';
+        
+        $bodyData = json_encode([
+            'status' => 'success',
+            'message' => $message,
+        ]);
+        $this->response->expects(static::once())->method('setHttpResponseCode')->with(200)->willReturnSelf();
+        $this->response->expects(static::once())->method('setBody')->with($bodyData)->willReturnSelf();
+        
+        TestHelper::invokeMethod($this->currentMock, 'setSuccessResponse', [$message]);
+    }
+
+    /**
+     * @test
+     * that handleCartCreateApiCall throws an exception if the first request item is not found
+     *
+     * @covers ::handleCartCreateApiCall
+     *
+     * @throws ReflectionException if handleCartCreateApiCall method doesn't exist
+     */
+    public function handleCartCreateApiCall_ifRequestItemsNotFound_throwsLocalizedException()
+    {
+        $this->request->expects(static::once())->method('getBodyParams')->willReturn(null);
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Missing required parameters.');
+        TestHelper::invokeMethod($this->currentMock, 'handleCartCreateApiCall');
     }
 }
