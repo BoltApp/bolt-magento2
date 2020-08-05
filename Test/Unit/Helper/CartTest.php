@@ -84,6 +84,9 @@ use ReflectionException;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\GroupedProduct\Block\Cart\Item\Renderer\Grouped as RendererGrouped;
+use Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable as RendererConfigurable;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -4576,18 +4579,11 @@ ORDER
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
-            ->willThrowException(
-                new NotFoundException(
-                    __("The product that was requested doesn't exist. Verify the product and try again.")
-                )
-            );
-
         $this->imageHelper->method('init')
             ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
             ->willThrowException(new Exception());
 
-        $this->bugsnag->expects(static::exactly(2))->method('registerCallback')->with(
+        $this->bugsnag->expects(static::once())->method('registerCallback')->with(
             static::callback(
                 function ($callback) {
                     $reportMock = $this->createMock(Report::class);
@@ -4610,8 +4606,7 @@ ORDER
                 }
             )
         );
-        $this->bugsnag->expects(static::exactly(2))->method('notifyError')->withConsecutive(
-            ['Could not retrieve product from repository', 'ProductId: ' .self::PRODUCT_ID. ', SKU: ' . self::PRODUCT_SKU],
+        $this->bugsnag->expects(static::once())->method('notifyError')->withConsecutive(
             ['Item image missing', 'SKU: ' . self::PRODUCT_SKU]
         );
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
@@ -4675,13 +4670,6 @@ ORDER
           $quoteItem->method('getProduct')->willReturn($productMock);
           $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
-              ->willThrowException(
-                  new NotFoundException(
-                      __("The product that was requested doesn't exist. Verify the product and try again.")
-                  )
-              );
-
           $this->imageHelper->method('init')
               ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
               ->willThrowException(new Exception());
@@ -4737,7 +4725,112 @@ ORDER
           static::assertEquals(0, $diff);
       }
 
+        /**
+         * @test
+         * @dataProvider dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem
+         *
+         * @covers ::getCartItems
+         *
+         * @param $imageConfig
+         * @param $childThumbnail
+         * @param $expectedProductName
+         */
+        public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
+        {
+            $quoteItem = $this->createPartialMock(
+                Item::class,
+                [
+                    'getProduct',
+                    'getProductType',
+                    'getOptionByCode'
+                ]
+            );
 
+            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+
+            $scopeConfigMock->expects(static::once())->method('getValue')->with(
+                'checkout/cart/configurable_product_image',
+                ScopeInterface::SCOPE_STORE
+            )->willReturn($imageConfig);
+            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+
+            $parentProductMock = $this->createMock(Product::class);
+            $parentProductMock->method('getName')->willReturn('Parent Product Name');
+            $quoteItem->method('getProduct')->willReturn($parentProductMock);
+            $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
+
+
+            $childProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $childProductMock->method('getName')->willReturn('Child Product Name');
+            $childProductMock->method('getThumbnail')->willReturn($childThumbnail);
+            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+            $quoteItemOption->method('getProduct')->willReturn($childProductMock);
+            $quoteItem->method('getOptionByCode')->with('simple_product')->willReturn($quoteItemOption);
+
+
+            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+        }
+
+        public function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem() {
+            return [
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Parent Product Name'],
+                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Parent Product Name']
+            ];
+        }
+
+        /**
+         * @test
+         * @dataProvider dataProvider_getProductToGetImageForQuoteItem_withGroupedItem
+         *
+         * @param $imageConfig
+         * @param $childThumbnail
+         * @param $expectedProductName
+         */
+        public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
+        {
+            $quoteItem = $this->createPartialMock(
+                Item::class,
+                [
+                    'getProduct',
+                    'getProductType',
+                    'getOptionByCode'
+                ]
+            );
+
+            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+
+            $scopeConfigMock->expects(static::once())->method('getValue')->with(
+                'checkout/cart/grouped_product_image',
+                ScopeInterface::SCOPE_STORE
+            )->willReturn($imageConfig);
+            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+
+            $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $productMock->method('getName')->willReturn('Child Product Name');
+            $productMock->method('getThumbnail')->willReturn($childThumbnail);
+            $quoteItem->method('getProduct')->willReturn($productMock);
+            $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
+
+
+            $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
+
+            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+            $quoteItemOption->method('getProduct')->willReturn($groupedProductMock);
+            $quoteItem->method('getOptionByCode')->with('product_type')->willReturn($quoteItemOption);
+
+
+            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+        }
+
+        public function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem() {
+            return [
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Grouped Product Name'],
+                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Grouped Product Name']
+            ];
+        }
 
       /**
        * @return MockObject
