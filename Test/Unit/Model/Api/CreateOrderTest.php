@@ -418,7 +418,7 @@ class CreateOrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('sendResponse')->with(
             200,
             [
-                'display_id'   => 'XXXXX / 456',
+                'display_id'   => 'XXXXX',
                 'message'   => 'Order create was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"11.00"}',
                 'order_received_url'   => '',
                 'status'    => 'success',
