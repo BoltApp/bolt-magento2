@@ -215,6 +215,11 @@ class DiscountTest extends TestCase
      * @var MockObject|Mysql mocked instance of Mysql adapter
      */
     private $connectionMock;
+    
+    /**
+     * @var MockObject|ThirdPartyModuleFactory
+     */
+    private $moduleGiftCardAccountMock;
 
     /**
      * Setup test dependencies, called before each test
@@ -245,6 +250,7 @@ class DiscountTest extends TestCase
         $this->aheadworksCustomerStoreCreditManagement = $this->createMock(ThirdPartyModuleFactory::class);
         $this->bssStoreCreditHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->bssStoreCreditCollection = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->moduleGiftCardAccountMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->quoteRepository = $this->createMock(CartRepositoryInterface::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
@@ -297,6 +303,7 @@ class DiscountTest extends TestCase
                     $this->aheadworksCustomerStoreCreditManagement,
                     $this->bssStoreCreditHelper,
                     $this->bssStoreCreditCollection,
+                    $this->moduleGiftCardAccountMock,
                     $this->quoteRepository,
                     $this->configHelper,
                     $this->bugsnag,
@@ -347,6 +354,7 @@ class DiscountTest extends TestCase
             $this->aheadworksCustomerStoreCreditManagement,
             $this->bssStoreCreditHelper,
             $this->bssStoreCreditCollection,
+            $this->moduleGiftCardAccountMock,
             $this->quoteRepository,
             $this->configHelper,
             $this->bugsnag,
@@ -390,6 +398,7 @@ class DiscountTest extends TestCase
         );
         static::assertAttributeEquals($this->bssStoreCreditHelper, 'bssStoreCreditHelper', $instance);
         static::assertAttributeEquals($this->bssStoreCreditCollection, 'bssStoreCreditCollection', $instance);
+        static::assertAttributeEquals($this->moduleGiftCardAccountMock, 'moduleGiftCardAccount', $instance);
         static::assertAttributeEquals($this->quoteRepository, 'quoteRepository', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
@@ -4116,5 +4125,121 @@ class DiscountTest extends TestCase
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
 
         static::assertNull($this->currentMock->applyMiravistRewardPoint($immutableQuote));
+    }
+    
+    /**
+     * @test
+     * that isMagentoGiftCardAccountAvailable returns availability of Magento Gift Card module
+     *
+     * @covers ::isMagentoGiftCardAccountAvailable
+     *
+     * @dataProvider isMagentoGiftCardAccountAvailable_withVariousMagentoGiftCardAccountAvailabilitiesProvider
+     *
+     * @param bool $magentoGiftCardAccountAvailable stubbed result of {@see \Bolt\Boltpay\Model\ThirdPartyModuleFactory::isAvailable}
+     * @param bool $expectedResult of the method call
+     */
+    public function isMagentoGiftCardAccountAvailable_withVariousMagentoGiftCardAccountAvailabilities_returnsAvailability(
+        $magentoGiftCardAccountAvailable,
+        $expectedResult
+    ) {
+        $this->initCurrentMock();
+        $this->moduleGiftCardAccountMock->expects(static::once())
+            ->method('isAvailable')
+            ->willReturn($magentoGiftCardAccountAvailable);
+
+        static::assertEquals($expectedResult, $this->currentMock->isMagentoGiftCardAccountAvailable());
+    }
+
+    /**
+     * Data provider for {@see isMagentoGiftCardAccountAvailable_withVariousMagentoGiftCardAccountAvailabilities_returnsAvailability}
+     *
+     * @return array[] containing Magento Gift Card module availability and expected result of the method call
+     */
+    public function isMagentoGiftCardAccountAvailable_withVariousMagentoGiftCardAccountAvailabilitiesProvider()
+    {
+        return [
+            ['magentoGiftCardAccountAvailable' => true, 'expectedResult' => true],
+            ['magentoGiftCardAccountAvailable' => false, 'expectedResult' => false],
+        ];
+    }
+    
+    /**
+     * @test
+     * that loadMagentoGiftCardAccount returns null if the Magento Gift Card is unavailable
+     *
+     * @covers ::loadMagentoGiftCardAccount
+     */
+    public function loadMagentoGiftCardAccount_cardIsUnavailable_returnsNull()
+    {
+        $this->initCurrentMock(['isMagentoGiftCardAccountAvailable']);
+        $code = 'testCouponCode';
+        $storeId = 23;
+        $this->currentMock->method('isMagentoGiftCardAccountAvailable')->willReturn(false);
+
+        static::assertNull($this->currentMock->loadMagentoGiftCardAccount($code, $storeId));
+    }
+    
+    /**
+     * @test
+     * that loadMagentoGiftCardAccount returns null if the Magento Gift Card is unavailable
+     *
+     * @covers ::loadMagentoGiftCardAccount
+     */
+    public function loadMagentoGiftCardAccount_intanceNull_returnsNull()
+    {
+        $this->initCurrentMock(['isMagentoGiftCardAccountAvailable']);
+        $code = 'testCouponCode';
+        $storeId = 23;
+        $this->currentMock->method('isMagentoGiftCardAccountAvailable')->willReturn(true);
+        
+        $this->moduleGiftCardAccountMock->expects(static::once())
+            ->method('getInstance')
+            ->willReturn(null);
+            
+        static::assertNull($this->currentMock->loadMagentoGiftCardAccount($code, $storeId));
+    }
+    
+    /**
+     * @test
+     * that loadMagentoGiftCardAccount returns \Magento\GiftCardAccount\Model\Giftcardaccount object
+     * if one is available for the provided giftcard code and website id
+     *
+     * @covers ::loadMagentoGiftCardAccount
+     *
+     * @throws ReflectionException if unable to set internal mock properties
+     */
+    public function loadMagentoGiftCardAccount_withMagentoGiftCardAvailableForWebsite_returnsAmastyGiftCardAccountModel()
+    {
+        $this->initCurrentMock(['isMagentoGiftCardAccountAvailable']);
+        $couponCode = 'testCouponCode';
+        $websiteId = 1111;
+        $this->currentMock->expects(static::once())->method('isMagentoGiftCardAccountAvailable')->willReturn(true);
+
+        $accountModelMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)->setMethods(
+            [
+                'getInstance',
+                'addFieldToFilter',
+                'addWebsiteFilter',
+                'getFirstItem',
+            ]
+        )->disableOriginalConstructor()->getMock();
+
+        TestHelper::setProperty($this->currentMock, 'moduleGiftCardAccount', $accountModelMock);
+
+        $accountModelMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $accountModelMock->expects(static::once())->method('addFieldToFilter')->with('code', ['eq' => $couponCode])->willReturnSelf();
+        $accountModelMock->expects(static::once())->method('addWebsiteFilter')->with([0, $websiteId])->willReturnSelf();
+        
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->disableOriginalConstructor()
+            ->setMethods(['isEmpty', 'isValid'])
+            ->getMock();
+        $giftcardMock->method('isEmpty')->willReturn(false);
+        $giftcardMock->method('isValid')->willReturn(true);
+        
+        $accountModelMock->expects(self::once())->method('getFirstItem')
+            ->willReturn($giftcardMock);
+
+        static::assertEquals($giftcardMock, $this->currentMock->loadMagentoGiftCardAccount($couponCode, $websiteId));
     }
 }

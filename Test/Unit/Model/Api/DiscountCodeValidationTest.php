@@ -93,11 +93,6 @@ class DiscountCodeValidationTest extends TestCase
     /**
      * @var MockObject|ThirdPartyModuleFactory
      */
-    private $moduleGiftCardAccountMock;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory
-     */
     private $moduleUnirgyGiftCertMock;
 
     /**
@@ -630,14 +625,6 @@ class DiscountCodeValidationTest extends TestCase
             404
         );
 
-        $moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $moduleGiftCardAccountMock->method('getInstance')
-            ->willReturn(null);
-
         $result = $this->currentMock->validate();
 
         $this->assertFalse($result);
@@ -1060,8 +1047,6 @@ class DiscountCodeValidationTest extends TestCase
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
 
-        $this->moduleGiftCardAccountMock->method('getInstance')->willReturnSelf();
-
         $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
             ->disableOriginalConstructor()
             ->setMethods(['isEmpty', 'isValid', 'getId', 'removeFromCart', 'addToCart'])
@@ -1078,8 +1063,8 @@ class DiscountCodeValidationTest extends TestCase
             ->withConsecutive($immutableQuoteMock, $parentQuoteMock)
             ->willReturn($giftcardMock);
 
-        $this->moduleGiftCardAccountMock->expects(self::once())->method('getFirstItem')
-            ->willReturn($giftcardMock);
+        $this->discountHelper->expects(self::once())->method('loadMagentoGiftCardAccount')
+            ->with(self::COUPON_CODE, self::WEBSITE_ID)->willReturn($giftcardMock);
 
         $immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
 
@@ -1093,6 +1078,7 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function validate_neitherCouponNorGiftcard()
     {
+        $websiteId = 11;
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
@@ -1120,9 +1106,6 @@ class DiscountCodeValidationTest extends TestCase
         $this->cartHelper->method('getQuoteById')
             ->willReturnMap($getQuoteByIdMap);
 
-
-        $this->moduleGiftCardAccountMock->method('getInstance')->willReturnSelf();
-
         $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
             ->disableOriginalConstructor()
             ->setMethods(['isEmpty', 'isValid', 'getId', 'addToCart'])
@@ -1130,9 +1113,9 @@ class DiscountCodeValidationTest extends TestCase
         $giftcardMock->method('isEmpty')->willReturn(false);
         $giftcardMock->method('isValid')->willReturn(true);
         $giftcardMock->method('getId')->willReturn(null);
-
-        $this->moduleGiftCardAccountMock->expects(self::once())->method('getFirstItem')
-            ->willReturn($giftcardMock);
+        
+        $this->discountHelper->expects(self::once())->method('loadMagentoGiftCardAccount')
+            ->with(self::COUPON_CODE, self::WEBSITE_ID)->willReturn($giftcardMock);
 
         $this->immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
 
@@ -2200,13 +2183,6 @@ class DiscountCodeValidationTest extends TestCase
         $this->dataObjectFactoryMock->method('create')
             ->willReturn($this->dataObjectMock);
 
-        $this->moduleGiftCardAccountMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'addFieldToFilter', 'addWebsiteFilter', 'getFirstItem'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->moduleGiftCardAccountMock->method('addFieldToFilter')->willReturnSelf();
-        $this->moduleGiftCardAccountMock->method('addWebsiteFilter')->willReturnSelf();
-
         $this->moduleUnirgyGiftCertMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
             ->setMethods(['getInstance'])
             ->disableOriginalConstructor()
@@ -2391,7 +2367,6 @@ class DiscountCodeValidationTest extends TestCase
                     $this->request,
                     $this->response,
                     $this->couponFactoryMock,
-                    $this->moduleGiftCardAccountMock,
                     $this->moduleUnirgyGiftCertMock,
                     $this->moduleUnirgyGiftCertHelperMock,
                     $this->quoteRepositoryForUnirgyGiftCert,
