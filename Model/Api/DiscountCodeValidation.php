@@ -648,7 +648,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $immutableQuote->getQuoteCurrencyCode())),
             'description'     => trim(__('Discount ') . $rule->getDescription()),
-            'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
+            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
 
         $this->logHelper->addInfoLog('### Coupon Result');
