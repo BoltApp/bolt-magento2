@@ -803,7 +803,7 @@ class Cart extends AbstractHelper
             $this->saveToCache(
                 $boltOrder,
                 $cacheIdentifier,
-                [self::BOLT_ORDER_TAG],
+                [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
                 self::BOLT_ORDER_CACHE_LIFETIME
             );
         }
