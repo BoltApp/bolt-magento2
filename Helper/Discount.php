@@ -204,11 +204,6 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     protected $moduleGiftCardAccount;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleGiftCardAccountHelper;
     
     /**
      * @var CouponFactory
@@ -248,7 +243,6 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -284,7 +278,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
-        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -325,7 +318,6 @@ class Discount extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
-        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
     }
