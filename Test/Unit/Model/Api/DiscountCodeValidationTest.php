@@ -624,9 +624,6 @@ class DiscountCodeValidationTest extends TestCase
             'The coupon code ' . $couponCode . ' is not found',
             404
         );
-        
-        $this->discountHelper->expects(self::once())->method('loadMagentoGiftCardAccount')
-            ->with($couponCode, $websiteId)->willReturn(null);
 
         $result = $this->currentMock->validate();
 

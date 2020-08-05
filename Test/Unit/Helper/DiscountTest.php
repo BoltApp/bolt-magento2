@@ -4143,7 +4143,7 @@ class DiscountTest extends TestCase
         $expectedResult
     ) {
         $this->initCurrentMock();
-        $this->moduleGiftCardAccount->expects(static::once())
+        $this->moduleGiftCardAccountMock->expects(static::once())
             ->method('isAvailable')
             ->willReturn($magentoGiftCardAccountAvailable);
 
@@ -4192,7 +4192,7 @@ class DiscountTest extends TestCase
         $storeId = 23;
         $this->currentMock->method('isMagentoGiftCardAccountAvailable')->willReturn(true);
         
-        $this->moduleGiftCardAccount->expects(static::once())
+        $this->moduleGiftCardAccountMock->expects(static::once())
             ->method('getInstance')
             ->willReturn(null);
             
@@ -4224,7 +4224,7 @@ class DiscountTest extends TestCase
             ]
         )->disableOriginalConstructor()->getMock();
 
-        TestHelper::setProperty($this->currentMock, 'moduleGiftCardAccountMock', $accountModelMock);
+        TestHelper::setProperty($this->currentMock, 'moduleGiftCardAccount', $accountModelMock);
 
         $accountModelMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $accountModelMock->expects(static::once())->method('addFieldToFilter')->with('code', ['eq' => $couponCode])->willReturnSelf();
