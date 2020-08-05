@@ -71,9 +71,6 @@ commands:
                 name: << parameters.php_version >> << parameters.m2_version >> Unit
                 command: |
                   mkdir ./artifacts
-                  export COMPOSER_MEMORY_LIMIT=3G
-                  export TEST_ENV=<< parameters.php_version >>
-                  export MAGENTO_VERSION=<< parameters.m2_version >>
                   Test/scripts/ci-unit.sh
       - save_cache:
           key: << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-lock-{{ arch }}-{{ checksum "composer.json" }}
@@ -312,9 +309,6 @@ workflows:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
       - unit-php72-magento23-for-merchant-branches
-      - unit-php71-magento22-for-merchant-branches
-      - unit-php70-magento22-for-merchant-branches
-      - integration-php72-magento23-for-merchant-branches
   auto-rebase:
     jobs:
       - auto-rebase:
