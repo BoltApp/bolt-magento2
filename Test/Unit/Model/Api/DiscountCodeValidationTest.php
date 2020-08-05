@@ -30,7 +30,6 @@ use Magento\Framework\Webapi\Exception as WebApiException;
 
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
-use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
@@ -74,11 +73,6 @@ class DiscountCodeValidationTest extends TestCase
     const USAGE_LIMIT = 100;
     const COUPON_CODE = 'TEST_COUPON';
     const STORE_ID = 1;
-
-    /**
-     * @var CouponFactory
-     */
-    private $couponFactoryMock;
 
     /**
      * @var UsageFactory
@@ -1981,30 +1975,6 @@ class DiscountCodeValidationTest extends TestCase
 
     /**
      * @test
-     * @covers ::convertToBoltDiscountType
-     * @dataProvider getMagentoToBoltDiscountTypes
-     */
-    public function convertToBoltDiscountType($input, $expected)
-    {
-        self::assertEquals(
-            $expected,
-            $this->invokeNonAccessibleMethod('convertToBoltDiscountType', [$input])
-        );
-    }
-
-    public function getMagentoToBoltDiscountTypes()
-    {
-        return [
-            ['by_fixed', 'fixed_amount'],
-            ['cart_fixed', 'fixed_amount'],
-            ['by_percent', 'percentage'],
-            ['by_shipping', 'shipping'],
-            ['', ''],
-        ];
-    }
-
-    /**
-     * @test
      * @covers ::loadGiftCertData
      */
     public function loadGiftCertData()
@@ -2160,24 +2130,6 @@ class DiscountCodeValidationTest extends TestCase
 
     private function createFactoryMocks()
     {
-        $this->couponFactoryMock = $this->getMockBuilder(CouponFactory::class)
-            ->setMethods(
-                [
-                    'create',
-                    'loadByCode',
-                    'isObjectNew',
-                    'getCouponId',
-                    'getId',
-                    'getRuleId',
-                    'getUsageLimit',
-                    'getTimesUsed'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->couponFactoryMock->method('create')
-            ->willReturn($this->couponMock);
-
         $this->usageFactoryMock = $this->getMockBuilder(UsageFactory::class)
             ->setMethods(['create', 'loadByCustomerCoupon'])
             ->disableOriginalConstructor()
@@ -2390,7 +2342,6 @@ class DiscountCodeValidationTest extends TestCase
                 [
                     $this->request,
                     $this->response,
-                    $this->couponFactoryMock,
                     $this->moduleGiftCardAccountMock,
                     $this->moduleUnirgyGiftCertMock,
                     $this->moduleUnirgyGiftCertHelperMock,
