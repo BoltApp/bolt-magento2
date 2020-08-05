@@ -42,9 +42,6 @@ use Magento\Framework\DB\Adapter\Pdo\Mysql;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Api\Data\CartExtension;
 use Magento\Framework\Api\ExtensibleDataInterface as GiftCardQuote;
-use Magento\SalesRule\Model\CouponFactory;
-use Magento\SalesRule\Model\Rule;
-use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Class DiscountTest
@@ -218,16 +215,6 @@ class DiscountTest extends TestCase
      * @var MockObject|Mysql mocked instance of Mysql adapter
      */
     private $connectionMock;
-    
-    /**
-     * @var CouponFactory
-     */
-    private $couponFactoryMock;
-    
-    /**
-     * @var MockObject|RuleRepository
-     */
-    private $ruleRepositoryMock;
 
     /**
      * Setup test dependencies, called before each test
@@ -272,8 +259,6 @@ class DiscountTest extends TestCase
             Mysql::class,
             ['query', 'beginTransaction', 'commit', 'getConnection', 'getTableName', 'rollBack']
         );
-        $this->couponFactoryMock = $this->createMock(CouponFactory::class);
-        $this->ruleRepositoryMock = $this->createMock(RuleRepository::class);
     }
 
     /**
@@ -318,8 +303,6 @@ class DiscountTest extends TestCase
                     $this->appState,
                     $this->sessionHelper,
                     $this->logHelper,
-                    $this->couponFactoryMock,
-                    $this->ruleRepositoryMock,
                 ]
             )
             ->setMethods($methods);
@@ -369,9 +352,7 @@ class DiscountTest extends TestCase
             $this->bugsnag,
             $this->appState,
             $this->sessionHelper,
-            $this->logHelper,
-            $this->couponFactoryMock,
-            $this->ruleRepositoryMock
+            $this->logHelper
         );
 
         static::assertAttributeEquals($this->resource, 'resource', $instance);
@@ -415,8 +396,6 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->appState, 'appState', $instance);
         static::assertAttributeEquals($this->sessionHelper, 'sessionHelper', $instance);
         static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        static::assertAttributeEquals($this->couponFactoryMock, 'CouponFactory', $instance);
-        static::assertAttributeEquals($this->ruleRepositoryMock, 'RuleRepository', $instance);
     }
 
     /**
@@ -4137,119 +4116,5 @@ class DiscountTest extends TestCase
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
 
         static::assertNull($this->currentMock->applyMiravistRewardPoint($immutableQuote));
-    }
-    
-    /**
-     * @test
-     * that loadCouponCodeData returns \Magento\SalesRule\Model\Coupon object
-     *
-     * @covers ::loadCouponCodeData
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function loadCouponCodeData_withCouponCode_returnCouponObject()
-    {
-        $this->initCurrentMock();
-        $couponCode = 'testCouponCode';
-        
-        $couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
-            ->setMethods(
-                [
-                    'loadByCode'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-            
-        $couponMock->expects(static::once())->method('loadByCode')->with($couponCode)->willReturnSelf();
-            
-        $this->couponFactoryMock->expects(static::once())->method('create')->willReturn($couponMock);
-        
-
-        static::assertEquals($couponMock, $this->currentMock->loadCouponCodeData($couponCode));
-    }
-    
-    /**
-     * @test
-     * that convertToBoltDiscountType returns the Bolt discount type value
-     *
-     * @covers ::convertToBoltDiscountType
-     *
-     * @dataProvider convertToBoltDiscountType_withVariousTypesProvider
-     *
-     * @param string $types
-     * @param bool $expectedResult of the method call
-     */
-    public function convertToBoltDiscountType_withVariousTypes_returnsBoltDiscountTypeValue(
-        $types,
-        $expectedResult
-    ) {
-        $this->initCurrentMock();
-        
-        $couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
-            ->setMethods(
-                [
-                    'getRuleId'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $couponMock->expects(static::once())->method('getRuleId')->willReturn(6);
-        
-        $ruleMock = $this->getMockBuilder(Rule::class)
-            ->setMethods(
-                [
-                    'getSimpleAction',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-            
-        $ruleMock->expects(self::once())->method('getSimpleAction')->willReturn($types);
-        
-        $this->ruleRepositoryMock->expects(static::once())->method('getById')->with(6)->willReturn($ruleMock);
-
-        static::assertEquals($expectedResult, $this->currentMock->convertToBoltDiscountType());
-    }
-
-    /**
-     * Data provider for {@see convertToBoltDiscountType_withVariousTypes_returnsBoltDiscountTypeValue}
-     *
-     * @return array[] containing Magento discount type and expected result of the method call
-     */
-    public function convertToBoltDiscountType_withVariousTypesProvider()
-    {
-        return [
-            ['types' => 'by_fixed', 'expectedResult' => 'fixed_amount'],
-            ['types' => 'cart_fixed', 'expectedResult' => 'fixed_amount'],
-            ['types' => 'by_percent', 'expectedResult' => 'percentage'],
-            ['types' => 'by_shipping', 'expectedResult' => 'shipping'],
-            ['types' => 'none_list', 'expectedResult' => ''],
-        ];
-    }
-    
-    /**
-     * @test
-     *
-     * @covers ::setCouponCode
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function setCouponCode_savesProperly()
-    {
-        $this->initCurrentMock();
-        $quoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getShippingAddress','setCollectShippingRates','setCouponCode','collectTotals','save'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $couponCode = 'testcoupon';
-        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturnSelf();
-        $quoteMock->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $quoteMock->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
-        $quoteMock->expects(static::once())->method('collectTotals')->willReturnSelf();
-        $quoteMock->expects(static::once())->method('save')->willReturnSelf();
-
-        static::assertNull($this->currentMock->setCouponCode($quoteMock,$couponCode));
     }
 }
