@@ -226,7 +226,7 @@ class CreateOrder implements CreateOrderInterface
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => "Order create was successful. Order Data: $orderData",
-                'display_id' => $createdOrder->getIncrementId() . ' / ' . $immutableQuoteId,
+                'display_id' => $createdOrder->getIncrementId(),
                 'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
