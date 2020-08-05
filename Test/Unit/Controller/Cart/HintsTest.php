@@ -18,10 +18,8 @@
 namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 
 use Bolt\Boltpay\Controller\Cart\Hints;
-use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
@@ -74,6 +72,26 @@ class HintsTest extends TestCase
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Hints(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->bugsnag,
+            $this->cartHelper
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     /**

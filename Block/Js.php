@@ -180,9 +180,9 @@ class Js extends Template
     }
 
     /**
-     * Get Replace Button Selectors.
+     * Get the global CSS to be added to any page that displays the Bolt Checkout button.
      *
-     * @return string
+     * @return string global CSS
      */
     public function getGlobalCSS()
     {

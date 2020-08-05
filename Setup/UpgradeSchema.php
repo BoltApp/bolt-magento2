@@ -20,9 +20,6 @@ use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 
-/**
- * @codeCoverageIgnore
- */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
     /**
@@ -77,6 +74,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             $setup->getIdxName('quote', ['bolt_parent_quote_id']),
             ['bolt_parent_quote_id']
+        );
+
+        $setup->getConnection()->addColumn(
+            $setup->getTable('sales_order'),
+            'bolt_transaction_reference',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 64,
+                'nullable' => true,
+                'comment' => 'Bolt Transaction Reference'
+            ]
         );
 
         $this->setupFeatureSwitchTable($setup);

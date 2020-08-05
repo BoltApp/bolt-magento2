@@ -46,8 +46,6 @@ class Data extends Action
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

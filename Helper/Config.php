@@ -391,8 +391,6 @@ class Config extends AbstractHelper
      * @param BoltConfigSettingFactory $boltConfigSettingFactory
      * @param RegionFactory $regionFactory
      * @param ComposerFactory $composerFactory
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -878,7 +876,6 @@ class Config extends AbstractHelper
      *
      * @return bool
      * @SuppressWarnings(PHPMD.BooleanGetMethodName)
-     * @codeCoverageIgnore
      */
     public function isSandboxModeSet($store = null)
     {
