@@ -17,8 +17,8 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -34,6 +34,8 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Composer\ComposerFactory;
 
 /**
+ * Class ConfigTest
+ * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
 class ConfigTest extends TestCase
@@ -212,6 +214,32 @@ JSON;
         }
 
         $this->currentMock = $builder->getMock();
+    }
+
+     /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Config(
+            $this->context,
+            $this->encryptor,
+            $this->moduleResource,
+            $this->productMetadata,
+            $this->boltConfigSettingFactoryMock,
+            $this->regionFactory,
+            $this->composerFactory
+        );
+        
+        $this->assertAttributeEquals($this->encryptor, 'encryptor', $instance);
+        $this->assertAttributeEquals($this->moduleResource, 'moduleResource', $instance);
+        $this->assertAttributeEquals($this->productMetadata, 'productMetadata', $instance);
+        $this->assertAttributeEquals($this->boltConfigSettingFactoryMock, 'boltConfigSettingFactory', $instance);
+        $this->assertAttributeEquals($this->regionFactory, 'regionFactory', $instance);
+        $this->assertAttributeEquals($this->composerFactory, 'composerFactory', $instance);
     }
 
     /**
@@ -1283,6 +1311,7 @@ Room 4000',
 
     /**
      * @test
+     * @covers ::getComposerVersion
      */
     public function getComposerVersion() {
         $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
@@ -1295,6 +1324,7 @@ Room 4000',
 
     /**
      * @test
+     * @covers ::getComposerVersion
      */
     public function getComposerVersion_withException_returnNull() {
         $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
@@ -1303,6 +1333,19 @@ Room 4000',
         $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturnSelf();
         $e = new \Exception(__('Test'));
         $this->composerFactory->expects(self::once())->method('getVersion')->willThrowException($e);
+        $this->assertNull($this->currentMock->getComposerVersion());
+    }
+
+    /**
+     * @test
+     * @covers ::getComposerVersion
+     */
+    public function getComposerVersion_withFindPackageWillReturnNull() {
+        $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
+        $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturn(null);
+        $this->composerFactory->expects(self::never())->method('getVersion');
         $this->assertNull($this->currentMock->getComposerVersion());
     }
 }
