@@ -149,3 +149,8 @@
  ## [v2.11.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.11.0) 2020-07-29
  - Improve support for bolt order management (beta)
  - Bug fixes
+ ## [v2.12.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.12.0) 2020-08-12
+ - Improve support for bolt order management (beta)
+ - Add support for plugin Amasty giftcard 2.0.0
+ - Support for gift wrapping info
+ - Bug fixes
