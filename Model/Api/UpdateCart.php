@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -90,6 +90,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         try {
             $this->cartRequest = $cart;
             
+            // TODO the display_id will be updated in this PR https://github.com/BoltApp/bolt-magento2/pull/863, and we need to adjust per change
             list($incrementId, $immutableQuoteId) = array_pad(
                 explode(' / ', $cart['display_id']),
                 2,
@@ -99,7 +100,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             
             $result = $this->validateQuote($parentQuoteId, $immutableQuoteId, $incrementId);
             
-            if( ! $result ){
+            if(!$result){
                 // Already sent a response with error, so just return.
                 return false;
             }
