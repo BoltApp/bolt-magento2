@@ -104,18 +104,6 @@ commands:
 
   m2-php-test-for-merchant-branches:
     description: PHP Unit tests for M2 on all merchant branches
-    parameters:
-      m2_version:
-        type: enum
-        default: "2.3.0"
-        enum: ["2.2.0", "2.3.0"]
-      php_version:
-        type: enum
-        default: "php72"
-        enum: ["php70", "php71", "php72"]
-      is_integration:
-        type: boolean
-        default: false
     steps:
       - checkout
       - swissknife/trigger-pipeline:
@@ -270,10 +258,7 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - m2-php-test-for-merchant-branches:
-          m2_version: "2.2.0"
-          php_version: "php70"
-          is_integration: false
+      - m2-php-test-for-merchant-branches
 
   phpcs:
     docker:
