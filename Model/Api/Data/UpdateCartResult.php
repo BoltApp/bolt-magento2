@@ -127,6 +127,7 @@ class UpdateCartResult implements UpdateCartResultInterface
     {
         return [
             'status' => $this->status,
+            'order_reference' => $this->orderReference,
             'order_create' => [
                 'cart' => $this->orderCreate->getCartData()
             ]
