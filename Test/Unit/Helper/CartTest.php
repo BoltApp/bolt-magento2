@@ -4756,7 +4756,7 @@ ORDER
 
             $parentProductMock = $this->createMock(Product::class);
             $parentProductMock->method('getName')->willReturn('Parent Product Name');
-            $quoteItem->method('getProduct')->willReturn($parentProductMock);
+            $quoteItem->expects(self::once())->method('getProduct')->willReturn($parentProductMock);
             $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
 
 
@@ -4809,9 +4809,8 @@ ORDER
             $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
             $productMock->method('getName')->willReturn('Child Product Name');
             $productMock->method('getThumbnail')->willReturn($childThumbnail);
-            $quoteItem->method('getProduct')->willReturn($productMock);
+            $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
             $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
-
 
             $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
             $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
