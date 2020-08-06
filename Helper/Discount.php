@@ -30,8 +30,6 @@ use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\SalesRule\Model\CouponFactory;
-use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Boltpay Discount helper class
@@ -199,36 +197,6 @@ class Discount extends AbstractHelper
      * @var LogHelper
      */
     private $logHelper;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleGiftCardAccount;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleGiftCardAccountHelper;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleUnirgyGiftCert;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleUnirgyGiftCertHelper;
-    
-    /**
-     * @var CouponFactory
-     */
-    protected $couponFactory;
-    
-    /**
-     * @var RuleRepository
-     */
-    protected $ruleRepository;
 
     /**
      * Discount constructor.
@@ -257,18 +225,12 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
-     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
-     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
-     * @param CouponFactory           $couponFactory
-     * @param RuleRepository          $ruleRepository
      */
     public function __construct(
         Context $context,
@@ -295,18 +257,12 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
-        ThirdPartyModuleFactory $moduleGiftCardAccount,
-        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
-        ThirdPartyModuleFactory $moduleUnirgyGiftCert,
-        ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         AppState $appState,
         Session $sessionHelper,
-        LogHelper $logHelper,
-        CouponFactory $couponFactory,
-        RuleRepository $ruleRepository
+        LogHelper $logHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -338,12 +294,6 @@ class Discount extends AbstractHelper
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
-        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
-        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
-        $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
-        $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
-        $this->couponFactory = $couponFactory;
-        $this->ruleRepository = $ruleRepository;
     }
     
     /**
@@ -1234,223 +1184,5 @@ class Discount extends AbstractHelper
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
-    }
-    
-    /**
-     * Check if Magento_GiftCardAccount module is available
-     *
-     * @return bool true if module is available, else false
-     */
-    public function isMagentoGiftCardAccountAvailable()
-    {
-        return $this->moduleGiftCardAccount->isAvailable();
-    }
-    
-    /**
-     * Load the Magento_GiftCardAccount by code
-     *
-     * @param string $code
-     * @param string|int $websiteId
-     *
-     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
-     */
-    public function loadMagentoGiftCardAccount($code, $websiteId)
-    {
-        if (!$this->isMagentoGiftCardAccountAvailable()) {
-            return null;
-        }
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
-        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
-        
-        if (!$giftCardAccountResource) {
-            return null;
-        }
-
-        $this->logHelper->addInfoLog('### GiftCard ###');
-        $this->logHelper->addInfoLog('# Code: ' . $code);
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
-        $giftCardsCollection = $giftCardAccountResource
-            ->addFieldToFilter('code', ['eq' => $code])
-            ->addWebsiteFilter([0, $websiteId]);
-
-        /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
-        $giftCard = $giftCardsCollection->getFirstItem();
-
-        $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
-
-        $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
-
-        return $result;
-    }
-    
-    /**
-     * Get the Magento_GiftCardAccount Gift Card data from quote
-     *
-     * @param Quote $quote
-     *
-     * @return array
-     */
-    public function getMagentoGiftCardAccountGiftCardData($quote)
-    {
-        if (! $this->isMagentoGiftCardAccountAvailable()) {
-            return [];
-        }
-        /** @var \Magento\GiftCardAccount\Helper\Data */
-        $giftCardAccountHelper = $this->moduleGiftCardAccountHelper->getInstance();
-        
-        if (!$giftCardAccountHelper) {
-            return [];
-        }
-        
-        $cards = $giftCardAccountHelper->getCards($quote);
-
-        if (!$cards) {
-            $cards = [];
-        } else {
-            $cards = array_column($cards,
-                                  \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT,
-                                  \Magento\GiftCardAccount\Model\Giftcardaccount::CODE);
-        }
-      
-        return $cards;
-    }
-    
-    /**
-     * Check if UnirgyGiftCert module is available
-     *
-     * @return bool true if module is available, else false
-     */
-    public function isUnirgyGiftCertAvailable()
-    {
-        return $this->moduleUnirgyGiftCert->isAvailable();
-    }
-    
-    /**
-     * @param string $code
-     * @param string|int $storeId
-     *
-     * @return null|\Unirgy\Giftcert\Model\Cert
-     * @throws NoSuchEntityException
-     */
-    public function loadUnirgyGiftCert($code, $storeId)
-    {
-        if (!$this->isUnirgyGiftCertAvailable()) {
-            return null;
-        }
-        
-        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
-        $giftCertRepository = $this->moduleUnirgyGiftCert->getInstance();
-        
-        if (!$giftCertRepository) {
-            return null;
-        }
-
-        $this->logHelper->addInfoLog('### UnirgyGiftCert ###');
-        $this->logHelper->addInfoLog('# Code: ' . $code);
-
-        try {
-            /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-            $giftCert = $giftCertRepository->get($code);
-
-            $gcStoreId = $giftCert->getStoreId();
-
-            $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
-                      ? $giftCert : null;
-
-        } catch (NoSuchEntityException $e) {
-            //We must ignore the exception, because it is thrown when data does not exist.
-            $result = null;
-        }
-
-        $this->logHelper->addInfoLog('# loadUnirgyGiftCert Result is empty: ' . ((!$result) ? 'yes' : 'no'));
-
-        return $result;
-    }
-    
-    /**
-     * @param \Unirgy\Giftcert\Model\Cert $giftCard
-     * @param Quote $quote
-     *
-     */
-    public function applyUnirgyGiftCert($giftCard, $quote)
-    {
-        if (!$this->isUnirgyGiftCertAvailable()) {
-            return;
-        }
-        
-        /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
-        $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
-        
-        if (!$unirgyHelper) {
-            return;
-        }
-        
-        if (empty($quote->getData($giftCard::GIFTCERT_CODE))) {
-            $unirgyHelper->addCertificate(
-                $giftCard->getCertNumber(),
-                $quote,
-                $this->quoteRepository
-            );
-        }
-    }
-    
-    /**
-     * Load the coupon data by code
-     *
-     * @param $couponCode
-     *
-     * @return Coupon
-     */
-    public function loadCouponCodeData($couponCode)
-    {
-        return $this->couponFactory->create()->loadByCode($couponCode);
-    }
-    
-    /**
-     * @param string $couponCode
-     * @return string
-     */
-    public function convertToBoltDiscountType($couponCode)
-    {
-        $coupon = $this->loadCouponCodeData($couponCode);
-        // Load the coupon discount rule
-        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
-        $type = $rule->getSimpleAction();
-        
-        return $this->getBoltDiscountType($type);
-    }
-    
-    /**
-     * @param string $type
-     * @return string
-     */
-    public function getBoltDiscountType($type)
-    {
-        switch ($type) {
-            case "by_fixed":
-            case "cart_fixed":
-                return "fixed_amount";
-            case "by_percent":
-                return "percentage";
-            case "by_shipping":
-                return "shipping";
-        }
-
-        return "";
-    }
-    
-    /**
-     * Set applied coupon code
-     *
-     * @param Quote  $quote
-     * @param string $couponCode
-     * @throws \Exception
-     */
-    public function setCouponCode($quote, $couponCode)
-    {
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->setCouponCode($couponCode)->collectTotals()->save();
     }
 }
