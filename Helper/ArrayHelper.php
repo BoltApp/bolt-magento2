@@ -84,19 +84,4 @@ class ArrayHelper
 
         return [];
     }
-    
-    /**
-     * @param array  $array
-     * @param string $key
-     * @param null   $default
-     * @return mixed|null
-     */
-    public static function getValueFromArrayByKey($array, $key, $default = null)
-    {
-        if (is_array($array) && array_key_exists($key, $array)) {
-            return $array[$key];
-        }
-        
-        return $default;
-    }
 }

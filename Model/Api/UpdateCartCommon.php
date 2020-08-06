@@ -215,20 +215,20 @@ abstract class UpdateCartCommon
         $shippingAddress = $immutableQuote->getShippingAddress();
         $address = $shipment['shipping_address'];
         $address = $this->cartHelper->handleSpecialAddressCases($address);
-        $region = $this->regionModel->loadByName(ArrayHelper::getValueFromArrayByKey($address, 'region', ''), ArrayHelper::getValueFromArrayByKey($address, 'country_code', ''));
+        $region = $this->regionModel->loadByName(ArrayHelper::getValueFromArray($address, 'region', ''), ArrayHelper::getValueFromArray($address, 'country_code', ''));
         $addressData = [
-                    'firstname'    => ArrayHelper::getValueFromArrayByKey($address, 'first_name', ''),
-                    'lastname'     => ArrayHelper::getValueFromArrayByKey($address, 'last_name', ''),
-                    'street'       => trim(ArrayHelper::getValueFromArrayByKey($address, 'street_address1', '') . "\n" . ArrayHelper::getValueFromArrayByKey($address, 'street_address2', '')),
-                    'city'         => ArrayHelper::getValueFromArrayByKey($address, 'locality', ''),
-                    'country_id'   => ArrayHelper::getValueFromArrayByKey($address, 'country_code', ''),
-                    'region'       => ArrayHelper::getValueFromArrayByKey($address, 'region', ''),
-                    'postcode'     => ArrayHelper::getValueFromArrayByKey($address, 'postal_code', ''),
-                    'telephone'    => ArrayHelper::getValueFromArrayByKey($address, 'phone_number', ''),
+                    'firstname'    => ArrayHelper::getValueFromArray($address, 'first_name', ''),
+                    'lastname'     => ArrayHelper::getValueFromArray($address, 'last_name', ''),
+                    'street'       => trim(ArrayHelper::getValueFromArray($address, 'street_address1', '') . "\n" . ArrayHelper::getValueFromArray($address, 'street_address2', '')),
+                    'city'         => ArrayHelper::getValueFromArray($address, 'locality', ''),
+                    'country_id'   => ArrayHelper::getValueFromArray($address, 'country_code', ''),
+                    'region'       => ArrayHelper::getValueFromArray($address, 'region', ''),
+                    'postcode'     => ArrayHelper::getValueFromArray($address, 'postal_code', ''),
+                    'telephone'    => ArrayHelper::getValueFromArray($address, 'phone_number', ''),
                     'region_id'    => $region ? $region->getId() : null,
-                    'company'      => ArrayHelper::getValueFromArrayByKey($address, 'company', ''),
+                    'company'      => ArrayHelper::getValueFromArray($address, 'company', ''),
                 ];
-        if ($this->cartHelper->validateEmail(ArrayHelper::getValueFromArrayByKey($address, 'email_address', ''))) {
+        if ($this->cartHelper->validateEmail(ArrayHelper::getValueFromArray($address, 'email_address', ''))) {
             $addressData['email'] = $address['email_address'];
         }
 
