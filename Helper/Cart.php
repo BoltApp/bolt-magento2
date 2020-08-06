@@ -1635,7 +1635,7 @@ class Cart extends AbstractHelper
         if ($totalAmount < 0) {
             $totalAmount = 0;
             foreach ($cart['discounts'] as &$discount) {
-                $discount['type'] = 'fixed_amount';
+                $discount['discount_type'] = 'fixed_amount';
             }
         } else {
             // add the diff to first item total to pass bolt order create check
@@ -1726,7 +1726,7 @@ class Cart extends AbstractHelper
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
                 'reference'   => $address->getCouponCode(),
-                'discount_category' => 'coupon',
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
                 'discount_type'   => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()),
             ];
 
@@ -1745,7 +1745,7 @@ class Cart extends AbstractHelper
                 $discounts[] = [
                     'description' => 'Store Credit',
                     'amount'      => $roundedAmount,
-                    'discount_category' => 'store_credit',
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
 
@@ -1768,7 +1768,7 @@ class Cart extends AbstractHelper
                     $discounts[] = [
                         'description' => 'Store Credit',
                         'amount'      => $roundedAmount,
-                        'discount_category' => 'store_credit',
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                         'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
 
@@ -1788,7 +1788,7 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'discount_category' => 'store_credit',
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                 'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
@@ -1806,7 +1806,7 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'discount_category' => 'store_credit',
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                 'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
@@ -1828,7 +1828,7 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description' => 'Store Credit',
                 'amount'      => $roundedAmount,
-                'discount_category' => 'store_credit',
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                 'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
@@ -1847,7 +1847,7 @@ class Cart extends AbstractHelper
                 $discounts[] = [
                     'description' => 'Reward Points',
                     'amount'      => $roundedAmount,
-                    'discount_category' => 'store_credit',
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
 
@@ -1870,7 +1870,7 @@ class Cart extends AbstractHelper
                     $discounts[] = [
                         'description' => 'Reward Points',
                         'amount'      => $roundedAmount,
-                        'discount_category' => 'store_credit',
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                         'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
 
@@ -1895,7 +1895,7 @@ class Cart extends AbstractHelper
                         $quote->getStoreId()
                     ),
                 'amount'      => $roundedAmount,
-                'discount_category' => 'store_credit',
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                 'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
             ];
 
@@ -1956,12 +1956,12 @@ class Cart extends AbstractHelper
                     || $discount == Discount::MAGEPLAZA_GIFTCARD
                     || $discount == Discount::UNIRGY_GIFT_CERT) {
                     $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
-                    $discountItem['discount_category'] = 'giftcard';
+                    $discountItem['discount_category'] = Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD;
                 }
                 
                 if ($discount == Discount::AMASTY_STORECREDIT) {
                     $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
-                    $discountItem['discount_category'] = 'store_credit';
+                    $discountItem['discount_category'] = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
                 }
 
                 $discounts[] = $discountItem;
