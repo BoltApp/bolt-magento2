@@ -2,11 +2,11 @@
     "name": "boltpay/bolt-magento2",
     "description": "Bolt payment gateway integration",
     "require": {
-        "magento/module-sales": "100.*|101.*|102.*",
-        "magento/module-checkout": "100.*|101.*|102.*",
-        "magento/module-payment": "100.*|101.*|102.*",
-        "magento/module-tax": "100.*|101.*|102.*",
-        "magento/framework": "100.*|101.*|102.*",
+        "magento/module-sales": "100.*|101.*|102.*|103.*",
+        "magento/module-checkout": "100.*|101.*|102.*|103.*",
+        "magento/module-payment": "100.*|101.*|102.*|103.*",
+        "magento/module-tax": "100.*|101.*|102.*|103.*",
+        "magento/framework": "100.*|101.*|102.*|103.*",
         "bugsnag/bugsnag": "^3.4"
     },
     "require-dev": {
