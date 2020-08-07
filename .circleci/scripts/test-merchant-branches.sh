@@ -6,12 +6,12 @@ if [ "$#" -ne 3 ]; then
 fi
 
 if [[ $CIRCLE_BRANCH == master ]] ; then
-  exit 1
+  exit 0
 fi
 
 if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
   echo "test-merchant-branches.sh Cannot be called from a merchant branch (this will cause an infinite loop)"
-  exit 1
+  exit 0
 fi
 
 # init git
