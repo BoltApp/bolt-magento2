@@ -9,7 +9,7 @@
  * http://opensource.org/licenses/osl-3.0.php
  * @category Bolt
  * @Package Bolt_Boltpay
- * @copyright Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 
@@ -30,9 +30,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
  * Class Data.
  * Create Bolt order controller.
  *
- * Called from the replace.phtml javascript block on checklout button click.
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * Called from the replace.phtml javascript block on checkout button click.
  */
 class Data extends Action
 {
@@ -74,8 +72,6 @@ class Data extends Action
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
      * @param DataObjectFactory $dataObjectFactory
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -111,7 +107,12 @@ class Data extends Action
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
                 $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
-                $this->metricsClient->processMetric("back_office_order_token.success", 1, "back_office_order_token.latency", $startTime);
+                $this->metricsClient->processMetric(
+                    "back_office_order_token.success",
+                    1,
+                    "back_office_order_token.latency",
+                    $startTime
+                );
             }
 
             $storeId = $this->cartHelper->getSessionQuoteStoreId();
@@ -137,7 +138,12 @@ class Data extends Action
             return $this->resultJsonFactory->create()->setData($result->getData());
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->metricsClient->processMetric("back_office_order_token.failure", 1, "back_office_order_token.latency", $startTime);
+            $this->metricsClient->processMetric(
+                "back_office_order_token.failure",
+                1,
+                "back_office_order_token.latency",
+                $startTime
+            );
             throw $e;
         }
     }

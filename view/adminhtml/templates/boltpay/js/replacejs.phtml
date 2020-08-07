@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -22,7 +22,8 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if (!$block->isEnabled()) return;
+if (!$block->isEnabled()) { return;
+}
 ?>
 
 <script type="text/javascript">
@@ -31,7 +32,7 @@ if (!$block->isEnabled()) return;
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-window.boltConfig = <?php echo $block->getSettings(); ?>;
+window.boltConfig = <?= /* @noEscape */ $block->getSettings(); ?>;
 
 ///////////////////////
 // String.trim Polyfill
@@ -382,7 +383,9 @@ require([
             cart = data.cart;
             create_request = null;
 
-            var prefill = isObject(data.hints.prefill) ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
+            var prefill = isObject(data.hints.prefill) ?
+                deepMergeObjects(hints.prefill, data.hints.prefill)
+                : hints.prefill;
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 

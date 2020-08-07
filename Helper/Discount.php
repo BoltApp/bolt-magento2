@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -30,7 +30,6 @@ use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-
 
 /**
  * Boltpay Discount helper class
@@ -60,32 +59,47 @@ class Discount extends AbstractHelper
     /**
      * @var ThirdPartyModuleFactory
      */
+    protected $amastyLegacyAccountFactory;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyLegacyGiftCardManagement;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyLegacyQuoteFactory;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyLegacyQuoteResource;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyLegacyQuoteRepository;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $amastyLegacyAccountCollection;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
     protected $amastyAccountFactory;
-
+    
     /**
      * @var ThirdPartyModuleFactory
      */
-    private $amastyGiftCardManagement;
-
+    protected $amastyGiftCardAccountManagement;
+    
     /**
      * @var ThirdPartyModuleFactory
      */
-    protected $amastyQuoteFactory;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyQuoteResource;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyQuoteRepository;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyAccountCollection;
+    protected $amastyGiftCardAccountCollection;
 
     /**
      * @var ThirdPartyModuleFactory
@@ -189,12 +203,15 @@ class Discount extends AbstractHelper
      *
      * @param Context                 $context
      * @param ResourceConnection      $resource
+     * @param ThirdPartyModuleFactory $amastyLegacyAccountFactory
+     * @param ThirdPartyModuleFactory $amastyLegacyGiftCardManagement
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteFactory
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteResource
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteRepository
+     * @param ThirdPartyModuleFactory $amastyLegacyAccountCollection
      * @param ThirdPartyModuleFactory $amastyAccountFactory
-     * @param ThirdPartyModuleFactory $amastyGiftCardManagement
-     * @param ThirdPartyModuleFactory $amastyQuoteFactory
-     * @param ThirdPartyModuleFactory $amastyQuoteResource
-     * @param ThirdPartyModuleFactory $amastyQuoteRepository
-     * @param ThirdPartyModuleFactory $amastyAccountCollection
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
      * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
@@ -214,18 +231,19 @@ class Discount extends AbstractHelper
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
         ResourceConnection $resource,
+        ThirdPartyModuleFactory $amastyLegacyAccountFactory,
+        ThirdPartyModuleFactory $amastyLegacyGiftCardManagement,
+        ThirdPartyModuleFactory $amastyLegacyQuoteFactory,
+        ThirdPartyModuleFactory $amastyLegacyQuoteResource,
+        ThirdPartyModuleFactory $amastyLegacyQuoteRepository,
+        ThirdPartyModuleFactory $amastyLegacyAccountCollection,
         ThirdPartyModuleFactory $amastyAccountFactory,
-        ThirdPartyModuleFactory $amastyGiftCardManagement,
-        ThirdPartyModuleFactory $amastyQuoteFactory,
-        ThirdPartyModuleFactory $amastyQuoteResource,
-        ThirdPartyModuleFactory $amastyQuoteRepository,
-        ThirdPartyModuleFactory $amastyAccountCollection,
+        ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
+        ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $mirasvitStoreCreditHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
@@ -248,12 +266,15 @@ class Discount extends AbstractHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
+        $this->amastyLegacyAccountFactory = $amastyLegacyAccountFactory;
+        $this->amastyLegacyGiftCardManagement = $amastyLegacyGiftCardManagement;
+        $this->amastyLegacyQuoteFactory = $amastyLegacyQuoteFactory;
+        $this->amastyLegacyQuoteResource = $amastyLegacyQuoteResource;
+        $this->amastyLegacyQuoteRepository = $amastyLegacyQuoteRepository;
+        $this->amastyLegacyAccountCollection = $amastyLegacyAccountCollection;
         $this->amastyAccountFactory = $amastyAccountFactory;
-        $this->amastyGiftCardManagement = $amastyGiftCardManagement;
-        $this->amastyQuoteFactory = $amastyQuoteFactory;
-        $this->amastyQuoteResource = $amastyQuoteResource;
-        $this->amastyQuoteRepository = $amastyQuoteRepository;
-        $this->amastyAccountCollection = $amastyAccountCollection;
+        $this->amastyGiftCardAccountManagement = $amastyGiftCardAccountManagement;
+        $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
@@ -274,16 +295,7 @@ class Discount extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
     }
-
-    /**
-     * Check whether the Amasty Gift Card module is available (installed and enabled)
-     * @return bool
-     */
-    public function isAmastyGiftCardAvailable()
-    {
-        return $this->amastyAccountFactory->isAvailable();
-    }
-
+    
     /**
      * Collect and update quote totals.
      * @param Quote $quote
@@ -298,6 +310,24 @@ class Discount extends AbstractHelper
     }
 
     /**
+     * Check whether the Amasty Gift Card module is available (installed and enabled)
+     * @return bool
+     */
+    public function isAmastyGiftCardAvailable()
+    {
+        return ($this->amastyAccountFactory->isAvailable() || $this->amastyLegacyAccountFactory->isAvailable());
+    }
+    
+    /**
+     * Check whether the Amasty Gift Card module is legacy version
+     * @return bool
+     */
+    public function isAmastyGiftCardLegacyVersion()
+    {
+        return $this->amastyLegacyAccountFactory->isExists();
+    }
+
+    /**
      * Load Amasty Gift Card account object.
      * @param string $code Gift Card coupon code
      * @param string|int $websiteId
@@ -309,10 +339,17 @@ class Discount extends AbstractHelper
             if (!$this->isAmastyGiftCardAvailable()) {
                 return null;
             }
-
-            $accountModel = $this->amastyAccountFactory->getInstance()
-                ->create()
-                ->loadByCode($code);
+            
+            if ($this->isAmastyGiftCardLegacyVersion()) {
+                $accountModel = $this->amastyLegacyAccountFactory->getInstance()
+                    ->create()
+                    ->loadByCode($code);
+            } else {
+                $accountModel = $this->amastyAccountFactory->getInstance()
+                    ->create()
+                    ->getByCode($code);    
+            }
+                
             return $accountModel && $accountModel->getId()
                    && (! $accountModel->getWebsiteId() || $accountModel->getWebsiteId() == $websiteId)
                    ? $accountModel : null;
@@ -325,61 +362,80 @@ class Discount extends AbstractHelper
      * Apply Amasty Gift Card coupon to cart
      *
      * @param string $code Gift Card coupon code
-     * @param \Amasty\GiftCard\Model\Account $accountModel
+     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Account $accountModel
      * @param Quote $quote
      * @return float
      * @throws LocalizedException
      */
     public function applyAmastyGiftCard($code, $accountModel, $quote)
     {
+        if (!$this->isAmastyGiftCardAvailable()) {
+            return null;
+        }
+            
         // Get current gift card balance before applying it to the quote
         // in case "fixed_amount" / "pay for everything" discount type is used
         $giftAmount = $accountModel->getCurrentValue();
 
         $quoteId = $quote->getId();
+        
+        if ($this->isAmastyGiftCardLegacyVersion()) {
+            $isValid = $this->amastyLegacyGiftCardManagement->getInstance()->validateCode($quote, $code);
 
-        $isValid = $this->amastyGiftCardManagement->getInstance()->validateCode($quote, $code);
-
-        if (!$isValid) {
-            throw new LocalizedException(__('Coupon with specified code "%1" is not valid.', $code));
-        }
-
-        if ($accountModel->canApplyCardForQuote($quote)) {
-            $quoteGiftCard = $this->amastyQuoteFactory->getInstance()->create();
-            $this->amastyQuoteResource->getInstance()->load($quoteGiftCard, $quoteId, 'quote_id');
-            $subtotal = $quoteGiftCard->getSubtotal($quote);
-
-            if ($quoteGiftCard->getCodeId() && $accountModel->getCodeId() == $quoteGiftCard->getCodeId()) {
-
-                throw new LocalizedException(__('This gift card account is already in the quote.'));
-
-            } elseif ($quoteGiftCard->getGiftAmount() && $subtotal == $quoteGiftCard->getGiftAmount()) {
-
-                throw new LocalizedException(__('Gift card can\'t be applied. Maximum discount reached.'));
-
-            } else {
-                $quoteGiftCard->unsetData($quoteGiftCard->getIdFieldName());
-                $quoteGiftCard->setQuoteId($quoteId);
-                $quoteGiftCard->setCodeId($accountModel->getCodeId());
-                $quoteGiftCard->setAccountId($accountModel->getId());
-
-                $this->amastyQuoteRepository->getInstance()->save($quoteGiftCard);
-                $this->updateTotals($quote);
-
-                if ($this->getAmastyPayForEverything()) {
-                    // pay for everything, items, shipping, tax
-                    return $giftAmount;
+            if (!$isValid) {
+                throw new LocalizedException(__('Coupon with specified code "%1" is not valid.', $code));
+            }
+    
+            if ($accountModel->canApplyCardForQuote($quote)) {
+                $quoteGiftCard = $this->amastyLegacyQuoteFactory->getInstance()->create();
+                $this->amastyLegacyQuoteResource->getInstance()->load($quoteGiftCard, $quoteId, 'quote_id');
+                $subtotal = $quoteGiftCard->getSubtotal($quote);
+    
+                if ($quoteGiftCard->getCodeId() && $accountModel->getCodeId() == $quoteGiftCard->getCodeId()) {
+    
+                    throw new LocalizedException(__('This gift card account is already in the quote.'));
+    
+                } elseif ($quoteGiftCard->getGiftAmount() && $subtotal == $quoteGiftCard->getGiftAmount()) {
+    
+                    throw new LocalizedException(__('Gift card can\'t be applied. Maximum discount reached.'));
+    
                 } else {
-                    // pay for items only
-                    $totals = $quote->getTotals();
-                    return $totals[self::AMASTY_GIFTCARD]->getValue();
+                    $quoteGiftCard->unsetData($quoteGiftCard->getIdFieldName());
+                    $quoteGiftCard->setQuoteId($quoteId);
+                    $quoteGiftCard->setCodeId($accountModel->getCodeId());
+                    $quoteGiftCard->setAccountId($accountModel->getId());
+    
+                    $this->amastyLegacyQuoteRepository->getInstance()->save($quoteGiftCard);
+                    $this->updateTotals($quote);
+    
+                    if ($this->getAmastyPayForEverything()) {
+                        // pay for everything, items, shipping, tax
+                        return $giftAmount;
+                    } else {
+                        // pay for items only
+                        $totals = $quote->getTotals();
+                        return $totals[self::AMASTY_GIFTCARD]->getValue();
+                    }
                 }
+            } else {
+                throw new LocalizedException(__('Gift card can\'t be applied.'));
             }
         } else {
-            throw new LocalizedException(__('Gift card can\'t be applied.'));
-        }
-    }
+            $giftCardCode = $this->amastyGiftCardAccountManagement->getInstance()->applyGiftCardToCart($quoteId, $code);
+            
+            if ($this->getAmastyPayForEverything()) {
+                // pay for everything, items, shipping, tax
+                return $giftAmount;
+            } else {
+                $activeQuote = $this->quoteRepository->getActive($quoteId);
+                // pay for items only
+                $totals = $activeQuote->getTotals();
 
+                return $totals[self::AMASTY_GIFTCARD]->getValue();
+            }
+        }        
+    }
+    
     /**
      * Copy Amasty Gift Cart data from source to destination quote
      *
@@ -394,16 +450,30 @@ class Discount extends AbstractHelper
         $connection = $this->resource->getConnection();
         $connection->beginTransaction();
         try {
-            $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            if ($this->isAmastyGiftCardLegacyVersion()) {
+                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
 
-            // Clear previously applied gift cart codes from the immutable quote
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
-            $connection->query($sql, ['destination_quote_id' => $destinationQuoteId]);
+                // Clear previously applied gift cart codes from the immutable quote
+                $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
+                $connection->query($sql, ['destination_quote_id' => $destinationQuoteId]);
+    
+                // Copy all gift cart codes applied to the parent quote to the immutable quote
+                $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code) 
+                        SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
+                        FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+            } else {
+                $giftCardTable = $this->resource->getTableName('amasty_giftcard_quote');
+    
+                // Clear previously applied gift cart codes from the immutable quote
+                $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
+                $connection->query($sql, ['destination_quote_id' => $destinationQuoteId]);
+    
+                // Copy all gift cart codes applied to the parent quote to the immutable quote
+                $sql = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) 
+                        SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
+                        FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+            }
 
-            // Copy all gift cart codes applied to the parent quote to the immutable quote
-            $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code) 
-                    SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
-                    FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
             $connection->query($sql, ['destination_quote_id' => $destinationQuoteId, 'source_quote_id' => $sourceQuoteId]);
 
             $connection->commit();
@@ -425,7 +495,11 @@ class Discount extends AbstractHelper
         }
         $connection = $this->resource->getConnection();
         try {
-            $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            if ($this->isAmastyGiftCardLegacyVersion()) {
+                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            } else {
+                $giftCardTable = $this->resource->getTableName('amasty_giftcard_quote');    
+            }
 
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
             $bind = [
@@ -450,12 +524,18 @@ class Discount extends AbstractHelper
         }
         $connection = $this->resource->getConnection();
         try {
-            $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            if ($this->isAmastyGiftCardLegacyVersion()) {
+                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            } else {
+                $giftCardTable = $this->resource->getTableName('amasty_giftcard_quote');    
+            }
+
             $quoteTable = $this->resource->getTableName('quote');
 
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+            
             $bind = [
                 'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
                 'entity_id' => $quote->getBoltParentQuoteId()
@@ -478,15 +558,38 @@ class Discount extends AbstractHelper
         if (! $this->isAmastyGiftCardAvailable()) {
             return;
         }
-        $connection = $this->resource->getConnection();
+        
         try {
-            $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
+            $connection = $this->resource->getConnection();
+            if ($this->isAmastyGiftCardLegacyVersion()) {                
+                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
 
-            $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
-            $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
+                $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
+                $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
+    
+                $this->updateTotals($quote);
+            } else {
+                if ($quote->getExtensionAttributes() && $quote->getExtensionAttributes()->getAmGiftcardQuote()) {
+                    $cards = $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards();
+                }
 
-            $this->updateTotals($quote);
+                $giftCodeExists = false;
+                $giftCode = '';
+                foreach ($cards as $k => $card) {
+                    if($card['id'] == $codeId) {
+                        $giftCodeExists = true;
+                        $giftCode = $card['code'];
+                        break;
+                    }
+                }
+                
+                if($giftCodeExists) {
+                    $this->amastyGiftCardAccountManagement->getInstance()->removeGiftCardFromCart($quote->getId(), $giftCode);                   
+                }                
+            }
         } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnag->notifyException($e);
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
     }
@@ -529,13 +632,30 @@ class Discount extends AbstractHelper
      */
     public function getAmastyGiftCardCodesCurrentValue($giftCardCodes)
     {
-        $data = $this->amastyAccountCollection
-            ->getInstance()
-            ->joinCode()
-            ->addFieldToFilter('gift_code', ['in'=>$giftCardCodes])
-            ->getData();
-
-        return array_sum(array_column($data, 'current_value'));
+        if (! $this->isAmastyGiftCardAvailable()) {
+            return;
+        }
+        
+        try {
+            if ($this->isAmastyGiftCardLegacyVersion()) {
+                $data = $this->amastyLegacyAccountCollection
+                    ->getInstance()
+                    ->joinCode()
+                    ->addFieldToFilter('gift_code', ['in'=>$giftCardCodes])
+                    ->getData();
+            } else {
+                $data = $this->amastyGiftCardAccountCollection
+                    ->getInstance()
+                    ->addCodeTable()
+                    ->addFieldToFilter('code', ['in'=>$giftCardCodes])
+                    ->getData();    
+            }        
+    
+            return array_sum(array_column($data, 'current_value'));
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            return null;
+        }
     }
 
 
@@ -588,7 +708,7 @@ class Discount extends AbstractHelper
      */
     public function getBssStoreCreditAmount($immutableQuote, $parentQuote)
     {
-        try{
+        try {
             $bssStoreCreditHelper = $this->bssStoreCreditHelper->getInstance();
             $isAppliedToShippingAndTax = $bssStoreCreditHelper->getGeneralConfig('used_shipping') || $bssStoreCreditHelper->getGeneralConfig('used_tax');
 
@@ -596,11 +716,12 @@ class Discount extends AbstractHelper
             if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {
                 $storeCreditAmount = $this->getBssStoreCreditBalanceAmount($parentQuote);
                 $parentQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
-                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();;
+                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
+                ;
             }
 
             return $storeCreditAmount;
-        }catch (\Exception $exception){
+        } catch (\Exception $exception) {
             $this->bugsnag->notifyException($exception);
             return 0;
         }
@@ -646,10 +767,10 @@ class Discount extends AbstractHelper
     public function getMirasvitStoreCreditAmount($quote, $paymentOnly = false)
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
-        if(!$paymentOnly){
+        if (!$paymentOnly) {
             /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
             $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()){
+            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;
             }
         }
@@ -697,8 +818,9 @@ class Discount extends AbstractHelper
      *
      * @return bool
      */
-    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer){
-        if(!$this->mirasvitStoreCreditConfig->isAvailable()){
+    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer)
+    {
+        if (!$this->mirasvitStoreCreditConfig->isAvailable()) {
             return false;
         }
 
@@ -712,7 +834,9 @@ class Discount extends AbstractHelper
             ) {
                 return true;
             }
-        }catch (\Exception $e){}
+        } catch (\Exception $e) {
+
+        }
 
         return false;
     }
@@ -729,7 +853,9 @@ class Discount extends AbstractHelper
         /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
         $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
 
-        if (!$mirasvitRewardsPurchaseHelper) { return 0; }
+        if (!$mirasvitRewardsPurchaseHelper) {
+            return 0;
+        }
 
         $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
         return $miravitRewardsPurchase->getSpendAmount();
@@ -824,10 +950,10 @@ class Discount extends AbstractHelper
             $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
             $code = $accountModel->getCode();
 
-            if($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
+            if ($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
                 unset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code]);
                 $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
-                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, NULL);
+                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, null);
                 $this->updateTotals($quote);
             }
 
@@ -882,7 +1008,7 @@ class Discount extends AbstractHelper
                     }
                 }
             }
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
     }
@@ -1016,7 +1142,8 @@ class Discount extends AbstractHelper
      *
      * @param Quote $quote
      */
-    public function applyExternalDiscountData($quote) {
+    public function applyExternalDiscountData($quote)
+    {
         // Amasty reward points are held in a separate table
         // and are not assigned to the quote / totals directly out of the customer session.
         $this->setAmastyRewardPoints($quote);
@@ -1045,7 +1172,7 @@ class Discount extends AbstractHelper
 
         try {
             $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
-            if(abs($parentPurchase->getSpendAmount()) > 0){
+            if (abs($parentPurchase->getSpendAmount()) > 0) {
                 $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
                     ->setSpendPoints($parentPurchase->getSpendPoints())
                     ->setSpendMinAmount($parentPurchase->getSpendMinAmount())

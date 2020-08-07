@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -85,7 +85,9 @@ class DeactivateQuoteTest extends TestCase
         $this->resourceConnection->expects(self::once())->method('getConnection')->willReturn($this->connection);
 
         $this->resourceConnection->method('getTableName')->withConsecutive(
-            ['quote'], ['sales_order'], ['sales_order_payment']
+            ['quote'],
+            ['sales_order'],
+            ['sales_order_payment']
         )->willReturnOnConsecutiveCalls('quote', 'sales_order', 'sales_order_payment');
 
         $this->connection->expects(self::once())->method('query')->will($this->returnCallback(
@@ -95,16 +97,14 @@ class DeactivateQuoteTest extends TestCase
                     $data
                 );
             }
-        )
-        );
+        ));
 
         if ($data['exception']) {
             $this->connection->expects(self::once())->method('query')->willThrowException(new \Exception($data['exception']));
             $this->bugsnag->expects(self::once())->method('notifyException')->will(
                 $this->returnCallback(
                     function ($data) {
-                        $this->assertEquals(__('Error when run query'),$data->getMessage());
-
+                        $this->assertEquals(__('Error when run query'), $data->getMessage());
                     }
                 )
             );
@@ -127,8 +127,5 @@ class DeactivateQuoteTest extends TestCase
             ]
             ]
         ];
-
-
     }
-
 }

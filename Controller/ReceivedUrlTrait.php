@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -65,6 +65,7 @@ trait ReceivedUrlTrait
         $boltPayload = $this->getRequest()->getParam('bolt_payload');
         $storeId = $this->getRequest()->getParam('store_id');
 
+        // phpcs:ignore
         $signature = base64_decode($boltSignature);
 
         $signingSecret = $this->configHelper->getSigningSecret($storeId);
@@ -74,6 +75,7 @@ trait ReceivedUrlTrait
 
         if ($signature === $hash) {
             try {
+                // phpcs:ignore
                 $payload = base64_decode($boltPayload);
                 $payloadArray = json_decode($payload, true);
                 $incrementId = $this->getIncrementIdFromPayload($payloadArray);
@@ -209,8 +211,7 @@ trait ReceivedUrlTrait
 
     /**
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @return false|Quote
      */
     private function getQuoteById($quoteId)
     {

@@ -11,19 +11,17 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab;
+
 use Magento\Customer\Controller\RegistryConstants;
 use Magento\Ui\Component\Layout\Tabs\TabInterface;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Registry;
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Block\Adminhtml\Edit\Tab
- */
+
 class CreditCard extends \Magento\Backend\Block\Template implements TabInterface
 {
     /**

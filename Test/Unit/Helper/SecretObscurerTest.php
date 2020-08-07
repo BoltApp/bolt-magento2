@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -22,28 +22,27 @@ use PHPUnit\Framework\TestCase;
 
 class SecretObscurerTest extends TestCase
 {
-	/**
-	 * @test
-	 */
-	public function obscure_empty()
-	{
-		$this->assertEquals('', SecretObscurer::obscure(''));
-	}
+    /**
+     * @test
+     */
+    public function obscure_empty()
+    {
+        $this->assertEquals('', SecretObscurer::obscure(''));
+    }
 
-	/**
-	 * @test
-	 */
-	public function obscure_short_string()
-	{
-		$this->assertEquals('***', SecretObscurer::obscure('abcde'));
-	}
+    /**
+     * @test
+     */
+    public function obscure_short_string()
+    {
+        $this->assertEquals('***', SecretObscurer::obscure('abcde'));
+    }
 
-	/**
-	 * @test
-	 */
-	public function obscure_long_string()
-	{
-		$this->assertEquals('aaa***bbb', SecretObscurer::obscure('aaaabbbb'));
-	}
-
+    /**
+     * @test
+     */
+    public function obscure_long_string()
+    {
+        $this->assertEquals('aaa***bbb', SecretObscurer::obscure('aaaabbbb'));
+    }
 }

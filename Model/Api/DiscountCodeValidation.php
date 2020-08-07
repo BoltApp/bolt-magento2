@@ -11,13 +11,14 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
@@ -165,6 +166,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var OrderHelper
      */
     protected $orderHelper;
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
 
     /**
      * DiscountCodeValidation constructor.
@@ -192,6 +197,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param RegionModel             $regionModel
      * @param TotalsCollector         $totalsCollector
      * @param OrderHelper             $orderHelper
+     * @param CacheInterface          $cache
      */
     public function __construct(
         Request $request,
@@ -216,7 +222,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         DiscountHelper $discountHelper,
         RegionModel $regionModel,
         TotalsCollector $totalsCollector,
-        OrderHelper $orderHelper
+        OrderHelper $orderHelper,
+        CacheInterface $cache = null
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -241,6 +248,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->regionModel = $regionModel;
         $this->totalsCollector = $totalsCollector;
         $this->orderHelper = $orderHelper;
+        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Framework\App\CacheInterface::class);
     }
 
     /**
@@ -272,7 +281,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     }
 
                     /** @var Quote $parentQuote */
-                    If ($immutableQuoteId == $parentQuoteId) {
+                    if ($immutableQuoteId == $parentQuoteId) {
                         // Product Page Checkout - quotes are created as inactive
                         $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
                     } else {
@@ -451,6 +460,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 // Already sent a response with error, so just return.
                 return false;
             }
+
+            //remove previously cached Bolt order since we altered related immutable quote by applying a discount
+            $this->cache->clean([CartHelper::BOLT_ORDER_TAG . '_' . $parentQuoteId]);
 
             $this->sendSuccessResponse($result, $immutableQuote);
         } catch (WebApiException $e) {
@@ -685,7 +697,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account) {
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)
@@ -725,7 +737,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 );
 
                 $giftAmount = $giftCard->getBalance();
-            }elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
+            } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
                 // Remove Mageplaza Gift Card if it was already applied
                 // to avoid errors on multiple calls to the discount validation API
                 // (e.g. changing the address, going back and forth)

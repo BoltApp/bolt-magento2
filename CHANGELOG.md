@@ -131,3 +131,26 @@
  - Added custom url validation
  - Bug fixes
  - Unit tests
+## [v2.8.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.8.1) 2020-06-11
+ - Fix PPC javascript error in Magento 2 version 2.3.5
+ - Fix unknown RevertGiftCardAccountBalance error
+## [v2.9.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.9.0) 2020-06-17
+ - Fix display of APM/Paypal transactions within Magento 2 dashboard
+ - Always-present checkout button improvements
+ - Update to method to save Bolt cart in to be more robust
+ - Added support for tracking non-Bolt order shipments.
+ - Code maintainability refactoring
+ - Bug fixes
+## [v2.10.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.10.0) 2020-07-20
+ - Fixes for latency regressions introduced in 2.9.0
+ - Refactoring to optimize number of calls made on page loading
+ - Customization branch restructuring
+ - Bug fixes
+ ## [v2.11.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.11.0) 2020-07-29
+ - Improve support for bolt order management (beta)
+ - Bug fixes
+ ## [v2.12.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.12.0) 2020-08-12
+ - Improve support for bolt order management (beta)
+ - Add support for plugin Amasty giftcard 2.0.0
+ - Support for gift wrapping info
+ - Bug fixes

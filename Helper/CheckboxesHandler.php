@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -52,8 +52,7 @@ class CheckboxesHandler extends AbstractHelper
         Context $context,
         Bugsnag $bugsnag,
         SubscriberFactory $subscriberFactory
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->subscriberFactory = $subscriberFactory;
         $this->bugsnag = $bugsnag;
@@ -71,7 +70,7 @@ class CheckboxesHandler extends AbstractHelper
         $needSubscribe = false;
         foreach ($checkboxes as $checkbox) {
             if ($checkbox['category'] == self::CATEGORY_NEWSLETTER && $checkbox['value']
-                && $checkbox['features'] && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $checkbox['features'])){
+                && $checkbox['features'] && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $checkbox['features'])) {
                 $needSubscribe = true;
             }
             $comment .= '<br>' . $checkbox['text'] . ': ' . ($checkbox['value'] ? 'Yes' : 'No');
@@ -92,7 +91,8 @@ class CheckboxesHandler extends AbstractHelper
      *
      * @param OrderModel $order
      */
-    public function subscribeToNewsletter($order) {
+    public function subscribeToNewsletter($order)
+    {
         $customerId = $order->getCustomerId();
         try {
             if ($customerId) {

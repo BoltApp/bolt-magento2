@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -29,11 +29,6 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 
-/**
- * Class ReceivedUrl
- *
- * @package Bolt\Boltpay\Controller\Order
- */
 class ReceivedUrl extends Action
 {
     use ReceivedUrlTrait;

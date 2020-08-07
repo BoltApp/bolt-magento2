@@ -11,12 +11,11 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Model\Api;
-
 
 use Bolt\Boltpay\Api\FeatureSwitchesHookInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
@@ -32,7 +31,8 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 
-class FeatureSwitchesHook implements FeatureSwitchesHookInterface {
+class FeatureSwitchesHook implements FeatureSwitchesHookInterface
+{
 
     /**
      * @var HookHelper
@@ -104,12 +104,13 @@ class FeatureSwitchesHook implements FeatureSwitchesHookInterface {
      * This webhook handler will reach out to bolt and then store switches on
      * the plugin table for feature switches. It returns only when the entire
      * call is done, i.e. it is a blocking call.
-     * 
+     *
      * @api
      * @return void
      * @throws \Exception
      */
-    public function notifyChanged() {
+    public function notifyChanged()
+    {
         $startTime = $this->metricsClient->getCurrentTime();
         // TODO(roopakv): verify webhook after adding support on bolt side
         // $this->hookHelper
@@ -119,15 +120,18 @@ class FeatureSwitchesHook implements FeatureSwitchesHookInterface {
             $this->fsManager->updateSwitchesFromBolt();
         } catch (\Exception $e) {
             $encodedError =  $this->errorResponse->prepareErrorMessage(
-                BoltErrorResponse::ERR_SERVICE, $e->getMessage()
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage()
             );
             $this->logHelper
                 ->addInfoLog('FeatureSwitchHook: failed updating switches');
             $this->logHelper->addInfoLog($encodedError);
             $this->metricsClient
                 ->processMetric(
-                    "feature_switch.webhook.failure", 1,
-                    "feature_switch.webhook.latency", $startTime
+                    "feature_switch.webhook.failure",
+                    1,
+                    "feature_switch.webhook.latency",
+                    $startTime
                 );
 
             $this->response->setHttpResponseCode(Exception::HTTP_INTERNAL_ERROR);
@@ -136,10 +140,13 @@ class FeatureSwitchesHook implements FeatureSwitchesHookInterface {
             return;
         }
         $this->metricsClient
-            ->processMetric("feature_switch.webhook.success", 1,
-                "feature_switch.webhook.latency", $startTime
+            ->processMetric(
+                "feature_switch.webhook.success",
+                1,
+                "feature_switch.webhook.latency",
+                $startTime
             );
-        $this->response->setBody(json_encode(array("status"=>"success")));
+        $this->response->setBody(json_encode(["status"=>"success"]));
         $this->response->sendResponse();
     }
 }

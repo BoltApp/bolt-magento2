@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -22,6 +22,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin;
 use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin
  */
@@ -106,5 +107,4 @@ class PurchasePluginTest extends TestCase
             ['/rewards/checkout/updatePaymentMethodPost', 0],
         ];
     }
-
 }

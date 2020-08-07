@@ -1,4 +1,19 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Cart;
 
@@ -18,6 +33,11 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend\Log\Filter\Mock;
 
+/**
+ * Class DataTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Cart
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Cart\Data
+ */
 class DataTest extends TestCase
 {
     const PLACE_ORDER_PAYLOAD = 'payload';
@@ -82,27 +102,27 @@ class DataTest extends TestCase
 
     private function initData()
     {
-        $this->happyCartArray = array('orderToken' => self::RESPONSE_TOKEN);
-        $this->happyCartData = array(
-            'cart' => array(
+        $this->happyCartArray = ['orderToken' => self::RESPONSE_TOKEN];
+        $this->happyCartData = [
+            'cart' => [
                 'orderToken' => self::RESPONSE_TOKEN
-                ),
+                ],
             'hints' => self::HINT,
             'publishableKey' => self::PUBLISHABLE_KEY,
             'storeId' => self::STORE_ID,
             'isPreAuth' => self::IS_PREAUTH
-        );
+        ];
 
-        $this->noTokenCartArray = array('orderToken' => '');
-        $this->noTokenCartData = array(
-            'cart' => array(
+        $this->noTokenCartArray = ['orderToken' => ''];
+        $this->noTokenCartData = [
+            'cart' => [
                 'orderToken' => ''
-            ),
+            ],
             'hints' => self::HINT,
             'publishableKey' => self::PUBLISHABLE_KEY,
             'storeId' => self::STORE_ID,
             'isPreAuth' => self::IS_PREAUTH
-        );
+        ];
 
         $this->map = [
             ['place_order_payload', null, self::PLACE_ORDER_PAYLOAD]
@@ -155,6 +175,32 @@ class DataTest extends TestCase
             ->willReturn($json);
         return $resultJsonFactory;
     }
+    
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Data(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient,
+            $this->dataObjectFactory
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
+        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+    }
 
     /**
      * @test
@@ -204,7 +250,7 @@ class DataTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $boltpayOrder->method('getResponse')
-            ->willReturn(array('token' => self::RESPONSE_TOKEN));
+            ->willReturn(['token' => self::RESPONSE_TOKEN]);
 
         $this->cartHelper->method('getBoltpayOrder')
             ->willReturn($boltpayOrder);

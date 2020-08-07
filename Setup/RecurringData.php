@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Setup;
@@ -71,15 +71,18 @@ class RecurringData implements InstallDataInterface
             $this->_fsManager->updateSwitchesFromBolt();
         } catch (\Exception $e) {
             $encodedError =  $this->_errorResponse->prepareErrorMessage(
-                BoltErrorResponse::ERR_SERVICE, $e->getMessage()
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage()
             );
             $this->_logHelper
                 ->addInfoLog('RecurringData: failed updating feature switches');
             $this->_logHelper->addInfoLog($encodedError);
             $this->_metricsClient
                 ->processMetric(
-                    "feature_switch.recurring.failure", 1,
-                    "feature_switch.recurring.latency", $startTime
+                    "feature_switch.recurring.failure",
+                    1,
+                    "feature_switch.recurring.latency",
+                    $startTime
                 );
             return;
         }

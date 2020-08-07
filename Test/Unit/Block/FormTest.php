@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -140,22 +140,25 @@ class FormTest extends \PHPUnit\Framework\TestCase
      * @param $data
      * @dataProvider providerGetCustomerCreditCardInfo
      */
-    public function getCustomerCreditCardInfo($data){
+    public function getCustomerCreditCardInfo($data)
+    {
         $this->addressMock->expects(self::once())->method('getCustomerId')->willReturn($data['customer_id']);
         $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($this->addressMock);
         $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);
 
-        $this->customerCreditCardCollectionFactoryMock->expects(static::any())->method('create')->willReturnSelf();;
+        $this->customerCreditCardCollectionFactoryMock->expects(static::any())->method('create')->willReturnSelf();
+        ;
         $this->customerCreditCardCollectionFactoryMock->expects(static::any())
                 ->method('getCreditCardInfosByCustomerId')
                 ->with($data['customer_id'])
                 ->willReturn([new \Magento\Framework\DataObject()]);
 
         $result = $this->block->getCustomerCreditCardInfo();
-        $this->assertEquals($data['expected'],$result);
+        $this->assertEquals($data['expected'], $result);
     }
 
-    public function providerGetCustomerCreditCardInfo(){
+    public function providerGetCustomerCreditCardInfo()
+    {
         return [
             ['data' => [
                 'customer_id' => '1111',
@@ -173,7 +176,8 @@ class FormTest extends \PHPUnit\Framework\TestCase
     /**
      * @test
      */
-    public function isAdminReorderForLoggedInCustomerFeatureEnabled(){
+    public function isAdminReorderForLoggedInCustomerFeatureEnabled()
+    {
         $this->featureSwitch->expects(static::once())->method('isAdminReorderForLoggedInCustomerFeatureEnabled')->willReturn(true);
         $this->assertTrue($this->block->isAdminReorderForLoggedInCustomerFeatureEnabled());
     }
@@ -181,7 +185,8 @@ class FormTest extends \PHPUnit\Framework\TestCase
     /**
      * @test
      */
-    public function getPublishableKeyBackOfficeShouldReturnConfigValue(){
+    public function getPublishableKeyBackOfficeShouldReturnConfigValue()
+    {
         $this->configHelperMock
             ->method('getPublishableKeyBackOffice')
             ->willReturn("backoffice-key");

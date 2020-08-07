@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -118,12 +118,14 @@ class InvoiceServiceTest extends TestCase
                 'setGrandTotal'
             ]
         );
-        $this->order = $this->createPartialMock(OrderModel::class,
+        $this->order = $this->createPartialMock(
+            OrderModel::class,
             ['getInvoiceCollection']
         );
 
 
-        $this->orderItem = $this->createPartialMock(Item::class,
+        $this->orderItem = $this->createPartialMock(
+            Item::class,
             ['addItem']
         );
 

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -95,8 +95,6 @@ class Hook extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param Bugsnag $bugsnag
      * @param Response $response
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

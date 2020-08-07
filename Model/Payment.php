@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -312,7 +312,7 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (!in_array(@$response->status,['cancelled','completed'])) {
+            if (!in_array(@$response->status, ['cancelled','completed'])) {
                 throw new LocalizedException(__('Payment void error.'));
             }
 
@@ -339,7 +339,8 @@ class Payment extends AbstractMethod
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId) {
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
+    {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
 
@@ -349,17 +350,17 @@ class Payment extends AbstractMethod
                 $payment->getOrder()->getId()
             );
 
-            $transactionDetails   = $transaction->getAdditionalInformation( Transaction::RAW_DETAILS );
+            $transactionDetails   = $transaction->getAdditionalInformation(Transaction::RAW_DETAILS);
             $transactionReference = $transactionDetails['Reference'];
 
-            if ( ! empty( $transactionReference ) ) {
+            if (! empty($transactionReference)) {
                 $order = $payment->getOrder();
-                $this->orderHelper->updateOrderPayment( $order, null, $transactionReference );
+                $this->orderHelper->updateOrderPayment($order, null, $transactionReference);
             }
             $this->metricsClient->processMetric("order_fetch.success", 1, "order_fetch.latency", $startTime);
-        } catch ( \Exception $e ) {
+        } catch (\Exception $e) {
             $this->metricsClient->processMetric("order_fetch.failure", 1, "order_fetch.latency", $startTime);
-            $this->bugsnag->notifyException( $e );
+            $this->bugsnag->notifyException($e);
         } finally {
             return [];
         }
@@ -380,8 +381,19 @@ class Payment extends AbstractMethod
             $startTime = $this->metricsClient->getCurrentTime();
             $order = $payment->getOrder();
 
-            if ($amount <= 0) {
+            if ($amount < 0) {
                 throw new LocalizedException(__('Invalid amount for capture.'));
+            }
+
+            $captureAmount = $this->getCaptureAmount($order, $amount);
+
+            if ($captureAmount < 1) {
+                ////////////////////////////////////////////////////////////////////////////////
+                // In certain circumstances, an amount's value of zero can be sent.
+                // This will then result in an exception by the Bolt API.
+                // In these instances, there is no need to call the Bolt API, so we simply return
+                ////////////////////////////////////////////////////////////////////////////////
+                return $this;
             }
 
             $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -395,7 +407,7 @@ class Payment extends AbstractMethod
             //Get capture data
             $capturedData = [
                 'transaction_id' => $realTransactionId,
-                'amount'         => $this->getCaptureAmount($order, $amount),
+                'amount'         => $captureAmount,
                 'currency'       => $order->getOrderCurrencyCode(),
                 'skip_hook_notification' => true
             ];
@@ -438,11 +450,11 @@ class Payment extends AbstractMethod
     {
         $orderCurrency = $order->getOrderCurrencyCode();
         if ($order->getStoreCurrencyCode() == $orderCurrency) {
-            return CurrencyUtils::toMinor( $amountInStoreCurrency, $orderCurrency );
+            return CurrencyUtils::toMinor($amountInStoreCurrency, $orderCurrency);
         } else {
             // Magento passes $amount in store currency but not in order currency - we have to grab amount from invoice
             $latestInvoice = $order->getInvoiceCollection()->getLastItem();
-            return CurrencyUtils::toMinor( $latestInvoice->getGrandTotal(),$orderCurrency );
+            return CurrencyUtils::toMinor($latestInvoice->getGrandTotal(), $orderCurrency);
         }
     }
 
@@ -469,7 +481,7 @@ class Payment extends AbstractMethod
             $orderCurrency = $order->getOrderCurrencyCode();
             // $amount argument of refund method is in store currency,
             // we need to get amount from credit memo to get the value in order's currency.
-            $refundAmount = CurrencyUtils::toMinorWithoutRounding(
+            $refundAmount = CurrencyUtils::toMinor(
                 $payment->getCreditMemo()->getGrandTotal(),
                 $orderCurrency
             );

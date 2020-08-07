@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -122,8 +122,9 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-	                $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(\Magento\Directory\Model\RegionFactory::class)
+                    $this->createMock(BoltConfigSettingFactory::class),
+                    $this->createMock(\Magento\Directory\Model\RegionFactory::class),
+                    $this->createMock(\Magento\Framework\Composer\ComposerFactory::class)
                 ]
             )
             ->getMock();
@@ -239,7 +240,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected_result, $result);
     }
 
-    public function providerIsGuestCheckoutAllowed() {
+    public function providerIsGuestCheckoutAllowed()
+    {
         return [
             [true,1],
             [false,0],
@@ -249,7 +251,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     /**
      * @test
      */
-    public function getStoreCurrencyCode() {
+    public function getStoreCurrencyCode()
+    {
         $result = $this->block->getStoreCurrencyCode();
         $this->assertEquals(self::CURRENCY_CODE, $result);
     }
@@ -266,7 +269,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($flag, $result);
     }
 
-    public function providerIsSaveHintsInSections() {
+    public function providerIsSaveHintsInSections()
+    {
         return [
             [true],
             [false],

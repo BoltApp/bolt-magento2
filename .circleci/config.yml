@@ -13,7 +13,7 @@ commands:
     steps:
       - slack/notify:
           color: '#58a359'
-          mentions: 'oleksii,Pavel,'
+          mentions: 'pavel,oleksii,'
           message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
           webhook: $SLACK_MAGENTO2_WEBHOOK
           include_job_number_field: false
@@ -50,7 +50,8 @@ commands:
                 command: |
                   mkdir ./artifacts
                   export TEST_ENV=<< parameters.php_version >>
-                  MAGENTO_VERSION=<< parameters.m2_version >> Test/scripts/ci-integration.sh
+                  export MAGENTO_VERSION=<< parameters.m2_version >>
+                  Test/scripts/ci-integration.sh
       - unless:
           condition: << parameters.is_integration >>
           steps:
@@ -60,20 +61,73 @@ commands:
                   mkdir ./artifacts
                   export COMPOSER_MEMORY_LIMIT=3G
                   export TEST_ENV=<< parameters.php_version >>
-                  MAGENTO_VERSION=<< parameters.m2_version >> Test/scripts/ci-unit.sh
+                  export MAGENTO_VERSION=<< parameters.m2_version >>
+                  Test/scripts/ci-unit.sh
       - save_cache:
           key: << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-lock-{{ arch }}-{{ checksum "composer.json" }}
           paths:
             - /home/circleci/.composer/cache/
       - store_artifacts:
           path: ./artifacts
+      - run:
+          name: "Conditionally Notify Greenkeeper"
+          when: on_fail
+          command: |
+            if [[ ${CIRCLE_BRANCH} == "master" ]]; then
+              NOTIFY_FLAG=true
+            else
+              if [[ ${CIRCLE_BRANCH:0:3} == ci/ ]] && grep -n "^${CIRCLE_BRANCH:3}$" ./.circleci/scripts/auto-rebase-branches.txt >> /dev/null ; then
+                NOTIFY_FLAG=true
+              else
+                NOTIFY_FLAG=false
+              fi
+            fi
+            if [ "$NOTIFY_FLAG" == false ]; then
+              circleci-agent step halt
+            fi
       - slack/status:
           fail_only: true
           failure_message: ':red_circle: M2: A $CIRCLE_JOB job has failed!'
-          only_for_branches: master
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
+  m2-php-test-for-merchant-branches:
+    description: PHP Unit tests for M2 on all merchant branches
+    parameters:
+      m2_version:
+        type: enum
+        default: "2.3.0"
+        enum: ["2.2.0", "2.3.0"]
+      php_version:
+        type: enum
+        default: "php72"
+        enum: ["php70", "php71", "php72"]
+      is_integration:
+        type: boolean
+        default: false
+    steps:
+      - checkout
+      - run:
+          name: Tests
+          command: |
+            mkdir ./artifacts
+            export COMPOSER_MEMORY_LIMIT=3G
+            export TEST_ENV=<< parameters.php_version >>
+            export MAGENTO_VERSION=<< parameters.m2_version >>
+            .circleci/scripts/test-merchant-branches.sh ${CIRCLE_BRANCH} << parameters.is_integration >>
+
 jobs:
+  auto-rebase:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Auto-rebase
+          command: bash .circleci/scripts/auto-rebase.sh
+
   tag-release-candidate:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -83,7 +137,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Tag master as release candidate every 3 weeks
+          name: Tag master as release candidate every 2 weeks
           command: .circleci/scripts/tag-rc-if-necessary.sh
       - notify-rc-tag:
           tag: $NEWTAGNAME
@@ -146,6 +200,59 @@ jobs:
           php_version: "php70"
           is_integration: false
 
+  integration-php72-magento23-for-merchant-branches:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    environment:
+      MAGENTO_DIR: magento
+    steps:
+      - m2-php-test-for-merchant-branches:
+          m2_version: "2.3.0"
+          php_version: "php72"
+          is_integration: true
+
+  unit-php72-magento23-for-merchant-branches:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test-for-merchant-branches:
+          m2_version: "2.3.0"
+          php_version: "php72"
+          is_integration: false
+
+  unit-php71-magento22-for-merchant-branches:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php71:2.2.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test-for-merchant-branches:
+          m2_version: "2.2.0"
+          php_version: "php71"
+          is_integration: false
+
+  unit-php70-magento22-for-merchant-branches:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test-for-merchant-branches:
+          m2_version: "2.2.0"
+          php_version: "php70"
+          is_integration: false
+
   phpcs:
     docker:
       - image: circleci/php:7.2-cli
@@ -161,7 +268,7 @@ workflows:
   version: 2
   build:
     jobs:
-      - phpcs
+#      - phpcs
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22
@@ -176,3 +283,16 @@ workflows:
                 - master
     jobs:
       - tag-release-candidate
+  merchant-branch-test:
+    jobs:
+      - unit-php72-magento23-for-merchant-branches
+      - unit-php71-magento22-for-merchant-branches
+      - unit-php70-magento22-for-merchant-branches
+      - integration-php72-magento23-for-merchant-branches
+  auto-rebase:
+    jobs:
+      - auto-rebase:
+          filters:
+            branches:
+              only:
+                - master

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -23,18 +23,12 @@ use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class Data.
  * Create Bolt order controller.
  *
- * Called from the replace.phtml javascript block on checklout button click.
- *
- * @package Bolt\Boltpay\Controller\Cart
+ * Called from the replace.phtml javascript block on checkout button click.
  */
 class Data extends Action
 {
@@ -49,44 +43,18 @@ class Data extends Action
     private $cartHelper;
 
     /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var MetricsClient
-     */
-    private $metricsClient;
-
-    /**
      * @param Context $context
      * @param JsonFactory $resultJsonFactory
      * @param CartHelper $cartHelper
-     * @param ConfigHelper $configHelper
-     * @param Bugsnag $bugsnag
-     * @param MetricsClient $metricsClient
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
         JsonFactory $resultJsonFactory,
-        CartHelper $cartHelper,
-        ConfigHelper $configHelper,
-        Bugsnag $bugsnag,
-        MetricsClient $metricsClient
+        CartHelper $cartHelper
     ) {
         parent::__construct($context);
         $this->resultJsonFactory = $resultJsonFactory;
         $this->cartHelper        = $cartHelper;
-        $this->configHelper      = $configHelper;
-        $this->bugsnag           = $bugsnag;
-        $this->metricsClient   = $metricsClient;
     }
 
     /**
@@ -97,78 +65,14 @@ class Data extends Action
      */
     public function execute()
     {
-        $startTime = $this->metricsClient->getCurrentTime();
         $result = $this->resultJsonFactory->create();
+        $paymentOnly = $this->getRequest()->getParam('payment_only');
+        // additional data collected from the (one page checkout) page,
+        // i.e. billing address to be saved with the order
+        $placeOrderPayload = $this->getRequest()->getParam('place_order_payload');
+        $data   = $this->cartHelper->calculateCartAndHints($paymentOnly, $placeOrderPayload);
+        $result->setData($data);
 
-        try {
-            if ($this->cartHelper->hasProductRestrictions()) {
-                throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
-            }
-
-            if (!$this->cartHelper->isCheckoutAllowed()) {
-                throw new BoltException(__('Guest checkout is not allowed.'));
-            }
-
-            // flag to determinate the type of checkout / data sent to Bolt
-            $payment_only = $this->getRequest()->getParam('payment_only');
-            // additional data collected from the (one page checkout) page,
-            // i.e. billing address to be saved with the order
-            $place_order_payload = $this->getRequest()->getParam('place_order_payload');
-            // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder($payment_only, $place_order_payload);
-
-            // format and send the response
-            $response = $boltpayOrder ? $boltpayOrder->getResponse() : null;
-
-            if ($response) {
-                $responseData = json_decode(json_encode($response), true);
-                $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
-            } else {
-                // Empty cart - order_token not fetched because doesn't exist. Not a failure.
-                $responseData['cart'] = [];
-            }
-
-            // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
-
-            $cart = array_merge($responseData['cart'], [
-                'orderToken'    => $response ? $responseData['token'] : '',
-                'cartReference' => $cartReference,
-            ]);
-
-            if (isset($cart['currency']['currency']) && $cart['currency']['currency']) {
-                // cart data validation requirement
-                $cart['currency']['currency_code'] = $cart['currency']['currency'];
-            }
-
-            $hints = $this->cartHelper->getHints($cartReference, 'cart');
-
-            $result->setData([
-                'status' => 'success',
-                'cart' => $cart,
-                'hints' => $hints,
-                'backUrl' => '',
-            ]);
-        } catch (BoltException $e) {
-            $this->bugsnag->notifyException($e);
-            $result->setData([
-                'status' => 'success',
-                'restrict' => true,
-                'message' => $e->getMessage(),
-                'backUrl' => '',
-            ]);
-            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
-        } catch (Exception $e) {
-            $this->bugsnag->notifyException($e);
-
-            $result->setData([
-                'status' => 'failure',
-                'message' => $e->getMessage(),
-                'backUrl' => '',
-            ]);
-            $this->metricsClient->processMetric("order_token.failure", 1,"order_token.latency", $startTime);
-        } finally {
-            return $result;
-        }
+        return $result;
     }
 }

@@ -34,7 +34,7 @@ class TestHelper extends TestCase
      * @return mixed
      * @throws \ReflectionException
      */
-    public static function invokeMethod($object, $methodName, array $parameters = array())
+    public static function invokeMethod($object, $methodName, array $parameters = [])
     {
         try {
             $reflectedMethod = self::getReflectedClass($object)->getMethod($methodName);
@@ -42,7 +42,7 @@ class TestHelper extends TestCase
 
             return $reflectedMethod->invokeArgs(is_object($object) ? $object : null, $parameters);
         } finally {
-            if ( $reflectedMethod && ($reflectedMethod->isProtected() || $reflectedMethod->isPrivate()) ) {
+            if ($reflectedMethod && ($reflectedMethod->isProtected() || $reflectedMethod->isPrivate())) {
                 $reflectedMethod->setAccessible(false);
             }
         }
@@ -103,4 +103,45 @@ class TestHelper extends TestCase
         }
     }
 
+    /**
+     * Generates all boolean combination for provided length
+     * we convert integers from 0 to (pow(2, N) - 1) into binary representation ['0000', '0001', '0010'...]
+     * then split each representation into array of bits [[0,0,0,0], [0,0,0,1], [0,0,1,0]]
+     * which are then casted into booleans
+     * [
+     *     [false, false, false, false],
+     *     [false, false, false, true],
+     *     [false, false, true, false],
+     *     ...
+     * ]
+     * @param int $length of each combination
+     *
+     * @return bool[][]
+     */
+    public static function getAllBooleanCombinations($length)
+    {
+        $numberOfIntegers = pow(2, $length);
+        $result = [];
+        for ($i = 0; $i < $numberOfIntegers; $i++) {
+            //get binary representation of the number
+            $binaryRepresentation = decbin($i);
+            //pad binary representation to $length by adding 0s at the beginning
+            $binaryRepresentation = str_repeat(0, $length - strlen($binaryRepresentation)) . $binaryRepresentation;
+            //split each bit of the binary representation, cast to boolean and add to output
+            $result[$binaryRepresentation] = array_map('boolval', str_split($binaryRepresentation, 1));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $class
+     * @param $data
+     * @return mixed
+     */
+    public static function serialize ($class, $data){
+        return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
+            ->getObject(\Magento\Framework\Serialize\Serializer\Serialize::class)->serialize($data);
+    }
 }
+class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -27,7 +27,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
- * Js Block. The block class used in replace.phtml and track.phtml blocks.
+ * Js Block. The block class used in track.phtml block.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
@@ -43,20 +43,20 @@ class Js extends Template
      */
     private $cartHelper;
 
-     /** @var Bugsnag  Bug logging interface*/
+    /** @var Bugsnag  Bug logging interface */
     private $bugsnag;
 
     /** @var array */
-    static $blockAlreadyShown;
+    private static $blockAlreadyShown;
 
     /**
-     * @param Context         $context
-     * @param Config          $configHelper
+     * @param Context $context
+     * @param Config $configHelper
      * @param CheckoutSession $checkoutSession
-     * @param CartHelper      $cartHelper
-     * @param Bugsnag         $bugsnag;
-     * @param Decider         $featureSwitches
-     * @param array           $data
+     * @param CartHelper $cartHelper
+     * @param Bugsnag $bugsnag
+     * @param Decider $featureSwitches
+     * @param array $data
      */
     public function __construct(
         Context $context,
@@ -84,7 +84,7 @@ class Js extends Template
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
 
-        return $cdnUrl.'/track.js';
+        return $cdnUrl . '/track.js';
     }
 
     /**
@@ -96,7 +96,7 @@ class Js extends Template
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
 
-        return $cdnUrl.'/connect.js';
+        return $cdnUrl . '/connect.js';
     }
 
     /**
@@ -107,7 +107,7 @@ class Js extends Template
     public function getPayByLinkUrl()
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
-        return $cdnUrl.'/checkout';
+        return $cdnUrl . '/checkout';
     }
 
     /**
@@ -117,7 +117,8 @@ class Js extends Template
     public function enableAlwaysPresentCheckoutButton()
     {
         $storeId = $this->getStoreId();
-        return $this->configHelper->isAlwaysPresentCheckoutEnabled($storeId) && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
+        return $this->configHelper->isAlwaysPresentCheckoutEnabled($storeId)
+            && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
     }
 
     /**
@@ -129,7 +130,7 @@ class Js extends Template
     {
         $cdnUrl = $this->configHelper->getCdnUrl();
 
-        return $cdnUrl.'/account.js';
+        return $cdnUrl . '/account.js';
     }
 
     /**
@@ -139,7 +140,8 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
+        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled()
+            && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
         $subject = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
 
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
@@ -168,9 +170,19 @@ class Js extends Template
     }
 
     /**
-     * Get Replace Button Selectors.
+     * Get Additional button attributes
      *
-     * @return string
+     * @return object|array Button attributes object or empty array if not provided
+     */
+    public function getAdditionalCheckoutButtonAttributes()
+    {
+        return $this->configHelper->getAdditionalCheckoutButtonAttributes();
+    }
+
+    /**
+     * Get the global CSS to be added to any page that displays the Bolt Checkout button.
+     *
+     * @return string global CSS
      */
     public function getGlobalCSS()
     {
@@ -216,7 +228,7 @@ class Js extends Template
      */
     public function getIsInstantCheckoutButton()
     {
-        return (bool)$this->featureSwitches->isInstantCheckoutButton();
+        return $this->featureSwitches->isInstantCheckoutButton();
     }
 
     /**
@@ -226,29 +238,32 @@ class Js extends Template
     public function getSettings()
     {
         return json_encode([
-            'connect_url'              => $this->getConnectJsUrl(),
-            'publishable_key_payment'  => $this->configHelper->getPublishableKeyPayment(),
+            'connect_url' => $this->getConnectJsUrl(),
+            'publishable_key_payment' => $this->configHelper->getPublishableKeyPayment(),
             'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
             'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
-            'create_order_url'         => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url'           => $this->getUrl(Config::SAVE_ORDER_ACTION),
-            'get_hints_url'            => $this->getUrl(Config::GET_HINTS_ACTION),
-            'selectors'                => $this->getReplaceSelectors(),
-            'shipping_prefetch_url'    => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping'        => $this->configHelper->getPrefetchShipping(),
-            'save_email_url'           => $this->getUrl(Config::SAVE_EMAIL_ACTION),
-            'pay_by_link_url'          => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
-            'quote_is_virtual'         => $this->getQuoteIsVirtual(),
-            'totals_change_selectors'  => $this->getTotalsChangeSelectors(),
+            'create_order_url' => $this->getUrl(Config::CREATE_ORDER_ACTION),
+            'save_order_url' => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'get_hints_url' => $this->getUrl(Config::GET_HINTS_ACTION),
+            'selectors' => $this->getReplaceSelectors(),
+            'shipping_prefetch_url' => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
+            'prefetch_shipping' => $this->configHelper->getPrefetchShipping(),
+            'save_email_url' => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'pay_by_link_url' => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
+            'quote_is_virtual' => $this->getQuoteIsVirtual(),
+            'totals_change_selectors' => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
-            'initiate_checkout'        => $this->getInitiateCheckout(),
-            'toggle_checkout'          => $this->getToggleCheckout(),
-            'is_pre_auth'              => $this->getIsPreAuth(),
-            'default_error_message'    => $this->getBoltPopupErrorMessage(),
-            'button_css_styles'        => $this->getButtonCssStyles(),
+            'additional_checkout_button_attributes' => $this->getAdditionalCheckoutButtonAttributes(),
+            'initiate_checkout' => $this->getInitiateCheckout(),
+            'toggle_checkout' => $this->getToggleCheckout(),
+            'is_pre_auth' => $this->getIsPreAuth(),
+            'default_error_message' => $this->getBoltPopupErrorMessage(),
+            'button_css_styles' => $this->getButtonCssStyles(),
             'is_instant_checkout_button' => $this->getIsInstantCheckoutButton(),
-            'cdn_url'                  => $this->configHelper->getCdnUrl(),
-            'always_present_checkout'  => $this->enableAlwaysPresentCheckoutButton(),
+            'cdn_url' => $this->configHelper->getCdnUrl(),
+            'always_present_checkout' => $this->enableAlwaysPresentCheckoutButton(),
+            'account_url' => $this->getAccountJsUrl(),
+            'order_management_selector' => $this->getOrderManagementSelector(),
         ]);
     }
 
@@ -268,9 +283,10 @@ class Js extends Template
     public function getBoltPopupErrorMessage()
     {
         $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?:
-                         $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '' ;
+            $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '';
         return __('Your payment was successful and we\'re now processing your order.' .
-        'If you don\'t receive order confirmation email in next 30 minutes, please contact us at '.$contact_email.'.');
+            'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' .
+            $contact_email . '.');
     }
 
     /**
@@ -281,9 +297,9 @@ class Js extends Template
         return [
             'checkout_start' => $this->getOnCheckoutStart(),
             'email_enter' => $this->getOnEmailEnter(),
-            'shipping_details_complete'=> $this->getOnShippingDetailsComplete(),
-            'shipping_options_complete'=> $this->getOnShippingOptionsComplete(),
-            'payment_submit'=> $this->getOnPaymentSubmit(),
+            'shipping_details_complete' => $this->getOnShippingDetailsComplete(),
+            'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
+            'payment_submit' => $this->getOnPaymentSubmit(),
             'success' => $this->getOnSuccess(),
             'close' => $this->getOnClose(),
         ];
@@ -410,7 +426,8 @@ class Js extends Template
     /**
      * Return true if we are on cart page or checkout page
      */
-    public function isOnPageFromWhiteList() {
+    public function isOnPageFromWhiteList()
+    {
         $currentPage = $this->getRequest()->getFullActionName();
         return in_array($currentPage, $this->getPageWhitelist());
     }
@@ -418,19 +435,21 @@ class Js extends Template
     /**
      * Return true if bolt on minicart is enabled
      */
-    public function isMinicartEnabled() {
+    public function isMinicartEnabled()
+    {
         return $this->configHelper->getMinicartSupport();
     }
 
     /**
      * Return true if we are on product page, and bolt on product page is enabled
      */
-    public function isBoltProductPage() {
+    public function isBoltProductPage()
+    {
         if (!$this->configHelper->getProductPageCheckoutFlag()) {
             return false;
         }
         $currentPage = $this->getRequest()->getFullActionName();
-        return $currentPage=="catalog_product_view";
+        return $currentPage == "catalog_product_view";
     }
 
     /**
@@ -457,6 +476,18 @@ class Js extends Template
     }
 
     /**
+     * Return true if Order Management is enabled
+     * @return bool
+     */
+    public function getOrderManagementSelector()
+    {
+        if (!$this->configHelper->isOrderManagementEnabled() || !$this->featureSwitches->isOrderManagementEnabled()) {
+            return '';
+        }
+        return $this->configHelper->getOrderManagementSelector();
+    }
+
+    /**
      * Return false if block wasn't shown yet
      * Need to provide using block only once
      *
@@ -469,5 +500,30 @@ class Js extends Template
         }
         static::$blockAlreadyShown[$blockType] = true;
         return false;
+    }
+
+    /**
+     * Return if we should use JS code that uses bolt cart from magento sections
+     */
+    public function isSaveCartInSections()
+    {
+        return $this->featureSwitches->isSaveCartInSections();
+    }
+
+    /**
+     * @param $jsCode
+     * @param string $argName
+     * @return string
+     */
+    public function wrapWithCatch ($jsCode, $argName = '')
+    {
+        return "
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}";
     }
 }

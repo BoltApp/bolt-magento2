@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -57,14 +57,14 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
                     $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
                     $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-	                $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(\Magento\Directory\Model\RegionFactory::class)
+                    $this->createMock(BoltConfigSettingFactory::class),
+                    $this->createMock(\Magento\Directory\Model\RegionFactory::class),
+                    $this->createMock(\Magento\Framework\Composer\ComposerFactory::class)
                 ]
             )
             ->getMock();
         $deciderMock = $this->createMock(Decider::class);
-        $productMetadataMock = $this->createMock(\Magento\Framework\App\ProductMetadata::class);
-        $this->block = new Success($productMetadataMock, $this->configHelper, $contextMock, $deciderMock);
+        $this->block = new Success($this->configHelper, $contextMock, $deciderMock);
     }
 
     /**
@@ -80,7 +80,8 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function shouldTrackCheckoutFunnelData() {
+    public function shouldTrackCheckoutFunnelData()
+    {
         return [
             [ true, true ],
             [ false, false ]

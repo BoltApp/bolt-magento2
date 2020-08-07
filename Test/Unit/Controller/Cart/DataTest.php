@@ -1,25 +1,36 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 
 use Bolt\Boltpay\Controller\Cart\Data;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart;
-use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Order;
-use Bolt\Boltpay\Model\Request;
-use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\DataObject;
-use Magento\Framework\ObjectManagerInterface;
-use phpDocumentor\Reflection\Types\Void_;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
+/**
+ * Class DataTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Cart
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Data
+ */
 class DataTest extends TestCase
 {
     const HINT = 'hint!';
@@ -39,26 +50,9 @@ class DataTest extends TestCase
     private $cartHelper;
 
     /**
-     * @var MockObject|Config
-     */
-
-    private $configHelper;
-
-    /**
-     * @var MockObject|Bugsnag
-     */
-
-    private $bugsnag;
-
-    /**
      * @var RequestInterface request
      */
     private $request;
-
-    /**
-     * @var MetricsClient metricsClient
-     */
-    private $metricsClient;
 
     /**
      * @var Object response
@@ -74,16 +68,11 @@ class DataTest extends TestCase
      * @var array $expectedCart
      */
     private $expectedCart;
-
+    
     /**
-     * @var Object requestShippingAddress
+     * @var MockObject|JsonFactory mocked instance of JsonFactory
      */
-    private $requestShippingAddress;
-
-    /**
-     * @var MockObject | Response boltpayOrder
-     */
-    private $boltpayOrder;
+    private $resultJsonFactory;
 
     protected function setUp()
     {
@@ -93,38 +82,38 @@ class DataTest extends TestCase
 
     private function initResponseData()
     {
-        $this->requestShippingAddress = 'String';
+        $requestShippingAddress = 'String';
 
-        $this->response = (object) ( array(
+        $this->response = (object) ( [
             'cart' =>
-                (object) ( array(
+                (object) ( [
                     'order_reference' => self::ORDER_REFERENCE,
                     'display_id'      => '100050001 / 1234',
                     'shipments'       =>
-                        array(
+                        [
                             0 =>
-                                (object) ( array(
-                                    'shipping_address' => $this->requestShippingAddress,
+                                (object) ( [
+                                    'shipping_address' => $requestShippingAddress,
                                     'shipping_method' => 'unknown',
                                     'service'         => 'Flat Rate - Fixed',
                                     'cost'            =>
-                                        (object) ( array(
+                                        (object) ( [
                                             'amount'          => 500,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        ) ),
+                                        ] ),
                                     'tax_amount'      =>
-                                        (object) ( array(
+                                        (object) ( [
                                             'amount'          => 0,
                                             'currency'        => 'USD',
                                             'currency_symbol' => '$',
-                                        ) ),
+                                        ] ),
                                     'reference'       => 'flatrate_flatrate'
-                                ) ),
-                        ),
-                ) ),
+                                ] ),
+                        ],
+                ] ),
             'token' => self::TOKEN
-        ) );
+        ] );
 
         //weird bit of stuff here, copied from the code under test
         $this->responseData = json_decode(json_encode($this->response), true);
@@ -139,29 +128,30 @@ class DataTest extends TestCase
     {
         $this->context = $this->createMock(Context::class);
         $this->request = $this->createMock(RequestInterface::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
+        $this->resultJsonFactory = $this->createMock(JsonFactory::class);
 
         $this->request->method('getParam')->willReturn('placeholder');
         $this->context->method('getRequest')->willReturn($this->request);
 
-        $this->boltpayOrder = $this->getMockBuilder(Response::class)
-            ->setMethods(['getResponse'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->boltpayOrder->method('getResponse')->willReturn($this->response);
-
         $this->cartHelper = $this->createMock(Cart::class);
-        $this->cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $this->cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $this->cartHelper->method('getBoltpayOrder')
-            ->withAnyParameters()
-            ->willReturn($this->boltpayOrder);
-        $this->cartHelper->method('getHints')->willReturn(self::HINT);
+    }
 
-        //Does not appear to be used in Data.php but is a part of the constructor
-        $this->configHelper = $this->createMock(Config::class);
-
-        $this->bugsnag = $this->createMock(Bugsnag::class);
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Data(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->cartHelper
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     private function buildJsonMock($expected)
@@ -185,162 +175,20 @@ class DataTest extends TestCase
      */
     public function execute_happyPath()
     {
-        $expected = array(
+        $expected = [
             'status' => 'success',
             'cart' => $this->expectedCart,
             'hints' => self::HINT,
             'backUrl' => ''
-        );
-
-        $this->boltpayOrder = $this->getMockBuilder(Response::class)
-            ->setMethods(['getResponse'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->boltpayOrder->method('getResponse')->willReturn($this->response);
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $cartHelper->method('getBoltpayOrder')
-            ->withAnyParameters()
-            ->willReturn($this->boltpayOrder);
-
+        ];
+        $this->cartHelper->method('calculateCartAndHints')->willReturn($expected);
         $jsonFactoryMock = $this->buildJsonMock($expected);
 
         $data = new Data(
             $this->context,
             $jsonFactoryMock,
-            $this->cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
+            $this->cartHelper
         );
-        $data->execute();
-    }
-
-    /**
-     * @test
-     */
-    public function execute_HasProductRestrictions()
-    {
-        //replace default set in init
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('hasProductRestrictions')->willReturn(true);
-        $this->bugsnag->expects($this->once())->method('notifyException');
-
-        $expected = array(
-            'status' => 'success',
-            'restrict' => true,
-            'message' => 'The cart has products not allowed for Bolt checkout',
-            'backUrl' => ''
-        );
-
-        $jsonFactoryMock = $this->buildJsonMock($expected);
-
-        $data = new Data(
-            $this->context,
-            $jsonFactoryMock,
-            $cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
-        );
-        $data->execute();
-    }
-
-    /**
-     * @test
-     */
-    public function execute_DisallowedCheckout()
-    {
-        //replace default set in init
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('isCheckoutAllowed')->willReturn(false);
-        $this->bugsnag->expects($this->once())->method('notifyException');
-
-        $expected = array(
-            'status' => 'success',
-            'restrict' => true,
-            'message' => 'Guest checkout is not allowed.',
-            'backUrl' => ''
-        );
-
-        $jsonFactoryMock = $this->buildJsonMock($expected);
-
-        $data = new Data(
-            $this->context,
-            $jsonFactoryMock,
-            $cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
-        );
-        $data->execute();
-    }
-
-    /**
-     * @test
-     */
-    public function execute_GeneralException()
-    {
-        //Make a method throw an exception during execution
-        $exception = new \Exception(self::EXCEPTION_MESSAGE);
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('getBoltpayOrder')->willThrowException($exception);
-        $this->bugsnag->expects($this->once())->method('notifyException');
-
-        $expected = array(
-            'status' => 'failure',
-            'message' => self::EXCEPTION_MESSAGE,
-            'backUrl' => '',
-        );
-
-        $jsonFactoryMock = $this->buildJsonMock($expected);
-
-        $data = new Data(
-            $this->context,
-            $jsonFactoryMock,
-            $cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
-        );
-
-        $data->execute();
-    }
-
-    /**
-     * @test
-     */
-    public function execute_NullResponse()
-    {
-        $expected = array(
-            'status' => 'success',
-            'cart' => array(
-                'orderToken' => '',
-                'cartReference' => ''
-            ),
-            'hints' => null,
-            'backUrl' => ''
-        );
-
-        $cartHelper = $this->createMock(Cart::class);
-        $cartHelper->method('hasProductRestrictions')->willReturn(false);
-        $cartHelper->method('isCheckoutAllowed')->willReturn(true);
-        $cartHelper->method('getBoltpayOrder')->willReturn(null);
-
-        $jsonFactoryMock = $this->buildJsonMock($expected);
-
-        $data = new Data(
-            $this->context,
-            $jsonFactoryMock,
-            $cartHelper,
-            $this->configHelper,
-            $this->bugsnag,
-            $this->metricsClient
-        );
-
         $data->execute();
     }
 }

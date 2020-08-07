@@ -11,11 +11,10 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Test\Unit\Helper;
-
 
 use \PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\ArrayHelper;
@@ -124,7 +123,9 @@ class ArrayHelperTest extends TestCase
                         'key2' => 'value2'
                     ]
                 ],
-                'key' => function() { return 'value3'; },
+                'key' => function () {
+                    return 'value3';
+                },
                 'default' => null,
                 'expect' => 'value3'
             ],
@@ -147,14 +148,15 @@ class ArrayHelperTest extends TestCase
      * @param array $b
      * @return bool
      */
-    private function checkArraysAreSimilar($a, $b) {
+    private function checkArraysAreSimilar($a, $b)
+    {
         // if the indexes don't match, return immediately
         if (count(array_diff_assoc($a, $b))) {
             return false;
         }
         // we know that the indexes, but maybe not values, match.
         // compare the values between the two arrays
-        foreach($a as $k => $v) {
+        foreach ($a as $k => $v) {
             if ($v !== $b[$k]) {
                 return false;
             }

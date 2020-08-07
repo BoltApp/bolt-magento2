@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -30,6 +30,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+
 /**
  * Class OrderManagement
  * Web hook endpoint. Save the order / Update order and payment status.
@@ -171,7 +172,7 @@ class OrderManagement implements OrderManagementInterface
             $this->hookHelper->preProcessWebhook($storeId);
 
             if ($type === 'pending') {
-                $this->orderHelper->saveCustomerCreditCard($display_id, $reference,$storeId);
+                $this->orderHelper->saveCustomerCreditCard($display_id, $reference, $storeId);
             }
 
             if ($type == 'cart.create') {
@@ -239,7 +240,7 @@ class OrderManagement implements OrderManagementInterface
         }
 
         if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
-            $this->setSuccessResponse('Ignore the credit hook for the invoice creation');
+            $this->setSuccessResponse('Ignore the capture hook for the invoice creation');
             return;
         }
 
@@ -267,7 +268,8 @@ class OrderManagement implements OrderManagementInterface
     /**
      * @param $message
      */
-    private function setSuccessResponse($message) {
+    private function setSuccessResponse($message)
+    {
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',

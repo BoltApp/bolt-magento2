@@ -1,4 +1,19 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Order;
 
@@ -18,6 +33,11 @@ use Magento\Sales\Api\Data\OrderInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
+/**
+ * Class ManagerTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Order
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Order\Save
+ */
 class SaveTest extends TestCase
 {
     const ORDER_ID = '1234';
@@ -67,6 +87,32 @@ class SaveTest extends TestCase
     protected function setUp()
     {
         $this->initRequiredMocks();
+    }
+    
+     /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Save(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->checkoutSession,
+            $this->orderHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->dataObjectFactory
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        $this->assertAttributeEquals($this->orderHelper, 'orderHelper', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
     }
 
     /**

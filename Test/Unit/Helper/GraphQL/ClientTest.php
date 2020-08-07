@@ -11,12 +11,11 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Helper\GraphQL;
-
 
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\GraphQL\Client;
@@ -35,8 +34,8 @@ use Zend\Http\Response;
 
 /**
  * Class ClientTest
- *
  * @package Bolt\Boltpay\Test\Unit\Helper\GraphQL
+ * @coversDefaultClass \Bolt\Boltpay\Helper\GraphQL\Client
  */
 class ClientTest extends TestCase
 {
@@ -112,8 +111,35 @@ class ClientTest extends TestCase
 
     /**
      * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
      */
-    public function getFeatureSwitches_success() {
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Client(
+            $this->context,
+            $this->zendClientFactory,
+            $this->boltConfig,
+            $this->responseFactory,
+            $this->requestFactory,
+            $this->logger,
+            $this->bugsnag
+        );
+        
+        $this->assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+        $this->assertAttributeEquals($this->boltConfig, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
+        $this->assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
+        $this->assertAttributeEquals($this->logger, 'logHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+    }
+
+    /**
+     * @test
+     */
+    public function getFeatureSwitches_success()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -139,7 +165,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function getFeatureSwitches_fail() {
+    public function getFeatureSwitches_fail()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -165,7 +192,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function sendLogs_success() {
+    public function sendLogs_success()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -191,7 +219,8 @@ class ClientTest extends TestCase
     /**
      * @test
      */
-    public function sendLogs_fail() {
+    public function sendLogs_fail()
+    {
         $httpClient = $this->createMock(ZendClient::class);
         $response = $this->createMock(Response::class);
 
@@ -214,4 +243,3 @@ class ClientTest extends TestCase
         $this->graphQLClient->sendLogs("[{}]");
     }
 }
-

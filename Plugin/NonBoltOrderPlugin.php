@@ -1,31 +1,31 @@
 <?php
 
-namespace Bolt\Boltpay\Observer;
+namespace Bolt\Boltpay\Plugin;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Order;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
-use Error;
 use Exception;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Sales\Api\OrderManagementInterface;
 use Zend_Http_Client_Exception;
 
 /**
- * Class NonBoltOrderObserver
+ * Class NonBoltOrderPlugin
  *
- * @package Bolt\Boltpay\Observer
+ * @package Bolt\Boltpay\Plugin
  */
-class NonBoltOrderObserver implements ObserverInterface
+class NonBoltOrderPlugin
 {
     /**
      * @var ApiHelper
@@ -68,6 +68,11 @@ class NonBoltOrderObserver implements ObserverInterface
     private $quoteRepository;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @param ApiHelper $apiHelper
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
@@ -76,6 +81,7 @@ class NonBoltOrderObserver implements ObserverInterface
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
      * @param QuoteRepository $quoteRepository
+     * @param Decider $decider
      */
     public function __construct(
         ApiHelper $apiHelper,
@@ -85,7 +91,8 @@ class NonBoltOrderObserver implements ObserverInterface
         DataObjectFactory $dataObjectFactory,
         LogHelper $logHelper,
         MetricsClient $metricsClient,
-        QuoteRepository $quoteRepository
+        QuoteRepository $quoteRepository,
+        Decider $decider
     ) {
         $this->apiHelper = $apiHelper;
         $this->bugsnag = $bugsnag;
@@ -95,35 +102,39 @@ class NonBoltOrderObserver implements ObserverInterface
         $this->logHelper = $logHelper;
         $this->metricsClient = $metricsClient;
         $this->quoteRepository = $quoteRepository;
+        $this->decider = $decider;
     }
 
     /**
-     * @param Observer $observer
+     * @param OrderManagementInterface $orderManagementInterface
+     * @param Order
+     *
+     * @return Order
      */
-    public function execute(Observer $observer)
+    public function afterPlace(OrderManagementInterface $orderManagementInterface, $order)
     {
-        try {
-            $order = $observer->getEvent()->getOrder();
-            if ($order == null) {
-                return;
-            }
+        if (!$this->decider->isNonBoltTrackingEnabled()) {
+            return $order;
+        }
 
+        try {
             $payment = $order->getPayment();
-            if ($payment && $payment->getMethod() == Payment::METHOD_CODE) {
+            $paymentMethod = $payment ? $payment->getMethod() : "unknown";
+            if ($paymentMethod == Payment::METHOD_CODE) {
                 // ignore Bolt orders
-                return;
+                return $order;
             }
 
             $quote = $this->quoteRepository->get($order->getQuoteId());
             if (!$quote) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_quote", 1);
-                return;
+                return $order;
             }
 
             $items = $quote->getAllVisibleItems();
             if (!$items) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_items", 1);
-                return;
+                return $order;
             }
 
             $this->handleMissingName($quote);
@@ -131,23 +142,23 @@ class NonBoltOrderObserver implements ObserverInterface
             $cart = $this->cartHelper->buildCartFromQuote($quote, $quote, $items, null, true, false);
             $customer = $quote->getCustomer();
             $storeId = $order->getStoreId();
-            $result = $this->createNonBoltOrder($cart, $customer, $storeId);
-            if ($result != 200) {
+            $result = $this->createNonBoltOrder($cart, $customer, $storeId, $paymentMethod);
+            $response = $result->getResponse();
+            if (empty($response)) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
-                return;
+                return $order;
             }
+
+            $order->setBoltTransactionReference($response->reference);
+            $order->save();
         } catch (Exception $exception) {
             $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
             $this->bugsnag->notifyException($exception);
-            return;
-        } catch (Error $error) {
-            // catch errors so failures here don't prevent orders from being created
-            $this->metricsClient->processCountMetric("non_bolt_order_creation.failure", 1);
-            $this->bugsnag->notifyException($error);
-            return;
+            return $order;
         }
 
         $this->metricsClient->processCountMetric("non_bolt_order_creation.success", 1);
+        return $order;
     }
 
     /**
@@ -156,30 +167,34 @@ class NonBoltOrderObserver implements ObserverInterface
      * @param array $cart
      * @param CustomerInterface $customer
      * @param int $storeId
+     * @param string $paymentMethod
      * @return Response|int
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    protected function createNonBoltOrder($cart, $customer, $storeId)
+    protected function createNonBoltOrder($cart, $customer, $storeId, $paymentMethod)
     {
         $apiKey = $this->configHelper->getApiKey($storeId);
 
         $phone = $this->getPhone($cart);
+        $email = $this->getEmail($cart, $customer);
+        $firstName = $this->getFirstName($cart, $customer);
+        $lastName = $this->getLastName($cart, $customer);
         $requestData = $this->dataObjectFactory->create();
         $requestData->setApiData([
             'cart' => $cart,
             'user_identifier' => [
-                'email' => $customer->getEmail(),
+                'email' => $email,
                 'phone' => $phone,
             ],
             'user_identity' => [
-                'first_name' => $customer->getFirstname(),
-                'last_name' => $customer->getLastname(),
+                'first_name' => $firstName,
+                'last_name' => $lastName,
             ],
+            'payment_method' => $paymentMethod,
         ]);
         $requestData->setDynamicApiUrl(ApiHelper::API_CREATE_NON_BOLT_ORDER);
         $requestData->setApiKey($apiKey);
-        $requestData->setStatusOnly(true);
 
         $request = $this->apiHelper->buildRequest($requestData);
         return $this->apiHelper->sendRequest($request);
@@ -193,19 +208,65 @@ class NonBoltOrderObserver implements ObserverInterface
      */
     protected function getPhone($cart)
     {
-        if (!@$cart['shipments']) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['phone'];
         }
 
-        if (count($cart['shipments']) < 1) {
-            return null;
+        return null;
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getEmail($cart, $customer)
+    {
+        if (!is_null($customer->getEmail())) {
+            return $customer->getEmail();
         }
 
-        if (!@$cart['shipments'][0]['shipping_address']) {
-            return null;
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['email'];
         }
 
-        return $cart['shipments'][0]['shipping_address']['phone'];
+        return null;
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getFirstName($cart, $customer)
+    {
+        if (!is_null($customer->getFirstname())) {
+            return $customer->getFirstname();
+        }
+
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['first_name'];
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array $cart
+     * @param CustomerInterface $customer
+     * @return string
+     */
+    protected function getLastName($cart, $customer)
+    {
+        if (!is_null($customer->getLastname())) {
+            return $customer->getLastname();
+        }
+
+        if (isset($cart['shipments'][0]['shipping_address'])) {
+            return $cart['shipments'][0]['shipping_address']['last_name'];
+        }
+
+        return null;
     }
 
     /**
@@ -213,12 +274,13 @@ class NonBoltOrderObserver implements ObserverInterface
      *
      * @param $quote
      */
-    protected function handleMissingName($quote) {
+    protected function handleMissingName($quote)
+    {
         $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
         if ($address->getLastName() == null) {
             $name = $address->getFirstName();
             $names = preg_split("/[\s]+/", $name);
-           if (count($names) > 1) {
+            if (count($names) > 1) {
                 $address->setFirstName(array_shift($names));
                 $address->setLastName(join(" ", $names));
             } else {

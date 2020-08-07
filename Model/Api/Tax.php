@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -105,7 +105,7 @@ class Tax extends ShippingTax implements TaxInterface
         }
 
         $selectedOption = $shipping_option['reference'];
-        list($carrierCode, $methodCode) = explode('_', $selectedOption);
+        list($carrierCode, $methodCode) = explode('_', $selectedOption, 2);
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);

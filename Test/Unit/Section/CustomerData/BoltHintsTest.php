@@ -8,7 +8,7 @@ use Bolt\Boltpay\Section\CustomerData\BoltHints;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\TestCase;
 
-class BoltHintsTest  extends TestCase
+class BoltHintsTest extends TestCase
 {
     /**
      * @var CartHelper
@@ -47,7 +47,8 @@ class BoltHintsTest  extends TestCase
     /**
      * @test
      */
-    public function getSectionData_returnEmptyIfPPCdisabled() {
+    public function getSectionData_returnEmptyIfPPCdisabled()
+    {
         $this->configHelper->expects($this->once())->method("getProductPageCheckoutFlag")->willReturn(false);
         $this->cartHelper->expects($this->never())->method("getHints");
 

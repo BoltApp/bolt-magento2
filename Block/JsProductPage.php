@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -32,7 +32,8 @@ use Magento\Catalog\Block\Product\View as ProductView;
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
-class JsProductPage extends Js {
+class JsProductPage extends Js
+{
 
     /**
      * @var \Magento\Catalog\Model\Product
@@ -51,7 +52,7 @@ class JsProductPage extends Js {
     ) {
         $this->_product = $productView->getProduct();
 
-        parent::__construct($context,$configHelper,$checkoutSession,$cartHelper,$bugsnag, $featureSwitches, $data);
+        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
     }
 
     /**

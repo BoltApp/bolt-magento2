@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -32,8 +32,7 @@ class WebhookLog extends AbstractDb
         \Magento\Framework\Stdlib\DateTime\DateTime $coreDate,
         \Magento\Framework\Model\ResourceModel\Db\Context $context,
         $connectionName = null
-    )
-    {
+    ) {
         $this->_coreDate = $coreDate;
         parent::__construct($context, $connectionName);
     }

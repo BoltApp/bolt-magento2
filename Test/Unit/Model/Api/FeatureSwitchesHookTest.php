@@ -11,12 +11,11 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
-
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
@@ -114,7 +113,8 @@ class FeatureSwitchesHookTest extends TestCase
     /**
      * @test
      */
-    public function workingUpdateFromBolt() {
+    public function workingUpdateFromBolt()
+    {
         $this->fsManager
             ->expects($this->once())
             ->method('updateSwitchesFromBolt');
@@ -132,7 +132,8 @@ class FeatureSwitchesHookTest extends TestCase
     /**
      * @test
      */
-    public function notWorkingUpdatesFromBolt() {
+    public function notWorkingUpdatesFromBolt()
+    {
         $this->fsManager
             ->expects($this->once())
             ->method('updateSwitchesFromBolt')
@@ -146,9 +147,11 @@ class FeatureSwitchesHookTest extends TestCase
 
         $this->assertEquals(
             Exception::HTTP_INTERNAL_ERROR,
-            $this->response->getStatusCode());
+            $this->response->getStatusCode()
+        );
         $this->assertEquals(
             '{"status":"failure","error":{"code":6001,"message":"oops"}}',
-            $this->response->getBody());
+            $this->response->getBody()
+        );
     }
 }

@@ -13,26 +13,31 @@ $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLogg
     In order to use Bolt from admin, please set "Publishable Key - Back Office" or ""Publishable Key - Payment Only"
     in the magento config (Stores > Configuration > Sales > Payment methods > Bolt Pay).
 <?php else: ?>
-<fieldset class="admin__fieldset payment-method" id="payment_form_<?php /* @noEscape */ echo $code; ?>" style="display:none">
+<fieldset class="admin__fieldset payment-method" id="payment_form_<?= /* @noEscape */ $code; ?>" style="display:none">
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
         <div>
             <select name="bolt-credit-cards" style="width: 284px; margin: 10px 0 5px;">
-                <option value=""><?php echo $block->escapeHtml(__('Add New Card')) ?></option>
+                <option value=""><?= /* @noEscape */ $block->escapeHtml(__('Add New Card')) ?></option>
                 <?php foreach ($customerCreditCardInfos as $customerCreditCardInfo): ?>
-                <option value="<?php echo $block->escapeHtml($customerCreditCardInfo->getId()) ?>"><?php echo $block->escapeHtml($customerCreditCardInfo->getCardLast4Digit()).' '.$block->escapeHtml($customerCreditCardInfo->getCardType()) ?></option>
+                <option value="<?= /* @noEscape */ $block->escapeHtml($customerCreditCardInfo->getId()) ?>">
+                    <?= $block->escapeHtml($customerCreditCardInfo->getCardLast4Digit())
+                    .' '. $block->escapeHtml($customerCreditCardInfo->getCardType()) ?>
+                </option>
                 <?php endforeach; ?>
             </select>
         </div>
     <?php endif; ?>
-    <input type="hidden" id="bolt-billing-address" value='<?php echo $block->escapeHtml($block->getBillingAddress()) ?>' />
-    <input type="hidden" id="bolt-place-order-payload" value='<?php echo $block->escapeHtml($block->getPlaceOrderPayload()) ?>' />
+    <input type="hidden" id="bolt-billing-address"
+           value='<?= /* @noEscape */ $block->escapeHtml($block->getBillingAddress()) ?>' />
+    <input type="hidden" id="bolt-place-order-payload"
+           value='<?= /* @noEscape */ $block->escapeHtml($block->getPlaceOrderPayload()) ?>' />
     <div class="bolt-checkout-button with-cards"></div>
     <div class="bolt-checkout-options-separator" style="padding: 20px; display: none;">-- OR --</div>
     <div class="bolt-checkout-pay-by-link"></div>
     <input type="hidden" class="required-entry" id="bolt-required-field">
 </fieldset>
 
-<?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
+    <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
     <script>
         require(['jquery', 'jquery/ui'], function($){
             $(document).on('change', 'select[name="bolt-credit-cards"]', function(){
@@ -41,13 +46,15 @@ $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLogg
                 var $boltRequiredField = $('#bolt-required-field');
 
                 if($creditCardsValue){
-                    //If the administrator chooses a credit card option, we hide the Bolt checkout button and force them to use the Magento submit order button
+                    // If the administrator chooses a credit card option,
+                    // we hide the Bolt checkout button and force them to use the Magento submit order button
                     $('.bolt-checkout-button.with-cards').hide();
                     if($boltRequiredField.hasClass('required-entry')){
                         $boltRequiredField.removeClass('required-entry');
                     }
                 }else {
-                    //If the administrator chooses the 'Add New Card' option, we show the Bolt checkout button and force them to use the Bolt checkout button
+                    // If the administrator chooses the 'Add New Card' option,
+                    // we show the Bolt checkout button and force them to use the Bolt checkout button
                     if(!$boltRequiredField.hasClass('required-entry')){
                         $boltRequiredField.addClass('required-entry');
                     }

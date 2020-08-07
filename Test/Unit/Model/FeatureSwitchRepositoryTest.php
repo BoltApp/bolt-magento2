@@ -1,8 +1,21 @@
 <?php
-
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit\Model;
-
 
 use Bolt\Boltpay\Api\Data\FeatureSwitchInterface;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
@@ -79,7 +92,8 @@ class FeatureSwitchRepositoryTest extends TestCase
 
         $this->assertEquals(
             $foundSwitch->getName(),
-            $this->switchRepo->getByName("SOME_SWITCH")->getName());
+            $this->switchRepo->getByName("SOME_SWITCH")->getName()
+        );
     }
 
     /**
@@ -113,7 +127,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
         $this->mockSwitch->expects($this->once())
@@ -143,7 +158,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->mockSwitch->expects($this->once())->method('setValue')->with(true);
         $this->mockSwitch->expects($this->once())
@@ -167,7 +183,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('save')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->switchRepo->save($this->mockSwitch);
     }
@@ -185,7 +202,8 @@ class FeatureSwitchRepositoryTest extends TestCase
             ->expects($this->once())
             ->method('delete')
             ->with(
-                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface'));
+                $this->isInstanceOf('Bolt\BoltPay\Api\Data\FeatureSwitchInterface')
+            );
 
         $this->switchRepo->delete($this->mockSwitch);
     }

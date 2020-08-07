@@ -11,12 +11,11 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Order;
-
 
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Controller\Adminhtml\Order\ReceivedUrl;
@@ -99,7 +98,7 @@ class ReceivedUrlTest extends TestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
-        $this->order = $this->createPartialMock(Order::class,['getStoreId','getId']);
+        $this->order = $this->createPartialMock(Order::class, ['getStoreId','getId']);
         $this->currentMock = $this->getMockBuilder(ReceivedUrl::class)
             ->setConstructorArgs([
                 $this->context,
@@ -129,7 +128,7 @@ class ReceivedUrlTest extends TestCase
      */
     public function getRedirectUrl()
     {
-        $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view',[
+        $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view', [
             '_secure' => true,
             'order_id' => self::ORDER_ID,
             'store_id' => self::STORE_ID
@@ -137,7 +136,7 @@ class ReceivedUrlTest extends TestCase
         $this->order->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
         $this->order->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
 
-        TestHelper::invokeMethod($this->currentMock, 'getRedirectUrl',[$this->order]);
+        TestHelper::invokeMethod($this->currentMock, 'getRedirectUrl', [$this->order]);
     }
 
     /**

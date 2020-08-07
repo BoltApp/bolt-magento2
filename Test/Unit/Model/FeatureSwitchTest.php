@@ -21,6 +21,7 @@ use Bolt\Boltpay\Model\FeatureSwitch;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\ResourceModel;
+
 class FeatureSwitchTest extends TestCase
 {
     /**
@@ -48,13 +49,14 @@ class FeatureSwitchTest extends TestCase
             ->with(ResourceModel\FeatureSwitch::class)
             ->willReturnSelf();
 
-        TestHelper::invokeMethod($this->mockFeatureSwitch,'_construct');
+        TestHelper::invokeMethod($this->mockFeatureSwitch, '_construct');
     }
 
     /**
      * @test
      */
-    public function setAndGetName(){
+    public function setAndGetName()
+    {
         $this->mockFeatureSwitch->setName('name');
         $this->assertEquals('name', $this->mockFeatureSwitch->getName());
     }
@@ -62,7 +64,8 @@ class FeatureSwitchTest extends TestCase
     /**
      * @test
      */
-    public function setAndGetValue(){
+    public function setAndGetValue()
+    {
         $this->mockFeatureSwitch->setValue('value');
         $this->assertEquals('value', $this->mockFeatureSwitch->getValue());
     }
@@ -70,7 +73,8 @@ class FeatureSwitchTest extends TestCase
     /**
      * @test
      */
-    public function setAndGetDefaultValue(){
+    public function setAndGetDefaultValue()
+    {
         $this->mockFeatureSwitch->setDefaultValue('defaultValue');
         $this->assertEquals('defaultValue', $this->mockFeatureSwitch->getDefaultValue());
     }
@@ -78,9 +82,9 @@ class FeatureSwitchTest extends TestCase
     /**
      * @test
      */
-    public function setAndGetRolloutPercentage(){
+    public function setAndGetRolloutPercentage()
+    {
         $this->mockFeatureSwitch->setRolloutPercentage('rolloutPercentage');
         $this->assertEquals('rolloutPercentage', $this->mockFeatureSwitch->getRolloutPercentage());
     }
-
 }

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -33,7 +33,8 @@ use \Magento\Framework\Exception\LocalizedException;
  *
  * @package Bolt\Boltpay\Helper\FeatureSwitch
  */
-class Manager extends AbstractHelper {
+class Manager extends AbstractHelper
+{
 
     /**
      * @var GQL
@@ -49,7 +50,6 @@ class Manager extends AbstractHelper {
      * @param Context                 $context
      * @param GQL                     $gql
      * @param FeatureSwitchRepository $fsRepo
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -67,10 +67,11 @@ class Manager extends AbstractHelper {
      *
      * @throws LocalizedException
      */
-    public function updateSwitchesFromBolt() {
+    public function updateSwitchesFromBolt()
+    {
         $switchesResponse = $this->gql->getFeatureSwitches();
 
-        $switches = array();
+        $switches = [];
         if ($switchesResponse->getData()) {
             $data = $switchesResponse->getData();
             $switches = @$data["response"]->data->plugin->features;

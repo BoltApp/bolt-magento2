@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -25,6 +25,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Helper\Bugsnag;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\RestoreQuotePlugin
  */
@@ -93,7 +94,7 @@ class RestoreQuotePluginTest extends TestCase
         };
 
         $this->subject = $this->createMock(CheckoutSession::class);
-        $this->bugsnag = $this->createPartialMock(Bugsnag::class,['notifyError']);
+        $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyError']);
 
         $objectManager = new ObjectManager($this);
         $this->plugin = $objectManager->getObject(
@@ -117,7 +118,7 @@ class RestoreQuotePluginTest extends TestCase
         $this->order->method('getQuoteId')->willReturn(111);
 
         $this->bugsnag->method('notifyError')
-            ->with('Ignore restoring quote if payment method is Boltpay','Quote Id: 111')
+            ->with('Ignore restoring quote if payment method is Boltpay', 'Quote Id: 111')
             ->willReturnSelf();
 
         $this->callback->expects(self::never())->method('__invoke');

@@ -11,17 +11,16 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Helper\Shared;
 
-
 use Magento\Framework\Exception\LocalizedException;
 
-
-class ApiUtils {
+class ApiUtils
+{
     /**
      * A helper method for checking errors in JSON object.
      *
@@ -53,14 +52,16 @@ class ApiUtils {
         }
     }
 
-    private static function isApiError($response) {
+    private static function isApiError($response)
+    {
         $arr = (array)$response;
         return array_key_exists('errors', $arr) ||
             array_key_exists('error_code', $arr) ||
             array_key_exists('error', $arr);
     }
 
-    public static function getJSONFromResponseBody($responseBody) {
+    public static function getJSONFromResponseBody($responseBody)
+    {
         $resultFromJSON = json_decode($responseBody);
         $jsonError  = self::handleJsonParseError();
         if ($jsonError != null) {
@@ -80,7 +81,8 @@ class ApiUtils {
         $moduleVersion,
         $requestData,
         $apiKey,
-        $additionalHeaders = array()) {
+        $additionalHeaders = []
+    ) {
 
         return [
                 'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,

@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\Info;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Model\Payment as BoltPayment;
+use Magento\Sales\Model\Order;
 
 class InfoTest extends \PHPUnit\Framework\TestCase
 {
@@ -29,7 +31,7 @@ class InfoTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp()
     {
-        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getCcType', 'getCcLast4', 'getAdditionalInformation']);
+        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder']);
     }
 
     /**
@@ -46,7 +48,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
             [
                 'Credit Card Type' => 'VISA',
                 'Credit Card Number' => 'xxxx-1111'
-            ], $data->getData()
+            ],
+            $data->getData()
         );
     }
     
@@ -59,9 +62,52 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
+            [],
+            $data->getData()
+        );
+    }
+    
+    /**
+     * @test
+     */
+    public function displayPaymentMethodTitleCreditCard()
+    {
+        $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('vantiv');
+        $paymentMock = $this->createPartialMock(
+            BoltPayment::class,
             [
-                'Paid via' => 'PAYPAL'
-            ], $data->getData()
+                'getConfigData',
+            ]
+        );
+        $orderMock = $this->createPartialMock(
+            Order::class,
+            [
+                'getStoreId',
+            ]
+        );
+        $orderMock->expects(self::once())->method('getStoreId')->willReturn(1);
+        $paymentMock->expects(self::once())->method('getConfigData')->willReturn('Bolt Pay');
+        $this->mock->expects(self::once())->method('getMethod')->willReturn($paymentMock);
+        $this->mock->expects(self::once())->method('getOrder')->willReturn($orderMock);
+        $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
+        $this->assertEquals(
+            'Bolt Pay',
+            $data
+        );
+    }
+    
+    /**
+     * @test
+     */
+    public function displayPaymentMethodTitlePayPal()
+    {
+        $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
+        $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
+        $this->assertEquals(
+            'Bolt-PayPal',
+            $data
         );
     }
 }

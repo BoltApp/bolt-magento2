@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -36,7 +36,8 @@ class Metric implements \JsonSerializable
      * @param array $data
      *
      */
-    function __construct($key,$data) {
+    function __construct($key, $data)
+    {
         $this->key = $key;
         $this->data = $data;
     }
@@ -47,7 +48,8 @@ class Metric implements \JsonSerializable
      *
      * @return JSON
      */
-    public function getMetricJson() {
+    public function getMetricJson()
+    {
         return json_encode($this);
     }
 
@@ -57,7 +59,8 @@ class Metric implements \JsonSerializable
      *
      * @return array()
      */
-    public function jsonSerialize() {
+    public function jsonSerialize()
+    {
         return
             [ $this->key => $this->data ];
     }

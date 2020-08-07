@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -29,7 +29,6 @@ use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
-
 
 /**
  * Boltpay GraphQLAPI helper
@@ -87,7 +86,6 @@ class Client extends AbstractHelper
      * @param RequestFactory $requestFactory
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -108,17 +106,18 @@ class Client extends AbstractHelper
     }
 
 
-    private function makeGQLCall($query, $operation, $variables) {
+    private function makeGQLCall($query, $operation, $variables)
+    {
         $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
 
         $apiKey = $this->configHelper->getApiKey();
 
-        $gqlRequest = array(
+        $gqlRequest = [
             "operationName" => $operation,
             "variables" => $variables,
             "query" => $query
-        );
+        ];
 
         $requestData = json_encode($gqlRequest, JSON_UNESCAPED_SLASHES);
 
@@ -133,7 +132,7 @@ class Client extends AbstractHelper
             $this->configHelper->getModuleVersion(),
             $requestData,
             $apiKey,
-            array()
+            []
         );
 
         $client->setHeaders($headers);
@@ -182,15 +181,16 @@ class Client extends AbstractHelper
     /**
      * This Method makes a call to Bolt and returns the feature switches and their values for this server with
      * its current version and the current merchant in question.
-     * 
+     *
      * @return mixed
      * @throws LocalizedException
      */
-    public function getFeatureSwitches() {
-        $res = $this->makeGQLCall(Constants::GET_FEATURE_SWITCHES_QUERY, Constants::GET_FEATURE_SWITCHES_OPERATION, array(
+    public function getFeatureSwitches()
+    {
+        $res = $this->makeGQLCall(Constants::GET_FEATURE_SWITCHES_QUERY, Constants::GET_FEATURE_SWITCHES_OPERATION, [
             "type" => Constants::PLUGIN_TYPE,
             "version" => $this->configHelper->getModuleVersion(),
-        ));
+        ]);
 
         return $res;
     }
@@ -201,13 +201,14 @@ class Client extends AbstractHelper
      * @param $jsonEncodedLogArray
      * @throws LocalizedException
      */
-    public function sendLogs($jsonEncodedLogArray) {
+    public function sendLogs($jsonEncodedLogArray)
+    {
         $res = $this->makeGQLCall(
             Constants::SEND_LOGS_QUERY,
             Constants::SEND_LOGS_OPERATION,
-            array(
+            [
                 "logs" => $jsonEncodedLogArray,
-            )
+            ]
         );
         return $res;
     }

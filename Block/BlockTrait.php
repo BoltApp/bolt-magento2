@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Block;
@@ -33,7 +33,8 @@ trait BlockTrait
     /**
      * @return mixed
      */
-    public function shouldTrackCheckoutFunnel() {
+    public function shouldTrackCheckoutFunnel()
+    {
         return $this->configHelper->shouldTrackCheckoutFunnel();
     }
 
@@ -44,7 +45,8 @@ trait BlockTrait
      */
     public function getCheckoutKey()
     {
-        if($this->configHelper->isPaymentOnlyCheckoutEnabled() && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION){
+        if ($this->configHelper->isPaymentOnlyCheckoutEnabled()
+            && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION) {
             return $this->configHelper->getPublishableKeyPayment();
         }
 
@@ -57,7 +59,9 @@ trait BlockTrait
      */
     public function isKeyMissing()
     {
-        return !$this->getCheckoutKey() || !$this->configHelper->getApiKey() || !$this->configHelper->getSigningSecret();
+        return !$this->getCheckoutKey()
+            || !$this->configHelper->getApiKey()
+            || !$this->configHelper->getSigningSecret();
     }
 
     /**
@@ -155,7 +159,7 @@ trait BlockTrait
         return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
     }
 
-    /** 
+    /**
      * Return checkout cdn url for use in checkout button v2
      */
     public function getCheckoutCdnUrl()
@@ -163,7 +167,7 @@ trait BlockTrait
         return $this->configHelper->getCdnUrl();
     }
 
-    /** 
+    /**
      * Return if instant bolt checkout button should be displayed
      */
     public function isInstantCheckoutButton()

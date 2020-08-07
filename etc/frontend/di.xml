@@ -12,7 +12,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 -->
@@ -78,6 +78,13 @@
         </arguments>
     </type>
 
+    <type name="Magento\Customer\CustomerData\SectionPoolInterface">
+        <arguments>
+            <argument name="sectionSourceMap" xsi:type="array">
+                <item name="boltcart" xsi:type="string">Bolt\Boltpay\Section\CustomerData\BoltCart</item>
+            </argument>
+        </arguments>
+    </type>
     <type name="Magento\Reward\Controller\Cart\Remove">
         <plugin sortOrder="1" name="boltBoltpayRemove"
                 type="Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin"/>

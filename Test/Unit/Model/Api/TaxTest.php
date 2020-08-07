@@ -97,8 +97,7 @@ class TaxTest extends TestCase
         $methods = [],
         $enableProxyingToOriginalMethods = false,
         $enableOriginalConstructor = true
-    )
-    {
+    ) {
         $builder = $this->getMockBuilder(Tax::class)
             ->setConstructorArgs(
                 [
@@ -135,10 +134,14 @@ class TaxTest extends TestCase
         $this->initCurrentMock();
 
         $this->assertAttributeInstanceOf(
-            TaxDataInterfaceFactory::class, 'taxDataFactory', $this->currentMock
+            TaxDataInterfaceFactory::class,
+            'taxDataFactory',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            TaxResultInterfaceFactory::class, 'taxResultFactory', $this->currentMock
+            TaxResultInterfaceFactory::class,
+            'taxResultFactory',
+            $this->currentMock
         );
         $this->assertAttributeInstanceOf(
             TotalsInformationManagementInterface::class,
@@ -146,7 +149,9 @@ class TaxTest extends TestCase
             $this->currentMock
         );
         $this->assertAttributeInstanceOf(
-            TotalsInformationInterface::class, 'addressInformation', $this->currentMock
+            TotalsInformationInterface::class,
+            'addressInformation',
+            $this->currentMock
         );
     }
 
@@ -154,9 +159,14 @@ class TaxTest extends TestCase
      * @test
      * that setAddressInformation would return set shipping method code and set shipping carrier code
      *
+     * @dataProvider provider_setAddressInformation_happyPath
      * @covers ::setAddressInformation
+     * @param $shippingReference
+     * @param $carrierCode
+     * @param $methodCode
+     *
      */
-    public function setAddressInformation_happyPath()
+    public function setAddressInformation_happyPath($shippingReference, $carrierCode, $methodCode)
     {
         $addressData = [
             'region' => 'California',
@@ -169,7 +179,7 @@ class TaxTest extends TestCase
         ];
 
         $shipping_option = [
-            'reference' => 'carrierCode_methodCode'
+            'reference' => $shippingReference
         ];
 
         $this->initCurrentMock(['populateAddress']);
@@ -182,10 +192,17 @@ class TaxTest extends TestCase
             ->with($address);
 
         $this->addressInformation->expects(self::once())->method('setShippingCarrierCode')
-            ->with('carrierCode');
-        $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with('methodCode');
+            ->with($carrierCode);
+        $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with($methodCode);
 
         $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+    }
+
+    public function provider_setAddressInformation_happyPath(){
+        return [
+          ['carrierCode_methodCode','carrierCode', 'methodCode'],
+          ['shqshared_GROUND_HOME_DELIVERY', 'shqshared', 'GROUND_HOME_DELIVERY']
+        ];
     }
 
     /**
@@ -242,7 +259,8 @@ class TaxTest extends TestCase
         $taxResult->expects(self::once())->method('setSubtotalAmount')->with(1000);
 
         $this->assertEquals(
-            $taxResult, $this->currentMock->createTaxResult($totalsInformation, self::CURRENCY_CODE)
+            $taxResult,
+            $this->currentMock->createTaxResult($totalsInformation, self::CURRENCY_CODE)
         );
     }
 
@@ -280,9 +298,12 @@ class TaxTest extends TestCase
         $shippingOption->expects(self::once())->method('setReference')->with('carrierCode_methodCode');
 
         $this->assertEquals(
-            $shippingOption, $this->currentMock->createShippingOption(
-            $totalsInformation, self::CURRENCY_CODE, $shipping_option
-        )
+            $shippingOption,
+            $this->currentMock->createShippingOption(
+                $totalsInformation,
+                self::CURRENCY_CODE,
+                $shipping_option
+            )
         );
     }
 
@@ -319,9 +340,12 @@ class TaxTest extends TestCase
         $shippingOption->expects(self::once())->method('setReference')->with(null);
 
         $this->assertEquals(
-            $shippingOption, $this->currentMock->createShippingOption(
-            $totalsInformation, self::CURRENCY_CODE, $shipping_option
-        )
+            $shippingOption,
+            $this->currentMock->createShippingOption(
+                $totalsInformation,
+                self::CURRENCY_CODE,
+                $shipping_option
+            )
         );
     }
 

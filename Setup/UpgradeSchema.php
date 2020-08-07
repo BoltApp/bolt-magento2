@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Setup;
@@ -20,9 +20,6 @@ use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 
-/**
- * @codeCoverageIgnore
- */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
     /**
@@ -79,6 +76,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ['bolt_parent_quote_id']
         );
 
+        $setup->getConnection()->addColumn(
+            $setup->getTable('sales_order'),
+            'bolt_transaction_reference',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length' => 64,
+                'nullable' => true,
+                'comment' => 'Bolt Transaction Reference'
+            ]
+        );
+
         $this->setupFeatureSwitchTable($setup);
 
         $this->setUpFeatureBoltCustomerCreditCardsTable($setup);
@@ -90,7 +98,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->endSetup();
     }
 
-    private function setupFeatureSwitchTable(SchemaSetupInterface $setup) {
+    private function setupFeatureSwitchTable(SchemaSetupInterface $setup)
+    {
         // If the table exists we do nothing. In the future, we can add migrations here based on
         // current version from context, however for now just move on.
         // The reason we do ugrade schema instead of install schema is that install schema is triggered *only*
@@ -141,7 +150,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function setupWebhookLogTable($setup){
+    private function setupWebhookLogTable($setup)
+    {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
         if ($tableCreated) {
             return;
@@ -180,7 +190,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup){
+    private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup)
+    {
         // If the table exists we do nothing. In the future, we can add migrations here based on
         // current version from context, however for now just move on.
         // The reason we do upgrade schema instead of install schema is that install schema is triggered *only*
@@ -244,7 +255,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
-    private function updateWebhookLogTable($setup){
+    private function updateWebhookLogTable($setup)
+    {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
 
         if (!$tableCreated) {
@@ -255,11 +267,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $connection->addColumn(
             $setup->getTable('bolt_webhook_log'),
-            'updated_at', [
+            'updated_at',
+            [
                 'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
                 'comment' => 'Updated At'
             ]
         );
-
     }
 }

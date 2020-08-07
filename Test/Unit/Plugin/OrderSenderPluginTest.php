@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -77,7 +77,7 @@ class OrderSenderPluginTest extends TestCase
     {
         $this->order->expects(self::once())->method('getPayment')->willReturnSelf();
         $this->order->expects(self::once())->method('getMethod')->willReturn(false);
-        $this->callback->expects(self::once())->method('__invoke')->with($this->order, false)->willReturnSelf();;
+        $this->callback->expects(self::once())->method('__invoke')->with($this->order, false)->willReturnSelf();
         $this->plugin->aroundSend($this->subject, $this->proceed, $this->order, false);
     }
 

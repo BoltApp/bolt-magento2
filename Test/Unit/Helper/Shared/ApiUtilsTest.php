@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -32,7 +32,8 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function getJSONFromResponseBody_success() {
+    public function getJSONFromResponseBody_success()
+    {
         $body = "{\"status\":\"ok\"}";
         $parsedBody = ApiUtils::getJSONFromResponseBody($body);
         $this->assertObjectHasAttribute("status", $parsedBody);
@@ -42,7 +43,8 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function getJSONFromResponseBody_badJSON() {
+    public function getJSONFromResponseBody_badJSON()
+    {
         $body = '{"status": notok}';
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage("JSON Parse Error: Syntax error, malformed JSON");
@@ -53,7 +55,8 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function getJSONFromResponseBody_errorFromBolt() {
+    public function getJSONFromResponseBody_errorFromBolt()
+    {
         $body = '{"error": {"something": "here"}}';
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessageRegExp("/Bolt API Error.*/");
@@ -64,7 +67,8 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function getJSONFromResponseBody_errorFromBoltWithMsg() {
+    public function getJSONFromResponseBody_errorFromBoltWithMsg()
+    {
         $body = '{"errors": [{"message": "here"}]}';
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessageRegExp("/here.*/");
@@ -75,13 +79,14 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function constructRequestHeaders_basic() {
+    public function constructRequestHeaders_basic()
+    {
         $headers = ApiUtils::constructRequestHeaders(
             "storeVersion",
             "moduleVersion",
             "request-data",
             "api-key",
-            array()
+            []
         );
         $this->assertEquals($headers["User-Agent"], "BoltPay/Magento-storeVersion/moduleVersion");
         $this->assertEquals($headers["X-Bolt-Plugin-Version"], "moduleVersion");
@@ -93,16 +98,17 @@ class ApiUtilsTest extends TestCase
     /**
      * @test
      */
-    public function constructRequestHeaders_skipsOverwritingWithAdditional() {
+    public function constructRequestHeaders_skipsOverwritingWithAdditional()
+    {
         $headers = ApiUtils::constructRequestHeaders(
             "storeVersion",
             "moduleVersion",
             "request-data",
             "api-key",
-            array(
+            [
                 "Content-type" => "secret",
                 "new-thing" => "nothing"
-            )
+            ]
         );
         $this->assertEquals($headers["User-Agent"], "BoltPay/Magento-storeVersion/moduleVersion");
         $this->assertEquals($headers["X-Bolt-Plugin-Version"], "moduleVersion");

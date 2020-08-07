@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -26,10 +26,6 @@ use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
 
-/**
- * Class CreditCard
- * @package Bolt\Boltpay\Block\Customer
- */
 class CreditCard extends Template
 {
     use BlockTrait;
@@ -71,8 +67,7 @@ class CreditCard extends Template
         Config $configHelper,
         Decider $featureSwitches,
         array $data = []
-    )
-    {
+    ) {
         $this->formKey = $formKey;
         $this->collectionFactory = $collectionFactory;
         $this->customerSession = $customerSession;
@@ -133,7 +128,8 @@ class CreditCard extends Template
     /**
      * @return string
      */
-    public function getFormKey(){
+    public function getFormKey()
+    {
         return $this->formKey->getFormKey();
     }
 }

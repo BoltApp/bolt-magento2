@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -30,75 +30,75 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class Debug implements DebugInterface
 {
-	/**
-	 * @var Response
-	 */
-	private $response;
+    /**
+     * @var Response
+     */
+    private $response;
 
-	/**
-	 * @var DebugInfoFactory
-	 */
-	private $debugInfoFactory;
+    /**
+     * @var DebugInfoFactory
+     */
+    private $debugInfoFactory;
 
-	/**
-	 * @var HookHelper
-	 */
-	private $hookHelper;
+    /**
+     * @var HookHelper
+     */
+    private $hookHelper;
 
-	/**
-	 * @var StoreManagerInterface
-	 */
-	private $storeManager;
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
-	/**
-	 * @var ProductMetadataInterface
-	 */
-	private $productMetadata;
+    /**
+     * @var ProductMetadataInterface
+     */
+    private $productMetadata;
 
-	/**
-	 * @var ConfigHelper
-	 */
-	private $configHelper;
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
 
-	/**
-	 * @var ModuleRetriever
-	 */
-	private $moduleRetriever;
+    /**
+     * @var ModuleRetriever
+     */
+    private $moduleRetriever;
 
     /**
      * @var LogRetriever
      */
     private $logRetriever;
 
-	/**
-	 * @param Response $response
-	 * @param DebugInfoFactory $debugInfoFactory
-	 * @param StoreManagerInterface $storeManager
-	 * @param HookHelper $hookHelper
-	 * @param ProductMetadataInterface $productMetadata
-	 * @param ConfigHelper $configHelper
-	 * @param ModuleRetriever $moduleRetriever
+    /**
+     * @param Response $response
+     * @param DebugInfoFactory $debugInfoFactory
+     * @param StoreManagerInterface $storeManager
+     * @param HookHelper $hookHelper
+     * @param ProductMetadataInterface $productMetadata
+     * @param ConfigHelper $configHelper
+     * @param ModuleRetriever $moduleRetriever
      * @param LogRetriever $logRetriever
-	 */
-	public function __construct(
-		Response $response,
-		DebugInfoFactory $debugInfoFactory,
-		StoreManagerInterface $storeManager,
-		HookHelper $hookHelper,
-		ProductMetadataInterface $productMetadata,
-		ConfigHelper $configHelper,
-		ModuleRetriever $moduleRetriever,
+     */
+    public function __construct(
+        Response $response,
+        DebugInfoFactory $debugInfoFactory,
+        StoreManagerInterface $storeManager,
+        HookHelper $hookHelper,
+        ProductMetadataInterface $productMetadata,
+        ConfigHelper $configHelper,
+        ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever
-	) {
-		$this->response = $response;
-		$this->debugInfoFactory = $debugInfoFactory;
-		$this->storeManager = $storeManager;
-		$this->hookHelper = $hookHelper;
-		$this->productMetadata = $productMetadata;
-		$this->configHelper = $configHelper;
-		$this->moduleRetriever = $moduleRetriever;
-		$this->logRetriever = $logRetriever;
-	}
+    ) {
+        $this->response = $response;
+        $this->debugInfoFactory = $debugInfoFactory;
+        $this->storeManager = $storeManager;
+        $this->hookHelper = $hookHelper;
+        $this->productMetadata = $productMetadata;
+        $this->configHelper = $configHelper;
+        $this->moduleRetriever = $moduleRetriever;
+        $this->logRetriever = $logRetriever;
+    }
 
     /**
      * This request handler will return relevant information for Bolt for debugging purpose.
@@ -109,42 +109,42 @@ class Debug implements DebugInterface
      * @throws \Magento\Framework\Webapi\Exception
      * @api
      */
-	public function debug()
-	{
-		# verify request
-		$this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
+    public function debug()
+    {
+        # verify request
+        $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
 
-		$result = $this->debugInfoFactory->create();
+        $result = $this->debugInfoFactory->create();
 
-		# populate php version
-		$result->setPhpVersion(PHP_VERSION);
+        # populate php version
+        $result->setPhpVersion(PHP_VERSION);
 
-		# populate platform version
-		$result->setPlatformVersion($this->productMetadata->getVersion());
+        # populate bolt config settings
+        $result->setComposerVersion($this->configHelper->getComposerVersion());
 
-		# populate bolt config settings
-		$result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
+        # populate platform version
+        $result->setPlatformVersion($this->productMetadata->getVersion());
 
-		# populate bolt config settings
-		$result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
+        # populate bolt config settings
+        $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
 
-		# populate other plugin info
-		$result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+        # populate other plugin info
+        $result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
 
-		# populate log
+        # populate log
         # parameters exist for getLog, default to exception.php last 100 lines
         $result->setLogs($this->logRetriever->getLogs());
 
-		// prepare response
-		$this->response->setHeader('Content-Type', 'json');
-		$this->response->setHttpResponseCode(200);
-		$this->response->setBody(
-			json_encode([
-				'status' => 'success',
-				'event' => 'integration.debug',
-				'data' => $result
-			])
-		);
-		$this->response->sendResponse();
-	}
+        // prepare response
+        $this->response->setHeader('Content-Type', 'json');
+        $this->response->setHttpResponseCode(200);
+        $this->response->setBody(
+            json_encode([
+                'status' => 'success',
+                'event' => 'integration.debug',
+                'data' => $result
+            ])
+        );
+        $this->response->sendResponse();
+    }
 }

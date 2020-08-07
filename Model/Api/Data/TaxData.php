@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -69,7 +69,8 @@ class TaxData implements TaxDataInterface, \JsonSerializable
      * @api
      * @return ShippingOptionInterface
      */
-    public function getShippingOption() {
+    public function getShippingOption()
+    {
         return $this->shippingOption;
     }
 
@@ -89,7 +90,8 @@ class TaxData implements TaxDataInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize () {
+    public function jsonSerialize()
+    {
         return [
             'tax_result' => $this->taxResult,
             'shipping_option' => $this->shippingOption

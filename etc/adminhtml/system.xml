@@ -12,7 +12,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 -->
@@ -95,7 +95,13 @@
                         <config_path>payment/boltpay/order_management</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
-                    <field id="always_present_checkout" translate="label" type="select" sortOrder="83" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="order_management_selector" translate="label" type="text" sortOrder="83" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>CSS selector for Bolt order management button</label>
+                        <depends><field id="order_management">1</field></depends>
+                        <comment>Leave empty for show button in header.</comment>
+                        <config_path>payment/boltpay/order_management_selector</config_path>
+                    </field>
+                    <field id="always_present_checkout" translate="label" type="select" sortOrder="84" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>(BETA) Enable Always Present Checkout Button</label>
                         <config_path>payment/boltpay/always_present_checkout</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -342,6 +348,11 @@
                         <config_path>payment/boltpay/pickup_shipping_method_code</config_path>
                         <depends><field id="enable_store_pickup_feature">1</field></depends>
                         <validate>validate-no-empty</validate>
+                    </field>
+                    <field id="product_attributes_list" translate="label" type="text" sortOrder="320" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Product attributes</label>
+                        <config_path>payment/boltpay/product_attributes_list</config_path>
+                        <comment>Comma separated list of product attributes that we send to bolt server. Leave empty for include only standard attributes.</comment>
                     </field>
                 </group>
             </group>

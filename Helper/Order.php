@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -38,11 +38,13 @@ use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as OrderModel;
+use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
@@ -99,11 +101,16 @@ class Order extends AbstractHelper
     const TT_APM_REFUND = 'apm_refund';
 
     const VALID_HOOKS_FOR_ORDER_CREATION = [Hook::HT_PENDING, Hook::HT_PAYMENT];
-    
+
     // Payment method was used for Bolt transaction
     const TP_VANTIV = 'vantiv';
     const TP_PAYPAL = 'paypal';
     const TP_AFTERPAY = 'afterpay';
+    const TP_METHOD_DISPLAY = [
+        'paypal' => 'PayPal',
+        'afterpay' => 'Afterpay',
+        'affirm' => 'Affirm',
+    ];
 
     /**
      * @var ApiHelper
@@ -294,8 +301,7 @@ class Order extends AbstractHelper
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
         CreditmemoManagementInterface $creditmemoManagement
-    )
-    {
+    ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
         $this->configHelper = $configHelper;
@@ -622,6 +628,17 @@ class Order extends AbstractHelper
         if ($this->configHelper->shouldAdjustTaxMismatch()) {
             $this->adjustTaxMismatch($transaction, $order, $quote);
         }
+
+        if ($this->configHelper->getPriceFaultTolerance()) {
+            /////////////////////////////////////////////////////////////////////////
+            /// Historically, we have honored a price tolerance of 1 cent on
+            /// an order due calculations outside of the Magento framework context
+            /// for discounts, shipping and tax.  We must still respect this feature
+            /// and adjust the order final price according to fault tolerance which
+            /// will now default to 1 cent unless a hidden option overrides this value
+            /////////////////////////////////////////////////////////////////////////
+            $this->adjustPriceMismatch($transaction, $order, $quote);
+        }
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
@@ -633,6 +650,42 @@ class Order extends AbstractHelper
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
         $order->save();
+    }
+
+    /**
+     * @param $transaction
+     * @param OrderModel $order
+     * @param Quote $quote
+     * @throws \Exception
+     */
+    private function adjustPriceMismatch($transaction, $order, $quote)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
+        $boltTotalAmount = $transaction->order->cart->total_amount->amount;
+        $magentoTotalAmount = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
+        $totalMismatch = $boltTotalAmount - $magentoTotalAmount;
+
+        if (abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance) {
+            $boltGrandTotal = CurrencyUtils::toMajor($boltTotalAmount, $currencyCode);
+            $order->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
+
+            $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTotalAmount, $magentoTotalAmount) {
+
+                $report->setMetaData([
+                    'TOTAL MISMATCH' => [
+                        'Bolt Total Amount' => $boltTotalAmount,
+                        'Magento Total Amount' => $magentoTotalAmount,
+                        'Order #' => $quote->getReservedOrderId(),
+                        'Quote ID' => $quote->getId(),
+
+                    ]
+                ]);
+            });
+
+            $diff = round(CurrencyUtils::toMajor($totalMismatch, $currencyCode), 2);
+            $this->bugsnag->notifyError('Total Mismatch', "Totals adjusted by $diff");
+        }
     }
 
     /**
@@ -681,7 +734,8 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @param string $state
      */
-    public function resetOrderState($order) {
+    public function resetOrderState($order)
+    {
         $order->setState(self::BOLT_ORDER_STATE_NEW);
         $order->setStatus(self::BOLT_ORDER_STATUS_PENDING);
         $order->addStatusHistoryComment(
@@ -699,11 +753,11 @@ class Order extends AbstractHelper
      */
     public function verifyOrderCreationHookType($hookType)
     {
-        if ( ( Hook::$fromBolt || isset ( $hookType ) )
-            && ! in_array ( $hookType, static::VALID_HOOKS_FOR_ORDER_CREATION )
+        if (( Hook::$fromBolt || isset($hookType) )
+            && ! in_array($hookType, static::VALID_HOOKS_FOR_ORDER_CREATION)
         ) {
-            throw new BoltException (
-                __( 'Order creation is forbidden from hook of type: %1', $hookType ),
+            throw new BoltException(
+                __('Order creation is forbidden from hook of type: %1', $hookType),
                 null,
                 CreateOrder::E_BOLT_REJECTED_ORDER
             );
@@ -855,7 +909,8 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function voidTransactionOnBolt($transactionId, $storeId){
+    public function voidTransactionOnBolt($transactionId, $storeId)
+    {
         //Get transaction data
         $transactionData = [
             'transaction_id' => $transactionId,
@@ -901,7 +956,7 @@ class Order extends AbstractHelper
             $parentQuoteId = @$transaction->order->cart->order_reference;
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
-            if (!$quote){
+            if (!$quote) {
                 list(, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
@@ -942,7 +997,8 @@ class Order extends AbstractHelper
      *
      * @param Quote $quote
      */
-    public function applyExternalQuoteData($quote) {
+    public function applyExternalQuoteData($quote)
+    {
         $this->discountHelper->applyExternalDiscountData($quote);
     }
 
@@ -950,10 +1006,13 @@ class Order extends AbstractHelper
      * @param OrderInterface $order
      * @param Quote $quote
      */
-    public function dispatchPostCheckoutEvents($order, $quote) {
+    public function dispatchPostCheckoutEvents($order, $quote)
+    {
         // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
         // as a flag to determine if the events were dispatched
-        if (! $quote->getBoltReservedOrderId()) return; // already dispatched
+        if (! $quote->getBoltReservedOrderId()) {
+            return; // already dispatched
+        }
 
         $this->applyExternalQuoteData($quote);
 
@@ -966,7 +1025,8 @@ class Order extends AbstractHelper
 
         $this->logHelper->addInfoLog('[-= dispatchPostCheckoutEvents =-]');
         $this->_eventManager->dispatch(
-            'checkout_submit_all_after', [
+            'checkout_submit_all_after',
+            [
                 'order' => $order,
                 'quote' => $quote
             ]
@@ -992,11 +1052,13 @@ class Order extends AbstractHelper
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
 
-            if($order->isCanceled()) {
+            if ($order->isCanceled()) {
                 throw new BoltException(
-                    __('Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
+                    __(
+                        'Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
                         $quote->getReservedOrderId(),
-                        $quote->getId()),
+                        $quote->getId()
+                    ),
                     null,
                     CreateOrder::E_BOLT_REJECTED_ORDER
                 );
@@ -1004,9 +1066,11 @@ class Order extends AbstractHelper
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
                 throw new BoltException(
-                    __('Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
+                    __(
+                        'Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
                         $quote->getReservedOrderId(),
-                        $quote->getId()),
+                        $quote->getId()
+                    ),
                     null,
                     CreateOrder::E_BOLT_GENERAL_ERROR
                 );
@@ -1075,9 +1139,9 @@ class Order extends AbstractHelper
         $transactionTaxAmount = $transaction->order->cart->tax_amount->amount;
         $transactionShippingAmount = $transaction->order->cart->shipping_amount->amount;
         $transactionGrandTotalAmount = $transaction->order->cart->total_amount->amount;
-
-        return abs($taxAmount - $transactionTaxAmount) <= self::MISMATCH_TOLERANCE
-            && abs($shippingAmount - $transactionShippingAmount) <= self::MISMATCH_TOLERANCE
+        $priceFaultTolerance =  $this->configHelper->getPriceFaultTolerance();
+        return abs($taxAmount - $transactionTaxAmount) <= $priceFaultTolerance
+            && abs($shippingAmount - $transactionShippingAmount) <= $priceFaultTolerance
             && $grandTotalAmount == $transactionGrandTotalAmount;
     }
 
@@ -1169,8 +1233,15 @@ class Order extends AbstractHelper
         }
 
         $parentQuoteId = $order->getQuoteId();
-        $this->deleteOrder($order);
         $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        $this->_eventManager->dispatch(
+            'sales_model_service_quote_submit_failure',
+            [
+                'order' => $order,
+                'quote' => $parentQuote
+            ]
+        );
+        $this->deleteOrder($order);
         // reactivate session quote - the condiotion excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
@@ -1201,7 +1272,8 @@ class Order extends AbstractHelper
     {
         $quote->setUpdatedAt($this->date->gmtDate());
         $this->_eventManager->dispatch(
-            'sales_quote_save_after', [
+            'sales_quote_save_after',
+            [
                 'quote' => $quote
             ]
         );
@@ -1225,7 +1297,7 @@ class Order extends AbstractHelper
         $boltParentQuoteId = $immutableQuote->getBoltParentQuoteId();
         if ($boltParentQuoteId) {
             $quote = $this->cartHelper->getQuoteById($boltParentQuoteId);
-            if($quote) {
+            if ($quote) {
                 $this->cartHelper->replicateQuoteData($immutableQuote, $quote);
             } else {
                 // if the parent quote is removed then we create order by the immutable quote
@@ -1505,7 +1577,10 @@ class Order extends AbstractHelper
 
         throw new LocalizedException(__(
             'Order Totals Mismatch Reference: %1 Order: %2 Bolt Total: %3 Store Total: %4',
-            $transaction->reference, $incrementId, $boltTotal, $storeTotal
+            $transaction->reference,
+            $incrementId,
+            $boltTotal,
+            $storeTotal
         ));
     }
 
@@ -1596,15 +1671,10 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            if ($order->canCancel()){
-                $this->cancelOrder($order);
-                return;
-            }
-
-            try{
-                // Restock product quantity when the payment is irreversibly rejected
+            try {
+                // Use registerCancellation method to cancel order and restock product saleable quantity
                 $order->registerCancellation('', false);
-            } catch (\Exception $e){
+            } catch (\Exception $e) {
                 // Put the order in "cancelled" state even if the previous call fails
                 $order->setState(OrderModel::STATE_CANCELED);
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
@@ -1656,10 +1726,17 @@ class Order extends AbstractHelper
      * Map class internal Bolt transaction state representation to Magento order state
      *
      * @param string $transactionState
+     * @param OrderModel $order
      * @return string
      */
-    public function transactionToOrderState($transactionState)
+    public function transactionToOrderState($transactionState, $order)
     {
+        $orderStateForCredit = (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING;
+
+        if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid()) {
+            $orderStateForCredit = OrderModel::STATE_CLOSED;
+        }
+
         return [
             self::TS_ZERO_AMOUNT => OrderModel::STATE_PROCESSING,
             self::TS_PENDING => OrderModel::STATE_PAYMENT_REVIEW,
@@ -1671,7 +1748,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
             // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
             // If called from Bolt merchant dashboard there is no enough info to sync the totals
-            self::TS_CREDIT_COMPLETED => (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING
+            self::TS_CREDIT_COMPLETED => $orderStateForCredit
         ][$transactionState];
     }
 
@@ -1717,13 +1794,12 @@ class Order extends AbstractHelper
         // Skip if there is no state change (i.e. fetch transaction call from admin panel / Payment model)
         // Reference check and $newCapture were added to support multiple refunds and captures,
         // valid same state transitions
-        if (
-            $transactionState == $prevTransactionState &&
+        if ($transactionState == $prevTransactionState &&
             $reference == $prevTransactionReference &&
             !$newCapture &&
             !($hookType == Hook::HT_PENDING && $order->getState() == OrderModel::STATE_PENDING_PAYMENT)
         ) {
-            if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)){
+            if ($this->isAnAllowedUpdateFromAdminPanel($order, $transactionState)) {
                 $payment->setIsTransactionApproved(true);
             }
             return;
@@ -1769,7 +1845,9 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CAPTURED:
-                if (!$newCapture) return;
+                if (!$newCapture) {
+                    return;
+                }
                 $transactionType = Transaction::TYPE_CAPTURE;
                 $transactionId = $transaction->id.'-capture-'.$newCapture->id;
                 $parentTransactionId = $transaction->id.'-auth';
@@ -1783,7 +1861,9 @@ class Order extends AbstractHelper
                 return;
 
             case self::TS_COMPLETED:
-                if (!$newCapture) return;
+                if (!$newCapture) {
+                    return;
+                }
                 $transactionType = Transaction::TYPE_CAPTURE;
                 if ($paymentAuthorized) {
                     $transactionId = $transaction->id.'-capture-'.$newCapture->id;
@@ -1810,11 +1890,13 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CREDIT_COMPLETED:
-                if (in_array($transaction->id, $processedRefunds)) return;
+                if (in_array($transaction->id, $processedRefunds)) {
+                    return;
+                }
                 $transactionType = Transaction::TYPE_REFUND;
                 $transactionId = $transaction->id . '-refund';
 
-                if (Hook::$fromBolt && $this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()){
+                if (Hook::$fromBolt && $this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) {
                     $this->createCreditMemoForHookRequest($order, $transaction);
                 }
                 break;
@@ -1842,7 +1924,6 @@ class Order extends AbstractHelper
             'transaction_reference' => $transaction->reference,
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
-            'captures' => implode(',', $processedCaptures),
             'refunds' => implode(',', $processedRefunds),
             'processor' => $transaction->processor
         ];
@@ -1858,7 +1939,7 @@ class Order extends AbstractHelper
         $payment->setParentTransactionId($parentTransactionId);
         $payment->setTransactionId($transactionId);
         $payment->setLastTransId($transactionId);
-        $payment->setAdditionalInformation($paymentData);
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         $payment->setIsTransactionClosed($transactionType != Transaction::TYPE_AUTH);
 
         $this->setOrderPaymentInfoData($payment, $transaction);
@@ -1871,11 +1952,12 @@ class Order extends AbstractHelper
             // set order state and status
             $this->resetOrderState($order);
         }
-        $orderState = $this->transactionToOrderState($transactionState);
+        $orderState = $this->transactionToOrderState($transactionState, $order);
+
         $this->setOrderState($order, $orderState);
 
         // Send order confirmation email to customer.
-        if ( ! $order->getEmailSent() ) {
+        if (! $order->getEmailSent()) {
             try {
                 $this->emailSender->send($order);
             } catch (\Exception $e) {
@@ -1884,10 +1966,13 @@ class Order extends AbstractHelper
         }
 
         // We will create an invoice if we have zero amount or new capture.
-        if ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState)) {
+        if (!$this->featureSwitches->isIgnoreHookForInvoiceCreationEnabled() && ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState))) {
             $currencyCode = $order->getOrderCurrencyCode();
             $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
             $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
+            $payment->setAdditionalInformation(
+                array_merge((array)$payment->getAdditionalInformation(), ['captures' => implode(',', $processedCaptures)])
+            );
         }
 
         if (!$order->getTotalDue()) {
@@ -1954,11 +2039,14 @@ class Order extends AbstractHelper
         $invoice->setBaseGrandTotal($amount);
         $invoice->setGrandTotal($amount);
         $invoice->register();
-        $invoice->save();
 
         $order->addRelatedObject($invoice);
 
-        if (!$invoice->getEmailSent()) {
+        if ($this->scopeConfig->isSetFlag(
+            InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
+            ScopeInterface::SCOPE_STORE,
+            $order->getStoreId()
+        ) && !$invoice->getEmailSent()) {
             try {
                 $this->invoiceSender->send($invoice);
             } catch (\Exception $e) {
@@ -1993,7 +2081,7 @@ class Order extends AbstractHelper
                 'shipping_amount' => 0
             ];
 
-            foreach ($order->getAllItems() as $item){
+            foreach ($order->getAllItems() as $item) {
                 $adjustment['qtys'][$item->getId()] = 0;
             }
         }
@@ -2059,7 +2147,7 @@ class Order extends AbstractHelper
     protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
     {
         if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
-            throw new \Exception( __('Capture amount is invalid'));
+            throw new \Exception(__('Capture amount is invalid'));
         }
 
         $currencyCode = $order->getOrderCurrencyCode();
@@ -2115,7 +2203,8 @@ class Order extends AbstractHelper
      *
      * @return string
      */
-    public function formatAmountForDisplay($order, $amount) {
+    public function formatAmountForDisplay($order, $amount)
+    {
         return $order->getOrderCurrency()->formatTxt($amount);
     }
 

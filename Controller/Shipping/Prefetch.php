@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -31,9 +31,7 @@ use Bolt\Boltpay\Helper\Geolocation;
  * Class Prefetch.
  * Gets user location data from geolocation API.
  * Calls shipping estimation with the location data.
- * Shipping is prefetched and cached.
- *
- * @package Bolt\Boltpay\Controller\Shipping
+ * Shipping is pre-fetched and cached.
  */
 class Prefetch extends Action
 {
@@ -75,8 +73,6 @@ class Prefetch extends Action
      * @param ConfigHelper $configHelper
      * @param CustomerSession $customerSession
      * @param Geolocation $geolocation
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
@@ -141,12 +137,12 @@ class Prefetch extends Action
                 $location = json_decode($locationJson);
 
                 // at least country code and zip are needed for shipping estimation
-                if ($location && @$location->country_code && @$location->zip) {
+                if ($location && isset($location->country_code) && isset($location->zip)) {
                     $shipping_address = [
                         'country_code' => $location->country_code,
                         'postal_code'  => $location->zip,
-                        'region'       => @$location->region_name,
-                        'locality'     => @$location->city,
+                        'region'       => isset($location->region_name) ? $location->region_name : "",
+                        'locality'     => isset($location->city) ? $location->city : "",
                     ];
                     $this->shippingMethods->shippingEstimation($quote, $shipping_address);
                 }

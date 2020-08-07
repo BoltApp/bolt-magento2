@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -34,8 +34,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * Class Save.
  * Converts / saves the quote into an order.
  * Updates the order payment/transaction info. Closes the quote / order session.
- *
- * @package Bolt\Boltpay\Controller\Order
  */
 class Save extends Action
 {
@@ -75,8 +73,6 @@ class Save extends Action
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
      * @param DataObjectFactory $dataObjectFactory
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

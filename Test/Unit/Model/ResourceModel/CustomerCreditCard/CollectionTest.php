@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -76,12 +76,13 @@ class CollectionTest extends TestCase
     /**
      * @test
      */
-    public function getCreditCardInfosByCustomerId(){
+    public function getCreditCardInfosByCustomerId()
+    {
         $this->mockCustomerCreditCardCollection->expects($this->once())->method('addFilter')
             ->with('customer_id', self::CUSTOMER_ID)
             ->willReturn([$this->mockCustomerCreditCard]);
 
         $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals([$this->mockCustomerCreditCard],$result);
+        $this->assertEquals([$this->mockCustomerCreditCard], $result);
     }
 }

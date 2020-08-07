@@ -1,4 +1,19 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Observer;
 
@@ -55,6 +70,7 @@ class TrackingSaveObserver implements ObserverInterface
      * @param ApiHelper $apiHelper
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
+     * @param Decider $decider
      *
      */
     public function __construct(
@@ -78,12 +94,13 @@ class TrackingSaveObserver implements ObserverInterface
      * @param array item options
      * @return array
      */
-    private function getPropertiesByProductOptions ($itemOptions) {
+    private function getPropertiesByProductOptions($itemOptions)
+    {
         if (!isset($itemOptions['attributes_info'])) {
             return [];
         }
         $properties = [];
-        foreach($itemOptions['attributes_info'] as $attributeInfo){
+        foreach ($itemOptions['attributes_info'] as $attributeInfo) {
             // Convert attribute to string if it's a boolean before sending to the Bolt API
             $attributeValue = is_bool($attributeInfo['value']) ? var_export($attributeInfo['value'], true) : $attributeInfo['value'];
             $attributeLabel = $attributeInfo['label'];
@@ -111,12 +128,19 @@ class TrackingSaveObserver implements ObserverInterface
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
 
-            // If this is not a bolt payment, ignore it
-            if (!$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
-                return;
+            $isNonBoltOrder = !$payment || $payment->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE;
+            if ($isNonBoltOrder) {
+                $transactionReference = $order->getBoltTransactionReference();
+            } else {
+                $transactionReference = $payment->getAdditionalInformation('transaction_reference');
             }
 
-            $transactionReference = $payment->getAdditionalInformation('transaction_reference');
+            if (is_null($transactionReference)) {
+                $quoteId = $order->getQuoteId();
+                $this->bugsnag->notifyError("Missing transaction reference", "QuoteID: {$quoteId}");
+                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                return;
+            }
 
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
@@ -137,7 +161,8 @@ class TrackingSaveObserver implements ObserverInterface
                 'transaction_reference' => $transactionReference,
                 'tracking_number'       => $tracking->getTrackNumber(),
                 'carrier'               => $tracking->getCarrierCode(),
-                'items'                 => $items
+                'items'                 => $items,
+                'is_non_bolt_order'     => $isNonBoltOrder,
             ];
 
             //Request Data
