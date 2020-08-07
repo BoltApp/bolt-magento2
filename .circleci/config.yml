@@ -2,6 +2,18 @@ version: 2.1
 
 orbs:
   slack: circleci/slack@3.4.2
+  swissknife: roopakv/swissknife@0.48.0
+
+parameters:
+  run_default_workflow:
+    type: boolean
+    default: true
+  run_rebase_and_unit_test:
+    type: boolean
+    default: false
+  rebase_and_unit_test_branch_name:
+    type: string
+    default: ""
 
 commands:
   notify-rc-tag:
@@ -92,28 +104,15 @@ commands:
 
   m2-php-test-for-merchant-branches:
     description: PHP Unit tests for M2 on all merchant branches
-    parameters:
-      m2_version:
-        type: enum
-        default: "2.3.0"
-        enum: ["2.2.0", "2.3.0"]
-      php_version:
-        type: enum
-        default: "php72"
-        enum: ["php70", "php71", "php72"]
-      is_integration:
-        type: boolean
-        default: false
     steps:
       - checkout
+      - swissknife/trigger-pipeline:
+          install-skip-trigger: true
       - run:
           name: Tests
           command: |
             mkdir ./artifacts
-            export COMPOSER_MEMORY_LIMIT=3G
-            export TEST_ENV=<< parameters.php_version >>
-            export MAGENTO_VERSION=<< parameters.m2_version >>
-            .circleci/scripts/test-merchant-branches.sh ${CIRCLE_BRANCH} << parameters.is_integration >>
+            .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
   auto-rebase:
@@ -127,6 +126,18 @@ jobs:
       - run:
           name: Auto-rebase
           command: bash .circleci/scripts/auto-rebase.sh
+
+  rebase-and-unit-test:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Rebase and Unit Test
+          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
 
   tag-release-candidate:
     docker:
@@ -199,20 +210,6 @@ jobs:
           php_version: "php70"
           is_integration: false
 
-  integration-php72-magento23-for-merchant-branches:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-    environment:
-      MAGENTO_DIR: magento
-    steps:
-      - m2-php-test-for-merchant-branches:
-          m2_version: "2.3.0"
-          php_version: "php72"
-          is_integration: true
-
   unit-php72-magento23-for-merchant-branches:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
@@ -221,36 +218,7 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
-      - m2-php-test-for-merchant-branches:
-          m2_version: "2.3.0"
-          php_version: "php72"
-          is_integration: false
-
-  unit-php71-magento22-for-merchant-branches:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php71:2.2.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test-for-merchant-branches:
-          m2_version: "2.2.0"
-          php_version: "php71"
-          is_integration: false
-
-  unit-php70-magento22-for-merchant-branches:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test-for-merchant-branches:
-          m2_version: "2.2.0"
-          php_version: "php70"
-          is_integration: false
+      - m2-php-test-for-merchant-branches
 
   phpcs:
     docker:
@@ -262,10 +230,10 @@ jobs:
           command: |
             Test/scripts/phpcs_meqp2.sh
 
-
 workflows:
   version: 2
   build:
+    when: << pipeline.parameters.run_default_workflow >>
     jobs:
 #      - phpcs
       - unit-php72-magento23
@@ -283,11 +251,9 @@ workflows:
     jobs:
       - tag-release-candidate
   merchant-branch-test:
+    when: << pipeline.parameters.run_default_workflow >>
     jobs:
       - unit-php72-magento23-for-merchant-branches
-      - unit-php71-magento22-for-merchant-branches
-      - unit-php70-magento22-for-merchant-branches
-      - integration-php72-magento23-for-merchant-branches
   auto-rebase:
     jobs:
       - auto-rebase:
@@ -295,3 +261,7 @@ workflows:
             branches:
               only:
                 - master
+  rebase-and-unit-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
+    when: << pipeline.parameters.run_rebase_and_unit_test >>
+    jobs:
+      - rebase-and-unit-test
