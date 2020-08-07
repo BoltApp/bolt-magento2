@@ -170,9 +170,19 @@ class Js extends Template
     }
 
     /**
-     * Get Replace Button Selectors.
+     * Get Additional button attributes
      *
-     * @return string
+     * @return object|array Button attributes object or empty array if not provided
+     */
+    public function getAdditionalCheckoutButtonAttributes()
+    {
+        return $this->configHelper->getAdditionalCheckoutButtonAttributes();
+    }
+
+    /**
+     * Get the global CSS to be added to any page that displays the Bolt Checkout button.
+     *
+     * @return string global CSS
      */
     public function getGlobalCSS()
     {
@@ -243,6 +253,7 @@ class Js extends Template
             'quote_is_virtual' => $this->getQuoteIsVirtual(),
             'totals_change_selectors' => $this->getTotalsChangeSelectors(),
             'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
+            'additional_checkout_button_attributes' => $this->getAdditionalCheckoutButtonAttributes(),
             'initiate_checkout' => $this->getInitiateCheckout(),
             'toggle_checkout' => $this->getToggleCheckout(),
             'is_pre_auth' => $this->getIsPreAuth(),

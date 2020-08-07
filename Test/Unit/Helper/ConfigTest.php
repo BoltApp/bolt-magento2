@@ -17,8 +17,8 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -34,6 +34,8 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Composer\ComposerFactory;
 
 /**
+ * Class ConfigTest
+ * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
 class ConfigTest extends TestCase
@@ -86,6 +88,9 @@ class ConfigTest extends TestCase
      "priceFaultTolerance": "10"  
 }
 JSON;
+
+    /** @var int Test store ID */
+    const STORE_ID = 1;
 
     /**
      * @var EncryptorInterface
@@ -212,6 +217,32 @@ JSON;
         }
 
         $this->currentMock = $builder->getMock();
+    }
+
+     /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Config(
+            $this->context,
+            $this->encryptor,
+            $this->moduleResource,
+            $this->productMetadata,
+            $this->boltConfigSettingFactoryMock,
+            $this->regionFactory,
+            $this->composerFactory
+        );
+        
+        $this->assertAttributeEquals($this->encryptor, 'encryptor', $instance);
+        $this->assertAttributeEquals($this->moduleResource, 'moduleResource', $instance);
+        $this->assertAttributeEquals($this->productMetadata, 'productMetadata', $instance);
+        $this->assertAttributeEquals($this->boltConfigSettingFactoryMock, 'boltConfigSettingFactory', $instance);
+        $this->assertAttributeEquals($this->regionFactory, 'regionFactory', $instance);
+        $this->assertAttributeEquals($this->composerFactory, 'composerFactory', $instance);
     }
 
     /**
@@ -944,6 +975,7 @@ JSON;
             'getTotalsChangeSelectors',
             'getGlobalCSS',
             'getAdditionalCheckoutButtonClass',
+            'getAdditionalCheckoutButtonAttributes',
             'getSuccessPageRedirect',
             'getPrefetchShipping',
             'getPrefetchAddressFields',
@@ -1308,6 +1340,77 @@ Room 4000',
         $this->assertNull($this->currentMock->getComposerVersion());
     }
 
+    /**
+     * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes
+     * stored in additional config field under 'checkoutButtonAttributes' field
+     *
+     * @covers ::getAdditionalCheckoutButtonAttributes
+     *
+     * @dataProvider getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider
+     *
+     * @param string $additionalConfig string from config property
+     * @param mixed $expectedResult from the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
+        $additionalConfig,
+        $expectedResult
+    ) {
+        $this->initCurrentMock(['getAdditionalConfigString']);
+        $this->currentMock->expects(static::once())
+            ->method('getAdditionalConfigString')
+            ->with(self::STORE_ID)
+            ->willReturn($additionalConfig);
+
+        $result = $this->currentMock->getAdditionalCheckoutButtonAttributes(self::STORE_ID);
+        static::assertEquals($expectedResult, $result);
+    }
+
+    /**
+     * Data provider for
+     * @see getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes
+     *
+     * @return array[] containing additional config values and expected result of the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    {
+        return [
+            'Only attributes in initial config'           => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now" 
+                    }
+                }',
+                'expectedResult'   => (object)["data-btn-txt" => "Pay now"],
+            ],
+            'Multiple attributes'                         => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now",
+                        "data-btn-text": "Data"
+                    }
+                }',
+                'expectedResult'   => (object)["data-btn-txt" => "Pay now", "data-btn-text" => "Data"],
+            ],
+            'Empty checkout button attributes property'   => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult'   => (object)[],
+            ],
+            'Missing checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult'   => (object)[],
+            ],
+            'Invalid additional config JSON'              => [
+                'additionalConfig' => 'invalid JSON',
+                'expectedResult'   => (object)[],
+            ],
+        ];
+    }
+  
     /**
      * @test
      * @covers ::getComposerVersion

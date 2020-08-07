@@ -27,8 +27,8 @@ use Magento\Framework\App\CacheInterface;
 
 /**
  * Class GeolocationTest
- * @coversDefaultClass Geolocation
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Geolocation
  */
 class GeolocationTest extends TestCase
 {
@@ -88,6 +88,28 @@ class GeolocationTest extends TestCase
                 ]
             )
             ->getMock();
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Geolocation(
+            $this->context,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->httpClientFactory,
+            $this->cache
+        );
+        
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->httpClientFactory, 'httpClientFactory', $instance);
+        $this->assertAttributeEquals($this->cache, 'cache', $instance);
     }
 
     /**

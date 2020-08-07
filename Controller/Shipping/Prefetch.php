@@ -73,8 +73,6 @@ class Prefetch extends Action
      * @param ConfigHelper $configHelper
      * @param CustomerSession $customerSession
      * @param Geolocation $geolocation
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

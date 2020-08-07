@@ -25,8 +25,8 @@ use Bolt\Boltpay\Helper\Log;
 
 /**
  * Class LogTest
- *
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Log
  */
 class LogTest extends TestCase
 {
@@ -79,6 +79,24 @@ class LogTest extends TestCase
                 ]
             )
             ->getMock();
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Log(
+            $this->context,
+            $this->boltLoger,
+            $this->configHelper
+        );
+        
+        $this->assertAttributeEquals($this->boltLoger, 'boltLogger', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**

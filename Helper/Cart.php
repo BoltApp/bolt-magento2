@@ -61,6 +61,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
 
 /**
  * Boltpay Cart helper
@@ -587,12 +588,39 @@ class Cart extends AbstractHelper
         // extend cache identifier with custom address fields
         $immutableQuote = $this->getLastImmutableQuote();
         $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
-
-        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
-            $identifier .= $giftMessageId;
-        }
+        $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
 
         return md5($identifier);
+    }
+
+    /**
+     * @param $immutableQuote
+     * @return string
+     */
+    private function convertExternalFieldsToCacheIdentifier($immutableQuote)
+    {
+        $cacheIdentifier = "";
+        // add gift message id into cart cache identifier
+        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
+            $cacheIdentifier .= $giftMessageId;
+        }
+
+        // add gift wrapping id into cart cache identifier
+        if ($giftWrappingId = $immutableQuote->getGwId()) {
+            $cacheIdentifier .= $giftWrappingId;
+        }
+
+        // add gift wrapping item ids into cart cache identifier
+        $quoteItems = $immutableQuote->getAllVisibleItems();
+        if ($quoteItems) {
+            foreach ($quoteItems as $item) {
+                if ($item->getGwId()) {
+                    $cacheIdentifier .= $item->getItemId() . '-' . $item->getGwId();
+                }
+            }
+        }
+
+        return $cacheIdentifier;
     }
 
     /**
@@ -776,7 +804,7 @@ class Cart extends AbstractHelper
             $this->saveToCache(
                 $boltOrder,
                 $cacheIdentifier,
-                [self::BOLT_ORDER_TAG],
+                [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
                 self::BOLT_ORDER_CACHE_LIFETIME
             );
         }
@@ -1286,19 +1314,14 @@ class Cart extends AbstractHelper
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    // If the cart item is type of bundle product, its SKU is a combination with bundle selections,
-                    // so we need to retrieve the sku of bundle product without bundle selections.
-                    $product_sku = 'bundle' == $item->getProductType()
-                                   ? $_product->getData('sku')
-                                   : $product['sku'];
-                    $variantProductToGetImage = $this->productRepository->get($product_sku, false, $storeId);
+                    $variantProductToGetImage = $this->getProductToGetImageForQuoteItem($item);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
                             'ITEM' => $product
                         ]);
                     });
-                    $this->bugsnag->notifyError('Could not retrieve product from repository', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
+                    $this->bugsnag->notifyError('Could not retrieve product', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
                 }
                 try {
                     $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
@@ -1345,6 +1368,93 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return [$products, $totalAmount, $diff];
+    }
+
+    /**
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    public function getProductToGetImageForQuoteItem($item)
+    {
+        $productType = $item->getProductType();
+        if ($productType == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+            return $this->getProductToGetImageForConfigurableItem($item);
+        }
+
+        if ($productType == \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE) {
+            return $this->getProductToGetImageForGroupedItem($item);
+        }
+
+        return $item->getProduct();
+    }
+
+    /**
+     * @see \Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable::getProductForThumbnail logic
+     * (Magento version is less than 2.2.7)
+     *
+     * @see \Magento\ConfigurableProduct\Model\Product\Configuration\Item\ItemProductResolver::getProductForThumbnail logic
+     * (Magento version is greater or equal to 2.2.7)
+     *
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    private function getProductToGetImageForConfigurableItem($item)
+    {
+        $parentProduct = $item->getProduct();
+        /** @var \Magento\Quote\Model\Quote\Item\Option $option */
+        $option = $item->getOptionByCode('simple_product');
+        $childProduct = $option ? $option->getProduct() : $item->getProduct();
+        $configValue = $this->configHelper->getScopeConfig()->getValue(
+            'checkout/cart/configurable_product_image',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        /**
+         * Show parent product thumbnail if it must be always shown according to the related setting in system config
+         * or if child thumbnail is not available
+         */
+        if ($configValue == ThumbnailSource::OPTION_USE_PARENT_IMAGE ||
+            !($childProduct && $childProduct->getThumbnail() && $childProduct->getThumbnail() != 'no_selection')
+        ) {
+            return $parentProduct;
+        }
+
+        return $childProduct;
+    }
+
+    /**
+     * @see \Magento\GroupedProduct\Block\Cart\Item\Renderer\Grouped::getProductForThumbnail logic
+     * (Magento version is less than 2.2.7)
+     *
+     * @see \Magento\GroupedProduct\Model\Product\Configuration\Item\ItemProductResolver::getProductForThumbnail logic
+     * (Magento version is greater or equal to 2.2.7)
+     *
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    private function getProductToGetImageForGroupedItem ($item)
+    {
+        /** @var \Magento\Quote\Model\Quote\Item\Option $option */
+        $option = $item->getOptionByCode('product_type');
+        $childProduct = $item->getProduct();
+        $groupedProduct = $option ? $option->getProduct() : $item->getProduct();
+
+        $configValue = $this->configHelper->getScopeConfig()->getValue(
+            'checkout/cart/grouped_product_image',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        /**
+         * Show grouped product thumbnail if it must be always shown according to the related setting in system config
+         * or if child product thumbnail is not available
+         */
+        if ($configValue == ThumbnailSource::OPTION_USE_PARENT_IMAGE ||
+            !($childProduct && $childProduct->getThumbnail() && $childProduct->getThumbnail() != 'no_selection')
+        ) {
+            return $groupedProduct;
+        }
+
+        return $childProduct;
     }
 
     /**

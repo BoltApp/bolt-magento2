@@ -86,7 +86,6 @@ class Client extends AbstractHelper
      * @param RequestFactory $requestFactory
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
