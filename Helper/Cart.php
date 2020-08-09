@@ -1363,6 +1363,15 @@ class Cart extends AbstractHelper
             $products[] = $product;
         }
 
+        if ($this->deciderHelper->isHandleVirtualProductsAsPhysical()) {
+            // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
+            // It means we don't support taxes for virtual product and should handle all products as physical
+            // TODO: Remove when issue will be solved https://boltpay.atlassian.net/browse/DC-181
+            foreach($products as $iterator => $product) {
+                $products[$iterator]['type'] = 'physical';
+            }
+        }
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
