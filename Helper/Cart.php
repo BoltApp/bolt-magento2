@@ -1746,15 +1746,15 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if (( $amount = abs($address->getDiscountAmount()) ) || $quote->getCouponCode()) {
+        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
                 'description' => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'      => $roundedAmount,
-                'reference'   => $address->getCouponCode(),
+                'reference'   => $quote->getCouponCode(),
                 'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                'discount_type'   => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()),
+                'discount_type'   => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()),
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;

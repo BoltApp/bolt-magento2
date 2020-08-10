@@ -21,6 +21,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\SalesRule\Model\Coupon;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterface;
@@ -31,7 +32,9 @@ use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Model\Api\UpdateCart;
+use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -95,6 +98,16 @@ class UpdateCartTest extends TestCase
      * @var LogHelper|MockObject
      */
     private $logHelper;
+    
+    /**
+     * @var Coupon|MockObject
+     */
+    private $couponMock;
+    
+    /**
+     * @var CartHelper|MockObject
+     */
+    private $cartHelper;
 
     /**
      * @var UpdateCart|MockObject
@@ -111,10 +124,6 @@ class UpdateCartTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->cartDataFactory = $this->createMock(CartDataInterfaceFactory::class);
         $this->updateCartResultFactory = $this->createMock(UpdateCartResultInterfaceFactory::class);
-
-        $this->response = $this->createMock(Response::class);
-        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
     }
 
     /**
@@ -166,9 +175,27 @@ class UpdateCartTest extends TestCase
 
         $this->currentMock = $builder->getMock();
         
+        $this->response = $this->createMock(Response::class);
+        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
+        $this->logHelper = $this->createMock(LogHelper::class);
+        
+        $this->couponMock = $this->getMockBuilder(Coupon::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
+            ->setMethods(
+                [
+                    'replicateQuoteData',
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+        
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
+        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);        
     }
     
     /**
@@ -398,13 +425,14 @@ class UpdateCartTest extends TestCase
     
     /**
      * @test
-     * that execute would send Success response and return true if all works
+     * that execute would send success response and return true if add coupon successfully
      *
      * @covers ::execute
      */
-    public function execute_sendSuccessResponse_returnTrue()
+    public function execute_addCoupon_sendSuccessResponse_returnTrue()
     {
         $requestCart = $this->getRequestCart();
+        $discount_codes_to_add = [self::COUPON_CODE];
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
@@ -417,7 +445,14 @@ class UpdateCartTest extends TestCase
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
             
-        $this->initCurrentMock(['validateQuote', 'preProcessWebhook', 'setShipment', 'generateResult'], $sessionHelper);        
+        $this->initCurrentMock([
+            'validateQuote',
+            'preProcessWebhook',
+            'setShipment',
+            'generateResult',
+            'verifyCouponCode',
+            'applyDiscount'
+        ], $sessionHelper);        
         
         $immutableQuoteMock = $this->getQuoteMock();
         
@@ -434,7 +469,121 @@ class UpdateCartTest extends TestCase
                 [$requestCart['shipments'][0], $immutableQuoteMock],
                 [$requestCart['shipments'][0], $parentQuoteMock]
             );
+
+        $this->currentMock->expects(self::once())->method('verifyCouponCode')
+            ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)
+            ->willReturn($this->couponMock);
         
+        $this->currentMock->expects(self::once())->method('applyDiscount')
+            ->with(self::COUPON_CODE, $this->couponMock, $parentQuoteMock)
+            ->willReturn(true);
+        
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($parentQuoteMock, $immutableQuoteMock);
+
+        $testCartData = $this->getTestCartData();
+        $testCartData['discounts'] = [
+            [
+                'description' => 'Discount Test Coupon',
+                'amount' => 1000,
+                'reference' => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type' => 'fixed_amount'
+            ]
+        ];
+        $result = [
+            'status' => 'success',
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'order_create' => [
+                'cart' => $testCartData,
+            ]
+        ];
+        
+        $this->currentMock->expects(self::once())->method('generateResult')
+            ->with($immutableQuoteMock)
+            ->willReturn($result);
+            
+        $this->expectSuccessResponse($result);
+
+        $this->assertTrue($this->currentMock->execute($requestCart, null, null, $discount_codes_to_add));
+    }
+    
+    /**
+     * @test
+     * that that execute would send success response and return true if remove coupon successfully
+     *
+     * @covers ::execute
+     */
+    public function execute_removeCoupon_sendSuccessResponse_returnTrue()
+    {
+        $requestCart = $this->getRequestCart();
+        $requestCart['discounts'] = [
+            [
+                'description' => 'Discount Test Coupon',
+                'amount' => 1000,
+                'reference' => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type' => 'fixed_amount'
+            ]
+        ];
+        $discount_codes_to_remove = [self::COUPON_CODE];
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+        
+        $sessionHelper = $this->getMockBuilder(SessionHelper::class)
+            ->setMethods(['loadSession'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
+            
+        $this->initCurrentMock([
+            'validateQuote',
+            'preProcessWebhook',
+            'setShipment',
+            'generateResult',
+            'getQuoteDiscounts',
+            'removeDiscount'
+        ], $sessionHelper);        
+        
+        $immutableQuoteMock = $this->getQuoteMock();
+        
+        $this->currentMock->expects(self::once())->method('validateQuote')
+            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID)
+            ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
+            
+        $this->currentMock->expects(self::once())->method('preProcessWebhook')
+            ->with(self::STORE_ID);
+            
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShipment')
+            ->withConsecutive(
+                [$requestCart['shipments'][0], $immutableQuoteMock],
+                [$requestCart['shipments'][0], $parentQuoteMock]
+            );
+
+        $quoteDiscount = [
+            [
+                'description' => 'Discount Test Coupon',
+                'amount'      => 1000,
+                'reference'   => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        $this->currentMock->expects(self::once())->method('getQuoteDiscounts')
+            ->with($parentQuoteMock)
+            ->willReturn($quoteDiscount);
+        
+        $this->currentMock->expects(self::once())->method('removeDiscount')
+            ->with(self::COUPON_CODE, [self::COUPON_CODE => 'coupon'], $parentQuoteMock, self::WEBSITE_ID, self::STORE_ID)
+            ->willReturn(true);
+        
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($parentQuoteMock, $immutableQuoteMock);
+
         $result = [
             'status' => 'success',
             'order_reference' => self::PARENT_QUOTE_ID,
@@ -449,7 +598,7 @@ class UpdateCartTest extends TestCase
             
         $this->expectSuccessResponse($result);
 
-        $this->assertTrue($this->currentMock->execute($requestCart));
+        $this->assertTrue($this->currentMock->execute($requestCart, null, null, null, $discount_codes_to_remove));
     }
     
     /**

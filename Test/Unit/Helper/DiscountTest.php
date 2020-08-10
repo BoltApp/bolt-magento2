@@ -4293,6 +4293,38 @@ class DiscountTest extends TestCase
 
         static::assertEquals($couponMock, $this->currentMock->loadCouponCodeData($couponCode));
     }
+    
+    /**
+     * @test
+     * that convertToBoltDiscountType returns empty string if the coupon code is empty
+     *
+     * @covers ::convertToBoltDiscountType
+     *
+     */
+    public function convertToBoltDiscountType_withEmptyCouponCode_returnEmptyString()
+    {
+        $this->initCurrentMock();
+        static::assertEquals('', $this->currentMock->convertToBoltDiscountType(''));
+    }
+    
+    /**
+     * @test
+     * that convertToBoltDiscountType returns empty string if the coupon code is empty
+     *
+     * @covers ::convertToBoltDiscountType
+     *
+     */
+    public function convertToBoltDiscountType_loadCouponCodeDataThrowsException_notifyException()
+    {
+        $this->initCurrentMock(['loadCouponCodeData']);
+        
+        $exceptionMock = $this->createMock(\Exception::class);
+        $this->currentMock->expects(static::once())->method('loadCouponCodeData')->willThrowException($exceptionMock);
+        $this->bugsnag->expects(static::once())->method('notifyException')->with($exceptionMock)->willReturnSelf();
+        $this->expectException(\Exception::class);
+
+        $this->currentMock->convertToBoltDiscountType('testcoupon');
+    }
 
     /**
      * @test
