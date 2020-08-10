@@ -137,6 +137,8 @@ class CartTest extends TestCase
     const HINT = 'hint!';
 
     const GIFT_MESSAGE_ID = '122';
+    const GIFT_WRAPPING_ID = '123';
+    const QUOTE_ITEM_ID = '124';
 
     /** @var array Address data containing all required fields */
     const COMPLETE_ADDRESS_DATA = [
@@ -155,6 +157,10 @@ class CartTest extends TestCase
 
     /** @var string Test email address */
     const EMAIL_ADDRESS = 'integration@bolt.com';
+    
+    const COUPON_CODE = 'testcoupon';
+    
+    const COUPON_DESCRIPTION = 'test coupon';
 
     /** @var Context|MockObject */
     private $contextHelper;
@@ -359,7 +365,8 @@ class CartTest extends TestCase
             'getTotals','getStore','getStoreId',
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
-            'assignCustomer','setIsActive','getGiftMessageId'
+            'assignCustomer','setIsActive','getGiftMessageId',
+            'getGwId'
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -565,7 +572,8 @@ class CartTest extends TestCase
                     'getCountryId',
                     'getEmail',
                     'getDiscountAmount',
-                    'getCouponCode'
+                    'getCouponCode',
+                    'getDiscountDescription'
                 ]
             )
             ->disableOriginalConstructor()
@@ -1206,6 +1214,69 @@ class CartTest extends TestCase
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
         static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getCartCacheIdentifier
+     * @throws ReflectionException
+     */
+    public function getCartCacheIdentifier_withGiftWrappingId_returnsCartCacheIdentifier()
+    {
+        $currentMock = $this->getCurrentMock(
+            [
+                'convertCustomAddressFieldsToCacheIdentifier',
+                'getLastImmutableQuote',
+            ]
+        );
+        $testCartData = $this->getTestCartData();
+        $addressCacheIdentifier = 'Test_Test_Test';
+        $this->quoteMock->expects(static::once())->method('getGwId')->willReturn(self::GIFT_WRAPPING_ID);
+        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
+        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
+        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        unset($testCartData['display_id']);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_WRAPPING_ID), $result);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getCartCacheIdentifier
+     * @throws ReflectionException
+     */
+    public function getCartCacheIdentifier_withGiftWrappingItemIds_returnsCartCacheIdentifier()
+    {
+        $currentMock = $this->getCurrentMock(
+            [
+                'convertCustomAddressFieldsToCacheIdentifier',
+                'getLastImmutableQuote',
+            ]
+        );
+        $testCartData = $this->getTestCartData();
+        $addressCacheIdentifier = 'Test_Test_Test';
+
+        $quoteItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'getItemId',
+                    'getGwId'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $quoteItem->method('getItemId')->willReturn(self::QUOTE_ITEM_ID);
+        $quoteItem->method('getGwId')->willReturn(self::GIFT_WRAPPING_ID);
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
+        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
+        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        unset($testCartData['display_id']);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::QUOTE_ITEM_ID.'-'.self::GIFT_WRAPPING_ID), $result);
     }
 
     /**
@@ -2588,7 +2659,10 @@ ORDER
         $testDiscounts = [
             [
                 'description' => 'Test discount',
-                'amount'      => 1000
+                'amount'      => 1000,
+                'reference'   => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount'
             ]
         ];
         $testItems = [
@@ -3246,7 +3320,13 @@ ORDER
             'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 0];
-        $testDiscount = ['description' => 'Test discount', 'amount' => 22345];
+        $testDiscount = [
+            'description' => 'Test discount',
+            'amount' => 22345,
+            'reference'   => self::COUPON_CODE,
+            'discount_category' => 'coupon',
+            'discount_type'   => 'fixed_amount'
+        ];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
@@ -3304,7 +3384,7 @@ ORDER
                         'reference'        => null,
                     ],
                 ],
-                'discounts'       => [$testDiscount + ['type' => 'fixed_amount']],
+                'discounts'       => [$testDiscount],
                 'total_amount'    => 0,
                 'tax_amount'      => 0,
             ],
@@ -3566,7 +3646,9 @@ ORDER
         $quote->method('getTotals')->willReturn([]);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
-        $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn('123456');
+        $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
+        $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
+        $this->discountHelper->expects(static::once())->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
@@ -3591,7 +3673,16 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
+                'amount'      => $expectedDiscountAmount,
+                'reference'   => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3619,6 +3710,7 @@ ORDER
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -3637,7 +3729,15 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3674,6 +3774,7 @@ ORDER
             ->with($this->immutableQuoteMock)
             ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
@@ -3708,10 +3809,15 @@ ORDER
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
-        static::assertEquals('fixed_amount', $discounts[0]['type']);
-        static::assertEquals('Store Credit', $discounts[0]['description']);
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3752,6 +3858,7 @@ ORDER
             ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
             ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $rewardModelMock->expects(static::once())->method('setCustomer')->with($this->customerMock)
@@ -3777,10 +3884,15 @@ ORDER
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
-        static::assertEquals('fixed_amount', $discounts[0]['type']);
-        static::assertEquals('Reward Points', $discounts[0]['description']);
+        $expectedDiscount = [
+            [
+                'description' => 'Reward Points',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3819,6 +3931,7 @@ ORDER
         $appliedDiscount = 10; // $
         $this->discountHelper->expects(static::once())->method('getMirasvitRewardsAmount')->with($this->quoteMock)
             ->willReturn($appliedDiscount);
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
         $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
         $scopeConfigMock->expects(static::once())->method('getValue')->with(
@@ -3842,10 +3955,15 @@ ORDER
 
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
-        static::assertEquals('fixed_amount', $discounts[0]['type']);
-        static::assertEquals('Mirasvit Reward Points', $discounts[0]['description']);
+        $expectedDiscount = [
+            [
+                'description' => 'Mirasvit Reward Points',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3877,6 +3995,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
@@ -3887,7 +4006,15 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3914,6 +4041,7 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -3932,7 +4060,15 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Reward Points',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -3960,6 +4096,7 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -3982,7 +4119,15 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -4014,6 +4159,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
         $this->discountHelper->expects(static::once())->method('isBssStoreCreditAllowed')->willReturn(true);
@@ -4031,7 +4177,15 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -4062,17 +4216,22 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $appliedDiscount = 10; // $
-        $amastyGiftCode = "12345";
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $appliedDiscount1 = 5; // $
+        $appliedDiscount2 = 10; // $
+        $amastyGiftCode = ["12345", "67890"];
         $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
         $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesFromTotals')
             ->willReturn($amastyGiftCode);
-
-        $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesCurrentValue')
-            ->with($amastyGiftCode)->willReturn($appliedDiscount);
+        $this->discountHelper->expects(static::exactly(2))
+            ->method('getAmastyGiftCardCodesCurrentValue')
+            ->withConsecutive(
+                [["12345"]],
+                [["67890"]]
+            )
+            ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
-
             ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
         $totalAmount = 10000; // cents
         $diff = 0;
@@ -4084,9 +4243,25 @@ ORDER
             $quote
         );
         static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedDiscountAmount = 100 * ($appliedDiscount1+$appliedDiscount2);
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => 'Gift Card 12345',
+                'amount'      => 500,
+                'discount_category' => 'giftcard',
+                'reference' => '12345',
+                'discount_type'   => 'fixed_amount',
+            ],
+            [
+                'description' => 'Gift Card 67890',
+                'amount'      => 1000,
+                'discount_category' => 'giftcard',
+                'reference' => '67890',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -4119,6 +4294,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $appliedDiscount = 10; // $
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($appliedDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn('Store Credit');
@@ -4135,9 +4311,17 @@ ORDER
             $paymentOnly,
             $quote
         );
+        $expectedDiscount = [
+            [
+                'description' => 'Store Credit',
+                'amount'      => $appliedDiscount * 100,
+                'discount_category' => 'store_credit',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
         static::assertEquals(
-            ['description' => 'Store Credit', 'amount' => $appliedDiscount * 100, 'type' => 'fixed_amount'],
-            $discounts[0]
+            $expectedDiscount,
+            $discounts
         );
 
         static::assertEquals($diffResult, $diff);
@@ -4173,12 +4357,19 @@ ORDER
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $appliedDiscount = 10; // $
-        $mageplazaGiftCode = "12345";
+        $appliedDiscount1 = 5; // $
+        $appliedDiscount2 = 10; // $
+        $mageplazaGiftCode = ["12345", "67890"];
         $this->discountHelper->expects(static::once())->method('getMageplazaGiftCardCodes')
             ->willReturn($mageplazaGiftCode);
-        $this->discountHelper->expects(static::once())->method('getMageplazaGiftCardCodesCurrentValue')
-            ->with($mageplazaGiftCode)->willReturn($appliedDiscount);
+        $this->discountHelper->expects($this->exactly(2))
+            ->method('getMageplazaGiftCardCodesCurrentValue')
+            ->withConsecutive(
+                [["12345"]],
+                [["67890"]]
+            )
+            ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::MAGEPLAZA_GIFTCARD => $this->quoteAddressTotal]);
@@ -4192,9 +4383,25 @@ ORDER
             $quote
         );
         static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedDiscountAmount = 100 * ($appliedDiscount1+$appliedDiscount2);
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => '12345',
+                'amount'      => 500,
+                'discount_category' => 'giftcard',
+                'reference'   => '12345',
+                'discount_type'   => 'fixed_amount',
+            ],
+            [
+                'description' => '67890',
+                'amount'      => 1000,
+                'discount_category' => 'giftcard',
+                'reference'   => '67890',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -4226,6 +4433,7 @@ ORDER
         $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
         $this->discountHelper->expects(static::once())->method('getUnirgyGiftCertBalanceByCode')
             ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
+        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
@@ -4241,7 +4449,16 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => '',
+                'amount'      => $expectedDiscountAmount,
+                'discount_category' => 'giftcard',
+                'reference' => '12345',
+                'discount_type'   => 'fixed_amount',
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
@@ -4270,6 +4487,8 @@ ORDER
         $discountAmount = 10; // $
         $giftVaucher = "12345";
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn($giftVaucher);
+        $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
+        $this->discountHelper->expects(static::once())->method('convertToBoltDiscountType')->with($giftVaucher)->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($discountAmount);
@@ -4289,8 +4508,20 @@ ORDER
         $expectedGiftVoucherAmount = 100 * $giftVoucherDiscount;
         $expectedRegularDiscountAmount = 100 * ($discountAmount - $giftVoucherDiscount);
         $expectedTotalAmount = $totalAmount - $expectedRegularDiscountAmount - $expectedGiftVoucherAmount;
-        static::assertEquals($expectedRegularDiscountAmount, $discounts[0]['amount']);
-        static::assertEquals($expectedGiftVoucherAmount, $discounts[1]['amount']);
+        $expectedDiscount = [
+            [
+                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
+                'amount'      => $expectedRegularDiscountAmount,
+                'reference'   => $giftVaucher,
+                'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount',
+            ],
+            [
+                'description' => 'Gift Voucher',
+                'amount'      => $expectedGiftVoucherAmount,
+            ]
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 

@@ -51,8 +51,6 @@ class Email extends Action
      * @param CustomerSession $customerSession
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

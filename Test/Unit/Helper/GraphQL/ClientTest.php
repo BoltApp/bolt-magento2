@@ -34,8 +34,8 @@ use Zend\Http\Response;
 
 /**
  * Class ClientTest
- *
  * @package Bolt\Boltpay\Test\Unit\Helper\GraphQL
+ * @coversDefaultClass \Bolt\Boltpay\Helper\GraphQL\Client
  */
 class ClientTest extends TestCase
 {
@@ -107,6 +107,32 @@ class ClientTest extends TestCase
                 'bugsnag' => $this->bugsnag,
             ]
         );
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Client(
+            $this->context,
+            $this->zendClientFactory,
+            $this->boltConfig,
+            $this->responseFactory,
+            $this->requestFactory,
+            $this->logger,
+            $this->bugsnag
+        );
+        
+        $this->assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+        $this->assertAttributeEquals($this->boltConfig, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
+        $this->assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
+        $this->assertAttributeEquals($this->logger, 'logHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
     }
 
     /**

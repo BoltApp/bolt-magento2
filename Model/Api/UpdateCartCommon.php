@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2018 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -112,81 +112,9 @@ abstract class UpdateCartCommon
      * @param  object $request
      * @return bool
      */
-    protected function validateQuote( $parentQuoteId, $immutableQuoteId, $incrementId )
+    public function validateQuote( $parentQuoteId, $immutableQuoteId, $incrementId )
     {
-        if (!empty($parentQuoteId)) {
-            // check if the cart / quote exists and it is active
-            try {
-                if (!$immutableQuoteId) {
-                    $immutableQuoteId = $parentQuoteId;
-                }
-
-                /** @var Quote $parentQuote */
-                if ($immutableQuoteId == $parentQuoteId) {
-                    // Product Page Checkout - quotes are created as inactive
-                    $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-                } else {
-                    $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
-                }
-
-                // check if cart identification data is sent
-                if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        'The order reference is invalid.',
-                        422
-                    );
-
-                    return false;
-                }
-                
-                // check if the order has already been created
-                if ($this->orderHelper->getExistingOrder($incrementId)) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The order #%s has already been created.', $incrementId),
-                        422
-                    );
-                    return false;
-                }
-    
-                // check the existence of child quote
-                $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
-                if (!$immutableQuote) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
-                        404
-                    );
-                    return false;
-                }
-    
-                // check if cart is empty
-                if (!$immutableQuote->getItemsCount()) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
-                        422
-                    );
-    
-                    return false;
-                }
-                
-                return [
-                    $parentQuote,
-                    $immutableQuote,
-                ];
-
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] is not found.', $parentQuoteId),
-                    404
-                );
-                return false;
-            }
-        } else {
+        if(empty($parentQuoteId)) {
             $this->bugsnag->notifyError(
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                 'The cart.order_reference is not set or empty.'
@@ -194,6 +122,80 @@ abstract class UpdateCartCommon
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                 'The cart reference is not found.',
+                404
+            );
+            return false;
+        }
+        
+        if(empty($incrementId)) {
+            $this->bugsnag->notifyError(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                'The cart.incrementId is not set or empty.'
+            );
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                'The cart incrementId is not found.',
+                404
+            );
+            return false;
+        }
+        
+        // check if the cart / quote exists and it is active
+        try {
+            if (!$immutableQuoteId) {
+                $immutableQuoteId = $parentQuoteId;
+            }
+
+            /** @var Quote $parentQuote */
+            if ($immutableQuoteId == $parentQuoteId) {
+                // Product Page Checkout - quotes are created as inactive
+                $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+            } else {
+                $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+            }
+            
+            // check if the order has already been created
+            if ($this->orderHelper->getExistingOrder($incrementId)) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The order #%s has already been created.', $incrementId),
+                    422
+                );
+                return false;
+            }
+
+            // check the existence of child quote
+            $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
+            if (!$immutableQuote) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
+                    404
+                );
+                return false;
+            }
+
+            // check if cart is empty
+            if (!$immutableQuote->getItemsCount()) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
+                    422
+                );
+
+                return false;
+            }
+            
+            return [
+                $parentQuote,
+                $immutableQuote,
+            ];
+
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                sprintf('The cart reference [%s] is not found.', $parentQuoteId),
                 404
             );
             return false;
@@ -210,7 +212,7 @@ abstract class UpdateCartCommon
      * @throws LocalizedException
      * @throws WebApiException
      */
-    protected function setShipment($shipment, $immutableQuote)
+    public function setShipment($shipment, $immutableQuote)
     {
         $shippingAddress = $immutableQuote->getShippingAddress();
         $address = $shipment['shipping_address'];
@@ -257,9 +259,9 @@ abstract class UpdateCartCommon
      */
     protected function getRequestContent()
     {
-        $this->logHelper->addInfoLog($this->request->getContent());
-
-        return json_decode($this->request->getContent());
+        $content =  $this->request->getContent();
+        $this->logHelper->addInfoLog($content);
+        return json_decode($content);
     }    
 
     /**

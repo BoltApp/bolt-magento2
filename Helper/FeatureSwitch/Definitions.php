@@ -163,7 +163,7 @@ class Definitions
             self::NAME_KEY            => self::M2_TRACK_NON_BOLT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::ROLLOUT_KEY         => 0
         ],
         self::M2_ORDER_MANAGEMENT =>  [
             self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
