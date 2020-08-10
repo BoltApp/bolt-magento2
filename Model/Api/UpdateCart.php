@@ -126,7 +126,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
                 $this->setShipment($cart['shipments'][0], $parentQuote);
             }
-            // TODO : add/remove giftcard 
+            // TODO : add/remove giftcard
+            // TODO : cache issue https://github.com/BoltApp/bolt-magento2/pull/833
             
             // Add discounts
             if( !empty($discount_codes_to_add) ){
