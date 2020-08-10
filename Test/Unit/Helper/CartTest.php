@@ -4226,8 +4226,8 @@ ORDER
         $this->discountHelper->expects($this->exactly(2))
             ->method('getAmastyGiftCardCodesCurrentValue')
             ->withConsecutive(
-                ["12345"],
-                ["67890"]
+                [["12345"]],
+                [["67890"]]
             )
             ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
@@ -4365,8 +4365,8 @@ ORDER
         $this->discountHelper->expects($this->exactly(2))
             ->method('getMageplazaGiftCardCodesCurrentValue')
             ->withConsecutive(
-                ["12345"],
-                ["67890"]
+                [["12345"]],
+                [["67890"]]
             )
             ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
         $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
