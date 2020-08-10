@@ -4216,14 +4216,14 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $appliedDiscount1 = 5; // $
         $appliedDiscount2 = 10; // $
         $amastyGiftCode = ["12345", "67890"];
         $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
         $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesFromTotals')
             ->willReturn($amastyGiftCode);
-        $this->discountHelper->expects($this->exactly(2))
+        $this->discountHelper->expects(static::exactly(2))
             ->method('getAmastyGiftCardCodesCurrentValue')
             ->withConsecutive(
                 [["12345"]],
@@ -4369,7 +4369,7 @@ ORDER
                 [["67890"]]
             )
             ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::MAGEPLAZA_GIFTCARD => $this->quoteAddressTotal]);
