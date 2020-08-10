@@ -4225,9 +4225,9 @@ ORDER
             ->willReturn($amastyGiftCode);
 
         $this->discountHelper->expects(static::any())->method('getAmastyGiftCardCodesCurrentValue')
-            ->with("12345")->willReturn($appliedDiscount1);
+            ->with(["12345"])->willReturn($appliedDiscount1);
         $this->discountHelper->expects(static::any())->method('getAmastyGiftCardCodesCurrentValue')
-            ->with("67890")->willReturn($appliedDiscount2);
+            ->with(["67890"])->willReturn($appliedDiscount2);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
