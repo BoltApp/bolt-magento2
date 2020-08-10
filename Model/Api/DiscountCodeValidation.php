@@ -38,7 +38,6 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Directory\Model\Region as RegionModel;
@@ -120,15 +119,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var BoltErrorResponse
      */
     private $errorResponse;
-
-    /**
-     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
-     */
-    private $moduleUnirgyGiftCertHelper;
-    /**
-     * @var QuoteRepository
-     */
-    private $quoteRepositoryForUnirgyGiftCert;
 
     /**
      * @var CheckoutSession
@@ -237,63 +227,22 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $request = $this->getRequestContent();
 
             $requestArray = json_decode(json_encode($request), true);
-            if (isset($requestArray['cart']['order_reference'])) {
-                $parentQuoteId = $requestArray['cart']['order_reference'];
-                $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
-                // check if the cart / quote exists and it is active
-                try {
-                    // get parent quote id, order increment id and child quote id
-                    // the latter two are transmitted as display_id field, separated by " / "
-                    list($incrementId, $immutableQuoteId) = array_pad(
-                        explode(' / ', $displayId),
-                        2,
-                        null
-                    );
-
-                    if (!$immutableQuoteId) {
-                        $immutableQuoteId = $parentQuoteId;
-                    }
-
-                    /** @var Quote $parentQuote */
-                    if ($immutableQuoteId == $parentQuoteId) {
-                        // Product Page Checkout - quotes are created as inactive
-                        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-                    } else {
-                        $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
-                    }
-
-                    // check if cart identification data is sent
-                    if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
-                        $this->sendErrorResponse(
-                            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                            'The order reference is invalid.',
-                            422
-                        );
-
-                        return false;
-                    }
-
-                } catch (\Exception $e) {
-                    $this->bugsnag->notifyException($e);
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                        sprintf('The cart reference [%s] is not found.', $parentQuoteId),
-                        404
-                    );
-                    return false;
-                }
-            } else {
-                $this->bugsnag->notifyError(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The cart.order_reference is not set or empty.'
-                );
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The cart reference is not found.',
-                    404
-                );
+            
+            $parentQuoteId = (isset($requestArray['cart']['order_reference'])) ? $requestArray['cart']['order_reference'] : '';
+            $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
+            list($incrementId, $immutableQuoteId) = array_pad(
+                explode(' / ', $displayId),
+                2,
+                null
+            );
+            
+            $result = $this->validateQuote($parentQuoteId, $immutableQuoteId, $incrementId);
+            
+            if( ! $result ){
                 return false;
             }
+            
+            list($parentQuote, $immutableQuote) = $result;
 
             $storeId = $parentQuote->getStoreId();
             $websiteId = $parentQuote->getStore()->getWebsiteId();
@@ -319,10 +268,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             // Load the Magento_GiftCardAccount object
             $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
 
-            // Apply Unirgy_GiftCert
+            // Load Unirgy_GiftCert object
             if (empty($giftCard)) {
-                // Load the gift cert by code
-                $giftCard = $this->loadGiftCertData($couponCode, $storeId);
+                $giftCard = $this->discountHelper->loadUnirgyGiftCert($couponCode, $storeId);
             }
 
             // Load Amasty Gift Card account object
@@ -387,35 +335,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // Set the shipment if request payload has that info.
-            if (isset($request->cart->shipments[0]->reference)) {
-                $shippingAddress = $immutableQuote->getShippingAddress();
-                $address = $request->cart->shipments[0]->shipping_address;
-                $address = $this->cartHelper->handleSpecialAddressCases($address);
-                $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
-                $addressData = [
-                            'firstname'    => @$address->first_name,
-                            'lastname'     => @$address->last_name,
-                            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
-                            'city'         => @$address->locality,
-                            'country_id'   => @$address->country_code,
-                            'region'       => @$address->region,
-                            'postcode'     => @$address->postal_code,
-                            'telephone'    => @$address->phone_number,
-                            'region_id'    => $region ? $region->getId() : null,
-                            'company'      => @$address->company,
-                        ];
-                if ($this->cartHelper->validateEmail(@$address->email_address)) {
-                    $addressData['email'] = $address->email_address;
-                }
-
-                $shippingAddress->setShouldIgnoreValidation(true);
-                $shippingAddress->addData($addressData);
-
-                $shippingAddress
-                    ->setShippingMethod($request->cart->shipments[0]->reference)
-                    ->setCollectShippingRates(true)
-                    ->collectShippingRates()
-                    ->save();
+            if (isset($requestArray['cart']['shipments'][0]['reference'])) {
+                $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
             }
 
             if ($coupon && $coupon->getCouponId()) {
@@ -465,6 +386,142 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         }
 
         return true;
+    }
+    
+    /**
+     * Validate the related quote.
+     *
+     * @param  object $request
+     * @return bool
+     */
+    protected function validateQuote( $parentQuoteId, $immutableQuoteId, $incrementId )
+    {
+        if (!empty($parentQuoteId)) {
+            // check if the cart / quote exists and it is active
+            try {
+                if (!$immutableQuoteId) {
+                    $immutableQuoteId = $parentQuoteId;
+                }
+
+                /** @var Quote $parentQuote */
+                if ($immutableQuoteId == $parentQuoteId) {
+                    // Product Page Checkout - quotes are created as inactive
+                    $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+                } else {
+                    $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+                }
+
+                // check if cart identification data is sent
+                if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        'The order reference is invalid.',
+                        422
+                    );
+
+                    return false;
+                }
+                
+                // check if the order has already been created
+                if ($this->orderHelper->getExistingOrder($incrementId)) {
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        sprintf('The order #%s has already been created.', $incrementId),
+                        422
+                    );
+                    return false;
+                }
+    
+                // check the existence of child quote
+                $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
+                if (!$immutableQuote) {
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
+                        404
+                    );
+                    return false;
+                }
+    
+                // check if cart is empty
+                if (!$immutableQuote->getItemsCount()) {
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
+                        422
+                    );
+    
+                    return false;
+                }
+                
+                return [
+                    $parentQuote,
+                    $immutableQuote,
+                ];
+
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The cart reference [%s] is not found.', $parentQuoteId),
+                    404
+                );
+                return false;
+            }
+        } else {
+            $this->bugsnag->notifyError(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                'The cart.order_reference is not set or empty.'
+            );
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                'The cart reference is not found.',
+                404
+            );
+            return false;
+        }
+    }
+    
+    /**
+     *
+     * Set the shipment if request payload has that info.
+     * 
+     * @param array $shipment
+     * @param Quote $immutableQuote
+     * 
+     * @throws LocalizedException
+     * @throws WebApiException
+     */
+    protected function setShipment($shipment, $immutableQuote)
+    {
+        $shippingAddress = $immutableQuote->getShippingAddress();
+        $address = $shipment['shipping_address'];
+        $address = $this->cartHelper->handleSpecialAddressCases($address);
+        $region = $this->regionModel->loadByName(ArrayHelper::getValueFromArray($address, 'region', ''), ArrayHelper::getValueFromArray($address, 'country_code', ''));
+        $addressData = [
+                    'firstname'    => ArrayHelper::getValueFromArray($address, 'first_name', ''),
+                    'lastname'     => ArrayHelper::getValueFromArray($address, 'last_name', ''),
+                    'street'       => trim(ArrayHelper::getValueFromArray($address, 'street_address1', '') . "\n" . ArrayHelper::getValueFromArray($address, 'street_address2', '')),
+                    'city'         => ArrayHelper::getValueFromArray($address, 'locality', ''),
+                    'country_id'   => ArrayHelper::getValueFromArray($address, 'country_code', ''),
+                    'region'       => ArrayHelper::getValueFromArray($address, 'region', ''),
+                    'postcode'     => ArrayHelper::getValueFromArray($address, 'postal_code', ''),
+                    'telephone'    => ArrayHelper::getValueFromArray($address, 'phone_number', ''),
+                    'region_id'    => $region ? $region->getId() : null,
+                    'company'      => ArrayHelper::getValueFromArray($address, 'company', ''),
+                ];
+        if ($this->cartHelper->validateEmail(ArrayHelper::getValueFromArray($address, 'email_address', ''))) {
+            $addressData['email'] = $address['email_address'];
+        }
+
+        $shippingAddress->setShouldIgnoreValidation(true);
+        $shippingAddress->addData($addressData);
+
+        $shippingAddress
+            ->setShippingMethod($shipment['reference'])
+            ->setCollectShippingRates(true)
+            ->collectShippingRates()
+            ->save();
     }
 
     /**
@@ -658,8 +715,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     }
 
     /**
-     * @param $code
-     * @param \Magento\GiftCardAccount\Model\Giftcardaccount|\Unirgy\Giftcert\Model\Cert $giftCard
+     * @param string $code
+     * @param object $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -678,35 +735,13 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 // Reset and apply Amasty Gift Cards to the immutable quote
                 $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
             } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
-                /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
-                $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
-                /** @var CheckoutSession $checkoutSession */
-                $checkoutSession = $this->checkoutSessionForUnirgyGiftCert;
-
-                if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $unirgyHelper->addCertificate(
-                        $giftCard->getCertNumber(),
-                        $immutableQuote,
-                        $this->quoteRepositoryForUnirgyGiftCert
-                    );
-                }
-
-                if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $unirgyHelper->addCertificate(
-                        $giftCard->getCertNumber(),
-                        $parentQuote,
-                        $this->quoteRepositoryForUnirgyGiftCert
-                    );
-                }
-
+                $this->discountHelper->applyUnirgyGiftCert($giftCard, $immutableQuote);
+                $this->discountHelper->applyUnirgyGiftCert($giftCard, $parentQuote);
                 // The Unirgy_GiftCert require double call the function addCertificate().
                 // Look on Unirgy/Giftcert/Controller/Checkout/Add::execute()
-                $unirgyHelper->addCertificate(
-                    $giftCard->getCertNumber(),
-                    $checkoutSession->getQuote(),
-                    $this->quoteRepositoryForUnirgyGiftCert
-                );
-
+                $checkoutSession = $this->checkoutSessionForUnirgyGiftCert;
+                $this->discountHelper->applyUnirgyGiftCert($giftCard, $checkoutSession->getQuote());
+                
                 $giftAmount = $giftCard->getBalance();
             } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
                 // Remove Mageplaza Gift Card if it was already applied
