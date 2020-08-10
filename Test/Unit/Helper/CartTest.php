@@ -4223,11 +4223,13 @@ ORDER
         $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
         $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesFromTotals')
             ->willReturn($amastyGiftCode);
-
-        $this->discountHelper->expects(static::any())->method('getAmastyGiftCardCodesCurrentValue')
-            ->with(["12345"])->willReturn($appliedDiscount1);
-        $this->discountHelper->expects(static::any())->method('getAmastyGiftCardCodesCurrentValue')
-            ->with(["67890"])->willReturn($appliedDiscount2);
+        $this->discountHelper->expects($this->exactly(2))
+            ->method('getAmastyGiftCardCodesCurrentValue')
+            ->withConsecutive(
+                ["12345"],
+                ["67890"]
+            )
+            ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
@@ -4360,10 +4362,13 @@ ORDER
         $mageplazaGiftCode = ["12345", "67890"];
         $this->discountHelper->expects(static::once())->method('getMageplazaGiftCardCodes')
             ->willReturn($mageplazaGiftCode);
-        $this->discountHelper->expects(static::any())->method('getMageplazaGiftCardCodesCurrentValue')
-            ->with("12345")->willReturn($appliedDiscount1);
-        $this->discountHelper->expects(static::any())->method('getMageplazaGiftCardCodesCurrentValue')
-            ->with("67890")->willReturn($appliedDiscount2);
+        $this->discountHelper->expects($this->exactly(2))
+            ->method('getMageplazaGiftCardCodesCurrentValue')
+            ->withConsecutive(
+                ["12345"],
+                ["67890"]
+            )
+            ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
         $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
