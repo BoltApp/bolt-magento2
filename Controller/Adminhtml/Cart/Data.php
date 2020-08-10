@@ -72,8 +72,6 @@ class Data extends Action
      * @param Bugsnag $bugsnag
      * @param MetricsClient $metricsClient
      * @param DataObjectFactory $dataObjectFactory
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

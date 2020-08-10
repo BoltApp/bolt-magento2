@@ -28,6 +28,11 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Class ManagerTest
+ *
+ * @coversDefaultClass \Bolt\Boltpay\Helper\FeatureSwitch\Manager
+ */
 class ManagerTest extends TestCase
 {
     /**
@@ -68,6 +73,24 @@ class ManagerTest extends TestCase
                 'fsRepo' => $this->fsRepo
             ]
         );
+    }
+    
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Manager(
+            $this->context,
+            $this->gql,
+            $this->fsRepo
+        );
+        
+        $this->assertAttributeEquals($this->gql, 'gql', $instance);
+        $this->assertAttributeEquals($this->fsRepo, 'fsRepo', $instance);
     }
 
     /**

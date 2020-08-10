@@ -44,7 +44,6 @@ class Log extends AbstractHelper
      * @param Context $context
      * @param BoltLogger $boltLogger
      * @param ConfigHelper $configHelper
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

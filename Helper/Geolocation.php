@@ -65,8 +65,6 @@ class Geolocation extends AbstractHelper
      * @param Bugsnag $bugsnag
      * @param ZendClientFactory $httpClientFactory
      * @param CacheInterface $cache
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

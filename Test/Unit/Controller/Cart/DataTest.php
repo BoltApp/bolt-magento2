@@ -18,23 +18,19 @@
 namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 
 use Bolt\Boltpay\Controller\Cart\Data;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart;
-use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Order;
-use Bolt\Boltpay\Model\Request;
-use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\DataObject;
-use Magento\Framework\ObjectManagerInterface;
-use phpDocumentor\Reflection\Types\Void_;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
+/**
+ * Class DataTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Cart
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Data
+ */
 class DataTest extends TestCase
 {
     const HINT = 'hint!';
@@ -72,11 +68,11 @@ class DataTest extends TestCase
      * @var array $expectedCart
      */
     private $expectedCart;
-
+    
     /**
-     * @var Object requestShippingAddress
+     * @var MockObject|JsonFactory mocked instance of JsonFactory
      */
-    private $requestShippingAddress;
+    private $resultJsonFactory;
 
     protected function setUp()
     {
@@ -86,7 +82,7 @@ class DataTest extends TestCase
 
     private function initResponseData()
     {
-        $this->requestShippingAddress = 'String';
+        $requestShippingAddress = 'String';
 
         $this->response = (object) ( [
             'cart' =>
@@ -97,7 +93,7 @@ class DataTest extends TestCase
                         [
                             0 =>
                                 (object) ( [
-                                    'shipping_address' => $this->requestShippingAddress,
+                                    'shipping_address' => $requestShippingAddress,
                                     'shipping_method' => 'unknown',
                                     'service'         => 'Flat Rate - Fixed',
                                     'cost'            =>
@@ -132,11 +128,30 @@ class DataTest extends TestCase
     {
         $this->context = $this->createMock(Context::class);
         $this->request = $this->createMock(RequestInterface::class);
+        $this->resultJsonFactory = $this->createMock(JsonFactory::class);
 
         $this->request->method('getParam')->willReturn('placeholder');
         $this->context->method('getRequest')->willReturn($this->request);
 
         $this->cartHelper = $this->createMock(Cart::class);
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Data(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->cartHelper
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     private function buildJsonMock($expected)
