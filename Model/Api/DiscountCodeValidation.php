@@ -38,6 +38,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Directory\Model\Region as RegionModel;
