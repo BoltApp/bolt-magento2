@@ -4247,14 +4247,14 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
             [
-                'description' => 'Gift Card ',
+                'description' => 'Gift Card 12345',
                 'amount'      => 500,
                 'discount_category' => 'giftcard',
                 'reference' => '12345',
                 'discount_type'   => 'fixed_amount',
             ],
             [
-                'description' => 'Gift Card ',
+                'description' => 'Gift Card 67890',
                 'amount'      => 1000,
                 'discount_category' => 'giftcard',
                 'reference' => '67890',
@@ -4387,14 +4387,14 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
             [
-                'description' => '',
+                'description' => '12345',
                 'amount'      => 500,
                 'discount_category' => 'giftcard',
                 'reference'   => '12345',
                 'discount_type'   => 'fixed_amount',
             ],
             [
-                'description' => '',
+                'description' => '67890',
                 'amount'      => 1000,
                 'discount_category' => 'giftcard',
                 'reference'   => '67890',
