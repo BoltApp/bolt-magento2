@@ -50,7 +50,6 @@ class Manager extends AbstractHelper
      * @param Context                 $context
      * @param GQL                     $gql
      * @param FeatureSwitchRepository $fsRepo
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,

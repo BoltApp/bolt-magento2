@@ -33,6 +33,11 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend\Log\Filter\Mock;
 
+/**
+ * Class DataTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Cart
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Cart\Data
+ */
 class DataTest extends TestCase
 {
     const PLACE_ORDER_PAYLOAD = 'payload';
@@ -169,6 +174,32 @@ class DataTest extends TestCase
         $resultJsonFactory->method('create')
             ->willReturn($json);
         return $resultJsonFactory;
+    }
+    
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Data(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->cartHelper,
+            $this->configHelper,
+            $this->bugsnag,
+            $this->metricsClient,
+            $this->dataObjectFactory
+        );
+        
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
+        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
     }
 
     /**

@@ -73,8 +73,6 @@ class Save extends Action
      * @param ConfigHelper      $configHelper
      * @param Bugsnag           $bugsnag
      * @param DataObjectFactory $dataObjectFactory
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
