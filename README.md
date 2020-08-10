@@ -73,3 +73,4 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 
 # Success!
 Your Bolt Payment Plugin is now installed and configured.
+
