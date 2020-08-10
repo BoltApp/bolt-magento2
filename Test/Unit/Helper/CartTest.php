@@ -137,6 +137,8 @@ class CartTest extends TestCase
     const HINT = 'hint!';
 
     const GIFT_MESSAGE_ID = '122';
+    const GIFT_WRAPPING_ID = '123';
+    const QUOTE_ITEM_ID = '124';
 
     /** @var array Address data containing all required fields */
     const COMPLETE_ADDRESS_DATA = [
@@ -363,7 +365,8 @@ class CartTest extends TestCase
             'getTotals','getStore','getStoreId',
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
-            'assignCustomer','setIsActive','getGiftMessageId'
+            'assignCustomer','setIsActive','getGiftMessageId',
+            'getGwId'
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -1211,6 +1214,69 @@ class CartTest extends TestCase
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
         static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getCartCacheIdentifier
+     * @throws ReflectionException
+     */
+    public function getCartCacheIdentifier_withGiftWrappingId_returnsCartCacheIdentifier()
+    {
+        $currentMock = $this->getCurrentMock(
+            [
+                'convertCustomAddressFieldsToCacheIdentifier',
+                'getLastImmutableQuote',
+            ]
+        );
+        $testCartData = $this->getTestCartData();
+        $addressCacheIdentifier = 'Test_Test_Test';
+        $this->quoteMock->expects(static::once())->method('getGwId')->willReturn(self::GIFT_WRAPPING_ID);
+        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
+        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
+        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        unset($testCartData['display_id']);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_WRAPPING_ID), $result);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getCartCacheIdentifier
+     * @throws ReflectionException
+     */
+    public function getCartCacheIdentifier_withGiftWrappingItemIds_returnsCartCacheIdentifier()
+    {
+        $currentMock = $this->getCurrentMock(
+            [
+                'convertCustomAddressFieldsToCacheIdentifier',
+                'getLastImmutableQuote',
+            ]
+        );
+        $testCartData = $this->getTestCartData();
+        $addressCacheIdentifier = 'Test_Test_Test';
+
+        $quoteItem = $this->getMockBuilder(Item::class)
+            ->setMethods(
+                [
+                    'getItemId',
+                    'getGwId'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $quoteItem->method('getItemId')->willReturn(self::QUOTE_ITEM_ID);
+        $quoteItem->method('getGwId')->willReturn(self::GIFT_WRAPPING_ID);
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
+        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
+            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
+        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        unset($testCartData['display_id']);
+        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::QUOTE_ITEM_ID.'-'.self::GIFT_WRAPPING_ID), $result);
     }
 
     /**

@@ -37,6 +37,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
  * Class SessionTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
+ * @coversDefaultClass \Bolt\Boltpay\Helper\Session
  */
 class SessionTest extends TestCase
 {
@@ -173,6 +174,36 @@ class SessionTest extends TestCase
                 ]
             )
             ->getMock();
+    }
+
+     /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Session(
+            $this->context,
+            $this->checkoutSession,
+            $this->adminCheckoutSession,
+            $this->customerSession,
+            $this->logHelper,
+            $this->cache,
+            $this->appState,
+            $this->formKey,
+            $this->configHelper
+        );
+        
+        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        $this->assertAttributeEquals($this->adminCheckoutSession, 'adminCheckoutSession', $instance);
+        $this->assertAttributeEquals($this->customerSession, 'customerSession', $instance);
+        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        $this->assertAttributeEquals($this->cache, 'cache', $instance);
+        $this->assertAttributeEquals($this->appState, 'appState', $instance);
+        $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**

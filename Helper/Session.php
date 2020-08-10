@@ -76,8 +76,6 @@ class Session extends AbstractHelper
      * @param State             $appState
      * @param FormKey           $formKey
      * @param ConfigHelper      $configHelper
-     *
-     * @codeCoverageIgnore
      */
     public function __construct(
         Context $context,
