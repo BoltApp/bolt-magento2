@@ -208,12 +208,6 @@ class Definitions
             self::ROLLOUT_KEY         => 100
         ],
         self::M2_ALWAYS_PRESENT_CHECKOUT => [
-            self::NAME_KEY => self::M2_ALWAYS_PRESENT_CHECKOUT,
-            self::VAL_KEY => true,
-            self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY => 0
-        ],
-        self::M2_ALWAYS_PRESENT_CHECKOUT => [
             self::NAME_KEY            => self::M2_ALWAYS_PRESENT_CHECKOUT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
