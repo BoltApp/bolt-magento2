@@ -132,6 +132,11 @@ class Definitions
      */
     const M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME = 'M2_BOLT_UPDATE_USE_GITHUB';
 
+    /**
+     * Handle virtual cart as physical. Workarond for known issue with taxable virtual products.
+     */
+    const M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL = "M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL";
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -243,6 +248,12 @@ class Definitions
         ],
         self::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME => [
             self::NAME_KEY            => self::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL => [
+            self::NAME_KEY            => self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0

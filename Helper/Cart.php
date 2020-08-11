@@ -1275,7 +1275,16 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
                 $product['sku']          = trim($item->getSku());
-                $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
+
+                // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
+                // It means we don't support taxes for virtual product and should handle all products as physical
+                // TODO: Remove the feature switch check when issue will be solved https://boltpay.atlassian.net/browse/DC-181
+                if ( $item->getIsVirtual() && !$this->deciderHelper->handleVirtualProductsAsPhysical()) {
+                    $product['type'] = self::ITEM_TYPE_DIGITAL;
+                } else {
+                    $product['type'] = self::ITEM_TYPE_PHYSICAL;
+                }
+
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////

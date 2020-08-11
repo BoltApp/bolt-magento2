@@ -281,4 +281,8 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME);
     }
+
+    public function handleVirtualProductsAsPhysical() {
+        return $this->isSwitchEnabled(Definitions::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL);
+    }
 }
