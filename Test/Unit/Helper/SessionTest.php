@@ -211,6 +211,8 @@ class SessionTest extends TestCase
             $this->cache,
             $this->appState,
             $this->formKey,
+            $this->coreRegistry,
+            $this->mageplazaShippingRestrictonHelper,
             $this->configHelper
         );
         
@@ -220,6 +222,8 @@ class SessionTest extends TestCase
         $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         $this->assertAttributeEquals($this->cache, 'cache', $instance);
         $this->assertAttributeEquals($this->appState, 'appState', $instance);
+        $this->assertAttributeEquals($this->coreRegistry, 'coreRegistry', $instance);
+        $this->assertAttributeEquals($this->mageplazaShippingRestrictonHelper, 'mageplazaShippingRestrictonHelper', $instance);
         $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
         $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
