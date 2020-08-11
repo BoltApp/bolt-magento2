@@ -265,4 +265,86 @@ class DeciderTest  extends TestCase
             [false, false],
         ];
     }
+
+    /**
+     * @test
+     * that isNewReleaseNotificationsEnabled determines if new Bolt release notifications feature switch is enabled
+     *
+     * @covers ::isNewReleaseNotificationsEnabled
+     *
+     * @dataProvider isNewReleaseNotificationsEnabled_withVariousSwitchEnabledStatesProvider
+     *
+     * @param bool $isSwitchEnabled stubbed result of {@see \Bolt\Boltpay\Helper\FeatureSwitch\Decider::isSwitchEnabled}
+     * @param bool $expectedResult of the tested method
+     *
+     * @throws LocalizedException if the feature switch is unknown
+     */
+    public function isNewReleaseNotificationsEnabled_withVariousSwitchEnabledStates_returnsBoolValue($isSwitchEnabled, $expectedResult)
+    {
+        $currentMock = $this->getMockBuilder(Decider::class)->setMethods(['isSwitchEnabled'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $currentMock->expects(static::once())
+            ->method('isSwitchEnabled')
+            ->with(Definitions::M2_BOLT_NEW_RELEASE_NOTIFICATIONS)
+            ->willReturn($isSwitchEnabled);
+
+        $this->assertEquals($expectedResult, $currentMock->isNewReleaseNotificationsEnabled());
+    }
+
+    /**
+     * Data provider for {@see isNewReleaseNotificationsEnabled_withVariousSwitchEnabledStates_returnsBoolValue}
+     *
+     * @return array[] containing is switch enabled flag and expected result of the tested method
+     */
+    public function isNewReleaseNotificationsEnabled_withVariousSwitchEnabledStatesProvider()
+    {
+        return [
+            ['isSwitchEnabled' => false, 'expectedResult' => false],
+            ['isSwitchEnabled' => true, 'expectedResult' => true],
+        ];
+    }
+
+    /**
+     * @test
+     * that isUseGithubForUpdateEnabled determines if new Bolt release notifications feature switch is enabled
+     *
+     * @covers ::isUseGithubForUpdateEnabled
+     *
+     * @dataProvider isUseGithubForUpdateEnabled_withVariousSwitchEnabledStatesProvider
+     *
+     * @param bool $isSwitchEnabled stubbed result of {@see \Bolt\Boltpay\Helper\FeatureSwitch\Decider::isSwitchEnabled}
+     * @param bool $expectedResult of the tested method
+     *
+     * @throws LocalizedException if the feature switch is unknown
+     */
+    public function isUseGithubForUpdateEnabled_withVariousSwitchEnabledStates_returnsBoolValue(
+        $isSwitchEnabled,
+        $expectedResult
+    ) {
+        $currentMock = $this->getMockBuilder(Decider::class)->setMethods(['isSwitchEnabled'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $currentMock->expects(static::once())
+            ->method('isSwitchEnabled')
+            ->with(Definitions::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME)
+            ->willReturn($isSwitchEnabled);
+
+        $this->assertEquals($expectedResult, $currentMock->isUseGithubForUpdateEnabled());
+    }
+    
+    /**
+     * Data provider for {@see isUseGithubForUpdateEnabled_withVariousSwitchEnabledStates_returnsBoolValue}
+     *
+     * @return array[] containing is switch enabled flag and expected result of the tested method
+     */
+    public function isUseGithubForUpdateEnabled_withVariousSwitchEnabledStatesProvider()
+    {
+        return [
+            ['isSwitchEnabled' => false, 'expectedResult' => false],
+            ['isSwitchEnabled' => true, 'expectedResult' => true],
+        ];
+    }
 }

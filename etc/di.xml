@@ -346,4 +346,5 @@
                 sortOrder="1"/>
     </type>
 
+    <type name="Bolt\Boltpay\Model\Updater" shared="true"/>
 </config>

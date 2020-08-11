@@ -1,0 +1,214 @@
+<?php
+/** @var Magento\Backend\Block\Template $block */
+
+/** @var \Bolt\Boltpay\ViewModel\UpdatePopup $updatePopupView */
+
+use Bolt\Boltpay\Model\Updater;
+
+$updatePopupView = $block->getViewModel();
+$updater = $updatePopupView->getUpdater();
+if (!$updatePopupView->shouldDisplay()) {
+    return;
+}
+switch ($updater->getSeverity()) {
+    case \Magento\Framework\Notification\MessageInterface::SEVERITY_CRITICAL:
+        $statusClass = 'message-warning';
+        break;
+    default:
+        $statusClass = 'message-success';
+        break;
+}
+?>
+<script type="text/template" id="bolt_update_popup">
+    <div class="bolt-modal-content" data-role="content">
+        <ul>
+            <li>
+                <?php echo __(
+                    'Before upgrading Bolt plugin on production, this process and code should be tested in a staging environment'
+                ); ?>
+            </li>
+            <li>
+                <?php echo __(
+                    'You can find our guide to production readiness testing <a href="%1">here</a>',
+                    'https://support.bolt.com/hc/en-us/articles/360046487254-Production-Readiness'
+                ); ?>
+            </li>
+            <li>
+                <?php echo __(
+                    'As a standard practice for all Magento plugin additions or upgrades, it is also advised that you <a href="%1">back up your store</a>',
+                    'https://devdocs.magento.com/guides/v2.3/install-gde/install/cli/install-cli-backup.html'
+                ); ?>
+            </li>
+        </ul>
+        <ul class="options-list">
+            <?php if (in_array(
+                $updater->getType(),
+                [
+                    Updater::INSTALLATION_TYPE_MAGENTO_WEB_SETUP,
+                    Updater::INSTALLATION_TYPE_DEFAULT_COMPOSER
+                ]
+            ) && $updatePopupView->getSetupWizardUrl()): ?>
+                <li>
+                    <h3>
+                        <?php echo __('Update using Web Setup Extension Manager'); ?>
+                        <a href="https://docs.magento.com/user-guide/system/web-setup-extension-manager.html"
+                           class="read-more">
+                            <?php echo __('(read more)'); ?>
+                        </a>
+                    </h3>
+                    <ol>
+                        <li>
+                            <?php echo __(
+                                    'Open <a href="%1" target="_blank">Web Setup</a>',
+                                    $updatePopupView->getSetupWizardUrl()
+                                );
+                            ?>
+                        </li>
+                        <li>
+                            <?php echo __('Click on Extension Manage'); ?>
+                        </li>
+                        <li>
+                            <?php echo __('Click on Review Updates'); ?>
+                        </li>
+                        <li>
+                            <?php echo __(
+                                'Select Update from the list of actions next to the %1 package',
+                                \Bolt\Boltpay\Helper\Config::BOLT_COMPOSER_NAME
+                            ); ?>
+                        </li>
+                    </ol>
+                </li>
+            <?php endif; ?>
+            <?php if ($updater->getType() == Updater::INSTALLATION_TYPE_MANUAL): ?>
+                <li>
+                    <h3>
+                        <?php echo __('Update manually'); ?>
+                        <a href=""
+                           class="read-more" target="_blank">
+                            <?php echo __('(read more)'); ?>
+                        </a>
+                    </h3>
+                    <ol>
+                        <li>
+                            <?php echo __(
+                                'Download updated version <a href="%1" target="_blank">release archive</a>',
+                                $updatePopupView->getReleaseDownloadLink($updater->getVersion())
+                            ); ?>
+                        </li>
+                        <li>
+                            <?php echo __(
+                                'Replace contents of the app/code/Bolt/Boltpay directory in your project with the contents of the archive'
+                            ); ?>
+                        </li>
+                        <li>
+                            <a href="https://devdocs.magento.com/guides/v2.3/config-guide/deployment/single-machine.html#deployment-steps">
+                                <?php echo __('Run the usual deployment commands') ?>
+                            </a>
+                        </li>
+                    </ol>
+                </li>
+            <?php else: ?>
+                <li>
+                    <h3>
+                        <?php echo __('Update using CLI'); ?>
+                        <a href="https://devdocs.magento.com/extensions/install/#upgrade-an-extension"
+                           class="read-more">
+                            <?php echo __('(read more)'); ?>
+                        </a>
+                    </h3>
+                    <ol>
+                        <li>
+                            <?php echo __('Update the module via composer:') ?>
+                            <p><?php echo __(
+                                    'composer require %1:%2',
+                                    \Bolt\Boltpay\Helper\Config::BOLT_COMPOSER_NAME,
+                                    $updater->getVersion()
+                                );
+                                ?></p>
+                        </li>
+                        <li>
+                            <a href="https://devdocs.magento.com/guides/v2.3/config-guide/deployment/single-machine.html#deployment-steps">
+                                <?php echo __('Run the usual deployment commands') ?>
+                            </a>
+                        </li>
+                    </ol>
+                </li>
+            <?php endif; ?>
+        </ul>
+    </div>
+</script>
+<script>
+    require(
+        [
+            'jquery',
+            'Magento_Ui/js/modal/alert',
+        ],
+        function ($, alert) {
+            var popupContent = alert({
+                title:   '<?php echo $updater->getUpdateTitle(); ?>',
+                content: $('#bolt_update_popup').html()
+            });
+            var popup = popupContent.parents('.modal-popup');
+            popup.find('.modal-title')
+                .css({ 'margin-right': 0, 'padding-left': '50px', 'background': '#fff' })
+                .addClass('message')
+                .addClass('<?php echo $statusClass;?>');
+            popup.find('.modal-content')
+                .css({'padding-right': '3rem'});
+        },
+    );
+</script>
+<style>
+    .bolt-modal-content ul > li {
+        list-style: none;
+    }
+
+    .bolt-modal-content .options-list > li {
+        margin-top: 10px;
+    }
+
+    .bolt-modal-content .options-list > li > h3 {
+        margin-bottom: 1rem;
+    }
+    #bolt-popup .popup-wrapper .popup-title {
+        font-weight: bold;
+        font-size: 18px;
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #eaeaea;
+    }
+
+    .bolt-modal-content {
+        text-align: left;
+    }
+
+    .bolt-modal-content a {
+        color: #2a8dfa;
+    }
+
+    .bolt-modal-content .read-more {
+        font-size: 12px;
+    }
+
+    .bolt-modal-content .options-list > li {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid #eaeaea;
+        display: inline-block;
+        float: left;
+    }
+
+    .bolt-modal-content .options-list > li:first-child {
+        margin-right: 10px;
+    }
+
+    .bolt-modal-content .options-list > li > ol {
+        padding-left: 15px;
+        list-style: decimal;
+    }
+
+    #bolt-popup .popup-wrapper .popup-action {
+        clear: both;
+        text-align: center;
+    }
+</style>

@@ -21,17 +21,20 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
+use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Request\Http as Request;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleResource;
+use Magento\Store\Model\ScopeInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Composer\ComposerFactory;
+use ReflectionException;
 
 /**
  * Class ConfigTest
@@ -103,7 +106,7 @@ JSON;
     private $moduleResource;
 
     /**
-     * @var ScopeConfigInterface
+     * @var ScopeConfigInterface|MockObject
      */
     private $scopeConfig;
 
@@ -140,7 +143,9 @@ JSON;
     private $boltConfigSettingFactoryMock;
 
     /**
-     * @inheritdoc
+     * Setup test dependencies, called before each test
+     *
+     * @throws ReflectionException if unable to set internal mock properties
      */
     public function setUp()
     {
@@ -171,7 +176,14 @@ JSON;
             return new BoltConfigSetting();
         });
 
-        $this->composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
+        $this->composerFactory = $this->createPartialMock(ComposerFactory::class, [
+            'create',
+            'getLocker',
+            'getLockedRepository',
+            'findPackage',
+            'getVersion',
+            'getLockData',
+        ]);
 
         $methods = ['getScopeConfig'];
         $this->initCurrentMock($methods);
@@ -181,9 +193,12 @@ JSON;
     }
 
     /**
-     * @param array $methods
-     * @param bool $enableOriginalConstructor
-     * @param bool $enableProxyingToOriginalMethods
+     * Configures {@see \Bolt\Boltpay\Test\Unit\Helper\ConfigTest::$currentMock} to mock of the test class
+     * based on provided parameters
+     *
+     * @param array $methods to be mocked
+     * @param bool $enableOriginalConstructor flag
+     * @param bool $enableProxyingToOriginalMethods flag
      */
     private function initCurrentMock(
         $methods = [],
@@ -483,6 +498,116 @@ JSON;
         $this->assertEquals($moduleVersion, $result, 'getModuleVersion() method: not working properly');
     }
 
+    /**
+     * @test
+     * that getPackageLock returns composer package lock information for provided package or false if not found
+     *
+     * @covers ::getPackageLock
+     *
+     * @dataProvider getPackageLock_withVariousPackageNamesProvider
+     *
+     * @param array $lockData composer.lock data
+     * @param string $packageName for which to retrieve package lock
+     * @param bool $expectException used to determine if composer unable to instantiate instance
+     * @param array|bool $expectedResult of the tested method call
+     *
+     * @throws Exception from {@see \Magento\Framework\Composer\ComposerFactory::create} if unable to instantiate composer instance
+     */
+    public function getPackageLock_withVariousPackageNames_returnsPackage(
+        $lockData,
+        $packageName,
+        $expectException,
+        $expectedResult
+    ) {
+        $e = new Exception();
+        $this->composerFactory->expects(static::once())->method('create')
+            ->will($expectException ? $this->throwException($e) : $this->returnSelf());
+        $this->composerFactory->expects($expectException ? static::never() : static::once())
+            ->method('getLocker')
+            ->willReturnSelf();
+        $this->composerFactory->expects($expectException ? static::never() : static::once())
+            ->method('getLockData')
+            ->willReturn($lockData);
+        
+        static::assertEquals($expectedResult, $this->currentMock->getPackageLock($packageName));
+    }
+
+    /**
+     * Data provider for {@see getPackageLock_withVariousPackageNames_returnsPackage}
+     *
+     * @return array[] containing lock data, package name, expectException and expected result
+     */
+    public function getPackageLock_withVariousPackageNamesProvider()
+    {
+        $boltLockPackage = [
+            'name'             => Config::BOLT_COMPOSER_NAME,
+            'version'          => '2.6.0',
+            'source'           => [
+                'type'      => 'git',
+                'url'       => 'https://github.com/BoltApp/bolt-magento2.git',
+                'reference' => '4e3e5f5d4433cee90ab7c7f5ae96f2c97d18eec0',
+            ],
+            'dist'             => [
+                'type'      => 'zip',
+                'url'       => 'https://api.github.com/repos/BoltApp/bolt-magento2/zipball/4e3e5f5d4433cee90ab7c7f5ae96f2c97d18eec0',
+                'reference' => '4e3e5f5d4433cee90ab7c7f5ae96f2c97d18eec0',
+                'shasum'    => '',
+            ],
+            'require'          => [
+                'bugsnag/bugsnag'         => '^3.4',
+                'magento/framework'       => '100.*|101.*|102.*',
+                'magento/module-checkout' => '100.*|101.*|102.*',
+                'magento/module-payment'  => '100.*|101.*|102.*',
+                'magento/module-sales'    => '100.*|101.*|102.*',
+                'magento/module-tax'      => '100.*|101.*|102.*',
+            ],
+            'require-dev'      => ['mikey179/vfsstream' => '^1.6', 'phpunit/phpunit' => '~6.2.0',],
+            'type'             => 'magento2-module',
+            'autoload'         => [
+                'files' => ['registration.php',],
+                'psr-4' => ['Bolt\\Boltpay\\' => '',],
+            ],
+            'notification-url' => 'https://packagist.org/downloads/',
+            'license'          => ['MIT',],
+            'description'      => 'Bolt payment gateway integration',
+            'time'             => '2020-05-04T15:48:37+00:00',
+        ];
+        return [
+            [
+                'lockData'       => [
+                    'packages' => [
+                        $boltLockPackage + ['name' => 'magento/module-catalog'],
+                        $boltLockPackage
+                    ],
+                ],
+                'packageName'    => Config::BOLT_COMPOSER_NAME,
+                'expectException' => false,
+                'expectedResult' => $boltLockPackage,
+            ],
+            [
+                'lockData'       => [
+                    'packages' => [
+                        $boltLockPackage + ['name' => 'magento/module-catalog'],
+                        $boltLockPackage
+                    ],
+                ],
+                'packageName'    => 'magento/module-cms',
+                'expectException' => false,
+                'expectedResult' => false,
+            ],
+            [
+                'lockData' => [
+                    'packages' => [
+                        $boltLockPackage + ['name' => 'magento/module-catalog'],
+                        $boltLockPackage
+                    ],
+                ],
+                'packageName' => 'sebastian/object-reflector',
+                'expectException' => true,
+                'expectedResult' => false,
+            ]
+        ];
+    }
 
     /**
      * @test
@@ -675,6 +800,56 @@ JSON;
             $this->currentMock->getProductPageCheckoutFlag(),
             'getProductPageCheckoutFlag() method: not working properly'
         );
+    }
+
+    /**
+     * @test
+     * that getShouldDisableNotificationsForNonCriticalUpdates returns configuration value for disabling notifications
+     * for non-critical updates
+     *
+     * @covers ::getShouldDisableNotificationsForNonCriticalUpdates
+     *
+     * @dataProvider getShouldDisableNotificationsForNonCriticalUpdates_withVariousScopeFlagsProvider
+     *
+     * @param mixed $store for which to retrieve configuration value
+     * @param bool $isSetFlag stubbed result of {@see \Magento\Framework\App\Config\ScopeConfigInterface::isSetFlag}
+     * @param bool $expectedResult of the tested method
+     */
+    public function getShouldDisableNotificationsForNonCriticalUpdates_withVariousScopeFlags_returnsConfigurationValue(
+        $store,
+        $isSetFlag,
+        $expectedResult
+    ) {
+        $this->scopeConfig->method('isSetFlag')
+            ->with(
+                BoltConfig::XML_PATH_DISABLE_NOTIFICATIONS_FOR_NON_CRITICAL_UPDATES,
+                ScopeInterface::SCOPE_STORE,
+                $store
+            )
+            ->willReturn($isSetFlag);
+
+        static::assertEquals(
+            $expectedResult,
+            $this->currentMock->getShouldDisableNotificationsForNonCriticalUpdates($store)
+        );
+    }
+
+    /**
+     * Data provider for
+     * @see getShouldDisableNotificationsForNonCriticalUpdates_withVariousScopeFlags_returnsConfigurationValue
+     *
+     * @return array[] containing
+     * store value,
+     * is set scope configuration flag
+     * and expected result of the tested method
+     */
+    public function getShouldDisableNotificationsForNonCriticalUpdates_withVariousScopeFlagsProvider()
+    {
+        return [
+            ['store' => self::STORE_PICKUP_APARTMENT, 'isSetFlag' => false, 'expectedResult' => false],
+            ['store' => 'ROOM 5000', 'isSetFlag' => true, 'expectedResult' => true],
+            ['store' => null, 'isSetFlag' => true, 'expectedResult' => true],
+        ];
     }
 
     /**
@@ -1335,7 +1510,7 @@ Room 4000',
         $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
         $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
         $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturnSelf();
-        $e = new \Exception(__('Test'));
+        $e = new Exception(__('Test'));
         $this->composerFactory->expects(self::once())->method('getVersion')->willThrowException($e);
         $this->assertNull($this->currentMock->getComposerVersion());
     }

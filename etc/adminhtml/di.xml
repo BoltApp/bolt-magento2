@@ -29,4 +29,12 @@
     <type name="Magento\Sales\Model\AdminOrder\Create">
         <plugin name="BoltBoltpayCreatePlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin" sortOrder="1"/>
     </type>
+
+    <type name="Magento\Framework\Notification\MessageList">
+        <arguments>
+            <argument name="messages" xsi:type="array">
+                <item name="bolt_update_available" xsi:type="string">Bolt\Boltpay\Model\System\Message\BoltUpdateAvailable</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

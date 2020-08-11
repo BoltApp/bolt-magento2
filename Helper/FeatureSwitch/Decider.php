@@ -257,4 +257,28 @@ class Decider extends AbstractHelper
     public function ifShouldDisablePrefillAddressForLoggedInCustomer() {
         return $this->isSwitchEnabled(Definitions::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER);
     }
+
+    /**
+     * Determines if new Bolt release notifications feature switch is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch is unknown
+     */
+    public function isNewReleaseNotificationsEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_NEW_RELEASE_NOTIFICATIONS);
+    }
+
+    /**
+     * Determines if new Bolt release notifications feature switch is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch is unknown
+     */
+    public function isUseGithubForUpdateEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME);
+    }
 }

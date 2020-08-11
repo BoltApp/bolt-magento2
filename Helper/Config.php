@@ -125,6 +125,11 @@ class Config extends AbstractHelper
     const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
 
     /**
+     * Disable notifications for non-critical updates
+     */
+    const XML_PATH_DISABLE_NOTIFICATIONS_FOR_NON_CRITICAL_UPDATES = 'payment/boltpay/disable_notifications_for_non_critical_updates';
+
+    /**
      * Enable Bolt order management
      */
     const XML_PATH_PRODUCT_ORDER_MANAGEMENT = 'payment/boltpay/order_management';
@@ -471,6 +476,30 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Gets package data from composer.lock, used to determine package source repository
+     *
+     * @param string                      $packageName Composer package name
+     *
+     * @return array|bool package data from composer.lock if found, otherwise false
+     *
+     * @throws \Exception if unable to instantiate composer instance or retrieve composer lock data
+     */
+    public function getPackageLock($packageName)
+    {
+        try {
+            $lockData = $this->composerFactory->create()->getLocker()->getLockData();
+            foreach ($lockData['packages'] as $package) {
+                if ($package['name'] == $packageName) {
+                    return $package;
+                }
+            }
+        } catch (\Exception $e) {
+            return false;
+        }
+        return false;
+    }
+
+    /**
      * @return string
      * @throws \Exception
      */
@@ -768,6 +797,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Gets configuration value for disabling notifications for non-critical updates
+     *
+     * @param int|string|Store $store
+     *
+     * @return bool
+     */
+    public function getShouldDisableNotificationsForNonCriticalUpdates($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_DISABLE_NOTIFICATIONS_FOR_NON_CRITICAL_UPDATES,
             ScopeInterface::SCOPE_STORE,
             $store
         );

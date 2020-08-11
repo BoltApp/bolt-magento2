@@ -90,6 +90,11 @@
                         <config_path>payment/boltpay/product_page_checkout</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="disable_notifications_for_non_critical_updates" translate="label" type="select" sortOrder="81" showInDefault="1" showInWebsite="0" showInStore="0">
+                        <label>Disable Notifications for Non-Critical Updates</label>
+                        <config_path>payment/boltpay/disable_notifications_for_non_critical_updates</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                     <field id="order_management" translate="label" type="select" sortOrder="82" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>(BETA) Enable Bolt order management</label>
                         <config_path>payment/boltpay/order_management</config_path>

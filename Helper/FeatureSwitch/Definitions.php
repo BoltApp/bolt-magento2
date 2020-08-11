@@ -122,6 +122,16 @@ class Definitions
      */
     const M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER = "M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER";
 
+    /**
+     * @var string Feature switch that determines whether notifications should be displayed for available updates
+     */
+    const M2_BOLT_NEW_RELEASE_NOTIFICATIONS = 'M2_BOLT_NEW_RELEASE_NOTIFICATIONS';
+
+    /**
+     * @var string Feature switch that determines whether Github should be used as source for updates instead of Magento Connect
+     */
+    const M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME = 'M2_BOLT_UPDATE_USE_GITHUB';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -224,6 +234,18 @@ class Definitions
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ]
+        ],
+        self::M2_BOLT_NEW_RELEASE_NOTIFICATIONS => [
+            self::NAME_KEY            => self::M2_BOLT_NEW_RELEASE_NOTIFICATIONS,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME => [
+            self::NAME_KEY            => self::M2_BOLT_UPDATE_USE_GITHUB_SWITCH_NAME,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
     ];
 }
