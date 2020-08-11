@@ -346,4 +346,65 @@
                 sortOrder="1"/>
     </type>
 
+    <!-- Aheadworks Giftcard V1 support start -->
+    <virtualType name="AheadworksGiftcardV1SupportContext" type="Bolt\Boltpay\Plugin\ThirdPartySupport\CommonModuleContext">
+        <arguments>
+            <argument name="supportedModule" xsi:type="string">Aheadworks_Giftcard</argument>
+            <argument name="versionFrom" xsi:type="null"></argument>
+            <argument name="versionTo" xsi:type="null"></argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AheadworksGiftcardV1GiftcardCartManagement" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Aheadworks_Giftcard</argument>
+            <argument name="className" xsi:type="string">Aheadworks\Giftcard\Api\GiftcardCartManagementInterface</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AheadworksGiftcardV1GiftcardOrderServicePlugin" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Aheadworks_Giftcard</argument>
+            <argument name="className" xsi:type="string">Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="AheadworksGiftcardRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Aheadworks_Giftcard</argument>
+            <argument name="className" xsi:type="string">Aheadworks\Giftcard\Api\GiftcardRepositoryInterface</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\CartPlugin">
+        <arguments>
+            <argument name="context" xsi:type="object">AheadworksGiftcardV1SupportContext</argument>
+            <argument name="giftcardCartManagementFactory" xsi:type="object">AheadworksGiftcardV1GiftcardCartManagement</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\DiscountCodeValidationPlugin">
+        <arguments>
+            <argument name="context" xsi:type="object">AheadworksGiftcardV1SupportContext</argument>
+            <argument name="aheadworksGiftcardRepositoryFactory" xsi:type="object">AheadworksGiftcardRepository</argument>
+            <argument name="aheadworksGiftcardCartManagementFactory" xsi:type="object">AheadworksGiftcardV1GiftcardCartManagement</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\OrderPlugin">
+        <arguments>
+            <argument name="context" xsi:type="object">AheadworksGiftcardV1SupportContext</argument>
+            <argument name="aheadworksGiftcardOrderServicePluginFactory" xsi:type="object">AheadworksGiftcardV1GiftcardOrderServicePlugin</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Helper\Cart">
+        <plugin name="AheadworksGiftcardV1DiscountCartPlugin"
+                type="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\CartPlugin"
+                sortOrder="1"/>
+    </type>
+    <type name="Bolt\Boltpay\Helper\Order">
+        <plugin name="AheadworksGiftcardV1OrderPlugin"
+                type="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\OrderPlugin"
+                sortOrder="10"/>
+    </type>
+    <type name="Bolt\Boltpay\Model\Api\DiscountCodeValidation">
+        <plugin name="AheadworksGiftcardV1DiscountCodeValidationPlugin"
+                type="Bolt\Boltpay\Plugin\ThirdPartySupport\Aheadworks\Giftcard\V1\DiscountCodeValidationPlugin"
+                sortOrder="10"/>
+    </type>
+    <!-- Aheadworks Giftcard V1 support end -->
 </config>

@@ -1151,7 +1151,7 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @throws \Exception
      */
-    protected function deleteOrder($order)
+    public function deleteOrder($order)
     {
         try {
             $order->cancel()->save()->delete();

@@ -691,10 +691,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param \Magento\GiftCardAccount\Model\Giftcardaccount|\Unirgy\Giftcert\Model\Cert $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
-     * @return array
+     * @return array|false
      * @throws \Exception
      */
-    private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
+    public function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
         try {
             if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
@@ -829,7 +829,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @return void
      * @throws \Exception
      */
-    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    public function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
         $additionalErrorResponseData = [];
         if ($quote) {

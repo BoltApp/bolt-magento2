@@ -519,7 +519,7 @@ class Cart extends AbstractHelper
      *
      * @return CartInterface
      */
-    protected function getLastImmutableQuote()
+    public function getLastImmutableQuote()
     {
         return $this->lastImmutableQuote;
     }

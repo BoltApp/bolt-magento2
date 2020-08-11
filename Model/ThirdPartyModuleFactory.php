@@ -72,8 +72,9 @@ class ThirdPartyModuleFactory
     }
     
     /**
-     * Check whether the class exists
-     * @return bool
+     * Check whether the configured third party class or interface exists
+     *
+     * @return bool true if exists, otherwise false
      */
     public function isExists()
     {
@@ -84,7 +85,7 @@ class ThirdPartyModuleFactory
         // Return false instead if any uncaught exceptions.
         ///////////////////////////////////////////////////////////////
         try {
-            return class_exists($this->className);
+            return class_exists($this->className) || interface_exists($this->className);
         } catch (\Exception $e) {
             return false;
         }
