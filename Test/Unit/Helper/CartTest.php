@@ -416,7 +416,7 @@ class CartTest extends TestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','isHandleVirtualProductsAsPhysical']);
+        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -4644,9 +4644,9 @@ ORDER
      *
      * @covers ::getCartItems
      */
-    public function getCartItems_withFeatureSwitchIsHandleVirtualProductsAsPhysical_returnPhysicalCart()
+    public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
     {
-        $this->deciderHelper->expects(self::once())->method('isHandleVirtualProductsAsPhysical')->willReturn(true);
+        $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
         $quoteItem = $this->createPartialMock(
             Item::class,
             [
