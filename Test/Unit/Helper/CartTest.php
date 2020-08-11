@@ -416,7 +416,7 @@ class CartTest extends TestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
+        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -4637,6 +4637,67 @@ ORDER
         static::assertEquals(10000, $totalAmount);
         static::assertEquals(0, $diff);
         }
+
+    /**
+     * @test
+     * that getCartItems will notify 'Item image missing' error if both attempts to retrieve image url fail
+     *
+     * @covers ::getCartItems
+     */
+    public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
+    {
+        $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getCalculationPrice',
+                'getQty',
+                'getProduct',
+                'getProductId',
+                'getName',
+                'getSku',
+                'getIsVirtual',
+            ]
+        );
+        $productMock = $this->createMock(Product::class);
+        $quoteItem->method('getName')->willReturn('Test Product');
+        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
+        $quoteItem->method('getQty')->willReturn(1);
+        $quoteItem->method('getCalculationPrice')->willReturn(self::PRODUCT_PRICE);
+        $quoteItem->method('getIsVirtual')->willReturn(true);
+        $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')->willReturn($productMock);
+        $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+
+        $this->imageHelper->method('init')
+        ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+        ->willThrowException(new Exception());
+
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getTotals')->willReturnSelf();
+
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
+            $this->quoteMock,
+            self::STORE_ID
+        );
+        static::assertEquals(
+            [
+                [
+                    'reference'    => 20102,
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1.0,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => '',
+                ],
+            ],
+            $products
+        );
+    }
+
 
 
       /**
