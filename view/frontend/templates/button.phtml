@@ -24,11 +24,15 @@ if ($block->shouldDisableBoltCheckout()) { return;
 }
 $checkoutButtonUrl = $block->getCheckoutCdnUrl(). '/v1/checkout_button?publishable_key='. $block->getCheckoutKey();
 $additionalCheckoutButtonClass = $block->getAdditionalCheckoutButtonClass();
+$additionalCheckoutButtonAttributes = '';
+foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
+    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
+}
 
 ?>
 <?php if (!$block->isInstantCheckoutButton()) { ?>
     <div class="bolt-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalCheckoutButtonClass; ?>"
-         style="<?= /* @noEscape */$block->getButtonCssStyles(); ?>">
+         style="<?= /* @noEscape */$block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>>
     </div>
 <?php } else { ?>
     <div data-tid="instant-bolt-checkout-button">
