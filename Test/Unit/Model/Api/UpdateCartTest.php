@@ -472,10 +472,10 @@ class UpdateCartTest extends TestCase
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
             ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)
-            ->willReturn($this->couponMock);
+            ->willReturn([$this->couponMock, null]);
         
         $this->currentMock->expects(self::once())->method('applyDiscount')
-            ->with(self::COUPON_CODE, $this->couponMock, $parentQuoteMock)
+            ->with(self::COUPON_CODE, $this->couponMock, null, $parentQuoteMock)
             ->willReturn(true);
         
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
