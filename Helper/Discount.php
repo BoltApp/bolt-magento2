@@ -217,6 +217,11 @@ class Discount extends AbstractHelper
     protected $moduleGiftCardAccount;
     
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $moduleGiftCardAccountHelper;
+    
+    /**
      * @var CouponFactory
      */
     protected $couponFactory;
@@ -255,6 +260,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -291,6 +297,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
+        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -332,6 +339,7 @@ class Discount extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
+        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
     }
@@ -1261,6 +1269,38 @@ class Discount extends AbstractHelper
         $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
+    }
+    
+    /**
+     * Get the Magento_GiftCardAccount Gift Card data from quote
+     *
+     * @param Quote $quote
+     *
+     * @return array
+     */
+    public function getMagentoGiftCardAccountGiftCardData($quote)
+    {
+        if (! $this->isMagentoGiftCardAccountAvailable()) {
+            return [];
+        }
+        /** @var \Magento\GiftCardAccount\Helper\Data */
+        $giftCardAccountHelper = $this->moduleGiftCardAccountHelper->getInstance();
+        
+        if (!$giftCardAccountHelper) {
+            return [];
+        }
+        
+        $cards = $giftCardAccountHelper->getCards($quote);
+
+        if (!$cards) {
+            $cards = [];
+        } else {
+            $cards = array_column($cards,
+                                  \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT,
+                                  \Magento\GiftCardAccount\Model\Giftcardaccount::CODE);
+        }
+      
+        return $cards;
     }
     
     /**

@@ -74,6 +74,13 @@
             <argument name="className" xsi:type="string">Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection</argument>
         </arguments>
     </virtualType>
+    
+    <virtualType name="boltMagentoGiftCardAccountHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
+            <argument name="className" xsi:type="string">Magento\GiftCardAccount\Helper\Data</argument>
+        </arguments>
+    </virtualType>
 
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -297,6 +304,7 @@
             <argument name="bssStoreCreditCollection" xsi:type="object">boltBssStoreCreditCollection</argument>
             <argument name="bssStoreCreditHelper" xsi:type="object">boltBssStoreCreditHelper</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
+            <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
         </arguments>
     </type>
 
