@@ -1454,6 +1454,7 @@ if (!$block->isSaveCartInSections()) { ?>
         var settings = window.boltConfig;
         var bolt_button_css_class    = 'bolt-checkout-button';
         var additional_button_class  = settings.additional_checkout_button_class;
+        var additional_button_attributes = settings.additional_checkout_button_attributes;
         var bolt_button_css_styles   = settings.button_css_styles;
         var bolt_button_selector     = '.bolt-checkout-button';
         var multi_step_css_class     = 'bolt-multi-step-checkout';
@@ -2092,6 +2093,12 @@ if (!$block->isSaveCartInSections()) { ?>
                             }
                             if (getCheckoutType() === 'checkout') {
                                 bolt_button.classList.add(multi_step_css_class);
+                            }
+
+                            for (var attribute_name in additional_button_attributes) {
+                                if (additional_button_attributes.hasOwnProperty(attribute_name)) {
+                                    bolt_button.setAttribute(attribute_name, additional_button_attributes[attribute_name]);
+                                }
                             }
                         }
                         // place the button before or after selector element

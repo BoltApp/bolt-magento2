@@ -109,6 +109,7 @@ class Order extends AbstractHelper
     const TP_METHOD_DISPLAY = [
         'paypal' => 'PayPal',
         'afterpay' => 'Afterpay',
+        'affirm' => 'Affirm',
     ];
 
     /**
@@ -1670,13 +1671,8 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            if ($order->canCancel()) {
-                $this->cancelOrder($order);
-                return;
-            }
-
             try {
-                // Restock product quantity when the payment is irreversibly rejected
+                // Use registerCancellation method to cancel order and restock product saleable quantity
                 $order->registerCancellation('', false);
             } catch (\Exception $e) {
                 // Put the order in "cancelled" state even if the previous call fails

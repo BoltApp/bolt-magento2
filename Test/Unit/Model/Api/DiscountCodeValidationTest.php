@@ -185,6 +185,11 @@ class DiscountCodeValidationTest extends TestCase
     private $ruleRepositoryMock;
 
     /**
+     * @var MockObject|\Magento\Framework\App\CacheInterface system cache model
+     */
+    private $cache;
+
+    /**
      * @var MockObject|BoltDiscountCodeValidation
      */
     private $currentMock;
@@ -386,6 +391,9 @@ class DiscountCodeValidationTest extends TestCase
         $this->discountHelper->expects(self::once())->method('convertToBoltDiscountType')
             ->with($couponCode)->willReturn('cart_fixed');
 
+        $this->cache->expects(static::once())->method('clean')
+            ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
+
         $result = $this->currentMock->validate();
 
         // If another exception happens, the test will fail.
@@ -498,6 +506,9 @@ class DiscountCodeValidationTest extends TestCase
             ->with($couponCode)->willReturn($this->couponMock);
         $this->discountHelper->expects(self::once())->method('convertToBoltDiscountType')
             ->with($couponCode)->willReturn('cart_fixed');
+
+        $this->cache->expects(static::once())->method('clean')
+            ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
 
         $result = $this->currentMock->validate();
 
@@ -992,6 +1003,9 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->expectSuccessResponse($result);
 
+        $this->cache->expects(static::once())->method('clean')
+            ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
+
         self::assertTrue($this->currentMock->validate());
     }
 
@@ -1069,6 +1083,9 @@ class DiscountCodeValidationTest extends TestCase
         $immutableQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
 
         $this->expectSuccessResponse($result);
+
+        $this->cache->expects(static::once())->method('clean')
+            ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
 
         self::assertTrue($this->currentMock->validate());
     }
@@ -2223,6 +2240,10 @@ class DiscountCodeValidationTest extends TestCase
             ->setMethods(['notifyException', 'notifyError'])
             ->disableOriginalConstructor()
             ->getMock();
+
+        $this->cache = $this->getMockBuilder(\Magento\Framework\App\CacheInterface::class)
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
     }
 
     protected function initRequiredMocks()
@@ -2353,7 +2374,8 @@ class DiscountCodeValidationTest extends TestCase
                     $this->discountHelper,
                     $this->regionModel,
                     $this->totalsCollector,
-                    $this->orderHelper
+                    $this->orderHelper,
+                    $this->cache
                 ]
             )->getMock();
     }

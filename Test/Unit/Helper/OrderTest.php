@@ -3071,12 +3071,11 @@ class OrderTest extends TestCase
     {
         $state = Order::STATE_CANCELED;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(true);
-        $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('hold');
         $this->orderMock->expects(static::never())->method('setState');
         $this->orderMock->expects(static::never())->method('setStatus');
-        $this->orderMock->expects(static::never())->method('save');
+        $this->orderMock->expects(static::once())->method('save');
+        $this->orderMock->expects(static::once())->method('registerCancellation');
         $this->currentMock->setOrderState($this->orderMock, $state);
     }
 
@@ -3089,8 +3088,6 @@ class OrderTest extends TestCase
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
-        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(false);
-        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::once())->method('registerCancellation')->willReturn($this->orderMock);
         $this->orderMock->expects(static::never())->method('setState');
         $this->orderMock->expects(static::never())->method('setStatus');
@@ -3107,8 +3104,6 @@ class OrderTest extends TestCase
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
         $this->orderMock->expects(static::once())->method('getState')->willReturn($prevState);
-        $this->orderMock->expects(static::once())->method('canCancel')->willReturn(false);
-        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::once())->method('registerCancellation')->willThrowException(new Exception());
         $this->orderMock->expects(static::once())->method('setState');
         $this->orderMock->expects(static::once())->method('setStatus');
