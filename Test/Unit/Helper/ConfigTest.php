@@ -89,6 +89,9 @@ class ConfigTest extends TestCase
 }
 JSON;
 
+    /** @var int Test store ID */
+    const STORE_ID = 1;
+
     /**
      * @var EncryptorInterface
      */
@@ -972,6 +975,7 @@ JSON;
             'getTotalsChangeSelectors',
             'getGlobalCSS',
             'getAdditionalCheckoutButtonClass',
+            'getAdditionalCheckoutButtonAttributes',
             'getSuccessPageRedirect',
             'getPrefetchShipping',
             'getPrefetchAddressFields',
@@ -1336,6 +1340,77 @@ Room 4000',
         $this->assertNull($this->currentMock->getComposerVersion());
     }
 
+    /**
+     * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes
+     * stored in additional config field under 'checkoutButtonAttributes' field
+     *
+     * @covers ::getAdditionalCheckoutButtonAttributes
+     *
+     * @dataProvider getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider
+     *
+     * @param string $additionalConfig string from config property
+     * @param mixed $expectedResult from the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
+        $additionalConfig,
+        $expectedResult
+    ) {
+        $this->initCurrentMock(['getAdditionalConfigString']);
+        $this->currentMock->expects(static::once())
+            ->method('getAdditionalConfigString')
+            ->with(self::STORE_ID)
+            ->willReturn($additionalConfig);
+
+        $result = $this->currentMock->getAdditionalCheckoutButtonAttributes(self::STORE_ID);
+        static::assertEquals($expectedResult, $result);
+    }
+
+    /**
+     * Data provider for
+     * @see getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes
+     *
+     * @return array[] containing additional config values and expected result of the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    {
+        return [
+            'Only attributes in initial config'           => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now" 
+                    }
+                }',
+                'expectedResult'   => (object)["data-btn-txt" => "Pay now"],
+            ],
+            'Multiple attributes'                         => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now",
+                        "data-btn-text": "Data"
+                    }
+                }',
+                'expectedResult'   => (object)["data-btn-txt" => "Pay now", "data-btn-text" => "Data"],
+            ],
+            'Empty checkout button attributes property'   => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult'   => (object)[],
+            ],
+            'Missing checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult'   => (object)[],
+            ],
+            'Invalid additional config JSON'              => [
+                'additionalConfig' => 'invalid JSON',
+                'expectedResult'   => (object)[],
+            ],
+        ];
+    }
+  
     /**
      * @test
      * @covers ::getComposerVersion

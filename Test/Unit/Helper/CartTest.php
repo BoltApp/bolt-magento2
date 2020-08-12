@@ -84,6 +84,9 @@ use ReflectionException;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\GroupedProduct\Block\Cart\Item\Renderer\Grouped as RendererGrouped;
+use Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable as RendererConfigurable;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -417,7 +420,7 @@ class CartTest extends TestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
+        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
     }
 
@@ -2427,7 +2430,7 @@ ORDER
         $currentMock->expects(static::once())->method('saveToCache')->with(
             $boltOrder,
             self::CACHE_IDENTIFIER,
-            [BoltHelperCart::BOLT_ORDER_TAG],
+            [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
             3600
         );
         $result = $currentMock->getBoltpayOrder(false, '');
@@ -2500,7 +2503,12 @@ ORDER
         $currentMock->expects(static::once())->method('boltCreateOrder')->with($cart, self::STORE_ID)
             ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('saveToCache')
-            ->with($boltOrder, self::CACHE_IDENTIFIER, [BoltHelperCart::BOLT_ORDER_TAG], 3600);
+            ->with(
+                $boltOrder,
+                self::CACHE_IDENTIFIER,
+                [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
+                3600
+            );
         $result = $currentMock->getBoltpayOrder(false, '');
         static::assertEquals($result, $boltOrder);
         }
@@ -4709,18 +4717,11 @@ ORDER
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
-            ->willThrowException(
-                new NotFoundException(
-                    __("The product that was requested doesn't exist. Verify the product and try again.")
-                )
-            );
-
         $this->imageHelper->method('init')
             ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
             ->willThrowException(new Exception());
 
-        $this->bugsnag->expects(static::exactly(2))->method('registerCallback')->with(
+        $this->bugsnag->expects(static::once())->method('registerCallback')->with(
             static::callback(
                 function ($callback) {
                     $reportMock = $this->createMock(Report::class);
@@ -4743,8 +4744,7 @@ ORDER
                 }
             )
         );
-        $this->bugsnag->expects(static::exactly(2))->method('notifyError')->withConsecutive(
-            ['Could not retrieve product from repository', 'ProductId: ' .self::PRODUCT_ID. ', SKU: ' . self::PRODUCT_SKU],
+        $this->bugsnag->expects(static::once())->method('notifyError')->withConsecutive(
             ['Item image missing', 'SKU: ' . self::PRODUCT_SKU]
         );
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
@@ -4775,6 +4775,67 @@ ORDER
         static::assertEquals(10000, $totalAmount);
         static::assertEquals(0, $diff);
         }
+
+    /**
+     * @test
+     * that getCartItems will notify 'Item image missing' error if both attempts to retrieve image url fail
+     *
+     * @covers ::getCartItems
+     */
+    public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
+    {
+        $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getCalculationPrice',
+                'getQty',
+                'getProduct',
+                'getProductId',
+                'getName',
+                'getSku',
+                'getIsVirtual',
+            ]
+        );
+        $productMock = $this->createMock(Product::class);
+        $quoteItem->method('getName')->willReturn('Test Product');
+        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
+        $quoteItem->method('getQty')->willReturn(1);
+        $quoteItem->method('getCalculationPrice')->willReturn(self::PRODUCT_PRICE);
+        $quoteItem->method('getIsVirtual')->willReturn(true);
+        $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')->willReturn($productMock);
+        $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+
+        $this->imageHelper->method('init')
+        ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+        ->willThrowException(new Exception());
+
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getTotals')->willReturnSelf();
+
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
+            $this->quoteMock,
+            self::STORE_ID
+        );
+        static::assertEquals(
+            [
+                [
+                    'reference'    => 20102,
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1.0,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => '',
+                ],
+            ],
+            $products
+        );
+    }
+
 
 
       /**
@@ -4807,13 +4868,6 @@ ORDER
           $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
           $quoteItem->method('getProduct')->willReturn($productMock);
           $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
-
-          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)
-              ->willThrowException(
-                  new NotFoundException(
-                      __("The product that was requested doesn't exist. Verify the product and try again.")
-                  )
-              );
 
           $this->imageHelper->method('init')
               ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
@@ -4870,7 +4924,111 @@ ORDER
           static::assertEquals(0, $diff);
       }
 
+        /**
+         * @test
+         * @dataProvider dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem
+         *
+         * @covers ::getCartItems
+         *
+         * @param $imageConfig
+         * @param $childThumbnail
+         * @param $expectedProductName
+         */
+        public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
+        {
+            $quoteItem = $this->createPartialMock(
+                Item::class,
+                [
+                    'getProduct',
+                    'getProductType',
+                    'getOptionByCode'
+                ]
+            );
 
+            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+
+            $scopeConfigMock->expects(static::once())->method('getValue')->with(
+                'checkout/cart/configurable_product_image',
+                ScopeInterface::SCOPE_STORE
+            )->willReturn($imageConfig);
+            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+
+            $parentProductMock = $this->createMock(Product::class);
+            $parentProductMock->method('getName')->willReturn('Parent Product Name');
+            $quoteItem->expects(self::once())->method('getProduct')->willReturn($parentProductMock);
+            $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
+
+
+            $childProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $childProductMock->method('getName')->willReturn('Child Product Name');
+            $childProductMock->method('getThumbnail')->willReturn($childThumbnail);
+            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+            $quoteItemOption->method('getProduct')->willReturn($childProductMock);
+            $quoteItem->method('getOptionByCode')->with('simple_product')->willReturn($quoteItemOption);
+
+
+            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+        }
+
+        public function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem() {
+            return [
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Parent Product Name'],
+                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Parent Product Name']
+            ];
+        }
+
+        /**
+         * @test
+         * @dataProvider dataProvider_getProductToGetImageForQuoteItem_withGroupedItem
+         *
+         * @param $imageConfig
+         * @param $childThumbnail
+         * @param $expectedProductName
+         */
+        public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
+        {
+            $quoteItem = $this->createPartialMock(
+                Item::class,
+                [
+                    'getProduct',
+                    'getProductType',
+                    'getOptionByCode'
+                ]
+            );
+
+            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+
+            $scopeConfigMock->expects(static::once())->method('getValue')->with(
+                'checkout/cart/grouped_product_image',
+                ScopeInterface::SCOPE_STORE
+            )->willReturn($imageConfig);
+            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+
+            $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $productMock->method('getName')->willReturn('Child Product Name');
+            $productMock->method('getThumbnail')->willReturn($childThumbnail);
+            $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
+            $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
+
+            $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+            $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
+
+            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+            $quoteItemOption->method('getProduct')->willReturn($groupedProductMock);
+            $quoteItem->method('getOptionByCode')->with('product_type')->willReturn($quoteItemOption);
+
+
+            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+        }
+
+        public function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem() {
+            return [
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Grouped Product Name'],
+                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Grouped Product Name']
+            ];
+        }
 
       /**
        * @return MockObject

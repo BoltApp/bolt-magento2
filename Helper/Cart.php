@@ -61,6 +61,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
 
 /**
  * Boltpay Cart helper
@@ -803,7 +804,7 @@ class Cart extends AbstractHelper
             $this->saveToCache(
                 $boltOrder,
                 $cacheIdentifier,
-                [self::BOLT_ORDER_TAG],
+                [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
                 self::BOLT_ORDER_CACHE_LIFETIME
             );
         }
@@ -1274,7 +1275,16 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
                 $product['sku']          = trim($item->getSku());
-                $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
+
+                // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
+                // It means we don't support taxes for virtual product and should handle all products as physical
+                // TODO: Remove the feature switch check when issue will be solved https://boltpay.atlassian.net/browse/DC-181
+                if ( $item->getIsVirtual() && !$this->deciderHelper->handleVirtualProductsAsPhysical()) {
+                    $product['type'] = self::ITEM_TYPE_DIGITAL;
+                } else {
+                    $product['type'] = self::ITEM_TYPE_PHYSICAL;
+                }
+
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
@@ -1313,19 +1323,14 @@ class Cart extends AbstractHelper
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
                 try {
-                    // If the cart item is type of bundle product, its SKU is a combination with bundle selections,
-                    // so we need to retrieve the sku of bundle product without bundle selections.
-                    $product_sku = 'bundle' == $item->getProductType()
-                                   ? $_product->getData('sku')
-                                   : $product['sku'];
-                    $variantProductToGetImage = $this->productRepository->get($product_sku, false, $storeId);
+                    $variantProductToGetImage = $this->getProductToGetImageForQuoteItem($item);
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($product) {
                         $report->setMetaData([
                             'ITEM' => $product
                         ]);
                     });
-                    $this->bugsnag->notifyError('Could not retrieve product from repository', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
+                    $this->bugsnag->notifyError('Could not retrieve product', "ProductId: {$product['reference']}, SKU: {$product['sku']}");
                 }
                 try {
                     $productImageUrl = $imageHelper->init($variantProductToGetImage, 'product_small_image')->getUrl();
@@ -1372,6 +1377,93 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return [$products, $totalAmount, $diff];
+    }
+
+    /**
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    public function getProductToGetImageForQuoteItem($item)
+    {
+        $productType = $item->getProductType();
+        if ($productType == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+            return $this->getProductToGetImageForConfigurableItem($item);
+        }
+
+        if ($productType == \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE) {
+            return $this->getProductToGetImageForGroupedItem($item);
+        }
+
+        return $item->getProduct();
+    }
+
+    /**
+     * @see \Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable::getProductForThumbnail logic
+     * (Magento version is less than 2.2.7)
+     *
+     * @see \Magento\ConfigurableProduct\Model\Product\Configuration\Item\ItemProductResolver::getProductForThumbnail logic
+     * (Magento version is greater or equal to 2.2.7)
+     *
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    private function getProductToGetImageForConfigurableItem($item)
+    {
+        $parentProduct = $item->getProduct();
+        /** @var \Magento\Quote\Model\Quote\Item\Option $option */
+        $option = $item->getOptionByCode('simple_product');
+        $childProduct = $option ? $option->getProduct() : $parentProduct;
+        $configValue = $this->configHelper->getScopeConfig()->getValue(
+            'checkout/cart/configurable_product_image',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        /**
+         * Show parent product thumbnail if it must be always shown according to the related setting in system config
+         * or if child thumbnail is not available
+         */
+        if ($configValue == ThumbnailSource::OPTION_USE_PARENT_IMAGE ||
+            !($childProduct && $childProduct->getThumbnail() && $childProduct->getThumbnail() != 'no_selection')
+        ) {
+            return $parentProduct;
+        }
+
+        return $childProduct;
+    }
+
+    /**
+     * @see \Magento\GroupedProduct\Block\Cart\Item\Renderer\Grouped::getProductForThumbnail logic
+     * (Magento version is less than 2.2.7)
+     *
+     * @see \Magento\GroupedProduct\Model\Product\Configuration\Item\ItemProductResolver::getProductForThumbnail logic
+     * (Magento version is greater or equal to 2.2.7)
+     *
+     * @param $item
+     * @return \Magento\Catalog\Model\Product
+     */
+    private function getProductToGetImageForGroupedItem ($item)
+    {
+        /** @var \Magento\Quote\Model\Quote\Item\Option $option */
+        $option = $item->getOptionByCode('product_type');
+        $childProduct = $item->getProduct();
+        $groupedProduct = $option ? $option->getProduct() : $childProduct;
+
+        $configValue = $this->configHelper->getScopeConfig()->getValue(
+            'checkout/cart/grouped_product_image',
+            ScopeInterface::SCOPE_STORE
+        );
+
+        /**
+         * Show grouped product thumbnail if it must be always shown according to the related setting in system config
+         * or if child product thumbnail is not available
+         */
+        if ($configValue == ThumbnailSource::OPTION_USE_PARENT_IMAGE ||
+            !($childProduct && $childProduct->getThumbnail() && $childProduct->getThumbnail() != 'no_selection')
+        ) {
+            return $groupedProduct;
+        }
+
+        return $childProduct;
     }
 
     /**
