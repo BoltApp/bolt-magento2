@@ -9,6 +9,7 @@ if ! (git rebase $CIRCLE_BRANCH); then
   exit 1
 fi
 
+export COMPOSER_MEMORY_LIMIT=3G
 echo "Start unit tests..."
 if ! ./Test/scripts/ci-unit.sh; then
   echo "unit tests failed"
