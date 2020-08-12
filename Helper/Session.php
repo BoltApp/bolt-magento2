@@ -25,10 +25,12 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Quote\Model\Quote;
+use Magento\Framework\Registry;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 
 /**
  * Boltpay Session helper
@@ -64,6 +66,12 @@ class Session extends AbstractHelper
     /** @var FormKey */
     private $formKey;
 
+    /** @var Registry */
+    private $coreRegistry;
+
+    /** @var ThirdPartyModuleFactory */
+    private $mageplazaShippingRestrictonHelper;
+
     /** @var ConfigHelper */
     private $configHelper;
 
@@ -75,6 +83,8 @@ class Session extends AbstractHelper
      * @param CacheInterface    $cache
      * @param State             $appState
      * @param FormKey           $formKey
+     * @param Registry          $coreRegistry
+     * @param ThirdPartyModuleFactory $mageplazaShippingRestrictonHelper;
      * @param ConfigHelper      $configHelper
      */
     public function __construct(
@@ -86,6 +96,8 @@ class Session extends AbstractHelper
         CacheInterface $cache,
         State $appState,
         FormKey $formKey,
+        Registry $coreRegistry,
+        ThirdPartyModuleFactory $mageplazaShippingRestrictonHelper,
         ConfigHelper $configHelper
     ) {
         parent::__construct($context);
@@ -96,6 +108,8 @@ class Session extends AbstractHelper
         $this->cache = $cache;
         $this->appState = $appState;
         $this->formKey = $formKey;
+        $this->coreRegistry = $coreRegistry;
+        $this->mageplazaShippingRestrictonHelper = $mageplazaShippingRestrictonHelper;
         $this->configHelper = $configHelper;
     }
 
@@ -184,6 +198,13 @@ class Session extends AbstractHelper
             $this->customerSession->loginById($customerId);
         }
         $this->replaceQuote($quote);
+
+        // third party plugin support
+        $mageplazaHelper = $this->mageplazaShippingRestrictonHelper->getInstance();
+        if ($mageplazaHelper && $mageplazaHelper->isEnabled()) {
+            $this->coreRegistry->register('mp_shippingrestriction_cart', $quote->getBoltParentQuoteId());
+            $this->coreRegistry->register('mp_shippingrestriction_address', $quote->getShippingAddress());
+        }
     }
 
     /**
