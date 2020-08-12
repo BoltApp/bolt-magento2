@@ -12,9 +12,9 @@ if ! (git rebase $CIRCLE_BRANCH); then
   exit 1
 fi
 
-export COMPOSER_MEMORY_LIMIT=3G
 export TEST_ENV="php72"
-export MAGENTO_VERSION="2.3.0"
+export MAGENTO_VERSION="2.2.0"
+export COMPOSER_MEMORY_LIMIT=3G
 
 echo "Start unit tests..."
 if ! ./Test/scripts/ci-unit.sh; then
