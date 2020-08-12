@@ -1412,7 +1412,7 @@ class Cart extends AbstractHelper
         $parentProduct = $item->getProduct();
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('simple_product');
-        $childProduct = $option ? $option->getProduct() : $item->getProduct();
+        $childProduct = $option ? $option->getProduct() : $parentProduct;
         $configValue = $this->configHelper->getScopeConfig()->getValue(
             'checkout/cart/configurable_product_image',
             ScopeInterface::SCOPE_STORE
@@ -1446,7 +1446,7 @@ class Cart extends AbstractHelper
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('product_type');
         $childProduct = $item->getProduct();
-        $groupedProduct = $option ? $option->getProduct() : $item->getProduct();
+        $groupedProduct = $option ? $option->getProduct() : $childProduct;
 
         $configValue = $this->configHelper->getScopeConfig()->getValue(
             'checkout/cart/grouped_product_image',
