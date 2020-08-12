@@ -263,7 +263,7 @@ workflows:
               only:
                 - master
   rebase-and-unit-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
-    name: "Rebase and Unit test: << pipeline.parameters.rebase_and_unit_test_branch_name >>"
     when: << pipeline.parameters.run_rebase_and_unit_test >>
     jobs:
-      - rebase-and-unit-test
+      - rebase-and-unit-test:
+          name: "Rebase and Unit test: << pipeline.parameters.rebase_and_unit_test_branch_name >>"
