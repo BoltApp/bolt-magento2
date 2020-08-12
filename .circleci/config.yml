@@ -138,7 +138,9 @@ jobs:
       - checkout
       - run:
           name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
+          command: |
+            export COMPOSER_MEMORY_LIMIT=3G
+            bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
 
   tag-release-candidate:
     docker:
