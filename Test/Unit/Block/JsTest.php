@@ -49,10 +49,9 @@ use Magento\Framework\Composer\ComposerFactory;
  */
 class JsTest extends \PHPUnit\Framework\TestCase
 {
-    // Number of settings in method getSettings()
 
     /** @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings} */
-    const SETTINGS_NUMBER = 25;
+    const SETTINGS_NUMBER = 26;
 
     /** @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks} */
     const TRACK_CALLBACK_NUMBER = 7;
@@ -177,6 +176,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isAlwaysPresentCheckoutEnabled',
             'isShowTermsPaymentButton',
             'getOrderManagementSelector',
+            'getAdditionalCheckoutButtonAttributes',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -592,6 +592,26 @@ class JsTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes from
+     * @see \Bolt\Boltpay\Helper\Config::getAdditionalCheckoutButtonAttributes
+     *
+     * @covers ::getAdditionalCheckoutButtonAttributes
+     */
+    public function getAdditionalCheckoutButtonAttributes_always_returnsAdditionalCheckoutButtonAttributesFromConfig()
+    {
+        $additionalCheckoutButtonAttributes = (object)["data-btn-txt" => "Pay now"];
+        $this->configHelper->expects(static::once())
+            ->method('getAdditionalCheckoutButtonAttributes')
+            ->willReturn($additionalCheckoutButtonAttributes);
+
+        static::assertEquals(
+            $additionalCheckoutButtonAttributes,
+            $this->currentMock->getAdditionalCheckoutButtonAttributes()
+        );
+    }
+  
+    /**
+     * @test  
      * that getAdditionalCheckoutButtonClass returns trimmed additional checkout button class from the config helper
      * @see \Bolt\Boltpay\Helper\Config::getAdditionalCheckoutButtonClass
      *

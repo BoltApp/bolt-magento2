@@ -689,6 +689,27 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get additional checkout button attributes configuration, stored in the following format in
+     * the Additional Configuration store admin field:
+     *
+     * {
+     *   "checkoutButtonAttributes": {
+     *     "data-btn-txt": "Pay now",
+     *     "data-btn-custom": "Some value"
+     *   }
+     * }
+     *
+     * @param int|string $storeId scope for which to retrieve additional checkout button attributes
+     *
+     * @return object containing additional checkout button attributes if available in Additional Configuration,
+     * otherwise an empty object
+     */
+    public function getAdditionalCheckoutButtonAttributes($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('checkoutButtonAttributes', $storeId) ?: (object)[];
+    }
+
+    /**
      * Get Custom Prefetch Address Fields
      *
      * @param int|string $storeId
@@ -1042,9 +1063,9 @@ class Config extends AbstractHelper
     /**
      * Get Additional Config object
      *
-     * @param int|string $storeId
+     * @param int|string $storeId scope for which to retrieve additional config property
      *
-     * @return  \stdClass
+     * @return object containing Additional Config parsed from JSON
      */
     private function getAdditionalConfigObject($storeId = null)
     {
@@ -1054,10 +1075,10 @@ class Config extends AbstractHelper
     /**
      * Get Additional Config property
      *
-     * @param $name
-     * @param int|string $storeId
+     * @param string $name of the additional config property
+     * @param int|string $storeId scope for which to retrieve additional config property
      *
-     * @return string
+     * @return mixed value of the requested property in the Additional COnfig
      */
     private function getAdditionalConfigProperty($name, $storeId = null)
     {

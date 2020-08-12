@@ -779,7 +779,9 @@ class ShippingMethods implements ShippingMethodsInterface
                 ->setTaxAmount($taxAmount);
         }
 
-        $shippingAddress->setShippingMethod(null)->save();
+        $shippingAddress->setShippingMethod(null);
+        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+        $shippingAddress->save();
 
         if ($errors) {
             $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
