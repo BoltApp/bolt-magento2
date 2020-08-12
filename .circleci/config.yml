@@ -266,4 +266,4 @@ workflows:
     when: << pipeline.parameters.run_rebase_and_unit_test >>
     jobs:
       - rebase-and-unit-test:
-          name: "Rebase and Unit test - << pipeline.parameters.rebase_and_unit_test_branch_name >>"
+          name: "Unit - << pipeline.parameters.rebase_and_unit_test_branch_name >>"
