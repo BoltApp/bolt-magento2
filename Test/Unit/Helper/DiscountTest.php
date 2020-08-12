@@ -2735,6 +2735,7 @@ class DiscountTest extends TestCase
      * @param int           $accountModelStoreId value of Mageplaza Gift Card Model store id
      * @param int           $storeId value of provided store id
      * @param bool          $expectException flag value
+     * @param bool          $isActive
      * @param \Mageplaza\GiftCard\Model\GiftCard|null $expectedResult of the tested method
      *
      * @throws ReflectionException if unable to set internal mock properties
@@ -2745,6 +2746,7 @@ class DiscountTest extends TestCase
         $accountModelId,
         $accountModelStoreId,
         $storeId,
+        $isActive,
         $expectException,
         $expectedResult
     ) {
@@ -2758,6 +2760,7 @@ class DiscountTest extends TestCase
                 'load',
                 'getId',
                 'getStoreId',
+                'isActive'
             ]
         )->disableOriginalConstructor()->getMock();
 
@@ -2770,6 +2773,7 @@ class DiscountTest extends TestCase
             ->method('load')
             ->with($code, 'code')
             ->willReturn($accountModel);
+
         $exception = $this->createMock(\Exception::class);
         if ($accountModel) {
             $accountModel->expects($isMageplazaGiftCardAvailable ? static::once() : static::never())
@@ -2778,6 +2782,7 @@ class DiscountTest extends TestCase
             $accountModel->expects(
                 $isMageplazaGiftCardAvailable && !$expectException ? static::exactly(2) : static::never()
             )->method('getStoreId')->willReturnOnConsecutiveCalls($accountModelStoreId, $accountModelStoreId);
+            $accountModel->method('isActive')->willReturn($isActive);
         }
         static::assertEquals($expectedResult, $this->currentMock->loadMageplazaGiftCard($code, $storeId));
     }
@@ -2801,12 +2806,14 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
                 'accountModelId'               => 1,
                 'accountModelStoreId'          => 22,
                 'storeId'                      => 23,
+                'isActive'                     => true,
                 'expectException'              => false,
                 'expectedResult'               => null,
             ],
@@ -2816,6 +2823,7 @@ class DiscountTest extends TestCase
                 'accountModelId'               => null,
                 'accountModelStoreId'          => 42,
                 'storeId'                      => 22,
+                'isActive'                     => true,
                 'expectException'              => false,
                 'expectedResult'               => null,
             ],
@@ -2827,12 +2835,14 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
                 'accountModelId'               => null,
                 'accountModelStoreId'          => 22,
                 'storeId'                      => 22,
+                'isActive'                     => true,
                 'expectException'              => false,
                 'expectedResult'               => null,
             ],
@@ -2844,12 +2854,14 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
                 'accountModelId'               => 66,
                 'accountModelStoreId'          => 22,
                 'storeId'                      => 84,
+                'isActive'                     => true,
                 'expectException'              => false,
                 'expectedResult'               => null,
             ],
@@ -2861,12 +2873,14 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
                 'accountModelId'               => 62,
                 'accountModelStoreId'          => 54,
                 'storeId'                      => 54,
+                'isActive'                     => true,
                 'expectException'              => true,
                 'expectedResult'               => null,
             ],
@@ -2878,12 +2892,14 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
                 'accountModelId'               => 62,
                 'accountModelStoreId'          => 54,
                 'storeId'                      => 54,
+                'isActive'                     => true,
                 'expectException'              => false,
                 'expectedResult'               => $this->createPartialMock(
                     ThirdPartyModuleFactory::class,
@@ -2891,9 +2907,29 @@ class DiscountTest extends TestCase
                         'getInstance',
                         'load',
                         'getId',
-                        'getStoreId'
+                        'getStoreId',
+                        'isActive'
                     ]
                 ),
+            ],
+            [
+                'isMageplazaGiftCardAvailable' => true,
+                'accountModel'                 => $this->createPartialMock(
+                    ThirdPartyModuleFactory::class,
+                    [
+                        'getInstance',
+                        'load',
+                        'getId',
+                        'getStoreId',
+                        'isActive'
+                    ]
+                ),
+                'accountModelId'               => 62,
+                'accountModelStoreId'          => 54,
+                'storeId'                      => 54,
+                'isActive'                     => false,
+                'expectException'              => false,
+                'expectedResult'               => null
             ],
         ];
     }
@@ -3162,7 +3198,7 @@ class DiscountTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $code = 1232;
+        $code = 'Bolt_MpGiftCard';
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
         
         $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)

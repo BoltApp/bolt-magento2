@@ -935,8 +935,8 @@ class Discount extends AbstractHelper
                 ->load($code, 'code');
 
             return $accountModel && $accountModel->getId()
-                   && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId)
-                   ? $accountModel : null;
+            && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId) && $accountModel->isActive()
+                ? $accountModel : null;
 
         } catch (\Exception $e) {
             return null;
