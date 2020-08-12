@@ -2,6 +2,9 @@
 merchantBranch=$1
 echo "Rebasing $merchantBranch from $CIRCLE_BRANCH"
 
+git config --global user.email "dev@bolt.com"
+git config --global user.name "Bolt Rebase & Test Bot"
+
 git checkout $merchantBranch
 if ! (git rebase $CIRCLE_BRANCH); then
   echo "Failed to rebase $merchantBranch from $CIRCLE_BRANCH"
