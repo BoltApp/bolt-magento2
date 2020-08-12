@@ -887,8 +887,8 @@ class Discount extends AbstractHelper
                 ->load($code, 'code');
 
             return $accountModel && $accountModel->getId()
-                   && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId)
-                   ? $accountModel : null;
+            && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId) && $accountModel->isActive()
+                ? $accountModel : null;
 
         } catch (\Exception $e) {
             return null;
@@ -978,7 +978,15 @@ class Discount extends AbstractHelper
         try {
             $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
             $giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code] = 0;
+
+            /// On the latest MagePlaza version (1.0.6), they save the gift card to the quote
+            /// and then pull them out to collect the total
+            $quote->setMpGiftCards(json_encode([$code => 0]));
+
+            // On the older MagePlaza version (ex: 1.0.0, etc) they used the session to save the gift card
+            // and then pull them out to collect the total
             $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
+
             $this->updateTotals($quote);
             $totals = $quote->getTotals();
             return isset($totals[self::MAGEPLAZA_GIFTCARD]) ? $totals[self::MAGEPLAZA_GIFTCARD]->getValue() : 0;
