@@ -17,36 +17,64 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
+use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebApiException;
-use Magento\Quote\Model\Quote;
-use Magento\SalesRule\Model\Coupon;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
 use Magento\SalesRule\Model\RuleRepository;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\SalesRule\Model\Coupon;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
-use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
-use Bolt\Boltpay\Model\Api\UpdateCartCommon;
-use Bolt\Boltpay\Model\Api\UpdateCartContext;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
+use Magento\Framework\Webapi\Exception as WebApiException;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Quote\Model\Quote\TotalsCollector;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 /**
  * Discount Code Validation class
  * @api
  */
-class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeValidationInterface
+class DiscountCodeValidation implements DiscountCodeValidationInterface
 {
+    /**
+     * @var Request
+     */
+    private $request;
+
+    /**
+     * @var Response
+     */
+    private $response;
+
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    private $moduleUnirgyGiftCert;
+
     /**
      * @var RuleRepository
      */
     protected $ruleRepository;
+
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
     /**
      * @var UsageFactory
@@ -69,9 +97,38 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     protected $customerFactory;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @var ConfigHelper
      */
     private $configHelper;
+
+    /**
+     * @var HookHelper
+     */
+    private $hookHelper;
+
+    /**
+     * @var BoltErrorResponse
+     */
+    private $errorResponse;
+
+    /**
+     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
+     */
+    private $moduleUnirgyGiftCertHelper;
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepositoryForUnirgyGiftCert;
 
     /**
      * @var CheckoutSession
@@ -84,38 +141,89 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     private $discountHelper;
 
     /**
+     * @var RegionModel
+     */
+    private $regionModel;
+
+    /**
      * @var TotalsCollector
      */
     private $totalsCollector;
 
     /**
+     * @var OrderHelper
+     */
+    protected $orderHelper;
+
+    /**
      * DiscountCodeValidation constructor.
      *
+     * @param Request                 $request
+     * @param Response                $response
+     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
+     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
+     * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
      * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
      * @param RuleRepository          $ruleRepository
+     * @param LogHelper               $logHelper
+     * @param BoltErrorResponse       $errorResponse
      * @param UsageFactory            $usageFactory
      * @param DataObjectFactory       $objectFactory
      * @param TimezoneInterface       $timezone
      * @param CustomerFactory         $customerFactory
+     * @param Bugsnag                 $bugsnag
+     * @param CartHelper              $cartHelper
      * @param ConfigHelper            $configHelper
+     * @param HookHelper              $hookHelper
      * @param DiscountHelper          $discountHelper
+     * @param RegionModel             $regionModel
      * @param TotalsCollector         $totalsCollector
-     * @param UpdateCartContext       $updateCartContext
+     * @param OrderHelper             $orderHelper
      */
     public function __construct(
+        Request $request,
+        Response $response,
+        ThirdPartyModuleFactory $moduleUnirgyGiftCert,
+        ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
+        QuoteRepository $quoteRepositoryForUnirgyGiftCert,
         CheckoutSession $checkoutSessionForUnirgyGiftCert,
-        UpdateCartContext $updateCartContext
+        RuleRepository $ruleRepository,
+        LogHelper $logHelper,
+        BoltErrorResponse $errorResponse,
+        UsageFactory $usageFactory,
+        DataObjectFactory $objectFactory,
+        TimezoneInterface $timezone,
+        CustomerFactory $customerFactory,
+        Bugsnag $bugsnag,
+        CartHelper $cartHelper,
+        ConfigHelper $configHelper,
+        HookHelper $hookHelper,
+        DiscountHelper $discountHelper,
+        RegionModel $regionModel,
+        TotalsCollector $totalsCollector,
+        OrderHelper $orderHelper
     ) {
-        parent::__construct($updateCartContext);
+        $this->request = $request;
+        $this->response = $response;
+        $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
+        $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
+        $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
         $this->checkoutSessionForUnirgyGiftCert = $checkoutSessionForUnirgyGiftCert;
-        $this->ruleRepository = $updateCartContext->getRuleRepository();
-        $this->usageFactory = $updateCartContext->getUsageFactory();
-        $this->objectFactory = $updateCartContext->getObjectFactory();
-        $this->timezone = $updateCartContext->getTimezone();
-        $this->customerFactory = $updateCartContext->getCustomerFactory();
-        $this->configHelper = $updateCartContext->getConfigHelper();
-        $this->discountHelper = $updateCartContext->getDiscountHelper();
-        $this->totalsCollector = $updateCartContext->getTotalsCollector();
+        $this->ruleRepository = $ruleRepository;
+        $this->logHelper = $logHelper;
+        $this->usageFactory = $usageFactory;
+        $this->objectFactory = $objectFactory;
+        $this->timezone = $timezone;
+        $this->customerFactory = $customerFactory;
+        $this->bugsnag = $bugsnag;
+        $this->cartHelper = $cartHelper;
+        $this->configHelper = $configHelper;
+        $this->hookHelper = $hookHelper;
+        $this->errorResponse = $errorResponse;
+        $this->discountHelper = $discountHelper;
+        $this->regionModel = $regionModel;
+        $this->totalsCollector = $totalsCollector;
+        $this->orderHelper = $orderHelper;
     }
 
     /**
@@ -129,22 +237,63 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             $request = $this->getRequestContent();
 
             $requestArray = json_decode(json_encode($request), true);
-            
-            $parentQuoteId = (isset($requestArray['cart']['order_reference'])) ? $requestArray['cart']['order_reference'] : '';
-            $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
-            list($incrementId, $immutableQuoteId) = array_pad(
-                explode(' / ', $displayId),
-                2,
-                null
-            );
-            
-            $result = $this->validateQuote($parentQuoteId, $immutableQuoteId, $incrementId);
-            
-            if( ! $result ){
+            if (isset($requestArray['cart']['order_reference'])) {
+                $parentQuoteId = $requestArray['cart']['order_reference'];
+                $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
+                // check if the cart / quote exists and it is active
+                try {
+                    // get parent quote id, order increment id and child quote id
+                    // the latter two are transmitted as display_id field, separated by " / "
+                    list($incrementId, $immutableQuoteId) = array_pad(
+                        explode(' / ', $displayId),
+                        2,
+                        null
+                    );
+
+                    if (!$immutableQuoteId) {
+                        $immutableQuoteId = $parentQuoteId;
+                    }
+
+                    /** @var Quote $parentQuote */
+                    if ($immutableQuoteId == $parentQuoteId) {
+                        // Product Page Checkout - quotes are created as inactive
+                        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+                    } else {
+                        $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+                    }
+
+                    // check if cart identification data is sent
+                    if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
+                        $this->sendErrorResponse(
+                            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                            'The order reference is invalid.',
+                            422
+                        );
+
+                        return false;
+                    }
+
+                } catch (\Exception $e) {
+                    $this->bugsnag->notifyException($e);
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                        sprintf('The cart reference [%s] is not found.', $parentQuoteId),
+                        404
+                    );
+                    return false;
+                }
+            } else {
+                $this->bugsnag->notifyError(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'The cart.order_reference is not set or empty.'
+                );
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'The cart reference is not found.',
+                    404
+                );
                 return false;
             }
-            
-            list($parentQuote, $immutableQuote) = $result;
 
             $storeId = $parentQuote->getStoreId();
             $websiteId = $parentQuote->getStore()->getWebsiteId();
@@ -170,9 +319,10 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             // Load the Magento_GiftCardAccount object
             $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
 
-            // Load Unirgy_GiftCert object
+            // Apply Unirgy_GiftCert
             if (empty($giftCard)) {
-                $giftCard = $this->discountHelper->loadUnirgyGiftCert($couponCode, $storeId);
+                // Load the gift cert by code
+                $giftCard = $this->loadGiftCertData($couponCode, $storeId);
             }
 
             // Load Amasty Gift Card account object
@@ -237,8 +387,35 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             }
 
             // Set the shipment if request payload has that info.
-            if (isset($requestArray['cart']['shipments'][0]['reference'])) {
-                $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
+            if (isset($request->cart->shipments[0]->reference)) {
+                $shippingAddress = $immutableQuote->getShippingAddress();
+                $address = $request->cart->shipments[0]->shipping_address;
+                $address = $this->cartHelper->handleSpecialAddressCases($address);
+                $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
+                $addressData = [
+                            'firstname'    => @$address->first_name,
+                            'lastname'     => @$address->last_name,
+                            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
+                            'city'         => @$address->locality,
+                            'country_id'   => @$address->country_code,
+                            'region'       => @$address->region,
+                            'postcode'     => @$address->postal_code,
+                            'telephone'    => @$address->phone_number,
+                            'region_id'    => $region ? $region->getId() : null,
+                            'company'      => @$address->company,
+                        ];
+                if ($this->cartHelper->validateEmail(@$address->email_address)) {
+                    $addressData['email'] = $address->email_address;
+                }
+
+                $shippingAddress->setShouldIgnoreValidation(true);
+                $shippingAddress->addData($addressData);
+
+                $shippingAddress
+                    ->setShippingMethod($request->cart->shipments[0]->reference)
+                    ->setCollectShippingRates(true)
+                    ->collectShippingRates()
+                    ->save();
             }
 
             if ($coupon && $coupon->getCouponId()) {
@@ -257,9 +434,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 // Already sent a response with error, so just return.
                 return false;
             }
-            
-            $result['cart'] = $this->getCartTotals($immutableQuote);
-            $this->sendSuccessResponse($result);
+
+            $this->sendSuccessResponse($result, $immutableQuote);
         } catch (WebApiException $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -289,6 +465,26 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         }
 
         return true;
+    }
+
+    /**
+     * @param null|int $storeId
+     * @throws LocalizedException
+     * @throws WebApiException
+     */
+    public function preProcessWebhook($storeId = null)
+    {
+        $this->hookHelper->preProcessWebhook($storeId);
+    }
+
+    /**
+     * @return array
+     */
+    private function getRequestContent()
+    {
+        $this->logHelper->addInfoLog($this->request->getContent());
+
+        return json_decode($this->request->getContent());
     }
 
     /**
@@ -462,8 +658,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     }
 
     /**
-     * @param string $code
-     * @param object $giftCard
+     * @param $code
+     * @param \Magento\GiftCardAccount\Model\Giftcardaccount|\Unirgy\Giftcert\Model\Cert $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -482,13 +678,35 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 // Reset and apply Amasty Gift Cards to the immutable quote
                 $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
             } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
-                $this->discountHelper->applyUnirgyGiftCert($giftCard, $immutableQuote);
-                $this->discountHelper->applyUnirgyGiftCert($giftCard, $parentQuote);
+                /** @var \Unirgy\Giftcert\Helper\Data $unirgyHelper */
+                $unirgyHelper = $this->moduleUnirgyGiftCertHelper->getInstance();
+                /** @var CheckoutSession $checkoutSession */
+                $checkoutSession = $this->checkoutSessionForUnirgyGiftCert;
+
+                if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
+                    $unirgyHelper->addCertificate(
+                        $giftCard->getCertNumber(),
+                        $immutableQuote,
+                        $this->quoteRepositoryForUnirgyGiftCert
+                    );
+                }
+
+                if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
+                    $unirgyHelper->addCertificate(
+                        $giftCard->getCertNumber(),
+                        $parentQuote,
+                        $this->quoteRepositoryForUnirgyGiftCert
+                    );
+                }
+
                 // The Unirgy_GiftCert require double call the function addCertificate().
                 // Look on Unirgy/Giftcert/Controller/Checkout/Add::execute()
-                $checkoutSession = $this->checkoutSessionForUnirgyGiftCert;
-                $this->discountHelper->applyUnirgyGiftCert($giftCard, $checkoutSession->getQuote());
-                
+                $unirgyHelper->addCertificate(
+                    $giftCard->getCertNumber(),
+                    $checkoutSession->getQuote(),
+                    $this->quoteRepositoryForUnirgyGiftCert
+                );
+
                 $giftAmount = $giftCard->getBalance();
             } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
                 // Remove Mageplaza Gift Card if it was already applied
@@ -582,7 +800,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
      * @return void
      * @throws \Exception
      */
-    protected function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
+    private function sendErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
         $additionalErrorResponseData = [];
         if ($quote) {
@@ -606,14 +824,54 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
      * @return array
      * @throws \Exception
      */
-    protected function sendSuccessResponse($result)
-    {  
+    private function sendSuccessResponse($result, $quote)
+    {
+        $result['cart'] = $this->getCartTotals($quote);
+
         $this->response->setBody(json_encode($result));
         $this->response->sendResponse();
 
         $this->logHelper->addInfoLog('### sendSuccessResponse');
         $this->logHelper->addInfoLog(json_encode($result));
         $this->logHelper->addInfoLog('=== END ===');
+
+        return $result;
+    }
+
+    /**
+     * @param string $code
+     * @param string|int $storeId
+     *
+     * @return null|\Unirgy\Giftcert\Model\Cert
+     * @throws NoSuchEntityException
+     */
+    public function loadGiftCertData($code, $storeId)
+    {
+        $result = null;
+
+        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
+        $giftCertRepository = $this->moduleUnirgyGiftCert->getInstance();
+
+        if ($giftCertRepository) {
+            $this->logHelper->addInfoLog('### GiftCert ###');
+            $this->logHelper->addInfoLog('# Code: ' . $code);
+
+            try {
+                /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+                $giftCert = $giftCertRepository->get($code);
+
+                $gcStoreId = $giftCert->getStoreId();
+
+                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
+                          ? $giftCert : null;
+
+            } catch (NoSuchEntityException $e) {
+                //We must ignore the exception, because it is thrown when data does not exist.
+                $result = null;
+            }
+        }
+
+        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }

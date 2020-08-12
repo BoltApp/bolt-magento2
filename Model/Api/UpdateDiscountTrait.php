@@ -208,7 +208,8 @@ trait UpdateDiscountTrait
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_INVALID,
                 sprintf('The coupon code %s is not found', $couponCode),
-                422
+                422,
+                $quote
             );
 
              return false;
@@ -221,7 +222,8 @@ trait UpdateDiscountTrait
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CODE_INVALID,
                 sprintf('The coupon code %s is not found', $couponCode),
-                422
+                422,
+                $quote
             );
 
             return false;

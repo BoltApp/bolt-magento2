@@ -35,6 +35,11 @@ use PHPUnit\Framework\TestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
+/**
+ * Class HintsTest
+ * @package Bolt\Boltpay\Test\Unit\Controller\Order
+ * @coversDefaultClass \Bolt\Boltpay\Controller\Order\Save
+ */
 class SaveTest extends TestCase
 {
     const ORDER_ID = 1234;
@@ -85,10 +90,41 @@ class SaveTest extends TestCase
      * @var Context
      */
     private $context;
+    
+    /**
+     * @var MockObject|ResultJsonFactory mocked instance of JsonFactory
+     */
+    private $resultJsonFactory;
 
     protected function setUp()
     {
         $this->initRequiredMocks();
+    }
+
+    /**
+     * @test
+     * that constructor sets internal properties
+     *
+     * @covers ::__construct
+     */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new Save(
+            $this->context,
+            $this->resultJsonFactory,
+            $this->checkoutSession,
+            $this->orderHelper,
+            $this->configHelper,
+            $this->bugsnagMock,
+            $this->dataObjectFactory
+        );
+
+        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        $this->assertAttributeEquals($this->orderHelper, 'orderHelper', $instance);
+        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        $this->assertAttributeEquals($this->bugsnagMock, 'bugsnag', $instance);
+        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
     }
 
     /**
