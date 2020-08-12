@@ -199,7 +199,7 @@ class Session extends AbstractHelper
         }
         $this->replaceQuote($quote);
 
-        // trird party plugin support
+        // third party plugin support
         $mageplazaHelper = $this->mageplazaShippingRestrictonHelper->getInstance();
         if ($mageplazaHelper && $mageplazaHelper->isEnabled()) {
             $this->coreRegistry->register('mp_shippingrestriction_cart', $quote->getBoltParentQuoteId());
