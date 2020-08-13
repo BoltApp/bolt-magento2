@@ -1903,39 +1903,6 @@ JS;
     }
 
     /**
-     * @test
-     * that isSaveCartInSections returns M2_SAVE_CART_IN_SECTIONS feature switch state from
-     * @see          \Bolt\Boltpay\Helper\FeatureSwitch\Decider::isSaveCartInSections
-     *
-     * @covers ::isSaveCartInSections
-     *
-     * @dataProvider isSaveCartInSections_withVariousSaveCartStatesProvider
-     *
-     * @param bool $isSaveCartInSections feature switch value
-     * @param bool $expectedResult of the tested method call
-     */
-    public function isSaveCartInSections_withVariousFetureSwitchStates_determinesIfCartSectionsShouldBeUsed(
-        $isSaveCartInSections,
-        $expectedResult
-    ) {
-        $this->deciderMock->expects(static::once())->method('isSaveCartInSections')->willReturn($isSaveCartInSections);
-        static::assertEquals($expectedResult, $this->currentMock->isSaveCartInSections());
-    }
-
-    /**
-     * Data provider for {@see isSaveCartInSections_withVariousFetureSwitchStates_determinesIfCartSectionsShouldBeUsed}
-     *
-     * @return array[] containing is save cart flag value and expected result of the tested method call
-     */
-    public function isSaveCartInSections_withVariousSaveCartStatesProvider()
-    {
-        return [
-            ['isSaveCartInSections' => true, 'expectedResult' => true],
-            ['isSaveCartInSections' => false, 'expectedResult' => false],
-        ];
-    }
-
-    /**
      * Stubs {@see \Bolt\Boltpay\Helper\Config::isSandboxModeSet} to return provided value and
      * @see \Bolt\Boltpay\Helper\Config::getCustomURLValueOrDefault} to always return the second argumen
      *
