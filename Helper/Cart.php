@@ -2053,11 +2053,12 @@ class Cart extends AbstractHelper
                         $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
-                            'description' => $description . $giftCardCode,
-                            'amount'      => $roundedAmount,
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'   => $giftCardCode,
-                            'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
@@ -2072,11 +2073,12 @@ class Cart extends AbstractHelper
                         $amount = abs($this->discountHelper->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
-                            'description' => $description . $giftCardCode,
-                            'amount'      => $roundedAmount,
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'   => $giftCardCode,
-                            'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
@@ -2097,11 +2099,12 @@ class Cart extends AbstractHelper
                     $discountAmount = abs($amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                     $discountItem = [
-                        'description' => $description . @$totals[$discount]->getTitle(),
-                        'amount'      => $roundedDiscountAmount,
+                        'description'       => $description . @$totals[$discount]->getTitle(),
+                        'amount'            => $roundedDiscountAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                        'reference'   => $gcCode,
-                        'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'reference'         => $gcCode,
+                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     ];
 
                     $discounts[] = $discountItem;
@@ -2111,11 +2114,12 @@ class Cart extends AbstractHelper
                         $amount = abs($giftCardAmount);
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
-                            'description' => 'Gift Card: ' . $giftCardCode,
-                            'amount'      => $roundedAmount,
+                            'description'       => 'Gift Card: ' . $giftCardCode,
+                            'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'   => $giftCardCode,
-                            'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
@@ -2131,8 +2135,9 @@ class Cart extends AbstractHelper
                     ];
     
                     if ($discount == Discount::AMASTY_STORECREDIT) {
-                        $discountItem['discount_type'] = $this->discountHelper->getBoltDiscountType('by_fixed');
-                        $discountItem['discount_category'] = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
+                        $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
+                        $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
+                        $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
                     }
 
                     $discounts[] = $discountItem;
