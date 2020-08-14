@@ -2670,7 +2670,8 @@ ORDER
                 'amount'      => 1000,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
-                'discount_type'   => 'fixed_amount'
+                'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         $testItems = [
@@ -3333,7 +3334,8 @@ ORDER
             'amount' => 22345,
             'reference'   => self::COUPON_CODE,
             'discount_category' => 'coupon',
-            'discount_type'   => 'fixed_amount'
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
         ];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
@@ -3688,6 +3690,7 @@ ORDER
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3743,6 +3746,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3823,6 +3827,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3898,6 +3903,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3969,6 +3975,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4020,6 +4027,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4074,6 +4082,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4133,6 +4142,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4191,6 +4201,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4255,6 +4266,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'giftcard',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4313,6 +4325,7 @@ ORDER
                 'amount'      => $appliedDiscount * 100,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals(
@@ -4381,6 +4394,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'giftcard',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4437,6 +4451,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'giftcard',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4496,6 +4511,7 @@ ORDER
                 'reference'   => $giftVaucher,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ],
             [
                 'description' => 'Gift Voucher',

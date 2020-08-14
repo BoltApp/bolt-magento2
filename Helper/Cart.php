@@ -1754,6 +1754,7 @@ class Cart extends AbstractHelper
         if ($totalAmount < 0) {
             $totalAmount = 0;
             foreach ($cart['discounts'] as &$discount) {
+                $discount['type']          = 'fixed_amount';
                 $discount['discount_type'] = 'fixed_amount';
             }
         } else {
