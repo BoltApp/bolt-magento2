@@ -208,12 +208,10 @@ class CreateOrder implements CreateOrderInterface
             $immutableQuote = $this->loadQuoteData($immutableQuoteId);
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
-            $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
 
             $transaction = json_decode($payload);
             $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
-
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => "Order create was successful. Order Data: $orderData",
@@ -284,7 +282,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function createOrder($transaction, $immutableQuote)
     {
-        $this->logHelper->addInfoLog('IN NEW FUNCTION');
+        $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
         /** @var Quote $quote */
         $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
 
