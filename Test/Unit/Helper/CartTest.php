@@ -4271,6 +4271,7 @@ ORDER
                 'discount_category' => 'giftcard',
                 'reference' => '12345',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ],
             [
                 'description' => 'Gift Card 67890',
@@ -4413,6 +4414,7 @@ ORDER
                 'discount_category' => 'giftcard',
                 'reference'   => '12345',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ],
             [
                 'description' => '67890',
