@@ -2670,7 +2670,8 @@ ORDER
                 'amount'      => 1000,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
-                'discount_type'   => 'fixed_amount'
+                'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         $testItems = [
@@ -3333,7 +3334,8 @@ ORDER
             'amount' => 22345,
             'reference'   => self::COUPON_CODE,
             'discount_category' => 'coupon',
-            'discount_type'   => 'fixed_amount'
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
         ];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
