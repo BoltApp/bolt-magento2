@@ -3658,7 +3658,7 @@ ORDER
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::once())->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
@@ -3690,6 +3690,7 @@ ORDER
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3720,7 +3721,7 @@ ORDER
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -3745,6 +3746,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3784,7 +3786,7 @@ ORDER
             ->with($this->immutableQuoteMock)
             ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
@@ -3825,6 +3827,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3868,7 +3871,7 @@ ORDER
             ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
             ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $rewardModelMock->expects(static::once())->method('setCustomer')->with($this->customerMock)
@@ -3900,6 +3903,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -3941,7 +3945,7 @@ ORDER
         $appliedDiscount = 10; // $
         $this->discountHelper->expects(static::once())->method('getMirasvitRewardsAmount')->with($this->quoteMock)
             ->willReturn($appliedDiscount);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
         $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
         $scopeConfigMock->expects(static::once())->method('getValue')->with(
@@ -3971,6 +3975,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4005,7 +4010,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
@@ -4022,6 +4027,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4051,7 +4057,7 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4076,6 +4082,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4106,7 +4113,7 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
             ->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4135,6 +4142,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4169,7 +4177,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
         $this->discountHelper->expects(static::once())->method('isBssStoreCreditAllowed')->willReturn(true);
@@ -4193,6 +4201,7 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4269,6 +4278,7 @@ ORDER
                 'discount_category' => 'giftcard',
                 'reference' => '67890',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4304,7 +4314,7 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $appliedDiscount = 10; // $
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($appliedDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn('Store Credit');
@@ -4327,6 +4337,7 @@ ORDER
                 'amount'      => $appliedDiscount * 100,
                 'discount_category' => 'store_credit',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals(
@@ -4409,6 +4420,7 @@ ORDER
                 'discount_category' => 'giftcard',
                 'reference'   => '67890',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4443,7 +4455,7 @@ ORDER
         $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
         $this->discountHelper->expects(static::once())->method('getUnirgyGiftCertBalanceByCode')
             ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
-        $this->discountHelper->expects(static::once())->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
             ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
@@ -4466,6 +4478,7 @@ ORDER
                 'discount_category' => 'giftcard',
                 'reference' => '12345',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4498,7 +4511,7 @@ ORDER
         $giftVaucher = "12345";
         $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn($giftVaucher);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::once())->method('convertToBoltDiscountType')->with($giftVaucher)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with($giftVaucher)->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($discountAmount);
@@ -4525,6 +4538,7 @@ ORDER
                 'reference'   => $giftVaucher,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
             ],
             [
                 'description' => 'Gift Voucher',
