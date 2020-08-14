@@ -2084,13 +2084,13 @@ class Cart extends AbstractHelper
                     || $discount == Discount::AMASTY_GIFTCARD
                     || $discount == Discount::MAGEPLAZA_GIFTCARD
                     || $discount == Discount::UNIRGY_GIFT_CERT) {
-                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
+                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                     $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD;
                 }
                 
                 if ($discount == Discount::AMASTY_STORECREDIT) {
-                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
+                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                     $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
                 }
