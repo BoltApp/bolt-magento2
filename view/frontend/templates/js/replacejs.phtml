@@ -239,7 +239,30 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          * @var bool|null true if we want to auto open bolt checkout
          */
         initiateCheckout: null,
+
+        /**
+         * @var bool true if BoltCheckout.configure() called at least once
+         */
+        congigureCalled: false,
+
+        /**
+         * @var boltBarrier allow extensions to postpone all configure() calls
+         */
+        beforeConfigureBarrier: boltBarrier(),
+
+        /**
+         * @var bool true if bolt checkout restricted for any cart
+         */
+        globalRestricted: false,
+
+        /**
+         * @var bool true if bolt checkout restricted for the current cart
+         */
+        cartRestricted: false,
+
     };
+    // resolve promise for now, but later extensions are able to set new promise
+    BoltState.beforeConfigureBarrier.resolve(true);
 
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
@@ -431,7 +454,13 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         ////////////////////////////////////////////////////////
         var toggleCheckoutConfig = settings.toggle_checkout;
         var toggleCheckoutIfNeeded = function(boltRestricted) {
-            if (!toggleCheckoutConfig) return;
+            if (!toggleCheckoutConfig) {
+                return;
+            }
+            if (BoltState.beforeConfigureBarrier.isResolved() === false) {
+                return;
+            }
+            boltRestricted = BoltState.globalRestricted || BoltState.cartRestricted;
 
             // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
             $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
@@ -442,8 +471,14 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             $(bolt_button_selector).toggle(!boltRestricted);
 
             // Show magento buttons if bolt checkout is restricted, otherwise hide it
+            var style;
+            if (boltRestricted) {
+                style = 'display:inline-block !important'
+            } else {
+                style = 'display:none !important'
+            }
             $.each(toggleCheckoutConfig.magentoButtons, function( index, button ) {
-                $(button).toggle(boltRestricted);
+                $(button).attr('style', style);
             });
         };
         ////////////////////////////////////////////////////////
@@ -684,13 +719,28 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
         var boltCheckoutConfigure = function(cart, hints, callback, parameters) {
             var callConfigure = function() {
+                // Check if BoltCheckout is defined (connect.js executed).
+                // If not, postpone processing until it is
+                if (!window.BoltCheckout) {
+                    whenDefined(window, 'BoltCheckout', callConfigure);
+                    return;
+                }
+                if (BoltState.congigureCalled == false) {
+                    $(document).trigger('bolt:beforeFirstConfigure');
+                    BoltState.congigureCalled = true;
+                    // trigger callConfigure with zero delay to allow extension
+                    // make setup in bolt:beforeFirstConfigure event
+                    setTimeout(callConfigure, 0);
+                    return;
+                }
+                if (BoltState.beforeConfigureBarrier.isResolved() === false) {
+                    BoltState.beforeConfigureBarrier.promise.then(function(result){
+                        callConfigure();
+                    });
+                    return;
+                }
+                toggleCheckoutIfNeeded();
                 BC = BoltCheckout.configure(cart, hints, callback, parameters);
-            }
-            // Check if BoltCheckout is defined (connect.js executed).
-            // If not, postpone processing until it is
-            if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', callConfigure);
-                return;
             }
             callConfigure();
         }
@@ -879,9 +929,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     $.get(settings.create_order_url, params)
                         .done(function (data) {
 
-                            var boltRestricted = !!data.restrict;
-
-                            toggleCheckoutIfNeeded(boltRestricted);
+                            BoltState.cartRestricted = !!data.restrict;
 
                             // Stop if Bolt checkout is restricted
                             if (boltRestricted) {
@@ -960,12 +1008,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         return;
                     }
 
-                        var boltRestricted = !!data.restrict;
-
-                        toggleCheckoutIfNeeded(boltRestricted);
+                        BoltState.cartRestricted = !!data.restrict;
+                        toggleCheckoutIfNeeded();
 
                         // Stop if Bolt checkout is restricted
-                        if (boltRestricted) {
+                        if (BoltState.cartRestricted) {
                             cart = {};
                             hints = {};
                         } else {

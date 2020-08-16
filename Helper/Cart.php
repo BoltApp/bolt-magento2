@@ -2208,10 +2208,10 @@ class Cart extends AbstractHelper
         }
 
         // get configured Product model getters that can restrict Bolt checkout usage
-        $productRestrictionMethods = $toggleCheckout->productRestrictionMethods ?: [];
+        $productRestrictionMethods = isset($toggleCheckout->productRestrictionMethods) ? $toggleCheckout->productRestrictionMethods : [];
 
         // get configured Quote Item getters that can restrict Bolt checkout usage
-        $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods ?: [];
+        $itemRestrictionMethods = isset($toggleCheckout->itemRestrictionMethods) ? $toggleCheckout->itemRestrictionMethods : [];
 
         if (!$productRestrictionMethods && !$itemRestrictionMethods) {
             return false;
