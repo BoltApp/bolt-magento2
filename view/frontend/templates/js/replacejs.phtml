@@ -193,20 +193,30 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
     // barrier is externally-resolved promise
     var boltBarrier = function() {
         var resolveHolder;
+        var isResolved = false;
+        var value = null;
         var promise = new Promise(function(resolve){
             resolveHolder = resolve;
         });
-        return { promise: promise, resolve: function(t){resolveHolder(t)}};
+        return {
+            promise: promise,
+            resolve: function(t){
+                resolveHolder(t);
+                value = t;
+                isResolved = true;
+            },
+            value: function() { return value; },
+            isResolved: function() { return isResolved; },
+        };
     };
 
     var expectCartRendering = true;
     var waitingForResolvingPromises = false;
 
     var BoltState = {
-        checkBarrier: boltBarrier(),
-        checkResult: null,
+        check: boltBarrier(),
         magentoCart: null,
-        magentoCustomer: null
+        isUserLoggedIn: null,
     };
 
     ////////////////////////////////////////////////////
@@ -552,12 +562,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             },
 
             check: function () {
-                if (BoltState.checkResult === null) {
+                if (BoltState.check.isResolved() === false) {
                     popUpOpen = true;
-                    return BoltState.checkBarrier.promise;
+                    return BoltState.check.promise;
                 }
-                if (!BoltState.checkResult) {
-                    if (!initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed && !BoltState.magentoCustomer.firstname ) {
+                if (!BoltState.check.value()) {
+                    if (!initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed && !BoltState.isUserLoggedIn ) {
                         authenticationPopup.showModal();
                     }
                     popUpOpen = false;
@@ -730,13 +740,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
         var resolveCheckPromise = function() {
             var resolveToValue = function(value) {
-                BoltState.checkBarrier.resolve(value);
-                BoltState.checkResult = value;
+                BoltState.check.resolve(value);
                 if (!value) {
                     popUpOpen = false;
                 }
             }
-            if (BoltState.checkResult !== null) {
+            if (BoltState.check.isResolved() === true) {
                 return;
             }
             if (BoltState.magentoCart === null) {
@@ -747,11 +756,15 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 return;
             }
             if (!initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed) {
-                if (BoltState.magentoCustomer === null) {
-                    // don't resolve promise, waiting for magento customer data
+                if (BoltState.isUserLoggedIn === null) {
+                    // initiate magento customer module to know if user logged in or not
+                    require(['Magento_Customer/js/model/customer'], function (customer) {
+                        BoltState.isUserLoggedIn = customer.isLoggedIn();
+                        resolveCheckPromise();
+                    });
                     return;
                 }
-                if (!BoltState.magentoCustomer.firstname) {
+                if (!BoltState.isUserLoggedIn) {
                     // if authentication is required for checkout set a cookie
                     // for auto opening Bolt checkout after login
                     setInitiateCheckoutCookie();
@@ -967,16 +980,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 if (customerData.get('boltcart')().data_id !== undefined) {
                     boltCartDataListener(customerData.get('boltcart')());
                 }
-
-                magentoCustomerDataListener = function(data) {
-                    BoltState.magentoCustomer = data;
-                    resolveCheckPromise();
-                }
-                customerData.get('customer').subscribe(magentoCustomerDataListener);
-                // check if magento section was initialized before our code execution
-                if (customerData.get('customer')().data_id !== undefined) {
-                    magentoCustomerDataListener(customerData.get('customer')());
-                }            
             }
         }
         /////////////////////////////////////////////////////
