@@ -1845,10 +1845,10 @@ class Cart extends AbstractHelper
             $discounts[] = [
                 'description'       => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'            => $roundedAmount,
-                'reference'         => $address->getCouponCode(),
+                'reference'         => $quote->getCouponCode(),
                 'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/merchant/order
+                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
