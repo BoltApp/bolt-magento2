@@ -2038,6 +2038,9 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description) {
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                $roundedDiscountAmount = 0;
+                $discountAmount = 0;
+                
                 ///////////////////////////////////////////////////////////////////////////
                 // If Amasty gift cards can be used for shipping and tax (PayForEverything)
                 // accumulate all the applied gift cards balance as discount amount. If the
@@ -2046,64 +2049,107 @@ class Cart extends AbstractHelper
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
-                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
-                }
-                ///////////////////////////////////////////////////////////////////////////
-
-                ///////////////////////////////////////////////////////////////////////////
-                // Change giftcards balance as discount amount to giftcard balances to the discount amount
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    foreach($giftCardCodes as $giftCardCode) {
+                        $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }
+                } elseif ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    ///////////////////////////////////////////////////////////////////////////
+                    // Change giftcards balance as discount amount to giftcard balances to the discount amount
+                    ///////////////////////////////////////////////////////////////////////////
                     $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
-                    $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
-                }
-
-                ///////////////////////////////////////////////////////////////////////////
-                /// Was added a proper Unirgy_Giftcert Amount to the discount.
-                /// The GiftCert accumulate correct balance only after each collectTotals.
-                ///  The Unirgy_Giftcert add the only discount which covers only product price.
-                ///  We should get the whole balance at first of the Giftcert.
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    foreach($giftCardCodes as $giftCardCode) {
+                        $amount = abs($this->discountHelper->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }
+                } elseif ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    ///////////////////////////////////////////////////////////////////////////
+                    /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                    /// The GiftCert accumulate correct balance only after each collectTotals.
+                    ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                    ///  We should get the whole balance at first of the Giftcert.
+                    /////////////////////////////////////////////////////////////////////////// 
                     $gcCode = $quote->getData('giftcert_code');
                     $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
                     if ($giftCertBalance > 0) {
                         $amount = $giftCertBalance;
                     }
-                }
+                    $discountAmount = abs($amount);
+                    $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
+                    $discountItem = [
+                        'description'       => $description . @$totals[$discount]->getTitle(),
+                        'amount'            => $roundedDiscountAmount,
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                        'reference'         => $gcCode,
+                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    ];
 
-                $amount = abs($amount);
-                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                    $discounts[] = $discountItem;
+                } elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
+                    $giftCardCodes = $this->discountHelper->getMagentoGiftCardAccountGiftCardData($quote);
+                    foreach($giftCardCodes as $giftCardCode => $giftCardAmount) {
+                        $amount = abs($giftCardAmount);
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => 'Gift Card: ' . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }                    
+                } else {
+                    $discountAmount = abs($amount);
+                    $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
+    
+                    $discountItem = [
+                        'description' => $description . @$totals[$discount]->getTitle(),
+                        'amount'      => $roundedDiscountAmount,
+                    ];
+    
+                    if ($discount == Discount::AMASTY_STORECREDIT) {
+                        $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
+                        $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
+                        $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
+                    }
 
-                $discountItem = [
-                    'description' => $description . @$totals[$discount]->getTitle(),
-                    'amount'      => $roundedAmount,
-                ];
-                
-                if ($discount == Discount::GIFT_CARD_ACCOUNT
-                    || $discount == Discount::AMASTY_GIFTCARD
-                    || $discount == Discount::MAGEPLAZA_GIFTCARD
-                    || $discount == Discount::UNIRGY_GIFT_CERT) {
-                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
-                    $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
-                    $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD;
+                    $discounts[] = $discountItem;
                 }
-                
-                if ($discount == Discount::AMASTY_STORECREDIT) {
-                    $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
-                    $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
-                    $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
-                }
-
-                $discounts[] = $discountItem;
 
                 if ($discount == Discount::GIFT_VOUCHER) {
                     // the amount is added to adress discount included above, $address->getDiscountAmount(),
                     // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
-                    $discounts[0]['amount'] -= $roundedAmount;
+                    $discounts[0]['amount'] -= $roundedDiscountAmount;
                 } else {
-                    $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-                    $totalAmount -= $roundedAmount;
+                    $diff -= CurrencyUtils::toMinorWithoutRounding($discountAmount, $currencyCode) - $roundedDiscountAmount;
+                    $totalAmount -= $roundedDiscountAmount;
                 }
             }
         }
