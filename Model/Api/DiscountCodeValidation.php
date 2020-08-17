@@ -23,7 +23,6 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Model\Coupon;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -62,16 +61,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var Response
      */
     private $response;
-
-    /**
-     * @var CouponFactory
-     */
-    protected $couponFactory;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    private $moduleGiftCardAccount;
 
     /**
      * @var ThirdPartyModuleFactory
@@ -176,8 +165,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      *
      * @param Request                 $request
      * @param Response                $response
-     * @param CouponFactory           $couponFactory
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
      * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
      * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
@@ -202,8 +189,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     public function __construct(
         Request $request,
         Response $response,
-        CouponFactory $couponFactory,
-        ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleUnirgyGiftCert,
         ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
@@ -227,8 +212,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     ) {
         $this->request = $request;
         $this->response = $response;
-        $this->couponFactory = $couponFactory;
-        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
         $this->moduleUnirgyGiftCert = $moduleUnirgyGiftCert;
         $this->moduleUnirgyGiftCertHelper = $moduleUnirgyGiftCertHelper;
         $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
@@ -342,8 +325,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 return false;
             }
 
-            // Load the gift card by code
-            $giftCard = $this->loadGiftCardData($couponCode, $websiteId);
+            // Load the Magento_GiftCardAccount object
+            $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
 
             // Apply Unirgy_GiftCert
             if (empty($giftCard)) {
@@ -365,7 +348,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $coupon = null;
             if (empty($giftCard)) {
                 // Load the coupon
-                $coupon = $this->loadCouponCodeData($couponCode);
+                $coupon = $this->discountHelper->loadCouponCodeData($couponCode);
             }
 
             // Check if the coupon and gift card does not exist.
@@ -642,9 +625,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
         try {
             // try applying to parent first
-            $this->setCouponCode($parentQuote, $couponCode);
+            $this->discountHelper->setCouponCode($parentQuote, $couponCode);
             // apply coupon to clone
-            $this->setCouponCode($immutableQuote, $couponCode);
+            $this->discountHelper->setCouponCode($immutableQuote, $couponCode);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
@@ -677,7 +660,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $immutableQuote->getQuoteCurrencyCode())),
             'description'     => trim(__('Discount ') . $rule->getDescription()),
-            'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
+            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
 
         $this->logHelper->addInfoLog('### Coupon Result');
@@ -794,7 +777,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'discount_code'   => $code,
             'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
             'description'     =>  __('Gift Card'),
-            'discount_type'   => $this->convertToBoltDiscountType('by_fixed'),
+            'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
         ];
 
         $this->logHelper->addInfoLog('### Gift Card Result');
@@ -863,83 +846,6 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->logHelper->addInfoLog('### sendSuccessResponse');
         $this->logHelper->addInfoLog(json_encode($result));
         $this->logHelper->addInfoLog('=== END ===');
-
-        return $result;
-    }
-
-    /**
-     * @param string $type
-     * @return string
-     */
-    private function convertToBoltDiscountType($type)
-    {
-        switch ($type) {
-            case "by_fixed":
-            case "cart_fixed":
-                return "fixed_amount";
-            case "by_percent":
-                return "percentage";
-            case "by_shipping":
-                return "shipping";
-        }
-
-        return "";
-    }
-
-    /**
-     * @param Quote  $quote
-     * @param string $couponCode
-     * @throws \Exception
-     */
-    private function setCouponCode($quote, $couponCode)
-    {
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->setCouponCode($couponCode)->collectTotals()->save();
-    }
-
-    /**
-     * Load the coupon data by code
-     *
-     * @param $couponCode
-     *
-     * @return Coupon
-     */
-    private function loadCouponCodeData($couponCode)
-    {
-        return $this->couponFactory->create()->loadByCode($couponCode);
-    }
-
-    /**
-     * Load the gift card data by code
-     *
-     * @param string $code
-     * @param string|int $websiteId
-     *
-     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
-     */
-    public function loadGiftCardData($code, $websiteId)
-    {
-        $result = null;
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
-        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
-
-        if ($giftCardAccountResource) {
-            $this->logHelper->addInfoLog('### GiftCard ###');
-            $this->logHelper->addInfoLog('# Code: ' . $code);
-
-            /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
-            $giftCardsCollection = $giftCardAccountResource
-                ->addFieldToFilter('code', ['eq' => $code])
-                ->addWebsiteFilter([0, $websiteId]);
-
-            /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
-            $giftCard = $giftCardsCollection->getFirstItem();
-
-            $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
-        }
-
-        $this->logHelper->addInfoLog('# loadGiftCertData Result is empty: '. ((!$result) ? 'yes' : 'no'));
 
         return $result;
     }
@@ -1033,7 +939,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
             'description'     =>  __('Discount ') . $address->getDiscountDescription(),
-            'discount_type'   => $this->convertToBoltDiscountType($rule->getSimpleAction()),
+            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
     }
 }
