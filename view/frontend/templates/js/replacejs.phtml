@@ -241,9 +241,9 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         initiateCheckout: null,
 
         /**
-         * @var bool true if BoltCheckout.configure() called at least once
+         * @var bool true if we loaded all JS code from this module and extensions
          */
-        congigureCalled: false,
+        codeIsLoaded:  boltBarrier(),
 
         /**
          * @var boltBarrier allow extensions to postpone all configure() calls
@@ -261,8 +261,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         cartRestricted: false,
 
     };
-    // resolve promise for now, but later extensions are able to set new promise
-    BoltState.beforeConfigureBarrier.resolve(true);
 
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
@@ -453,14 +451,15 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         // if toggling is enabled.
         ////////////////////////////////////////////////////////
         var toggleCheckoutConfig = settings.toggle_checkout;
-        var toggleCheckoutIfNeeded = function(boltRestricted) {
+        var toggleCheckoutIfNeeded = function() {
             if (!toggleCheckoutConfig) {
                 return;
             }
-            if (BoltState.beforeConfigureBarrier.isResolved() === false) {
+            if (BoltState.codeIsLoaded.isResolved() === false || BoltState.beforeConfigureBarrier.isResolved() === false) {
+                // allow extensions to made their setup before we toggle buttons first time
                 return;
             }
-            boltRestricted = BoltState.globalRestricted || BoltState.cartRestricted;
+            var boltRestricted = BoltState.globalRestricted || BoltState.cartRestricted;
 
             // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
             $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
@@ -725,14 +724,14 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     whenDefined(window, 'BoltCheckout', callConfigure);
                     return;
                 }
-                if (BoltState.congigureCalled == false) {
-                    $(document).trigger('bolt:beforeFirstConfigure');
-                    BoltState.congigureCalled = true;
-                    // trigger callConfigure with zero delay to allow extension
-                    // make setup in bolt:beforeFirstConfigure event
-                    setTimeout(callConfigure, 0);
+                // waiting while all JS code is loaded
+                if (BoltState.codeIsLoaded.isResolved() === false) {
+                    BoltState.codeIsLoaded.promise.then(function(result){
+                        callConfigure();
+                    });
                     return;
                 }
+                // extensions can use this promise to postpone BoltCheckout.configure() calls
                 if (BoltState.beforeConfigureBarrier.isResolved() === false) {
                     BoltState.beforeConfigureBarrier.promise.then(function(result){
                         callConfigure();
@@ -1427,6 +1426,9 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
         <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
+
+        // For now all JS code is loaded, we made all necessary settings and can call Boltcheckout.Configure()
+        BoltState.codeIsLoaded.resolve(true);
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
