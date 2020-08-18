@@ -470,14 +470,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             $(bolt_button_selector).toggle(!boltRestricted);
 
             // Show magento buttons if bolt checkout is restricted, otherwise hide it
-            var style;
-            if (boltRestricted) {
-                style = 'display:inline-block !important'
-            } else {
-                style = 'display:none !important'
-            }
-            $.each(toggleCheckoutConfig.magentoButtons, function( index, button ) {
-                $(button).attr('style', style);
+            $.each(toggleCheckoutConfig.magentoButtons, function( index, buttonSelector ) {
+                document.querySelectorAll(buttonSelector).forEach(function(button) {
+                    button.style.removeProperty('display');
+                    button.style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
+                });
             });
         };
         ////////////////////////////////////////////////////////
