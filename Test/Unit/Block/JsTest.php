@@ -1726,8 +1726,8 @@ JS;
             ['configButtonColor' => '', 'expectedResult' => ''],
             ['configButtonColor' => null, 'expectedResult' => ''],
             ['configButtonColor' => false, 'expectedResult' => ''],
-            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA;'],
-            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated;'],
+            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA'],
+            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated'],
         ];
     }
 

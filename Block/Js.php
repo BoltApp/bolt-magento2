@@ -458,18 +458,11 @@ class Js extends Template
      */
     public function getButtonCssStyles()
     {
-        $style = "";
-
-        $toggleCheckout = $this->configHelper->getToggleCheckout();
-        if ($toggleCheckout && $toggleCheckout->active) {
-            $style .= 'display:none;';
-        }
-
         $buttonColor = $this->configHelper->getButtonColor();
-        if ($buttonColor) {
-            $style .= '--bolt-primary-action-color:' . $buttonColor .';';
+        if (!$buttonColor) {
+            return "";
         }
-        return $style;
+        return '--bolt-primary-action-color:' . $buttonColor;
     }
 
     /**
