@@ -689,7 +689,7 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Check if the quote is noot deleted
+     * Check if the quote is not deleted
      *
      * @param int|string $quoteId
      * @return bool
