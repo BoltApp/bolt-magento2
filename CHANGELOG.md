@@ -100,7 +100,7 @@
  - Various bug fixes
 ## [v2.4.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.0) 2020-03-11
  - Bug fixes
- - Added JS event for when hints are set 
+ - Added JS event for when hints are set
 ## [v2.4.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.4.1) 2020-03-18
  - Fix Bolt checkout not opening on IE
 ## [v2.5.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.5.0) 2020-03-27
@@ -155,3 +155,5 @@
  - Add support for plugin Amasty giftcard 2.0.0
  - Support for gift wrapping info
  - Bug fixes
+ ## [v2.13.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.13.0) 2020-08-19
+ - Add functionality allowing merchant extensions to hide bolt checkout button when applicable.
