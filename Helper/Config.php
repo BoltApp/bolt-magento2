@@ -362,6 +362,7 @@ class Config extends AbstractHelper
         \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
         \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
+        \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE
     ];
     /**
      * @var ResourceInterface
@@ -1534,6 +1535,18 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * Check if guest checkout for downloadable product is disabled
+     * @return bool
+     */
+    public function isGuestCheckoutForDownloadableProductDisabled()
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            \Magento\Downloadable\Observer\IsAllowedGuestCheckoutObserver::XML_PATH_DISABLE_GUEST_CHECKOUT,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
