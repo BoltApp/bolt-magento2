@@ -128,9 +128,9 @@ class Js extends Template
      */
     public function getAccountJsUrl()
     {
-        $cdnUrl = $this->configHelper->getCdnUrl();
+        $accountUrl = $this->configHelper->getAccountUrl();
 
-        return $cdnUrl . '/account.js';
+        return $accountUrl . '/account.js';
     }
 
     /**
