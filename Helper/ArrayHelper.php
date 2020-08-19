@@ -67,6 +67,8 @@ class ArrayHelper
     /**
      * Get incrementId and quoteId from display_id.
      *
+     * No longer used, leaving in for now for tests, will remove
+     *
      * @param string $displayId
      * @return array - [$incrementId, $quoteId]
      */

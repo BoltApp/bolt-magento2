@@ -185,10 +185,9 @@ trait ReceivedUrlTrait
      */
     private function getIncrementIdFromPayload($payload)
     {
-        $displayId = ArrayHelper::getValueFromArray($payload, 'display_id', '');
-        $data = ArrayHelper::extractDataFromDisplayId($displayId);
+        $incrementId = ArrayHelper::getValueFromArray($payload, 'display_id', '');
 
-        return isset($data[0]) ? $data[0] : '';
+        return $incrementId;
     }
 
     /**

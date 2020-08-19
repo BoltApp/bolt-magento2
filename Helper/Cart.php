@@ -832,7 +832,7 @@ class Cart extends AbstractHelper
      */
     public function doesOrderExist($cart, $quote)
     {
-        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $incrementId = $cart['display_id']; //do we want to just stick $cart['display_id'] into getOrderByIncrementId?
         $order = $this->getOrderByIncrementId($incrementId);
 
         if ($quote && !$order) {
@@ -1500,8 +1500,11 @@ class Cart extends AbstractHelper
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
 
-        //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
-        $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
+        //Use display_id to hold and transmit, all the way back and forth, reserved order id
+        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+
+        //Store immutable quote id in metadata of cart
+        $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
