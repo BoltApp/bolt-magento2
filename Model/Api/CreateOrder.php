@@ -208,20 +208,9 @@ class CreateOrder implements CreateOrderInterface
             $immutableQuote = $this->loadQuoteData($immutableQuoteId);
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
-            $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
 
             $transaction = json_decode($payload);
-
-            /** @var Quote $quote */
-            $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
-
-            /** @var \Magento\Sales\Model\Order $createdOrder */
-            $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
-
-            if (! $createdOrder) {
-                $this->validateQuoteData($quote, $transaction);
-                $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
-            }
+            $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
             $this->sendResponse(200, [
                 'status'    => 'success',
@@ -282,6 +271,29 @@ class CreateOrder implements CreateOrderInterface
         } finally {
             $this->response->sendResponse();
         }
+    }
+
+    /**
+     * @param Quote $immutableQuote
+     * @param \stdClass $transaction
+     * @return OrderModel
+     * @throws \Exception
+     * @throws BoltException
+     */
+    public function createOrder($transaction, $immutableQuote)
+    {
+        $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
+        /** @var Quote $quote */
+        $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
+
+        /** @var \Magento\Sales\Model\Order $createdOrder */
+        $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
+
+        if (! $createdOrder) {
+            $this->validateQuoteData($quote, $transaction);
+            $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
+        }
+        return $createdOrder;
     }
 
     /**

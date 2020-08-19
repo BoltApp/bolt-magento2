@@ -375,6 +375,7 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::execute
      * @covers ::preProcessWebhook
+     * @covers ::createOrder
      * @covers ::getQuoteIdFromPayloadOrder
      * @covers ::getDisplayId
      * @covers ::getOrderReference
@@ -501,6 +502,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      * @covers ::validateQuoteData
      * @covers ::validateMinimumAmount
      * @covers ::validateCartItems
@@ -567,6 +569,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      */
     public function execute_localizedException()
     {
@@ -604,6 +607,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      */
     public function execute_otherException()
     {
