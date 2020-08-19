@@ -802,7 +802,8 @@ class Order extends AbstractHelper
         // where only reserved_order_id was stored in display_id field
         // and the immutable quote_id in order_reference
         ///////////////////////////////////////////////////////////////
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+        $incrementId = $transaction->order->cart->display_id;
+        $quoteId = $transaction->order->cart->metadata->immutable_quote_id;
 
         if (!$quoteId) {
             $quoteId = $parentQuoteId;
@@ -944,12 +945,12 @@ class Order extends AbstractHelper
     /**
      * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
      *
-     * @param $displayId
+     * @param $immutableQuoteId
      * @param $reference
      * @param $storeId
      * @return bool
      */
-    public function saveCustomerCreditCard($displayId, $reference, $storeId)
+    public function saveCustomerCreditCard($immutableQuoteId, $reference, $storeId)
     {
         try {
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
@@ -957,7 +958,6 @@ class Order extends AbstractHelper
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
-                list(, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
 
@@ -1173,13 +1173,13 @@ class Order extends AbstractHelper
      * Try to cancel the order. Covers the case when the payment was declined before authorization (blacklisted cc).
      * It is called upon rejected_irreversible hook.
      *
-     * @param $displayId
+     * @param $incrementId
+     * @param $quoteId
      * @return bool
      * @throws BoltException
      */
-    public function tryDeclinedPaymentCancelation($displayId)
+    public function tryDeclinedPaymentCancelation($incrementId, $quoteId)
     {
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
@@ -1204,10 +1204,8 @@ class Order extends AbstractHelper
      * @param $displayId
      * @throws \Exception
      */
-    public function deleteOrderByIncrementId($displayId)
+    public function deleteOrderByIncrementId($incrementId, $immutableQuoteId)
     {
-        list($incrementId, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
-
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
@@ -1542,7 +1540,8 @@ class Order extends AbstractHelper
         }
 
         // Get the order and quote id
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+        $incrementId = $transaction->order->cart->display_id;
+        $quoteId = $transaction->order->cart->metadata->immutable_quote_id;
 
         if (!$quoteId) {
             $quoteId = $transaction->order->cart->order_reference;
@@ -2245,12 +2244,7 @@ class Order extends AbstractHelper
             return null;
         }
 
-        list($incrementId) = $this->getDataFromDisplayID($displayId);
-
-        if (empty($incrementId)) {
-            return null;
-        }
-        $order = $this->getExistingOrder(trim($incrementId));
+        $order = $this->getExistingOrder($displayId);
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }

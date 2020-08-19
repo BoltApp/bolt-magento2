@@ -214,16 +214,11 @@ class CreateOrder implements CreateOrderInterface
             $orderData = json_encode($createdOrder->getData());
 
             $this->sendResponse(200, [
-                'metadata'  => [[
-                    'quote_id' => $immutableQuoteId,
-                ]],
-                'data' => [[
-                    'status'    => 'success',
-                    'message'   => "Order create was successful. Order Data: $orderData",
-                    'display_id' => $createdOrder->getIncrementId(),
-                    'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
-                    'order_received_url' => $this->getReceivedUrl($immutableQuote),
-                ]]
+                'status'    => 'success',
+                'message'   => "Order create was successful. Order Data: $orderData",
+                'display_id' => $createdOrder->getIncrementId(),
+                'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
+                'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);
             $this->metricsClient->processMetric("order_creation.success", 1, "order_creation.latency", $startTime);
         } catch (\Magento\Framework\Webapi\Exception $e) {
