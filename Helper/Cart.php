@@ -684,8 +684,8 @@ class Cart extends AbstractHelper
     protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
     {
         $response = $boltOrder ? $boltOrder->getResponse() : null;
-        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
-        return $immutableQuoteId;
+//        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        return $response->cart->metadata->immutable_quote_id;
     }
 
     /**
@@ -2377,7 +2377,7 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+            $cartReference = $response ? $responseData['cart']['metadata']['immutable_quote_id'] : '';
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',

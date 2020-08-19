@@ -138,6 +138,7 @@ class OrderManagement implements OrderManagementInterface
      * @param mixed $currency
      * @param mixed $status
      * @param mixed $display_id
+     * @param mixed $immutable_quote_id
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
      *
