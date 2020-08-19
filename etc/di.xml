@@ -308,6 +308,18 @@
         </arguments>
     </type>
 
+    <virtualType name="boltMageplazaShippingRestrictonHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Mageplaza_ShippingRestriction</argument>
+            <argument name="className" xsi:type="string">Mageplaza\ShippingRestriction\Helper\Data</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bolt\Boltpay\Helper\Session">
+        <arguments>
+            <argument name="mageplazaShippingRestrictonHelper" xsi:type="object">boltMageplazaShippingRestrictonHelper</argument>
+        </arguments>
+    </type>
+
     <!-- When adding any plugin, you MUST wrap the plugin in a feature switch -->
     <type name="Magento\Quote\Model\Quote">
         <plugin name="Bolt_Boltpay_Quote_Plugin" type="Bolt\Boltpay\Plugin\QuotePlugin" sortOrder="1" />
