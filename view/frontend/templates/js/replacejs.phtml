@@ -238,6 +238,27 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          * @var bool|null true if we want to auto open bolt checkout
          */
         initiateCheckout: null,
+
+        /**
+         * @var bool true if we loaded all JS code from this module and extensions
+         */
+        codeIsLoaded:  boltBarrier(),
+
+        /**
+         * @var boltBarrier allow extensions to postpone all configure() calls
+         */
+        beforeConfigureBarrier: boltBarrier(),
+
+        /**
+         * @var bool true if bolt checkout restricted for any cart
+         */
+        globalRestricted: false,
+
+        /**
+         * @var bool true if bolt checkout restricted for the current cart
+         */
+        cartRestricted: false,
+
     };
 
     ////////////////////////////////////////////////////
@@ -431,8 +452,15 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         // if toggling is enabled.
         ////////////////////////////////////////////////////////
         var toggleCheckoutConfig = settings.toggle_checkout;
-        var toggleCheckoutIfNeeded = function(boltRestricted) {
-            if (!toggleCheckoutConfig) return;
+        var toggleCheckoutIfNeeded = function() {
+            if (!toggleCheckoutConfig) {
+                return;
+            }
+            if (BoltState.codeIsLoaded.isResolved() === false || BoltState.beforeConfigureBarrier.isResolved() === false) {
+                // allow extensions to made their setup before we toggle buttons first time
+                return;
+            }
+            var boltRestricted = BoltState.globalRestricted || BoltState.cartRestricted;
 
             // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
             $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
@@ -443,8 +471,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             $(bolt_button_selector).toggle(!boltRestricted);
 
             // Show magento buttons if bolt checkout is restricted, otherwise hide it
-            $.each(toggleCheckoutConfig.magentoButtons, function( index, button ) {
-                $(button).toggle(boltRestricted);
+            $.each(toggleCheckoutConfig.magentoButtons, function( index, buttonSelector ) {
+                document.querySelectorAll(buttonSelector).forEach(function(button) {
+                    button.style.removeProperty('display');
+                    button.style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
+                });
             });
         };
         ////////////////////////////////////////////////////////
@@ -685,13 +716,28 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
         var boltCheckoutConfigure = function(cart, hints, callback, parameters) {
             var callConfigure = function() {
+                // Check if BoltCheckout is defined (connect.js executed).
+                // If not, postpone processing until it is
+                if (!window.BoltCheckout) {
+                    whenDefined(window, 'BoltCheckout', callConfigure);
+                    return;
+                }
+                // waiting while all JS code is loaded
+                if (BoltState.codeIsLoaded.isResolved() === false) {
+                    BoltState.codeIsLoaded.promise.then(function(result){
+                        callConfigure();
+                    });
+                    return;
+                }
+                // extensions can use this promise to postpone BoltCheckout.configure() calls
+                if (BoltState.beforeConfigureBarrier.isResolved() === false) {
+                    BoltState.beforeConfigureBarrier.promise.then(function(result){
+                        callConfigure();
+                    });
+                    return;
+                }
+                toggleCheckoutIfNeeded();
                 BC = BoltCheckout.configure(cart, hints, callback, parameters);
-            }
-            // Check if BoltCheckout is defined (connect.js executed).
-            // If not, postpone processing until it is
-            if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', callConfigure);
-                return;
             }
             callConfigure();
         }
@@ -898,9 +944,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     $.get(settings.create_order_url, params)
                         .done(function (data) {
 
-                            var boltRestricted = !!data.restrict;
-
-                            toggleCheckoutIfNeeded(boltRestricted);
+                            BoltState.cartRestricted = !!data.restrict;
 
                             // Stop if Bolt checkout is restricted
                             if (boltRestricted) {
@@ -961,12 +1005,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     return;
                 }
 
-                        var boltRestricted = !!data.restrict;
-
-                        toggleCheckoutIfNeeded(boltRestricted);
+                        BoltState.cartRestricted = !!data.restrict;
+                        toggleCheckoutIfNeeded();
 
                         // Stop if Bolt checkout is restricted
-                        if (boltRestricted) {
+                        if (BoltState.cartRestricted) {
                             cart = {};
                             hints = {};
                         } else {
@@ -1376,6 +1419,9 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         createOrder();
         ////////////////////////////////////////////////////
         <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
+
+        // For now all JS code is loaded, we made all necessary settings and can call Boltcheckout.Configure()
+        BoltState.codeIsLoaded.resolve(true);
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
