@@ -156,4 +156,5 @@
  - Support for gift wrapping info
  - Bug fixes
  ## [v2.13.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.13.0) 2020-08-19
- - Add functionality allowing merchant extensions to hide bolt checkout button when applicable.
+ - Improved back-end components related to checkout experience.
+ - Support for the Mageplaza plugin's shipping restriction
