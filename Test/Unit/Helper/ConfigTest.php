@@ -1048,6 +1048,20 @@ JSON;
 
     /**
      * @test
+     * @dataProvider providerTrueAndFalse
+     * @param $booleanValue
+     */
+    public function isGuestCheckoutForDownloadableProductDisabled($booleanValue)
+    {
+        $this->scopeConfig->method('isSetFlag')
+            ->with('catalog/downloadable/disable_guest_checkout', 'store')
+            ->willReturn($booleanValue);
+        $result = $this->currentMock->isGuestCheckoutForDownloadableProductDisabled();
+        $this->assertEquals($booleanValue, $result);
+    }
+
+    /**
+     * @test
      */
     public function getAllConfigSettings()
     {

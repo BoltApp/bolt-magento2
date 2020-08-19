@@ -89,12 +89,26 @@ class JsProductPage extends Js
     }
 
     /**
+     * Check if current product has type downloadable
+     *
+     * @return boolean
+     */
+    public function isDownloadable()
+    {
+        return $this->_product->getTypeId() == \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE;
+    }
+
+    /**
      * Check if guest checkout is allowed
      *
      * @return int 1 if guest checkout is allowed, 0 if not
      */
     public function isGuestCheckoutAllowed()
     {
+        if ($this->isDownloadable() && $this->configHelper->isGuestCheckoutForDownloadableProductDisabled()) {
+            return 0;
+        }
+
         return (int)$this->configHelper->isGuestCheckoutAllowed();
     }
 
