@@ -684,7 +684,6 @@ class Cart extends AbstractHelper
     protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
     {
         $response = $boltOrder ? $boltOrder->getResponse() : null;
-//        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
         return $response->cart->metadata->immutable_quote_id;
     }
 
