@@ -193,14 +193,52 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
     // barrier is externally-resolved promise
     var boltBarrier = function() {
         var resolveHolder;
+        var isResolved = false;
+        var value = null;
         var promise = new Promise(function(resolve){
             resolveHolder = resolve;
         });
-        return { promise: promise, resolve: function(t){resolveHolder(t)}};
+        return {
+            promise: promise,
+            resolve: function(t){
+                resolveHolder(t);
+                value = t;
+                isResolved = true;
+            },
+            value: function() { return value; },
+            isResolved: function() { return isResolved; },
+        };
     };
 
     var expectCartRendering = true;
     var waitingForResolvingPromises = false;
+
+    /**
+     * BoltState contains all global variables we need for interaction between
+     * this module and extensions.
+     * TODO(vitaliy): Move into BoltState cart, hints, callbacks
+     */
+    var BoltState = {
+        /**
+         * @var boltBarrier return value for check() callback
+         */
+        check: boltBarrier(),
+
+        /**
+         * @var object|null magento cart. null means cart isn't retrieved yet
+         */
+        magentoCart: null,
+
+        /**
+         * @var bool|null true - logged in user, false - guest user, null - not known at the moment
+         */
+        isUserLoggedIn: null,
+
+        /**
+         * @var bool|null true if we want to auto open bolt checkout
+         */
+        initiateCheckout: null,
+    };
 
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
@@ -222,10 +260,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         }
 
         ////////////////////////////////////////////////////
-
-        // initialize customer and cart observables
-        var customer = customerData.get('customer');
-        var shoppingCart = customerData.get('cart');
 
             var showBoltErrorMessage = function (messsage, order_reference) {
                 var boltModal = $('#bolt-modal'),
@@ -439,7 +473,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         //////////////////////////////////////////////
 
         // flag that represents should the checkout auto-open
-        var initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
+        BoltState.initiateCheckout = settings.initiate_checkout && getInitiateCheckoutCookie();
         unsetInitiateCheckoutCookie();
 
         // the open status of checkout modal
@@ -554,23 +588,20 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 /**
                  * On Bolt button click check if guest checkout is allowed.
                  * Display login popup to guest customers if it is not. The
-                 * Magento customerData and authenticationPopup objects are
+                 * Magento customer, customerData, authenticationPopup objects are
                  * used.
                  */
-                // check if / wait until the observable objects are set.
-                // proceed, allow checkout if initial checkout flag is set
-                if (!initiateCheckout && !shoppingCart().data_id) return false;
-
-                // do not open checkout if the cart is empty
-                if (shoppingCart().summary_count === 0) return false;
-
-                // check if login is required
-                // skip the check if initial checkout flag is set
-                if (!initiateCheckout && !customer().firstname && !shoppingCart().isGuestCheckoutAllowed) {
-                    // if authentication is required for checkout set a cookie
-                    // for auto opening Bolt checkout after login
-                    setInitiateCheckoutCookie();
-                    authenticationPopup.showModal();
+                if (BoltState.check.isResolved() === false) {
+                    popUpOpen = true;
+                    return BoltState.check.promise;
+                }
+                if (!BoltState.check.value()) {
+                    // If check resolved to false, guest checkout is disallowed, and user isn't logged in
+                    // show authentication popup
+                    if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed && !BoltState.isUserLoggedIn ) {
+                        showAuthenticationPopup();
+                    }
+                    popUpOpen = false;
                     return false;
                 }
 
@@ -688,11 +719,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             callConfigureWithPromises();
         }
 
-        var magentoCart;
         var boltCartDataID;
 
         var invalidateBoltCartIfOutdated = function() {
-            if (magentoCart === undefined || magentoCart.data_id === undefined) {
+            if (BoltState.magentoCart === undefined || BoltState.magentoCart.data_id === undefined) {
                 return;
             }
             if (boltCartDataID === undefined) {
@@ -702,12 +732,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 invalidateBoltCart();
                 return;
             }
-            if (magentoCart.data_id > boltCartDataID) {
+            if (BoltState.magentoCart.data_id > boltCartDataID) {
                 invalidateBoltCart();
                 return;
             }
-            if (magentoCart.data_id == boltCartDataID) {
-                var magentoTotal = magentoCart.subtotalAmount;
+            if (BoltState.magentoCart.data_id == boltCartDataID) {
+                var magentoTotal = BoltState.magentoCart.subtotalAmount;
                 if (magentoTotal === undefined) {
                     return;
                 }
@@ -739,10 +769,58 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
         }
 
+        var showAuthenticationPopup = function() {
+            // set a cookie for auto opening Bolt checkout after login
+            setInitiateCheckoutCookie();
+            authenticationPopup.showModal();
+        }
+
+        var resolveCheckPromise = function() {
+            var resolveToValue = function(value) {
+                BoltState.check.resolve(value);
+                if (!value) {
+                    popUpOpen = false;
+                }
+            }
+            if (BoltState.check.isResolved() === true) {
+                return;
+            }
+            if (BoltState.magentoCart === null) {
+                return;
+            }
+            if (BoltState.magentoCart.summary_count === 0) {
+                resolveToValue(false);
+                return;
+            }
+            if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed) {
+                if (BoltState.isUserLoggedIn === null) {
+                    // initiate magento customer module to know if user logged in or not
+                    require(['Magento_Customer/js/model/customer'], function (customer) {
+                        BoltState.isUserLoggedIn = customer.isLoggedIn();
+                        resolveCheckPromise();
+                    });
+                    return;
+                }
+                if (!BoltState.isUserLoggedIn) {
+                    if (popUpOpen) {
+                        // If we resolve promises after user clicked checkout button
+                        // we should show authentication popup
+                        showAuthenticationPopup();
+                    }
+                    resolveToValue(false);
+                    return;
+                }
+            }
+            resolveToValue(true);
+            return;
+        }
+
         if (getCheckoutType() !== 'payment') {
             callConfigureWithPromises();
             customerData.get('cart').subscribe(function(data) {
-                magentoCart = data;
+                BoltState.magentoCart = data;
+                resolveCheckPromise();
+
                 // Call invalidateBoltCartIfOutdated with zero delay
                 // to make sure that it is added into the end of event loop.
                 // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
@@ -861,7 +939,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                             // open the checkout if auto-open flag is set
                             // one time only on page load
-                            if (initiateCheckout && allowAutoOpen) {
+                            if (BoltState.initiateCheckout && allowAutoOpen) {
                                 BC.open();
                                 allowAutoOpen = false;
                             }
@@ -921,7 +999,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
-                        if (initiateCheckout && allowAutoOpen) {
+                        if (BoltState.initiateCheckout && allowAutoOpen) {
                             BC.open();
                             allowAutoOpen = false;
                         }
