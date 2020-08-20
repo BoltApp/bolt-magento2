@@ -242,13 +242,15 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
         /**
          * @var bool true if we loaded all JS code from this module and extensions
+         * we set the initial value later
          */
-        codeIsLoaded:  boltBarrier(),
+        codeIsLoaded: null,
 
         /**
          * @var boltBarrier allow extensions to postpone all configure() calls
+         * we set the initial value later
          */
-        beforeConfigureBarrier: boltBarrier(),
+        beforeConfigureBarrier: null,
 
         /**
          * @var bool true if bolt checkout restricted for any cart
@@ -471,10 +473,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             // Show magento buttons if bolt checkout is restricted, otherwise hide it
             $.each(toggleCheckoutConfig.magentoButtons, function( index, buttonSelector ) {
-                document.querySelectorAll(buttonSelector).forEach(function(button) {
-                    button.style.removeProperty('display');
-                    button.style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
-                });
+                var buttons = document.querySelectorAll(buttonSelector);
+                for (var i = 0; i < buttons.length; i++) {
+                    buttons[i].style.removeProperty('display');
+                    buttons[i].style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
+                };
             });
         };
         ////////////////////////////////////////////////////////
@@ -866,6 +869,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             // we know that connect.js was initiated and can use promises in IE11
             BoltState.check = boltBarrier();
+            BoltState.codeIsLoaded = boltBarrier();
+            BoltState.beforeConfigureBarrier = boltBarrier();
+            // resolve promise for now, extensions can initialize it again
+            BoltState.beforeConfigureBarrier.resolve(true);
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
@@ -1055,6 +1062,21 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     boltCartDataListener(customerData.get('boltcart')());
                 }
             }
+            ////////////////////////////////////////////////
+            // process the button when available on the page
+            ////////////////////////////////////////////////
+            onElementReady(bolt_button_selector, function(element) {
+                checkout_buttons = true;
+                processButtons();
+            });
+            if (boltConfig.always_present_checkout) {
+                processButtons();
+            }
+
+            <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
+
+            // For now all JS code is loaded, we made all necessary settings and can call Boltcheckout.Configure()
+            BoltState.codeIsLoaded.resolve();
         }
         /////////////////////////////////////////////////////
 
@@ -1096,22 +1118,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             }
         });
         }
-        /////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////
         // Flag that is true if checkout buttons exists on the page
         var checkout_buttons = false;
-        ////////////////////////////////////////////////
-        // process the button when available on the page
-        ////////////////////////////////////////////////
-        onElementReady(bolt_button_selector, function(element) {
-            checkout_buttons = true;
-            processButtons();
-        });
-        if (boltConfig.always_present_checkout) {
-            processButtons();
-        }
-        ////////////////////////////////////////////////
 
         //////////////////////////////////////////////////////////
         // loop through selectors array and set up the replacement
@@ -1422,10 +1432,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         ////////////////////////////////////////////////////
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
-        <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
-
-        // For now all JS code is loaded, we made all necessary settings and can call Boltcheckout.Configure()
-        BoltState.codeIsLoaded.resolve(true);
     });
 
     if (trim(location.pathname, '/') === 'checkout/cart') {
