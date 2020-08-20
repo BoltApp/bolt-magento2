@@ -221,8 +221,9 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
     var BoltState = {
         /**
          * @var boltBarrier return value for check() callback
+         * we set the initial value later
          */
-        check: boltBarrier(),
+        check: null,
 
         /**
          * @var object|null magento cart. null means cart isn't retrieved yet
@@ -821,8 +822,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 return;
             }
 
-            // skip if there is already an ongoing request
-            if (createRequest) return;
+            // we know that connect.js was initiated and can use promises in IE11
+            BoltState.check = boltBarrier();
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
