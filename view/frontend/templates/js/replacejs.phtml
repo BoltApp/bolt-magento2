@@ -787,10 +787,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             if (BoltState.magentoCart === null) {
                 return;
             }
-            if (BoltState.magentoCart.summary_count === 0) {
-                resolveToValue(false);
-                return;
-            }
             if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed) {
                 if (BoltState.isUserLoggedIn === null) {
                     // initiate magento customer module to know if user logged in or not
