@@ -200,7 +200,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ['grouped', false],
             ['configurable', true],
             ['virtual', true],
-            ['bundle', false],
+            ['bundle', true],
             ['downloadable', true]
         ];
     }

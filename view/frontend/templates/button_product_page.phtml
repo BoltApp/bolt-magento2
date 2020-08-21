@@ -209,7 +209,7 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
 
             var setupProductPage = function () {
                 var options = {};
-                var compositeAttributes = ['super_attribute', 'options'];
+                var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
                 formData = $("#product_addtocart_form").serializeArray();
                 $.each( formData, function( key, input ) {
                     var name = input.name, value = input.value;
