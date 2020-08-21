@@ -2264,36 +2264,37 @@ class Cart extends AbstractHelper
         }
 
         //add item to quote
-        $item = $request['items'][0];
-        $product = $this->productRepository->getbyId($item['reference']);
+        foreach ($request['items'] as $item) {
+            $product = $this->productRepository->getbyId($item['reference']);
 
-        $options = json_decode($item['options'], true);
-        if (isset($options['storeId']) && $options['storeId']) {
-            $quote->setStoreId($options['storeId']);
-        }
-        unset($options['storeId']);
-        unset($options['form_key']);
-        $options['qty'] = $item['quantity'];
-        $options = new \Magento\Framework\DataObject($options);
-
-        try {
-            $quote->addProduct($product, $options);
-        } catch (\Exception $e) {
-            $error_message = $e->getMessage();
-            if ($error_message == 'Product that you are trying to add is not available.') {
-                throw new BoltException(
-                    __($error_message),
-                    null,
-                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
-                );
-            } else {
-                throw new BoltException(
-                    __('The requested qty is not available'),
-                    null,
-                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
-                );
+            $options = json_decode($item['options'], true);
+            if (isset($options['storeId']) && $options['storeId']) {
+                $quote->setStoreId($options['storeId']);
             }
-        };
+            unset($options['storeId']);
+            unset($options['form_key']);
+            $options['qty'] = $item['quantity'];
+            $options = new \Magento\Framework\DataObject($options);
+
+            try {
+                $quote->addProduct($product, $options);
+            } catch (\Exception $e) {
+                $error_message = $e->getMessage();
+                if ($error_message == 'Product that you are trying to add is not available.') {
+                    throw new BoltException(
+                        __($error_message),
+                        null,
+                        BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                    );
+                } else {
+                    throw new BoltException(
+                        __('The requested qty is not available'),
+                        null,
+                        BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                    );
+                }
+            };
+        }
 
         $quote->reserveOrderId();
 

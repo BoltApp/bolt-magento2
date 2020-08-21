@@ -5266,6 +5266,127 @@ ORDER
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
         }
 
+
+    /**
+     * @test
+     * that that createCartByRequest creates cart with grouped product's children and returns expected cart data using
+     * @see \Bolt\Boltpay\Helper\Cart::getCartData
+     *
+     * @covers ::createCartByRequest
+     *
+     * @throws Exception from tested method
+     */
+    public function createCartByRequest_withGroupedProductChildren_returnsExpectedCartData()
+    {
+        $request = [
+            'type'     => 'cart.create',
+            'items'    =>
+                [
+                    [
+                        'reference'    => CartTest::PRODUCT_ID,
+                        'name'         => 'Affirm Water Bottle 1',
+                        'description'  => null,
+                        'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                        'total_amount' => CartTest::PRODUCT_PRICE,
+                        'unit_price'   => CartTest::PRODUCT_PRICE,
+                        'tax_amount'   => 0,
+                        'quantity'     => 1,
+                        'uom'          => null,
+                        'upc'          => null,
+                        'sku'          => null,
+                        'isbn'         => null,
+                        'brand'        => null,
+                        'manufacturer' => null,
+                        'category'     => null,
+                        'tags'         => null,
+                        'properties'   => null,
+                        'color'        => null,
+                        'size'         => null,
+                        'weight'       => null,
+                        'weight_unit'  => null,
+                        'image_url'    => null,
+                        'details_url'  => null,
+                        'tax_code'     => null,
+                        'type'         => 'unknown'
+                    ],
+                    [
+                        'reference'    => CartTest::PRODUCT_ID,
+                        'name'         => 'Affirm Water Bottle 1',
+                        'description'  => null,
+                        'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                        'total_amount' => CartTest::PRODUCT_PRICE,
+                        'unit_price'   => CartTest::PRODUCT_PRICE,
+                        'tax_amount'   => 0,
+                        'quantity'     => 1,
+                        'uom'          => null,
+                        'upc'          => null,
+                        'sku'          => null,
+                        'isbn'         => null,
+                        'brand'        => null,
+                        'manufacturer' => null,
+                        'category'     => null,
+                        'tags'         => null,
+                        'properties'   => null,
+                        'color'        => null,
+                        'size'         => null,
+                        'weight'       => null,
+                        'weight_unit'  => null,
+                        'image_url'    => null,
+                        'details_url'  => null,
+                        'tax_code'     => null,
+                        'type'         => 'unknown'
+                    ]
+                ],
+            'currency' => self::CURRENCY_CODE,
+            'metadata' => null,
+        ];
+
+        $expectedCartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle 1',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle 2',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+        ];
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+            ->willReturn(self::QUOTE_ID);
+        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
+        $this->quoteMock->expects(static::once())->method('reserveOrderId');
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+
+        static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
+
         /**
         * @test
         * that createCartByRequest creates cart with configurable product and returns expected cart data using
