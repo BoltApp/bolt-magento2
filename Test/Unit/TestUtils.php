@@ -11,7 +11,6 @@ class TestUtils {
         /** @var $product \Magento\Catalog\Model\Product */
         $product = \Magento\TestFramework\Helper\Bootstrap::getObjectManager()
             ->create(\Magento\Catalog\Model\Product::class);
-        error_log("#1.1");
         $product->setTypeId(
             \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE
         )->setAttributeSetId(

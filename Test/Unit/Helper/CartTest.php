@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bugsnag\Report;
 use Exception;
 use Magento\Catalog\Helper\Image;
@@ -91,7 +92,7 @@ use Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable as Rendere
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
  */
-class CartTest extends TestCase
+class CartTest extends BoltTestCase
 {
     /** @var int Test quote id */
     const QUOTE_ID = 1234;
@@ -6187,11 +6188,13 @@ ORDER
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
+
     /**
      * @test
      */
     public function integrationCartTest()
     {
+        $this->skipTestInUnitTestsFlow();
         $product = \Bolt\Boltpay\Test\Unit\TestUtils::createSimpleProduct();
         static::assertEquals($product->getSku(),'Simple Product 1 sku');
     }
