@@ -4390,6 +4390,7 @@ class DiscountTest extends TestCase
             ['types' => 'by_percent', 'expectedResult' => 'percentage'],
             ['types' => 'by_shipping', 'expectedResult' => 'shipping'],
             ['types' => 'none_list', 'expectedResult' => ''],
+            ['types' => '', 'expectedResult' => ''],
         ];
     }
 
