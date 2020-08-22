@@ -298,6 +298,7 @@ class CartTest extends BoltTestCase
      */
     protected function setUp()
     {
+        $this->originalObjectManager = ObjectManager::getInstance();
         $this->testAddressData = [
             'company'         => "",
             'country'         => "United States",
@@ -423,6 +424,11 @@ class CartTest extends BoltTestCase
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
+    }
+
+    protected function tearDown()
+    {
+        ObjectManager::setInstance($this->originalObjectManager);
     }
 
     /**
