@@ -31,7 +31,7 @@ while ! mysql -uroot -h 127.0.0.1 -e "SELECT 1" >/dev/null 2>&1; do
 done
 
 # TODO(vitaliy): Investigate the root of the issue. See https://github.com/magento/magento2/issues/24650
-if [ "${MAGENTO_VERSION}" == "2.3.0" ]; then
+if [ -f "vendor/magento/module-inventory-catalog/etc/communication.xml" ]; then
     sed -i 's/is_synchronous="false"//g' vendor/magento/module-inventory-catalog/etc/communication.xml
 fi
 
