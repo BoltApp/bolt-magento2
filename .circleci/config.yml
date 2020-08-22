@@ -55,11 +55,11 @@ commands:
             - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock-{{ arch }}
             - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock
       - run:
-        name: "Setup custom environment variables"
-        command: |
-          mkdir ./artifacts
-          echo 'export TEST_ENV="<< parameters.php_version >>"' >> $BASH_ENV
-          echo 'export MAGENTO_VERSION="<< parameters.m2_version >>"' >> $BASH_ENV
+          name: "Setup custom environment variables"
+          command: |
+            mkdir ./artifacts
+            echo 'export TEST_ENV="<< parameters.php_version >>"' >> $BASH_ENV
+            echo 'export MAGENTO_VERSION="<< parameters.m2_version >>"' >> $BASH_ENV
       - when:
           condition: << parameters.is_integration >>
           steps:
