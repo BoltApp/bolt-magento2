@@ -102,6 +102,41 @@ commands:
           failure_message: ':red_circle: M2: A $CIRCLE_JOB job has failed!'
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
+  m2-php-test-magento-integration:
+    description: PHP Magento Integration tests for M2
+    parameters:
+      cache_key_separator:
+        type: string
+      m2_version:
+        type: enum
+        default: "2.3.0"
+        enum: ["2.2.0", "2.3.0"]
+      php_version:
+        type: enum
+        default: "php72"
+        enum: ["php70", "php71", "php72"]
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock-{{ arch }}-{{ checksum "composer.json" }}
+            - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock-{{ arch }}
+            - << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-composer-lock
+      - run:
+          name: << parameters.php_version >> << parameters.m2_version >> Unit
+          command: |
+            mkdir ./artifacts
+            export COMPOSER_MEMORY_LIMIT=3G
+            export TEST_ENV=<< parameters.php_version >>
+            export MAGENTO_VERSION=<< parameters.m2_version >>
+            Test/scripts/ci-magento-integration.sh
+      - save_cache:
+          key: << parameters.m2_version >>-v1-<< parameters.cache_key_separator >>-lock-{{ arch }}-{{ checksum "composer.json" }}
+          paths:
+            - /home/circleci/.composer/cache/
+      - store_artifacts:
+          path: ./artifacts
+
   m2-php-test-for-merchant-branches:
     description: PHP Unit tests for M2 on all merchant branches
     steps:
@@ -221,6 +256,19 @@ jobs:
     steps:
       - m2-php-test-for-merchant-branches
 
+  integration-magento-php72-magento23:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test-magento-integration:
+          cache_key_separator: php72mag23installed
+          m2_version: "2.3.0"
+          php_version: "php72"
+
   phpcs:
     docker:
       - image: circleci/php:7.2-cli
@@ -236,10 +284,10 @@ workflows:
   build:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
-#      - phpcs
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22
+      - integration-magento-php72-magento23
       - integration-php72-magento23
   tagger:
     triggers:
