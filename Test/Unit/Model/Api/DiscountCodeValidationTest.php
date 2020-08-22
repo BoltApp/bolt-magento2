@@ -1998,7 +1998,8 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function loadGiftCertData()
     {
-        $giftCertRepository = $this->getMockBuilder('\Unirgy\Giftcert\Model\GiftcertRepository')
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();
@@ -2025,7 +2026,8 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function loadGiftCertData_noGiftCert()
     {
-        $giftCertRepository = $this->getMockBuilder('\Unirgy\Giftcert\Model\GiftcertRepository')
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();

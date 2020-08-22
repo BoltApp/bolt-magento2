@@ -929,7 +929,8 @@ class DiscountTest extends TestCase
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardAvailable')->willReturn(true);
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardLegacyVersion')->willReturn(false);
 
-        $accountModel = $this->getMockBuilder('Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory')
+        // mock for class Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory that doesn't exist
+        $accountModel = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['getCurrentValue'])
             ->disableOriginalConstructor()
             ->getMock();
