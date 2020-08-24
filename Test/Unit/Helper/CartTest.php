@@ -88,6 +88,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
 use Magento\GroupedProduct\Block\Cart\Item\Renderer\Grouped as RendererGrouped;
 use Magento\ConfigurableProduct\Block\Cart\Item\Renderer\Configurable as RendererConfigurable;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -293,6 +295,9 @@ class CartTest extends BoltTestCase
     /** @var MockObject|DeciderHelper */
     private $deciderHelper;
 
+    /** array of objects we need to delete after test */
+    private $objectsToClean;
+
     /**
      * Setup test dependencies, called before each test
      */
@@ -424,10 +429,13 @@ class CartTest extends BoltTestCase
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
+
+        $this->objectsToClean = array();
     }
 
     protected function tearDown()
     {
+        TestUtils::cleanupSharedFixtures($this->objectsToClean);
         ObjectManager::setInstance($this->originalObjectManager);
     }
 
@@ -2540,78 +2548,54 @@ ORDER
 
         /**
         * @test
-        * that getCartData returns expected cart data when checkout type is multistep and there is no discount
-        *
         * @covers ::getCartData
-        *
-        * @throws Exception from tested method
         */
         public function getCartData_inMultistepWithNoDiscount_returnsCartData()
         {
-        $billingAddress = $this->getAddressMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($billingAddress, $shippingAddress);
+            $this->skipTestInUnitTestsFlow();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            TestUtils::setQuoteToSession($quote);
+            $product = TestUtils::createSimpleProduct();
+            $this->objectsToClean[] = $product;
+            $quote->addProduct($product,1);
+                
+            $result = $boltHelperCart->getCartData(false, "");
 
-        $quote->method('getTotals')->willReturn([]);
-        $this->checkoutSession->expects(static::any())->method('getQuote')->willReturn($quote);
-        $this->searchCriteriaBuilder->expects(static::once())->method('addFilter')->withAnyParameters()
-            ->willReturnSelf();
-        $this->searchCriteriaBuilder->expects(static::once())->method('create')
-            ->willReturn($this->createMock(SearchCriteria::class));
+            // check that created immutuble quote has correct parent quote id
+            list ($reserved_order_id, $immutable_quote_id) = explode(" / ",$result["display_id"]);
+            $immutable_quote = TestUtils::getQuoteById($immutable_quote_id);
+            static::assertEquals($immutable_quote->getBoltParentQuoteId(), $quote->getId());
 
-        $this->quoteRepository->expects(static::any())
-            ->method('getList')
-            ->with($this->createMock(SearchCriteria::class))
-            ->willReturnSelf();
-        $this->quoteRepository->expects(static::any())->method('getItems')->willReturn([$quote]);
+            // check image url
+            static::assertRegExp(
+                "|http://localhost/pub/static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+                $result['items'][0]['image_url']
+            );
+            unset($result['items'][0]['image_url']);
 
-        $paymentOnly = false;
-        $placeOrderPayload = '';
-        $immutableQuote = $quote;
+            $expected = [
+                'order_reference' => $quote->getId(),
+                'display_id'      => $quote->getBoltReservedOrderId() . ' / ' . $immutable_quote_id,
+                'currency'        => self::CURRENCY_CODE,
+                'items'           => [
+                    [
+                        'reference'    => $product->getId(),
+                        'name'         => 'Test Product',
+                        'total_amount' => 10000,
+                        'unit_price'   => 10000,
+                        'quantity'     => 1,
+                        'sku'          => self::PRODUCT_SKU,
+                        'type'         => 'physical',
+                        'description'  => 'Product Description',
+                    ]
+                ],
+                'discounts'       => [],
+                'total_amount'    => 10000,
+                'tax_amount'      => 0
+            ];
 
-        $this->imageHelper->method('init')->willReturnSelf();
-        $this->imageHelper->method('getUrl')->willReturn('no-image');
-
-        $this->productMock->method('getDescription')->willReturn('Product Description');
-
-        $result = $this->currentMock->getCartData($paymentOnly, $placeOrderPayload, $immutableQuote);
-
-        $expected = [
-            'order_reference' => self::PARENT_QUOTE_ID,
-            'display_id'      => '100010001 / ' . self::IMMUTABLE_QUOTE_ID,
-            'currency'        => self::CURRENCY_CODE,
-            'items'           => [
-                [
-                    'reference'    => self::PRODUCT_ID,
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product Description',
-                    'image_url'    => 'no-image'
-                ]
-            ],
-            'billing_address' => [
-                'first_name'      => 'IntegrationBolt',
-                'last_name'       => 'BoltTest',
-                'company'         => '',
-                'phone'           => '132 231 1234',
-                'street_address1' => '228 7th Avenue',
-                'street_address2' => '228 7th Avenue 2',
-                'locality'        => 'New York',
-                'region'          => 'New York',
-                'postal_code'     => '10011',
-                'country_code'    => 'US',
-                'email'           => self::EMAIL_ADDRESS
-            ],
-            'discounts'       => [],
-            'total_amount'    => 10000,
-            'tax_amount'      => 0
-        ];
-
-        static::assertEquals($expected, $result);
+            static::assertEquals($expected, $result);
         }
 
         /**
@@ -6194,14 +6178,4 @@ ORDER
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
-
-    /**
-     * @test
-     */
-    public function integrationCartTest()
-    {
-        $this->skipTestInUnitTestsFlow();
-        $product = \Bolt\Boltpay\Test\Unit\TestUtils::createSimpleProduct();
-        static::assertEquals($product->getSku(),'Simple Product 1 sku');
-    }
 }
