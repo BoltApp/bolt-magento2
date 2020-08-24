@@ -68,8 +68,17 @@ class TestUtils {
         }
     }
 
+    private static function isMagentoIntegrationMode()
+    {
+        return class_exists('\Magento\TestFramework\Helper\Bootstrap');
+    }
+
     public static function cleanupSharedFixtures($objects)
     {
+        // don't need to clean up on unit test mode
+        if (!self::isMagentoIntegrationMode()) {
+            return;
+        }
         session_unset();
         self::setSecureAreaIfNeeded();
         foreach ($objects as $object) {
