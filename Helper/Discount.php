@@ -1293,6 +1293,9 @@ class Discount extends AbstractHelper
      */
     public function convertToBoltDiscountType($couponCode)
     {
+        if ($couponCode == "") {
+            return "fixed_amount";
+        }
         $coupon = $this->loadCouponCodeData($couponCode);
         // Load the coupon discount rule
         $rule = $this->ruleRepository->getById($coupon->getRuleId());        
@@ -1317,7 +1320,7 @@ class Discount extends AbstractHelper
                 return "shipping";
         }
 
-        return "";
+        return "fixed_amount";
     }
     
     /**
