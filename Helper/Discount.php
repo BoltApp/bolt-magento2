@@ -1320,7 +1320,7 @@ class Discount extends AbstractHelper
                 return "shipping";
         }
 
-        return "";
+        return "fixed_amount";
     }
     
     /**

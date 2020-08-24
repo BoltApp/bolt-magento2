@@ -4333,6 +4333,17 @@ class DiscountTest extends TestCase
 
     /**
      * @test
+     * @covers ::convertToBoltDiscountType
+     */
+    public function convertToBoltDiscountType_withEmptyDiscountCode_returnsDefaultValue()
+    {
+        $this->initCurrentMock();
+        $couponCode = "";
+        static::assertEquals("fixed_amount", $this->currentMock->convertToBoltDiscountType($couponCode));
+    }
+
+    /**
+     * @test
      * that convertToBoltDiscountType returns the Bolt discount type value
      *
      * @covers ::convertToBoltDiscountType
