@@ -1294,7 +1294,7 @@ class Discount extends AbstractHelper
     public function convertToBoltDiscountType($couponCode)
     {
         if ($couponCode == "") {
-            return "";
+            return "fixed_amount";
         }
         $coupon = $this->loadCouponCodeData($couponCode);
         // Load the coupon discount rule
