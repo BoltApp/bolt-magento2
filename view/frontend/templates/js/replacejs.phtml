@@ -352,7 +352,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             var publishableKey = getCheckoutKey();
             if (scriptTag) {
                 scriptTag.setAttribute('data-publishable-key', publishableKey);
-                createOrder();
                 return;
             }
             scriptTag = document.createElement('script');
@@ -361,7 +360,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             scriptTag.setAttribute('src', settings.connect_url);
             scriptTag.setAttribute('id', 'bolt-connect');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
-            scriptTag.onload = createOrder;
             document.head.appendChild(scriptTag);
         };
 
@@ -739,23 +737,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
         }
 
-        if (getCheckoutType() !== 'payment') {
-            callConfigureWithPromises();
-            customerData.get('cart').subscribe(function(data) {
-                magentoCart = data;
-                // Call invalidateBoltCartIfOutdated with zero delay
-                // to make sure that it is added into the end of event loop.
-                // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
-                // After zero delay boltCartDataID will have actual value anyway.
-                setTimeout(invalidateBoltCartIfOutdated, 0);
-            })
-        }
-
-        var createOrder = function (el, dataChanged) {
+        var boltCheckoutSetup = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
             if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', createOrder);
+                whenDefined(window, 'BoltCheckout', boltCheckoutSetup);
                 return;
             }
 
@@ -875,13 +861,30 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
-            customerData.get('boltcart').subscribe(function(data) {
-                boltCartDataID = data.data_id;
+                callConfigureWithPromises();
 
-                cart = data.cart !== undefined ? data.cart : {};
-                if ((JSON.stringify(cart) === oldBoltCartValue) && !waitingForResolvingPromises) {
-                    return;
+                magentoCartDataListener = function(data) {
+                    magentoCart = data;
+                    // Call invalidateBoltCartIfOutdated with zero delay
+                    // to make sure that it is added into the end of event loop.
+                    // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
+                    // After zero delay boltCartDataID will have actual value anyway.
+                    setTimeout(invalidateBoltCartIfOutdated, 0);
                 }
+
+                customerData.get('cart').subscribe(magentoCartDataListener);
+                // check if magento section was initialized before our code execution
+                if (customerData.get('cart')().data_id !== undefined) {
+                    magentoCartDataListener(customerData.get('cart')());
+                }
+
+                boltCartDataListener = function(data) {
+                    boltCartDataID = data.data_id;
+
+                    cart = data.cart !== undefined ? data.cart : {};
+                    if ((JSON.stringify(cart) === oldBoltCartValue) && !waitingForResolvingPromises) {
+                        return;
+                    }
 
                         var boltRestricted = !!data.restrict;
 
@@ -928,8 +931,13 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                         // prefetch Shipping and Tax for multi-step checkout
                         prefetchShipping();
-                    });
-        }
+                }
+                customerData.get('boltcart').subscribe(boltCartDataListener);
+                // check if magento section was initialized before our code execution
+                if (customerData.get('boltcart')().data_id !== undefined) {
+                    boltCartDataListener(customerData.get('boltcart')());
+                }
+            }
         }
         /////////////////////////////////////////////////////
 
@@ -948,7 +956,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             if (address !== billing_address_value) {
                 billing_address_value = address;
-                createOrder();
+                boltCheckoutSetup();
             }
         });
         /////////////////////////////////////////////////////
@@ -967,7 +975,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             if (email !== customer_email_value) {
                 customer_email_value = email;
-                createOrder();
+                boltCheckoutSetup();
             }
         });
         }
@@ -1287,7 +1295,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
             }
             setupOrderManagementReplacement();
-        };
+        }
 
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
@@ -1295,7 +1303,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         // enables Bolt checkout or opens authentication
         // popup when button is clicked.
         ////////////////////////////////////////////////////
-        createOrder();
+        boltCheckoutSetup();
         ////////////////////////////////////////////////////
         <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
     });
