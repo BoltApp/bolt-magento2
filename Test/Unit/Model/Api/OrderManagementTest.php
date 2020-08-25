@@ -213,7 +213,8 @@ class OrderManagementTest extends TestCase
             self::AMOUNT,
             self::CURRENCY,
             null,
-            self::DISPLAY_ID
+            self::DISPLAY_ID,
+            self::QUOTE_ID
         );
     }
 

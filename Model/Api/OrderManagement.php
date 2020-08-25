@@ -180,7 +180,7 @@ class OrderManagement implements OrderManagementInterface
             if ($type == 'cart.create') {
                 $this->handleCartCreateApiCall();
             } else {
-                $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
+                $this->saveUpdateOrder($reference, $type, $display_id, $immutable_quote_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
         } catch (BoltException $e) {

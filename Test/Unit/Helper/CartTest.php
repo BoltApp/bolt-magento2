@@ -1345,7 +1345,7 @@ class CartTest extends TestCase
         $responseMock->expects(static::once())->method('getResponse')->willReturn(
             (object)[
                 'cart' => (object)[
-                    'metadata' => [
+                    'metadata' => (object)[
                         'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
                     ]
                 ]

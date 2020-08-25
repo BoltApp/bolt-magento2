@@ -992,15 +992,15 @@ class OrderTest extends TestCase
                     'order'     => [
                         'cart'      => [
                             'tax_amount'   => [
-                                'amount' => 500
+                                'amount' => 500,
                             ],
                             'total_amount' => [
-                                'amount' => 500
-                            ]
+                                'amount' => 500,
+                            ],
                         ],
-                        'user_note' => $userNote
+                        'user_note' => $userNote,
                     ],
-                    'reference' => self::REFERENCE_ID
+                    'reference' => self::REFERENCE_ID,
                 ]
             )
         );
@@ -1227,7 +1227,12 @@ class OrderTest extends TestCase
                         'cart' => [
                             'order_reference' => self::QUOTE_ID,
                             'display_id'      => self::DISPLAY_ID,
-                            'total_amount'    => ['amount' => 100]
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
                         ]
                     ],
                     'status' => 'cancelled',
@@ -1238,8 +1243,6 @@ class OrderTest extends TestCase
 
         $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
-        $this->currentMock->expects(self::once())->method('getDataFromDisplayID')
-            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID]);
         return $transaction;
     }
 
@@ -1318,7 +1321,12 @@ class OrderTest extends TestCase
                         'cart' => [
                             'order_reference' => self::QUOTE_ID,
                             'display_id'      => self::DISPLAY_ID,
-                            'total_amount'    => ['amount' => 100]
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
                         ]
                     ],
                     'status' => Payment::TRANSACTION_AUTHORIZED,
@@ -2072,7 +2080,7 @@ class OrderTest extends TestCase
             ->willReturn($this->orderMock);
         $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2090,7 +2098,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('save');
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2108,7 +2116,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('save');
 
-        self::assertFalse($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertFalse($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2790,8 +2798,11 @@ class OrderTest extends TestCase
                                 'amount' => 1000
                             ],
                             'order_reference' => self::ORDER_ID,
-                            'display_id'      => self::INCREMENT_ID
-                        ]
+                            'display_id'      => self::INCREMENT_ID,
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
+                        ],
                     ],
                     'reference' => self::REFERENCE_ID
                 ]
@@ -2865,11 +2876,14 @@ class OrderTest extends TestCase
                     'order'     => [
                         'cart' => [
                             'total_amount'    => [
-                                'amount' => 1000
+                                'amount' => 1000,
                             ],
                             'order_reference' => self::QUOTE_ID,
-                            'display_id'      => self::INCREMENT_ID
-                        ]
+                            'display_id'      => self::INCREMENT_ID,
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
+                        ],
                     ],
                     'reference' => self::REFERENCE_ID
                 ]
