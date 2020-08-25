@@ -2565,7 +2565,7 @@ ORDER
             $result = $boltHelperCart->getCartData(false, "");
 
             // check that created immutuble quote has correct parent quote id
-            list ($reserved_order_id, $immutable_quote_id) = explode(" / ",$result["display_id"]);
+            $immutable_quote_id = $result['metadata']['immutable_quote_id'];
             $immutable_quote = TestUtils::getQuoteById($immutable_quote_id);
             static::assertEquals($immutable_quote->getBoltParentQuoteId(), $quote->getId());
 
