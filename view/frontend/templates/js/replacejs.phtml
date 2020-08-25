@@ -893,8 +893,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                             hints = {};
                         } else {
 
-                            console.log(data);
-                            prefill = isObject(data.hints.prefill)
+                            var prefill = isObject(data.hints.prefill)
                                 ? deepMergeObjects(hints.prefill, data.hints.prefill) : hints.prefill;
 
                             hints = deepMergeObjects(hints, data.hints);

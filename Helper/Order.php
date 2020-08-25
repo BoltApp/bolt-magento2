@@ -1178,7 +1178,7 @@ class Order extends AbstractHelper
      * @return bool
      * @throws BoltException
      */
-    public function tryDeclinedPaymentCancelation($incrementId, $quoteId)
+    public function tryDeclinedPaymentCancelation($incrementId, $immutableQuoteId)
     {
         $order = $this->getExistingOrder($incrementId);
 
@@ -1187,7 +1187,7 @@ class Order extends AbstractHelper
                 __(
                     'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
                     $incrementId,
-                    $quoteId
+                    $immutableQuoteId
                 ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
