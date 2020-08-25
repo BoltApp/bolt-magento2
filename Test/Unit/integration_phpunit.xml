@@ -33,7 +33,7 @@
     <!-- Code coverage filters -->
     <filter>
         <whitelist addUncoveredFilesFromWhiteList="true">
-            <directory suffix=".php">../../../app/code/Magento</directory>
+            <directory suffix=".php">../../../app/code/Bolt</directory>
             <directory suffix=".php">../../../lib/internal/Magento</directory>
             <exclude>
                 <directory>../../../app/code/*/*/Test</directory>
