@@ -696,7 +696,7 @@ class ShippingTaxTest extends TestCase
             'display_id' => self::DISPLAY_ID,
             'order_reference' => self::PARENT_QUOTE_ID,
             'metadata' => [
-                self::IMMUTABLE_QUOTE_ID,
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
             ],
         ];
         $shipping_address = [

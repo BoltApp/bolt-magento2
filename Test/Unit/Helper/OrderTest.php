@@ -1337,11 +1337,9 @@ class OrderTest extends TestCase
 
         $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
-        $this->currentMock->expects(self::once())->method('getDataFromDisplayID')
-            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, null]);
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn(null);
+            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) {
@@ -1350,7 +1348,7 @@ class OrderTest extends TestCase
                     [
                         'ORDER' => [
                             'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::QUOTE_ID,
+                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
                             'Magento StoreId' => self::STORE_ID
                         ]
                     ]
@@ -1377,7 +1375,7 @@ class OrderTest extends TestCase
         $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(false);
 
         $this->bugsnag->expects(self::once())->method('notifyException')
-            ->with(new LocalizedException(__('Unknown quote id: %1', self::QUOTE_ID)))
+            ->with(new LocalizedException(__('Unknown quote id: %1', self::IMMUTABLE_QUOTE_ID)))
             ->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
@@ -2894,7 +2892,7 @@ class OrderTest extends TestCase
             'total_amount' => 500
         ];
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
+        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn($this->quoteMock);
         $this->cartHelper->expects(self::once())->method('getCartData')->with(
             true,
