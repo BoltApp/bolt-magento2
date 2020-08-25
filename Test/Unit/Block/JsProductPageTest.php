@@ -61,7 +61,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     protected $checkoutSessionMock;
 
     /**
-     * @var BlockJs
+     * @var BlockJsProductPage
      */
     protected $block;
 
@@ -111,7 +111,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed'
+            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed','isGuestCheckoutForDownloadableProductDisabled'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -200,8 +200,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ['grouped', false],
             ['configurable', true],
             ['virtual', true],
-            ['bundle', false],
-            ['downloadable', false]
+            ['bundle', true],
+            ['downloadable', true]
         ];
     }
 
@@ -230,21 +230,56 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
-     * @dataProvider providerIsGuestCheckoutAllowed
+     * @dataProvider providerIsDownloadable
+     *
+     * @param $typeId
+     * @param $expectedResult
      */
-    public function isGuestCheckoutAllowed($flag, $expected_result)
+    public function isDownloadable($typeId, $expectedResult)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isDownloadable();
+        $this->assertEquals($expectedResult, $result);
+    }
+
+    public function providerIsDownloadable()
+    {
+        return [
+            ['simple', false],
+            ['grouped', false],
+            ['configurable', false],
+            ['virtual', false],
+            ['bundle', false],
+            ['downloadable', true]
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsGuestCheckoutAllowed
+     *
+     * @param $isGuestCheckoutAllowed
+     * @param $isGuestCheckoutForDownloadableProductDisabled
+     * @param $expectedResult
+     * @param $productType
+     */
+    public function isGuestCheckoutAllowed($isGuestCheckoutAllowed, $isGuestCheckoutForDownloadableProductDisabled, $expectedResult, $productType = 'simple')
     {
         $this->configHelper->method('isGuestCheckoutAllowed')
-            ->willReturn($flag);
+            ->willReturn($isGuestCheckoutAllowed);
+        $this->configHelper->method('isGuestCheckoutForDownloadableProductDisabled')
+            ->willReturn($isGuestCheckoutForDownloadableProductDisabled);
+        $this->product->method('getTypeId')->willReturn($productType);
         $result = $this->block->isGuestCheckoutAllowed();
-        $this->assertEquals($expected_result, $result);
+        $this->assertEquals($expectedResult, $result);
     }
 
     public function providerIsGuestCheckoutAllowed()
     {
         return [
-            [true,1],
-            [false,0],
+            [true, true, 0, 'downloadable'],
+            [true, true, 1],
+            [true, false, 1, 'configurable'],
         ];
     }
 

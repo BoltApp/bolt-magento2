@@ -929,7 +929,8 @@ class DiscountTest extends TestCase
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardAvailable')->willReturn(true);
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardLegacyVersion')->willReturn(false);
 
-        $accountModel = $this->getMockBuilder('Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory')
+        // mock for class Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory that doesn't exist
+        $accountModel = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['getCurrentValue'])
             ->disableOriginalConstructor()
             ->getMock();
@@ -4333,6 +4334,17 @@ class DiscountTest extends TestCase
 
     /**
      * @test
+     * @covers ::convertToBoltDiscountType
+     */
+    public function convertToBoltDiscountType_withEmptyDiscountCode_returnsDefaultValue()
+    {
+        $this->initCurrentMock();
+        $couponCode = "";
+        static::assertEquals("fixed_amount", $this->currentMock->convertToBoltDiscountType($couponCode));
+    }
+
+    /**
+     * @test
      * that convertToBoltDiscountType returns the Bolt discount type value
      *
      * @covers ::convertToBoltDiscountType
@@ -4389,7 +4401,8 @@ class DiscountTest extends TestCase
             ['types' => 'cart_fixed', 'expectedResult' => 'fixed_amount'],
             ['types' => 'by_percent', 'expectedResult' => 'percentage'],
             ['types' => 'by_shipping', 'expectedResult' => 'shipping'],
-            ['types' => 'none_list', 'expectedResult' => ''],
+            ['types' => 'none_list', 'expectedResult' => 'fixed_amount'],
+            ['types' => '', 'expectedResult' => 'fixed_amount'],
         ];
     }
 
