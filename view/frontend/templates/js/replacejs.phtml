@@ -935,7 +935,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                             BoltState.cartRestricted = !!data.restrict;
 
                             // Stop if Bolt checkout is restricted
-                            if (boltRestricted) {
+                            if (BoltState.cartRestricted) {
                                 if (popUpOpen) reject(new Error(data.message));
                                 hintBarrier.resolve(hints);
                                 return;
