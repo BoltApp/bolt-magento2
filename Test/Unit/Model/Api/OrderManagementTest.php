@@ -55,7 +55,7 @@ class OrderManagementTest extends TestCase
     const REFERENCE = "AAAA-BBBB-CCCC";
     const AMOUNT = 11800;
     const CURRENCY = "USD";
-    const DISPLAY_ID = "000000123 / 456";
+    const DISPLAY_ID = "000000123";
     const REQUEST_HEADER_TRACE_ID = 'aaaabbbbcccc';
     const TYPE = 'pending';
     const STATUS = 'pending';
@@ -823,7 +823,7 @@ class OrderManagementTest extends TestCase
     {
         $type = "pending";
         $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
-            ->with(self::DISPLAY_ID, self::REFERENCE, self::STORE_ID)->willReturnSelf();
+            ->with(self::QUOTE_ID, self::REFERENCE, self::STORE_ID)->willReturnSelf();
 
         $this->currentMock->manage(
             self::ID,
@@ -833,7 +833,8 @@ class OrderManagementTest extends TestCase
             self::AMOUNT,
             self::CURRENCY,
             null,
-            self::DISPLAY_ID
+            self::DISPLAY_ID,
+            self::QUOTE_ID
         );
     }
 

@@ -50,7 +50,7 @@ class ShippingTaxTest extends TestCase
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
     const INCREMENT_ID = 100050001;
-    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const STORE_ID = 1;
     const CURRENCY_CODE = 'USD';
     const EMAIL = 'integration@bolt.com';
@@ -572,7 +572,10 @@ class ShippingTaxTest extends TestCase
     public function execute_WebApiException()
     {
         $cart = [
-            'display_id' => self::DISPLAY_ID
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $this->initCurrentMock(['getQuoteById', 'preprocessHook']);
 
@@ -606,7 +609,10 @@ class ShippingTaxTest extends TestCase
     {
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $shipping_address = [
             'email' => 'invalid email'
@@ -662,7 +668,10 @@ class ShippingTaxTest extends TestCase
     public function execute_Exception()
     {
         $cart = [
-            'display_id' => self::DISPLAY_ID
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $this->initCurrentMock(['loadQuote']);
 
@@ -685,7 +694,10 @@ class ShippingTaxTest extends TestCase
     {
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $shipping_address = [
             'email' => self::EMAIL

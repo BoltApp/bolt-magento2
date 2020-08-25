@@ -60,7 +60,7 @@ class ShippingMethodsTest extends TestCase
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
     const INCREMENT_ID = 100050001;
-    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const STORE_ID = 1;
 
     /**
@@ -322,7 +322,10 @@ class ShippingMethodsTest extends TestCase
     public function getShippingMethods_emptyQuote()
     {
         $cart = [
-            'display_id' => self::DISPLAY_ID
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+            ]
         ];
         $shippingAddress = [
             'street_address1' => 'test'
@@ -434,12 +437,18 @@ class ShippingMethodsTest extends TestCase
             // common case
             [[
                 'display_id'      => self::DISPLAY_ID,
-                'order_reference' => self::PARENT_QUOTE_ID
+                'order_reference' => self::PARENT_QUOTE_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ],self::PARENT_QUOTE_ID],
             // product page checkout case
             [[
                 'display_id'      => self::DISPLAY_ID,
-                'order_reference' => self::IMMUTABLE_QUOTE_ID
+                'order_reference' => self::IMMUTABLE_QUOTE_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ],self::IMMUTABLE_QUOTE_ID]
         ];
     }
@@ -540,7 +549,15 @@ class ShippingMethodsTest extends TestCase
         $e = new WebapiException(__('Precondition Failed'), 6001, 412);
         $this->currentMock->method('preprocessHook')->willThrowException($e);
         $this->expectErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
-        $this->assertNull($this->currentMock->getShippingMethods(['display_id' => self::DISPLAY_ID], []));
+        $this->assertNull($this->currentMock->getShippingMethods(
+            [
+                'display_id' => self::DISPLAY_ID,
+                'metadata'   => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    ]
+            ],
+            [])
+        );
     }
 
     /**
@@ -556,7 +573,10 @@ class ShippingMethodsTest extends TestCase
                     'quantity' => '2',
                     'total_amount' => '60000'
                 ]
-            ]
+            ],
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $shippingAddress = [
             'company'         => "",

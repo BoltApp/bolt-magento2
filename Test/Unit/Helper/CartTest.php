@@ -2931,7 +2931,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001 / 1001',
+                'display_id'      => self::ORDER_INCREMENT_ID,
                 'currency'        => 'USD',
                 'items'           => [$testItem],
                 'billing_address' =>
@@ -2951,6 +2951,10 @@ ORDER
                 'discounts'       => [],
                 'total_amount'    => 12345,
                 'tax_amount'      => 0,
+                'metadata'        =>
+                    [
+                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    ]
             ],
             $result
         );
@@ -6012,7 +6016,7 @@ ORDER
                         ],
                     'metadata'        =>
                         [
-                            'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            'immutable_quote_id' => self::QUOTE_ID,
                         ],
                 ] ),
             'token' => self::TOKEN
@@ -6063,7 +6067,7 @@ ORDER
                    ->withAnyParameters()
                    ->willReturn($boltpayOrder);
 
-        $this->assertEquals($expected, $currentMock->calculateCartAndHints());
+            $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
 
         /**
