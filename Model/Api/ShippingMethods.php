@@ -346,7 +346,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $startTime = $this->metricsClient->getCurrentTime();
         try {
             // get immutable quote id stored with transaction
-            $quoteId = $cart['metadata']['immutable_quote_id'];
+            $quoteId = isset($cart['metadata']['immutable_quote_id']) ? $cart['metadata']['immutable_quote_id'] : '';
 
             // Load quote from entity id
             $this->quote = $this->getQuoteById($quoteId);

@@ -802,8 +802,12 @@ class Order extends AbstractHelper
         // where only reserved_order_id was stored in display_id field
         // and the immutable quote_id in order_reference
         ///////////////////////////////////////////////////////////////
-        $incrementId = $transaction->order->cart->display_id;
-        $quoteId = $transaction->order->cart->metadata->immutable_quote_id;
+        $incrementId = isset($transaction->order->cart->display_id) ?
+            $transaction->order->cart->display_id :
+            null;
+        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
+            $transaction->order->cart->metadata->immutable_quote_id :
+            null;
 
         if (!$quoteId) {
             $quoteId = $parentQuoteId;
@@ -1540,8 +1544,12 @@ class Order extends AbstractHelper
         }
 
         // Get the order and quote id
-        $incrementId = $transaction->order->cart->display_id;
-        $quoteId = $transaction->order->cart->metadata->immutable_quote_id;
+        $incrementId = isset($transaction->order->cart->display_id) ?
+            $transaction->order->cart->display_id :
+            null;
+        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
+            $transaction->order->cart->metadata->immutable_quote_id :
+            null;
 
         if (!$quoteId) {
             $quoteId = $transaction->order->cart->order_reference;
