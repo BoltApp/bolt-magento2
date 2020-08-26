@@ -1973,6 +1973,7 @@ class Cart extends AbstractHelper
         // so we need to set boltReservedOrderId
         $quote->setBoltReservedOrderId($quote->getReservedOrderId());
         $quote->setIsActive(false);
+        $this->quoteResourceSave($quote);
 
         $cart_data = $this->getCartData(false,'', $quote);
         $this->quoteResourceSave($quote);
