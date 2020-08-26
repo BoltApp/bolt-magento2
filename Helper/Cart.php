@@ -845,7 +845,7 @@ class Cart extends AbstractHelper
      */
     public function doesOrderExist($cart, $quote)
     {
-        $incrementId = $cart['display_id']; //do we want to just stick $cart['display_id'] into getOrderByIncrementId?
+        $incrementId = $cart['display_id'];
         $order = $this->getOrderByIncrementId($incrementId);
 
         if ($quote && !$order) {
