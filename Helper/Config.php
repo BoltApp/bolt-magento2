@@ -940,7 +940,7 @@ class Config extends AbstractHelper
     {
         return (
             $url
-            && preg_match("/^https?:\/\/([a-zA-Z0-9]+\.)+bolt.me\/?$/", $url)
+            && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url)
         );
     }
 
