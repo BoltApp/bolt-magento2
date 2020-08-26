@@ -26,6 +26,7 @@
             <module name="Magento_Tax"/>
             <module name="Magento_GiftCardAccount"/>
             <module name="Magento_Customer"/>
+            <module name="Magento_GroupedProduct"/>
         </sequence>
     </module>
 </config>

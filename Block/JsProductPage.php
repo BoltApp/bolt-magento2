@@ -19,13 +19,13 @@ namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Magento\Checkout\Helper\Data;
-use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Catalog\Block\Product\View as ProductView;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use \Magento\Catalog\Model\ProductRepository;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -40,6 +40,16 @@ class JsProductPage extends Js
      */
     private $_product;
 
+    /**
+     * @var ProductRepository
+     */
+    private $_productRepository;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
     public function __construct(
         Context $context,
         Config $configHelper,
@@ -48,10 +58,13 @@ class JsProductPage extends Js
         Bugsnag $bugsnag,
         ProductView $productView,
         Decider $featureSwitches,
+        ProductRepository $productRepository,
+        SearchCriteriaBuilder $searchCriteriaBuilder,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
-
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->_productRepository = $productRepository;
         parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
     }
 
@@ -96,6 +109,24 @@ class JsProductPage extends Js
     public function isDownloadable()
     {
         return $this->_product->getTypeId() == \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE;
+    }
+
+    /**
+     * Check if current product has type grouped
+     *
+     * @return bool
+     */
+    public function isGrouped(){
+        return $this->_product->getTypeId() == \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE;
+    }
+
+    /**
+     * @return \Magento\Catalog\Api\Data\ProductInterface[]
+     */
+    public function getGroupedProductChildren(){
+        $ids = $this->_product->getTypeInstance()->getChildrenIds($this->_product->getId());
+        $searchCriteria = $this->searchCriteriaBuilder->addFilter('entity_id', $ids, 'in');
+        return $this->_productRepository->getList($searchCriteria->create())->getItems();
     }
 
     /**
