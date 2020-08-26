@@ -684,7 +684,20 @@ class Cart extends AbstractHelper
     protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
     {
         $response = $boltOrder ? $boltOrder->getResponse() : null;
-        return $response->cart->metadata->immutable_quote_id;
+        $immutableQuoteId = null;
+        // If response is null don't even bother trying, we return null
+        if ($response)
+        {
+            try
+            {
+                $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
+            }
+            catch (\Exception $e)
+            {
+                $this->bugsnag->notifyException($e);
+            }
+        }
+        return $immutableQuoteId;
     }
 
     /**
