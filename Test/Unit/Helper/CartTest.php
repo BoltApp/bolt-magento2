@@ -1360,7 +1360,9 @@ class CartTest extends BoltTestCase
         $responseMock->expects(static::once())->method('getResponse')->willReturn(
             (object)[
                 'cart' => (object)[
-                    'display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID
+                    'metadata' => (object)[
+                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                    ]
                 ]
             ]
         );
@@ -2336,7 +2338,7 @@ ORDER
         static::assertEquals(
             $this->orderMock,
             $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                ['display_id' => self::ORDER_INCREMENT_ID],
                 $this->quoteMock
             )
         );
@@ -2362,7 +2364,7 @@ ORDER
         static::assertEquals(
             $this->orderMock,
             $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                ['display_id' => self::ORDER_INCREMENT_ID],
                 $this->quoteMock
             )
         );
@@ -2389,7 +2391,7 @@ ORDER
 
         static::assertFalse(
             $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID],
+                ['display_id' => self::ORDER_INCREMENT_ID],
                 $this->quoteMock
             )
         );
@@ -2563,7 +2565,7 @@ ORDER
             $result = $boltHelperCart->getCartData(false, "");
 
             // check that created immutuble quote has correct parent quote id
-            list ($reserved_order_id, $immutable_quote_id) = explode(" / ",$result["display_id"]);
+            $immutable_quote_id = $result['metadata']['immutable_quote_id'];
             $immutable_quote = TestUtils::getQuoteById($immutable_quote_id);
             static::assertEquals($immutable_quote->getBoltParentQuoteId(), $quote->getId());
 
@@ -2576,7 +2578,7 @@ ORDER
 
             $expected = [
                 'order_reference' => $quote->getId(),
-                'display_id'      => $quote->getBoltReservedOrderId() . ' / ' . $immutable_quote_id,
+                'display_id'      => $quote->getBoltReservedOrderId(),
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => [
                     [
@@ -2592,7 +2594,10 @@ ORDER
                 ],
                 'discounts'       => [],
                 'total_amount'    => 10000,
-                'tax_amount'      => 0
+                'tax_amount'      => 0,
+                'metadata'        => [
+                    'immutable_quote_id' => $immutable_quote_id,
+                ],
             ];
 
             static::assertEquals($expected, $result);
@@ -2708,7 +2713,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+                'display_id'      => self::ORDER_INCREMENT_ID,
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => $testItems,
                 'discounts'       => $testDiscounts,
@@ -2734,7 +2739,10 @@ ORDER
                         'service'          => null,
                         'reference'        => null,
                     ]
-                ]
+                ],
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ],
             $currentMock->getCartData(
                 true,
@@ -2914,7 +2922,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001 / 1001',
+                'display_id'      => self::ORDER_INCREMENT_ID,
                 'currency'        => 'USD',
                 'items'           => [$testItem],
                 'billing_address' =>
@@ -2934,6 +2942,10 @@ ORDER
                 'discounts'       => [],
                 'total_amount'    => 12345,
                 'tax_amount'      => 0,
+                'metadata'        =>
+                    [
+                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    ]
             ],
             $result
         );
@@ -3264,7 +3276,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001 / 1001',
+                'display_id'      => '100010001',
                 'currency'        => 'USD',
                 'items'           => [
                     ['total_amount' => 12468] + $testItem,
@@ -3294,6 +3306,9 @@ ORDER
                 'discounts'       => [],
                 'total_amount'    => 12468,
                 'tax_amount'      => 0,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ],
             $result
         );
@@ -3360,7 +3375,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001 / 1001',
+                'display_id'      => '100010001',
                 'currency'        => 'USD',
                 'items'           => [$testItem,],
                 'shipments'       => [
@@ -3388,6 +3403,9 @@ ORDER
                 'discounts'       => [$testDiscount],
                 'total_amount'    => 0,
                 'tax_amount'      => 0,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ],
             $result
         );
@@ -5143,7 +5161,7 @@ ORDER
 
         $expectedCartData = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
@@ -5160,6 +5178,9 @@ ORDER
             'discounts'       => [],
             'total_amount'    => self::PRODUCT_PRICE,
             'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
 
         $this->quoteManagement->expects(static::once())->method('createEmptyCart')
@@ -5223,7 +5244,7 @@ ORDER
 
         $expectedCartData = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
@@ -5240,6 +5261,9 @@ ORDER
             'discounts'       => [],
             'total_amount'    => self::PRODUCT_PRICE,
             'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
 
         $cartMock = $this->getCurrentMock(['getCartData']);
@@ -5302,7 +5326,7 @@ ORDER
 
         $expectedCartData = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
@@ -5319,6 +5343,9 @@ ORDER
             'discounts'       => [],
             'total_amount'    => self::PRODUCT_PRICE,
             'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
 
         $cartMock = $this->getCurrentMock(['getCartData']);
@@ -5955,7 +5982,7 @@ ORDER
             'cart' =>
                 (object) ( [
                     'order_reference' => self::QUOTE_ID,
-                    'display_id'      => '100050001 / 1234',
+                    'display_id'      => '100050001',
                     'shipments'       =>
                         [
                             0 =>
@@ -5977,6 +6004,10 @@ ORDER
                                         ] ),
                                     'reference'       => 'flatrate_flatrate'
                                 ] ),
+                        ],
+                    'metadata'        =>
+                        [
+                            'immutable_quote_id' => self::QUOTE_ID,
                         ],
                 ] ),
             'token' => self::TOKEN
@@ -6027,7 +6058,7 @@ ORDER
                    ->withAnyParameters()
                    ->willReturn($boltpayOrder);
 
-        $this->assertEquals($expected, $currentMock->calculateCartAndHints());
+            $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
 
         /**

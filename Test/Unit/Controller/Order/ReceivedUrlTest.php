@@ -48,9 +48,10 @@ class ReceivedUrlTest extends TestCase
 {
     //TODO: figure out proper values for these things, probably some reverse engineering to be done.
     const DECODED_BOLT_PAYLOAD = '{"display_id":"' .self::JSON_DISPLAY_ID. '", "transaction_reference":"' .self::TRANSACTION_REFERENCE. '"}';
-    const DISPLAY_ID = self::INCREMENT_ID. ' / ' .self::QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const INCREMENT_ID = 'increment_id';
-    const JSON_DISPLAY_ID = self::INCREMENT_ID. ' \/ ' .self::QUOTE_ID;
+    const JSON_DISPLAY_ID = self::INCREMENT_ID;
+
     const ORDER_ID = 'order_id';
     const QUOTE_ID = 'quote_id';
     const STORE_ID = '1234';

@@ -212,10 +212,11 @@ class CreateOrder implements CreateOrderInterface
             $transaction = json_decode($payload);
             $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
+
             $this->sendResponse(200, [
                 'status'    => 'success',
                 'message'   => "Order create was successful. Order Data: $orderData",
-                'display_id' => $createdOrder->getIncrementId() . ' / ' . $immutableQuoteId,
+                'display_id' => $createdOrder->getIncrementId(),
                 'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
                 'order_received_url' => $this->getReceivedUrl($immutableQuote),
             ]);

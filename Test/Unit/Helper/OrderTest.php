@@ -98,7 +98,7 @@ class OrderTest extends TestCase
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
-    const DISPLAY_ID = self::INCREMENT_ID . " / " . self::IMMUTABLE_QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const REFERENCE_ID = '1123123123';
     const PROCESSOR_VANTIV = 'vantiv';
     const PROCESSOR_PAYPAL = 'paypal';
@@ -992,15 +992,15 @@ class OrderTest extends TestCase
                     'order'     => [
                         'cart'      => [
                             'tax_amount'   => [
-                                'amount' => 500
+                                'amount' => 500,
                             ],
                             'total_amount' => [
-                                'amount' => 500
-                            ]
+                                'amount' => 500,
+                            ],
                         ],
-                        'user_note' => $userNote
+                        'user_note' => $userNote,
                     ],
-                    'reference' => self::REFERENCE_ID
+                    'reference' => self::REFERENCE_ID,
                 ]
             )
         );
@@ -1227,7 +1227,12 @@ class OrderTest extends TestCase
                         'cart' => [
                             'order_reference' => self::QUOTE_ID,
                             'display_id'      => self::DISPLAY_ID,
-                            'total_amount'    => ['amount' => 100]
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
                         ]
                     ],
                     'status' => 'cancelled',
@@ -1238,8 +1243,6 @@ class OrderTest extends TestCase
 
         $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
-        $this->currentMock->expects(self::once())->method('getDataFromDisplayID')
-            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID]);
         return $transaction;
     }
 
@@ -1318,7 +1321,12 @@ class OrderTest extends TestCase
                         'cart' => [
                             'order_reference' => self::QUOTE_ID,
                             'display_id'      => self::DISPLAY_ID,
-                            'total_amount'    => ['amount' => 100]
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
                         ]
                     ],
                     'status' => Payment::TRANSACTION_AUTHORIZED,
@@ -1329,11 +1337,9 @@ class OrderTest extends TestCase
 
         $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
-        $this->currentMock->expects(self::once())->method('getDataFromDisplayID')
-            ->with(self::DISPLAY_ID)->willReturn([self::INCREMENT_ID, null]);
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::QUOTE_ID)->willReturn(null);
+            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) {
@@ -1342,7 +1348,7 @@ class OrderTest extends TestCase
                     [
                         'ORDER' => [
                             'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::QUOTE_ID,
+                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
                             'Magento StoreId' => self::STORE_ID
                         ]
                     ]
@@ -1369,7 +1375,7 @@ class OrderTest extends TestCase
         $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(false);
 
         $this->bugsnag->expects(self::once())->method('notifyException')
-            ->with(new LocalizedException(__('Unknown quote id: %1', self::QUOTE_ID)))
+            ->with(new LocalizedException(__('Unknown quote id: %1', self::IMMUTABLE_QUOTE_ID)))
             ->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
@@ -2054,7 +2060,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn(false);
 
-        $this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID);
+        $this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2072,7 +2078,7 @@ class OrderTest extends TestCase
             ->willReturn($this->orderMock);
         $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2090,7 +2096,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('save');
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2108,7 +2114,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
         $this->orderMock->expects(static::never())->method('save');
 
-        self::assertFalse($this->currentMock->tryDeclinedPaymentCancelation(self::DISPLAY_ID));
+        self::assertFalse($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -2125,7 +2131,7 @@ class OrderTest extends TestCase
         $this->bugsnag->expects(self::once())->method('notifyError');
         $this->orderMock->expects(static::never())->method('getState');
         $this->currentMock->expects(static::never())->method('deleteOrder');
-        $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
+        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2152,7 +2158,7 @@ class OrderTest extends TestCase
             )
         );
         $this->currentMock->expects(static::never())->method('deleteOrder');
-        $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
+        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2182,7 +2188,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
         $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
+        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2226,7 +2232,7 @@ class OrderTest extends TestCase
             ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
         $quoteMock->expects(static::once())->method('setIsActive')->with(false)->WillReturnSelf();
         $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
+        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2262,7 +2268,7 @@ class OrderTest extends TestCase
             ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
         $this->quoteMock->expects(static::once())->method('SetBoltCheckoutType')
             ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $this->currentMock->deleteOrderByIncrementId(self::DISPLAY_ID);
+        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2790,8 +2796,11 @@ class OrderTest extends TestCase
                                 'amount' => 1000
                             ],
                             'order_reference' => self::ORDER_ID,
-                            'display_id'      => self::INCREMENT_ID
-                        ]
+                            'display_id'      => self::INCREMENT_ID,
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
+                        ],
                     ],
                     'reference' => self::REFERENCE_ID
                 ]
@@ -2865,11 +2874,14 @@ class OrderTest extends TestCase
                     'order'     => [
                         'cart' => [
                             'total_amount'    => [
-                                'amount' => 1000
+                                'amount' => 1000,
                             ],
                             'order_reference' => self::QUOTE_ID,
-                            'display_id'      => self::INCREMENT_ID
-                        ]
+                            'display_id'      => self::INCREMENT_ID,
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                            ],
+                        ],
                     ],
                     'reference' => self::REFERENCE_ID
                 ]
@@ -2880,7 +2892,7 @@ class OrderTest extends TestCase
             'total_amount' => 500
         ];
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
+        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn($this->quoteMock);
         $this->cartHelper->expects(self::once())->method('getCartData')->with(
             true,
@@ -4672,7 +4684,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::IMMUTABLE_QUOTE_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
     }
 
@@ -4694,7 +4706,7 @@ class OrderTest extends TestCase
             ->willReturnOnConsecutiveCalls(null, null);
 
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::IMMUTABLE_QUOTE_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 

@@ -684,12 +684,24 @@ class Cart extends AbstractHelper
     protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
     {
         $response = $boltOrder ? $boltOrder->getResponse() : null;
-        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        $immutableQuoteId = null;
+        // If response is null don't even bother trying, we return null
+        if ($response)
+        {
+            try
+            {
+                $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
+            }
+            catch (\Exception $e)
+            {
+                $this->bugsnag->notifyException($e);
+            }
+        }
         return $immutableQuoteId;
     }
 
     /**
-     * Check if the quote is noot deleted
+     * Check if the quote is not deleted
      *
      * @param int|string $quoteId
      * @return bool
@@ -833,7 +845,7 @@ class Cart extends AbstractHelper
      */
     public function doesOrderExist($cart, $quote)
     {
-        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $incrementId = $cart['display_id'];
         $order = $this->getOrderByIncrementId($incrementId);
 
         if ($quote && !$order) {
@@ -1592,8 +1604,11 @@ class Cart extends AbstractHelper
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
 
-        //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
-        $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
+        //Use display_id to hold and transmit, all the way back and forth, reserved order id
+        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+
+        //Store immutable quote id in metadata of cart
+        $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
@@ -2374,7 +2389,7 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+            $cartReference = $response ? $responseData['cart']['metadata']['immutable_quote_id'] : '';
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',
