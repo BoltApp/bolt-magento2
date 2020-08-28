@@ -245,4 +245,10 @@
         <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
                 type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
     </type>
+
+    <type name="Magento\Sales\Model\ResourceModel\Order">
+        <plugin name="BoltBoltpayOrderStatusLogging"
+            type="Bolt\Boltpay\Plugin\OrderStatusLogging"
+            sortOrder="1"/>
+    </type>
 </config>
