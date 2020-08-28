@@ -284,4 +284,10 @@
                 type="Bolt\Boltpay\Plugin\RestoreQuotePlugin"
                 sortOrder="1"/>
     </type>
+
+    <type name="Magento\Sales\Model\ResourceModel\Order">
+        <plugin name="BoltBoltpayOrderStatusLogging"
+            type="Bolt\Boltpay\Plugin\OrderStatusLogging"
+            sortOrder="1"/>
+    </type>
 </config>
