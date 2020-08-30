@@ -31,9 +31,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
-use Magento\Framework\Registry;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 
 /**
  * Class SessionTest
@@ -88,12 +86,6 @@ class SessionTest extends TestCase
 
     /** @var FormKey */
     private $formKey;
-
-    /** @var Registry */
-    private $coreRegistry;
-
-    /** @var ThirdPartyModuleFactory */
-    private $mageplazaShippingRestrictonHelper;
 
     /** @var ConfigHelper */
     private $configHelper;
@@ -157,14 +149,6 @@ class SessionTest extends TestCase
             ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID']
         );
 
-        $this->coreRegistry = $this->createMock(
-            Registry::class
-        );
-
-        $this->mageplazaShippingRestrictonHelper = $this->createMock(
-            ThirdPartyModuleFactory::class
-        );
-
         $this->configHelper = $this->createPartialMock(
             ConfigHelper::class,
             ['isSessionEmulationEnabled']
@@ -186,8 +170,6 @@ class SessionTest extends TestCase
                     $this->cache,
                     $this->appState,
                     $this->formKey,
-                    $this->coreRegistry,
-                    $this->mageplazaShippingRestrictonHelper,
                     $this->configHelper
                 ]
             )
@@ -211,8 +193,6 @@ class SessionTest extends TestCase
             $this->cache,
             $this->appState,
             $this->formKey,
-            $this->coreRegistry,
-            $this->mageplazaShippingRestrictonHelper,
             $this->configHelper
         );
         
@@ -222,8 +202,6 @@ class SessionTest extends TestCase
         $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         $this->assertAttributeEquals($this->cache, 'cache', $instance);
         $this->assertAttributeEquals($this->appState, 'appState', $instance);
-        $this->assertAttributeEquals($this->coreRegistry, 'coreRegistry', $instance);
-        $this->assertAttributeEquals($this->mageplazaShippingRestrictonHelper, 'mageplazaShippingRestrictonHelper', $instance);
         $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
         $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
