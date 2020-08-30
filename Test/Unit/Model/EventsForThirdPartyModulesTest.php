@@ -51,6 +51,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
      */
     public function dispatchEventTest()
     {
+        $this->skipTestInUnitTestsFlow();
         $eventsForThirdPartyModulesMock = Bootstrap::getObjectManager()->get(EventsForThirdPartyModulesMock::class);
         $listenerMock = Bootstrap::getObjectManager()->get(ListenerMock::class);
         
