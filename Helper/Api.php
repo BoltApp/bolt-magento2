@@ -30,7 +30,6 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
 
 /**

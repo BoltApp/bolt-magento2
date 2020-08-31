@@ -24,7 +24,6 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Checkout\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\Test\Unit\ObjectManagerFactoryTest;
 use Magento\Framework\Controller\Result\JsonFactory as ResultJsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObjectFactory;
@@ -32,7 +31,6 @@ use Magento\Framework\UrlInterface;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\TestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**

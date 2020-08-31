@@ -21,13 +21,11 @@ use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingDataInterfaceFactory;
 use Bolt\Boltpay\Api\ShippingInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
 use Magento\Quote\Api\ShippingMethodManagementInterface;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
 use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
 

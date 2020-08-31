@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Model\AdminOrder;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Backend\Model\Session\Quote as AdminCheckoutSession;
 use Magento\Sales\Model\AdminOrder\Create;

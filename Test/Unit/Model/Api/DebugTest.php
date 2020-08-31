@@ -31,7 +31,6 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Api\Data\StoreInterface;
-use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
 

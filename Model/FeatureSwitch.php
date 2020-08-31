@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Model;
 
 use Magento\Framework\Model\AbstractModel;
-use Bolt\Boltpay\Api\Data\FeatureSwitchInterface;
 
 class FeatureSwitch extends AbstractModel implements \Bolt\Boltpay\Api\Data\FeatureSwitchInterface
 {

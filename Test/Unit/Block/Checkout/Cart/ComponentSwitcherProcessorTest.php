@@ -22,7 +22,6 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
 use PHPUnit\Framework\TestCase;

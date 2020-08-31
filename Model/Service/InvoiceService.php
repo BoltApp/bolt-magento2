@@ -17,7 +17,6 @@
  
 namespace Bolt\Boltpay\Model\Service;
 
-use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Api\Data\OrderInterface;
 
 class InvoiceService extends \Magento\Sales\Model\Service\InvoiceService

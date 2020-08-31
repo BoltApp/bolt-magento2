@@ -25,8 +25,6 @@ use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Checkout\Api\TotalsInformationManagementInterface;
 use Magento\Checkout\Api\Data\TotalsInformationInterface;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use Bolt\Boltpay\Model\Api\ShippingTax;
 use Magento\Quote\Api\Data\TotalsInterface;
 
 /**

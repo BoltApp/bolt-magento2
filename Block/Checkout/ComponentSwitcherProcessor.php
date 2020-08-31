@@ -16,8 +16,6 @@
  */
 namespace Bolt\Boltpay\Block\Checkout;
 
-use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
-
 /**
  * Class ComponentSwitcherProcessor
  * Enable / disable components in the checkout page layout depending on the configuration.

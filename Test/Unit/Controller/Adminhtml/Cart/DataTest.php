@@ -31,7 +31,6 @@ use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Zend\Log\Filter\Mock;
 
 /**
  * Class DataTest

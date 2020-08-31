@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Test\Unit\Helper\GraphQL;
 
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\GraphQL\Client;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\HTTP\ZendClientFactory;
 use Magento\Framework\HTTP\ZendClient;
 use Bolt\Boltpay\Model\ResponseFactory;
