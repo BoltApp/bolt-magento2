@@ -42,9 +42,11 @@ Create dedicated database for running the test
 Copy configruration file template `mage2ce/dev/tests/integration/etc/install-config-mysql.php.dist` to 'install-config-mysql.php' in the same directory and add your test database access credentials.
 
 Copy xml congiguration file
+
 `cp app/code/Bolt/Boltpay/Test/Unit/integration_phpunit.xml dev/tests/integration/bolt_phpunit.xml`
 
 Run integration tests
+
 `cd dev/tests/integration/`
 `../../../vendor/bin/phpunit -c bolt_phpunit.xml`
 
