@@ -432,6 +432,24 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Load Order by order id
+     *
+     * @param $orderId
+     * @return OrderInterface|mixed
+     */
+    public function getOrderById($orderId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('main_table.entity_id', $orderId)->create();
+
+        $collection = $this->orderRepository
+            ->getList($searchCriteria)
+            ->getItems();
+
+        return reset($collection);
+    }
+
+    /**
      * Save quote via repository
      *
      * @param CartInterface $quote

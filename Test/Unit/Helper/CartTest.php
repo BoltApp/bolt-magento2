@@ -2403,6 +2403,28 @@ ORDER
         }
 
         /**
+         * @test
+         */
+        public function getOrderById()
+        {
+            $orderId = 1;
+
+            $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
+
+            $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('main_table.entity_id', $orderId)->willReturnSelf();
+            $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
+
+            $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+            $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
+            $collection = [$orderInterface, $orderInterface2];
+            $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
+            $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
+
+            $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
+            $this->assertSame($orderInterface, $this->currentMock->getOrderById($orderId));
+        }
+
+        /**
         * @test
         * that getBoltpayOrder creates new Bolt order when cache is enabled but current cart cannot be loaded
         *

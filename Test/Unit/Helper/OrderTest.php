@@ -374,6 +374,7 @@ class OrderTest extends TestCase
                 'getCartData',
                 'getOrderByQuoteId',
                 'validateEmail',
+                'getOrderById'
             ])
             ->getMock();
 
@@ -1843,6 +1844,12 @@ class OrderTest extends TestCase
         $transaction = new stdClass();
         $this->quoteManagement->expects(self::once())->method('submit')
             ->with($this->quoteMock)->willReturn($this->orderMock);
+        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
+        $paymentMock = $this->createMock(OrderPaymentInterface::class);
+        $paymentMock->expects(self::any())->method('getMethod')->willReturn(Payment::METHOD_CODE);
+        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
+        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
+
         $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
             ->with('BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook');
         $this->currentMock->expects(self::once())->method('orderPostprocess')
@@ -1851,6 +1858,27 @@ class OrderTest extends TestCase
             $this->currentMock->processNewOrder($this->quoteMock, $transaction),
             $this->orderMock
         );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_withNonBoltOrder()
+    {
+        $transaction = new stdClass();
+        $this->quoteManagement->expects(self::once())->method('submit')
+            ->with($this->quoteMock)->willReturn($this->orderMock);
+        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $paymentMock = $this->createMock(OrderPaymentInterface::class);
+        $paymentMock->expects(self::any())->method('getMethod')->willReturn('paypal');
+        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
+        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Payment method assigned to order 1234 is: paypal');
+        $this->currentMock->processNewOrder($this->quoteMock, $transaction);
     }
 
     /**
