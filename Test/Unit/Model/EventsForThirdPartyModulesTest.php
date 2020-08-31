@@ -55,11 +55,11 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
         $eventsForThirdPartyModulesMock = Bootstrap::getObjectManager()->get(EventsForThirdPartyModulesMock::class);
         $listenerMock = Bootstrap::getObjectManager()->get(ListenerMock::class);
         
-        /*$eventsForThirdPartyModulesMock->dispatchEvent("classDoesNotExist");
+        $eventsForThirdPartyModulesMock->dispatchEvent("classDoesNotExist");
         static::assertFalse($listenerMock->methodCalled);
         
         $eventsForThirdPartyModulesMock->dispatchEvent("moduleDoesNotEnabled");
-        static::assertFalse($listenerMock->methodCalled);*/
+        static::assertFalse($listenerMock->methodCalled);
         
         $eventsForThirdPartyModulesMock->dispatchEvent("shouldCall");
         static::assertTrue($listenerMock->methodCalled);

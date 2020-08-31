@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model;
 
+use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -28,7 +29,7 @@ class EventsForThirdPartyModules
                 [
                     "module" => "Mageplaza_ShippingRestriction",
                     "3pclasses" => ["Mageplaza\ShippingRestriction\Helper\Data"],
-                    "boltClass" => "Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction",
+                    "boltClass" => Mageplaza_ShippingRestriction::class,
                 ],
             ],
         ]
@@ -80,7 +81,7 @@ class EventsForThirdPartyModules
                     continue;
                 }
                 foreach ($listener["3pclasses"] as $className) {
-                    if (!$this->isClassExists($className)) {
+                    if (!$this->doesClassExist($className)) {
                         continue 2;
                     }
                 }
@@ -105,7 +106,7 @@ class EventsForThirdPartyModules
      * Check whether the class exists
      * @return bool
      */
-    private function isClassExists($className)
+    private function doesClassExist($className)
     {
         ///////////////////////////////////////////////////////////////
         // Due to a known bug https://github.com/magento/magento2/pull/21435,
