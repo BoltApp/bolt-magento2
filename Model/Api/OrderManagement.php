@@ -154,7 +154,6 @@ class OrderManagement implements OrderManagementInterface
         $currency = null,
         $status = null,
         $display_id = null, // <order increment ID>
-        $immutable_quote_id = null,
         $source_transaction_id = null,
         $source_transaction_reference = null
     ) {
@@ -173,15 +172,18 @@ class OrderManagement implements OrderManagementInterface
 
             $this->hookHelper->preProcessWebhook($storeId);
 
-            if ($type === 'pending') {
-                $this->orderHelper->saveCustomerCreditCard($immutable_quote_id, $reference, $storeId);
-            }
-
             if ($type == 'cart.create') {
                 $this->handleCartCreateApiCall();
-            } else {
-                $this->saveUpdateOrder($reference, $type, $display_id, $immutable_quote_id, $storeId);
+                $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+                return;
             }
+
+            if ($type === 'pending') {
+                $this->orderHelper->saveCustomerCreditCard($reference, $storeId);
+            }
+
+            $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
+
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
         } catch (BoltException $e) {
             $this->bugsnag->notifyException($e);
@@ -224,22 +226,12 @@ class OrderManagement implements OrderManagementInterface
      * @param $storeId
      * @throws \Bolt\Boltpay\Exception\BoltException
      */
-    private function saveUpdateOrder($reference, $type, $display_id, $immutable_quote_id, $storeId)
+    private function saveUpdateOrder($reference, $type, $display_id, $storeId)
     {
         if (empty($reference)) {
             throw new LocalizedException(
                 __('Missing required parameters.')
             );
-        }
-        if ($type === 'failed_payment' || $type === 'failed') {
-            $this->orderHelper->deleteOrderByIncrementId($display_id, $immutable_quote_id);
-            $this->setSuccessResponse('Order was deleted: ' . $display_id);
-            return;
-        }
-
-        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id, $immutable_quote_id)) {
-            $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
-            return;
         }
 
         if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
@@ -250,6 +242,23 @@ class OrderManagement implements OrderManagementInterface
         if ($type === HookHelper::HT_CREDIT && $this->decider->isIgnoreHookForCreditMemoCreationEnabled()) {
             $this->setSuccessResponse('Ignore the credit hook for the credit memo creation');
             return;
+        }
+
+        if ($type === 'failed_payment' || $type === 'failed' || $type === 'rejected_irreversible') {
+            $transaction = $this->orderHelper->fetchTransactionInfo($reference, $storeId);
+            // TODO(vitaliy): use helper in the next PR
+            $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
+
+            if ($type === 'failed_payment' || $type === 'failed') {
+                $this->orderHelper->deleteOrderByIncrementId($display_id, $immutableQuoteId);
+                $this->setSuccessResponse('Order was deleted: ' . $display_id);
+                return;
+            }
+
+            if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id, $immutableQuoteId)) {
+                $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
+                return;
+            }
         }
 
         list(, $order) = $this->orderHelper->saveUpdateOrder(
