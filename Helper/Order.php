@@ -835,7 +835,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->getExistingOrder($incrementId);
+        $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -1257,12 +1257,21 @@ class Order extends AbstractHelper
 
     /**
      * @param $orderIncrementId
-     * @return OrderModel|false
+     * @param null $quoteId
+     * @return false|OrderInterface|OrderModel
      */
-    public function getExistingOrder($orderIncrementId)
+    public function getExistingOrder($orderIncrementId, $quoteId = null)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+        $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+
+        // If we had timeout issue on the create_order hook and the third party change the order increment id
+        // then we use the parent quote id as a fallback to get existing order
+        if ($quoteId && (!$order || !$order->getId())) {
+            $order = $this->getOrderByQuoteId($quoteId);
+        }
+
+        return $order;
     }
 
     /**
