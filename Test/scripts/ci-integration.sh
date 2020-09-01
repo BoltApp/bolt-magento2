@@ -69,4 +69,5 @@ git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 npm install
 npm run build
-TEST_ENV=plugin_ci CUSTOM_TEST=true WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts
+sleep 40
+TEST_ENV=plugin_ci SCREENSHOT_DIR=/home/circleci/project/artifacts CUSTOM_TEST=true WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts
