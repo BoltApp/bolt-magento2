@@ -60,7 +60,6 @@ class DeleteOldWebHookLogsTest extends TestCase
     {
         $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
         $this->webhookLogFactory->expects(self::once())->method('deleteOldAttempts')->willReturnSelf();
-        ;
         $this->currentMock->execute();
     }
 }

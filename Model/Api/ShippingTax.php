@@ -33,7 +33,6 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 
 /**
  * Class ShippingTax

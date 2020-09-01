@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\ShippingMethods as BoltShippingMethods;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Magento\Framework\Phrase;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Hook as HookHelper;

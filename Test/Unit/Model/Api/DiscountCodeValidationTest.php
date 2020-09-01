@@ -26,8 +26,6 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebApiException;
-
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;

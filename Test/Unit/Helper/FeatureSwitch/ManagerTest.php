@@ -17,15 +17,12 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch;
 
-use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
-use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\App\State;
 use PHPUnit\Framework\TestCase;
 
 /**

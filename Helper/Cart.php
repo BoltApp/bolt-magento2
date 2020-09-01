@@ -61,7 +61,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 
 /**
  * Boltpay Cart helper
