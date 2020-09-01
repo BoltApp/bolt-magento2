@@ -225,6 +225,11 @@ class DiscountTest extends TestCase
     private $moduleGiftCardAccountMock;
     
     /**
+     * @var MockObject|ThirdPartyModuleFactory
+     */
+    private $moduleGiftCardAccountHelperMock;
+    
+    /**
      * @var CouponFactory
      */
     private $couponFactoryMock;
@@ -264,6 +269,7 @@ class DiscountTest extends TestCase
         $this->bssStoreCreditHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->bssStoreCreditCollection = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountMock = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->moduleGiftCardAccountHelperMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->quoteRepository = $this->createMock(CartRepositoryInterface::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
@@ -319,6 +325,7 @@ class DiscountTest extends TestCase
                     $this->bssStoreCreditHelper,
                     $this->bssStoreCreditCollection,
                     $this->moduleGiftCardAccountMock,
+                    $this->moduleGiftCardAccountHelperMock,
                     $this->quoteRepository,
                     $this->configHelper,
                     $this->bugsnag,
@@ -372,6 +379,7 @@ class DiscountTest extends TestCase
             $this->bssStoreCreditHelper,
             $this->bssStoreCreditCollection,
             $this->moduleGiftCardAccountMock,
+            $this->moduleGiftCardAccountHelperMock,
             $this->quoteRepository,
             $this->configHelper,
             $this->bugsnag,
@@ -418,6 +426,7 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->bssStoreCreditHelper, 'bssStoreCreditHelper', $instance);
         static::assertAttributeEquals($this->bssStoreCreditCollection, 'bssStoreCreditCollection', $instance);
         static::assertAttributeEquals($this->moduleGiftCardAccountMock, 'moduleGiftCardAccount', $instance);
+        static::assertAttributeEquals($this->moduleGiftCardAccountHelperMock, 'moduleGiftCardAccountHelper', $instance);
         static::assertAttributeEquals($this->quoteRepository, 'quoteRepository', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);

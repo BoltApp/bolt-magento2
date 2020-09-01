@@ -4227,12 +4227,12 @@ ORDER
         */
         public function collectDiscounts_withMagentoGiftcard_collectsMagentoGiftcard()
         {
-            $mock = $this->getCurrentMock();
+            $currentMock = $this->getCurrentMock();
             $shippingAddress = $this->getAddressMock();
             $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
             $quote->method('getBoltParentQuoteId')->willReturn(999999);
-            $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-            $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
+            $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
+            $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
             $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
             $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
             $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
