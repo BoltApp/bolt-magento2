@@ -150,10 +150,11 @@ class Shipping extends ShippingTax implements ShippingInterface
 
         $estimateAddress = $this->estimateAddressFactory->create();
 
-        $estimateAddress->setRegionId(@$addressData['region_id']);
-        $estimateAddress->setRegion(@$addressData['region']);
-        $estimateAddress->setCountryId(@$addressData['country_id']);
-        $estimateAddress->setPostcode(@$addressData['postcode']);
+        $estimateAddress->setRegionId($addressData['region_id'] ?? null);
+        $estimateAddress->setRegion($addressData['region'] ?? null);
+        $estimateAddress->setCountryId($addressData['country_id'] ?? null);
+        $estimateAddress->setPostcode($addressData['postcode'] ?? null);
+
         /**
          * @var ShippingMethodInterface[] $shippingOptionsArray
          */

@@ -311,7 +311,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
 
             // get the coupon code
-            $discount_code = @$request->discount_code ?: @$request->cart->discount_code;
+            $discount_code = $request->discount_code ?? $request->cart->discount_code ?? null;
             $couponCode = trim($discount_code);
 
             // Check if empty coupon was sent
@@ -398,23 +398,35 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             // Set the shipment if request payload has that info.
             if (isset($request->cart->shipments[0]->reference)) {
                 $shippingAddress = $immutableQuote->getShippingAddress();
-                $address = $request->cart->shipments[0]->shipping_address;
-                $address = $this->cartHelper->handleSpecialAddressCases($address);
-                $region = $this->regionModel->loadByName(@$address->region, @$address->country_code);
+                $address         = $request->cart->shipments[0]->shipping_address;
+                $address         = $this->cartHelper->handleSpecialAddressCases($address);
+                $regionName      = $address->region ?? null;
+                $countryCode     = $address->country_code ?? null;
+                $firstName       = $address->first_name ?? null;
+                $lastName        = $address->last_name ?? null;
+                $streetAddress1  = $address->street_address1 ?? null;
+                $streetAddress2  = $address->street_address2 ?? null;
+                $locality        = $address->locality ?? null;
+                $postalCode      = $address->postal_code ?? null;
+                $phoneNumber     = $address->phone_number ?? null;
+                $company         = $address->company ?? null;
+                $emailAddress    = $address->email_address ?? null;
+
+                $region = $this->regionModel->loadByName($regionName, $countryCode);
                 $addressData = [
-                            'firstname'    => @$address->first_name,
-                            'lastname'     => @$address->last_name,
-                            'street'       => trim(@$address->street_address1 . "\n" . @$address->street_address2),
-                            'city'         => @$address->locality,
-                            'country_id'   => @$address->country_code,
-                            'region'       => @$address->region,
-                            'postcode'     => @$address->postal_code,
-                            'telephone'    => @$address->phone_number,
+                            'firstname'    => $firstName,
+                            'lastname'     => $lastName,
+                            'street'       => trim($streetAddress1 . "\n" . $streetAddress2),
+                            'city'         => $locality,
+                            'country_id'   => $countryCode,
+                            'region'       => $regionName,
+                            'postcode'     => $postalCode,
+                            'telephone'    => $phoneNumber,
                             'region_id'    => $region ? $region->getId() : null,
-                            'company'      => @$address->company,
+                            'company'      => $company,
                         ];
-                if ($this->cartHelper->validateEmail(@$address->email_address)) {
-                    $addressData['email'] = $address->email_address;
+                if ($this->cartHelper->validateEmail($emailAddress)) {
+                    $addressData['email'] = $emailAddress;
                 }
 
                 $shippingAddress->setShouldIgnoreValidation(true);
