@@ -234,16 +234,6 @@ class OrderManagement implements OrderManagementInterface
             );
         }
 
-        if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
-            $this->setSuccessResponse('Ignore the capture hook for the invoice creation');
-            return;
-        }
-
-        if ($type === HookHelper::HT_CREDIT && $this->decider->isIgnoreHookForCreditMemoCreationEnabled()) {
-            $this->setSuccessResponse('Ignore the credit hook for the credit memo creation');
-            return;
-        }
-
         if ($type === 'failed_payment' || $type === 'failed' || $type === 'rejected_irreversible') {
             $transaction = $this->orderHelper->fetchTransactionInfo($reference, $storeId);
             // TODO(vitaliy): use helper in the next PR
@@ -259,6 +249,16 @@ class OrderManagement implements OrderManagementInterface
                 $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
                 return;
             }
+        }
+
+        if ($type === HookHelper::HT_CAPTURE && $this->decider->isIgnoreHookForInvoiceCreationEnabled()) {
+            $this->setSuccessResponse('Ignore the capture hook for the invoice creation');
+            return;
+        }
+
+        if ($type === HookHelper::HT_CREDIT && $this->decider->isIgnoreHookForCreditMemoCreationEnabled()) {
+            $this->setSuccessResponse('Ignore the credit hook for the credit memo creation');
+            return;
         }
 
         list(, $order) = $this->orderHelper->saveUpdateOrder(
