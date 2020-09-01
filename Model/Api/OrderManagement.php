@@ -138,6 +138,7 @@ class OrderManagement implements OrderManagementInterface
      * @param mixed $currency
      * @param mixed $status
      * @param mixed $display_id
+     * @param mixed $immutable_quote_id
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
      *
@@ -152,7 +153,8 @@ class OrderManagement implements OrderManagementInterface
         $amount = null,
         $currency = null,
         $status = null,
-        $display_id = null, // <order increment ID / immutable quote ID>
+        $display_id = null, // <order increment ID>
+        $immutable_quote_id = null,
         $source_transaction_id = null,
         $source_transaction_reference = null
     ) {
@@ -172,13 +174,13 @@ class OrderManagement implements OrderManagementInterface
             $this->hookHelper->preProcessWebhook($storeId);
 
             if ($type === 'pending') {
-                $this->orderHelper->saveCustomerCreditCard($display_id, $reference, $storeId);
+                $this->orderHelper->saveCustomerCreditCard($immutable_quote_id, $reference, $storeId);
             }
 
             if ($type == 'cart.create') {
                 $this->handleCartCreateApiCall();
             } else {
-                $this->saveUpdateOrder($reference, $type, $display_id, $storeId);
+                $this->saveUpdateOrder($reference, $type, $display_id, $immutable_quote_id, $storeId);
             }
             $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
         } catch (BoltException $e) {
@@ -218,10 +220,11 @@ class OrderManagement implements OrderManagementInterface
      * @param $reference
      * @param $type
      * @param $display_id
+     * @param $immutable_quote_id
      * @param $storeId
      * @throws \Bolt\Boltpay\Exception\BoltException
      */
-    private function saveUpdateOrder($reference, $type, $display_id, $storeId)
+    private function saveUpdateOrder($reference, $type, $display_id, $immutable_quote_id, $storeId)
     {
         if (empty($reference)) {
             throw new LocalizedException(
@@ -229,12 +232,12 @@ class OrderManagement implements OrderManagementInterface
             );
         }
         if ($type === 'failed_payment' || $type === 'failed') {
-            $this->orderHelper->deleteOrderByIncrementId($display_id);
+            $this->orderHelper->deleteOrderByIncrementId($display_id, $immutable_quote_id);
             $this->setSuccessResponse('Order was deleted: ' . $display_id);
             return;
         }
 
-        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id)) {
+        if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id, $immutable_quote_id)) {
             $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
             return;
         }

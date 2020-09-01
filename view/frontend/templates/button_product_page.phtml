@@ -181,6 +181,11 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
                 var quantity = Number($('#qty').val());
                 return quantity > 0 ? quantity : 1;
             };
+
+            var getGroupedProductChildQty = function(productId) {
+                return Number($('input[name="super_group['+productId+']').val());
+            };
+
             <?php if ($block->isSaveHintsInSections()): ?>
             var hintsSection = customerData.get('bolthints');
             var hints = hintsSection.data !== undefined ? hintsSection.data : {};
@@ -207,9 +212,9 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
             });
             <?php endif; ?>
 
-            var setupProductPage = function () {
+            var getItemsData = function () {
                 var options = {};
-                var compositeAttributes = ['super_attribute', 'options'];
+                var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
                 formData = $("#product_addtocart_form").serializeArray();
                 $.each( formData, function( key, input ) {
                     var name = input.name, value = input.value;
@@ -227,15 +232,38 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
-                var cart = {
-                    currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
-                    items: [{
+
+                var items = [];
+                <?php if ($block->isGrouped()): ?>
+                    <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
+                        var childProductQty = getGroupedProductChildQty(<?= /* @noEscape */ $childProduct->getId(); ?>);
+                        if (childProductQty > 0) {
+                            items.push({
+                                reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
+                                price: '<?php echo $childProduct->getPrice() ?>',
+                                name: '<?= /* @noEscape */ addcslashes($childProduct->getName(), "'"); ?>',
+                                quantity: childProductQty,
+                                options: JSON.stringify(options)
+                            });
+                        }
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    items.push({
                         reference: '<?= /* @noEscape */ $block->getProduct()->getId(); ?>',
                         price: itemPrice,
                         name: '<?= /* @noEscape */ addcslashes($block->getProduct()->getName(), "'"); ?>',
                         quantity: getQty(),
                         options: JSON.stringify(options)
-                    }]
+                    });
+                <?php endif; ?>
+
+                return items;
+            };
+
+            var setupProductPage = function () {
+                var cart = {
+                    currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
+                    items: getItemsData()
                 };
 
                 // if connect.js is not loaded postpone until it is
@@ -246,6 +274,7 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
 
             setupProductPage();
             $('#qty').on('change', setupProductPage);
+            $('.table-wrapper.grouped .input-text.qty').on('change', setupProductPage);
 
             // Object holding the base item price
             // and price deltas for every custom option selected.

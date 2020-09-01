@@ -15,7 +15,7 @@
         "magento/magento-coding-standard": "^5.0"
     },
     "type": "magento2-module",
-    "version": "2.12.0",
+    "version": "2.13.0",
     "license": "MIT",
     "autoload": {
         "files": [ "registration.php" ],

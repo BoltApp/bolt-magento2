@@ -113,14 +113,14 @@ class Definitions
     const M2_ALWAYS_PRESENT_CHECKOUT = "M2_ALWAYS_PRESENT_CHECKOUT";
 
     /**
-     * Use magento sections to save bolt cart in browser local storage
-     */
-    const M2_SAVE_CART_IN_SECTIONS = "M2_SAVE_CART_IN_SECTIONS";
-
-    /**
      * Disable pre-fill address from Bolt for the logged-in customer
      */
     const M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER = "M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER";
+
+    /**
+     * Handle virtual cart as physical. Workarond for known issue with taxable virtual products.
+     */
+    const M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL = "M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL";
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
@@ -208,28 +208,22 @@ class Definitions
             self::ROLLOUT_KEY         => 100
         ],
         self::M2_ALWAYS_PRESENT_CHECKOUT => [
-            self::NAME_KEY => self::M2_ALWAYS_PRESENT_CHECKOUT,
-            self::VAL_KEY => true,
-            self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY => 0
-        ],
-        self::M2_ALWAYS_PRESENT_CHECKOUT => [
             self::NAME_KEY            => self::M2_ALWAYS_PRESENT_CHECKOUT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ],
-        self::M2_SAVE_CART_IN_SECTIONS => [
-            self::NAME_KEY            => self::M2_SAVE_CART_IN_SECTIONS,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
         ],
         self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER =>  [
             self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
-        ]
+        ],
+        self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL => [
+            self::NAME_KEY            => self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
     ];
 }

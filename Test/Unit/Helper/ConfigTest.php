@@ -469,6 +469,98 @@ JSON;
     /**
      * @test
      */
+    public function getAccountUrl()
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
+            ->willReturn(true);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_ACCOUNT)
+            ->willReturn("");
+
+        $this->assertEquals(
+            BoltConfig::ACCOUNT_URL_SANDBOX,
+            $this->currentMock->getAccountUrl(),
+            'getAccountUrl() method: not working properly'
+        );
+    }
+
+    /**
+     * @test
+     * @dataProvider dataProvider_getAccountUrl_devModeSet
+     * @covers::getAccountUrl
+     *
+     * @param $validateCustomUrl
+     * @param $expected
+     */
+    public function getAccountUrl_devModeSet($validateCustomUrl, $expected)
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
+
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
+            ->willReturn(true);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('validateCustomUrl')
+            ->willReturn($validateCustomUrl);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_CUSTOM_ACCOUNT)
+            ->willReturn("https://account.bolt.me/");
+
+        $this->assertEquals(
+            $expected,
+            $this->currentMock->getAccountUrl(),
+            'getAccountUrl() method: not working properly'
+        );
+    }
+
+    public function dataProvider_getAccountUrl_devModeSet()
+    {
+        return [
+            [true, 'https://account.bolt.me/'],
+            [false,'https://account-sandbox.bolt.com'],
+        ];
+    }
+
+    /**
+     * @test
+     */
+    public function getAccountUrlInProductionMode()
+    {
+        $this->initCurrentMock(['isSandboxModeSet']);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('isSandboxModeSet')
+            ->willReturn(false);
+
+        $this->assertEquals(
+            BoltConfig::ACCOUNT_URL_PRODUCTION,
+            $this->currentMock->getAccountUrl(),
+            'getAccountUrl() method: not working properly'
+        );
+    }
+
+
+    /**
+     * @test
+     */
     public function getModuleVersion()
     {
         $moduleVersion = '1.0.10';
@@ -956,6 +1048,20 @@ JSON;
 
     /**
      * @test
+     * @dataProvider providerTrueAndFalse
+     * @param $booleanValue
+     */
+    public function isGuestCheckoutForDownloadableProductDisabled($booleanValue)
+    {
+        $this->scopeConfig->method('isSetFlag')
+            ->with('catalog/downloadable/disable_guest_checkout', 'store')
+            ->willReturn($booleanValue);
+        $result = $this->currentMock->isGuestCheckoutForDownloadableProductDisabled();
+        $this->assertEquals($booleanValue, $result);
+    }
+
+    /**
+     * @test
      */
     public function getAllConfigSettings()
     {
@@ -1275,7 +1381,8 @@ Room 4000',
             ['https://test.bolt.me', true],
             ['https://test.bolt.me/', true],
             ['https://api.test.bolt.me/', true],
-            ['https://test.bolt.com', false],
+            ['https://test.bolt.com', true],
+            ['https://connect-staging.bolt.com', true],
             ['https://test .bolt.com', false],
             ['https://testbolt.me', false],
             ['https://test.com', false],

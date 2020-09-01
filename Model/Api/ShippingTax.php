@@ -301,7 +301,7 @@ abstract class ShippingTax
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
             // get immutable quote id stored with transaction
-            list(, $immutableQuoteId) = explode(' / ', $cart['display_id']);
+            $immutableQuoteId = isset($cart['metadata']['immutable_quote_id']) ? $cart['metadata']['immutable_quote_id'] : '';
             // Load immutable quote from entity id
             $immutableQuote = $this->loadQuote($immutableQuoteId);
 

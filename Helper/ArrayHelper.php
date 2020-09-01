@@ -63,25 +63,4 @@ class ArrayHelper
 
         return $default;
     }
-
-    /**
-     * Get incrementId and quoteId from display_id.
-     *
-     * @param string $displayId
-     * @return array - [$incrementId, $quoteId]
-     */
-    public static function extractDataFromDisplayId($displayId)
-    {
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
-
-        if ($incrementId || $quoteId) {
-            return [$incrementId, $quoteId];
-        }
-
-        return [];
-    }
 }

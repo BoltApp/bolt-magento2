@@ -128,9 +128,9 @@ class Js extends Template
      */
     public function getAccountJsUrl()
     {
-        $cdnUrl = $this->configHelper->getCdnUrl();
+        $accountUrl = $this->configHelper->getAccountUrl();
 
-        return $cdnUrl . '/account.js';
+        return $accountUrl . '/account.js';
     }
 
     /**
@@ -458,11 +458,18 @@ class Js extends Template
      */
     public function getButtonCssStyles()
     {
-        $buttonColor = $this->configHelper->getButtonColor();
-        if (!$buttonColor) {
-            return "";
+        $style = "";
+
+        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        if ($toggleCheckout && $toggleCheckout->active) {
+            $style .= 'display:none;';
         }
-        return '--bolt-primary-action-color:' . $buttonColor;
+
+        $buttonColor = $this->configHelper->getButtonColor();
+        if ($buttonColor) {
+            $style .= '--bolt-primary-action-color:' . $buttonColor .';';
+        }
+        return $style;
     }
 
     /**
@@ -500,14 +507,6 @@ class Js extends Template
         }
         static::$blockAlreadyShown[$blockType] = true;
         return false;
-    }
-
-    /**
-     * Return if we should use JS code that uses bolt cart from magento sections
-     */
-    public function isSaveCartInSections()
-    {
-        return $this->featureSwitches->isSaveCartInSections();
     }
 
     /**

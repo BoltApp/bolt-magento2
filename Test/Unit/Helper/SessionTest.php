@@ -32,6 +32,7 @@ use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class SessionTest
@@ -86,6 +87,9 @@ class SessionTest extends TestCase
 
     /** @var FormKey */
     private $formKey;
+
+    /** @var EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
 
     /** @var ConfigHelper */
     private $configHelper;
@@ -149,6 +153,10 @@ class SessionTest extends TestCase
             ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID']
         );
 
+        $this->eventsForThirdPartyModules = $this->createMock(
+            EventsForThirdPartyModules::class
+        );
+
         $this->configHelper = $this->createPartialMock(
             ConfigHelper::class,
             ['isSessionEmulationEnabled']
@@ -170,7 +178,8 @@ class SessionTest extends TestCase
                     $this->cache,
                     $this->appState,
                     $this->formKey,
-                    $this->configHelper
+                    $this->configHelper,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->getMock();
@@ -193,7 +202,8 @@ class SessionTest extends TestCase
             $this->cache,
             $this->appState,
             $this->formKey,
-            $this->configHelper
+            $this->configHelper,
+            $this->eventsForThirdPartyModules
         );
         
         $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
@@ -202,6 +212,7 @@ class SessionTest extends TestCase
         $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         $this->assertAttributeEquals($this->cache, 'cache', $instance);
         $this->assertAttributeEquals($this->appState, 'appState', $instance);
+        $this->assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
         $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
         $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }

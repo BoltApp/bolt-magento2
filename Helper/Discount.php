@@ -30,6 +30,8 @@ use \Magento\Framework\Event\Observer;
 use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\SalesRule\Model\CouponFactory;
+use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Boltpay Discount helper class
@@ -50,6 +52,12 @@ class Discount extends AbstractHelper
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
     const BSS_STORE_CREDIT = 'bss_storecredit';
+    
+    // Bolt discount category
+    const BOLT_DISCOUNT_CATEGORY_STORE_CREDIT = 'store_credit';
+    const BOLT_DISCOUNT_CATEGORY_COUPON = 'coupon';
+    const BOLT_DISCOUNT_CATEGORY_GIFTCARD = 'giftcard';
+    const BOLT_DISCOUNT_CATEGORY_AUTO_PROMO = 'automatic_promotion';
 
     /**
      * @var ResourceConnection $resource
@@ -197,6 +205,21 @@ class Discount extends AbstractHelper
      * @var LogHelper
      */
     private $logHelper;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $moduleGiftCardAccount;
+    
+    /**
+     * @var CouponFactory
+     */
+    protected $couponFactory;
+    
+    /**
+     * @var RuleRepository
+     */
+    protected $ruleRepository;
 
     /**
      * Discount constructor.
@@ -225,12 +248,15 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
      * @param AppState                $appState
      * @param Session                 $sessionHelper
      * @param LogHelper               $logHelper
+     * @param CouponFactory           $couponFactory
+     * @param RuleRepository          $ruleRepository
      */
     public function __construct(
         Context $context,
@@ -257,12 +283,15 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
+        ThirdPartyModuleFactory $moduleGiftCardAccount,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         AppState $appState,
         Session $sessionHelper,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        CouponFactory $couponFactory,
+        RuleRepository $ruleRepository
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -294,6 +323,9 @@ class Discount extends AbstractHelper
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
+        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
+        $this->couponFactory = $couponFactory;
+        $this->ruleRepository = $ruleRepository;
     }
     
     /**
@@ -887,8 +919,8 @@ class Discount extends AbstractHelper
                 ->load($code, 'code');
 
             return $accountModel && $accountModel->getId()
-                   && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId)
-                   ? $accountModel : null;
+            && (! $accountModel->getStoreId() || $accountModel->getStoreId() == $storeId) && $accountModel->isActive()
+                ? $accountModel : null;
 
         } catch (\Exception $e) {
             return null;
@@ -978,7 +1010,15 @@ class Discount extends AbstractHelper
         try {
             $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
             $giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code] = 0;
+
+            /// On the latest MagePlaza version (1.0.6), they save the gift card to the quote
+            /// and then pull them out to collect the total
+            $quote->setMpGiftCards(json_encode([$code => 0]));
+
+            // On the older MagePlaza version (ex: 1.0.0, etc) they used the session to save the gift card
+            // and then pull them out to collect the total
             $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
+
             $this->updateTotals($quote);
             $totals = $quote->getTotals();
             return isset($totals[self::MAGEPLAZA_GIFTCARD]) ? $totals[self::MAGEPLAZA_GIFTCARD]->getValue() : 0;
@@ -1184,5 +1224,115 @@ class Discount extends AbstractHelper
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
+    }
+    
+    /**
+     * Check if Magento_GiftCardAccount module is available
+     *
+     * @return bool true if module is available, else false
+     */
+    public function isMagentoGiftCardAccountAvailable()
+    {
+        return $this->moduleGiftCardAccount->isAvailable();
+    }
+    
+    /**
+     * Load the Magento_GiftCardAccount by code
+     *
+     * @param string $code
+     * @param string|int $websiteId
+     *
+     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
+     */
+    public function loadMagentoGiftCardAccount($code, $websiteId)
+    {
+        if (!$this->isMagentoGiftCardAccountAvailable()) {
+            return null;
+        }
+
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
+        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
+        
+        if (!$giftCardAccountResource) {
+            return null;
+        }
+
+        $this->logHelper->addInfoLog('### GiftCard ###');
+        $this->logHelper->addInfoLog('# Code: ' . $code);
+
+        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
+        $giftCardsCollection = $giftCardAccountResource
+            ->addFieldToFilter('code', ['eq' => $code])
+            ->addWebsiteFilter([0, $websiteId]);
+
+        /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
+        $giftCard = $giftCardsCollection->getFirstItem();
+
+        $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
+
+        $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
+
+        return $result;
+    }
+    
+    /**
+     * Load the coupon data by code
+     *
+     * @param $couponCode
+     *
+     * @return Coupon
+     */
+    public function loadCouponCodeData($couponCode)
+    {
+        return $this->couponFactory->create()->loadByCode($couponCode);
+    }
+    
+    /**
+     * @param string $couponCode
+     * @return string
+     */
+    public function convertToBoltDiscountType($couponCode)
+    {
+        if ($couponCode == "") {
+            return "fixed_amount";
+        }
+        $coupon = $this->loadCouponCodeData($couponCode);
+        // Load the coupon discount rule
+        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+        $type = $rule->getSimpleAction();
+        
+        return $this->getBoltDiscountType($type);
+    }
+    
+    /**
+     * @param string $type
+     * @return string
+     */
+    public function getBoltDiscountType($type)
+    {
+        switch ($type) {
+            case "by_fixed":
+            case "cart_fixed":
+                return "fixed_amount";
+            case "by_percent":
+                return "percentage";
+            case "by_shipping":
+                return "shipping";
+        }
+
+        return "fixed_amount";
+    }
+    
+    /**
+     * Set applied coupon code
+     *
+     * @param Quote  $quote
+     * @param string $couponCode
+     * @throws \Exception
+     */
+    public function setCouponCode($quote, $couponCode)
+    {
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->setCouponCode($couponCode)->collectTotals()->save();
     }
 }

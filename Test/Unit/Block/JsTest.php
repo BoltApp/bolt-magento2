@@ -393,11 +393,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
         return [
             [
                 "sandboxMode"    => true,
-                'expectedResult' => HelperConfig::CDN_URL_SANDBOX . '/account.js',
+                'expectedResult' => HelperConfig::ACCOUNT_URL_SANDBOX . '/account.js',
             ],
             [
                 "sandboxMode"    => false,
-                'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/account.js',
+                'expectedResult' => HelperConfig::ACCOUNT_URL_PRODUCTION . '/account.js',
             ],
         ];
     }
@@ -1726,8 +1726,8 @@ JS;
             ['configButtonColor' => '', 'expectedResult' => ''],
             ['configButtonColor' => null, 'expectedResult' => ''],
             ['configButtonColor' => false, 'expectedResult' => ''],
-            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA'],
-            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated'],
+            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA;'],
+            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated;'],
         ];
     }
 
@@ -1899,39 +1899,6 @@ JS;
         return [
             ['blockType' => 'account', 'blockAlreadyShownProperty' => [], 'expectedResult' => false],
             ['blockType' => 'account', 'blockAlreadyShownProperty' => ['account' => true], 'expectedResult' => true],
-        ];
-    }
-
-    /**
-     * @test
-     * that isSaveCartInSections returns M2_SAVE_CART_IN_SECTIONS feature switch state from
-     * @see          \Bolt\Boltpay\Helper\FeatureSwitch\Decider::isSaveCartInSections
-     *
-     * @covers ::isSaveCartInSections
-     *
-     * @dataProvider isSaveCartInSections_withVariousSaveCartStatesProvider
-     *
-     * @param bool $isSaveCartInSections feature switch value
-     * @param bool $expectedResult of the tested method call
-     */
-    public function isSaveCartInSections_withVariousFetureSwitchStates_determinesIfCartSectionsShouldBeUsed(
-        $isSaveCartInSections,
-        $expectedResult
-    ) {
-        $this->deciderMock->expects(static::once())->method('isSaveCartInSections')->willReturn($isSaveCartInSections);
-        static::assertEquals($expectedResult, $this->currentMock->isSaveCartInSections());
-    }
-
-    /**
-     * Data provider for {@see isSaveCartInSections_withVariousFetureSwitchStates_determinesIfCartSectionsShouldBeUsed}
-     *
-     * @return array[] containing is save cart flag value and expected result of the tested method call
-     */
-    public function isSaveCartInSections_withVariousSaveCartStatesProvider()
-    {
-        return [
-            ['isSaveCartInSections' => true, 'expectedResult' => true],
-            ['isSaveCartInSections' => false, 'expectedResult' => false],
         ];
     }
 

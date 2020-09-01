@@ -29,6 +29,7 @@ use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Boltpay Session helper
@@ -67,15 +68,19 @@ class Session extends AbstractHelper
     /** @var ConfigHelper */
     private $configHelper;
 
+    /** @var EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
+
     /**
-     * @param Context           $context
-     * @param CheckoutSession   $checkoutSession
-     * @param CustomerSession   $customerSession
-     * @param LogHelper         $logHelper
-     * @param CacheInterface    $cache
-     * @param State             $appState
-     * @param FormKey           $formKey
-     * @param ConfigHelper      $configHelper
+     * @param Context                    $context
+     * @param CheckoutSession            $checkoutSession
+     * @param CustomerSession            $customerSession
+     * @param LogHelper                  $logHelper
+     * @param CacheInterface             $cache
+     * @param State                      $appState
+     * @param FormKey                    $formKey
+     * @param ConfigHelper               $configHelper
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         Context $context,
@@ -86,7 +91,8 @@ class Session extends AbstractHelper
         CacheInterface $cache,
         State $appState,
         FormKey $formKey,
-        ConfigHelper $configHelper
+        ConfigHelper $configHelper,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -97,6 +103,7 @@ class Session extends AbstractHelper
         $this->appState = $appState;
         $this->formKey = $formKey;
         $this->configHelper = $configHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -184,6 +191,7 @@ class Session extends AbstractHelper
             $this->customerSession->loginById($customerId);
         }
         $this->replaceQuote($quote);
+        $this->eventsForThirdPartyModules->dispatchEvent("afterLoadSession", $quote);
     }
 
     /**

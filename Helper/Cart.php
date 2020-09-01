@@ -684,12 +684,24 @@ class Cart extends AbstractHelper
     protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
     {
         $response = $boltOrder ? $boltOrder->getResponse() : null;
-        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        $immutableQuoteId = null;
+        // If response is null don't even bother trying, we return null
+        if ($response)
+        {
+            try
+            {
+                $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
+            }
+            catch (\Exception $e)
+            {
+                $this->bugsnag->notifyException($e);
+            }
+        }
         return $immutableQuoteId;
     }
 
     /**
-     * Check if the quote is noot deleted
+     * Check if the quote is not deleted
      *
      * @param int|string $quoteId
      * @return bool
@@ -833,7 +845,7 @@ class Cart extends AbstractHelper
      */
     public function doesOrderExist($cart, $quote)
     {
-        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $incrementId = $cart['display_id'];
         $order = $this->getOrderByIncrementId($incrementId);
 
         if ($quote && !$order) {
@@ -1275,7 +1287,16 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
                 $product['sku']          = trim($item->getSku());
-                $product['type']         = $item->getIsVirtual() ? self::ITEM_TYPE_DIGITAL : self::ITEM_TYPE_PHYSICAL;
+
+                // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
+                // It means we don't support taxes for virtual product and should handle all products as physical
+                // TODO: Remove the feature switch check when issue will be solved https://boltpay.atlassian.net/browse/DC-181
+                if ( $item->getIsVirtual() && !$this->deciderHelper->handleVirtualProductsAsPhysical()) {
+                    $product['type'] = self::ITEM_TYPE_DIGITAL;
+                } else {
+                    $product['type'] = self::ITEM_TYPE_PHYSICAL;
+                }
+
                 ///////////////////////////////////////////
                 // Get item attributes / product properties
                 ///////////////////////////////////////////
@@ -1403,7 +1424,7 @@ class Cart extends AbstractHelper
         $parentProduct = $item->getProduct();
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('simple_product');
-        $childProduct = $option ? $option->getProduct() : $item->getProduct();
+        $childProduct = $option ? $option->getProduct() : $parentProduct;
         $configValue = $this->configHelper->getScopeConfig()->getValue(
             'checkout/cart/configurable_product_image',
             ScopeInterface::SCOPE_STORE
@@ -1437,7 +1458,7 @@ class Cart extends AbstractHelper
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('product_type');
         $childProduct = $item->getProduct();
-        $groupedProduct = $option ? $option->getProduct() : $item->getProduct();
+        $groupedProduct = $option ? $option->getProduct() : $childProduct;
 
         $configValue = $this->configHelper->getScopeConfig()->getValue(
             'checkout/cart/grouped_product_image',
@@ -1583,8 +1604,11 @@ class Cart extends AbstractHelper
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
 
-        //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
-        $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
+        //Use display_id to hold and transmit, all the way back and forth, reserved order id
+        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+
+        //Store immutable quote id in metadata of cart
+        $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
@@ -1745,7 +1769,8 @@ class Cart extends AbstractHelper
         if ($totalAmount < 0) {
             $totalAmount = 0;
             foreach ($cart['discounts'] as &$discount) {
-                $discount['type'] = 'fixed_amount';
+                $discount['type']          = 'fixed_amount'; // For v1/merchant/order
+                $discount['discount_type'] = 'fixed_amount'; // For v1/discounts.code.apply and v2/cart.update
             }
         } else {
             // add the diff to first item total to pass bolt order create check
@@ -1833,9 +1858,12 @@ class Cart extends AbstractHelper
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
-                'description' => trim(__('Discount ') . $address->getDiscountDescription()),
-                'amount'      => $roundedAmount,
-                'reference'   => $address->getCouponCode()
+                'description'       => trim(__('Discount ') . $address->getDiscountDescription()),
+                'amount'            => $roundedAmount,
+                'reference'         => $address->getCouponCode(),
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
+                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1851,8 +1879,11 @@ class Cart extends AbstractHelper
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
-                    'description' => 'Store Credit',
-                    'amount'      => $roundedAmount,
+                    'description'       => 'Store Credit',
+                    'amount'            => $roundedAmount,
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1872,9 +1903,11 @@ class Cart extends AbstractHelper
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
-                        'description' => 'Store Credit',
-                        'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
+                        'description'       => 'Store Credit',
+                        'amount'            => $roundedAmount,
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1891,9 +1924,11 @@ class Cart extends AbstractHelper
             $amount = abs($this->discountHelper->getMirasvitStoreCreditAmount($quote, $paymentOnly));
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
-                'description' => 'Store Credit',
-                'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'description'       => 'Store Credit',
+                'amount'            => $roundedAmount,
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1908,9 +1943,11 @@ class Cart extends AbstractHelper
             $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
-                'description' => 'Store Credit',
-                'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'description'       => 'Store Credit',
+                'amount'            => $roundedAmount,
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1929,9 +1966,11 @@ class Cart extends AbstractHelper
             $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
             $discounts[] = [
-                'description' => 'Store Credit',
-                'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'description'       => 'Store Credit',
+                'amount'            => $roundedAmount,
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1947,8 +1986,11 @@ class Cart extends AbstractHelper
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
-                    'description' => 'Reward Points',
-                    'amount'      => $roundedAmount,
+                    'description'       => 'Reward Points',
+                    'amount'            => $roundedAmount,
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1968,9 +2010,11 @@ class Cart extends AbstractHelper
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
-                        'description' => 'Reward Points',
-                        'amount'      => $roundedAmount,
-                        'type'        => 'fixed_amount',
+                        'description'       => 'Reward Points',
+                        'amount'            => $roundedAmount,
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -1993,8 +2037,10 @@ class Cart extends AbstractHelper
                         ScopeInterface::SCOPE_STORE,
                         $quote->getStoreId()
                     ),
-                'amount'      => $roundedAmount,
-                'type'        => 'fixed_amount',
+                'amount'            => $roundedAmount,
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2007,6 +2053,9 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description) {
             if (@$totals[$discount] && $amount = @$totals[$discount]->getValue()) {
+                $roundedDiscountAmount = 0;
+                $discountAmount = 0;
+                
                 ///////////////////////////////////////////////////////////////////////////
                 // If Amasty gift cards can be used for shipping and tax (PayForEverything)
                 // accumulate all the applied gift cards balance as discount amount. If the
@@ -2015,53 +2064,107 @@ class Cart extends AbstractHelper
                 ///////////////////////////////////////////////////////////////////////////
                 if ($discount == Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
-                    $amount = $this->discountHelper->getAmastyGiftCardCodesCurrentValue($giftCardCodes);
-                }
-                ///////////////////////////////////////////////////////////////////////////
-
-                ///////////////////////////////////////////////////////////////////////////
-                // Change giftcards balance as discount amount to giftcard balances to the discount amount
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    foreach($giftCardCodes as $giftCardCode) {
+                        $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }
+                } elseif ($discount == Discount::MAGEPLAZA_GIFTCARD) {
+                    ///////////////////////////////////////////////////////////////////////////
+                    // Change giftcards balance as discount amount to giftcard balances to the discount amount
+                    ///////////////////////////////////////////////////////////////////////////
                     $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
-                    $amount = $this->discountHelper->getMageplazaGiftCardCodesCurrentValue($giftCardCodes);
-                }
-
-                ///////////////////////////////////////////////////////////////////////////
-                /// Was added a proper Unirgy_Giftcert Amount to the discount.
-                /// The GiftCert accumulate correct balance only after each collectTotals.
-                ///  The Unirgy_Giftcert add the only discount which covers only product price.
-                ///  We should get the whole balance at first of the Giftcert.
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    foreach($giftCardCodes as $giftCardCode) {
+                        $amount = abs($this->discountHelper->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => $description . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }
+                } elseif ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                    ///////////////////////////////////////////////////////////////////////////
+                    /// Was added a proper Unirgy_Giftcert Amount to the discount.
+                    /// The GiftCert accumulate correct balance only after each collectTotals.
+                    ///  The Unirgy_Giftcert add the only discount which covers only product price.
+                    ///  We should get the whole balance at first of the Giftcert.
+                    /////////////////////////////////////////////////////////////////////////// 
                     $gcCode = $quote->getData('giftcert_code');
                     $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
                     if ($giftCertBalance > 0) {
                         $amount = $giftCertBalance;
                     }
+                    $discountAmount = abs($amount);
+                    $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
+                    $discountItem = [
+                        'description'       => $description . @$totals[$discount]->getTitle(),
+                        'amount'            => $roundedDiscountAmount,
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                        'reference'         => $gcCode,
+                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    ];
+
+                    $discounts[] = $discountItem;
+                } elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
+                    $giftCardCodes = $this->discountHelper->getMagentoGiftCardAccountGiftCardData($quote);
+                    foreach($giftCardCodes as $giftCardCode => $giftCardAmount) {
+                        $amount = abs($giftCardAmount);
+                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                        $discountItem = [
+                            'description'       => 'Gift Card: ' . $giftCardCode,
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                            'reference'         => $giftCardCode,
+                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        ];
+                        $discountAmount += $amount;
+                        $roundedDiscountAmount += $roundedAmount;
+                        $discounts[] = $discountItem;
+                    }                    
+                } else {
+                    $discountAmount = abs($amount);
+                    $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
+    
+                    $discountItem = [
+                        'description' => $description . @$totals[$discount]->getTitle(),
+                        'amount'      => $roundedDiscountAmount,
+                    ];
+    
+                    if ($discount == Discount::AMASTY_STORECREDIT) {
+                        $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
+                        $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
+                        $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
+                    }
+
+                    $discounts[] = $discountItem;
                 }
-
-                $amount = abs($amount);
-                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-
-                $discountItem = [
-                    'description' => $description . @$totals[$discount]->getTitle(),
-                    'amount'      => $roundedAmount,
-                ];
-
-                if ($discount == Discount::AMASTY_STORECREDIT) {
-                    $discountItem['type'] = 'fixed_amount';
-                }
-
-                $discounts[] = $discountItem;
 
                 if ($discount == Discount::GIFT_VOUCHER) {
                     // the amount is added to adress discount included above, $address->getDiscountAmount(),
                     // by plugin implementation, subtract it so this discount is shown separately and totals are in sync
-                    $discounts[0]['amount'] -= $roundedAmount;
+                    $discounts[0]['amount'] -= $roundedDiscountAmount;
                 } else {
-                    $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-                    $totalAmount -= $roundedAmount;
+                    $diff -= CurrencyUtils::toMinorWithoutRounding($discountAmount, $currencyCode) - $roundedDiscountAmount;
+                    $totalAmount -= $roundedDiscountAmount;
                 }
             }
         }
@@ -2120,10 +2223,10 @@ class Cart extends AbstractHelper
         }
 
         // get configured Product model getters that can restrict Bolt checkout usage
-        $productRestrictionMethods = $toggleCheckout->productRestrictionMethods ?: [];
+        $productRestrictionMethods = isset($toggleCheckout->productRestrictionMethods) ? $toggleCheckout->productRestrictionMethods : [];
 
         // get configured Quote Item getters that can restrict Bolt checkout usage
-        $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods ?: [];
+        $itemRestrictionMethods = isset($toggleCheckout->itemRestrictionMethods) ? $toggleCheckout->itemRestrictionMethods : [];
 
         if (!$productRestrictionMethods && !$itemRestrictionMethods) {
             return false;
@@ -2176,36 +2279,37 @@ class Cart extends AbstractHelper
         }
 
         //add item to quote
-        $item = $request['items'][0];
-        $product = $this->productRepository->getbyId($item['reference']);
+        foreach ($request['items'] as $item) {
+            $product = $this->productRepository->getbyId($item['reference']);
 
-        $options = json_decode($item['options'], true);
-        if (isset($options['storeId']) && $options['storeId']) {
-            $quote->setStoreId($options['storeId']);
-        }
-        unset($options['storeId']);
-        unset($options['form_key']);
-        $options['qty'] = $item['quantity'];
-        $options = new \Magento\Framework\DataObject($options);
-
-        try {
-            $quote->addProduct($product, $options);
-        } catch (\Exception $e) {
-            $error_message = $e->getMessage();
-            if ($error_message == 'Product that you are trying to add is not available.') {
-                throw new BoltException(
-                    __($error_message),
-                    null,
-                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
-                );
-            } else {
-                throw new BoltException(
-                    __('The requested qty is not available'),
-                    null,
-                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
-                );
+            $options = json_decode($item['options'], true);
+            if (isset($options['storeId']) && $options['storeId']) {
+                $quote->setStoreId($options['storeId']);
             }
-        };
+            unset($options['storeId']);
+            unset($options['form_key']);
+            $options['qty'] = $item['quantity'];
+            $options = new \Magento\Framework\DataObject($options);
+
+            try {
+                $quote->addProduct($product, $options);
+            } catch (\Exception $e) {
+                $error_message = $e->getMessage();
+                if ($error_message == 'Product that you are trying to add is not available.') {
+                    throw new BoltException(
+                        __($error_message),
+                        null,
+                        BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                    );
+                } else {
+                    throw new BoltException(
+                        __('The requested qty is not available'),
+                        null,
+                        BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                    );
+                }
+            };
+        }
 
         $quote->reserveOrderId();
 
@@ -2286,7 +2390,7 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+            $cartReference = $response ? $responseData['cart']['metadata']['immutable_quote_id'] : '';
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',

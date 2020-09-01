@@ -27,15 +27,19 @@ use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use \Magento\Catalog\Model\ProductRepository;
 
 /**
  * Class JsTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
+ * @coversDefaultClass \Bolt\Boltpay\Block\JsProductPage
  */
 class JsProductPageTest extends \PHPUnit\Framework\TestCase
 {
     const CURRENCY_CODE = 'USD';
+    const PRODUCT_ID = '1';
 
     /**
      * @var HelperConfig
@@ -61,7 +65,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     protected $checkoutSessionMock;
 
     /**
-     * @var BlockJs
+     * @var BlockJsProductPage
      */
     protected $block;
 
@@ -77,16 +81,30 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     private $magentoQuote;
 
+    /**
+     * @var ProductView
+     */
     private $productViewMock;
 
-    private $scopeConfigMock;
-
+    /**
+     * @var Product
+     */
     private $product;
 
     /**
      * @var Decider
      */
     private $featureSwitches;
+
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
 
     /**
      * @inheritdoc
@@ -111,7 +129,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             'getPublishableKeyPayment', 'getPublishableKeyCheckout', 'getPublishableKeyBackOffice',
             'getReplaceSelectors', 'getGlobalCSS', 'getPrefetchShipping', 'getQuoteIsVirtual',
             'getTotalsChangeSelectors', 'getAdditionalCheckoutButtonClass', 'getAdditionalConfigString', 'getIsPreAuth',
-            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed'
+            'shouldTrackCheckoutFunnel', 'isPaymentOnlyCheckoutEnabled', 'isGuestCheckoutAllowed','isGuestCheckoutForDownloadableProductDisabled'
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -146,7 +164,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
         $this->product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId'])
+            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId','getId','getTypeInstance','getChildrenIds'])
             ->getMock();
 
         $this->productViewMock = $this->getMockBuilder(ProductView::class)
@@ -156,6 +174,11 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
         $this->productViewMock->method('getProduct')
             ->willReturn($this->product);
         $this->featureSwitches = $this->createMock(Decider::class);
+        $this->productRepository = $this->createPartialMock(ProductRepository::class, [
+            'getList',
+            'getItems'
+        ]);
+        $this->searchCriteriaBuilder = $this->createPartialMock(SearchCriteriaBuilder::class,['addFilter', 'create']);
 
         $this->block = $this->getMockBuilder(BlockJsProductPage::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
@@ -168,6 +191,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->bugsnagHelperMock,
                     $this->productViewMock,
                     $this->featureSwitches,
+                    $this->productRepository,
+                    $this->searchCriteriaBuilder
                 ]
             )
             ->getMock();
@@ -197,11 +222,11 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     {
         return [
             ['simple', true],
-            ['grouped', false],
+            ['grouped', true],
             ['configurable', true],
             ['virtual', true],
-            ['bundle', false],
-            ['downloadable', false]
+            ['bundle', true],
+            ['downloadable', true]
         ];
     }
 
@@ -230,21 +255,101 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
-     * @dataProvider providerIsGuestCheckoutAllowed
+     * @dataProvider providerIsDownloadable
+     *
+     * @param $typeId
+     * @param $expectedResult
      */
-    public function isGuestCheckoutAllowed($flag, $expected_result)
+    public function isDownloadable($typeId, $expectedResult)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isDownloadable();
+        $this->assertEquals($expectedResult, $result);
+    }
+
+    public function providerIsDownloadable()
+    {
+        return [
+            ['simple', false],
+            ['grouped', false],
+            ['configurable', false],
+            ['virtual', false],
+            ['bundle', false],
+            ['downloadable', true]
+        ];
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsGrouped
+     *
+     * @param $typeId
+     * @param $expectedResult
+     */
+    public function isGrouped($typeId, $expectedResult)
+    {
+        $this->product->method('getTypeId')->willReturn($typeId);
+        $result = $this->block->isGrouped();
+        $this->assertEquals($expectedResult, $result);
+    }
+
+    public function providerIsGrouped()
+    {
+        return [
+            ['simple', false],
+            ['grouped', true],
+            ['configurable', false],
+            ['virtual', false],
+            ['bundle', false],
+            ['downloadable', false]
+        ];
+    }
+
+    /**
+     * @covers ::getGroupedProductChildren
+     * @test
+     */
+    public function getGroupedProductChildren(){
+        $this->product->expects(self::once())->method('getTypeInstance')->willReturnSelf();
+        $this->product->expects(self::once())->method('getId')->willReturn(self::PRODUCT_ID);
+        $this->product->expects(self::once())->method('getChildrenIds')->with(self::PRODUCT_ID)->willReturn([2,3]);
+
+        $this->searchCriteriaBuilder->expects(self::once())->method('addFilter')->with('entity_id', [2,3], 'in')->willReturnSelf();
+        $searchCriteriaBuilderInterFace = $this->createMock(\Magento\Framework\Api\SearchCriteriaInterface::class);
+        $this->searchCriteriaBuilder->expects(self::once())->method('create')->willReturn($searchCriteriaBuilderInterFace);
+
+        $this->productRepository->expects(self::once())->method('getList')->with($searchCriteriaBuilderInterFace)->willReturnSelf();
+        $this->productRepository->expects(self::once())->method('getItems')->willReturn([$this->product]);
+
+        $this->assertEquals([$this->product], $this->block->getGroupedProductChildren());
+    }
+
+    /**
+     * @test
+     * @dataProvider providerIsGuestCheckoutAllowed
+     *
+     * @param $isGuestCheckoutAllowed
+     * @param $isGuestCheckoutForDownloadableProductDisabled
+     * @param $expectedResult
+     * @param $productType
+     */
+    public function isGuestCheckoutAllowed($isGuestCheckoutAllowed, $isGuestCheckoutForDownloadableProductDisabled, $expectedResult, $productType = 'simple')
     {
         $this->configHelper->method('isGuestCheckoutAllowed')
-            ->willReturn($flag);
+            ->willReturn($isGuestCheckoutAllowed);
+        $this->configHelper->method('isGuestCheckoutForDownloadableProductDisabled')
+            ->willReturn($isGuestCheckoutForDownloadableProductDisabled);
+        $this->product->method('getTypeId')->willReturn($productType);
         $result = $this->block->isGuestCheckoutAllowed();
-        $this->assertEquals($expected_result, $result);
+        $this->assertEquals($expectedResult, $result);
     }
 
     public function providerIsGuestCheckoutAllowed()
     {
         return [
-            [true,1],
-            [false,0],
+            [true, true, 0, 'downloadable'],
+            [true, true, 1],
+            [true, false, 1, 'configurable'],
         ];
     }
 
