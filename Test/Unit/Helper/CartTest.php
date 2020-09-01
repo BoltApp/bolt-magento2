@@ -4255,7 +4255,7 @@ ORDER
                 ->willReturn($giftCardCodes);
             $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(15);
             $quote->expects(static::any())->method('getTotals')
-                ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
+                ->willReturn([DiscountHelper::GIFT_CARD_ACCOUNT => $this->quoteAddressTotal]);
             $totalAmount = 10000; // cents
             $diff = 0;
             $paymentOnly = true;
