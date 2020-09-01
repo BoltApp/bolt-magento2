@@ -26,7 +26,7 @@ class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
             "listeners" => [
                 [
                     "module" => "Bolt_Boltpay",
-                    "3pclasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
+                    "checkClasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
                     "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
                 ],
             ],
@@ -35,7 +35,7 @@ class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
             "listeners" => [
                 [
                     "module" => "Bolt_AnotherName",
-                    "3pclasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
+                    "checkClasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
                     "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
                 ],
             ],
@@ -44,10 +44,21 @@ class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
             "listeners" => [
                 [
                     "module" => "Bolt_AnotherName",
-                    "3pclasses" => ["Bolt\Boltpay\Model\WrongClassName"],
+                    "checkClasses" => ["Bolt\Boltpay\Model\WrongClassName"],
                     "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
                 ],
             ],
         ]
+    ];
+    const filterListeners = [
+        "runFilter" => [
+            "listeners" => [
+                [
+                    "module" => "Bolt_Boltpay",
+                    "sendClasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
+                    "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
+                ],
+            ],
+        ],
     ];
 }

@@ -31,4 +31,9 @@ class ListenerMock {
     {
         $this->methodCalled = true;
     }
+
+    public function runFilter($result, $classInstance)
+    {
+        return ($classInstance instanceof \Bolt\Boltpay\Model\EventsForThirdPartyModules) && is_null($result);
+    }
 }

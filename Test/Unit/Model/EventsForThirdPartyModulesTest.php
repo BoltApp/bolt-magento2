@@ -27,23 +27,29 @@ use Magento\TestFramework\Helper\Bootstrap;
  */
 class EventsForThirdPartyModuleTest extends BoltTestCase
 {
- 
+
+    private function configCheckOneConst($eventsListeners)
+    {
+        foreach ($eventsListeners as $eventName => $eventListeners) {
+            foreach ($eventListeners["listeners"] as $listener) {
+                static::assertArrayHasKey('module', $listener);
+                $has3pClasses = (isset($listener["checkClasses"]) && is_array($listener["checkClasses"]) && count($listener["checkClasses"])>=1)
+                    || (isset($listener["sendClasses"]) && is_array($listener["sendClasses"]) && count($listener["sendClasses"])>=1);
+                static::assertTrue($has3pClasses);
+                $boltClass = Bootstrap::getObjectManager()->create($listener["boltClass"]);
+                static::assertTrue(method_exists($boltClass, $eventName));
+            }
+        }
+    }
+
     /**
      * @test
      */
     public function configTest()
     {
         $this->skipTestInUnitTestsFlow();
-        $eventsListeners = EventsForThirdPartyModules::eventListeners;
-        foreach ($eventsListeners as $eventName => $eventListeners) {
-            foreach ($eventListeners["listeners"] as $listener) {
-                static::assertArrayHasKey('module', $listener);
-                static::assertTrue(is_array($listener["3pclasses"]));
-                static::assertTrue(count($listener["3pclasses"])>=1);
-                $boltClass = Bootstrap::getObjectManager()->create($listener["boltClass"]);
-                static::assertTrue(method_exists($boltClass, $eventName));
-            }
-        }
+        $this->configCheckOneConst(EventsForThirdPartyModules::eventListeners);
+        $this->configCheckOneConst(EventsForThirdPartyModules::filterListeners);
     }
 
     /**
@@ -63,5 +69,18 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
         
         $eventsForThirdPartyModulesMock->dispatchEvent("shouldCall");
         static::assertTrue($listenerMock->methodCalled);
+    }
+
+    /**
+     * @test
+     */
+    public function runFilterTest()
+    {
+        $this->skipTestInUnitTestsFlow();
+        $eventsForThirdPartyModulesMock = Bootstrap::getObjectManager()->get(EventsForThirdPartyModulesMock::class);
+        $listenerMock = Bootstrap::getObjectManager()->get(ListenerMock::class);
+
+        $result = $eventsForThirdPartyModulesMock->runFilter("runFilter", null);
+        static::assertTrue($result);
     }
 }
