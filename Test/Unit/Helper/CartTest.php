@@ -87,6 +87,8 @@ use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\Serializer\Serialize;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
  */
@@ -291,6 +293,9 @@ class CartTest extends BoltTestCase
     /** @var MockObject|DeciderHelper */
     private $deciderHelper;
 
+    /** @var MockObject|EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
+
     /** array of objects we need to delete after test */
     private $objectsToClean;
 
@@ -430,6 +435,8 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->currentMock = $this->getCurrentMock(null);
 
         $this->objectsToClean = array();
@@ -482,7 +489,8 @@ class CartTest extends BoltTestCase
                     $this->coreRegistry,
                     $this->metricsClient,
                     $this->deciderHelper,
-                    $this->serialize
+                    $this->serialize,
+                    $this->eventsForThirdPartyModules,
                 ]
             )
             ->getMock();
@@ -686,7 +694,8 @@ class CartTest extends BoltTestCase
             $this->coreRegistry,
             $this->metricsClient,
             $this->deciderHelper,
-            $this->serialize
+            $this->serialize,
+            $this->eventsForThirdPartyModules
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
