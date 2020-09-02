@@ -805,8 +805,8 @@ class Order extends AbstractHelper
         $incrementId = isset($transaction->order->cart->display_id) ?
             $transaction->order->cart->display_id :
             null;
-        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
-            $transaction->order->cart->metadata->immutable_quote_id :
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
             null;
 
         if (!$quoteId) {
@@ -1557,8 +1557,8 @@ class Order extends AbstractHelper
         $incrementId = isset($transaction->order->cart->display_id) ?
             $transaction->order->cart->display_id :
             null;
-        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
-            $transaction->order->cart->metadata->immutable_quote_id :
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
             null;
 
         if (!$quoteId) {

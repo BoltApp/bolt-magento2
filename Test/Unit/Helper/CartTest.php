@@ -1354,22 +1354,19 @@ class CartTest extends BoltTestCase
      */
     public function getImmutableQuoteIdFromBoltOrder_always_returnsImmutableQuote()
     {
-        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
-        $responseMock->expects(static::once())->method('getResponse')->willReturn(
-            (object)[
-                'cart' => (object)[
-                    'metadata' => (object)[
-                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
-                    ]
+        $boltOrder = (object)[
+            'cart' => (object)[
+                'metadata' => (object)[
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
                 ]
             ]
-        );
+        ];
         static::assertEquals(
             self::IMMUTABLE_QUOTE_ID,
             TestHelper::invokeMethod(
                 $this->currentMock,
                 'getImmutableQuoteIdFromBoltOrder',
-                [$responseMock]
+                [$boltOrder]
             )
         );
     }
@@ -2472,7 +2469,7 @@ ORDER
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
             ->willReturn($boltOrder);
-        $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder)
+        $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn(true);
@@ -2507,7 +2504,7 @@ ORDER
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
             ->willReturn($boltOrder);
-        $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder)
+        $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)->willReturn(
             false

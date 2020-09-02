@@ -596,6 +596,7 @@ class ShippingTaxTest extends TestCase
             ->with(ShippingTax::METRICS_FAILURE_KEY, 1, ShippingTax::METRICS_LATENCY_KEY, $startTime);
 
         $this->expectErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->assertNull($this->currentMock->execute($cart, []));
     }
 
@@ -643,6 +644,8 @@ class ShippingTaxTest extends TestCase
             ->with(TestHelper::getProperty($this->currentMock, 'quote'));
         $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
             ->with($shipping_address)->willReturn($shipping_address);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $e = new BoltException(
             __('Invalid email: %1', 'invalid email'),
@@ -730,6 +733,8 @@ class ShippingTaxTest extends TestCase
             ->with($shipping_address)->willReturn($shipping_address);
         $this->cartHelper->expects(self::once())->method('validateEmail')
             ->with(self::EMAIL)->willReturn(true);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getResult')
             ->with($shipping_address, $shipping_option);
         $this->logHelper->expects(self::exactly(4))->method('addInfoLog');
