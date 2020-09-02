@@ -251,13 +251,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
                 // check if the cart / quote exists and it is active
                 try {
-                    // get parent quote id, order increment id and child quote id
-                    // the latter two are transmitted as display_id field, separated by " / "
-                    list($incrementId, $immutableQuoteId) = array_pad(
-                        explode(' / ', $displayId),
-                        2,
-                        null
-                    );
+                    $incrementId = $displayId;
+                    // TODO(vitaliy): use helper in the next PR
+                    $immutableQuoteId = @$requestArray['cart']['metadata']['immutable_quote_id'];
 
                     if (!$immutableQuoteId) {
                         $immutableQuoteId = $parentQuoteId;

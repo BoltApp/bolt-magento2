@@ -63,7 +63,7 @@ class DiscountCodeValidationTest extends TestCase
     const PARENT_QUOTE_ID = "1000";
     const IMMUTABLE_QUOTE_ID = "1001";
     const INCREMENT_ID = 100050001;
-    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const RULE_ID = 6;
     const COUPON_ID = 5;
     const WEBSITE_ID = 1;
@@ -703,7 +703,10 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID
+                'display_id'      => self::DISPLAY_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -738,7 +741,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -775,7 +781,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -818,7 +827,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -866,7 +878,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -917,7 +932,10 @@ class DiscountCodeValidationTest extends TestCase
             'discount_code' => self::COUPON_CODE,
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID
+                'display_id'      => self::DISPLAY_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
 
@@ -1017,7 +1035,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
         $result = [
@@ -1098,7 +1119,10 @@ class DiscountCodeValidationTest extends TestCase
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
                 'display_id'      => self::DISPLAY_ID,
-                'discount_code'   => self::COUPON_CODE
+                'discount_code'   => self::COUPON_CODE,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
             ]
         ];
         $this->request->expects(self::atLeastOnce())->method('getContent')
@@ -1149,7 +1173,15 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function validate_webhookPreProcessException()
     {
-        $requestContent = ['cart' => ['order_reference' => self::PARENT_QUOTE_ID, 'display_id' => self::DISPLAY_ID]];
+        $requestContent = [
+            'cart' => [
+                'order_reference' => self::PARENT_QUOTE_ID,
+                'display_id' => self::DISPLAY_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
+            ]
+        ];
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
@@ -1183,7 +1215,15 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function validate_validationException()
     {
-        $requestContent = ['cart' => ['order_reference' => self::PARENT_QUOTE_ID, 'display_id' => self::DISPLAY_ID]];
+        $requestContent = [
+            'cart' => [
+                'order_reference' => self::PARENT_QUOTE_ID,
+                'display_id' => self::DISPLAY_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ]
+            ]
+        ];
 
         $this->request->expects(self::atLeastOnce())->method('getContent')
             ->willReturn(json_encode($requestContent));
