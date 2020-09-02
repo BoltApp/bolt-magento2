@@ -23,6 +23,7 @@ use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Model\Api\UpdateCartCommon;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
+use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
@@ -34,7 +35,9 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
  * @package Bolt\Boltpay\Model\Api
  */
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
-{    
+{
+    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
+
     /**
      * @var CartDataInterfaceFactory
      */
@@ -69,6 +72,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         UpdateCartResultInterfaceFactory $updateCartResultFactory
     ) {
         parent::__construct($updateCartContext);
+        $this->UpdateDiscountTraitConstructor($updateCartContext);
         $this->cartDataFactory = $cartDataFactory;
         $this->updateCartResultFactory = $updateCartResultFactory;
         $this->sessionHelper = $updateCartContext->getSessionHelper();
@@ -123,7 +127,57 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $this->setShipment($cart['shipments'][0], $parentQuote);
             }
 
-            // TODO : add/remove coupon/giftcard 
+            // TODO : add/remove giftcard
+            // TODO : cache issue https://github.com/BoltApp/bolt-magento2/pull/833
+            
+            // Add discounts
+            if( !empty($discount_codes_to_add) ){
+                // Get the coupon code
+                $discount_code = $discount_codes_to_add[0];
+                $couponCode = trim($discount_code);
+                
+                $coupon = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+                if( ! $coupon ){
+                    // Already sent a response with error, so just return.
+                    return false;
+                }              
+
+                $result = $this->applyDiscount($couponCode, $coupon, $parentQuote);
+    
+                if (!$result) {
+                    // Already sent a response with error, so just return.
+                    return false;
+                }    
+            }
+  
+            // Remove discounts
+            if( !empty($discount_codes_to_remove) ){
+                $discount_code = $discount_codes_to_remove[0];
+                $couponCode = trim($discount_code);
+
+                $discounts = $this->getQuoteDiscounts($parentQuote);
+
+                if(empty($discounts)){
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_CODE_INVALID,
+                        'Coupon code does not exist!',
+                        422,
+                        $parentQuote
+                    );
+                    return false;
+                }
+                
+                $discounts = array_column($discounts, 'discount_category', 'reference');
+             
+                $result = $this->removeDiscount($couponCode, $discounts, $parentQuote, $websiteId, $storeId);
+                
+                if (!$result) {
+                    // Already sent a response with error, so just return.
+                    return false;
+                }
+            }
+
+            $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
            
             $result = $this->generateResult($immutableQuote);
                 
@@ -158,6 +212,18 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         }
 
         return true;
+    }
+    
+    /**
+     * @param Quote $quote
+     * @return array
+     * @throws \Exception
+     */
+    protected function getQuoteDiscounts($quote)
+    {
+        $is_has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
+        list ($discounts, ,) = $this->cartHelper->collectDiscounts(0, 0, $is_has_shipment, $quote);
+        return $discounts;
     }
     
     /**

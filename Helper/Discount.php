@@ -1351,12 +1351,18 @@ class Discount extends AbstractHelper
         if ($couponCode == "") {
             return "fixed_amount";
         }
-        $coupon = $this->loadCouponCodeData($couponCode);
-        // Load the coupon discount rule
-        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
-        $type = $rule->getSimpleAction();
         
-        return $this->getBoltDiscountType($type);
+        try {
+            $coupon = $this->loadCouponCodeData($couponCode);
+            // Load the coupon discount rule
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+            $type = $rule->getSimpleAction();
+            
+            return $this->getBoltDiscountType($type);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }        
     }
     
     /**
