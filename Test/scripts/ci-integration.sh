@@ -28,6 +28,7 @@ php bin/magento config:set payment/boltpay/active 1
 php bin/magento config:set payment/boltpay/api_key $BOLT_STAGING_MERCHANT_API_KEY
 php bin/magento config:set payment/boltpay/signing_secret $BOLT_STAGING_MERCHANT_SIGNING_SECRET
 php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGING_MERCHANT_PUBLISHABLE_KEY
+php bin/magento config:set payment/boltpay/product_page_checkout 1
 
 # install and run ngrok
 wget -O ngrok.zip https://bolt-devops.s3-us-west-2.amazonaws.com/testing/ngrok.zip
