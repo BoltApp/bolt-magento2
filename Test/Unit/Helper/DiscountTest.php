@@ -4401,7 +4401,7 @@ class DiscountTest extends TestCase
     public function convertToBoltDiscountType_withEmptyCouponCode_returnEmptyString()
     {
         $this->initCurrentMock();
-        static::assertEquals('', $this->currentMock->convertToBoltDiscountType(''));
+        static::assertEquals('fixed_amount', $this->currentMock->convertToBoltDiscountType(''));
     }
     
     /**
