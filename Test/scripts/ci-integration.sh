@@ -10,6 +10,7 @@ sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-net
 
 cd Test/scripts/
 gzip -d create_test_data.sql.gz
+ls 
 sudo mysql magento2 < create_test_data.sql
 cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
@@ -80,4 +81,4 @@ export SCREENSHOT_DIR=./screenshots
 export TEST_SUITE=checkout_magento2_front
 export WDIO_CONFIG=localChrome
 export TEST_ENV=plugin_local_staging
-run test-retry-runner
+npm run test-retry-runner
