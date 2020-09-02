@@ -805,8 +805,8 @@ class Order extends AbstractHelper
         $incrementId = isset($transaction->order->cart->display_id) ?
             $transaction->order->cart->display_id :
             null;
-        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
-            $transaction->order->cart->metadata->immutable_quote_id :
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
             null;
 
         if (!$quoteId) {
@@ -949,12 +949,11 @@ class Order extends AbstractHelper
     /**
      * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
      *
-     * @param $immutableQuoteId
      * @param $reference
      * @param $storeId
      * @return bool
      */
-    public function saveCustomerCreditCard($immutableQuoteId, $reference, $storeId)
+    public function saveCustomerCreditCard($reference, $storeId)
     {
         try {
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
@@ -962,6 +961,8 @@ class Order extends AbstractHelper
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
+                // TODO(vitaliy): use helper in the next PR
+                $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
 
@@ -1555,8 +1556,8 @@ class Order extends AbstractHelper
         $incrementId = isset($transaction->order->cart->display_id) ?
             $transaction->order->cart->display_id :
             null;
-        $quoteId = isset($transaction->order->cart->metadata->immutable_quote_id) ?
-            $transaction->order->cart->metadata->immutable_quote_id :
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
             null;
 
         if (!$quoteId) {

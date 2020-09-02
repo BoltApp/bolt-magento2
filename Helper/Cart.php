@@ -61,7 +61,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 
 /**
  * Boltpay Cart helper
@@ -678,24 +678,46 @@ class Cart extends AbstractHelper
     /**
      * Get the id of the quote Bolt order was created for
      *
-     * @param Response $boltOrder
+     * @param Object $response
      * @return mixed
      */
-    protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
+    public function getImmutableQuoteIdFromBoltOrder($response)
     {
-        $response = $boltOrder ? $boltOrder->getResponse() : null;
         $immutableQuoteId = null;
         // If response is null don't even bother trying, we return null
         if ($response)
         {
-            try
-            {
+            if (isset($response->cart->metadata->immutable_quote_id)) {
                 $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
+            } else {
+                // check if cart was created in plugin version before 2.14.0
+                list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
             }
-            catch (\Exception $e)
-            {
-                $this->bugsnag->notifyException($e);
-            }
+        }
+        if (!$immutableQuoteId) {
+            $this->bugsnag->notifyException(new \Exception("Bolt order doesn't contain immutable order id"));
+        }
+        return $immutableQuoteId;
+    }
+
+    /**
+     * Get the id of the quote Bolt order was created for
+     * The same as getImmutableQuoteIdFromBoltOrder but cart is in array format
+     *
+     * @param Response $boltOrder
+     * @return mixed
+     */
+    public function getImmutableQuoteIdFromBoltCartArray($boltCart)
+    {
+        $immutableQuoteId = null;
+        if (isset($boltCart['metadata']['immutable_quote_id'])) {
+            $immutableQuoteId = $boltCart['metadata']['immutable_quote_id'];
+        } else {
+            // check if cart was created in plugin version before 2.14.0
+            list(, $immutableQuoteId) = explode(' / ', $boltCart['display_id']);
+        }
+        if (!$immutableQuoteId) {
+            $this->bugsnag->notifyException(new \Exception("Bolt order doesn't contain immutable order id"));
         }
         return $immutableQuoteId;
     }
@@ -791,7 +813,7 @@ class Cart extends AbstractHelper
 
             if ($boltOrder = $this->loadFromCache($cacheIdentifier)) {
 
-                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder);
+                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder->getResponse());
 
                 // found in cache, check if the old immutable quote is still there
                 if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
@@ -1854,16 +1876,16 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if (( $amount = abs($address->getDiscountAmount()) ) || $address->getCouponCode()) {
+        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
             $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
             $discounts[] = [
                 'description'       => trim(__('Discount ') . $address->getDiscountDescription()),
                 'amount'            => $roundedAmount,
-                'reference'         => $address->getCouponCode(),
+                'reference'         => $quote->getCouponCode(),
                 'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->convertToBoltDiscountType($address->getCouponCode()), // For v1/merchant/order
+                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
+                'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
             ];
 
             $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2132,7 +2154,7 @@ class Cart extends AbstractHelper
                             'description'       => 'Gift Card: ' . $giftCardCode,
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
+                            'reference'         => (string)$giftCardCode,
                             'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                             'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
@@ -2390,7 +2412,11 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            $cartReference = $response ? $responseData['cart']['metadata']['immutable_quote_id'] : '';
+            if ($response) {
+                $cartReference = $this->getImmutableQuoteIdFromBoltCartArray($responseData['cart']);
+            } else {
+                $cartReference = '';
+            }
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',

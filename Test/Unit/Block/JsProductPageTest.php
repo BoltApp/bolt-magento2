@@ -25,7 +25,6 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use \Magento\Catalog\Model\ProductRepository;

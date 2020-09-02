@@ -138,6 +138,11 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     private $mirasvitStoreCreditCalculationConfig;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitStoreCreditCalculationConfigLegacy;
 
     /**
      * @var ThirdPartyModuleFactory
@@ -212,6 +217,11 @@ class Discount extends AbstractHelper
     protected $moduleGiftCardAccount;
     
     /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $moduleGiftCardAccountHelper;
+    
+    /**
      * @var CouponFactory
      */
     protected $couponFactory;
@@ -239,6 +249,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy
      * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
@@ -249,6 +260,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditHelper
      * @param ThirdPartyModuleFactory $bssStoreCreditCollection
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param ConfigHelper            $configHelper
      * @param Bugsnag                 $bugsnag
@@ -274,6 +286,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
+        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
@@ -284,6 +297,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $bssStoreCreditHelper,
         ThirdPartyModuleFactory $bssStoreCreditCollection,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
+        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -308,6 +322,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
+        $this->mirasvitStoreCreditCalculationConfigLegacy = $mirasvitStoreCreditCalculationConfigLegacy;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
@@ -324,6 +339,7 @@ class Discount extends AbstractHelper
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
         $this->moduleGiftCardAccount = $moduleGiftCardAccount;
+        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
     }
@@ -802,6 +818,12 @@ class Discount extends AbstractHelper
         if (!$paymentOnly) {
             /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
             $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
+            // For old version of Mirasvit Store Credit plugin,
+            // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+            // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
+            if (empty($miravitCalculationConfig)) {
+                $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfigLegacy->getInstance();
+            }
             if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;
             }
@@ -1276,6 +1298,39 @@ class Discount extends AbstractHelper
     }
     
     /**
+     * Get the Magento_GiftCardAccount Gift Card data from quote
+     *
+     * @param Quote $quote
+     *
+     * @return array
+     */
+    public function getMagentoGiftCardAccountGiftCardData($quote)
+    {
+        if (! $this->isMagentoGiftCardAccountAvailable()) {
+            return [];
+        }
+        /** @var \Magento\GiftCardAccount\Helper\Data */
+        $giftCardAccountHelper = $this->moduleGiftCardAccountHelper->getInstance();
+        
+        if (!$giftCardAccountHelper) {
+            return [];
+        }
+        
+        $cards = $giftCardAccountHelper->getCards($quote);
+
+        if (!$cards) {
+            $cards = [];
+        } else {
+            $cards = array_column($cards,
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::CODE' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
+                                );
+        }
+      
+        return $cards;
+    }
+    
+    /**
      * Load the coupon data by code
      *
      * @param $couponCode
@@ -1296,12 +1351,18 @@ class Discount extends AbstractHelper
         if ($couponCode == "") {
             return "fixed_amount";
         }
-        $coupon = $this->loadCouponCodeData($couponCode);
-        // Load the coupon discount rule
-        $rule = $this->ruleRepository->getById($coupon->getRuleId());        
-        $type = $rule->getSimpleAction();
         
-        return $this->getBoltDiscountType($type);
+        try {
+            $coupon = $this->loadCouponCodeData($couponCode);
+            // Load the coupon discount rule
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+            $type = $rule->getSimpleAction();
+            
+            return $this->getBoltDiscountType($type);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }        
     }
     
     /**

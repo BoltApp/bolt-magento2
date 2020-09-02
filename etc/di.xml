@@ -62,11 +62,23 @@
 
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
+    
+    <!-- For update cart endpoint -->
+    <preference for="Bolt\Boltpay\Api\UpdateCartInterface" type="Bolt\Boltpay\Model\Api\UpdateCart" />
+    <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
+    <preference for="Bolt\Boltpay\Api\Data\UpdateCartResultInterface" type="Bolt\Boltpay\Model\Api\Data\UpdateCartResult" />
 
     <virtualType name="boltMagentoGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
             <argument name="className" xsi:type="string">Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection</argument>
+        </arguments>
+    </virtualType>
+    
+    <virtualType name="boltMagentoGiftCardAccountHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
+            <argument name="className" xsi:type="string">Magento\GiftCardAccount\Helper\Data</argument>
         </arguments>
     </virtualType>
 
@@ -181,6 +193,13 @@
             <argument name="className" xsi:type="string">Mirasvit\Credit\Helper\Calculation</argument>
         </arguments>
     </virtualType>
+    <!-- For Mirasvit Store Credit Old versions -->
+    <virtualType name="boltMirasvitStoreCreditCalculationConfigLegacy" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
+            <argument name="className" xsi:type="string">Mirasvit\Credit\Service\Config\CalculationConfig</argument>
+        </arguments>
+    </virtualType>
 
     <virtualType name="boltMirasvitStoreCreditCalculationConfig" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -274,6 +293,7 @@
             <argument name="mirasvitStoreCreditHelper" xsi:type="object">boltMirasvitStoreCreditHelper</argument>
             <argument name="mirasvitStoreCreditCalculationHelper" xsi:type="object">boltMirasvitStoreCreditCalculationHelper</argument>
             <argument name="mirasvitStoreCreditCalculationConfig" xsi:type="object">boltMirasvitStoreCreditCalculationConfig</argument>
+            <argument name="mirasvitStoreCreditCalculationConfigLegacy" xsi:type="object">boltMirasvitStoreCreditCalculationConfigLegacy</argument>
             <argument name="mirasvitStoreCreditConfig" xsi:type="object">boltMirasvitStoreCreditConfig</argument>
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
@@ -284,18 +304,7 @@
             <argument name="bssStoreCreditCollection" xsi:type="object">boltBssStoreCreditCollection</argument>
             <argument name="bssStoreCreditHelper" xsi:type="object">boltBssStoreCreditHelper</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
-        </arguments>
-    </type>
-
-    <virtualType name="boltMageplazaShippingRestrictonHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mageplaza_ShippingRestriction</argument>
-            <argument name="className" xsi:type="string">Mageplaza\ShippingRestriction\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-    <type name="Bolt\Boltpay\Helper\Session">
-        <arguments>
-            <argument name="mageplazaShippingRestrictonHelper" xsi:type="object">boltMageplazaShippingRestrictonHelper</argument>
+            <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
         </arguments>
     </type>
 

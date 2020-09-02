@@ -44,6 +44,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
+use Magento\Framework\Serialize\Serializer\Serialize;
 
 /**
  * Class ShippingMethods
@@ -162,6 +163,11 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private $ruleFactory;
 
+    /**
+     * @var Serialize
+     */
+    private $serialize;
+
     protected $_oldShippingAddress;
 
     /**
@@ -187,6 +193,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param SessionHelper                   $sessionHelper
      * @param DiscountHelper                  $discountHelper
      * @param RuleFactory                     $ruleFactory
+     * @param Serialize                       $serialize
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -208,7 +215,8 @@ class ShippingMethods implements ShippingMethodsInterface
         PriceHelper $priceHelper,
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
-        RuleFactory $ruleFactory
+        RuleFactory $ruleFactory,
+        Serialize $serialize
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -230,6 +238,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->sessionHelper = $sessionHelper;
         $this->discountHelper = $discountHelper;
         $this->ruleFactory = $ruleFactory;
+        $this->serialize = $serialize;
     }
 
     /**
@@ -244,30 +253,49 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     protected function checkCartItems($cart)
     {
-        $cartItems = [];
+        $cartItems = ['quantity' => [], 'total' => []];
         foreach ($cart['items'] as $item) {
             $sku = $item['sku'];
-            @$cartItems['quantity'][$sku] += $item['quantity'];
-            @$cartItems['total'][$sku] += $item['total_amount'];
+            if (!isset($cartItems['quantity'][$sku])) {
+                $cartItems['quantity'][$sku] = 0;
+            }
+            if (!isset($cartItems['total'][$sku])) {
+                $cartItems['total'][$sku] = 0;
+            }
+            $cartItems['quantity'][$sku] += $item['quantity'];
+            $cartItems['total'][$sku] += $item['total_amount'];
         }
-        $quoteItems = [];
+
+        $quoteItems = ['quantity' => [], 'total' => []];
         foreach ($this->quote->getAllVisibleItems() as $item) {
             $sku = trim($item->getSku());
             $quantity = round($item->getQty());
             $unitPrice = round($item->getCalculationPrice(), 2);
-            @$quoteItems['quantity'][$sku] += $quantity;
-            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
+            if (!isset($quoteItems['quantity'][$sku])) {
+                $quoteItems['quantity'][$sku] = 0;
+            }
+            if (!isset($quoteItems['total'][$sku])) {
+                $quoteItems['total'][$sku] = 0;
+            }
+            $quoteItems['quantity'][$sku] += $quantity;
+            $quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
         $total = $this->quote->getTotals();
         if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
             $giftWrapping = $total['giftwrapping'];
             $sku = trim($giftWrapping->getCode());
-            @$quoteItems['quantity'][$sku] += 1;
-            @$quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
+            if (!isset($quoteItems['quantity'][$sku])) {
+                $quoteItems['quantity'][$sku] = 0;
+            }
+            if (!isset($quoteItems['total'][$sku])) {
+                $quoteItems['total'][$sku] = 0;
+            }
+            $quoteItems['quantity'][$sku] += 1;
+            $quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
         }
 
-        if (!$quoteItems) {
+        if (!$quoteItems['quantity'] && !$quoteItems['total']) {
             throw new BoltException(
                 __('The cart is empty. Please reload the page and checkout again.'),
                 null,
@@ -309,7 +337,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     private function validateAddressData($addressData)
     {
-        $this->validateEmail(@$addressData['email']);
+        $this->validateEmail($addressData['email']);
     }
 
     /**
@@ -346,7 +374,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $startTime = $this->metricsClient->getCurrentTime();
         try {
             // get immutable quote id stored with transaction
-            $quoteId = isset($cart['metadata']['immutable_quote_id']) ? $cart['metadata']['immutable_quote_id'] : '';
+            $quoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
 
             // Load quote from entity id
             $this->quote = $this->getQuoteById($quoteId);
@@ -489,6 +517,16 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         // Take into account external data applied to quote in thirt party modules
         $externalData = $this->applyExternalQuoteData($quote);
+        $regionName = $addressData['region'] ?? null;
+        $countryCode = $addressData['country_code'] ?? null;
+        $postalCode = $addressData['postal_code'] ?? null;
+        $locality = $addressData['locality'] ?? null;
+        $streetAddress1 = $addressData['street_address1'] ?? null;
+        $streetAddress2 = $addressData['street_address2'] ?? null;
+        $email = $addressData['email'] ?? null;
+        $company = $addressData['company'] ?? null;
+
+
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
         // applied rules (discounts), region and postal_code match then use the cached version.
@@ -499,8 +537,8 @@ class ShippingMethods implements ShippingMethodsInterface
             $parentQuoteId = $quote->getBoltParentQuoteId();
 
             $cacheIdentifier = $parentQuoteId.'_'.round($quote->getSubtotal()*100).'_'.
-                $addressData['country_code']. '_'.$addressData['region'].'_'.$addressData['postal_code']. '_'.
-                @$addressData['street_address1'].'_'.@$addressData['street_address2'].'_'.$externalData;
+                $countryCode. '_'.$regionName.'_'.$postalCode. '_'.
+                $streetAddress1.'_'.$streetAddress2.'_'.$externalData;
 
             // include products in cache key
             foreach ($quote->getAllVisibleItems() as $item) {
@@ -516,34 +554,37 @@ class ShippingMethods implements ShippingMethodsInterface
             // extend cache identifier with custom address fields
             $cacheIdentifier .= $this->cartHelper->convertCustomAddressFieldsToCacheIdentifier($quote);
 
-            $cacheIdentifier = md5($cacheIdentifier);
+            $cacheIdentifier = hash('md5', $cacheIdentifier);
 
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
-                return unserialize($serialized);
+
+                // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
+                // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
+                return unserialize($serialized); // @codingStandardsIgnoreLine
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
 
         // Get region id
-        $region = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
+        $region = $this->regionModel->loadByName($regionName, $countryCode);
 
         // Accept valid email or an empty variable (when run from prefetch controller)
-        if ($email = @$addressData['email']) {
+        if ($email) {
             $this->validateEmail($email);
         }
 
         // Reformat address data
         $addressData = [
-            'country_id' => @$addressData['country_code'],
-            'postcode'   => @$addressData['postal_code'],
-            'region'     => @$addressData['region'],
+            'country_id' => $countryCode,
+            'postcode'   => $postalCode,
+            'region'     => $regionName,
             'region_id'  => $region ? $region->getId() : null,
-            'city'       => @$addressData['locality'],
-            'street'     => trim(@$addressData['street_address1'] . "\n" . @$addressData['street_address2']),
+            'city'       => $locality,
+            'street'     => trim($streetAddress1 . "\n" . $streetAddress2),
             'email'      => $email,
-            'company'    => @$addressData['company'],
+            'company'    => $company
         ];
 
         foreach ($addressData as $key => $value) {
@@ -558,7 +599,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Cache the calculated result
         if ($prefetchShipping) {
-            $this->cache->save(serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
+            $this->cache->save($this->serialize->serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
         }
 
         return $shippingOptionsModel;

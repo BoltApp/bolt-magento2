@@ -33,7 +33,6 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 
 /**
  * Class ShippingTax
@@ -148,7 +147,7 @@ abstract class ShippingTax
      */
     public function validateAddressData($addressData)
     {
-        $this->validateEmail(@$addressData['email']);
+        $this->validateEmail($addressData['email']);
     }
 
     /**
@@ -225,24 +224,33 @@ abstract class ShippingTax
 
     public function reformatAddressData($addressData)
     {
+        $regionName = $addressData['region'] ?? null;
+        $countryCode = $addressData['country_code'] ?? null;
+        $postalCode = $addressData['postal_code'] ?? null;
+        $locality = $addressData['locality'] ?? null;
+        $streetAddress1 = $addressData['street_address1'] ?? null;
+        $streetAddress2 = $addressData['street_address2'] ?? null;
+        $email = $addressData['email'] ?? null;
+        $company = $addressData['company'] ?? null;
+
         // Get region id
-        $region = $this->regionModel->loadByName(@$addressData['region'], @$addressData['country_code']);
+        $region = $this->regionModel->loadByName($regionName, $countryCode);
 
         // Accept valid email or an empty variable (when run from prefetch controller)
-        if ($email = @$addressData['email']) {
+        if ($email) {
             $this->validateEmail($email);
         }
 
         // Reformat address data
         $addressData = [
-            'country_id' => @$addressData['country_code'],
-            'postcode'   => @$addressData['postal_code'],
-            'region'     => @$addressData['region'],
+            'country_id' => $countryCode,
+            'postcode'   => $postalCode,
+            'region'     => $regionName,
             'region_id'  => $region ? $region->getId() : null,
-            'city'       => @$addressData['locality'],
-            'street'     => trim(@$addressData['street_address1'] . "\n" . @$addressData['street_address2']),
+            'city'       => $locality,
+            'street'     => trim($streetAddress1 . "\n" . $streetAddress2),
             'email'      => $email,
-            'company'    => @$addressData['company'],
+            'company'    => $company
         ];
 
         foreach ($addressData as $key => $value) {
@@ -301,7 +309,7 @@ abstract class ShippingTax
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
             // get immutable quote id stored with transaction
-            $immutableQuoteId = isset($cart['metadata']['immutable_quote_id']) ? $cart['metadata']['immutable_quote_id'] : '';
+            $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
             // Load immutable quote from entity id
             $immutableQuote = $this->loadQuote($immutableQuoteId);
 

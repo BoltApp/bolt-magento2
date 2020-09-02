@@ -25,8 +25,6 @@ use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Checkout\Api\TotalsInformationManagementInterface;
 use Magento\Checkout\Api\Data\TotalsInformationInterface;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use Bolt\Boltpay\Model\Api\ShippingTax;
 use Magento\Quote\Api\Data\TotalsInterface;
 
 /**
@@ -142,9 +140,9 @@ class Tax extends ShippingTax implements TaxInterface
     {
         $shippingOption = $this->shippingOptionFactory->create();
         $shippingOption->setTaxAmount(CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode));
-        $shippingOption->setService(@$shipping_option['service']);
+        $shippingOption->setService($shipping_option['service'] ?? null);
         $shippingOption->setCost(CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode));
-        $shippingOption->setReference(@$shipping_option['reference']);
+        $shippingOption->setReference($shipping_option['reference'] ?? null);
 
         return $shippingOption;
     }
