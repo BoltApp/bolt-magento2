@@ -1012,15 +1012,14 @@ class Order extends AbstractHelper
      */
     public function dispatchPostCheckoutEvents($order, $quote)
     {
-        // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
-        // as a flag to determine if the events were dispatched
-        if (! $quote->getBoltReservedOrderId()) {
+        //Add a flag instead of using reserved order ID
+        if ($quote->getBoltDispatched()) {
             return; // already dispatched
         }
 
         $this->applyExternalQuoteData($quote);
 
-        // do not verify inventory, it is already reserved
+
         $quote->setInventoryProcessed(true);
 
         if ($order->getAppliedRuleIds() === null) {
@@ -1037,7 +1036,7 @@ class Order extends AbstractHelper
         );
 
         // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
-        $quote->setBoltReservedOrderId(null);
+        $quote->setBoltDispatched(true);
         $this->cartHelper->quoteResourceSave($quote);
     }
 
@@ -1054,7 +1053,7 @@ class Order extends AbstractHelper
     public function processExistingOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
-        if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+        if ($order = $this->getExistingOrder(null, $quote->getId())) {
 
             if ($order->isCanceled()) {
                 throw new BoltException(
