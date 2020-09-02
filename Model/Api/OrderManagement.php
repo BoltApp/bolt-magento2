@@ -260,7 +260,9 @@ class OrderManagement implements OrderManagementInterface
             $this->request->getBodyParams()
         );
 
+
         $orderData = json_encode($order->getData());
+        $this->logHelper->addInfoLog("order created. Order data: $orderData");
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',

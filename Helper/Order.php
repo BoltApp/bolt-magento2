@@ -548,13 +548,13 @@ class Order extends AbstractHelper
      * Check if the order has been created in the meanwhile
      * from another request, hook vs. frontend on a slow network / server
      *
-     * @param int|string $incrementId
+     * @param int|string $parentQuoteId
      * @return bool|OrderModel
      */
-    private function checkExistingOrder($incrementId)
+    private function checkExistingOrder($parentQuoteId)
     {
         /** @var OrderModel $order */
-        if ($order = $this->getExistingOrder($incrementId)) {
+        if ($order = $this->getExistingOrder(null, $parentQuoteId)) {
             $this->bugsnag->notifyError(
                 'Duplicate Order Creation Attempt',
                 null
@@ -581,14 +581,14 @@ class Order extends AbstractHelper
         /** @var Quote $quote */
         $quote = $this->prepareQuote($immutableQuote, $transaction);
 
-        if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+        if ($order = $this->checkExistingOrder($quote->getId())) {
             return $order;
         }
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
         } catch (\Exception $e) {
-            if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+            if ($order = $this->checkExistingOrder($quote->getId())) {
                 return $order;
             }
             throw $e;
@@ -1341,7 +1341,7 @@ class Order extends AbstractHelper
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
 
-        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
+//        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
 
         $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
