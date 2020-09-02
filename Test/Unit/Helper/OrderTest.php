@@ -4595,7 +4595,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4630,6 +4630,8 @@ class OrderTest extends TestCase
         $transactionData->from_consumer->id = 1;
         $transactionData->from_credit_card->id = 1;
         $transactionData->order->cart->order_reference = self::QUOTE_ID;
+        $transactionData->order->cart->metadata = new \stdClass();
+        $transactionData->order->cart->metadata->immutable_quote_id = self::IMMUTABLE_QUOTE_ID;
 
         return $transactionData;
     }
@@ -4656,7 +4658,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
     }
 
@@ -4684,7 +4686,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::IMMUTABLE_QUOTE_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertTrue($result);
     }
 
@@ -4706,7 +4708,7 @@ class OrderTest extends TestCase
             ->willReturnOnConsecutiveCalls(null, null);
 
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::IMMUTABLE_QUOTE_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4732,7 +4734,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willThrowException(new \Exception());
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4759,7 +4761,7 @@ class OrderTest extends TestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(self::DISPLAY_ID, OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
         $this->assertFalse($result);
     }
 

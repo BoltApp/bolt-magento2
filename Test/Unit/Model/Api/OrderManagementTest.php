@@ -126,7 +126,8 @@ class OrderManagementTest extends TestCase
                 'getStoreIdByQuoteId',
                 'tryDeclinedPaymentCancelation',
                 'deleteOrderByIncrementId',
-                'saveCustomerCreditCard'
+                'saveCustomerCreditCard',
+                'fetchTransactionInfo'
             ]
         );
         $this->logHelper = $this->createMock(LogHelper::class);
@@ -218,6 +219,16 @@ class OrderManagementTest extends TestCase
         );
     }
 
+    private function mockTransactionData()
+    {
+        $transactionData = new \stdClass();
+        $transactionData->order = new \stdClass();
+        $transactionData->order->cart = new \stdClass();
+        $transactionData->order->cart->metadata = new \stdClass();
+        $transactionData->order->cart->metadata->immutable_quote_id = self::QUOTE_ID;
+        return $transactionData;
+    }
+
     /**
      * @test
      * @depends manage_common
@@ -230,6 +241,8 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::once())->method('tryDeclinedPaymentCancelation')
             ->willReturn(true);
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
@@ -260,6 +273,8 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::once())->method('tryDeclinedPaymentCancelation')
             ->willReturn(false);
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
             ->willReturn(self::REQUEST_HEADER_TRACE_ID);
         $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
@@ -309,6 +324,8 @@ class OrderManagementTest extends TestCase
             ->with(self::DISPLAY_ID)->willThrowException(
                 $exception
             );
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
@@ -345,6 +362,8 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
             ->with(self::DISPLAY_ID);
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
@@ -389,6 +408,8 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
             ->with(self::DISPLAY_ID)->willThrowException($exception);
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'failure',
@@ -424,6 +445,8 @@ class OrderManagementTest extends TestCase
 
         $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
             ->with(self::DISPLAY_ID);
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+            ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
@@ -824,7 +847,7 @@ class OrderManagementTest extends TestCase
     {
         $type = "pending";
         $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
-            ->with(self::QUOTE_ID, self::REFERENCE, self::STORE_ID)->willReturnSelf();
+            ->with(self::REFERENCE, self::STORE_ID)->willReturnSelf();
 
         $this->currentMock->manage(
             self::ID,
