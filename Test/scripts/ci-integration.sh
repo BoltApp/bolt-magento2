@@ -8,6 +8,10 @@ trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit
 
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
+cd Test/scripts/
+gzip -d create_test_data.sql.gz
+sudo mysql magento2 < create_test_data.sql
+cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
 
@@ -69,8 +73,11 @@ cd project
 git clone --depth 1 --branch m2-rc-tests git@github.com:BoltApp/integration-tests.git
 cd integration-tests
 mkdir test-results
-JUNIT_REPORT_DIR=./test-results
-SCREENSHOT_DIR=./screenshots
 npm install
 npm run build
-TEST_ENV=plugin_ci RETRY_COUNT=1 CUSTOM_TEST=true WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts
+export JUNIT_REPORT_DIR=./test-results
+export SCREENSHOT_DIR=./screenshots
+export TEST_SUITE=checkout_magento2_front
+export WDIO_CONFIG=localChrome
+export TEST_ENV=plugin_local_staging
+run test-retry-runner
