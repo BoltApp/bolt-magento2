@@ -75,4 +75,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!--Update Cart Endpoint-->
+    <route url="/V1/bolt/boltpay/cart/update" method="POST">
+        <service class="Bolt\Boltpay\Api\UpdateCartInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>

@@ -59,4 +59,32 @@ class ErrorResponse
 
         return json_encode($errResponse, JSON_FORCE_OBJECT);
     }
+    
+    /**
+     *
+     * For the error response of UpdateCart api hook
+     *
+     * @param       $errCode
+     * @param       $message
+     * @param array $additionalData
+     * @return string
+     */
+    public function prepareUpdateCartErrorMessage($errCode, $message, $additionalData = [])
+    {        
+        $errResponse = [
+            'status' => 'failure',
+            'errors' => [
+                [
+                    'code' => $errCode,
+                    'message' => $message,
+                ]
+            ],
+        ];
+
+        if (count($additionalData)) {
+            $errResponse += $additionalData;
+        }
+
+        return json_encode($errResponse);
+    }
 }

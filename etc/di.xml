@@ -62,6 +62,11 @@
 
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
+    
+    <!-- For update cart endpoint -->
+    <preference for="Bolt\Boltpay\Api\UpdateCartInterface" type="Bolt\Boltpay\Model\Api\UpdateCart" />
+    <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
+    <preference for="Bolt\Boltpay\Api\Data\UpdateCartResultInterface" type="Bolt\Boltpay\Model\Api\Data\UpdateCartResult" />
 
     <virtualType name="boltMagentoGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
