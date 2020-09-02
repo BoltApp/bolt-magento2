@@ -37,7 +37,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
     use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
-    
+
     /**
      * @var CartDataInterfaceFactory
      */
@@ -126,6 +126,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
                 $this->setShipment($cart['shipments'][0], $parentQuote);
             }
+
             // TODO : add/remove giftcard
             // TODO : cache issue https://github.com/BoltApp/bolt-magento2/pull/833
             

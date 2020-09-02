@@ -207,6 +207,11 @@ class Config extends AbstractHelper
     const XML_PATH_CUSTOM_CDN = 'payment/boltpay/custom_cdn';
 
     /**
+     * Path for custom account url, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_ACCOUNT = 'payment/boltpay/custom_account';
+
+    /**
      * Bolt sandbox url
      */
     const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
@@ -220,6 +225,16 @@ class Config extends AbstractHelper
      * Bolt sandbox cdn url
      */
     const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+
+    /**
+     * Bolt production cdn url
+     */
+    const ACCOUNT_URL_PRODUCTION = 'https://account.bolt.com';
+
+    /**
+     * Bolt sandbox cdn url
+     */
+    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.bolt.com';
 
     /**
      * Bolt production cdn url
@@ -362,6 +377,9 @@ class Config extends AbstractHelper
         \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
         \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
+        \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE,
+        \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
+        \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
     ];
     /**
      * @var ResourceInterface
@@ -458,6 +476,23 @@ class Config extends AbstractHelper
             return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         } else {
             return self::CDN_URL_PRODUCTION;
+        }
+    }
+
+    /**
+     * Get Bolt Account base URL
+     *
+     * @param int|string $storeId
+     *
+     * @return  string
+     */
+    public function getAccountUrl($storeId = null)
+    {
+        //Check for sandbox mode
+        if ($this->isSandboxModeSet($storeId)) {
+            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
+        } else {
+            return self::ACCOUNT_URL_PRODUCTION;
         }
     }
 
@@ -906,7 +941,7 @@ class Config extends AbstractHelper
     {
         return (
             $url
-            && preg_match("/^https?:\/\/([a-zA-Z0-9]+\.)+bolt.me\/?$/", $url)
+            && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url)
         );
     }
 
@@ -1534,6 +1569,18 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
+    }
+
+    /**
+     * Check if guest checkout for downloadable product is disabled
+     * @return bool
+     */
+    public function isGuestCheckoutForDownloadableProductDisabled()
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            \Magento\Downloadable\Observer\IsAllowedGuestCheckoutObserver::XML_PATH_DISABLE_GUEST_CHECKOUT,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }

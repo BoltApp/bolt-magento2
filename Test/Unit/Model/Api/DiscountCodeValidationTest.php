@@ -26,8 +26,6 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebApiException;
-
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
@@ -1998,7 +1996,8 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function loadGiftCertData()
     {
-        $giftCertRepository = $this->getMockBuilder('\Unirgy\Giftcert\Model\GiftcertRepository')
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();
@@ -2025,7 +2024,8 @@ class DiscountCodeValidationTest extends TestCase
      */
     public function loadGiftCertData_noGiftCert()
     {
-        $giftCertRepository = $this->getMockBuilder('\Unirgy\Giftcert\Model\GiftcertRepository')
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();

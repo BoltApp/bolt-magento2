@@ -393,11 +393,11 @@ class JsTest extends \PHPUnit\Framework\TestCase
         return [
             [
                 "sandboxMode"    => true,
-                'expectedResult' => HelperConfig::CDN_URL_SANDBOX . '/account.js',
+                'expectedResult' => HelperConfig::ACCOUNT_URL_SANDBOX . '/account.js',
             ],
             [
                 "sandboxMode"    => false,
-                'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/account.js',
+                'expectedResult' => HelperConfig::ACCOUNT_URL_PRODUCTION . '/account.js',
             ],
         ];
     }
@@ -1726,8 +1726,8 @@ JS;
             ['configButtonColor' => '', 'expectedResult' => ''],
             ['configButtonColor' => null, 'expectedResult' => ''],
             ['configButtonColor' => false, 'expectedResult' => ''],
-            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA'],
-            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated'],
+            ['configButtonColor' => '#AA00AA', 'expectedResult' => '--bolt-primary-action-color:#AA00AA;'],
+            ['configButtonColor' => 'not validated', 'expectedResult' => '--bolt-primary-action-color:not validated;'],
         ];
     }
 

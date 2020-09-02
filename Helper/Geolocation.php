@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\HTTP\ZendClientFactory;
 use Magento\Framework\App\CacheInterface;
 

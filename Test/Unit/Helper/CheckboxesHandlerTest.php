@@ -19,8 +19,6 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\CheckboxesHandler;
 use PHPUnit\Framework\TestCase;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Bolt\Boltpay\Helper\Bugsnag;

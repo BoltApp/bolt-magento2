@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\FeatureSwitchesHookInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -27,7 +26,6 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Exception;
-use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 

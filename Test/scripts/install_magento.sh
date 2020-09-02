@@ -30,6 +30,11 @@ while ! mysql -uroot -h 127.0.0.1 -e "SELECT 1" >/dev/null 2>&1; do
     sleep 1
 done
 
+# TODO(vitaliy): Investigate the root of the issue. See https://github.com/magento/magento2/issues/24650
+if [ -f "vendor/magento/module-inventory-catalog/etc/communication.xml" ]; then
+    sed -i 's/is_synchronous="false"//g' vendor/magento/module-inventory-catalog/etc/communication.xml
+fi
+
 echo "Installing Magento..."
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
 php bin/magento setup:install -q \
@@ -46,6 +51,7 @@ php bin/magento setup:install -q \
     --admin-user="admin" \
     --use-rewrites=1 \
     --admin-use-security-key=0 \
-    --admin-password="123123q"
+    --admin-password="123123q" \
+    --magento-init-params="MAGE_MODE=developer"
 
 composer require --dev "mikey179/vfsstream:^1.6"

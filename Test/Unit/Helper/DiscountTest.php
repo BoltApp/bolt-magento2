@@ -138,6 +138,11 @@ class DiscountTest extends TestCase
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mirasvit Store Credit calculation config model
      */
     private $mirasvitStoreCreditCalculationConfig;
+    
+    /**
+     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mirasvit Store Credit calculation config model
+     */
+    private $mirasvitStoreCreditCalculationConfigLegacy;
 
     /**
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mirasvit Store Credit config model
@@ -254,6 +259,7 @@ class DiscountTest extends TestCase
         $this->mirasvitStoreCreditHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitStoreCreditCalculationHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitStoreCreditCalculationConfig = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->mirasvitStoreCreditCalculationConfigLegacy = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitStoreCreditConfig = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitRewardsPurchaseHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mageplazaGiftCardCollection = $this->createMock(ThirdPartyModuleFactory::class);
@@ -309,6 +315,7 @@ class DiscountTest extends TestCase
                     $this->mirasvitStoreCreditHelper,
                     $this->mirasvitStoreCreditCalculationHelper,
                     $this->mirasvitStoreCreditCalculationConfig,
+                    $this->mirasvitStoreCreditCalculationConfigLegacy,
                     $this->mirasvitStoreCreditConfig,
                     $this->mirasvitRewardsPurchaseHelper,
                     $this->mageplazaGiftCardCollection,
@@ -362,6 +369,7 @@ class DiscountTest extends TestCase
             $this->mirasvitStoreCreditHelper,
             $this->mirasvitStoreCreditCalculationHelper,
             $this->mirasvitStoreCreditCalculationConfig,
+            $this->mirasvitStoreCreditCalculationConfigLegacy,
             $this->mirasvitStoreCreditConfig,
             $this->mirasvitRewardsPurchaseHelper,
             $this->mageplazaGiftCardCollection,
@@ -402,6 +410,11 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals(
             $this->mirasvitStoreCreditCalculationConfig,
             'mirasvitStoreCreditCalculationConfig',
+            $instance
+        );
+        static::assertAttributeEquals(
+            $this->mirasvitStoreCreditCalculationConfigLegacy,
+            'mirasvitStoreCreditCalculationConfigLegacy',
             $instance
         );
         static::assertAttributeEquals($this->mirasvitStoreCreditConfig, 'mirasvitStoreCreditConfig', $instance);
@@ -929,7 +942,8 @@ class DiscountTest extends TestCase
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardAvailable')->willReturn(true);
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardLegacyVersion')->willReturn(false);
 
-        $accountModel = $this->getMockBuilder('Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory')
+        // mock for class Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory that doesn't exist
+        $accountModel = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['getCurrentValue'])
             ->disableOriginalConstructor()
             ->getMock();
@@ -2370,6 +2384,52 @@ class DiscountTest extends TestCase
 
         $mirasvitStoreCCCMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $mirasvitStoreCCCMock->expects(static::once())->method('isTaxIncluded')->willReturn(true);
+
+        static::assertEquals(
+            $mirasvitBalanceAmount,
+            $this->currentMock->getMirasvitStoreCreditAmount($quoteMock, false)
+        );
+    }
+    
+    /**
+     * @test
+     * that getMirasvitStoreCreditAmount returns balance amount retrieved from with old version of Mirasvit Store Credit plugin
+     * {@see \Bolt\Boltpay\Helper\Discount::getMirasvitStoreCreditUsedAmount} if provided paymentOnly parameter is true
+     * and Mirasvit calculation tax is configured to be included
+     *
+     * @covers ::getMirasvitStoreCreditAmount
+     *
+     * @throws ReflectionException if unable to set internal mock properties
+     */
+    public function getMirasvitStoreCreditAmount_ifPaymentOnlyAndTaxIncludedWithLegency_returnsBalanceAmount()
+    {
+        $this->initCurrentMock(['getMirasvitStoreCreditUsedAmount']);
+        $quoteMock = $this->createPartialMock(
+            Quote::class,
+            ['getGrandTotal', 'getCreditAmountUsed', 'getTotals', 'getValue']
+        );
+        $mirasvitBalanceAmount = 100;
+        $this->currentMock->expects(static::once())
+            ->method('getMirasvitStoreCreditUsedAmount')
+            ->with($quoteMock)
+            ->willReturn($mirasvitBalanceAmount);
+
+        $mirasvitStoreCCCMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $mirasvitStoreCCCLegencyMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'isTaxIncluded', 'IsShippingIncluded'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        TestHelper::setProperty($this->currentMock, 'mirasvitStoreCreditCalculationConfig', $mirasvitStoreCCCMock);
+        TestHelper::setProperty($this->currentMock, 'mirasvitStoreCreditCalculationConfigLegacy', $mirasvitStoreCCCLegencyMock);
+
+        $mirasvitStoreCCCMock->expects(static::once())->method('getInstance')->willReturn(null);
+        $mirasvitStoreCCCLegencyMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $mirasvitStoreCCCLegencyMock->expects(static::once())->method('isTaxIncluded')->willReturn(true);
 
         static::assertEquals(
             $mirasvitBalanceAmount,
@@ -4365,6 +4425,17 @@ class DiscountTest extends TestCase
 
     /**
      * @test
+     * @covers ::convertToBoltDiscountType
+     */
+    public function convertToBoltDiscountType_withEmptyDiscountCode_returnsDefaultValue()
+    {
+        $this->initCurrentMock();
+        $couponCode = "";
+        static::assertEquals("fixed_amount", $this->currentMock->convertToBoltDiscountType($couponCode));
+    }
+
+    /**
+     * @test
      * that convertToBoltDiscountType returns the Bolt discount type value
      *
      * @covers ::convertToBoltDiscountType
@@ -4421,7 +4492,8 @@ class DiscountTest extends TestCase
             ['types' => 'cart_fixed', 'expectedResult' => 'fixed_amount'],
             ['types' => 'by_percent', 'expectedResult' => 'percentage'],
             ['types' => 'by_shipping', 'expectedResult' => 'shipping'],
-            ['types' => 'none_list', 'expectedResult' => ''],
+            ['types' => 'none_list', 'expectedResult' => 'fixed_amount'],
+            ['types' => '', 'expectedResult' => 'fixed_amount'],
         ];
     }
 

@@ -312,7 +312,9 @@ class Payment extends AbstractMethod
                 );
             }
 
-            if (!in_array(@$response->status, ['cancelled','completed'])) {
+            $status = $response->status ?? null;
+
+            if (!in_array($status, ['cancelled','completed'])) {
                 throw new LocalizedException(__('Payment void error.'));
             }
 
@@ -431,8 +433,8 @@ class Payment extends AbstractMethod
                     __('Bad capture response from boltpay')
                 );
             }
-
-            if (!in_array(@$response->status, [self::TRANSACTION_AUTHORIZED, self::TRANSACTION_COMPLETED])) {
+            $status = $response->status ?? null;
+            if (!in_array($status, [self::TRANSACTION_AUTHORIZED, self::TRANSACTION_COMPLETED])) {
                 throw new LocalizedException(__('Payment capture error.'));
             }
 
@@ -530,8 +532,9 @@ class Payment extends AbstractMethod
                     __('Bad refund response from boltpay')
                 );
             }
+            $status = $response->status ?? null;
 
-            if (@$response->status != self::TRANSACTION_COMPLETED) {
+            if ($status != self::TRANSACTION_COMPLETED) {
                 throw new LocalizedException(__('Payment refund error.'));
             }
 

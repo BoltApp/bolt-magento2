@@ -375,6 +375,7 @@ class CreateOrderTest extends TestCase
      * @test
      * @covers ::execute
      * @covers ::preProcessWebhook
+     * @covers ::createOrder
      * @covers ::getQuoteIdFromPayloadOrder
      * @covers ::getDisplayId
      * @covers ::getOrderReference
@@ -418,7 +419,7 @@ class CreateOrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('sendResponse')->with(
             200,
             [
-                'display_id'   => 'XXXXX / 456',
+                'display_id'   => 'XXXXX',
                 'message'   => 'Order create was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"11.00"}',
                 'order_received_url'   => '',
                 'status'    => 'success',
@@ -501,6 +502,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      * @covers ::validateQuoteData
      * @covers ::validateMinimumAmount
      * @covers ::validateCartItems
@@ -567,6 +569,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      */
     public function execute_localizedException()
     {
@@ -604,6 +607,7 @@ class CreateOrderTest extends TestCase
     /**
      * @test
      * @covers ::execute
+     * @covers ::createOrder
      */
     public function execute_otherException()
     {

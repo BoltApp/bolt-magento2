@@ -124,6 +124,9 @@ class UpdateCartTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->cartDataFactory = $this->createMock(CartDataInterfaceFactory::class);
         $this->updateCartResultFactory = $this->createMock(UpdateCartResultInterfaceFactory::class);
+        $this->response = $this->createMock(Response::class);
+        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
+        $this->logHelper = $this->createMock(LogHelper::class);
     }
 
     /**
@@ -196,6 +199,9 @@ class UpdateCartTest extends TestCase
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);        
+        TestHelper::setProperty($this->currentMock, 'response', $this->response);
+        TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
+        TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
     }
     
     /**
@@ -444,7 +450,7 @@ class UpdateCartTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
-            
+
         $this->initCurrentMock([
             'validateQuote',
             'preProcessWebhook',
@@ -599,6 +605,7 @@ class UpdateCartTest extends TestCase
         $this->expectSuccessResponse($result);
 
         $this->assertTrue($this->currentMock->execute($requestCart, null, null, null, $discount_codes_to_remove));
+
     }
     
     /**
