@@ -59,7 +59,6 @@ class UpdateCartCommonTest extends TestCase
 {
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
-    const INCREMENT_ID = 100050001;
     const STORE_ID = 1;
     const CURRENCY_CODE = 'USD';
 
@@ -442,20 +441,14 @@ class UpdateCartCommonTest extends TestCase
     {
         $this->initCurrentMock();
 
-        $this->assertFalse($this->currentMock->validateQuote('', self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
-    }
-    
-    /**
-     * @test
-     * that validateQuote would return false if increment id is empty
-     *
-     * @covers ::validateQuote
-     */
-    public function validateQuote_incrementIdEmpty_returnFalse()
-    {
-        $this->initCurrentMock();
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
+        ->with(self::IMMUTABLE_QUOTE_ID)
+        ->willReturn($this->getQuoteMock(
+            null,
+            self::PARENT_QUOTE_ID
+        ));
 
-        $this->assertFalse($this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, ''));
+        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
     
     /**
@@ -468,6 +461,13 @@ class UpdateCartCommonTest extends TestCase
     {
         $this->initCurrentMock();
         
+        $this->cartHelper->expects(self::once())->method('getQuoteById')
+        ->with(self::IMMUTABLE_QUOTE_ID)
+        ->willReturn($this->getQuoteMock(
+            self::IMMUTABLE_QUOTE_ID,
+            self::PARENT_QUOTE_ID
+        ));
+
         $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
             ->with(self::PARENT_QUOTE_ID)
             ->willReturn($this->getQuoteMock(
@@ -476,9 +476,9 @@ class UpdateCartCommonTest extends TestCase
             ));
 
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(true);
+            ->with(null,self::PARENT_QUOTE_ID)->willReturn(true);
 
-        $this->assertFalse($this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
+        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -490,24 +490,13 @@ class UpdateCartCommonTest extends TestCase
     public function validateQuote_immutableQuoteNotExist_returnFalse()
     {
         $this->initCurrentMock();
-        
-        $parentQuoteMock = $this->getQuoteMock(
-            self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID
-        );
 
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
-        
-        $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
-        
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
-        
-        $this->assertFalse($this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
+
+        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
-    
+
     /**
      * @test
      * that validateQuote would return false if immutable quote does not have any item
@@ -535,12 +524,12 @@ class UpdateCartCommonTest extends TestCase
             ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
         
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::PARENT_QUOTE_ID)->willReturn(false);
         
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($immutableQuoteMock);
         
-        $this->assertFalse($this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
+        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
     
     /**
@@ -570,39 +559,12 @@ class UpdateCartCommonTest extends TestCase
             ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
         
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::PARENT_QUOTE_ID)->willReturn(false);
         
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($immutableQuoteMock);
         
-        $this->assertEquals([$parentQuoteMock, $immutableQuoteMock], $this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
-    }
-    
-    /**
-     * @test
-     * that validateQuote would return quotes if all works
-     *
-     * @covers ::validateQuote
-     */
-    public function validateQuote_immutableQuoteIdEmpty_returnQuotes()
-    {
-        $this->initCurrentMock();
-        
-        $parentQuoteMock = $this->getQuoteMock(
-            self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID,
-            ['getItemsCount']
-        );
-        
-        $parentQuoteMock->expects(self::once())->method('getItemsCount')->willReturn(1);
-        
-        $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
-        
-        $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
-            ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
-        
-        $this->assertEquals([$parentQuoteMock, $parentQuoteMock], $this->currentMock->validateQuote(self::PARENT_QUOTE_ID, null, self::INCREMENT_ID));
+        $this->assertEquals([$parentQuoteMock, $immutableQuoteMock], $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
     
     /**
@@ -615,27 +577,11 @@ class UpdateCartCommonTest extends TestCase
     {
         $this->initCurrentMock();
         
-        $parentQuoteMock = $this->getQuoteMock(
-            self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID
-        );
-
-        $immutableQuoteMock = $this->getQuoteMock(
-            self::IMMUTABLE_QUOTE_ID,
-            self::PARENT_QUOTE_ID
-        );
-        
-        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')
-            ->with(self::PARENT_QUOTE_ID)->willReturn($parentQuoteMock);
-            
-        $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
-            
         $exception = new NoSuchEntityException();
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willThrowException($exception);
         
-        $this->assertFalse($this->currentMock->validateQuote(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID));
+        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
     }
     
     /**

@@ -49,8 +49,6 @@ class UpdateCartTest extends TestCase
 {
     const PARENT_QUOTE_ID = "1000";
     const IMMUTABLE_QUOTE_ID = "1001";
-    const INCREMENT_ID = '100050001';
-    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
     const RULE_ID = 6;
     const COUPON_ID = 5;
     const WEBSITE_ID = 1;
@@ -319,8 +317,8 @@ class UpdateCartTest extends TestCase
     private function getRequestCart()
     {        
         $request_cart = [
-            'order_reference' => self::PARENT_QUOTE_ID,
-            'display_id'  => self::DISPLAY_ID,
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'  => '',
             'shipments' => [
                 0 => $this->getShipments(),
             ],
@@ -338,7 +336,7 @@ class UpdateCartTest extends TestCase
     {
         return [
             'order_reference' => self::PARENT_QUOTE_ID,
-            'display_id' => self::DISPLAY_ID,
+            'display_id' => '',
             'currency' => 'USD',
             'total_amount' => 50500,
             'tax_amount' => 1000,            
@@ -421,7 +419,7 @@ class UpdateCartTest extends TestCase
         $this->initCurrentMock(['validateQuote']);
         
         $this->currentMock->expects(self::once())->method('validateQuote')
-            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID)
+            ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn(false);
         
         $requestCart = $this->getRequestCart();
@@ -463,7 +461,7 @@ class UpdateCartTest extends TestCase
         $immutableQuoteMock = $this->getQuoteMock();
         
         $this->currentMock->expects(self::once())->method('validateQuote')
-            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID)
+            ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
             
         $this->currentMock->expects(self::once())->method('preProcessWebhook')
@@ -557,7 +555,7 @@ class UpdateCartTest extends TestCase
         $immutableQuoteMock = $this->getQuoteMock();
         
         $this->currentMock->expects(self::once())->method('validateQuote')
-            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID)
+            ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
             
         $this->currentMock->expects(self::once())->method('preProcessWebhook')
@@ -628,7 +626,7 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::never())->method('getQuoteCart');
             
         $this->currentMock->expects(self::once())->method('validateQuote')
-            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID, self::INCREMENT_ID)
+            ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
 
         $this->currentMock->expects(self::once())->method('preProcessWebhook')
