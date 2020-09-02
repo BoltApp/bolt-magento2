@@ -4212,6 +4212,79 @@ ORDER
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
+        
+        /**
+        * @test
+        * that collectDiscounts properly handles Magento Giftcard by reading amount from giftcard balance
+        *
+        * @covers ::collectDiscounts
+        *
+        * @throws NoSuchEntityException from tested method
+        */
+        public function collectDiscounts_withMagentoGiftcard_collectsMagentoGiftcard()
+        {
+            $currentMock = $this->getCurrentMock();
+            $shippingAddress = $this->getAddressMock();
+            $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
+            $quote->method('getBoltParentQuoteId')->willReturn(999999);
+            $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
+            $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
+            $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
+            $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
+            $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
+            $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
+                ->willReturn(false);
+            $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
+            $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
+            $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
+            $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+            $this->discountHelper->expects(static::never())->method('getAmastyGiftCardCodesFromTotals');
+            $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+            
+            $appliedCode1     = '12345';
+            $appliedDiscount1 = 5; // $
+            $appliedCode2     = '67890';
+            $appliedDiscount2 = 10; // $
+            $giftCardCodes = [$appliedCode1 => $appliedDiscount1, $appliedCode2 => $appliedDiscount2];
+            
+            $this->discountHelper->expects(static::once())->method('getMagentoGiftCardAccountGiftCardData')
+                ->willReturn($giftCardCodes);
+            $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(15);
+            $quote->expects(static::any())->method('getTotals')
+                ->willReturn([DiscountHelper::GIFT_CARD_ACCOUNT => $this->quoteAddressTotal]);
+            $totalAmount = 10000; // cents
+            $diff = 0;
+            $paymentOnly = true;
+            list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+                $totalAmount,
+                $diff,
+                $paymentOnly,
+                $quote
+            );
+            static::assertEquals($diffResult, $diff);
+            $expectedDiscountAmount = 100 * ($appliedDiscount1+$appliedDiscount2);
+            $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+            $expectedDiscount = [
+                [
+                    'description' => 'Gift Card: 12345',
+                    'amount'      => 500,
+                    'discount_category' => 'giftcard',
+                    'reference' => '12345',
+                    'discount_type'   => 'fixed_amount',
+                    'type'   => 'fixed_amount',
+                ],
+                [
+                    'description' => 'Gift Card: 67890',
+                    'amount'      => 1000,
+                    'discount_category' => 'giftcard',
+                    'reference' => '67890',
+                    'discount_type'   => 'fixed_amount',
+                    'type'   => 'fixed_amount',
+                ]
+            ];
+            static::assertEquals($expectedDiscount, $discounts);
+            static::assertEquals($expectedTotalAmount, $totalAmountResult);
+        }
 
         /**
         * @test

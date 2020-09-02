@@ -2132,7 +2132,7 @@ class Cart extends AbstractHelper
                             'description'       => 'Gift Card: ' . $giftCardCode,
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
+                            'reference'         => (string)$giftCardCode,
                             'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                             'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
