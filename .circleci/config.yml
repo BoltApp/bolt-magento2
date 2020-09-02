@@ -72,6 +72,8 @@ commands:
                   Test/scripts/ci-integration.sh
             - store_test_results:
                 path: ./integration-tests/test-results
+            - store_artifacts:
+                path: ./integration-tests/screenshots
       - unless:
           condition: << parameters.is_integration >>
           steps:
