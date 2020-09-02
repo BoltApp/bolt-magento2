@@ -1308,8 +1308,8 @@ class Discount extends AbstractHelper
             $cards = [];
         } else {
             $cards = array_column($cards,
-                                  'a', // \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT,
-                                  'c'  // \Magento\GiftCardAccount\Model\Giftcardaccount::CODE
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::CODE' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
                                 );
         }
       
