@@ -67,6 +67,9 @@ echo "restarted apache2"
 
 git clone --depth 1 --branch m2-rc-tests git@github.com:BoltApp/integration-tests.git
 cd integration-tests
+mkdir test-results
+JUNIT_REPORT_DIR=./test-results
+SCREENSHOT_DIR=/home/circleci/project/artifacts
 npm install
 npm run build
-TEST_ENV=plugin_ci RETRY_COUNT=1 SCREENSHOT_DIR=/home/circleci/project/artifacts CUSTOM_TEST=true WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts
+TEST_ENV=plugin_ci RETRY_COUNT=1 CUSTOM_TEST=true WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/front/cart/checkout_physical_product.C70241.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_percentage.C70243.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/discount_bolt_shipping.C70244.spec.ts bolt/integration-tests/checkout/specs/magento2/front/cart/auth_loggedIn.C116881.spec.ts

@@ -70,6 +70,8 @@ commands:
                 name: << parameters.php_version >> Magento << parameters.m2_version >> Integration
                 command: |
                   Test/scripts/ci-integration.sh
+            - store_test_results:
+                path: ./integration-tests/test-results
       - unless:
           condition: << parameters.is_integration >>
           steps:
