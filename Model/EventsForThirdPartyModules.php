@@ -33,6 +33,15 @@ class EventsForThirdPartyModules
                     "boltClass" => Mageplaza_ShippingRestriction::class,
                 ],
             ],
+        ],
+        "beforeDeleteOrder" => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["\Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
         ]
     ];
 
@@ -41,9 +50,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => [
-                        "Aheadworks\Giftcard\Api\GiftcardCartManagementInterface",
-                    ],
+                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],

@@ -19,9 +19,24 @@ namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Service\OrderService;
 
 class Giftcard
 {
+    /**
+     * @var OrderService Magento order management model
+     */
+    private $orderService;
+
+    /**
+     * @param OrderService $orderService Magento order service instance
+     */
+    public function __construct(
+        OrderService $orderService
+    ) {
+        $this->orderService = $orderService;
+    }
+
     public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote)
     {
         list ($discounts, $totalAmount, $diff) = $result;
@@ -92,5 +107,28 @@ class Giftcard
             ];
             return $result;
         }
+    }
+
+    /**
+     * Fetch transaction details info
+     *
+     * Plugin for {@see \Bolt\Boltpay\Helper\Order::deleteOrder}
+     * Used to restore Aheadworks Giftcard balance for failed payment orders by manually executing the appropriate
+     * plugin {@see \Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin::aroundCancel}
+     * because it is plugged into {@see \Magento\Sales\Api\OrderManagementInterface::cancel} instead of
+     * {@see \Magento\Sales\Model\Order::cancel} which we call in {@see \Bolt\Boltpay\Helper\Order::deleteOrder}
+     *
+     * @param \Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin $aheadworksGiftcardOrderServicePlugin
+     * @param \Magento\Sales\Model\Order $order to be deleted
+     */
+    public function beforeDeleteOrder($aheadworksGiftcardOrderServicePlugin, $order)
+    {
+        $aheadworksGiftcardOrderServicePlugin->aroundCancel(
+            $this->orderService,
+            function ($orderId) {
+                return true;
+            },
+            $order->getId()
+        );
     }
 }
