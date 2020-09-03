@@ -653,9 +653,12 @@ class CreateOrderTest extends TestCase
                 'cart' => [
                     'order_reference' => self::ORDER_ID,
                     'display_id' => false,
+                    'metadata' => [
+                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    ],
                 ]
             ]),
-            self::ORDER_ID
+            self::IMMUTABLE_QUOTE_ID
         );
     }
 
