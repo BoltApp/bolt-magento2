@@ -29,7 +29,6 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Zend\Log\Filter\Mock;
 
 /**
  * Class PrefetchTest

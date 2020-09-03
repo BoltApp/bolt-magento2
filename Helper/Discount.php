@@ -143,6 +143,11 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     private $mirasvitStoreCreditCalculationConfig;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mirasvitStoreCreditCalculationConfigLegacy;
 
     /**
      * @var ThirdPartyModuleFactory
@@ -249,6 +254,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
+     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy
      * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
@@ -286,6 +292,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitStoreCreditHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
         ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
+        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy,
         ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
@@ -322,6 +329,7 @@ class Discount extends AbstractHelper
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
+        $this->mirasvitStoreCreditCalculationConfigLegacy = $mirasvitStoreCreditCalculationConfigLegacy;
         $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
@@ -818,6 +826,12 @@ class Discount extends AbstractHelper
         if (!$paymentOnly) {
             /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
             $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
+            // For old version of Mirasvit Store Credit plugin,
+            // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+            // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
+            if (empty($miravitCalculationConfig)) {
+                $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfigLegacy->getInstance();
+            }
             if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;
             }
@@ -1296,8 +1310,8 @@ class Discount extends AbstractHelper
             $cards = [];
         } else {
             $cards = array_column($cards,
-                                  'a', // \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT,
-                                  'c'  // \Magento\GiftCardAccount\Model\Giftcardaccount::CODE
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
+                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::CODE' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
                                 );
         }
       
@@ -1322,8 +1336,8 @@ class Discount extends AbstractHelper
      */
     public function convertToBoltDiscountType($couponCode)
     {
-        if(empty($couponCode)) {
-            return '';
+        if ($couponCode == "") {
+            return "fixed_amount";
         }
         
         try {
@@ -1355,7 +1369,7 @@ class Discount extends AbstractHelper
                 return "shipping";
         }
 
-        return "";
+        return "fixed_amount";
     }
     
     /**

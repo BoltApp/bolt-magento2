@@ -21,13 +21,11 @@ use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingDataInterfaceFactory;
 use Bolt\Boltpay\Api\ShippingInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
 use Magento\Quote\Api\ShippingMethodManagementInterface;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
 use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
 
@@ -152,10 +150,11 @@ class Shipping extends ShippingTax implements ShippingInterface
 
         $estimateAddress = $this->estimateAddressFactory->create();
 
-        $estimateAddress->setRegionId(@$addressData['region_id']);
-        $estimateAddress->setRegion(@$addressData['region']);
-        $estimateAddress->setCountryId(@$addressData['country_id']);
-        $estimateAddress->setPostcode(@$addressData['postcode']);
+        $estimateAddress->setRegionId($addressData['region_id'] ?? null);
+        $estimateAddress->setRegion($addressData['region'] ?? null);
+        $estimateAddress->setCountryId($addressData['country_id'] ?? null);
+        $estimateAddress->setPostcode($addressData['postcode'] ?? null);
+
         /**
          * @var ShippingMethodInterface[] $shippingOptionsArray
          */

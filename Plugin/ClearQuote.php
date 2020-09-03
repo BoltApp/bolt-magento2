@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Plugin;
 
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Model\Payment;
 
 /**
  * Class ClearQuote

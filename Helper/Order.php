@@ -802,7 +802,12 @@ class Order extends AbstractHelper
         // where only reserved_order_id was stored in display_id field
         // and the immutable quote_id in order_reference
         ///////////////////////////////////////////////////////////////
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+        $incrementId = isset($transaction->order->cart->display_id) ?
+            $transaction->order->cart->display_id :
+            null;
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
+            null;
 
         if (!$quoteId) {
             $quoteId = $parentQuoteId;
@@ -830,7 +835,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
-        $order = $this->getExistingOrder($incrementId);
+        $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
@@ -944,12 +949,11 @@ class Order extends AbstractHelper
     /**
      * Save credit card information for logged-in customer based on their Bolt transaction reference and store id
      *
-     * @param $displayId
      * @param $reference
      * @param $storeId
      * @return bool
      */
-    public function saveCustomerCreditCard($displayId, $reference, $storeId)
+    public function saveCustomerCreditCard($reference, $storeId)
     {
         try {
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
@@ -957,7 +961,8 @@ class Order extends AbstractHelper
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
-                list(, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
+                // TODO(vitaliy): use helper in the next PR
+                $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
 
@@ -1039,7 +1044,7 @@ class Order extends AbstractHelper
 
     /**
      * Try to fetch and price-validate already existing order.
-     * Use case: order has been created but the payment failes due to the ivnalid credit card data.
+     * Use case: order has been created but the payment fails due to the invalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
      *
      * @param Quote $quote
@@ -1173,13 +1178,13 @@ class Order extends AbstractHelper
      * Try to cancel the order. Covers the case when the payment was declined before authorization (blacklisted cc).
      * It is called upon rejected_irreversible hook.
      *
-     * @param $displayId
+     * @param $incrementId
+     * @param $quoteId
      * @return bool
      * @throws BoltException
      */
-    public function tryDeclinedPaymentCancelation($displayId)
+    public function tryDeclinedPaymentCancelation($incrementId, $immutableQuoteId)
     {
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($displayId);
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
@@ -1187,7 +1192,7 @@ class Order extends AbstractHelper
                 __(
                     'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
                     $incrementId,
-                    $quoteId
+                    $immutableQuoteId
                 ),
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
@@ -1204,10 +1209,8 @@ class Order extends AbstractHelper
      * @param $displayId
      * @throws \Exception
      */
-    public function deleteOrderByIncrementId($displayId)
+    public function deleteOrderByIncrementId($incrementId, $immutableQuoteId)
     {
-        list($incrementId, $immutableQuoteId) = $this->getDataFromDisplayID($displayId);
-
         $order = $this->getExistingOrder($incrementId);
 
         if (!$order) {
@@ -1255,12 +1258,21 @@ class Order extends AbstractHelper
 
     /**
      * @param $orderIncrementId
-     * @return OrderModel|false
+     * @param null $quoteId
+     * @return false|OrderInterface|OrderModel
      */
-    public function getExistingOrder($orderIncrementId)
+    public function getExistingOrder($orderIncrementId, $quoteId = null)
     {
         /** @var OrderModel $order */
-        return $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+        $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
+
+        // If we had timeout issue on the create_order hook and the third party change the order increment id
+        // then we use the parent quote id as a fallback to get existing order
+        if ($quoteId && (!$order || !$order->getId())) {
+            $order = $this->getOrderByQuoteId($quoteId);
+        }
+
+        return $order;
     }
 
     /**
@@ -1539,7 +1551,12 @@ class Order extends AbstractHelper
         }
 
         // Get the order and quote id
-        list($incrementId, $quoteId) = $this->getDataFromDisplayID($transaction->order->cart->display_id);
+        $incrementId = isset($transaction->order->cart->display_id) ?
+            $transaction->order->cart->display_id :
+            null;
+        $quoteId = isset($transaction->order) ?
+            $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order) :
+            null;
 
         if (!$quoteId) {
             $quoteId = $transaction->order->cart->order_reference;
@@ -2242,12 +2259,7 @@ class Order extends AbstractHelper
             return null;
         }
 
-        list($incrementId) = $this->getDataFromDisplayID($displayId);
-
-        if (empty($incrementId)) {
-            return null;
-        }
-        $order = $this->getExistingOrder(trim($incrementId));
+        $order = $this->getExistingOrder($displayId);
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
     }

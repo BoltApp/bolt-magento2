@@ -50,7 +50,7 @@ class ShippingTaxTest extends TestCase
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
     const INCREMENT_ID = 100050001;
-    const DISPLAY_ID = self::INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const STORE_ID = 1;
     const CURRENCY_CODE = 'USD';
     const EMAIL = 'integration@bolt.com';
@@ -572,7 +572,10 @@ class ShippingTaxTest extends TestCase
     public function execute_WebApiException()
     {
         $cart = [
-            'display_id' => self::DISPLAY_ID
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $this->initCurrentMock(['getQuoteById', 'preprocessHook']);
 
@@ -593,6 +596,7 @@ class ShippingTaxTest extends TestCase
             ->with(ShippingTax::METRICS_FAILURE_KEY, 1, ShippingTax::METRICS_LATENCY_KEY, $startTime);
 
         $this->expectErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->assertNull($this->currentMock->execute($cart, []));
     }
 
@@ -606,7 +610,10 @@ class ShippingTaxTest extends TestCase
     {
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $shipping_address = [
             'email' => 'invalid email'
@@ -637,6 +644,8 @@ class ShippingTaxTest extends TestCase
             ->with(TestHelper::getProperty($this->currentMock, 'quote'));
         $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
             ->with($shipping_address)->willReturn($shipping_address);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $e = new BoltException(
             __('Invalid email: %1', 'invalid email'),
@@ -662,7 +671,10 @@ class ShippingTaxTest extends TestCase
     public function execute_Exception()
     {
         $cart = [
-            'display_id' => self::DISPLAY_ID
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $this->initCurrentMock(['loadQuote']);
 
@@ -685,7 +697,10 @@ class ShippingTaxTest extends TestCase
     {
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
         $shipping_address = [
             'email' => self::EMAIL
@@ -718,6 +733,8 @@ class ShippingTaxTest extends TestCase
             ->with($shipping_address)->willReturn($shipping_address);
         $this->cartHelper->expects(self::once())->method('validateEmail')
             ->with(self::EMAIL)->willReturn(true);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getResult')
             ->with($shipping_address, $shipping_option);
         $this->logHelper->expects(self::exactly(4))->method('addInfoLog');

@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Block\Checkout;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Framework\App\ProductMetadataInterface;
 use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 

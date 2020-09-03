@@ -26,16 +26,13 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\App\Action\Context;
-use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Framework\Phrase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\Constraint\ExceptionMessage;
 use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
@@ -48,9 +45,10 @@ class ReceivedUrlTest extends TestCase
 {
     //TODO: figure out proper values for these things, probably some reverse engineering to be done.
     const DECODED_BOLT_PAYLOAD = '{"display_id":"' .self::JSON_DISPLAY_ID. '", "transaction_reference":"' .self::TRANSACTION_REFERENCE. '"}';
-    const DISPLAY_ID = self::INCREMENT_ID. ' / ' .self::QUOTE_ID;
+    const DISPLAY_ID = self::INCREMENT_ID;
     const INCREMENT_ID = 'increment_id';
-    const JSON_DISPLAY_ID = self::INCREMENT_ID. ' \/ ' .self::QUOTE_ID;
+    const JSON_DISPLAY_ID = self::INCREMENT_ID;
+
     const ORDER_ID = 'order_id';
     const QUOTE_ID = 'quote_id';
     const STORE_ID = '1234';

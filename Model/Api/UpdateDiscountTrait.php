@@ -500,4 +500,5 @@ trait UpdateDiscountTrait
 
         return true;
     }
+
 }

@@ -37,7 +37,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
     use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
-    
+
     /**
      * @var CartDataInterfaceFactory
      */

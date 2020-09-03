@@ -61,7 +61,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 
 /**
  * Boltpay Cart helper
@@ -678,18 +678,52 @@ class Cart extends AbstractHelper
     /**
      * Get the id of the quote Bolt order was created for
      *
-     * @param Response $boltOrder
+     * @param Object $response
      * @return mixed
      */
-    protected function getImmutableQuoteIdFromBoltOrder($boltOrder)
+    public function getImmutableQuoteIdFromBoltOrder($response)
     {
-        $response = $boltOrder ? $boltOrder->getResponse() : null;
-        list(, $immutableQuoteId) = $response ? explode(' / ', $response->cart->display_id) : [null, null];
+        $immutableQuoteId = null;
+        // If response is null don't even bother trying, we return null
+        if ($response)
+        {
+            if (isset($response->cart->metadata->immutable_quote_id)) {
+                $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
+            } else {
+                // check if cart was created in plugin version before 2.14.0
+                list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
+            }
+        }
+        if (!$immutableQuoteId) {
+            $this->bugsnag->notifyException(new \Exception("Bolt order doesn't contain immutable order id"));
+        }
         return $immutableQuoteId;
     }
 
     /**
-     * Check if the quote is noot deleted
+     * Get the id of the quote Bolt order was created for
+     * The same as getImmutableQuoteIdFromBoltOrder but cart is in array format
+     *
+     * @param Response $boltOrder
+     * @return mixed
+     */
+    public function getImmutableQuoteIdFromBoltCartArray($boltCart)
+    {
+        $immutableQuoteId = null;
+        if (isset($boltCart['metadata']['immutable_quote_id'])) {
+            $immutableQuoteId = $boltCart['metadata']['immutable_quote_id'];
+        } else {
+            // check if cart was created in plugin version before 2.14.0
+            list(, $immutableQuoteId) = explode(' / ', $boltCart['display_id']);
+        }
+        if (!$immutableQuoteId) {
+            $this->bugsnag->notifyException(new \Exception("Bolt order doesn't contain immutable order id"));
+        }
+        return $immutableQuoteId;
+    }
+
+    /**
+     * Check if the quote is not deleted
      *
      * @param int|string $quoteId
      * @return bool
@@ -779,7 +813,7 @@ class Cart extends AbstractHelper
 
             if ($boltOrder = $this->loadFromCache($cacheIdentifier)) {
 
-                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder);
+                $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder->getResponse());
 
                 // found in cache, check if the old immutable quote is still there
                 if ($immutableQuoteId && $this->isQuoteAvailable($immutableQuoteId)) {
@@ -833,7 +867,7 @@ class Cart extends AbstractHelper
      */
     public function doesOrderExist($cart, $quote)
     {
-        list($incrementId,) = isset($cart['display_id']) ? explode(' / ', $cart['display_id']) : [null, null];
+        $incrementId = $cart['display_id'];
         $order = $this->getOrderByIncrementId($incrementId);
 
         if ($quote && !$order) {
@@ -1592,8 +1626,11 @@ class Cart extends AbstractHelper
         $billingAddress  = $immutableQuote->getBillingAddress();
         $shippingAddress = $immutableQuote->getShippingAddress();
 
-        //Use display_id to hold and transmit, all the way back and forth, both reserved order id and immutable quote id
-        $cart['display_id'] = $immutableQuote->getReservedOrderId() . ' / ' . $immutableQuote->getId();
+        //Use display_id to hold and transmit, all the way back and forth, reserved order id
+        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+
+        //Store immutable quote id in metadata of cart
+        $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
@@ -2117,7 +2154,7 @@ class Cart extends AbstractHelper
                             'description'       => 'Gift Card: ' . $giftCardCode,
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
+                            'reference'         => (string)$giftCardCode,
                             'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                             'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
@@ -2208,10 +2245,10 @@ class Cart extends AbstractHelper
         }
 
         // get configured Product model getters that can restrict Bolt checkout usage
-        $productRestrictionMethods = $toggleCheckout->productRestrictionMethods ?: [];
+        $productRestrictionMethods = isset($toggleCheckout->productRestrictionMethods) ? $toggleCheckout->productRestrictionMethods : [];
 
         // get configured Quote Item getters that can restrict Bolt checkout usage
-        $itemRestrictionMethods = $toggleCheckout->itemRestrictionMethods ?: [];
+        $itemRestrictionMethods = isset($toggleCheckout->itemRestrictionMethods) ? $toggleCheckout->itemRestrictionMethods : [];
 
         if (!$productRestrictionMethods && !$itemRestrictionMethods) {
             return false;
@@ -2264,36 +2301,37 @@ class Cart extends AbstractHelper
         }
 
         //add item to quote
-        $item = $request['items'][0];
-        $product = $this->productRepository->getbyId($item['reference']);
+        foreach ($request['items'] as $item) {
+            $product = $this->productRepository->getbyId($item['reference']);
 
-        $options = json_decode($item['options'], true);
-        if (isset($options['storeId']) && $options['storeId']) {
-            $quote->setStoreId($options['storeId']);
-        }
-        unset($options['storeId']);
-        unset($options['form_key']);
-        $options['qty'] = $item['quantity'];
-        $options = new \Magento\Framework\DataObject($options);
-
-        try {
-            $quote->addProduct($product, $options);
-        } catch (\Exception $e) {
-            $error_message = $e->getMessage();
-            if ($error_message == 'Product that you are trying to add is not available.') {
-                throw new BoltException(
-                    __($error_message),
-                    null,
-                    BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
-                );
-            } else {
-                throw new BoltException(
-                    __('The requested qty is not available'),
-                    null,
-                    BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
-                );
+            $options = json_decode($item['options'], true);
+            if (isset($options['storeId']) && $options['storeId']) {
+                $quote->setStoreId($options['storeId']);
             }
-        };
+            unset($options['storeId']);
+            unset($options['form_key']);
+            $options['qty'] = $item['quantity'];
+            $options = new \Magento\Framework\DataObject($options);
+
+            try {
+                $quote->addProduct($product, $options);
+            } catch (\Exception $e) {
+                $error_message = $e->getMessage();
+                if ($error_message == 'Product that you are trying to add is not available.') {
+                    throw new BoltException(
+                        __($error_message),
+                        null,
+                        BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
+                    );
+                } else {
+                    throw new BoltException(
+                        __('The requested qty is not available'),
+                        null,
+                        BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
+                    );
+                }
+            };
+        }
 
         $quote->reserveOrderId();
 
@@ -2374,7 +2412,11 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            list(, $cartReference) = $response ? explode(' / ', $responseData['cart']['display_id']) : [null, ''];
+            if ($response) {
+                $cartReference = $this->getImmutableQuoteIdFromBoltCartArray($responseData['cart']);
+            } else {
+                $cartReference = '';
+            }
 
             $cart = array_merge($responseData['cart'], [
                 'orderToken'    => $response ? $responseData['token'] : '',
