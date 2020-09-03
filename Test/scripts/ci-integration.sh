@@ -6,9 +6,11 @@ set -x
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
+git clone --depth 1 --branch m2-rc-tests git@github.com:BoltApp/integration-tests.git
+
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
-cd Test/scripts/
+cd integration-tests/operations/docker/m2
 gzip -d create_test_data.sql.gz
 ls 
 sudo mysql magento2 < create_test_data.sql
@@ -71,9 +73,7 @@ mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 
-cd project
-git clone --depth 1 --branch m2-rc-tests git@github.com:BoltApp/integration-tests.git
-cd integration-tests
+cd project/integration-tests
 mkdir test-results
 npm install
 npm run build
