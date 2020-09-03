@@ -63,6 +63,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Magento\Framework\Serialize\Serializer\Serialize;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Boltpay Cart helper
@@ -187,6 +188,11 @@ class Cart extends AbstractHelper
      */
     private $customerRepository;
 
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
         'first_name',
@@ -258,35 +264,36 @@ class Cart extends AbstractHelper
     private $serialize;
 
     /**
-     * @param Context           $context
-     * @param CheckoutSession   $checkoutSession
-     * @param ProductRepository $productRepository
-     * @param ApiHelper         $apiHelper
-     * @param ConfigHelper      $configHelper
-     * @param CustomerSession   $customerSession
-     * @param LogHelper         $logHelper
-     * @param Bugsnag           $bugsnag
-     * @param DataObjectFactory $dataObjectFactory
-     * @param ImageFactory      $imageHelperFactory
-     * @param Emulation         $appEmulation
-     * @param QuoteFactory      $quoteFactory
-     * @param TotalsCollector   $totalsCollector
-     * @param QuoteRepository   $quoteRepository
-     * @param OrderRepository   $orderRepository
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param QuoteResource     $quoteResource
-     * @param SessionHelper $sessionHelper
-     * @param CheckoutHelper $checkoutHelper
-     * @param DiscountHelper $discountHelper
-     * @param CacheInterface $cache
-     * @param ResourceConnection $resourceConnection
-     * @param CartManagementInterface $quoteManagement
-     * @param HookHelper $hookHelper
-     * @param CustomerRepository $customerRepository
-     * @param Registry $coreRegistry
-     * @param MetricsClient $metricsClient
-     * @param DeciderHelper $deciderHelper
-     * @param Serialize $serialize
+     * @param Context                    $context
+     * @param CheckoutSession            $checkoutSession
+     * @param ProductRepository          $productRepository
+     * @param ApiHelper                  $apiHelper
+     * @param ConfigHelper               $configHelper
+     * @param CustomerSession            $customerSession
+     * @param LogHelper                  $logHelper
+     * @param Bugsnag                    $bugsnag
+     * @param DataObjectFactory          $dataObjectFactory
+     * @param ImageFactory               $imageHelperFactory
+     * @param Emulation                  $appEmulation
+     * @param QuoteFactory               $quoteFactory
+     * @param TotalsCollector            $totalsCollector
+     * @param QuoteRepository            $quoteRepository
+     * @param OrderRepository            $orderRepository
+     * @param SearchCriteriaBuilder      $searchCriteriaBuilder
+     * @param QuoteResource              $quoteResource
+     * @param SessionHelper              $sessionHelper
+     * @param CheckoutHelper             $checkoutHelper
+     * @param DiscountHelper             $discountHelper
+     * @param CacheInterface             $cache
+     * @param ResourceConnection         $resourceConnection
+     * @param CartManagementInterface    $quoteManagement
+     * @param HookHelper                 $hookHelper
+     * @param CustomerRepository         $customerRepository
+     * @param Registry                   $coreRegistry
+     * @param MetricsClient              $metricsClient
+     * @param DeciderHelper              $deciderHelper
+     * @param Serialize                  $serialize
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         Context $context,
@@ -317,7 +324,8 @@ class Cart extends AbstractHelper
         Registry $coreRegistry,
         MetricsClient $metricsClient,
         DeciderHelper $deciderHelper,
-        Serialize $serialize
+        Serialize $serialize,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -334,7 +342,7 @@ class Cart extends AbstractHelper
         $this->totalsCollector = $totalsCollector;
         $this->quoteRepository = $quoteRepository;
         $this->orderRepository = $orderRepository;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder; 
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
@@ -348,6 +356,7 @@ class Cart extends AbstractHelper
         $this->metricsClient = $metricsClient;
         $this->deciderHelper = $deciderHelper;
         $this->serialize = $serialize;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -2202,8 +2211,8 @@ class Cart extends AbstractHelper
                 }
             }
         }
-        /////////////////////////////////////////////////////////////////////////////////
-        return [$discounts, $totalAmount, $diff];
+        // TODO: move all third party plugins support into filter
+        return $this->eventsForThirdPartyModules->runFilter("collectDiscounts", [$discounts, $totalAmount, $diff], $quote);
     }
 
     /**

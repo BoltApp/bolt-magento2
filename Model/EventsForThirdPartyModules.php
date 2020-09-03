@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model;
 
+use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -28,11 +29,50 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mageplaza_ShippingRestriction",
-                    "3pclasses" => ["Mageplaza\ShippingRestriction\Helper\Data"],
+                    "checkClasses" => ["Mageplaza\ShippingRestriction\Helper\Data"],
                     "boltClass" => Mageplaza_ShippingRestriction::class,
                 ],
             ],
+        ],
+        "beforeDeleteOrder" => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["\Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
         ]
+    ];
+
+    const filterListeners = [
+        "applyGiftcard" => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
+        "collectDiscounts" => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
+        "loadGiftcard" => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardRepositoryInterface"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
     ];
 
     /**
@@ -67,6 +107,65 @@ class EventsForThirdPartyModules
     }
 
     /**
+     * Check if module enables and neccessary classes exist
+     * return [$result, $sendClasses]
+     * bool $result true if we should run the method
+     * array $sendClasses array of classed we should pass into the method
+     */
+    private function prepareForListenerRun($listener)
+    {
+        if (!$this->isModuleAvailable($listener["module"])) {
+            return [false, null];
+        }
+        if (isset($listener["checkClasses"])) {
+            foreach ($listener["checkClasses"] as $className) {
+                if (!$this->doesClassExist($className)) {
+                    return [false,null];
+                }
+            }
+        }
+        $sendClasses = [];
+        if (isset($listener["sendClasses"])) {
+            foreach ($listener["sendClasses"] as $className) {
+                if (!$this->doesClassExist($className)) {
+                    return [false,null];
+                }
+                $sendClasses[] = $this->objectManager->get($className);
+            }
+        }
+        return [true, $sendClasses];
+    }
+
+    /**
+     * Run filter
+     *
+     * Call all filter listeners that relates to existing module and if necessary classes exist
+     */
+    public function runFilter($filterName, $result, ...$arguments) {
+        if (!isset(static::filterListeners[$filterName])) {
+            return;
+        }
+        try {
+            foreach (static::filterListeners[$filterName]["listeners"] as $listener) {
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                if (!$active) {
+                    continue;
+                }
+                $boltClass = $this->objectManager->get($listener["boltClass"]);
+                if ($sendClasses) {
+                    $result = $boltClass->$filterName($result, ...$sendClasses, ...$arguments);
+                } else {
+                    $result = $boltClass->$filterName($result, ...$arguments);
+                }
+            }
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+        } finally {
+            return $result;
+        }
+    }
+
+    /**
      * Dispatch event
      *
      * Call all listeners that relates to existing module and if necessary classes exist
@@ -77,16 +176,16 @@ class EventsForThirdPartyModules
         }
         try {
             foreach (static::eventListeners[$eventName]["listeners"] as $listener) {
-                if (!$this->isModuleAvailable($listener["module"])) {
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                if (!$active) {
                     continue;
                 }
-                foreach ($listener["3pclasses"] as $className) {
-                    if (!$this->doesClassExist($className)) {
-                        continue 2;
-                    }
-                }
                 $boltClass = $this->objectManager->get($listener["boltClass"]);
-                $boltClass->$eventName(...$arguments);
+                if ($sendClasses) {
+                    $boltClass->$eventName(...$sendClasses, ...$arguments);
+                } else {
+                    $boltClass->$eventName(...$arguments);
+                }
             }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -115,7 +214,11 @@ class EventsForThirdPartyModules
         // Return false instead if any uncaught exceptions.
         ///////////////////////////////////////////////////////////////
         try {
-            return class_exists($className);
+            if (substr($className, -9) === "Interface") {
+                return interface_exists($className);
+            } else {
+                return class_exists($className);
+            }
         } catch (\Exception $e) {
             return false;
         }

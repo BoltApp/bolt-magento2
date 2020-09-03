@@ -51,6 +51,7 @@ use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class DiscountCodeValidationTest
@@ -227,6 +228,10 @@ class DiscountCodeValidationTest extends TestCase
      */
     private $ruleCustomerMock;
 
+    /**
+     * @var MockObject|EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
 
     /**
      * @inheritdoc
@@ -2384,6 +2389,11 @@ class DiscountCodeValidationTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules
+            ->method('runFilter')
+            ->will($this->returnArgument(1));
+
         $this->createFactoryMocks();
         $this->createHelperMocks();
     }
@@ -2415,6 +2425,7 @@ class DiscountCodeValidationTest extends TestCase
                     $this->regionModel,
                     $this->totalsCollector,
                     $this->orderHelper,
+                    $this->eventsForThirdPartyModules,
                     $this->cache
                 ]
             )->getMock();

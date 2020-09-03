@@ -45,6 +45,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Discount Code Validation class
@@ -155,36 +156,43 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @var OrderHelper
      */
     protected $orderHelper;
+
     /**
      * @var CacheInterface
      */
     private $cache;
 
     /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
+    /**
      * DiscountCodeValidation constructor.
      *
-     * @param Request                 $request
-     * @param Response                $response
-     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCert
-     * @param ThirdPartyModuleFactory $moduleUnirgyGiftCertHelper
-     * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
-     * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
-     * @param RuleRepository          $ruleRepository
-     * @param LogHelper               $logHelper
-     * @param BoltErrorResponse       $errorResponse
-     * @param UsageFactory            $usageFactory
-     * @param DataObjectFactory       $objectFactory
-     * @param TimezoneInterface       $timezone
-     * @param CustomerFactory         $customerFactory
-     * @param Bugsnag                 $bugsnag
-     * @param CartHelper              $cartHelper
-     * @param ConfigHelper            $configHelper
-     * @param HookHelper              $hookHelper
-     * @param DiscountHelper          $discountHelper
-     * @param RegionModel             $regionModel
-     * @param TotalsCollector         $totalsCollector
-     * @param OrderHelper             $orderHelper
-     * @param CacheInterface          $cache
+     * @param Request                    $request
+     * @param Response                   $response
+     * @param ThirdPartyModuleFactory    $moduleUnirgyGiftCert
+     * @param ThirdPartyModuleFactory    $moduleUnirgyGiftCertHelper
+     * @param QuoteRepository            $quoteRepositoryForUnirgyGiftCert
+     * @param CheckoutSession            $checkoutSessionForUnirgyGiftCert
+     * @param RuleRepository             $ruleRepository
+     * @param LogHelper                  $logHelper
+     * @param BoltErrorResponse          $errorResponse
+     * @param UsageFactory               $usageFactory
+     * @param DataObjectFactory          $objectFactory
+     * @param TimezoneInterface          $timezone
+     * @param CustomerFactory            $customerFactory
+     * @param Bugsnag                    $bugsnag
+     * @param CartHelper                 $cartHelper
+     * @param ConfigHelper               $configHelper
+     * @param HookHelper                 $hookHelper
+     * @param DiscountHelper             $discountHelper
+     * @param RegionModel                $regionModel
+     * @param TotalsCollector            $totalsCollector
+     * @param OrderHelper                $orderHelper
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param CacheInterface             $cache
      */
     public function __construct(
         Request $request,
@@ -208,6 +216,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         RegionModel $regionModel,
         TotalsCollector $totalsCollector,
         OrderHelper $orderHelper,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         CacheInterface $cache = null
     ) {
         $this->request = $request;
@@ -231,6 +240,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->regionModel = $regionModel;
         $this->totalsCollector = $totalsCollector;
         $this->orderHelper = $orderHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Magento\Framework\App\CacheInterface::class);
     }
@@ -339,6 +349,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             if (empty($giftCard)) {
                 // Load the gift card by code
                 $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode, $storeId);
+            }
+
+            if (empty($giftCard)) {
+                $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $storeId);
             }
 
             $coupon = null;
@@ -687,6 +701,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      */
     private function applyingGiftCardCode($code, $giftCard, $immutableQuote, $parentQuote)
     {
+        $result = [];
         try {
             if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
                 // Remove Amasty Gift Card if already applied
@@ -740,7 +755,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $this->discountHelper->applyMageplazaGiftCard($code, $parentQuote);
 
                 $giftAmount = $giftCard->getBalance();
-            } else {
+            } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
                     try {
                         // on subsequest validation calls from Bolt checkout
@@ -767,6 +782,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
 
                 // Send the whole GiftCard Amount.
                 $giftAmount = $parentQuote->getGiftCardsAmount();
+            } else {
+                // TODO: move all cases above into filter
+                $result = $this->eventsForThirdPartyModules->runFilter("applyGiftcard", null, $code, $giftCard, $immutableQuote, $parentQuote);
+                if (empty($result)) {
+                    throw new \Exception('Unknown giftCard class');
+                }
+                if ($result['status']=='failure') {
+                    throw new \Exception($result['error_message']);
+                }
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -780,13 +804,15 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             return false;
         }
 
-        $result = [
-            'status'          => 'success',
-            'discount_code'   => $code,
-            'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
-            'description'     =>  __('Gift Card'),
-            'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
-        ];
+        if (!$result) {
+            $result = [
+                'status'          => 'success',
+                'discount_code'   => $code,
+                'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
+                'description'     =>  __('Gift Card'),
+                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+            ];
+        }
 
         $this->logHelper->addInfoLog('### Gift Card Result');
         $this->logHelper->addInfoLog(json_encode($result));

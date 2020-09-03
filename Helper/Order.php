@@ -63,6 +63,7 @@ use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class Order
@@ -236,6 +237,9 @@ class Order extends AbstractHelper
     /** @var CreditmemoManagementInterface  */
     protected $creditmemoManagement;
 
+    /** @var EventsForThirdPartyModules  */
+    private $eventsForThirdPartyModules;
+
     /**
      * @var array transaction info cache
      */
@@ -271,6 +275,7 @@ class Order extends AbstractHelper
      * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      * @param CreditmemoFactory $creditmemoFactory
      * @param CreditmemoManagementInterface $creditmemoManagement
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         Context $context,
@@ -300,7 +305,8 @@ class Order extends AbstractHelper
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
-        CreditmemoManagementInterface $creditmemoManagement
+        CreditmemoManagementInterface $creditmemoManagement,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -330,6 +336,7 @@ class Order extends AbstractHelper
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
         $this->creditmemoFactory = $creditmemoFactory;
         $this->creditmemoManagement = $creditmemoManagement;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -1171,6 +1178,7 @@ class Order extends AbstractHelper
      */
     protected function deleteOrder($order)
     {
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeDeleteOrder", $order);
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {

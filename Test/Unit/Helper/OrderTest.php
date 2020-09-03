@@ -89,6 +89,7 @@ use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as Cus
 use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Api\CreditmemoManagementInterface;
 use Magento\Sales\Model\Order\Creditmemo;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -246,6 +247,9 @@ class OrderTest extends TestCase
     /** @var MockObject|ScopeConfigInterface mocked instance of the configuration provider */
     private $scopeConfigMock;
 
+    /** @var MockObject|EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
+
     /**
      * Setup test dependencies, called before each test
      *
@@ -319,7 +323,8 @@ class OrderTest extends TestCase
                     $this->customerCreditCardFactory,
                     $this->customerCreditCardCollectionFactory,
                     $this->creditmemoFactory,
-                    $this->creditmemoManagement
+                    $this->creditmemoManagement,
+                    $this->eventsForThirdPartyModules,
                 ]
             )
             ->setMethods($methods);
@@ -466,6 +471,7 @@ class OrderTest extends TestCase
         $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled','isCreatingCreditMemoFromWebHookEnabled','isIgnoreHookForInvoiceCreationEnabled']);
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
         $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class);
+        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
     }
 
     /**
@@ -504,7 +510,8 @@ class OrderTest extends TestCase
             $this->customerCreditCardFactory,
             $this->customerCreditCardCollectionFactory,
             $this->creditmemoFactory,
-            $this->creditmemoManagement
+            $this->creditmemoManagement,
+            $this->eventsForThirdPartyModules
         );
         $this->assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
         $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
@@ -537,6 +544,7 @@ class OrderTest extends TestCase
         );
         $this->assertAttributeEquals($this->creditmemoFactory, 'creditmemoFactory', $instance);
         $this->assertAttributeEquals($this->creditmemoManagement, 'creditmemoManagement', $instance);
+        $this->assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
