@@ -532,9 +532,7 @@ class Order extends AbstractHelper
                         'Store Applied Taxes' => $address->getAppliedTaxes(),
                         'Bolt Tax Amount' => $boltTaxAmount,
                         'Store Tax Amount' => $orderTaxAmount,
-                        'Order #' => $quote->getReservedOrderId(),
                         'Quote ID' => $quote->getId(),
-
                     ]
                 ]);
             });
