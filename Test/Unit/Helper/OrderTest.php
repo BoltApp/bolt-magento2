@@ -4852,7 +4852,6 @@ class OrderTest extends TestCase
             ->willReturnCallback(
             function (callable $callback) use ($quoteMock, $boltTotalAmount, $magentoTotalAmount) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $quoteMock->expects(static::once())->method('getReservedOrderId')->willReturn(static::ORDER_ID);
                 $quoteMock->expects(static::once())->method('getId')->willReturn(static::QUOTE_ID);
                 $reportMock->expects(static::once())
                     ->method('setMetaData')->with(
@@ -4860,7 +4859,6 @@ class OrderTest extends TestCase
                             'TOTAL MISMATCH' => [
                                 'Bolt Total Amount' => $boltTotalAmount,
                                 'Magento Total Amount' => $magentoTotalAmount,
-                                'Order #' => static::ORDER_ID,
                                 'Quote ID' => static::QUOTE_ID,
                             ]
                         ]

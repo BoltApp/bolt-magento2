@@ -673,9 +673,7 @@ class Order extends AbstractHelper
                     'TOTAL MISMATCH' => [
                         'Bolt Total Amount' => $boltTotalAmount,
                         'Magento Total Amount' => $magentoTotalAmount,
-                        'Order #' => $quote->getReservedOrderId(),
                         'Quote ID' => $quote->getId(),
-
                     ]
                 ]);
             });
