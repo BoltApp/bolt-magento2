@@ -1031,7 +1031,7 @@ class Order extends AbstractHelper
             ]
         );
 
-        // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
+        // Set dispatched to be true. Prevents dispatching more then once.
         $quote->setBoltDispatched(true);
         $this->cartHelper->quoteResourceSave($quote);
     }
