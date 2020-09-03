@@ -2332,14 +2332,6 @@ class Cart extends AbstractHelper
             };
         }
 
-//        $quote->reserveOrderId();
-
-        // We use boltReservedOrderId for two purposes:
-        // - to have in subsidiary Quote the same orderId as in immutableQuote
-        // - to make work in dispatchPostCheckoutEvents only once
-        // Second purpose is actual for Product page checkout
-        // so we need to set boltReservedOrderId
-//        $quote->setBoltReservedOrderId($quote->getReservedOrderId());
         $quote->setIsActive(false);
 
         $cart_data = $this->getCartData(false, '', $quote);
