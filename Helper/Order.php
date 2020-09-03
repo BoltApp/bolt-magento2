@@ -1070,7 +1070,7 @@ class Order extends AbstractHelper
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
                 throw new BoltException(
                     __(
-                        'Order is in pending payment. Waiting for the hook update. Quote ID: %2',
+                        'Order is in pending payment. Waiting for the hook update. Quote ID: %1',
                         $quote->getId()
                     ),
                     null,
