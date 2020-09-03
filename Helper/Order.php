@@ -1344,7 +1344,6 @@ class Order extends AbstractHelper
         $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
             $report->setMetaData([
                 'CREATE ORDER' => [
-                    'order increment ID' => $quote->getReservedOrderId(),
                     'parent quote ID' => $quote->getId(),
                     'immutable quote ID' => $immutableQuote->getId()
                 ]
