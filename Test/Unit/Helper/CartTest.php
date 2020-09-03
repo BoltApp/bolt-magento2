@@ -86,7 +86,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
-
+use Magento\Framework\Serialize\Serializer\Serialize;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
  */
@@ -159,9 +159,9 @@ class CartTest extends BoltTestCase
 
     /** @var string Test email address */
     const EMAIL_ADDRESS = 'integration@bolt.com';
-    
+
     const COUPON_CODE = 'testcoupon';
-    
+
     const COUPON_DESCRIPTION = 'test coupon';
 
     /** @var Context|MockObject */
@@ -294,6 +294,9 @@ class CartTest extends BoltTestCase
     /** array of objects we need to delete after test */
     private $objectsToClean;
 
+    /** @var MockObject|Serialize */
+    private $serialize;
+
     /**
      * Setup test dependencies, called before each test
      */
@@ -424,6 +427,8 @@ class CartTest extends BoltTestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
+        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
+        $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->currentMock = $this->getCurrentMock(null);
 
@@ -476,7 +481,8 @@ class CartTest extends BoltTestCase
                     $this->customerRepository,
                     $this->coreRegistry,
                     $this->metricsClient,
-                    $this->deciderHelper
+                    $this->deciderHelper,
+                    $this->serialize
                 ]
             )
             ->getMock();
@@ -679,7 +685,8 @@ class CartTest extends BoltTestCase
             $this->customerRepository,
             $this->coreRegistry,
             $this->metricsClient,
-            $this->deciderHelper
+            $this->deciderHelper,
+            $this->serialize
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -706,6 +713,7 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
         static::assertAttributeEquals($this->customerRepository, 'customerRepository', $instance);
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
+        static::assertAttributeEquals($this->serialize, 'serialize', $instance);
     }
 
     /**
@@ -2556,7 +2564,7 @@ ORDER
             $product = TestUtils::createSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
-                
+
             $result = $boltHelperCart->getCartData(false, "");
 
             // check that created immutuble quote has correct parent quote id

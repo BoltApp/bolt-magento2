@@ -73,13 +73,13 @@ class Bugsnag extends AbstractHelper
         //////////////////////////////////////////
         if (!class_exists('\GuzzleHttp\Client')) {
             // @codeCoverageIgnoreStart
-            require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
+            require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php'; // phpcs:ignore
             // @codeCoverageIgnoreEnd
         }
 
         if (!class_exists('\Bugsnag\Client')) {
             // @codeCoverageIgnoreStart
-            require_once $directoryList->getPath('lib_internal') . '/Bolt/bugsnag/autoloader.php';
+            require_once $directoryList->getPath('lib_internal') . '/Bolt/bugsnag/autoloader.php'; // phpcs:ignore
             // @codeCoverageIgnoreEnd
         }
         //////////////////////////////////////////

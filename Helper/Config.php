@@ -1118,7 +1118,7 @@ class Config extends AbstractHelper
     private function getAdditionalConfigProperty($name, $storeId = null)
     {
         $config = $this->getAdditionalConfigObject($storeId);
-        return @$config->$name;
+        return $config->$name ?? null;
     }
 
     /**
@@ -1236,7 +1236,7 @@ class Config extends AbstractHelper
     private function getPageFilter($filterName, $storeId = null)
     {
         $pageFilters = $this->getPageFilters($storeId);
-        if ($pageFilters && @$pageFilters->$filterName) {
+        if ($pageFilters && isset($pageFilters->$filterName)) {
             return (array)$pageFilters->$filterName;
         }
         return [];

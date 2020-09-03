@@ -255,7 +255,7 @@ class Api extends AbstractHelper
                 $headers = $response->getHeaders();
                 $report->setMetaData([
                     'META DATA' => [
-                        'bolt_trace_id' => @$headers[ConfigHelper::BOLT_TRACE_ID_HEADER],
+                        'bolt_trace_id' => $headers[ConfigHelper::BOLT_TRACE_ID_HEADER] ?? null,
                     ]
                 ]);
             });

@@ -96,7 +96,7 @@ class Decider extends AbstractHelper
             $this->_session->setBoltFeatureSwitchId($boltFeatureSwitchId);
         }
         $saltedString = $boltFeatureSwitchId . "-" . $switchName;
-        $hash = md5($saltedString);
+        $hash = hash('md5', $saltedString);
         $hexStr = substr($hash, 0, 6);
         $decEquivalent = hexdec($hexStr);
 
@@ -125,7 +125,7 @@ class Decider extends AbstractHelper
      */
     public function isSwitchEnabled($switchName)
     {
-        $defaultDef = @Definitions::DEFAULT_SWITCH_VALUES[$switchName];
+        $defaultDef = Definitions::DEFAULT_SWITCH_VALUES[$switchName] ?? null;
         if (!$defaultDef) {
             throw new LocalizedException(__("Unknown feature switch"));
         }

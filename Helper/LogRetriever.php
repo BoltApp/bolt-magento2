@@ -16,10 +16,36 @@
  */
 
 namespace Bolt\Boltpay\Helper;
+use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\Filesystem\Driver\File;
 
 class LogRetriever
 {
     const DEFAULT_LOG_PATH = "var/log/exception.log";
+
+    /**
+     * @var File
+     */
+    protected $file;
+
+    /**
+     * @var Bugsnag
+     */
+    protected $bugsnag;
+
+    /**
+     * LogRetriever constructor.
+     * @param File $file
+     * @param Bugsnag $bugsnag
+     */
+    public function __construct(
+        File $file,
+        Bugsnag $bugsnag
+    )
+    {
+        $this->file = $file;
+        $this->bugsnag = $bugsnag;
+    }
 
     /**
      * @param string $logPath
@@ -33,9 +59,11 @@ class LogRetriever
 
     private function customTail($logPath, $lines)
     {
-        //Open file, return informative error string if doesn't exist
-        $file = @fopen($logPath, "rb");
-        if ($file === false) {
+        try {
+            //Open file, return informative error string if doesn't exist
+            $file = $this->file->fileOpen($logPath, "rb");
+        } catch (FileSystemException $exception) {
+            $this->bugsnag->notifyException($exception);
             return "No file found at " . $logPath;
         }
 

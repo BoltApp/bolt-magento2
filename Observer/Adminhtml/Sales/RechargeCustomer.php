@@ -85,7 +85,7 @@ class RechargeCustomer implements ObserverInterface
                 $response = $boltCustomerCreditCard->recharge($order);
 
                 $responseData = $response->getResponse();
-                $reference = @$responseData->transaction->reference;
+                $reference = $responseData->transaction->reference ?? null;
                 if ($reference) {
                     $order->addStatusHistoryComment(
                         __(
