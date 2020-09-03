@@ -2388,8 +2388,6 @@ class OrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('setBillingAddress')->with($parentQuote, $transaction);
         $this->currentMock->expects(self::once())->method('setShippingMethod')->with($parentQuote);
 
-        $this->discountHelper->expects(self::once())->method('applyMageplazaDiscountToQuote')->with($parentQuote);
-
         $parentQuote->expects(self::once())->method('setPaymentMethod')->with(Payment::METHOD_CODE);
 
         $quotePayment = $this->createMock(Quote\Payment::class);

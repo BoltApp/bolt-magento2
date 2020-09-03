@@ -118,6 +118,11 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     protected $mageplazaGiftCardFactory;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    protected $mageplazaGiftCardCheckoutHelper;
 
     /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
@@ -254,6 +259,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
+     * @param ThirdPartyModuleFactory $mageplazaGiftCardCheckoutHelper
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
@@ -291,6 +297,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
+        ThirdPartyModuleFactory $mageplazaGiftCardCheckoutHelper,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
@@ -327,6 +334,7 @@ class Discount extends AbstractHelper
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
+        $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
@@ -991,25 +999,15 @@ class Discount extends AbstractHelper
      * @param int $codeId
      * @param Quote $quote
      */
-    public function removeMageplazaGiftCard($codeId, $quote)
+    public function removeMageplazaGiftCard($code, $quote)
     {
         if (! $this->isMageplazaGiftCardAvailable()) {
             return;
         }
 
         try {
-            $accountModel = $this->mageplazaGiftCardFactory->getInstance()
-                ->load($codeId);
-
-            $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
-            $code = $accountModel->getCode();
-
-            if ($accountModel->getId() && isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code])) {
-                unset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code]);
-                $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
-                $quote->setData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY, null);
-                $this->updateTotals($quote);
-            }
+            $mageplazaGiftCardCheckoutHelper = $this->mageplazaGiftCardCheckoutHelper->getInstance();
+            $mageplazaGiftCardCheckoutHelper->removeGiftCard($code, false, $quote);
 
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -1030,18 +1028,8 @@ class Discount extends AbstractHelper
         }
 
         try {
-            $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
-            $giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code] = 0;
-
-            /// On the latest MagePlaza version (1.0.6), they save the gift card to the quote
-            /// and then pull them out to collect the total
-            $quote->setMpGiftCards(json_encode([$code => 0]));
-
-            // On the older MagePlaza version (ex: 1.0.0, etc) they used the session to save the gift card
-            // and then pull them out to collect the total
-            $this->sessionHelper->getCheckoutSession()->setGiftCardsData($giftCardsData);
-
-            $this->updateTotals($quote);
+            $mageplazaGiftCardCheckoutHelper = $this->mageplazaGiftCardCheckoutHelper->getInstance();
+            $mageplazaGiftCardCheckoutHelper->addGiftCards($code, $quote);
             $totals = $quote->getTotals();
             return isset($totals[self::MAGEPLAZA_GIFTCARD]) ? $totals[self::MAGEPLAZA_GIFTCARD]->getValue() : 0;
         } catch (\Exception $e) {
@@ -1061,13 +1049,13 @@ class Discount extends AbstractHelper
         }
 
         try {
-            if ($mpGiftCards = $quote->getData(self::MAGEPLAZA_GIFTCARD_QUOTE_KEY)) {
-                foreach (json_decode($mpGiftCards, true) as $couponCode => $amount) {
-                    $giftCard = $this->loadMageplazaGiftCard($couponCode, $quote->getStoreId());
-                    if ($giftCard && $giftCard->getId()) {
-                        $this->removeMageplazaGiftCard($giftCard->getId(), $quote);
-                        $this->applyMageplazaGiftCard($giftCard->getCode(), $quote);
-                    }
+            $mageplazaGiftCardCheckoutHelper = $this->mageplazaGiftCardCheckoutHelper->getInstance();
+            $giftCards = $mageplazaGiftCardCheckoutHelper->getGiftCardsUsed($quote);
+
+            if ($giftCards && count($giftCards)) {
+                foreach ($giftCards as $code => $amount) {
+                    $this->removeMageplazaGiftCard($code, $quote);
+                    $this->applyMageplazaGiftCard($code, $quote);
                 }
             }
         } catch (\Exception $e) {

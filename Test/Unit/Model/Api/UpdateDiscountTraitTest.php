@@ -399,8 +399,80 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      * 
      */
+    public function verifyCouponCode_returnMagentoGiftCardAccount()
+    {
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn($giftcardMock);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertEquals([null,$giftcardMock], $result);
+    }
+    
+    /**
+     * @test
+     * 
+     */
+    public function verifyCouponCode_returnAmastyGiftCard()
+    {
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn($giftcardMock);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertEquals([null,$giftcardMock], $result);
+    }
+    
+    /**
+     * @test
+     * 
+     */
+    public function verifyCouponCode_returnMageplazaGiftCard()
+    {
+        $giftcardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+        
+        $this->discountHelper->expects(static::once())->method('loadMageplazaGiftCard')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn($giftcardMock);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertEquals([null,$giftcardMock], $result);
+    }
+    
+    /**
+     * @test
+     * 
+     */
     public function verifyCouponCode_couponObjNull_returnFalse()
     {
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+        
+        $this->discountHelper->expects(static::once())->method('loadMageplazaGiftCard')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn(null);
+            
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn(null);
         
@@ -422,6 +494,15 @@ class UpdateDiscountTraitTest extends TestCase
                 ]
             ]);
 
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+        
+        $this->discountHelper->expects(static::once())->method('loadMageplazaGiftCard')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn(null);
+            
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
         
@@ -442,19 +523,28 @@ class UpdateDiscountTraitTest extends TestCase
                 ]
             ]);
         
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
+            ->willReturn(null);
+        
+        $this->discountHelper->expects(static::once())->method('loadMageplazaGiftCard')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn(null);
+            
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
         
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
         
-        $this->assertEquals($coupon, $result);
+        $this->assertEquals([$coupon, null], $result);
     }
     
     /**
      * @test
      *
      */
-    public function applyDiscount_returnTrue()
+    public function applyDiscount_applyCoupon_returnTrue()
     {
         $quote = $this->getQuoteMock();
         
@@ -477,7 +567,33 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, null, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyDiscount_applyGiftCard_returnTrue()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->disableOriginalConstructor()
+            ->setMethods(['getId', 'removeFromCart', 'addToCart'])
+            ->getMock();
+        
+        $giftcardMock->method('getId')->willReturn(123);
+        
+        $giftcardMock->expects(self::once())->method('removeFromCart')
+            ->with(true, $quote);
+
+        $giftcardMock->expects(self::once())->method('addToCart')
+            ->with(true, $quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, null, $giftcardMock, $quote]);
         
         $this->assertTrue($result);
     }
@@ -485,7 +601,7 @@ class UpdateDiscountTraitTest extends TestCase
     /**
      * @test
      */
-    public function applyDiscount_throwException()
+    public function applyDiscount_applyCoupon_throwException()
     {
         $quote = $this->getQuoteMock();
         
@@ -499,7 +615,7 @@ class UpdateDiscountTraitTest extends TestCase
         $this->expectException(WebApiException::class);
         $this->expectExceptionMessage('Something happened with current code.');
         
-        TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, $quote]);
+        TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, null, $quote]);
     }
     
     /**
@@ -850,12 +966,94 @@ class UpdateDiscountTraitTest extends TestCase
         
         $this->assertFalse($result);
     }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingGiftCardCode_amastyGiftCard()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();        
+        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_CODE, $quote);            
+        $this->discountHelper->expects(static::once())->method('applyAmastyGiftCard')->with(self::COUPON_CODE, $giftcardMock, $quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingGiftCardCode_mageplazaGiftCard()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $giftcardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
+            ->disableOriginalConstructor()
+            ->getMock();        
+        $this->discountHelper->expects(static::once())->method('removeMageplazaGiftCard')->with(self::COUPON_CODE, $quote);            
+        $this->discountHelper->expects(static::once())->method('applyMageplazaGiftCard')->with(self::COUPON_CODE, $quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingGiftCardCode_magentoGiftCard()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->setMethods(['removeFromCart', 'addToCart'])
+            ->disableOriginalConstructor()
+            ->getMock();        
+        $giftcardMock->expects(static::once())->method('removeFromCart')->with(true, $quote);            
+        $giftcardMock->expects(static::once())->method('addToCart')->with(true, $quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingGiftCardCode_throwException()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $giftcardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $exception = new \Exception('General exception');
+        $this->discountHelper->expects(static::once())->method('removeMageplazaGiftCard')
+            ->with(self::COUPON_CODE, $quote)->willThrowException($exception);
+
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        $this->currentMock->expects(self::once())->method('sendErrorResponse')
+            ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertFalse($result);
+    }
 
     /**
      * @test
      *
      */
-    public function removeDiscount()
+    public function removeDiscount_removeCoupon()
     {
         $discounts = [
             self::COUPON_CODE => 'coupon',    
@@ -866,6 +1064,35 @@ class UpdateDiscountTraitTest extends TestCase
             ->with($quote, '');
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [self::COUPON_CODE, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeDiscount_removeGiftCard()
+    {
+        $couponCode = 'giftcard1234';
+        $discounts = [
+            $couponCode => 'gift_card',    
+        ];
+        $quote = $this->getQuoteMock();
+        $giftcardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
+            ->setMethods(['getCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('getCode')->willReturn($couponCode);
+        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with($couponCode, self::WEBSITE_ID)
+            ->willReturn(null);            
+        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with($couponCode, self::WEBSITE_ID)
+            ->willReturn(null);        
+        $this->discountHelper->expects(static::once())->method('loadMageplazaGiftCard')->with($couponCode, self::STORE_ID)
+            ->willReturn($giftcardMock);
+        $this->discountHelper->expects(static::once())->method('removeMageplazaGiftCard')->with($couponCode, $quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [$couponCode, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
         
         $this->assertTrue($result);
     }
@@ -923,6 +1150,82 @@ class UpdateDiscountTraitTest extends TestCase
             ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeCouponCode', [$quote]);
+        
+        $this->assertFalse($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeGiftCardCode_mageplazaGiftCard()
+    {
+        $quote = $this->getQuoteMock();
+        $giftcardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
+            ->setMethods(['getCode'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('getCode')->willReturn(self::COUPON_CODE);        
+        $this->discountHelper->expects(static::once())->method('removeMageplazaGiftCard')->with(self::COUPON_CODE, $quote);            
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeGiftCardCode_amastyGiftCard()
+    {
+        $codeId = 100;
+        $quote = $this->getQuoteMock();
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->setMethods(['getCodeId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('getCodeId')->willReturn($codeId);        
+        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with($codeId, $quote);            
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeGiftCardCode_magentoGiftCard()
+    {
+        $codeId = 100;
+        $quote = $this->getQuoteMock();
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->setMethods(['removeFromCart'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('removeFromCart')->with(true, $quote);         
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeGiftCardCode_throwException()
+    {
+        $quote = $this->getQuoteMock();
+        $exception = new \Exception('The GiftCard '.self::COUPON_CODE.' does not support removal');
+
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        $this->currentMock->expects(self::once())->method('sendErrorResponse')
+            ->with(BoltErrorResponse::ERR_SERVICE,'The GiftCard '.self::COUPON_CODE.' does not support removal',422,$quote);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, null, $quote]);
         
         $this->assertFalse($result);
     }

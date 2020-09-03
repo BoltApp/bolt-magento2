@@ -163,6 +163,11 @@ class DiscountTest extends TestCase
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mageplaza giftcard factory
      */
     private $mageplazaGiftCardFactory;
+    
+    /**
+     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mageplaza giftcard checkout helper
+     */
+    private $mageplazaGiftCardCheckoutHelper;
 
     /**
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty Rewards resource quote
@@ -269,6 +274,7 @@ class DiscountTest extends TestCase
         $this->mirasvitRewardsPurchaseHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mageplazaGiftCardCollection = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mageplazaGiftCardFactory = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->mageplazaGiftCardCheckoutHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsResourceQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->aheadworksCustomerStoreCreditManagement = $this->createMock(ThirdPartyModuleFactory::class);
@@ -326,6 +332,7 @@ class DiscountTest extends TestCase
                     $this->mirasvitRewardsPurchaseHelper,
                     $this->mageplazaGiftCardCollection,
                     $this->mageplazaGiftCardFactory,
+                    $this->mageplazaGiftCardCheckoutHelper,
                     $this->amastyRewardsResourceQuote,
                     $this->amastyRewardsQuote,
                     $this->aheadworksCustomerStoreCreditManagement,
@@ -381,6 +388,7 @@ class DiscountTest extends TestCase
             $this->mirasvitRewardsPurchaseHelper,
             $this->mageplazaGiftCardCollection,
             $this->mageplazaGiftCardFactory,
+            $this->mageplazaGiftCardCheckoutHelper,
             $this->amastyRewardsResourceQuote,
             $this->amastyRewardsQuote,
             $this->aheadworksCustomerStoreCreditManagement,
@@ -429,6 +437,7 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->mirasvitRewardsPurchaseHelper, 'mirasvitRewardsPurchaseHelper', $instance);
         static::assertAttributeEquals($this->mageplazaGiftCardCollection, 'mageplazaGiftCardCollection', $instance);
         static::assertAttributeEquals($this->mageplazaGiftCardFactory, 'mageplazaGiftCardFactory', $instance);
+        static::assertAttributeEquals($this->mageplazaGiftCardCheckoutHelper, 'mageplazaGiftCardCheckoutHelper', $instance);
         static::assertAttributeEquals($this->amastyRewardsResourceQuote, 'amastyRewardsResourceQuote', $instance);
         static::assertAttributeEquals($this->amastyRewardsQuote, 'amastyRewardsQuote', $instance);
         static::assertAttributeEquals(
@@ -3147,10 +3156,10 @@ class DiscountTest extends TestCase
     {
         $this->initCurrentMock(['isMageplazaGiftCardAvailable']);
         $quote = $this->createMock(Quote::class);
-        $codeId = 1232;
+        $code = '1232';
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(false);
 
-        static::assertNull($this->currentMock->removeMageplazaGiftCard($codeId, $quote));
+        static::assertNull($this->currentMock->removeMageplazaGiftCard($code, $quote));
     }
 
     /**
@@ -3161,31 +3170,25 @@ class DiscountTest extends TestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
-    public function removeMageplazaGiftCard_ifAccountModelThrowsException_notifiesBugSnag()
+    public function removeMageplazaGiftCard_ifHelperThrowsException_notifiesBugSnag()
     {
         $this->initCurrentMock(['isMageplazaGiftCardAvailable']);
         $quote = $this->createMock(Quote::class);
-        $codeId = 1232;
+        $code = '1232';
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
 
-
-        $accountModelMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)->setMethods(
-            [
-                'getInstance',
-                'load',
-                'getCode',
-                'getId',
-            ]
-        )->disableOriginalConstructor()->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardFactory', $accountModelMock);
-
-        $accountModelMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'removeGiftCard'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $exception = $this->createMock(\Exception::class);
-        $accountModelMock->expects(static::once())->method('load')->with($codeId)->willThrowException($exception);
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('removeGiftCard')
+            ->with($code, false, $quote)->willThrowException($exception);
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
 
-        static::assertNull($this->currentMock->removeMageplazaGiftCard($codeId, $quote));
+        $this->currentMock->removeMageplazaGiftCard($code, $quote);
     }
 
     /**
@@ -3198,69 +3201,23 @@ class DiscountTest extends TestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
-    public function removeMageplazaGiftCard_ifAccountModelHasId_updatesTotals()
+    public function removeMageplazaGiftCard_success()
     {
         $this->initCurrentMock(['isMageplazaGiftCardAvailable']);
-
-        $codeId = 1232;
-        $quote = $this->createPartialMock(
-            Quote::class,
-            [
-                'getShippingAddress',
-                'setCollectShippingRates',
-                'setTotalsCollectedFlag',
-                'collectTotals',
-                'setDataChanges',
-                'setData',
-            ]
-        );
+        $quote = $this->createMock(Quote::class);
+        $code = '1232';
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
 
-        $accountModelMock = $this->createPartialMock(
-            ThirdPartyModuleFactory::class,
-            [
-                'getInstance',
-                'load',
-                'getCode',
-                'getId',
-            ]
-        );
-
-        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardFactory', $accountModelMock);
-
-        $accountModelMock->expects(static::once())->method('getInstance')->willReturnSelf();
-        $accountModelMock->expects(static::once())->method('load')->with($codeId)->willReturnSelf();
-
-        $giftCardMock = $this->createPartialMock(
-            ThirdPartyModuleFactory::class,
-            ['getGiftCardsData', 'getCheckoutSession']
-        );
-        TestHelper::setProperty($this->currentMock, 'sessionHelper', $giftCardMock);
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class, ['setGiftCardsData']);
-
-        $giftCardMock->expects(static::exactly(2))->method('getCheckoutSession')
-            ->willReturnOnConsecutiveCalls($giftCardMock, $checkoutSession);
-
-        $code = 2323;
-        $giftCardsData = [Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY => [$code => 22]];
-        $giftCardMock->expects(static::once())->method('getGiftCardsData')->willReturn($giftCardsData);
-
-        $accountModelMock->expects(static::once())->method('getCode')->willReturn($code);
-        $id = 5;
-        $accountModelMock->expects(static::once())->method('getId')->willReturn($id);
-        unset($giftCardsData[Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY][$code]);
-        $checkoutSession->expects(self::once())->method('setGiftCardsData')->with($giftCardsData)->willReturnSelf();
-
-        $quote->expects(static::once())->method('setData')
-            ->with(Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY, null)
-            ->willReturnSelf();
-        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
-        $quote->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
-        $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
-        $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
-
-        $this->currentMock->removeMageplazaGiftCard($codeId, $quote);
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'removeGiftCard'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('removeGiftCard')
+            ->with($code, false, $quote);
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
+            
+        $this->currentMock->removeMageplazaGiftCard($code, $quote);
     }
 
     /**
@@ -3296,12 +3253,6 @@ class DiscountTest extends TestCase
             ->setMethods(
                 [
                     'getTotals',
-                    'getShippingAddress',
-                    'setCollectShippingRates',
-                    'setTotalsCollectedFlag',
-                    'collectTotals',
-                    'setDataChanges',
-                    'setMpGiftCards'
                 ]
             )
             ->disableOriginalConstructor()
@@ -3309,33 +3260,16 @@ class DiscountTest extends TestCase
 
         $code = 'Bolt_MpGiftCard';
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
-        $quote->expects(static::once())->method('setMpGiftCards')->with('{"Bolt_MpGiftCard":0}')->willReturnSelf();
-        $giftCardMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getGiftCardsData', 'getCheckoutSession'])
+        
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'addGiftCards'])
             ->disableOriginalConstructor()
             ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'sessionHelper', $giftCardMock);
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class, ['setGiftCardsData']);
-        $giftCardMock->expects(static::exactly(2))
-            ->method('getCheckoutSession')
-            ->willReturnOnConsecutiveCalls($giftCardMock, $checkoutSession);
-
-        $giftCardData = [Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY => [$code => 0]];
-        $giftCardMock->expects(static::once())
-            ->method('getGiftCardsData')
-            ->willReturn($giftCardData);
-
-        $checkoutSession->expects(self::once())
-            ->method('setGiftCardsData')
-            ->with($giftCardData)
-            ->willReturnSelf();
-
-        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
-        $quote->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
-        $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
-        $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('addGiftCards')
+            ->with($code, $quote);
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
+        
         $magePlazaMock = $this->createPartialMock(ThirdPartyModuleFactory::class, ['getValue']);
 
         $totals = [
@@ -3363,21 +3297,17 @@ class DiscountTest extends TestCase
 
         $code = 1232;
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
-
-        $giftCardMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getGiftCardsData', 'setGiftCardsData', 'getCheckoutSession'])
+        
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'addGiftCards'])
             ->disableOriginalConstructor()
             ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'sessionHelper', $giftCardMock);
-        $giftCardMock->expects(static::once())->method('getCheckoutSession')->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $exception = $this->createMock(\Exception::class);
-
-        $giftCardMock->expects(static::once())
-            ->method('getGiftCardsData')
-            ->willThrowException($exception);
-
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('addGiftCards')
+            ->with($code, $quote)->willThrowException($exception);
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
 
         $this->currentMock->applyMageplazaGiftCard($code, $quote);
     }
@@ -3410,61 +3340,36 @@ class DiscountTest extends TestCase
         $this->initCurrentMock(
             [
                 'isMageplazaGiftCardAvailable',
-                'loadMageplazaGiftCard',
                 'removeMageplazaGiftCard',
                 'applyMageplazaGiftCard',
             ]
         );
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getData', 'getStoreId'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
 
         $mpGiftCardsArray = [
-            [232 => 11],
-            [132 => 15],
+            232 => 10,
+            132 => 15,
         ];
-        $mpGiftCards = json_encode($mpGiftCardsArray);
-
-        $quote->expects(static::once())
-            ->method('getData')
-            ->with(Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY)
-            ->willReturn($mpGiftCards);
-
-        $storeId = 11;
-        $quote->expects(static::exactly(2))->method('getStoreId')
-            ->willReturnOnConsecutiveCalls($storeId, $storeId);
-
-        $giftCardMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getId', 'getCode'])
+        
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'getGiftCardsUsed'])
             ->disableOriginalConstructor()
             ->getMock();
-
-        $giftCardMockTwo = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getId', 'getCode'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->currentMock->expects(static::exactly(2))
-            ->method('loadMageplazaGiftCard')
-            ->withConsecutive([array_keys($mpGiftCardsArray)[0]], [array_keys($mpGiftCardsArray)[1]])
-            ->willReturnOnConsecutiveCalls($giftCardMock, $giftCardMockTwo);
-
-        $giftCardMock->expects(self::exactly(2))->method('getId')->willReturnOnConsecutiveCalls(11, 11);
-        $giftCardMockTwo->expects(self::exactly(2))->method('getId')->willReturnOnConsecutiveCalls(12, 12);
-        $code = 323;
-        $codeTwo = 4343;
-        $giftCardMock->expects(self::once())->method('getCode')->willReturn($code);
-        $giftCardMockTwo->expects(self::once())->method('getCode')->willReturn($codeTwo);
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getGiftCardsUsed')
+            ->with($quote)->willReturn($mpGiftCardsArray);
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
 
         $this->currentMock->expects(self::exactly(2))
             ->method('removeMageplazaGiftCard')
-            ->withConsecutive([11, $quote], [12, $quote]);
+            ->withConsecutive([232, $quote], [132, $quote]);
         $this->currentMock->expects(self::exactly(2))
             ->method('applyMageplazaGiftCard')
-            ->withConsecutive([$code], [$codeTwo]);
+            ->withConsecutive([232, $quote], [132, $quote]);
 
         $this->currentMock->applyMageplazaDiscountToQuote($quote);
     }
@@ -3477,20 +3382,23 @@ class DiscountTest extends TestCase
      */
     public function applyMageplazaDiscountToQuote_throwsException_notifiesBugSnag()
     {
-        $this->initCurrentMock(['isMageplazaGiftCardAvailable', 'loadMageplazaGiftCard']);
+        $this->initCurrentMock(['isMageplazaGiftCardAvailable']);
         $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getData', 'getStoreId'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->currentMock->expects(static::once())->method('isMageplazaGiftCardAvailable')->willReturn(true);
-
+        
+        $mageplazaGiftCardCheckoutHelperMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+            ->setMethods(['getInstance', 'getGiftCardsUsed'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $exception = $this->createMock(\Exception::class);
-
-        $quote->expects(static::once())->method('getData')->with(Discount::MAGEPLAZA_GIFTCARD_QUOTE_KEY)
-            ->willThrowException($exception);
-
+        $mageplazaGiftCardCheckoutHelperMock->expects(static::once())->method('getGiftCardsUsed')
+            ->with($quote)->willThrowException($exception);
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
+        TestHelper::setProperty($this->currentMock, 'mageplazaGiftCardCheckoutHelper', $mageplazaGiftCardCheckoutHelperMock);
 
         $this->currentMock->applyMageplazaDiscountToQuote($quote);
     }

@@ -239,6 +239,13 @@
             <argument name="className" xsi:type="string">Mageplaza\GiftCard\Model\ResourceModel\GiftCard\Collection</argument>
         </arguments>
     </virtualType>
+    
+    <virtualType name="boltMageplazaGiftCardCheckoutHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
+            <argument name="className" xsi:type="string">Mageplaza\GiftCard\Helper\Checkout</argument>
+        </arguments>
+    </virtualType>
 
     <virtualType name="boltAmastyRewardsResourceQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -298,6 +305,7 @@
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
+            <argument name="mageplazaGiftCardCheckoutHelper" xsi:type="object">boltMageplazaGiftCardCheckoutHelper</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
@@ -305,6 +313,18 @@
             <argument name="bssStoreCreditHelper" xsi:type="object">boltBssStoreCreditHelper</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="boltMageplazaShippingRestrictonHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Mageplaza_ShippingRestriction</argument>
+            <argument name="className" xsi:type="string">Mageplaza\ShippingRestriction\Helper\Data</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bolt\Boltpay\Helper\Session">
+        <arguments>
+            <argument name="mageplazaShippingRestrictonHelper" xsi:type="object">boltMageplazaShippingRestrictonHelper</argument>
         </arguments>
     </type>
 
