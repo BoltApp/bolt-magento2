@@ -1338,7 +1338,6 @@ class Order extends AbstractHelper
             @$transaction->order->cart->shipments[0]->shipping_address->email_address;
         $this->addCustomerDetails($quote, $email);
 
-//        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
 
         $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
