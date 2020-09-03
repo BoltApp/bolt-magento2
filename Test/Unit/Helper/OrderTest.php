@@ -932,7 +932,7 @@ class OrderTest extends TestCase
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(
-            'Quote Submit Error. Order #: '.self::INCREMENT_ID.
+            'Quote Submit Error. Parent Quote ID: '.self::QUOTE_ID.
             ' Immutable Quote ID: '.self::IMMUTABLE_QUOTE_ID
         );
 
