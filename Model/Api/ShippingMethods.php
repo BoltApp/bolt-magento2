@@ -844,7 +844,6 @@ class ShippingMethods implements ShippingMethodsInterface
                         'address' => $addressData,
                         'immutable quote ID' => $quote->getId(),
                         'parent quote ID' => $quote->getBoltParentQuoteId(),
-                        'order increment ID' => $quote->getReservedOrderId(),
                         'Store Id'  => $quote->getStoreId()
                     ]
                 ]);
