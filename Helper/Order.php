@@ -593,8 +593,7 @@ class Order extends AbstractHelper
         }
         if ($order === null) {
             throw new LocalizedException(__(
-                'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
-                $quote->getReservedOrderId(),
+                'Quote Submit Error. Parent Quote ID: %1 Immutable Quote ID: %2',
                 $quote->getId(),
                 $immutableQuote->getId()
             ));

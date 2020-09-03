@@ -922,8 +922,7 @@ class OrderTest extends TestCase
         $immutableQuoteMock = $this->createPartialMock(Quote::class, ['getId']);
         $immutableQuoteMock->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
 
-        $quoteMock = $this->createPartialMock(Quote::class, ['getReservedOrderId','getId']);
-        $quoteMock->method('getReservedOrderId')->willReturn(self::INCREMENT_ID);
+        $quoteMock = $this->createPartialMock(Quote::class, ['getId']);
         $quoteMock->method('getId')->willReturn(self::QUOTE_ID);
 
         $this->createOrderSetUp($quoteMock);
@@ -934,7 +933,6 @@ class OrderTest extends TestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(
             'Quote Submit Error. Order #: '.self::INCREMENT_ID.
-            ' Parent Quote ID: '.self::QUOTE_ID.
             ' Immutable Quote ID: '.self::IMMUTABLE_QUOTE_ID
         );
 
