@@ -171,6 +171,15 @@ class UpgradeSchemaTest extends TestCase
                 ],
             ],
             [
+                $quoteTable,
+                'bolt_dispatched',
+                [
+                    'type'     => Table::TYPE_BOOLEAN,
+                    'nullable' => true,
+                    'comment'  => 'Order dispatched flag'
+                ]
+            ],
+            [
                 $boltWebhookTable,
                 'updated_at',
                 [
