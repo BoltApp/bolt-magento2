@@ -1044,7 +1044,7 @@ class Order extends AbstractHelper
 
     /**
      * Try to fetch and price-validate already existing order.
-     * Use case: order has been created but the payment failes due to the ivnalid credit card data.
+     * Use case: order has been created but the payment fails due to the invalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
      *
      * @param Quote $quote
