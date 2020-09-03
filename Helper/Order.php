@@ -1102,15 +1102,13 @@ class Order extends AbstractHelper
                 $report->setMetaData([
                     'CREATE ORDER' => [
                         'pre-auth order.create' => true,
-                        'order increment ID' => $quote->getReservedOrderId(),
                         'parent quote ID' => $quote->getId(),
                     ]
                 ]);
             });
             throw new BoltException(
                 __(
-                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                    $quote->getReservedOrderId(),
+                    'Quote Submit Error. Parent Quote ID: %1',
                     $quote->getId()
                 ),
                 null,
