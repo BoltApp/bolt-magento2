@@ -159,6 +159,6 @@
  - Improved back-end components related to checkout experience.
  - Support for the Mageplaza plugin's shipping restriction
 
- ## [v2.14.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.14.0) 2020-09-03
+ ## [v2.14.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.14.0) 2020-09-09
  - Added: Shoppers can now add multiple discounts and remove discounts in Bolt Checkout.
  - Improvement: The `display_id` now displays just the `order_id` value in the merchant dashboard and user emails. 
