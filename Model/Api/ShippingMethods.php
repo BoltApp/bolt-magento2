@@ -56,6 +56,7 @@ class ShippingMethods implements ShippingMethodsInterface
 {
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
+    const BOLT_SHIPPING_TAX_CACHE_TAG = 'BOLT_SHIPPING_TAX_CACHE_TAG';
 
     /**
      * @var HookHelper
@@ -599,7 +600,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Cache the calculated result
         if ($prefetchShipping) {
-            $this->cache->save($this->serialize->serialize($shippingOptionsModel), $cacheIdentifier, [], 3600);
+            $this->cache->save($this->serialize->serialize($shippingOptionsModel), $cacheIdentifier, [self::BOLT_SHIPPING_TAX_CACHE_TAG], 3600);
         }
 
         return $shippingOptionsModel;
