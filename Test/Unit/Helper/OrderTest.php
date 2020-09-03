@@ -2347,7 +2347,7 @@ class OrderTest extends TestCase
                 ]
             )
         );
-        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getReservedOrderId', 'getId'];
+        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getId'];
         /** @var MockObject|Quote $immutableQuote */
         $immutableQuote = $this->createPartialMock(Quote::class, $quoteMockMethodsList);
         $immutableQuote->expects(self::any())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
@@ -2391,15 +2391,12 @@ class OrderTest extends TestCase
 
         $quotePayment->expects(self::once())->method('save');
 
-        $parentQuote->expects(self::once())->method('getReservedOrderId')->willReturn(self::ORDER_ID);
-
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) use ($bugsnagParentQuoteId) {
                 $report = $this->createMock(Report::class);
                 $report->expects(self::once())->method('setMetaData')->with(
                     [
                         'CREATE ORDER' => [
-                            'order increment ID' => self::ORDER_ID,
                             'parent quote ID'    => $bugsnagParentQuoteId,
                             'immutable quote ID' => self::IMMUTABLE_QUOTE_ID
                         ]
