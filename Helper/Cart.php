@@ -1553,7 +1553,6 @@ class Cart extends AbstractHelper
         ////////////////////////////////////////////////////////
         if (!$immutableQuote) {
             $immutableQuote = $this->createImmutableQuote($quote);
-//            $this->reserveOrderId($immutableQuote, $quote);
         }
 
         ////////////////////////////////////////////////////////
@@ -1627,7 +1626,7 @@ class Cart extends AbstractHelper
         $shippingAddress = $immutableQuote->getShippingAddress();
 
         //Use display_id to hold and transmit, all the way back and forth, reserved order id
-//        $cart['display_id'] = $immutableQuote->getReservedOrderId();
+        $cart['display_id'] = '';
 
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();

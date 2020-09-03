@@ -2626,8 +2626,6 @@ ORDER
         $currentMock = $this->getCurrentMock(['createImmutableQuote', 'reserveOrderId']);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([]);
@@ -2651,7 +2649,6 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
@@ -2680,8 +2677,6 @@ ORDER
         $this->setUpAddressMock($this->quoteShippingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteShippingAddress);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
@@ -2696,8 +2691,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -2708,7 +2701,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::ORDER_INCREMENT_ID,
+                'display_id'      => '',
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => $testItems,
                 'discounts'       => $testDiscounts,
@@ -2780,15 +2773,12 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteShippingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteShippingAddress);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
@@ -2803,8 +2793,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -2863,15 +2851,12 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
@@ -2888,8 +2873,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -2917,7 +2900,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => self::ORDER_INCREMENT_ID,
+                'display_id'      => '',
                 'currency'        => 'USD',
                 'items'           => [$testItem],
                 'billing_address' =>
@@ -2977,15 +2960,12 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
@@ -3002,8 +2982,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -3082,15 +3060,12 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
@@ -3107,8 +3082,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -3172,15 +3145,12 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteShippingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteShippingAddress);
         $currentMock->expects(static::any())->method('getCartItems')->willReturn($getCartItemsResult);
@@ -3195,8 +3165,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -3271,7 +3239,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001',
+                'display_id'      => '',
                 'currency'        => 'USD',
                 'items'           => [
                     ['total_amount' => 12468] + $testItem,
@@ -3370,7 +3338,7 @@ ORDER
         static::assertEquals(
             [
                 'order_reference' => 1000,
-                'display_id'      => '100010001',
+                'display_id'      => '',
                 'currency'        => 'USD',
                 'items'           => [$testItem,],
                 'shipments'       => [
@@ -3467,7 +3435,7 @@ ORDER
         *
         * @throws Exception from tested method
         */
-        public function getCartData_paymentOnlyAndShippingAddresIncomplete_returnsEmptyArrayAndNotifiesError()
+        public function getCartData_paymentOnlyAndShippingAddressIncomplete_returnsEmptyArrayAndNotifiesError()
         {
         $testItem = [
             'reference'    => self::PRODUCT_ID,
@@ -3488,14 +3456,11 @@ ORDER
                 'getQuoteById',
                 'collectDiscounts',
                 'createImmutableQuote',
-                'reserveOrderId',
                 'getCalculationAddress'
             ]
         );
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('reserveOrderId')
-            ->with($this->immutableQuoteMock, $this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteShippingAddress);
         $currentMock->expects(static::any())->method('getCartItems')->willReturn($getCartItemsResult);
@@ -3512,8 +3477,6 @@ ORDER
             ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
             ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::ORDER_INCREMENT_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
@@ -5231,7 +5194,7 @@ ORDER
 
         $expectedCartData = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID,
+            'display_id'      => '',
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
@@ -5314,7 +5277,7 @@ ORDER
 
         $expectedCartData = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID,
+            'display_id'      => '',
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
@@ -5345,7 +5308,6 @@ ORDER
         $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
-        $this->quoteMock->expects(static::once())->method('reserveOrderId');
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -5466,7 +5428,6 @@ ORDER
         $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
         $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
-        $this->quoteMock->expects(static::once())->method('reserveOrderId');
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -5548,7 +5509,6 @@ ORDER
         $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
-        $this->quoteMock->expects(static::once())->method('reserveOrderId');
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -5566,7 +5526,6 @@ ORDER
         public function createCartByRequest_withEncryptedUserIdInRequest_assignsCustomerToQuote()
         {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
-        $this->quoteMock->expects(static::once())->method('reserveOrderId');
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
         $currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
             ->willReturn($expectedCartData);

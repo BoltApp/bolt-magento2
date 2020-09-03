@@ -830,7 +830,7 @@ class OrderTest extends TestCase
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::INCREMENT_ID)->willReturn(false);
 
         $this->bugsnag->expects(self::never())->method('notifyError');
 
@@ -1630,7 +1630,7 @@ class OrderTest extends TestCase
     public function dispatchPostCheckoutEvents()
     {
         list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(true);
+        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(true);
         $quoteMock->expects(self::once())->method('setInventoryProcessed')->with(true);
 
         $orderMock->expects(self::once())->method('getAppliedRuleIds')->willReturn(null);
@@ -1646,7 +1646,7 @@ class OrderTest extends TestCase
                 ]
             );
 
-        $quoteMock->expects(self::once())->method('setBoltReservedOrderId')->with(null);
+        $quoteMock->expects(self::once())->method('setBoltDispatched')->with(true);
         $this->cartHelper->expects(self::once())->method('quoteResourceSave')->with($quoteMock);
 
         $this->currentMock->dispatchPostCheckoutEvents($orderMock, $quoteMock);
@@ -1661,7 +1661,7 @@ class OrderTest extends TestCase
     public function dispatchPostCheckoutEvents_whenAlreadyDispatched_returnsNull()
     {
         list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(false);
+        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(true);
 
         $this->assertNull($this->currentMock->dispatchPostCheckoutEvents($orderMock, $quoteMock));
     }
