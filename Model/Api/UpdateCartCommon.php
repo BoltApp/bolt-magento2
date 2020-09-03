@@ -120,7 +120,7 @@ abstract class UpdateCartCommon
             if (!$immutableQuote) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
+                    sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId),
                     404
                 );
                 return false;
@@ -131,11 +131,11 @@ abstract class UpdateCartCommon
             if(empty($parentQuoteId)) {
                 $this->bugsnag->notifyError(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'Parent quote is not exist'
+                    'Parent quote does not exist'
                 );
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'Parent quote is not exist',
+                    'Parent quote does not exist',
                     404
                 );
                 return false;
@@ -153,7 +153,7 @@ abstract class UpdateCartCommon
             if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The order by quote #%s has already been created ', $parentQuoteId),
+                    sprintf('The order with quote #%s has already been created ', $parentQuoteId),
                     422
                 );
                 return false;
