@@ -1671,7 +1671,7 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_noOrder()
     {
-        $this->quoteMock->expects(self::once()->method('getId'))
+        $this->quoteMock->expects(self::once())->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(null, self::QUOTE_ID)->willReturn(false);
