@@ -6,7 +6,7 @@ set -x
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
-git clone --depth 1 --branch m2-rc-tests git@github.com:BoltApp/integration-tests.git
+git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
