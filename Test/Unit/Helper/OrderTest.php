@@ -1628,7 +1628,7 @@ class OrderTest extends TestCase
     public function dispatchPostCheckoutEvents()
     {
         list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(true);
+        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(false);
         $quoteMock->expects(self::once())->method('setInventoryProcessed')->with(true);
 
         $orderMock->expects(self::once())->method('getAppliedRuleIds')->willReturn(null);
