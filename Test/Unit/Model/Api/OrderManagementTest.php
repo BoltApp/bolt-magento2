@@ -136,7 +136,7 @@ class OrderManagementTest extends TestCase
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->response = $this->createMock(Response::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->order = $this->createPartialMock(Order::class, ['getData']);
+        $this->order = $this->createPartialMock(Order::class, ['getData','getIncrementId']);
 
         $this->quoteMock = $this->createMock(Quote::class);
         $this->decider = $this->createPartialMock(
@@ -147,9 +147,11 @@ class OrderManagementTest extends TestCase
         $this->order->expects(self::any())->method('getData')
             ->willReturn([
                 'id' => '1111',
-                'increment_id'=> 'XXXXX',
+                'increment_id'=> SELF::DISPLAY_ID,
                 'grand_total' => '$11.00'
             ]);
+        $this->order->expects(self::any())->method('getIncrementId')
+            ->willReturn(SELF::DISPLAY_ID);
 
         $this->orderHelperMock->expects(self::any())->method('saveUpdateOrder')
             ->willReturn([$this->quoteMock, $this->order]);
@@ -284,7 +286,8 @@ class OrderManagementTest extends TestCase
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"$11.00"}',
+            'display_id' => SELF::DISPLAY_ID,
+            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"'.SELF::DISPLAY_ID.'","grand_total":"$11.00"}',
         ]));
 
         $this->currentMock->manage(
@@ -601,7 +604,8 @@ class OrderManagementTest extends TestCase
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"$11.00"}',
+            'display_id' => SELF::DISPLAY_ID,
+            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"'.SELF::DISPLAY_ID.'","grand_total":"$11.00"}',
         ]));
 
         $this->currentMock->manage(
