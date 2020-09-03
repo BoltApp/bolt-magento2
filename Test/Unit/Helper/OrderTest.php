@@ -776,7 +776,6 @@ class OrderTest extends TestCase
 
         $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
         $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($quoteAddressMock);
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')->willReturn(self::ORDER_ID);
         $this->quoteMock->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
@@ -788,7 +787,6 @@ class OrderTest extends TestCase
                             'Store Applied Taxes' => null,
                             'Bolt Tax Amount'     => (float)10,
                             'Store Tax Amount'    => (float)50,
-                            'Order #'             => self::ORDER_ID,
                             'Quote ID'            => self::QUOTE_ID,
                         ]
                     ]
@@ -814,7 +812,7 @@ class OrderTest extends TestCase
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->bugsnag->expects(self::once())->method('notifyError')
             ->with('Duplicate Order Creation Attempt', null);
 
@@ -823,7 +821,7 @@ class OrderTest extends TestCase
             TestHelper::invokeMethod(
                 $this->currentMock,
                 'checkExistingOrder',
-                [self::INCREMENT_ID]
+                [self::QUOTE_ID]
             )
         );
     }
@@ -838,7 +836,7 @@ class OrderTest extends TestCase
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::QUOTE_ID)->willReturn(false);
 
         $this->bugsnag->expects(self::never())->method('notifyError');
 
@@ -846,7 +844,7 @@ class OrderTest extends TestCase
             TestHelper::invokeMethod(
                 $this->currentMock,
                 'checkExistingOrder',
-                [self::INCREMENT_ID]
+                [self::QUOTE_ID]
             )
         );
     }
@@ -932,8 +930,7 @@ class OrderTest extends TestCase
         $immutableQuoteMock = $this->createPartialMock(Quote::class, ['getId']);
         $immutableQuoteMock->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
 
-        $quoteMock = $this->createPartialMock(Quote::class, ['getReservedOrderId','getId']);
-        $quoteMock->method('getReservedOrderId')->willReturn(self::INCREMENT_ID);
+        $quoteMock = $this->createPartialMock(Quote::class, ['getId']);
         $quoteMock->method('getId')->willReturn(self::QUOTE_ID);
 
         $this->createOrderSetUp($quoteMock);
@@ -943,8 +940,7 @@ class OrderTest extends TestCase
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(
-            'Quote Submit Error. Order #: '.self::INCREMENT_ID.
-            ' Parent Quote ID: '.self::QUOTE_ID.
+            'Quote Submit Error. Parent Quote ID: '.self::QUOTE_ID.
             ' Immutable Quote ID: '.self::IMMUTABLE_QUOTE_ID
         );
 
@@ -1624,6 +1620,8 @@ class OrderTest extends TestCase
                 'getBoltReservedOrderId',
                 'setBoltReservedOrderId',
                 'setInventoryProcessed',
+                'getBoltDispatched',
+                'setBoltDispatched',
             ]
         );
 
@@ -1638,7 +1636,7 @@ class OrderTest extends TestCase
     public function dispatchPostCheckoutEvents()
     {
         list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(true);
+        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(false);
         $quoteMock->expects(self::once())->method('setInventoryProcessed')->with(true);
 
         $orderMock->expects(self::once())->method('getAppliedRuleIds')->willReturn(null);
@@ -1654,7 +1652,7 @@ class OrderTest extends TestCase
                 ]
             );
 
-        $quoteMock->expects(self::once())->method('setBoltReservedOrderId')->with(null);
+        $quoteMock->expects(self::once())->method('setBoltDispatched')->with(true);
         $this->cartHelper->expects(self::once())->method('quoteResourceSave')->with($quoteMock);
 
         $this->currentMock->dispatchPostCheckoutEvents($orderMock, $quoteMock);
@@ -1669,7 +1667,7 @@ class OrderTest extends TestCase
     public function dispatchPostCheckoutEvents_whenAlreadyDispatched_returnsNull()
     {
         list($orderMock, $quoteMock) = $this->dispatchPostCheckoutEventsSetUp();
-        $quoteMock->expects(self::once())->method('getBoltReservedOrderId')->willReturn(false);
+        $quoteMock->expects(self::once())->method('getBoltDispatched')->willReturn(true);
 
         $this->assertNull($this->currentMock->dispatchPostCheckoutEvents($orderMock, $quoteMock));
     }
@@ -1683,10 +1681,10 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_noOrder()
     {
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::QUOTE_ID)->willReturn(false);
         self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
     }
 
@@ -1699,18 +1697,15 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_canceledOrder()
     {
-        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
-        $this->quoteMock->expects(self::once())->method('getId')
+        $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Order has been canceled due to the previously declined payment. Order #: %s Quote ID: %s',
-                self::INCREMENT_ID,
+                'Order has been canceled due to the previously declined payment. Quote ID: %s',
                 self::QUOTE_ID
             )
         );
@@ -1727,12 +1722,10 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_pendingOrder()
     {
-        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
-        $this->quoteMock->expects(self::once())->method('getId')
+        $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
@@ -1740,8 +1733,7 @@ class OrderTest extends TestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Order is in pending payment. Waiting for the hook update. Order #: %s Quote ID: %s',
-                self::INCREMENT_ID,
+                'Order is in pending payment. Waiting for the hook update. Quote ID: %s',
                 self::QUOTE_ID
             )
         );
@@ -1759,10 +1751,10 @@ class OrderTest extends TestCase
     public function processExistingOrder_samePriceOrder()
     {
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
@@ -1786,10 +1778,10 @@ class OrderTest extends TestCase
     public function processExistingOrder_deleteOrder()
     {
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
@@ -1814,8 +1806,6 @@ class OrderTest extends TestCase
         $this->quoteManagement->expects(self::once())->method('submit')
             ->with($this->quoteMock)->willReturn(null);
         $this->bugsnag->expects(self::once())->method('registerCallback');
-        $this->quoteMock->expects(self::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
         $this->quoteMock->expects(self::atLeastOnce())->method('getId')
             ->willReturn(self::QUOTE_ID);
 
@@ -1826,7 +1816,6 @@ class OrderTest extends TestCase
                     [
                         'CREATE ORDER' => [
                             'pre-auth order.create' => true,
-                            'order increment ID'    => self::INCREMENT_ID,
                             'parent quote ID'       => self::QUOTE_ID,
                         ]
                     ]
@@ -1838,8 +1827,7 @@ class OrderTest extends TestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Quote Submit Error. Order #: %s Parent Quote ID: %s',
-                self::INCREMENT_ID,
+                'Quote Submit Error. Parent Quote ID: %s',
                 self::QUOTE_ID
             )
         );
@@ -2365,7 +2353,7 @@ class OrderTest extends TestCase
                 ]
             )
         );
-        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getReservedOrderId', 'getId'];
+        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getId'];
         /** @var MockObject|Quote $immutableQuote */
         $immutableQuote = $this->createPartialMock(Quote::class, $quoteMockMethodsList);
         $immutableQuote->expects(self::any())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
@@ -2407,15 +2395,12 @@ class OrderTest extends TestCase
 
         $quotePayment->expects(self::once())->method('save');
 
-        $parentQuote->expects(self::once())->method('getReservedOrderId')->willReturn(self::ORDER_ID);
-
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) use ($bugsnagParentQuoteId) {
                 $report = $this->createMock(Report::class);
                 $report->expects(self::once())->method('setMetaData')->with(
                     [
                         'CREATE ORDER' => [
-                            'order increment ID' => self::ORDER_ID,
                             'parent quote ID'    => $bugsnagParentQuoteId,
                             'immutable quote ID' => self::IMMUTABLE_QUOTE_ID
                         ]
@@ -4875,7 +4860,6 @@ class OrderTest extends TestCase
             ->willReturnCallback(
             function (callable $callback) use ($quoteMock, $boltTotalAmount, $magentoTotalAmount) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $quoteMock->expects(static::once())->method('getReservedOrderId')->willReturn(static::ORDER_ID);
                 $quoteMock->expects(static::once())->method('getId')->willReturn(static::QUOTE_ID);
                 $reportMock->expects(static::once())
                     ->method('setMetaData')->with(
@@ -4883,7 +4867,6 @@ class OrderTest extends TestCase
                             'TOTAL MISMATCH' => [
                                 'Bolt Total Amount' => $boltTotalAmount,
                                 'Magento Total Amount' => $magentoTotalAmount,
-                                'Order #' => static::ORDER_ID,
                                 'Quote ID' => static::QUOTE_ID,
                             ]
                         ]

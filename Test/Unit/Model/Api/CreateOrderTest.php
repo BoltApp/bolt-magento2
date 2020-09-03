@@ -236,6 +236,8 @@ class CreateOrderTest extends TestCase
             [self::QUOTE_ID, $this->quoteMock],
             [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
         ]);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $this->orderMock = $this->createPartialMock(Order::class, ['getData','getIncrementId','getGrandTotal']);
 
@@ -648,14 +650,18 @@ class CreateOrderTest extends TestCase
      */
     public function getQuoteIdFromPayloadOrder_noOrder()
     {
+        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray');
         self::assertEquals(
+            self::IMMUTABLE_QUOTE_ID,
             $this->currentMock->getQuoteIdFromPayloadOrder([
                 'cart' => [
                     'order_reference' => self::ORDER_ID,
                     'display_id' => false,
+                    'metadata' => [
+                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    ],
                 ]
-            ]),
-            self::ORDER_ID
+            ])
         );
     }
 

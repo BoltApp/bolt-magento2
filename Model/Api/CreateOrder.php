@@ -316,19 +316,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function getQuoteIdFromPayloadOrder($order)
     {
-        $parentQuoteId = $this->getOrderReference($order);
-        $displayId = $this->getDisplayId($order);
-        list($incrementId, $quoteId) = array_pad(
-            explode(' / ', $displayId),
-            2,
-            null
-        );
-
-        if (!$quoteId) {
-            $quoteId = $parentQuoteId;
-        }
-
-        return (int)$quoteId;
+        return (int)$this->cartHelper->getImmutableQuoteIdFromBoltCartArray($order['cart']);
     }
 
     /**

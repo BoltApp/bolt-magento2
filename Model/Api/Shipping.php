@@ -183,7 +183,6 @@ class Shipping extends ShippingTax implements ShippingInterface
                         'address' => $addressData,
                         'immutable quote ID' => $this->quote->getId(),
                         'parent quote ID' => $this->quote->getBoltParentQuoteId(),
-                        'order increment ID' => $this->quote->getReservedOrderId(),
                         'Store Id' => $this->quote->getStoreId()
                     ]
                 ]);

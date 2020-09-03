@@ -87,6 +87,16 @@ class UpgradeSchema implements UpgradeSchemaInterface
             ]
         );
 
+        $setup->getConnection()->addColumn(
+            $setup->getTable('quote'),
+            'bolt_dispatched',
+            [
+                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                'nullable' => true,
+                'comment' => 'Order dispatched flag'
+            ]
+        );
+
         $this->setupFeatureSwitchTable($setup);
 
         $this->setUpFeatureBoltCustomerCreditCardsTable($setup);

@@ -273,6 +273,7 @@ class OrderManagement implements OrderManagementInterface
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',
+            'display_id' => $order->getIncrementId(),
             'message' => "Order creation / update was successful. Order Data: $orderData",
         ]));
     }

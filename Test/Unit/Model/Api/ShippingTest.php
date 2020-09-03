@@ -410,7 +410,6 @@ class ShippingTest extends TestCase
                                 'address' => $reformattedAddressData,
                                 'immutable quote ID' => self::IMMUTABLE_QUOTE_ID,
                                 'parent quote ID' => self::PARENT_QUOTE_ID,
-                                'order increment ID' => self::INCREMENT_ID,
                                 'Store Id' => self::STORE_ID
                             ]
                         ]
@@ -439,7 +438,7 @@ class ShippingTest extends TestCase
         $parentQuoteId = self::PARENT_QUOTE_ID
     ) {
         $quoteMethods = array_merge([
-            'getId', 'getBoltParentQuoteId', 'getReservedOrderId', 'getStoreId', 'getQuoteCurrencyCode'
+            'getId', 'getBoltParentQuoteId', 'getStoreId', 'getQuoteCurrencyCode'
         ], $methods);
 
         $quote = $this->getMockBuilder(Quote::class)
@@ -450,8 +449,6 @@ class ShippingTest extends TestCase
             ->willReturn($quoteId);
         $quote->method('getBoltParentQuoteId')
             ->willReturn($parentQuoteId);
-        $quote->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
         $quote->method('getStoreId')
             ->willReturn(self::STORE_ID);
         $quote->method('getQuoteCurrencyCode')

@@ -551,9 +551,7 @@ class Order extends AbstractHelper
                         'Store Applied Taxes' => $address->getAppliedTaxes(),
                         'Bolt Tax Amount' => $boltTaxAmount,
                         'Store Tax Amount' => $orderTaxAmount,
-                        'Order #' => $quote->getReservedOrderId(),
                         'Quote ID' => $quote->getId(),
-
                     ]
                 ]);
             });
@@ -567,13 +565,13 @@ class Order extends AbstractHelper
      * Check if the order has been created in the meanwhile
      * from another request, hook vs. frontend on a slow network / server
      *
-     * @param int|string $incrementId
+     * @param int|string $parentQuoteId
      * @return bool|OrderModel
      */
-    private function checkExistingOrder($incrementId)
+    private function checkExistingOrder($parentQuoteId)
     {
         /** @var OrderModel $order */
-        if ($order = $this->getExistingOrder($incrementId)) {
+        if ($order = $this->getExistingOrder(null, $parentQuoteId)) {
             $this->bugsnag->notifyError(
                 'Duplicate Order Creation Attempt',
                 null
@@ -600,22 +598,21 @@ class Order extends AbstractHelper
         /** @var Quote $quote */
         $quote = $this->prepareQuote($immutableQuote, $transaction);
 
-        if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+        if ($order = $this->checkExistingOrder($quote->getId())) {
             return $order;
         }
         try {
             /** @var OrderModel $order */
             $order = $this->quoteManagement->submit($quote);
         } catch (\Exception $e) {
-            if ($order = $this->checkExistingOrder($quote->getReservedOrderId())) {
+            if ($order = $this->checkExistingOrder($quote->getId())) {
                 return $order;
             }
             throw $e;
         }
         if ($order === null) {
             throw new LocalizedException(__(
-                'Quote Submit Error. Order #: %1 Parent Quote ID: %2 Immutable Quote ID: %3',
-                $quote->getReservedOrderId(),
+                'Quote Submit Error. Parent Quote ID: %1 Immutable Quote ID: %2',
                 $quote->getId(),
                 $immutableQuote->getId()
             ));
@@ -695,9 +692,7 @@ class Order extends AbstractHelper
                     'TOTAL MISMATCH' => [
                         'Bolt Total Amount' => $boltTotalAmount,
                         'Magento Total Amount' => $magentoTotalAmount,
-                        'Order #' => $quote->getReservedOrderId(),
                         'Quote ID' => $quote->getId(),
-
                     ]
                 ]);
             });
@@ -1033,15 +1028,14 @@ class Order extends AbstractHelper
      */
     public function dispatchPostCheckoutEvents($order, $quote)
     {
-        // Use existing bolt_reserved_order_id quote field, not needed anymore for it's primary purpose,
-        // as a flag to determine if the events were dispatched
-        if (! $quote->getBoltReservedOrderId()) {
+        //Add a flag instead of using reserved order ID
+        if ($quote->getBoltDispatched()) {
             return; // already dispatched
         }
 
         $this->applyExternalQuoteData($quote);
 
-        // do not verify inventory, it is already reserved
+
         $quote->setInventoryProcessed(true);
 
         if ($order->getAppliedRuleIds() === null) {
@@ -1057,8 +1051,8 @@ class Order extends AbstractHelper
             ]
         );
 
-        // Nullify bolt_reserved_order_id. Prevents dispatching more then once.
-        $quote->setBoltReservedOrderId(null);
+        // Set dispatched to be true. Prevents dispatching more then once.
+        $quote->setBoltDispatched(true);
         $this->cartHelper->quoteResourceSave($quote);
     }
 
@@ -1075,13 +1069,12 @@ class Order extends AbstractHelper
     public function processExistingOrder($quote, $transaction)
     {
         // check if the order has been created in the meanwhile
-        if ($order = $this->getExistingOrder($quote->getReservedOrderId())) {
+        if ($order = $this->getExistingOrder(null, $quote->getId())) {
 
             if ($order->isCanceled()) {
                 throw new BoltException(
                     __(
-                        'Order has been canceled due to the previously declined payment. Order #: %1 Quote ID: %2',
-                        $quote->getReservedOrderId(),
+                        'Order has been canceled due to the previously declined payment. Quote ID: %1',
                         $quote->getId()
                     ),
                     null,
@@ -1092,8 +1085,7 @@ class Order extends AbstractHelper
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
                 throw new BoltException(
                     __(
-                        'Order is in pending payment. Waiting for the hook update. Order #: %1 Quote ID: %2',
-                        $quote->getReservedOrderId(),
+                        'Order is in pending payment. Waiting for the hook update. Quote ID: %1',
                         $quote->getId()
                     ),
                     null,
@@ -1125,15 +1117,13 @@ class Order extends AbstractHelper
                 $report->setMetaData([
                     'CREATE ORDER' => [
                         'pre-auth order.create' => true,
-                        'order increment ID' => $quote->getReservedOrderId(),
                         'parent quote ID' => $quote->getId(),
                     ]
                 ]);
             });
             throw new BoltException(
                 __(
-                    'Quote Submit Error. Order #: %1 Parent Quote ID: %2',
-                    $quote->getReservedOrderId(),
+                    'Quote Submit Error. Parent Quote ID: %1',
                     $quote->getId()
                 ),
                 null,
@@ -1361,13 +1351,11 @@ class Order extends AbstractHelper
             $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
         $this->addCustomerDetails($quote, $email);
 
-        $quote->setReservedOrderId($quote->getBoltReservedOrderId());
         $this->cartHelper->quoteResourceSave($quote);
 
         $this->bugsnag->registerCallback(function ($report) use ($quote, $immutableQuote) {
             $report->setMetaData([
                 'CREATE ORDER' => [
-                    'order increment ID' => $quote->getReservedOrderId(),
                     'parent quote ID' => $quote->getId(),
                     'immutable quote ID' => $immutableQuote->getId()
                 ]
