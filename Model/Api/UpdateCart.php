@@ -94,15 +94,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         try {
             $this->cartRequest = $cart;
             
-            // TODO the display_id will be updated in this PR https://github.com/BoltApp/bolt-magento2/pull/863, and we need to adjust per change
-            list($incrementId, $immutableQuoteId) = array_pad(
-                explode(' / ', $cart['display_id']),
-                2,
-                null
-            );
-            $parentQuoteId = $cart['order_reference'];
+            // Bolt server sends immutableQuoteId as order reference
+            $immutableQuoteId = $cart['order_reference'];
             
-            $result = $this->validateQuote($parentQuoteId, $immutableQuoteId, $incrementId);
+            $result = $this->validateQuote($immutableQuoteId);
             
             if(!$result){
                 // Already sent a response with error, so just return.

@@ -112,38 +112,33 @@ abstract class UpdateCartCommon
      * @param  object $request
      * @return bool
      */
-    public function validateQuote( $parentQuoteId, $immutableQuoteId, $incrementId )
+    public function validateQuote($immutableQuoteId)
     {
-        if(empty($parentQuoteId)) {
-            $this->bugsnag->notifyError(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart.order_reference is not set or empty.'
-            );
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart reference is not found.',
-                404
-            );
-            return false;
-        }
-        
-        if(empty($incrementId)) {
-            $this->bugsnag->notifyError(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart.incrementId is not set or empty.'
-            );
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                'The cart incrementId is not found.',
-                404
-            );
-            return false;
-        }
-        
-        // check if the cart / quote exists and it is active
         try {
-            if (!$immutableQuoteId) {
-                $immutableQuoteId = $parentQuoteId;
+            // check the existence of child quote
+            $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
+            if (!$immutableQuote) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId),
+                    404
+                );
+                return false;
+            }
+
+            $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
+
+            if(empty($parentQuoteId)) {
+                $this->bugsnag->notifyError(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'Parent quote does not exist'
+                );
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                    'Parent quote does not exist',
+                    404
+                );
+                return false;
             }
 
             /** @var Quote $parentQuote */
@@ -155,22 +150,11 @@ abstract class UpdateCartCommon
             }
             
             // check if the order has already been created
-            if ($this->orderHelper->getExistingOrder($incrementId)) {
+            if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The order #%s has already been created.', $incrementId),
+                    sprintf('The order with quote #%s has already been created ', $parentQuoteId),
                     422
-                );
-                return false;
-            }
-
-            // check the existence of child quote
-            $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
-            if (!$immutableQuote) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] is not found.', $immutableQuoteId),
-                    404
                 );
                 return false;
             }
@@ -195,7 +179,7 @@ abstract class UpdateCartCommon
             $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                sprintf('The cart reference [%s] is not found.', $parentQuoteId),
+                $e->getMessage(),
                 404
             );
             return false;
