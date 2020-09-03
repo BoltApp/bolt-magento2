@@ -806,7 +806,7 @@ class OrderTest extends TestCase
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->bugsnag->expects(self::once())->method('notifyError')
             ->with('Duplicate Order Creation Attempt', null);
 
@@ -815,7 +815,7 @@ class OrderTest extends TestCase
             TestHelper::invokeMethod(
                 $this->currentMock,
                 'checkExistingOrder',
-                [self::INCREMENT_ID]
+                [self::QUOTE_ID]
             )
         );
     }
@@ -830,7 +830,7 @@ class OrderTest extends TestCase
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(null, self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::QUOTE_ID)->willReturn(false);
 
         $this->bugsnag->expects(self::never())->method('notifyError');
 
@@ -838,7 +838,7 @@ class OrderTest extends TestCase
             TestHelper::invokeMethod(
                 $this->currentMock,
                 'checkExistingOrder',
-                [self::INCREMENT_ID]
+                [self::QUOTE_ID]
             )
         );
     }
@@ -1675,10 +1675,10 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_noOrder()
     {
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once()->method('getId'))
+            ->willReturn->(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::QUOTE_ID)->willReturn(false);
         self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
     }
 
@@ -1691,18 +1691,15 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_canceledOrder()
     {
-        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
-        $this->quoteMock->expects(self::once())->method('getId')
+        $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Order has been canceled due to the previously declined payment. Order #: %s Quote ID: %s',
-                self::INCREMENT_ID,
+                'Order has been canceled due to the previously declined payment. Quote ID: %s',
                 self::QUOTE_ID
             )
         );
@@ -1719,12 +1716,10 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_pendingOrder()
     {
-        $this->quoteMock->expects(self::exactly(2))->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
-        $this->quoteMock->expects(self::once())->method('getId')
+        $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
@@ -1732,8 +1727,7 @@ class OrderTest extends TestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Order is in pending payment. Waiting for the hook update. Order #: %s Quote ID: %s',
-                self::INCREMENT_ID,
+                'Order is in pending payment. Waiting for the hook update. Quote ID: %s',
                 self::QUOTE_ID
             )
         );
@@ -1751,10 +1745,10 @@ class OrderTest extends TestCase
     public function processExistingOrder_samePriceOrder()
     {
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
@@ -1778,10 +1772,10 @@ class OrderTest extends TestCase
     public function processExistingOrder_deleteOrder()
     {
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
+        $this->quoteMock->expects(self::once())->method('getId')
+            ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
+            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
