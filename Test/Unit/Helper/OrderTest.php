@@ -1612,6 +1612,8 @@ class OrderTest extends TestCase
                 'getBoltReservedOrderId',
                 'setBoltReservedOrderId',
                 'setInventoryProcessed',
+                'getBoltDispatched',
+                'setBoltDispatched',
             ]
         );
 
