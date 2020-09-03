@@ -768,7 +768,6 @@ class OrderTest extends TestCase
 
         $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
         $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($quoteAddressMock);
-        $this->quoteMock->expects(self::once())->method('getReservedOrderId')->willReturn(self::ORDER_ID);
         $this->quoteMock->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
@@ -780,7 +779,6 @@ class OrderTest extends TestCase
                             'Store Applied Taxes' => null,
                             'Bolt Tax Amount'     => (float)10,
                             'Store Tax Amount'    => (float)50,
-                            'Order #'             => self::ORDER_ID,
                             'Quote ID'            => self::QUOTE_ID,
                         ]
                     ]
