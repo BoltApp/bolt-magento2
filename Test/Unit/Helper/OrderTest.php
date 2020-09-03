@@ -1800,8 +1800,6 @@ class OrderTest extends TestCase
         $this->quoteManagement->expects(self::once())->method('submit')
             ->with($this->quoteMock)->willReturn(null);
         $this->bugsnag->expects(self::once())->method('registerCallback');
-        $this->quoteMock->expects(self::atLeastOnce())->method('getReservedOrderId')
-            ->willReturn(self::INCREMENT_ID);
         $this->quoteMock->expects(self::atLeastOnce())->method('getId')
             ->willReturn(self::QUOTE_ID);
 
@@ -1812,7 +1810,6 @@ class OrderTest extends TestCase
                     [
                         'CREATE ORDER' => [
                             'pre-auth order.create' => true,
-                            'order increment ID'    => self::INCREMENT_ID,
                             'parent quote ID'       => self::QUOTE_ID,
                         ]
                     ]
@@ -1824,8 +1821,7 @@ class OrderTest extends TestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Quote Submit Error. Order #: %s Parent Quote ID: %s',
-                self::INCREMENT_ID,
+                'Quote Submit Error. Parent Quote ID: %s',
                 self::QUOTE_ID
             )
         );
