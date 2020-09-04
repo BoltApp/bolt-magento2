@@ -258,12 +258,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             $requestArray = json_decode(json_encode($request), true);
             if (isset($requestArray['cart']['order_reference'])) {
                 $parentQuoteId = $requestArray['cart']['order_reference'];
-                $displayId = isset($requestArray['cart']['display_id']) ? $requestArray['cart']['display_id'] : '';
                 // check if the cart / quote exists and it is active
                 try {
-                    $incrementId = $displayId;
-                    // TODO(vitaliy): use helper in the next PR
-                    $immutableQuoteId = @$requestArray['cart']['metadata']['immutable_quote_id'];
+                    $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
 
                     if (!$immutableQuoteId) {
                         $immutableQuoteId = $parentQuoteId;
@@ -278,7 +275,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     }
 
                     // check if cart identification data is sent
-                    if (empty($parentQuoteId) || empty($incrementId) || empty($immutableQuoteId)) {
+                    if (empty($parentQuoteId) || empty($immutableQuoteId)) {
                         $this->sendErrorResponse(
                             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                             'The order reference is invalid.',
@@ -373,10 +370,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
             }
 
             // check if the order has already been created
-            if ($this->orderHelper->getExistingOrder($incrementId)) {
+            if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The order #%s has already been created.', $incrementId),
+                    sprintf('The order with quote #%s has already been created.', $parentQuoteId),
                     422
                 );
                 return false;

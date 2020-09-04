@@ -320,27 +320,19 @@ class DiscountCodeValidationTest extends TestCase
         }
     }
 
-    public function validate_simpleCoupon_dataProvider()
-    {
-        return [
-            [self::DISPLAY_ID],
-            [self::INCREMENT_ID.' / '.self::PARENT_QUOTE_ID],
-            [self::PARENT_QUOTE_ID]
-        ];
-    }
-
     /**
      * @test
-     * @dataProvider validate_simpleCoupon_dataProvider
      */
-    public function validate_simpleCoupon($displayId)
+    public function validate_simpleCoupon()
     {
         $couponCode = 'FIXED20';
         $request_data = [
             'discount_code' => $couponCode,
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => $displayId
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
             ]
         ];
 
@@ -428,7 +420,6 @@ class DiscountCodeValidationTest extends TestCase
             'discount_code' => $couponCode,
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'  => self::DISPLAY_ID,
                 'shipments' => [
                     0 => [
                         'shipping_address' => $request_shipping_addr,
@@ -446,6 +437,9 @@ class DiscountCodeValidationTest extends TestCase
                         ],
                         'reference' => 'flatrate_flatrate',
                     ],
+                ],
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ],
             ]
         ];
@@ -545,7 +539,6 @@ class DiscountCodeValidationTest extends TestCase
             'discount_code' => $couponCode,
             'cart'          => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'shipments'       => [
                     0 => [
                         'shipping_address' => $request_shipping_addr,
@@ -565,6 +558,9 @@ class DiscountCodeValidationTest extends TestCase
                             ],
                         'reference'        => 'flatrate_flatrate',
                     ],
+                ],
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ],
             ]
         ];
@@ -642,30 +638,20 @@ class DiscountCodeValidationTest extends TestCase
     /**
      * @test
      */
-    public function validate_noCartIdentificationData()
-    {
-        $requestContent = ['cart' => ['order_reference' => self::PARENT_QUOTE_ID]];
-
-        $this->request->expects(self::atLeastOnce())->method('getContent')->willReturn(json_encode($requestContent));
-        $this->expectErrorResponse(
-            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            'The order reference is invalid.',
-            422
-        );
-
-        self::assertFalse($this->currentMock->validate());
-    }
-
-    /**
-     * @test
-     */
     public function validate_noQuoteException()
     {
-        $requestContent = ['cart' => ['order_reference' => self::PARENT_QUOTE_ID]];
+        $requestContent = ['cart' => 
+            [
+                'order_reference' => self::PARENT_QUOTE_ID,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                ],
+            ]
+        ];
         $exception = new NoSuchEntityException();
 
         $this->request->expects(self::atLeastOnce())->method('getContent')->willReturn(json_encode($requestContent));
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::PARENT_QUOTE_ID)
+        $this->cartHelper->expects(self::once())->method('getActiveQuoteById')->with(self::PARENT_QUOTE_ID)
             ->willThrowException($exception);
 
         $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
@@ -708,7 +694,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ]
@@ -745,7 +730,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -785,7 +769,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -809,14 +792,14 @@ class DiscountCodeValidationTest extends TestCase
         $this->configureCouponMockMethods();
 
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(true);
+            ->with(null, self::PARENT_QUOTE_ID)->willReturn(true);
         
         $this->discountHelper->expects(self::once())->method('loadCouponCodeData')
             ->with(self::COUPON_CODE)->willReturn($this->couponMock);
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            sprintf('The order #%s has already been created.', self::INCREMENT_ID),
+            sprintf('The order with quote #%s has already been created.', self::PARENT_QUOTE_ID),
             422
         );
 
@@ -831,7 +814,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -882,7 +864,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -937,7 +918,6 @@ class DiscountCodeValidationTest extends TestCase
             'discount_code' => self::COUPON_CODE,
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ]
@@ -1007,7 +987,7 @@ class DiscountCodeValidationTest extends TestCase
         $immutableQuoteMock->expects(self::atLeastOnce())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(false);
+            ->with(null, self::PARENT_QUOTE_ID)->willReturn(false);
        
         $this->moduleUnirgyGiftCertMock->method('getInstance')->willReturn(null);
         $this->discountHelper->expects(self::once())->method('loadMagentoGiftCardAccount')
@@ -1039,7 +1019,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -1123,7 +1102,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => self::DISPLAY_ID,
                 'discount_code'   => self::COUPON_CODE,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
@@ -1181,7 +1159,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id' => self::DISPLAY_ID,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ]
@@ -1223,7 +1200,6 @@ class DiscountCodeValidationTest extends TestCase
         $requestContent = [
             'cart' => [
                 'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id' => self::DISPLAY_ID,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ]
