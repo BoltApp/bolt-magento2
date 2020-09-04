@@ -711,7 +711,9 @@ class Cart extends AbstractHelper
                 $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
             } else {
                 // check if cart was created in plugin version before 2.14.0
-                list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
+                if (isset($response->cart->display_id)) {
+                 list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
+                }
             }
         }
         if (!$immutableQuoteId) {
@@ -734,7 +736,9 @@ class Cart extends AbstractHelper
             $immutableQuoteId = $boltCart['metadata']['immutable_quote_id'];
         } else {
             // check if cart was created in plugin version before 2.14.0
-            list(, $immutableQuoteId) = explode(' / ', $boltCart['display_id']);
+            if (isset($boltCart['display_id'])) {
+                list(, $immutableQuoteId) = explode(' / ', $boltCart['display_id']);
+            }
         }
         if (!$immutableQuoteId) {
             $this->bugsnag->notifyException(new \Exception("Bolt order doesn't contain immutable order id"));
