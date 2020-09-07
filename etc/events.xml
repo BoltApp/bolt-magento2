@@ -4,4 +4,16 @@
     <event name="sales_order_shipment_track_save_after">
         <observer name="boltTrackSaveObserver" instance="Bolt\Boltpay\Observer\TrackingSaveObserver" />
     </event>
+    <event name="tax_settings_change_after">
+        <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
+    </event>
+    <event name="taxjar_salestax_import_categories">
+        <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
+    </event>
+    <event name="taxjar_salestax_import_data">
+        <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
+    </event>
+    <event name="taxjar_salestax_import_rates">
+        <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
+    </event>
 </config>
