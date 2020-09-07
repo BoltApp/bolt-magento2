@@ -19,5 +19,5 @@ mkdir -p project
 cp magento/app/code/Bolt/Boltpay/composer.json project/composer.json
 cp magento/app/code/Bolt/Boltpay/Test/Unit/phpunit.xml magento/dev/tests/unit/bolt_phpunit.xml
 echo "Starting Bolt Unit Tests"
-php magento/vendor/phpunit/phpunit/phpunit --verbose -c magento/dev/tests/unit/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
+php magento/vendor/phpunit/phpunit/phpunit -d memory_limit=5G --verbose -c magento/dev/tests/unit/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
 bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV
