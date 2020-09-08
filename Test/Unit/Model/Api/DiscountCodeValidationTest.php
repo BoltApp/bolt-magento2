@@ -389,6 +389,8 @@ class DiscountCodeValidationTest extends TestCase
         $this->cache->expects(static::once())->method('clean')
             ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
 
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
+
         $result = $this->currentMock->validate();
 
         // If another exception happens, the test will fail.
@@ -506,7 +508,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cache->expects(static::once())->method('clean')
             ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
-
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
         $result = $this->currentMock->validate();
 
         // If another exception happens, the test will fail.
@@ -1006,7 +1008,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cache->expects(static::once())->method('clean')
             ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
-
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
         self::assertTrue($this->currentMock->validate());
     }
 
@@ -1089,7 +1091,7 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->cache->expects(static::once())->method('clean')
             ->with([CartHelper::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
-
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
         self::assertTrue($this->currentMock->validate());
     }
 
@@ -1147,6 +1149,7 @@ class DiscountCodeValidationTest extends TestCase
             400,
             ['total_amount' => null, 'tax_amount' => null, 'discounts' => null]
         );
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
 
         self::assertFalse($this->currentMock->validate());
     }
@@ -2365,7 +2368,7 @@ class DiscountCodeValidationTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
             ->will($this->returnArgument(1));

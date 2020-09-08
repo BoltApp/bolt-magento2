@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
+use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -42,6 +43,14 @@ class EventsForThirdPartyModules
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],
+        ],
+        'beforeApplyDiscount' => [
+            "listeners" => [
+                [
+                    "module" => "IDme_GroupVerification",
+                    "boltClass" => IDme_GroupVerification::class,
+                ],
+            ]
         ]
     ];
 
