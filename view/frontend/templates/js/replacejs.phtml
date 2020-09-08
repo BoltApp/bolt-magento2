@@ -201,6 +201,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
     var expectCartRendering = true;
     var waitingForResolvingPromises = false;
+    var skipNextBoltCartUpdate = false;
 
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
@@ -666,6 +667,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         }
 
         var callConfigureWithPromises = function() {
+            // Set the flag in case bolt cart updating will not be finished
+            // because page loading breaks
+            // We check the flag when next page is loaded
+            if (localStorage) {
+                localStorage.setItem("bolt_cart_is_updating", "true");
+            }
             if (waitingForResolvingPromises) {
                 return;
             }
@@ -875,7 +882,19 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
+                // If flag set it means the previous page didn't update bolt cart properly
+                // Magento continue cart updating now and we know that bolt cart isn't actual
+                if (localStorage && localStorage.getItem("bolt_cart_is_updating") == "true") {
+                    skipNextBoltCartUpdate = true;
+                }
             customerData.get('boltcart').subscribe(function(data) {
+                if (localStorage) {
+                    localStorage.setItem("bolt_cart_is_updating", "false");
+                }
+                if (skipNextBoltCartUpdate) {
+                    skipNextBoltCartUpdate = false;
+                    return;
+                }
                 boltCartDataID = data.data_id;
 
                 cart = data.cart !== undefined ? data.cart : {};
