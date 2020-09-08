@@ -37,7 +37,7 @@ class Giftcard
         $this->orderService = $orderService;
     }
 
-    public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote)
+    public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote, $paymentOnly)
     {
         list ($discounts, $totalAmount, $diff) = $result;
 

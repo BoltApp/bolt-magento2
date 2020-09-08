@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
+use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -62,6 +63,14 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
+                                      "Mirasvit\Credit\Service\Calculation",
+                                      "Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
             ],
         ],
         "loadGiftcard" => [
@@ -70,6 +79,16 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardRepositoryInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
+        "checkMirasvitCreditAdminQuoteUsed" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Model\Config"],
+                    "boltClass" => Mirasvit_Credit::class,
+                    "createInstance" => false,
                 ],
             ],
         ],
@@ -112,7 +131,7 @@ class EventsForThirdPartyModules
      * bool $result true if we should run the method
      * array $sendClasses array of classed we should pass into the method
      */
-    private function prepareForListenerRun($listener)
+    private function prepareForListenerRun($listener, $createInstance = true)
     {
         if (!$this->isModuleAvailable($listener["module"])) {
             return [false, null];
@@ -130,7 +149,9 @@ class EventsForThirdPartyModules
                 if (!$this->doesClassExist($className)) {
                     return [false,null];
                 }
-                $sendClasses[] = $this->objectManager->get($className);
+                if ($createInstance) {
+                    $sendClasses[] = $this->objectManager->get($className);
+                }                
             }
         }
         return [true, $sendClasses];
@@ -147,12 +168,14 @@ class EventsForThirdPartyModules
         }
         try {
             foreach (static::filterListeners[$filterName]["listeners"] as $listener) {
-                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                // By default, we create instance for running filter
+                $createInstance = isset($listener["createInstance"]) ? $listener["createInstance"] : true;
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener, $createInstance);
                 if (!$active) {
                     continue;
                 }
                 $boltClass = $this->objectManager->get($listener["boltClass"]);
-                if ($sendClasses) {
+                if ($createInstance && $sendClasses) {
                     $result = $boltClass->$filterName($result, ...$sendClasses, ...$arguments);
                 } else {
                     $result = $boltClass->$filterName($result, ...$arguments);

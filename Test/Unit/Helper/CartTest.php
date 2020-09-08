@@ -3598,8 +3598,6 @@ ORDER
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn(0);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -3644,8 +3642,6 @@ ORDER
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
         $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -3702,8 +3698,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
@@ -3766,9 +3760,6 @@ ORDER
             ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')
-            ->with($this->immutableQuoteMock)
-            ->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
@@ -3970,58 +3961,6 @@ ORDER
 
         /**
         * @test
-        * that collectDiscounts properly handles Mirasvit Store Credit using
-        * @see \Bolt\Boltpay\Helper\Discount::getMirasvitStoreCreditAmount
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withMirasvitStoreCredit_collectsDiscount()
-        {
-        $mock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $quote->method('getTotals')->willReturn([]);
-        $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(true);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-        $appliedDiscount = 10; // $
-        $this->discountHelper->expects(static::once())->method('getMirasvitStoreCreditAmount')
-            ->with($quote, $paymentOnly)->willReturn($appliedDiscount);
-        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts($totalAmount, $diff, $paymentOnly, $quote);
-        static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
         * that collectDiscounts collects Reward Points from quote property if checkout type is payment
         *
         * @covers ::collectDiscounts
@@ -4041,8 +3980,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -4097,8 +4034,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -4157,8 +4092,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4213,8 +4146,6 @@ ORDER
             $shippingAddress->expects(static::any())->method('getCouponCode')->willReturn(false);
             $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
             $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-            $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-                ->willReturn(false);
             $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
             $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
             $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4288,8 +4219,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4368,8 +4297,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
@@ -4433,8 +4360,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
@@ -4507,8 +4432,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $appliedDiscount = 10; // $
@@ -4563,8 +4486,6 @@ ORDER
         $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $giftVoucherDiscount = 5; // $
@@ -4629,8 +4550,6 @@ ORDER
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
             ->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::once())->method('isMirasvitStoreCreditAllowed')->with($quote)
-            ->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
