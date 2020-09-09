@@ -170,7 +170,7 @@ class Credit
      *
      * @return bool
      */
-    public function isMirasvitAdminQuoteUsingCreditObserver($result, Observer $observer)
+    public function checkMirasvitCreditAdminQuoteUsed($result, Observer $observer)
     {
         try {
             $payment = $observer->getEvent()->getPayment();
