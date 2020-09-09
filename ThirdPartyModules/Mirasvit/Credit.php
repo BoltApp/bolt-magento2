@@ -22,18 +22,24 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
 use Magento\Framework\App\State;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 class Credit
 {
     /**
      * @var State
      */
-    private $appState;
+    protected $appState;
     
     /**
      * @var DiscountHelper
      */
     protected $discountHelper;
+    
+    /**
+     * @var SessionHelper
+     */
+    protected $sessionHelper;
     
     /**
      * @var \Mirasvit\Credit\Helper\Data
@@ -59,13 +65,16 @@ class Credit
      * @param Discount                     $discountHelper
      * @param EventsForThirdPartyModules   $eventsForThirdPartyModules
      * @param State                        $appState
+     * @param SessionHelper                $sessionHelper
      */
     public function __construct(
         Discount    $discountHelper,
-        State       $appState
+        State       $appState,
+        SessionHelper $sessionHelper
     ) {
-        $this->discountHelper = $discountHelper;
-        $this->appState       = $appState;
+        $this->discountHelper  = $discountHelper;
+        $this->appState        = $appState;
+        $this->sessionHelper = $sessionHelper;
     }
 
     public function collectDiscounts($result,
@@ -115,15 +124,8 @@ class Credit
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
             
-        if (!$paymentOnly) {
-            // For old version of Mirasvit Store Credit plugin,
-            // $miravitCalculationConfig could be empty,
-            // so we use the instance of \Mirasvit\Credit\Service\Config\CalculationConfig instead.
-            $miravitCalculationConfig = !empty($this->mirasvitStoreCreditCalculationConfig)
-                                        ? $this->mirasvitStoreCreditCalculationConfig
-                                        : $this->mirasvitStoreCreditCalculationConfigLegacy;
-       
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
+        if (!$paymentOnly) {       
+            if ($this->ifMirasvitCreditIsShippingTaxIncluded($quote)) {
                 return $miravitBalanceAmount;
             }
         }
@@ -186,5 +188,69 @@ class Credit
         }
 
         return false;
+    }
+    
+    /**
+     * To run filter to check if the Mirasvit credit amount can be applied to shipping/tax.
+     *
+     * @param boolean $result
+     * @param Mirasvit\Credit\Api\Config\CalculationConfigInterface|object $mirasvitStoreCreditCalculationConfig
+     * @param Mirasvit\Credit\Service\Config\CalculationConfig|object $mirasvitStoreCreditCalculationConfigLegacy
+     * @param Quote|object $quote
+     * 
+     * @return boolean
+     */
+    public function checkMirasvitCreditIsShippingTaxIncluded($result,
+                                     $mirasvitStoreCreditCalculationConfig,
+                                     $mirasvitStoreCreditCalculationConfigLegacy,
+                                     $quote)
+    {
+        $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
+        $this->mirasvitStoreCreditCalculationConfigLegacy = $mirasvitStoreCreditCalculationConfigLegacy;
+        
+        return $this->ifMirasvitCreditIsShippingTaxIncluded($quote);
+    }
+    
+    /**
+     * If the Mirasvit credit amount can be applied to shipping/tax.
+     *
+     * @param Quote|object $quote
+     * 
+     * @return boolean
+     */
+    private function ifMirasvitCreditIsShippingTaxIncluded($quote)
+    {
+        // For old version of Mirasvit Store Credit plugin,
+        // $miravitCalculationConfig could be empty,
+        // so we use the instance of \Mirasvit\Credit\Service\Config\CalculationConfig instead.
+        $miravitCalculationConfig = !empty($this->mirasvitStoreCreditCalculationConfig)
+                                    ? $this->mirasvitStoreCreditCalculationConfig
+                                    : $this->mirasvitStoreCreditCalculationConfigLegacy;
+   
+        if ($miravitCalculationConfig->isTaxIncluded($quote->getStore()) || $miravitCalculationConfig->IsShippingIncluded($quote->getStore())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+    /**
+     * Exclude the Mirasvit credit amount from shipping discount, so the Bolt can apply Mirasvit credit to shipping properly.
+     *
+     * @param float $result
+     * @param Mirasvit\Credit\Helper\Data|object $mirasvitStoreCreditHelper 
+     * @param Quote|object $quote
+     * @param Address|object $shippingAddress
+     * 
+     * @return float
+     */
+    public function collectShippingDiscounts($result,
+                                     $mirasvitStoreCreditHelper,
+                                     $quote,
+                                     $shippingAddress)
+    {
+        $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitStoreCreditShippingDiscountAmount(0);
+        $result -= $mirasvitStoreCreditShippingDiscountAmount;
+        return $result;
     }
 }

@@ -82,6 +82,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "collectShippingDiscounts" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Helper\Data"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
+            ],
+        ],
         "checkMirasvitCreditAdminQuoteUsed" => [
             "listeners" => [
                 [
@@ -89,6 +98,16 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Credit\Model\Config"],
                     "boltClass" => Mirasvit_Credit::class,
                     "createInstance" => false,
+                ],
+            ],
+        ],
+        "checkMirasvitCreditIsShippingTaxIncluded" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],
+                    "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
         ],
