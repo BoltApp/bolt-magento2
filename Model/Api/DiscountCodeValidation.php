@@ -446,6 +446,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                     ->save();
             }
 
+            $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
+
             if ($coupon && $coupon->getCouponId()) {
                 if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
                     $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
