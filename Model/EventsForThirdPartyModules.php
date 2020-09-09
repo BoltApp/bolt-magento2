@@ -161,7 +161,7 @@ class EventsForThirdPartyModules
                 if (empty($classInstances)) {
                     return [false,null];
                 }
-                $sendClasses[] = $classInstances[0];               
+                $sendClasses[] = current($classInstances);               
             }
         }
         return [true, $sendClasses];
