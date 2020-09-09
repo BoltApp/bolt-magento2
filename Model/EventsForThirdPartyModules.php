@@ -67,8 +67,7 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation",
-                                      "Mirasvit\Credit\Api\Config\CalculationConfigInterface",
-                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],
+                                      "Mirasvit\Credit\Api\Config\CalculationConfigInterface|Mirasvit\Credit\Service\Config\CalculationConfig",],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
@@ -86,9 +85,8 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => ["Mirasvit\Credit\Model\Config"],
+                    "checkClasses" => ["Mirasvit\Credit\Model\Config"],
                     "boltClass" => Mirasvit_Credit::class,
-                    "createInstance" => false,
                 ],
             ],
         ],
@@ -131,27 +129,39 @@ class EventsForThirdPartyModules
      * bool $result true if we should run the method
      * array $sendClasses array of classed we should pass into the method
      */
-    private function prepareForListenerRun($listener, $createInstance = true)
+    private function prepareForListenerRun($listener)
     {
         if (!$this->isModuleAvailable($listener["module"])) {
             return [false, null];
         }
         if (isset($listener["checkClasses"])) {
-            foreach ($listener["checkClasses"] as $className) {
-                if (!$this->doesClassExist($className)) {
+            foreach ($listener["checkClasses"] as $classNameItem) {
+                $classNames = explode('|',$classNameItem);
+                $existClasses = array_filter($classNames, function($className) {
+                    return $this->doesClassExist($className);
+                });
+                if (empty($existClasses)) {
                     return [false,null];
-                }
+                }                
             }
         }
         $sendClasses = [];
         if (isset($listener["sendClasses"])) {
-            foreach ($listener["sendClasses"] as $className) {
-                if (!$this->doesClassExist($className)) {
+            foreach ($listener["sendClasses"] as $classNameItem) {
+                $classNames = explode('|',$classNameItem);
+                $existClasses = array_filter($classNames, function($className) {
+                    return $this->doesClassExist($className);
+                });
+                if (empty($existClasses)) {
                     return [false,null];
                 }
-                if ($createInstance) {
-                    $sendClasses[] = $this->objectManager->get($className);
-                }                
+                $classInstances = array_map(function($className) {
+                    return $this->objectManager->get($className);
+                }, $existClasses);
+                if (empty($classInstances)) {
+                    return [false,null];
+                }
+                $sendClasses[] = $classInstances[0];               
             }
         }
         return [true, $sendClasses];
@@ -168,14 +178,12 @@ class EventsForThirdPartyModules
         }
         try {
             foreach (static::filterListeners[$filterName]["listeners"] as $listener) {
-                // By default, we create instance for running filter
-                $createInstance = isset($listener["createInstance"]) ? $listener["createInstance"] : true;
-                list ($active, $sendClasses) = $this->prepareForListenerRun($listener, $createInstance);
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
                 if (!$active) {
                     continue;
                 }
                 $boltClass = $this->objectManager->get($listener["boltClass"]);
-                if ($createInstance && $sendClasses) {
+                if ($sendClasses) {
                     $result = $boltClass->$filterName($result, ...$sendClasses, ...$arguments);
                 } else {
                     $result = $boltClass->$filterName($result, ...$arguments);

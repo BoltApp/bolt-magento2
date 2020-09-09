@@ -49,11 +49,6 @@ class Credit
      * @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface
      */
     protected $mirasvitStoreCreditCalculationConfig;
-    
-    /**
-     * @var \Mirasvit\Credit\Service\Config\CalculationConfig
-     */
-    protected $mirasvitStoreCreditCalculationConfigLegacy;
 
     /**
      * @param Discount                     $discountHelper
@@ -72,7 +67,6 @@ class Credit
                                      $mirasvitStoreCreditHelper,
                                      $mirasvitStoreCreditCalculationService,
                                      $mirasvitStoreCreditCalculationConfig,
-                                     $mirasvitStoreCreditCalculationConfigLegacy,
                                      $quote,
                                      $paymentOnly)
     {
@@ -80,7 +74,6 @@ class Credit
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationService = $mirasvitStoreCreditCalculationService;
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
-        $this->mirasvitStoreCreditCalculationConfigLegacy = $mirasvitStoreCreditCalculationConfigLegacy;
 
         try {
             $amount = abs($this->getMirasvitStoreCreditAmount($quote, $paymentOnly));
@@ -115,15 +108,9 @@ class Credit
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
             
-        if (!$paymentOnly) {
-            // For old version of Mirasvit Store Credit plugin,
-            // $miravitCalculationConfig could be empty,
-            // so we use the instance of \Mirasvit\Credit\Service\Config\CalculationConfig instead.
-            $miravitCalculationConfig = !empty($this->mirasvitStoreCreditCalculationConfig)
-                                        ? $this->mirasvitStoreCreditCalculationConfig
-                                        : $this->mirasvitStoreCreditCalculationConfigLegacy;
-       
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
+        if (!$paymentOnly) {       
+            if ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded()
+                || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;
             }
         }
