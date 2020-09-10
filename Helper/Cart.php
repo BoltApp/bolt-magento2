@@ -1984,27 +1984,6 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process BSS Store Credit
-        /////////////////////////////////////////////////////////////////////////////////
-        if (array_key_exists(Discount::BSS_STORE_CREDIT, $totals)
-            && $this->discountHelper->isBssStoreCreditAllowed()
-        ) {
-            $amount = $this->discountHelper->getBssStoreCreditAmount($quote, $parentQuote);
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-            $discounts[] = [
-                'description'       => 'Store Credit',
-                'amount'            => $roundedAmount,
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseRewardPoints()) {
@@ -2196,7 +2175,7 @@ class Cart extends AbstractHelper
             }
         }
         // TODO: move all third party plugins support into filter
-        return $this->eventsForThirdPartyModules->runFilter("collectDiscounts", [$discounts, $totalAmount, $diff], $quote, $paymentOnly);
+        return $this->eventsForThirdPartyModules->runFilter("collectDiscounts", [$discounts, $totalAmount, $diff], $quote, $parentQuote, $paymentOnly);
     }
 
     /**
