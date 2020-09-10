@@ -35,7 +35,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
                 static::assertArrayHasKey('module', $listener);
                 $has3pClasses = isset($listener["checkClasses"])
                                 ? (is_array($listener["checkClasses"]) && count($listener["checkClasses"])>=1)
-                                : (isset($listener["sendClasses"]) ? (is_array($listener["sendClasses"]) && count($listener["sendClasses"])>=1) : true;
+                                : (isset($listener["sendClasses"]) ? (is_array($listener["sendClasses"]) && count($listener["sendClasses"])>=1) : true);
                 static::assertTrue($has3pClasses);
                 $boltClass = Bootstrap::getObjectManager()->create($listener["boltClass"]);
                 static::assertTrue(method_exists($boltClass, $eventName));
