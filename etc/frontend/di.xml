@@ -66,10 +66,6 @@
         </arguments>
     </type>
 
-    <type name="Magento\Framework\RequireJs\Config\File\Collector\Aggregated">
-        <plugin name="Bolt_Boltpay_RequireJs_Plugin" type="Bolt\Boltpay\Plugin\RequireJs" sortOrder="1" />
-    </type>
-
     <type name="Magento\Customer\CustomerData\SectionPoolInterface">
         <arguments>
             <argument name="sectionSourceMap" xsi:type="array">
