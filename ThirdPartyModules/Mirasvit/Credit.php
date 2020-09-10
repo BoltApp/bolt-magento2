@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
@@ -34,6 +35,11 @@ class Credit
      * @var DiscountHelper
      */
     protected $discountHelper;
+    
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnagHelper;
     
     /**
      * @var \Mirasvit\Credit\Helper\Data
@@ -54,13 +60,16 @@ class Credit
      * @param Discount                     $discountHelper
      * @param EventsForThirdPartyModules   $eventsForThirdPartyModules
      * @param State                        $appState
+     * @param Bugsnag                      $bugsnagHelper
      */
     public function __construct(
         Discount    $discountHelper,
-        State       $appState
+        State       $appState,
+        Bugsnag     $bugsnagHelper
     ) {
         $this->discountHelper = $discountHelper;
         $this->appState       = $appState;
+        $this->bugsnagHelper  = $bugsnagHelper;
     }
 
     public function collectDiscounts($result,
