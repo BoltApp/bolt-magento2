@@ -52,7 +52,7 @@ class Giftcard
      * @param $quote
      * @return array
      */
-    public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote)
+    public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote, $paymentOnly)
     {
         list ($discounts, $totalAmount, $diff) = $result;
 

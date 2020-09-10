@@ -180,41 +180,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltMirasvitStoreCreditHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Credit\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltMirasvitStoreCreditCalculationHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Credit\Helper\Calculation</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Mirasvit Store Credit Old versions -->
-    <virtualType name="boltMirasvitStoreCreditCalculationConfigLegacy" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Credit\Service\Config\CalculationConfig</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltMirasvitStoreCreditCalculationConfig" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Credit\Api\Config\CalculationConfigInterface</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltMirasvitStoreCreditConfig" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Credit</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Credit\Model\Config</argument>
-        </arguments>
-    </virtualType>
-
     <virtualType name="boltMirasvitRewardsPurchaseHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Mirasvit_Rewards</argument>
@@ -297,11 +262,6 @@
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
             <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyCertRepository</argument>
-            <argument name="mirasvitStoreCreditHelper" xsi:type="object">boltMirasvitStoreCreditHelper</argument>
-            <argument name="mirasvitStoreCreditCalculationHelper" xsi:type="object">boltMirasvitStoreCreditCalculationHelper</argument>
-            <argument name="mirasvitStoreCreditCalculationConfig" xsi:type="object">boltMirasvitStoreCreditCalculationConfig</argument>
-            <argument name="mirasvitStoreCreditCalculationConfigLegacy" xsi:type="object">boltMirasvitStoreCreditCalculationConfigLegacy</argument>
-            <argument name="mirasvitStoreCreditConfig" xsi:type="object">boltMirasvitStoreCreditConfig</argument>
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>

@@ -18,8 +18,8 @@
 namespace Bolt\Boltpay\Plugin;
 
 use Magento\Framework\Event\ObserverInterface;
-use \Magento\Framework\Event\Observer;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\Framework\Event\Observer;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class MirasvitCreditQuotePaymentImportDataBeforePlugin
@@ -29,19 +29,19 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
  */
 class MirasvitCreditQuotePaymentImportDataBeforePlugin
 {
-    /**
-     * @var DiscountHelper
+     /**
+     * @var EventsForThirdPartyModules
      */
-    private $discountHelper;
+    private $eventsForThirdPartyModules;
 
     /**
      * MirasvitCreditQuotePaymentImportDataBeforePlugin constructor.
      *
-     * @param DiscountHelper $discountHelper
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
-    public function __construct(DiscountHelper $discountHelper)
+    public function __construct(EventsForThirdPartyModules $eventsForThirdPartyModules)
     {
-        $this->discountHelper = $discountHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -52,7 +52,7 @@ class MirasvitCreditQuotePaymentImportDataBeforePlugin
      */
     public function beforeExecute(ObserverInterface $subject, Observer $observer)
     {
-        if ($this->discountHelper->isMirasvitAdminQuoteUsingCreditObserver($observer)) {
+        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditAdminQuoteUsed", false, $observer)) {
             $observer->getEvent()->getInput()->setUseCredit(true);
         }
 

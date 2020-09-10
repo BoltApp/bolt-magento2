@@ -26,7 +26,7 @@ class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
             "listeners" => [
                 [
                     "module" => "Bolt_Boltpay",
-                    "checkClasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
+                    "checkClasses" => [["Bolt\Boltpay\Model\EventsForThirdPartyModulesFake","Bolt\Boltpay\Model\EventsForThirdPartyModules"]],
                     "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
                 ],
             ],
@@ -55,7 +55,7 @@ class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
             "listeners" => [
                 [
                     "module" => "Bolt_Boltpay",
-                    "sendClasses" => ["Bolt\Boltpay\Model\EventsForThirdPartyModules"],
+                    "sendClasses" => [["Bolt\Boltpay\Model\EventsForThirdPartyModulesFake","Bolt\Boltpay\Model\EventsForThirdPartyModules"]],
                     "boltClass" => "Bolt\Boltpay\Test\Unit\Model\ListenerMock",
                 ],
             ],

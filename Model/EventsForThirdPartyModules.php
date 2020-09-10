@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
+use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -71,6 +72,17 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
+                                      "Mirasvit\Credit\Service\Calculation",
+                                      // For old version of Mirasvit Store Credit plugin,
+                                      // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+                                      // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
+                                      ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
             ],
         ],
         "loadGiftcard" => [
@@ -79,6 +91,15 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardRepositoryInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
+        "checkMirasvitCreditAdminQuoteUsed" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "checkClasses" => ["Mirasvit\Credit\Model\Config"],
+                    "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
         ],
@@ -127,19 +148,40 @@ class EventsForThirdPartyModules
             return [false, null];
         }
         if (isset($listener["checkClasses"])) {
-            foreach ($listener["checkClasses"] as $className) {
-                if (!$this->doesClassExist($className)) {
+            foreach ($listener["checkClasses"] as $classNameItem) {
+                // Some merchants still use legacy version of third-party plugin,
+                // so there are cases that the class does not exist,
+                // then we use sub-array to include classes for supported versions.
+                $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
+                $existClasses = array_filter($classNames, function($className) {
+                    return $this->doesClassExist($className);
+                });
+                if (empty($existClasses)) {
                     return [false,null];
-                }
+                }                
             }
         }
         $sendClasses = [];
         if (isset($listener["sendClasses"])) {
-            foreach ($listener["sendClasses"] as $className) {
-                if (!$this->doesClassExist($className)) {
+            foreach ($listener["sendClasses"] as $classNameItem) {
+                // Some merchants still use legacy version of third-party plugin,
+                // so there are cases that the class does not exist or its instance can not be created,
+                // then we use sub-array to include classes for supported versions.
+                $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
+                $classInstance = null;
+                foreach ($classNames as $className) {
+                    // Once the class instance is created, no need to process the rest.
+                    if (!empty($classInstance)) {
+                        break;
+                    }
+                    $classInstance = $this->doesClassExist($className) ? $this->objectManager->get($className) : null;
+                }
+
+                if (empty($classInstance)) {
                     return [false,null];
                 }
-                $sendClasses[] = $this->objectManager->get($className);
+
+                $sendClasses[] = $classInstance;               
             }
         }
         return [true, $sendClasses];

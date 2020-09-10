@@ -130,31 +130,6 @@ class Discount extends AbstractHelper
     protected $unirgyCertRepository;
 
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $mirasvitStoreCreditHelper;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $mirasvitStoreCreditCalculationHelper;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    private $mirasvitStoreCreditCalculationConfig;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $mirasvitStoreCreditCalculationConfigLegacy;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $mirasvitStoreCreditConfig;
-
-    /**
      * Mirasvit Rewards Points entry point
      *
      * @var ThirdPartyModuleFactory
@@ -251,12 +226,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
      * @param ThirdPartyModuleFactory $unirgyCertRepository
-     * @param ThirdPartyModuleFactory $mirasvitStoreCreditHelper
-     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper
-     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig
-     * @param ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy
      * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
-     * @param ThirdPartyModuleFactory $mirasvitStoreCreditConfig
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCheckoutHelper
@@ -289,11 +259,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
         ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
         ThirdPartyModuleFactory $unirgyCertRepository,
-        ThirdPartyModuleFactory $mirasvitStoreCreditHelper,
-        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationHelper,
-        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfig,
-        ThirdPartyModuleFactory $mirasvitStoreCreditCalculationConfigLegacy,
-        ThirdPartyModuleFactory $mirasvitStoreCreditConfig,
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
@@ -326,11 +291,6 @@ class Discount extends AbstractHelper
         $this->amastyGiftCardAccountManagement = $amastyGiftCardAccountManagement;
         $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
-        $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
-        $this->mirasvitStoreCreditCalculationHelper = $mirasvitStoreCreditCalculationHelper;
-        $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
-        $this->mirasvitStoreCreditCalculationConfigLegacy = $mirasvitStoreCreditCalculationConfigLegacy;
-        $this->mirasvitStoreCreditConfig = $mirasvitStoreCreditConfig;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
@@ -795,112 +755,6 @@ class Discount extends AbstractHelper
             ->getData();
 
         return array_sum(array_column($data, 'balance_amount'));
-    }
-
-    /**
-     * Check whether the Mirasvit Store Credit module is allowed for quote
-     *
-     * @param $quote
-     *
-     * @return bool
-     */
-    public function isMirasvitStoreCreditAllowed($quote)
-    {
-        if (!$this->mirasvitStoreCreditHelper->isAvailable()) {
-            return false;
-        }
-
-        return $quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditUsedAmount($quote) > 0;
-    }
-
-    /**
-     * @param      $quote
-     *
-     * @param bool $paymentOnly
-     *
-     * @return float
-     */
-    public function getMirasvitStoreCreditAmount($quote, $paymentOnly = false)
-    {
-        $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
-        if (!$paymentOnly) {
-            /** @var \Mirasvit\Credit\Api\Config\CalculationConfigInterface $miravitCalculationConfig */
-            $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfig->getInstance();
-            // For old version of Mirasvit Store Credit plugin,
-            // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
-            // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
-            if (empty($miravitCalculationConfig)) {
-                $miravitCalculationConfig = $this->mirasvitStoreCreditCalculationConfigLegacy->getInstance();
-            }
-            if ($miravitCalculationConfig->isTaxIncluded() || $miravitCalculationConfig->IsShippingIncluded()) {
-                return $miravitBalanceAmount;
-            }
-        }
-
-        $unresolvedTotal = $quote->getGrandTotal() + $quote->getCreditAmountUsed();
-        $totals = $quote->getTotals();
-
-        $tax      = isset($totals['tax']) ? $totals['tax']->getValue() : 0;
-        $shipping = isset($totals['shipping']) ? $totals['shipping']->getValue() : 0;
-
-        $unresolvedTotal = $this->mirasvitStoreCreditCalculationHelper->getInstance()->calc($unresolvedTotal, $tax, $shipping);
-
-        return min($unresolvedTotal, $miravitBalanceAmount);
-    }
-
-    /**
-     * Get Mirasvit Store credit balance used amount.
-     * This method is only called when the Mirasvit_Credit module is installed and available on the quote.
-     *
-     * @param $quote
-     *
-     * @return float
-     */
-    protected function getMirasvitStoreCreditUsedAmount($quote)
-    {
-        $balance = $this->mirasvitStoreCreditHelper
-                        ->getInstance()
-                        ->getBalance($quote->getCustomerId(), $quote->getQuoteCurrencyCode());
-
-        $amount = ((float)$quote->getManualUsedCredit() > 0) ? $quote->getManualUsedCredit() : $balance->getAmount();
-        if ($quote->getQuoteCurrencyCode() !== $balance->getCurrencyCode()) {
-            $amount = $this->mirasvitStoreCreditCalculationHelper->getInstance()->convertToCurrency(
-                $amount,
-                $balance->getCurrencyCode(),
-                $quote->getQuoteCurrencyCode(),
-                $quote->getStore()
-            );
-        }
-
-        return $amount;
-    }
-
-    /**
-     * @param Observer $observer
-     *
-     * @return bool
-     */
-    public function isMirasvitAdminQuoteUsingCreditObserver(Observer $observer)
-    {
-        if (!$this->mirasvitStoreCreditConfig->isAvailable()) {
-            return false;
-        }
-
-        try {
-            $payment = $observer->getEvent()->getPayment();
-            $miravitConfig = $this->mirasvitStoreCreditConfig->getInstance();
-
-            if ($payment->getMethod() == Payment::METHOD_CODE &&
-                $this->appState->getAreaCode() == FrontNameResolver::AREA_CODE &&
-                $payment->getQuote()->getUseCredit() == $miravitConfig::USE_CREDIT_YES
-            ) {
-                return true;
-            }
-        } catch (\Exception $e) {
-
-        }
-
-        return false;
     }
 
     /**
