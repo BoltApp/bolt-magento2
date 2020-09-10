@@ -67,7 +67,8 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation",
-                                      "Mirasvit\Credit\Api\Config\CalculationConfigInterface|Mirasvit\Credit\Service\Config\CalculationConfig",],
+                                      ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
@@ -148,20 +149,24 @@ class EventsForThirdPartyModules
         $sendClasses = [];
         if (isset($listener["sendClasses"])) {
             foreach ($listener["sendClasses"] as $classNameItem) {
-                $classNames = explode('|',$classNameItem);
-                $existClasses = array_filter($classNames, function($className) {
-                    return $this->doesClassExist($className);
-                });
-                if (empty($existClasses)) {
+                // Some merchants still use legacy version of third-party plugin,
+                // so there are cases that the class does not exist or its instance can not be created,
+                // then we use sub-array to include classes for supported versions.
+                $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
+                $classInstance = null;
+                foreach ($classNames as $className) {
+                    // Once the class instance is created, no need to process the rest.
+                    if (!empty($classInstance)) {
+                        break;
+                    }
+                    $classInstance = $this->doesClassExist($className) ? $this->objectManager->get($className) : null;
+                }
+
+                if (empty($classInstance)) {
                     return [false,null];
                 }
-                $classInstances = array_map(function($className) {
-                    return $this->objectManager->get($className);
-                }, $existClasses);
-                if (empty($classInstances)) {
-                    return [false,null];
-                }
-                $sendClasses[] = current($classInstances);               
+
+                $sendClasses[] = $classInstance;               
             }
         }
         return [true, $sendClasses];
