@@ -146,7 +146,10 @@ class EventsForThirdPartyModules
         }
         if (isset($listener["checkClasses"])) {
             foreach ($listener["checkClasses"] as $classNameItem) {
-                $classNames = explode('|',$classNameItem);
+                // Some merchants still use legacy version of third-party plugin,
+                // so there are cases that the class does not exist,
+                // then we use sub-array to include classes for supported versions.
+                $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
                 $existClasses = array_filter($classNames, function($className) {
                     return $this->doesClassExist($className);
                 });
