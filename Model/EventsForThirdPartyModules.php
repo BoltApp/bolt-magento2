@@ -76,6 +76,9 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation",
+                                      // For old version of Mirasvit Store Credit plugin,
+                                      // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+                                      // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
                                       ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
                                       "Mirasvit\Credit\Service\Config\CalculationConfig"],],
                     "boltClass" => Mirasvit_Credit::class,
