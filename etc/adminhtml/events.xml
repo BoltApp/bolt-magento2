@@ -10,4 +10,7 @@
     <event name="checkout_submit_all_after">
         <observer name="create_invoice_for_recharged_order" instance="Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder" />
     </event>
+    <event name="admin_system_config_changed_section_carriers" >
+        <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
+    </event>
 </config>

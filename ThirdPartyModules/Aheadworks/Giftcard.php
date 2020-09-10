@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
@@ -29,14 +30,28 @@ class Giftcard
     private $orderService;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnagHelper;
+
+    /**
      * @param OrderService $orderService Magento order service instance
+     * @param Bugsnag $bugsnagHelper Bugsnag helper instance
      */
     public function __construct(
-        OrderService $orderService
+        OrderService $orderService,
+        Bugsnag $bugsnagHelper
     ) {
         $this->orderService = $orderService;
+        $this->bugsnagHelper = $bugsnagHelper;
     }
 
+    /**
+     * @param $result
+     * @param $aheadworksGiftcardManagement
+     * @param $quote
+     * @return array
+     */
     public function collectDiscounts($result, $aheadworksGiftcardManagement, $quote, $paymentOnly)
     {
         list ($discounts, $totalAmount, $diff) = $result;
@@ -59,6 +74,13 @@ class Giftcard
         }
     }
 
+    /**
+     * @param $result
+     * @param $aheadworksGiftcardRepository
+     * @param $code
+     * @param $storeId
+     * @return null
+     */
     public function loadGiftcard($result, $aheadworksGiftcardRepository, $code, $storeId)
     {
         if (!empty($result)) {
@@ -72,6 +94,15 @@ class Giftcard
         return null;
     }
 
+    /**
+     * @param $result
+     * @param $aheadworksGiftcardManagement
+     * @param $code
+     * @param $giftCard
+     * @param $immutableQuote
+     * @param $parentQuote
+     * @return array|null
+     */
     public function applyGiftcard($result, $aheadworksGiftcardManagement, $code, $giftCard, $immutableQuote, $parentQuote)
     {
         if (!empty($result)) {
