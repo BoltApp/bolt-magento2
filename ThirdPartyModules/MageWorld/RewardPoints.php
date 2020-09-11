@@ -140,7 +140,7 @@ class RewardPoints
      * @param Quote $quote
      *
      */
-    public function beforeValidateQuoteData($mwRewardPointsHelperData,
+    public function beforePrepareQuote($mwRewardPointsHelperData,
                                      $mwRewardPointsModelCustomer,
                                      $quote)
     {
