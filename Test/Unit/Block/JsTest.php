@@ -256,7 +256,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
             $this->checkoutSessionMock,
             $this->cartHelperMock,
             $this->bugsnagHelperMock,
-            $this->deciderMock
+            $this->deciderMock,
+            $this->eventsForThirdPartyModules
         );
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->checkoutSessionMock, 'checkoutSession', $instance);
