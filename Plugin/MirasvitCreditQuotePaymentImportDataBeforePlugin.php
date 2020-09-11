@@ -52,7 +52,7 @@ class MirasvitCreditQuotePaymentImportDataBeforePlugin
      */
     public function beforeExecute(ObserverInterface $subject, Observer $observer)
     {
-        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditAdminQuoteUsed", '', $observer)) {
+        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditAdminQuoteUsed", false, $observer)) {
             $observer->getEvent()->getInput()->setUseCredit(true);
         }
 

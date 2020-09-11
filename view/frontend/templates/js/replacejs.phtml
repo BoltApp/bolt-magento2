@@ -842,8 +842,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     popUpOpen = false;
                 }
             }
+            // BoltState.magentoCart.isGuestCheckoutAllowed can be changed with the cart
+            // so we need to calculate check from scratch
             if (BoltState.check.isResolved() === true) {
-                return;
+                BoltState.check = boltBarrier();
             }
             if (BoltState.magentoCart === null) {
                 return;
