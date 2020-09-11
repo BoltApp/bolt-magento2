@@ -229,14 +229,12 @@ class Credit
      * Exclude the Mirasvit credit amount from shipping discount, so the Bolt can apply Mirasvit credit to shipping properly.
      *
      * @param float $result
-     * @param Mirasvit\Credit\Helper\Data|object $mirasvitStoreCreditHelper 
      * @param Quote|object $quote
      * @param Address|object $shippingAddress
      * 
      * @return float
      */
     public function collectShippingDiscounts($result,
-                                     $mirasvitStoreCreditHelper,
                                      $quote,
                                      $shippingAddress)
     {

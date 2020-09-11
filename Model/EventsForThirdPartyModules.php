@@ -98,7 +98,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => ["Mirasvit\Credit\Helper\Data"],
+                    "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
