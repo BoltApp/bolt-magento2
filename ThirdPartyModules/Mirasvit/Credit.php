@@ -42,6 +42,7 @@ class Credit
      */
     protected $sessionHelper;
 
+    /**
      * @var Bugsnag
      */
     private $bugsnagHelper;
