@@ -21,6 +21,7 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -82,6 +83,11 @@ class EventsForThirdPartyModules
                                       ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
                                       "Mirasvit\Credit\Service\Config\CalculationConfig"],],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Helper\Data"],
+                    "boltClass" => Amasty_Rewards::class,
                 ],
             ],
         ],
