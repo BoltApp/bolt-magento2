@@ -219,11 +219,8 @@ class Credit
      */
     private function ifMirasvitCreditIsShippingTaxIncluded($quote)
     {   
-        if ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded($quote->getStore()) || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded($quote->getStore())) {
-            return true;
-        } else {
-            return false;
-        }
+        return ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded($quote->getStore())
+                || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded($quote->getStore()));
     }
     
     /**
