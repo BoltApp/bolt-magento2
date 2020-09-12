@@ -17,12 +17,15 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 
+use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
 use Magento\Framework\App\State;
+use Magento\Backend\App\Area\FrontNameResolver;
+use Magento\Framework\Event\Observer;
 
 class Credit
 {
