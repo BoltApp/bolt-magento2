@@ -24,7 +24,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 class RewardPoints
 {    
     /**
-     * @var DiscountHelper
+     * @var Discount
      */
     protected $discountHelper;
     
@@ -149,7 +149,6 @@ class RewardPoints
         
         try {
             if ($quote->getMwRewardpoint()) {
-                $currencyCode = $quote->getQuoteCurrencyCode();
                 $storeCode = $quote->getStore()->getCode();
                 if (
                     $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()

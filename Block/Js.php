@@ -214,7 +214,7 @@ class Js extends Template
      * @return string
      */
     public function getAdditionalJavascript()
-    {        
+    {
         return $this->eventsForThirdPartyModules->runFilter("getAdditionalJS", $this->configHelper->getAdditionalJS());
     }
 

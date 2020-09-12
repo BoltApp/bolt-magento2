@@ -264,6 +264,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
         static::assertAttributeEquals($this->cartHelperMock, 'cartHelper', $instance);
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
         static::assertAttributeEquals($this->deciderMock, 'featureSwitches', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
