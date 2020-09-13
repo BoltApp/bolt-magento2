@@ -382,7 +382,10 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
-            $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
+            $msg = substr($e->getMessage(), 0, 16) === "Unknown quote id" ?
+                'Something went wrong with your cart. Please reload the page and checkout again.' :
+                $e->getMessage();
+            $this->catchExceptionAndSendError($e, $msg, $e->getCode());
         } catch (Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
@@ -407,7 +410,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->quote = $this->getQuoteById($quoteId);
 
         if (!$this->quote) {
-            return new BoltException(
+            throw new BoltException(
                 __('Unknown quote id: %1.', $quoteId),
                 null,
                 6103
