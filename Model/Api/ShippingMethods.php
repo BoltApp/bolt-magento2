@@ -374,71 +374,82 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         $startTime = $this->metricsClient->getCurrentTime();
         try {
-            // get immutable quote id stored with transaction
-            $quoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
-
-            // Load quote from entity id
-            $this->quote = $this->getQuoteById($quoteId);
-
-            if (!$this->quote) {
-                $exception =  new BoltException(
-                    __('Unknown quote id: %1.', $quoteId)
-                );
-                return $this->catchExceptionAndSendError(
-                    $exception,
-                    __('Something went wrong with your cart. Please reload the page and checkout again.'),
-                    6103
-                );
-            }
-
-            $this->preprocessHook();
-
-            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
-            $this->checkCartItems($cart);
-
-            // Load logged in customer checkout and customer sessions from cached session id.
-            // Replace parent quote with immutable quote in checkout session.
-            $this->sessionHelper->loadSession($this->quote);
-
-            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-
-            if (isset($addressData['email']) && $addressData['email'] !== null) {
-                $this->validateAddressData($addressData);
-            }
-
-            $shippingOptionsModel = $this->shippingEstimation($this->quote, $addressData);
-
-            if ($this->taxAdjusted) {
-                $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
-                    $report->setMetaData([
-                        'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)]
-                    ]);
-                });
-                $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted.");
-            }
-
-            /** @var \Magento\Quote\Model\Quote $parentQuote */
-            $parentQuote = $this->getQuoteById($cart['order_reference']);
-            if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())) {
-                $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-                $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
-
-                $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
-            }
+            $shippingAndTax = $this->getShippingAndTax($cart, $shipping_address);
             $this->metricsClient->processMetric("ship_tax.success", 1, "ship_tax.latency", $startTime);
-
-            return $shippingOptionsModel;
+            return $shippingAndTax;
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
+    }
+
+    /**
+     * Get shipping and tax options
+     *
+     * @param $cart
+     * @param $shipping_address
+     * @return ShippingOptionsInterface
+     * @throws BoltException
+     */
+    public function getShippingAndTax($cart, $shipping_address)
+    {
+        // get immutable quote id stored with transaction
+        $quoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
+
+        // Load quote from entity id
+        $this->quote = $this->getQuoteById($quoteId);
+
+        if (!$this->quote) {
+            return new BoltException(
+                __('Unknown quote id: %1.', $quoteId),
+                null,
+                6103
+            );
+        }
+
+        $this->preprocessHook();
+
+        $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
+        $this->checkCartItems($cart);
+
+        // Load logged in customer checkout and customer sessions from cached session id.
+        // Replace parent quote with immutable quote in checkout session.
+        $this->sessionHelper->loadSession($this->quote);
+
+        $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
+
+        if (isset($addressData['email']) && $addressData['email'] !== null) {
+            $this->validateAddressData($addressData);
+        }
+
+        $shippingOptionsModel = $this->shippingEstimation($this->quote, $addressData);
+
+        if ($this->taxAdjusted) {
+            $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
+                $report->setMetaData([
+                    'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)]
+                ]);
+            });
+            $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted.");
+        }
+
+        /** @var \Magento\Quote\Model\Quote $parentQuote */
+        $parentQuote = $this->getQuoteById($cart['order_reference']);
+        if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())) {
+            $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
+            $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
+
+            $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
+        }
+
+        return $shippingOptionsModel;
     }
 
     /**
