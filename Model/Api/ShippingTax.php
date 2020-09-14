@@ -304,45 +304,12 @@ abstract class ShippingTax
     {
         // echo statement initially
         $startTime = $this->metricsClient->getCurrentTime();
-
         $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
-            // get immutable quote id stored with transaction
-            $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
-            // Load immutable quote from entity id
-            $immutableQuote = $this->loadQuote($immutableQuoteId);
-
-            $this->preprocessHook($immutableQuote->getStoreId());
-
-            // get the parent quote
-            $parentQuoteId = $cart['order_reference'];
-            $parentQuote = $this->loadQuote($parentQuoteId);
-
-            $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
-
-            $this->quote = $parentQuote;
-            $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
-
-            // Load logged in customer checkout and customer sessions from cached session id.
-            // Replace the quote with $parentQuote in checkout session.
-            $this->sessionHelper->loadSession($this->quote);
-
-            $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
-
-            if (isset($addressData['email']) && $addressData['email'] !== null) {
-                $this->validateAddressData($addressData);
-            }
-
-            $result = $this->getResult($addressData, $shipping_option);
-
-            $this->logHelper->addInfoLog('[-= Shipping / Tax result =-]');
-            $this->logHelper->addInfoLog(json_encode($result, JSON_PRETTY_PRINT));
-
+            $result = $this->handleRequest($cart, $shipping_address, $shipping_option);
             $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
-
             return $result;
-
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
@@ -354,6 +321,51 @@ abstract class ShippingTax
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
+    }
+
+
+    /**
+     * Handles the split shipping and tax request
+     *
+     * @param mixed $cart cart details
+     * @param mixed $shipping_address shipping address
+     * @param mixed $shipping_option selected shipping option
+     * @return ShippingTaxDataInterface
+     * @throws BoltException
+     */
+    public function handleRequest($cart, $shipping_address, $shipping_option)
+    {
+        // get immutable quote id stored with transaction
+        $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
+        // Load immutable quote from entity id
+        $immutableQuote = $this->loadQuote($immutableQuoteId);
+
+        $this->preprocessHook($immutableQuote->getStoreId());
+
+        // get the parent quote
+        $parentQuoteId = $cart['order_reference'];
+        $parentQuote = $this->loadQuote($parentQuoteId);
+
+        $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
+
+        $this->quote = $parentQuote;
+        $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
+
+        // Load logged in customer checkout and customer sessions from cached session id.
+        // Replace the quote with $parentQuote in checkout session.
+        $this->sessionHelper->loadSession($this->quote);
+
+        $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
+
+        if (isset($addressData['email']) && $addressData['email'] !== null) {
+            $this->validateAddressData($addressData);
+        }
+
+        $result = $this->getResult($addressData, $shipping_option);
+
+        $this->logHelper->addInfoLog('[-= Shipping / Tax result =-]');
+        $this->logHelper->addInfoLog(json_encode($result, JSON_PRETTY_PRINT));
+        return $result;
     }
 
     /**
