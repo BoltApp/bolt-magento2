@@ -24,12 +24,10 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 /**
  * Class MirasvitCreditQuotePaymentImportDataBeforePlugin
  * Support Store Credit for admin order
- *
- * @package Bolt\Boltpay\Plugin
  */
 class MirasvitCreditQuotePaymentImportDataBeforePlugin
 {
-     /**
+    /**
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;

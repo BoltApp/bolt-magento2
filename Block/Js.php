@@ -523,7 +523,7 @@ class Js extends Template
      * @param string $argName
      * @return string
      */
-    public function wrapWithCatch ($jsCode, $argName = '')
+    public function wrapWithCatch($jsCode, $argName = '')
     {
         return "
 function($argName) {

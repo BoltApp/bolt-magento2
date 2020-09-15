@@ -17,11 +17,6 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
-/**
- * UpdateCart result interface.
- *
- * @api
- */
 interface UpdateCartResultInterface
 {
     /**

@@ -20,11 +20,6 @@ namespace Bolt\Boltpay\Plugin;
 use Magento\Checkout\Model\Session;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-/**
- * Class RestoreQuotePlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class RestoreQuotePlugin
 {
     /**

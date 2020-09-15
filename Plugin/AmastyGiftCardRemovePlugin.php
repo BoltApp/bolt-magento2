@@ -26,8 +26,6 @@ use Magento\Framework\Controller\ResultInterface;
  * Class AmastyGiftCardRemovePlugin
  * Ensure Gift Card is removed from the parent quote.
  * The default method removes the first found row which might corespond to some previusly created immutable quote.
- *
- * @package Bolt\Boltpay\Plugin
  */
 class AmastyGiftCardRemovePlugin
 {

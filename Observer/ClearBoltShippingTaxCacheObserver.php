@@ -22,11 +22,6 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 
-/**
- * Class ClearBoltShippingTaxCacheObserver
- *
- * @package Bolt\Boltpay\Observer
- */
 class ClearBoltShippingTaxCacheObserver implements ObserverInterface
 {
     /**
@@ -38,9 +33,7 @@ class ClearBoltShippingTaxCacheObserver implements ObserverInterface
      * ClearBoltCacheObserver constructor.
      * @param CacheInterface|null $cache
      */
-    public function __construct(
-        CacheInterface $cache = null
-    )
+    public function __construct(CacheInterface $cache = null)
     {
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
             ->get(CacheInterface::class);

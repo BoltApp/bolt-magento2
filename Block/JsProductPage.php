@@ -67,7 +67,16 @@ class JsProductPage extends Js
         $this->_product = $productView->getProduct();
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->_productRepository = $productRepository;
-        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $eventsForThirdPartyModules, $data);
+        parent::__construct(
+            $context,
+            $configHelper,
+            $checkoutSession,
+            $cartHelper,
+            $bugsnag,
+            $featureSwitches,
+            $eventsForThirdPartyModules,
+            $data
+        );
     }
 
     /**
@@ -118,14 +127,16 @@ class JsProductPage extends Js
      *
      * @return bool
      */
-    public function isGrouped(){
+    public function isGrouped()
+    {
         return $this->_product->getTypeId() == \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE;
     }
 
     /**
      * @return \Magento\Catalog\Api\Data\ProductInterface[]
      */
-    public function getGroupedProductChildren(){
+    public function getGroupedProductChildren()
+    {
         $ids = $this->_product->getTypeInstance()->getChildrenIds($this->_product->getId());
         $searchCriteria = $this->searchCriteriaBuilder->addFilter('entity_id', $ids, 'in');
         return $this->_productRepository->getList($searchCriteria->create())->getItems();

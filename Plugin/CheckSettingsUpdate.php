@@ -23,11 +23,6 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager as FeatureSwitchManager;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-/**
- * Class ClearQuote
- *
- * @package Bolt\Boltpay\Plugin
- */
 class CheckSettingsUpdate
 {
     /**
