@@ -2292,12 +2292,12 @@ class Cart extends AbstractHelper
      *
      * @return array cart_data in bolt format
      * @throws \Exception
+     * @throws BoltException
      */
     public function createCartByRequest($request)
     {
         return $this->createCart($request['items'], $request['metadata']);
     }
-
 
     /**
      * Create a cart with the provided items
