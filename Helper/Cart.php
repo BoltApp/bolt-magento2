@@ -712,7 +712,10 @@ class Cart extends AbstractHelper
             } else {
                 // check if cart was created in plugin version before 2.14.0
                 if (isset($response->cart->display_id)) {
-                 list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
+                    $result = explode(' / ', $response->cart->display_id);
+                    if (count($result) == 2) {
+                        list(, $immutableQuoteId) = $result;
+                    }
                 }
             }
         }
