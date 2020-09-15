@@ -976,8 +976,7 @@ class Order extends AbstractHelper
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
-                // TODO(vitaliy): use helper in the next PR
-                $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
+                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
 

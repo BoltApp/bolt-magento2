@@ -236,8 +236,7 @@ class OrderManagement implements OrderManagementInterface
 
         if ($type === 'failed_payment' || $type === 'failed' || $type === 'rejected_irreversible') {
             $transaction = $this->orderHelper->fetchTransactionInfo($reference, $storeId);
-            // TODO(vitaliy): use helper in the next PR
-            $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
+            $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
 
             if ($type === 'failed_payment' || $type === 'failed') {
                 $this->orderHelper->deleteOrderByIncrementId($display_id, $immutableQuoteId);
