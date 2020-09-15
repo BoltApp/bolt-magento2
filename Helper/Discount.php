@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Bolt\Boltpay\Model\Payment;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -26,8 +25,6 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use \Magento\Framework\Event\Observer;
-use \Magento\Backend\App\Area\FrontNameResolver;
 use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\SalesRule\Model\CouponFactory;
@@ -51,7 +48,6 @@ class Discount extends AbstractHelper
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
-    const BSS_STORE_CREDIT = 'bss_storecredit';
     
     // Bolt discount category
     const BOLT_DISCOUNT_CATEGORY_STORE_CREDIT = 'store_credit';
@@ -152,16 +148,6 @@ class Discount extends AbstractHelper
     protected $aheadworksCustomerStoreCreditManagement;
 
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $bssStoreCreditHelper;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $bssStoreCreditCollection;
-
-    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -233,8 +219,6 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
-     * @param ThirdPartyModuleFactory $bssStoreCreditHelper
-     * @param ThirdPartyModuleFactory $bssStoreCreditCollection
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
@@ -266,8 +250,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
-        ThirdPartyModuleFactory $bssStoreCreditHelper,
-        ThirdPartyModuleFactory $bssStoreCreditCollection,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
@@ -298,8 +280,6 @@ class Discount extends AbstractHelper
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
-        $this->bssStoreCreditHelper = $bssStoreCreditHelper;
-        $this->bssStoreCreditCollection = $bssStoreCreditCollection;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -702,59 +682,6 @@ class Discount extends AbstractHelper
         }
 
         return (float) $result;
-    }
-
-    /**
-     * Check whether the Bss Store Credit module is allowed
-     *
-     * @return int
-     */
-    public function isBssStoreCreditAllowed()
-    {
-        if (!$this->bssStoreCreditHelper->isAvailable()) {
-            return 0;
-        }
-        return $this->bssStoreCreditHelper->getInstance()->getGeneralConfig('active');
-    }
-
-    /**
-     * @param $immutableQuote
-     * @param $parentQuote
-     * @return mixed
-     */
-    public function getBssStoreCreditAmount($immutableQuote, $parentQuote)
-    {
-        try {
-            $bssStoreCreditHelper = $this->bssStoreCreditHelper->getInstance();
-            $isAppliedToShippingAndTax = $bssStoreCreditHelper->getGeneralConfig('used_shipping') || $bssStoreCreditHelper->getGeneralConfig('used_tax');
-
-            $storeCreditAmount = $immutableQuote->getBaseBssStorecreditAmountInput();
-            if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {
-                $storeCreditAmount = $this->getBssStoreCreditBalanceAmount($parentQuote);
-                $parentQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
-                $immutableQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();
-                ;
-            }
-
-            return $storeCreditAmount;
-        } catch (\Exception $exception) {
-            $this->bugsnag->notifyException($exception);
-            return 0;
-        }
-    }
-
-    /**
-     * @param $quote
-     * @return float|int
-     */
-    public function getBssStoreCreditBalanceAmount($quote)
-    {
-        $data = $this->bssStoreCreditCollection
-            ->getInstance()
-            ->addFieldToFilter('customer_id', ['in' => $quote->getCustomerId()])
-            ->getData();
-
-        return array_sum(array_column($data, 'balance_amount'));
     }
 
     /**

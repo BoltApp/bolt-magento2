@@ -160,16 +160,6 @@ class DiscountTest extends TestCase
     private $aheadworksCustomerStoreCreditManagement;
 
     /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Bss StoreCredit helper
-     */
-    private $bssStoreCreditHelper;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Bss StoreCredit collection
-     */
-    private $bssStoreCreditCollection;
-
-    /**
      * @var MockObject|CartRepositoryInterface mocked instance of the the Quote repository model
      */
     private $quoteRepository;
@@ -248,8 +238,6 @@ class DiscountTest extends TestCase
         $this->amastyRewardsResourceQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->aheadworksCustomerStoreCreditManagement = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->bssStoreCreditHelper = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->bssStoreCreditCollection = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountHelperMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->quoteRepository = $this->createMock(CartRepositoryInterface::class);
@@ -301,8 +289,6 @@ class DiscountTest extends TestCase
                     $this->amastyRewardsResourceQuote,
                     $this->amastyRewardsQuote,
                     $this->aheadworksCustomerStoreCreditManagement,
-                    $this->bssStoreCreditHelper,
-                    $this->bssStoreCreditCollection,
                     $this->moduleGiftCardAccountMock,
                     $this->moduleGiftCardAccountHelperMock,
                     $this->quoteRepository,
@@ -352,8 +338,6 @@ class DiscountTest extends TestCase
             $this->amastyRewardsResourceQuote,
             $this->amastyRewardsQuote,
             $this->aheadworksCustomerStoreCreditManagement,
-            $this->bssStoreCreditHelper,
-            $this->bssStoreCreditCollection,
             $this->moduleGiftCardAccountMock,
             $this->moduleGiftCardAccountHelperMock,
             $this->quoteRepository,
@@ -388,8 +372,6 @@ class DiscountTest extends TestCase
             'aheadworksCustomerStoreCreditManagement',
             $instance
         );
-        static::assertAttributeEquals($this->bssStoreCreditHelper, 'bssStoreCreditHelper', $instance);
-        static::assertAttributeEquals($this->bssStoreCreditCollection, 'bssStoreCreditCollection', $instance);
         static::assertAttributeEquals($this->moduleGiftCardAccountMock, 'moduleGiftCardAccount', $instance);
         static::assertAttributeEquals($this->moduleGiftCardAccountHelperMock, 'moduleGiftCardAccountHelper', $instance);
         static::assertAttributeEquals($this->quoteRepository, 'quoteRepository', $instance);
@@ -1941,249 +1923,6 @@ class DiscountTest extends TestCase
         $result = $this->currentMock->getUnirgyGiftCertBalanceByCode($giftCertCode);
         static::assertThat($result, static::isType('float'));
         static::assertEquals(5913.46, $result);
-    }
-
-    /**
-     * @test
-     * that isBssStoreCreditAllowed returns whether BSS Store Credit is available
-     *
-     * @covers ::isBssStoreCreditAllowed
-     *
-     * @dataProvider isBssStoreCreditAllowed_withVariousCreditHelperAvailabilityProvider
-     *
-     * @param bool $isBssStoreCreditAvailable stubbed result of {@see \Bolt\Boltpay\Model\ThirdPartyModuleFactory::isAvailable}
-     * @param bool $bssActiveConfig Bss general config value for 'active' config
-     * @param int  $expectedResult of the tested method
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function isBssStoreCreditAllowed_withVariousCreditHelperAvailability_returnsBssStoreCreditAllowed(
-        $isBssStoreCreditAvailable,
-        $bssActiveConfig,
-        $expectedResult
-    ) {
-        $this->initCurrentMock();
-
-        $bssStoreCreditHelper = $this->createPartialMock(
-            ThirdPartyModuleFactory::class,
-            ['isAvailable', 'getInstance', 'getGeneralConfig']
-        );
-        TestHelper::setProperty($this->currentMock, 'bssStoreCreditHelper', $bssStoreCreditHelper);
-        $bssStoreCreditHelper->expects(static::once())->method('isAvailable')->willReturn($isBssStoreCreditAvailable);
-        $bssStoreCreditHelper->method('getInstance')->willReturnSelf();
-        $bssStoreCreditHelper->expects($bssActiveConfig ? static::once() : static::never())
-            ->method('getGeneralConfig')
-            ->with('active')
-            ->willReturn($bssActiveConfig);
-
-        static::assertEquals($expectedResult, $this->currentMock->isBssStoreCreditAllowed());
-    }
-
-    /**
-     * Data provider for {@see isBssStoreCreditAllowed_withVariousCreditHelperAvailability_returnsBssStoreCreditAllowed}
-     *
-     * @return array[] containing flags Bss Store Credit Availability, expected general config and
-     * expected result of the method call
-     */
-    public function isBssStoreCreditAllowed_withVariousCreditHelperAvailabilityProvider()
-    {
-        return [
-            ['isBssStoreCreditAvailable' => false, 'bssActiveConfig' => false, 'expectedResult' => 0],
-            ['isBssStoreCreditAvailable' => true, 'bssActiveConfig' => 1, 'expectedResult' => 1],
-        ];
-    }
-
-    /**
-     * @test
-     * that getBssStoreCreditAmount returns Bss Store Credit amount applied to provided parent quote
-     * by calling {@see \Bolt\Boltpay\Helper\Discount::getBssStoreCreditBalanceAmount}
-     *
-     * @covers ::getBssStoreCreditAmount
-     *
-     * @throws ReflectionException if unable to set internal mocked properties
-     */
-    public function getBssStoreCreditAmount_ifIsAppliedToShippingAndTax_returnsStoreCreditAmount()
-    {
-        $this->initCurrentMock(['getBssStoreCreditBalanceAmount']);
-        $immutableQuoteMock = $this->createPartialMock(
-            Quote::class,
-            ['getBaseBssStorecreditAmountInput', 'getSubtotal', 'setBaseBssStorecreditAmountInput', 'save']
-        );
-        $parentQuote = $this->createPartialMock(Quote::class, ['setBaseBssStorecreditAmountInput', 'save']);
-
-        $bssStoreCreditHelper = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getGeneralConfig'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        TestHelper::setProperty($this->currentMock, 'bssStoreCreditHelper', $bssStoreCreditHelper);
-
-        $bssStoreCreditHelper->expects(static::once())->method('getInstance')->willReturnSelf();
-        $bssStoreCreditHelper->expects(static::exactly(2))
-            ->method('getGeneralConfig')
-            ->withConsecutive(['used_shipping'], ['used_tax'])
-            ->willReturnOnConsecutiveCalls(false, true);
-        $storeCreditAmount = 10;
-        $immutableQuoteMock->expects(static::once())
-            ->method('getBaseBssStorecreditAmountInput')
-            ->willReturn($storeCreditAmount);
-        $subtotal = 5;
-        $immutableQuoteMock->expects(static::once())->method('getSubtotal')->willReturn($subtotal);
-        $newStoreCreditAmount = 55;
-        $this->currentMock->expects(static::once())
-            ->method('getBssStoreCreditBalanceAmount')
-            ->with($parentQuote)
-            ->willReturn($newStoreCreditAmount);
-        $parentQuote->expects(static::once())
-            ->method('setBaseBssStorecreditAmountInput')
-            ->with($newStoreCreditAmount)
-            ->willReturnSelf();
-        $parentQuote->expects(static::once())->method('save')->willReturnSelf();
-
-        $immutableQuoteMock->expects(static::once())
-            ->method('setBaseBssStorecreditAmountInput')
-            ->with($newStoreCreditAmount)
-            ->willReturnSelf();
-        $immutableQuoteMock->expects(static::once())->method('save')->willReturnSelf();
-
-        static::assertEquals(
-            $newStoreCreditAmount,
-            $this->currentMock->getBssStoreCreditAmount($immutableQuoteMock, $parentQuote)
-        );
-    }
-
-    /**
-     * @test
-     * that getBssStoreCreditAmount returns base store credit amount from input if the store credit
-     * is configured to not be applied to neither shipping nor tax
-     *
-     * @covers ::getBssStoreCreditAmount
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function getBssStoreCreditAmount_whenCantAppliedShippingAndTax_returnsStoreCreditAmount()
-    {
-        $this->initCurrentMock(['getBssStoreCreditBalanceAmount']);
-        $immutableQuoteMock = $this->createPartialMock(
-            Quote::class,
-            ['getBaseBssStorecreditAmountInput', 'getSubtotal', 'setBaseBssStorecreditAmountInput', 'save']
-        );
-        $parentQuote = $this->createPartialMock(Quote::class, ['setBaseBssStorecreditAmountInput', 'save']);
-
-        $bssStoreCreditHelper = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getGeneralConfig'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        TestHelper::setProperty($this->currentMock, 'bssStoreCreditHelper', $bssStoreCreditHelper);
-
-        $bssStoreCreditHelper->expects(static::once())->method('getInstance')->willReturnSelf();
-        $bssStoreCreditHelper->expects(static::exactly(2))
-            ->method('getGeneralConfig')
-            ->withConsecutive(['used_shipping'], ['used_tax'])
-            ->willReturnOnConsecutiveCalls(false, false);
-        $storeCreditAmount = 10;
-        $immutableQuoteMock->expects(static::once())
-            ->method('getBaseBssStorecreditAmountInput')
-            ->willReturn($storeCreditAmount);
-
-        static::assertEquals(
-            $storeCreditAmount,
-            $this->currentMock->getBssStoreCreditAmount($immutableQuoteMock, $parentQuote)
-        );
-    }
-
-    /**
-     * @test
-     * that getBssStoreCreditAmount returns zero for the store credit amount and notifies the Bugsnag if
-     * an exception occurs when retrieving amount
-     *
-     * @covers ::getBssStoreCreditAmount
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function getBssStoreCreditAmount_quoteThrowsException_returnsZeroCreditAmount()
-    {
-        $this->initCurrentMock(['getBssStoreCreditBalanceAmount']);
-        $immutableQuoteMock = $this->createPartialMock(
-            Quote::class,
-            ['getBaseBssStorecreditAmountInput', 'getSubtotal', 'setBaseBssStorecreditAmountInput', 'save']
-        );
-        $parentQuote = $this->createPartialMock(Quote::class, ['setBaseBssStorecreditAmountInput', 'save']);
-
-        $bssStoreCreditHelper = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getGeneralConfig'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        TestHelper::setProperty($this->currentMock, 'bssStoreCreditHelper', $bssStoreCreditHelper);
-
-        $bssStoreCreditHelper->expects(static::once())->method('getInstance')->willReturnSelf();
-        $bssStoreCreditHelper->expects(static::exactly(2))
-            ->method('getGeneralConfig')
-            ->withConsecutive(['used_shipping'], ['used_tax'])
-            ->willReturnOnConsecutiveCalls(false, true);
-        $storeCreditAmount = 10;
-        $immutableQuoteMock->expects(static::once())
-            ->method('getBaseBssStorecreditAmountInput')
-            ->willReturn($storeCreditAmount);
-        $subtotal = 5;
-        $immutableQuoteMock->expects(static::once())->method('getSubtotal')->willReturn($subtotal);
-        $newStoreCreditAmount = 55;
-        $this->currentMock->expects(static::once())
-            ->method('getBssStoreCreditBalanceAmount')
-            ->with($parentQuote)
-            ->willReturn($newStoreCreditAmount);
-        $parentQuote->expects(static::once())
-            ->method('setBaseBssStorecreditAmountInput')
-            ->with($newStoreCreditAmount)
-            ->willReturnSelf();
-        $exception = $this->createMock(\Exception::class);
-
-        $parentQuote->expects(static::once())->method('save')->willThrowException($exception);
-
-        $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
-
-        static::assertEquals(
-            0,
-            $this->currentMock->getBssStoreCreditAmount($immutableQuoteMock, $parentQuote)
-        );
-    }
-
-    /**
-     * @test
-     * that getBssStoreCreditBalanceAmount returns the Bss Store Credit balance by adding up all balances
-     * loaded by provided quote's customer id
-     *
-     * @covers ::getBssStoreCreditBalanceAmount
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function getBssStoreCreditBalanceAmount_always_returnsBalance()
-    {
-        $this->initCurrentMock();
-        $bssStoreCreditHelper = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'addFieldToFilter', 'getData'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerId']);
-        $quoteCustomerId = 5;
-        $quoteMock->expects(static::once())->method('getCustomerId')->willReturn($quoteCustomerId);
-
-        TestHelper::setProperty($this->currentMock, 'bssStoreCreditCollection', $bssStoreCreditHelper);
-
-        $bssStoreCreditHelper->expects(static::once())->method('getInstance')->willReturnSelf();
-        $bssStoreCreditHelper->expects(static::once())
-            ->method('addFieldToFilter')
-            ->with('customer_id', ['in' => $quoteCustomerId])
-            ->willReturnSelf();
-        $data = [
-            ['balance_amount' => 5],
-            ['balance_amount' => 10]
-        ];
-        $bssStoreCreditHelper->expects(static::once())->method('getData')->willReturn($data);
-
-        static::assertEquals(
-            array_sum(array_column($data, 'balance_amount')),
-            $this->currentMock->getBssStoreCreditBalanceAmount($quoteMock)
-        );
     }
 
     /**

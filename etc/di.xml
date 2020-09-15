@@ -237,21 +237,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltBssStoreCreditCollection" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Bss_StoreCredit</argument>
-            <argument name="className" xsi:type="string">Bss\StoreCredit\Model\ResourceModel\Credit\Collection</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltBssStoreCreditHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Bss_StoreCredit</argument>
-            <argument name="className" xsi:type="string">Bss\StoreCredit\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-
-
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
             <!-- For Amasty Gift Card v1.8.15 and before -->
@@ -273,8 +258,6 @@
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
-            <argument name="bssStoreCreditCollection" xsi:type="object">boltBssStoreCreditCollection</argument>
-            <argument name="bssStoreCreditHelper" xsi:type="object">boltBssStoreCreditHelper</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
         </arguments>
