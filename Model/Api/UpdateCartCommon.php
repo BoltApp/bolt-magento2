@@ -21,6 +21,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Quote\Model\Quote;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
@@ -33,6 +34,8 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Helper\ArrayHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class UpdateCartCommon
@@ -87,6 +90,21 @@ abstract class UpdateCartCommon
     protected $orderHelper;
     
     /**
+     * @var ConfigHelper
+     */
+    protected $configHelper;
+    
+    /**
+     * @var CacheInterface
+     */
+    protected $cache;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
+    
+    /**
      * UpdateCartCommon constructor.
      *
      * @param UpdateCartContext $updateCartContext
@@ -104,6 +122,9 @@ abstract class UpdateCartCommon
         $this->regionModel = $updateCartContext->getRegionModel();
         $this->orderHelper = $updateCartContext->getOrderHelper();
         $this->cartHelper = $updateCartContext->getCartHelper();
+        $this->configHelper = $updateCartContext->getConfigHelper();
+        $this->cache = $updateCartContext->getCache();
+        $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
     }
     
     /**
@@ -243,7 +264,7 @@ abstract class UpdateCartCommon
      */
     protected function getRequestContent()
     {
-        $content =  $this->request->getContent();
+        $content = $this->request->getContent();
         $this->logHelper->addInfoLog($content);
         return json_decode($content);
     }    
@@ -265,6 +286,6 @@ abstract class UpdateCartCommon
      * @return array
      * @throws \Exception
      */
-    abstract protected function sendSuccessResponse($result);
+    abstract protected function sendSuccessResponse($result, $quote = null);
 
 }

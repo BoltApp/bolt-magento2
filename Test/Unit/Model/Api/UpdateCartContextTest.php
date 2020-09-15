@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Model\Coupon;
@@ -41,6 +40,7 @@ use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
+use Magento\Framework\App\CacheInterface;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -127,11 +127,6 @@ class UpdateCartContextTest extends TestCase
     private $configHelper;
 
     /**
-     * @var QuoteRepository|MockObject
-     */
-    private $quoteRepositoryForUnirgyGiftCert;
-
-    /**
      * @var CheckoutSession|MockObject
      */
     private $checkoutSessionForUnirgyGiftCert;
@@ -150,6 +145,11 @@ class UpdateCartContextTest extends TestCase
      * @var SessionHelper|MockObject
      */
     private $sessionHelper;
+    
+    /**
+     * @var CacheInterface|MockObject
+     */
+    private $cache;
 
     /**
      * @var UpdateCartContext|MockObject
@@ -167,7 +167,6 @@ class UpdateCartContextTest extends TestCase
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->quoteRepositoryForUnirgyGiftCert = $this->createMock(QuoteRepository::class);
         $this->checkoutSessionForUnirgyGiftCert = $this->createMock(CheckoutSession::class);
         $this->ruleRepository = $this->createMock(RuleRepository::class);
         $this->usageFactory = $this->createMock(UsageFactory::class);
@@ -178,6 +177,7 @@ class UpdateCartContextTest extends TestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->totalsCollector = $this->createMock(TotalsCollector::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
+        $this->cache = $this->createMock(CacheInterface::class);
 
         $this->currentMock = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -191,7 +191,6 @@ class UpdateCartContextTest extends TestCase
                     $this->regionModel,
                     $this->orderHelper,
                     $this->cartHelper,
-                    $this->quoteRepositoryForUnirgyGiftCert,
                     $this->checkoutSessionForUnirgyGiftCert,
                     $this->ruleRepository,
                     $this->usageFactory,
@@ -201,7 +200,8 @@ class UpdateCartContextTest extends TestCase
                     $this->configHelper,
                     $this->discountHelper,
                     $this->totalsCollector,
-                    $this->sessionHelper
+                    $this->sessionHelper,
+                    $this->cache
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -227,7 +227,6 @@ class UpdateCartContextTest extends TestCase
             $this->regionModel,
             $this->orderHelper,
             $this->cartHelper,
-            $this->quoteRepositoryForUnirgyGiftCert,
             $this->checkoutSessionForUnirgyGiftCert,
             $this->ruleRepository,
             $this->usageFactory,
@@ -237,7 +236,8 @@ class UpdateCartContextTest extends TestCase
             $this->configHelper,
             $this->discountHelper,
             $this->totalsCollector,
-            $this->sessionHelper
+            $this->sessionHelper,
+            $this->cache
         );
         
         $this->assertAttributeInstanceOf(Request::class, 'request', $instance);
@@ -249,7 +249,6 @@ class UpdateCartContextTest extends TestCase
         $this->assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
         $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
         $this->assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
-        $this->assertAttributeInstanceOf(QuoteRepository::class, 'quoteRepositoryForUnirgyGiftCert', $instance);
         $this->assertAttributeInstanceOf(CheckoutSession::class, 'checkoutSessionForUnirgyGiftCert', $instance);
         $this->assertAttributeInstanceOf(RuleRepository::class, 'ruleRepository', $instance);
         $this->assertAttributeInstanceOf(UsageFactory::class, 'usageFactory', $instance);
@@ -260,6 +259,7 @@ class UpdateCartContextTest extends TestCase
         $this->assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
         $this->assertAttributeInstanceOf(TotalsCollector::class, 'totalsCollector', $instance);
         $this->assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
+        $this->assertAttributeInstanceOf(CacheInterface::class, 'cache', $instance);
     }
 
     /**
@@ -429,17 +429,6 @@ class UpdateCartContextTest extends TestCase
     
     /**
      * @test
-     * that getQuoteRepositoryForUnirgyGiftCert would returns QuoteRepository instance
-     *
-     * @covers ::getQuoteRepositoryForUnirgyGiftCert
-     */
-    public function getQuoteRepositoryForUnirgyGiftCert_always_returnsQuoteRepository()
-    {
-        $this->assertEquals($this->quoteRepositoryForUnirgyGiftCert, $this->currentMock->getQuoteRepositoryForUnirgyGiftCert());
-    }
-    
-    /**
-     * @test
      * that getCheckoutSessionForUnirgyGiftCert would returns CheckoutSession instance
      *
      * @covers ::getCheckoutSessionForUnirgyGiftCert
@@ -480,5 +469,16 @@ class UpdateCartContextTest extends TestCase
     public function getSessionHelper_always_returnsSessionHelper()
     {
         $this->assertEquals($this->sessionHelper, $this->currentMock->getSessionHelper());
+    }
+    
+    /**
+     * @test
+     * that getCache would returns Cache instance
+     *
+     * @covers ::getCache
+     */
+    public function getCache_always_returnsCache()
+    {
+        $this->assertEquals($this->cache, $this->currentMock->getCache());
     }
 }

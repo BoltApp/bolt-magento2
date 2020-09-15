@@ -123,6 +123,11 @@ class DiscountTest extends TestCase
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Unirgy Giftcert repository
      */
     private $unirgyCertRepository;
+    
+    /**
+     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Unirgy Giftcert helper
+     */
+    private $unirgyGiftCertHelper;
 
     /**
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mirasvit Rewards purchase helper
@@ -231,6 +236,7 @@ class DiscountTest extends TestCase
         $this->amastyGiftCardAccountManagement = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyGiftCardAccountCollection = $this->createMock(ThirdPartyModuleFactory::class);        
         $this->unirgyCertRepository = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->unirgyGiftCertHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitRewardsPurchaseHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mageplazaGiftCardCollection = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mageplazaGiftCardFactory = $this->createMock(ThirdPartyModuleFactory::class);
@@ -282,6 +288,7 @@ class DiscountTest extends TestCase
                     $this->amastyGiftCardAccountManagement,
                     $this->amastyGiftCardAccountCollection,
                     $this->unirgyCertRepository,
+                    $this->unirgyGiftCertHelper,
                     $this->mirasvitRewardsPurchaseHelper,
                     $this->mageplazaGiftCardCollection,
                     $this->mageplazaGiftCardFactory,
@@ -331,6 +338,7 @@ class DiscountTest extends TestCase
             $this->amastyGiftCardAccountManagement,
             $this->amastyGiftCardAccountCollection,
             $this->unirgyCertRepository,
+            $this->unirgyGiftCertHelper,
             $this->mirasvitRewardsPurchaseHelper,
             $this->mageplazaGiftCardCollection,
             $this->mageplazaGiftCardFactory,
@@ -361,6 +369,7 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->amastyGiftCardAccountManagement, 'amastyGiftCardAccountManagement', $instance);
         static::assertAttributeEquals($this->amastyGiftCardAccountCollection, 'amastyGiftCardAccountCollection', $instance);        
         static::assertAttributeEquals($this->unirgyCertRepository, 'unirgyCertRepository', $instance);
+        static::assertAttributeEquals($this->unirgyGiftCertHelper, 'unirgyGiftCertHelper', $instance);
         static::assertAttributeEquals($this->mirasvitRewardsPurchaseHelper, 'mirasvitRewardsPurchaseHelper', $instance);
         static::assertAttributeEquals($this->mageplazaGiftCardCollection, 'mageplazaGiftCardCollection', $instance);
         static::assertAttributeEquals($this->mageplazaGiftCardFactory, 'mageplazaGiftCardFactory', $instance);
@@ -1886,6 +1895,55 @@ class DiscountTest extends TestCase
             array_sum(array_column($giftCardCodesUnusedBalance, 'current_value')),
             $this->currentMock->getAmastyGiftCardCodesCurrentValue($giftCardCodes)
         );
+    }
+    
+    /**
+     * @test
+     * @covers ::loadGiftCertData
+     */
+    public function loadGiftCertData()
+    {
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
+            ->setMethods(['get'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftCertMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
+            ->setMethods(['getStoreId', 'getData'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $giftCertMock->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $giftCertMock->expects(self::once())->method('getData')->with('status')
+            ->willReturn('A');
+
+        $giftCertRepository->method('get')->with(self::COUPON_CODE)->willReturn($giftCertMock);
+        $this->unirgyCertRepository->expects(static::once())->method('getInstance')->willReturn($giftCertRepository);
+
+        $result = $this->currentMock->loadUnirgyGiftCertData($giftCertCode, $storeId);
+        self::assertEquals(
+            $giftCertMock,
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::loadGiftCertData
+     */
+    public function loadGiftCertData_noGiftCert()
+    {
+        // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
+        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
+            ->setMethods(['get'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $giftCertRepository->method('get')->with(self::COUPON_CODE)->willThrowException(new NoSuchEntityException());
+
+        $this->unirgyCertRepository->expects(static::once())->method('getInstance')->willReturn($giftCertRepository);
+
+        $result = $this->currentMock->loadUnirgyGiftCertData($giftCertCode, $storeId);
+        self::assertNull($result);
     }
 
     /**
