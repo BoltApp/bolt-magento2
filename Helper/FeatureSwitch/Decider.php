@@ -257,4 +257,8 @@ class Decider extends AbstractHelper
     public function handleVirtualProductsAsPhysical() {
         return $this->isSwitchEnabled(Definitions::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL);
     }
+
+    public function isIncludeUserGroupIntoCart() {
+        return $this->isSwitchEnabled(Definitions::M2_INCLUDE_USER_GROUP_ID_INTO_CART);
+    }
 }

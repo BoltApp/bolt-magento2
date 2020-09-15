@@ -1528,6 +1528,17 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Return user group id. "0" for guest users
+     *
+     */
+    private function getUserGroupId() {
+        if (!$this->customerSession->isLoggedIn()) {
+            return "0";
+        }
+        return $this->customerSession->getCustomer()->getGroupId();
+    }
+
+    /**
      * Get the address for totals calculation based on the quote physical / virtual type
      *
      * @param Quote $quote
@@ -1624,6 +1635,10 @@ class Cart extends AbstractHelper
         // This is the constraint field on Bolt side and this way
         // duplicate payments / orders are prevented
         $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+
+        if ($this->deciderHelper->isIncludeUserGroupIntoCart()) {
+            $cart['metadata']['user_group_id'] = $this->getUserGroupId();
+        }
 
         $this->sessionHelper->cacheFormKey($immutableQuote);
 
