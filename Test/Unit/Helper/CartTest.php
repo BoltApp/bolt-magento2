@@ -5523,6 +5523,353 @@ ORDER
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
         }
 
+    /**
+     * @test
+     * that createCart creates cart with simple product and returns expected cart data using
+     * @see \Bolt\Boltpay\Helper\Cart::getCartData
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withGuestUserAndSimpleProduct_returnsExpectedCartData()
+    {
+        $items = [
+            [
+                'reference'    => CartTest::PRODUCT_ID,
+                'name'         => 'Product name',
+                'description'  => null,
+                'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                'total_amount' => CartTest::PRODUCT_PRICE,
+                'unit_price'   => CartTest::PRODUCT_PRICE,
+                'tax_amount'   => 0,
+                'quantity'     => 1,
+                'uom'          => null,
+                'upc'          => null,
+                'sku'          => null,
+                'isbn'         => null,
+                'brand'        => null,
+                'manufacturer' => null,
+                'category'     => null,
+                'tags'         => null,
+                'properties'   => null,
+                'color'        => null,
+                'size'         => null,
+                'weight'       => null,
+                'weight_unit'  => null,
+                'image_url'    => null,
+                'details_url'  => null,
+                'tax_code'     => null,
+                'type'         => 'unknown'
+            ]
+        ];
+
+        $expectedCartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+            ->willReturn(self::QUOTE_ID);
+        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+
+        static::assertEquals($expectedCartData, $cartMock->createCart($items));
+    }
+
+
+    /**
+     * @test
+     * that that createCart creates cart with grouped product's children and returns expected cart data using
+     * @see \Bolt\Boltpay\Helper\Cart::getCartData
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withGroupedProductChildren_returnsExpectedCartData()
+    {
+        $items = [
+            [
+                'reference'    => CartTest::PRODUCT_ID,
+                'name'         => 'Affirm Water Bottle 1',
+                'description'  => null,
+                'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                'total_amount' => CartTest::PRODUCT_PRICE,
+                'unit_price'   => CartTest::PRODUCT_PRICE,
+                'tax_amount'   => 0,
+                'quantity'     => 1,
+                'uom'          => null,
+                'upc'          => null,
+                'sku'          => null,
+                'isbn'         => null,
+                'brand'        => null,
+                'manufacturer' => null,
+                'category'     => null,
+                'tags'         => null,
+                'properties'   => null,
+                'color'        => null,
+                'size'         => null,
+                'weight'       => null,
+                'weight_unit'  => null,
+                'image_url'    => null,
+                'details_url'  => null,
+                'tax_code'     => null,
+                'type'         => 'unknown'
+            ],
+            [
+                'reference'    => CartTest::PRODUCT_ID,
+                'name'         => 'Affirm Water Bottle 1',
+                'description'  => null,
+                'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                'total_amount' => CartTest::PRODUCT_PRICE,
+                'unit_price'   => CartTest::PRODUCT_PRICE,
+                'tax_amount'   => 0,
+                'quantity'     => 1,
+                'uom'          => null,
+                'upc'          => null,
+                'sku'          => null,
+                'isbn'         => null,
+                'brand'        => null,
+                'manufacturer' => null,
+                'category'     => null,
+                'tags'         => null,
+                'properties'   => null,
+                'color'        => null,
+                'size'         => null,
+                'weight'       => null,
+                'weight_unit'  => null,
+                'image_url'    => null,
+                'details_url'  => null,
+                'tax_code'     => null,
+                'type'         => 'unknown'
+            ]
+        ];
+
+        $expectedCartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle 1',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle 2',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+        ];
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+            ->willReturn(self::QUOTE_ID);
+        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+
+        static::assertEquals($expectedCartData, $cartMock->createCart($items));
+    }
+
+    /**
+     * @test
+     * that createCart creates cart with configurable product and returns expected cart data using
+     * @see \Bolt\Boltpay\Helper\Cart::getCartData
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withGuestUserAndConfigurableProduct_returnsExpectedCartData()
+    {
+        $items = [
+            [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'type'         => 'unknown'
+            ]
+        ];
+
+        $items[0]['options'] = json_encode(
+            [
+                "product"                      => self::PRODUCT_ID,
+                "selected_configurable_option" => "",
+                "item"                         => self::PRODUCT_ID,
+                "related_product"              => "",
+                "form_key"                     => "8xaF8eKXVaiRVM53",
+                "super_attribute"              => self::SUPER_ATTRIBUTE,
+                "qty"                          => "1",
+                'storeId'                      => self::STORE_ID
+            ],
+            JSON_FORCE_OBJECT
+        );
+
+        $expectedCartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => self::ORDER_INCREMENT_ID,
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+
+        $cartMock = $this->getCurrentMock(['getCartData']);
+        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+            ->willReturn(self::QUOTE_ID);
+        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+
+        static::assertEquals($expectedCartData, $cartMock->createCart($items));
+    }
+
+    /**
+     * @test
+     * that createCart assigns customer to quote by calling
+     * @see \Bolt\Boltpay\Helper\Cart::assignQuoteCustomerByEncryptedUserId
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withEncryptedUserIdInRequest_assignsCustomerToQuote()
+    {
+        list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        $currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
+
+        $items = $request['items'];
+        $metadata = [
+            'encrypted_user_id' =>  json_encode($payload + ['signature' => 'correct_signature']),
+        ];
+
+        $customer = $this->createMock(CustomerInterface::class);
+        $this->customerRepository->method('getById')->willReturn($customer);
+        $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
+
+        static::assertEquals($expectedCartData, $currentMock->createCart($items, $metadata));
+    }
+
+    /**
+     * @test
+     * that createCart throws BoltException with if a stock exception occurs when adding product to cart
+     * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_OUT_OF_STOCK used as exception code
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withOutOfStockException_throwsBoltExceptionWithOutOfStockCode()
+    {
+        list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
+        $items = $request['items'];
+        $this->quoteMock->expects(static::once())->method('addProduct')
+            ->with($this->productMock, new DataObject(['qty' => 1]))
+            ->willThrowException(new Exception('Product that you are trying to add is not available.'));
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_OUT_OF_STOCK);
+        $this->expectExceptionMessage('Product that you are trying to add is not available.');
+
+        static::assertEquals($expectedCartData, $currentMock->createCart($items));
+    }
+
+    /**
+     * @test
+     * that createCart throws BoltException with if a non-stock exception occurs when adding product to cart
+     * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_INVALID_QUANTITY used as exception code
+     *
+     * @covers ::createCart
+     *
+     * @throws Exception from tested method
+     */
+    public function createCart_withExceptionWhenAddingProductToCart_throwsBoltException()
+    {
+        list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
+
+        $items = $request['items'];
+        $this->quoteMock->expects(static::once())->method('addProduct')
+            ->with($this->productMock, new DataObject(['qty' => 1]))
+            ->willThrowException(new Exception('Product unavailable.'));
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_INVALID_QUANTITY);
+        $this->expectExceptionMessage('The requested qty is not available');
+
+        static::assertEquals($expectedCartData, $currentMock->createCart($items));
+    }
+
         /**
         * @test
         * that getHints returns virtual_terminal_mode set to true when provided checkout type is admin
