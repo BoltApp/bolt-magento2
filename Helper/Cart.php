@@ -2358,7 +2358,6 @@ class Cart extends AbstractHelper
         return $cart_data;
     }
 
-
     /**
      * Assign customer to Quote by encrypted user id
      *
