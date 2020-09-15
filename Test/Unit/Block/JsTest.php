@@ -41,6 +41,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
 use Magento\Framework\Composer\ComposerFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class JsTest
@@ -117,6 +118,9 @@ class JsTest extends \PHPUnit\Framework\TestCase
      * @var ObjectManager|MockObject unit test object manager
      */
     private $objectManager;
+    
+    /** @var MockObject|EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
 
     /**
      * Setup test dependencies, called before each test
@@ -209,6 +213,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
         $storeManager = $this->getMockForAbstractClass(StoreManagerInterface::class);
         $storeManager->method('getStore')->willReturn($store);
         $this->contextMock->method('getStoreManager')->willReturn($storeManager);
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
 
         $this->currentMock = $this->getMockBuilder(Js::class)
             ->setMethods(
@@ -229,7 +235,8 @@ class JsTest extends \PHPUnit\Framework\TestCase
                     $this->checkoutSessionMock,
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
-                    $this->deciderMock
+                    $this->deciderMock,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->getMock();
@@ -249,13 +256,15 @@ class JsTest extends \PHPUnit\Framework\TestCase
             $this->checkoutSessionMock,
             $this->cartHelperMock,
             $this->bugsnagHelperMock,
-            $this->deciderMock
+            $this->deciderMock,
+            $this->eventsForThirdPartyModules
         );
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->checkoutSessionMock, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->cartHelperMock, 'cartHelper', $instance);
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
         static::assertAttributeEquals($this->deciderMock, 'featureSwitches', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**

@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Js Block. The block class used in track.phtml block.
@@ -48,6 +49,11 @@ class Js extends Template
 
     /** @var array */
     private static $blockAlreadyShown;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
 
     /**
      * @param Context $context
@@ -56,6 +62,7 @@ class Js extends Template
      * @param CartHelper $cartHelper
      * @param Bugsnag $bugsnag
      * @param Decider $featureSwitches
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param array $data
      */
     public function __construct(
@@ -65,6 +72,7 @@ class Js extends Template
         CartHelper $cartHelper,
         Bugsnag $bugsnag,
         Decider $featureSwitches,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -73,6 +81,7 @@ class Js extends Template
         $this->cartHelper = $cartHelper;
         $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -206,7 +215,7 @@ class Js extends Template
      */
     public function getAdditionalJavascript()
     {
-        return $this->configHelper->getAdditionalJS();
+        return $this->eventsForThirdPartyModules->runFilter("getAdditionalJS", $this->configHelper->getAdditionalJS());
     }
 
     /**

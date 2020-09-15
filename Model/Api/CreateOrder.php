@@ -39,6 +39,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class CreateOrder
@@ -123,6 +124,11 @@ class CreateOrder implements CreateOrderInterface
      * @var SessionHelper
      */
     private $sessionHelper;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
 
     /**
      * @param HookHelper             $hookHelper
@@ -138,6 +144,7 @@ class CreateOrder implements CreateOrderInterface
      * @param ConfigHelper           $configHelper
      * @param StockRegistryInterface $stockRegistry
      * @param SessionHelper          $sessionHelper
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -152,7 +159,8 @@ class CreateOrder implements CreateOrderInterface
         BackendUrl $backendUrl,
         ConfigHelper $configHelper,
         StockRegistryInterface $stockRegistry,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         $this->hookHelper = $hookHelper;
         $this->orderHelper = $orderHelper;
@@ -167,6 +175,7 @@ class CreateOrder implements CreateOrderInterface
         $this->backendUrl = $backendUrl;
         $this->stockRegistry = $stockRegistry;
         $this->sessionHelper = $sessionHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -284,6 +293,7 @@ class CreateOrder implements CreateOrderInterface
     public function createOrder($transaction, $immutableQuote)
     {
         $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
+        $this->eventsForThirdPartyModules->dispatchEvent("beforePrepareQuote", $immutableQuote);
         /** @var Quote $quote */
         $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
 
