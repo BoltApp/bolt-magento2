@@ -212,7 +212,7 @@ trait UpdateDiscountTrait
      * @throws LocalizedException
      * @throws \Exception
      */
-    private function applyingCouponCode($couponCode, $coupon, $quote, $addQuote = null)
+    protected function applyingCouponCode($couponCode, $coupon, $quote, $addQuote = null)
     {
         // get coupon entity id and load the coupon discount rule
         $couponId = $coupon->getId();

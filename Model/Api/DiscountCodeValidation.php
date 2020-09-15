@@ -35,7 +35,10 @@ use Magento\Framework\Webapi\Exception as WebApiException;
  */
 class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeValidationInterface
 {
-    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
+    use UpdateDiscountTrait {
+        __construct as private UpdateDiscountTraitConstructor;
+        applyingGiftCardCode as private UpdateDiscountTraitApplyingGiftCardCode;
+    }
     
     /**
      * @var array

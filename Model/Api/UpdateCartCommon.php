@@ -26,6 +26,8 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -105,6 +107,16 @@ abstract class UpdateCartCommon
     protected $eventsForThirdPartyModules;
     
     /**
+     * @var CheckoutSession
+     */
+    protected $checkoutSession;
+    
+    /**
+     * @var RuleRepository
+     */
+    protected $ruleRepository;
+    
+    /**
      * UpdateCartCommon constructor.
      *
      * @param UpdateCartContext $updateCartContext
@@ -125,6 +137,8 @@ abstract class UpdateCartCommon
         $this->configHelper = $updateCartContext->getConfigHelper();
         $this->cache = $updateCartContext->getCache();
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
+        $this->checkoutSession = $updateCartContext->getCheckoutSession();
+        $this->ruleRepository = $updateCartContext->getRuleRepository();
     }
     
     /**

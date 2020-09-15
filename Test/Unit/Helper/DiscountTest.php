@@ -45,6 +45,7 @@ use Magento\Framework\Api\ExtensibleDataInterface as GiftCardQuote;
 use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Class DiscountTest
@@ -1899,10 +1900,13 @@ class DiscountTest extends TestCase
     
     /**
      * @test
-     * @covers ::loadGiftCertData
+     * @covers ::loadUnirgyGiftCertData
      */
-    public function loadGiftCertData()
+    public function loadUnirgyGiftCertData()
     {
+        $storeId = 11;
+        $couponCode = 'godieo1';
+        $this->initCurrentMock();
         // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
         $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
@@ -1912,14 +1916,14 @@ class DiscountTest extends TestCase
             ->setMethods(['getStoreId', 'getData'])
             ->disableOriginalConstructor()
             ->getMock();
-        $giftCertMock->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $giftCertMock->expects(self::once())->method('getStoreId')->willReturn($storeId);
         $giftCertMock->expects(self::once())->method('getData')->with('status')
             ->willReturn('A');
 
-        $giftCertRepository->method('get')->with(self::COUPON_CODE)->willReturn($giftCertMock);
+        $giftCertRepository->method('get')->with($couponCode)->willReturn($giftCertMock);
         $this->unirgyCertRepository->expects(static::once())->method('getInstance')->willReturn($giftCertRepository);
 
-        $result = $this->currentMock->loadUnirgyGiftCertData($giftCertCode, $storeId);
+        $result = $this->currentMock->loadUnirgyGiftCertData($couponCode, $storeId);
         self::assertEquals(
             $giftCertMock,
             $result
@@ -1928,21 +1932,24 @@ class DiscountTest extends TestCase
 
     /**
      * @test
-     * @covers ::loadGiftCertData
+     * @covers ::loadUnirgyGiftCertData
      */
-    public function loadGiftCertData_noGiftCert()
+    public function loadUnirgyGiftCertData_noGiftCert()
     {
+        $storeId = 11;
+        $couponCode = 'godieo1';
+        $this->initCurrentMock();
         // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
         $giftCertRepository = $this->getMockBuilder(\stdclass::class)
             ->setMethods(['get'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $giftCertRepository->method('get')->with(self::COUPON_CODE)->willThrowException(new NoSuchEntityException());
+        $giftCertRepository->method('get')->with($couponCode)->willThrowException(new NoSuchEntityException());
 
         $this->unirgyCertRepository->expects(static::once())->method('getInstance')->willReturn($giftCertRepository);
 
-        $result = $this->currentMock->loadUnirgyGiftCertData($giftCertCode, $storeId);
+        $result = $this->currentMock->loadUnirgyGiftCertData($couponCode, $storeId);
         self::assertNull($result);
     }
 

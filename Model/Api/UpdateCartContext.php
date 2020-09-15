@@ -354,9 +354,9 @@ class UpdateCartContext
     /**
      * @return CheckoutSession
      */
-    public function getCheckoutSessionForUnirgyGiftCert()
+    public function getCheckoutSession()
     {
-        return $this->checkoutSessionForUnirgyGiftCert;
+        return $this->checkoutSession;
     }
 
     /**

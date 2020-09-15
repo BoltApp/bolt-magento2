@@ -214,7 +214,8 @@ class UpdateDiscountTraitTest extends TestCase
                     'getToDate',
                     'getFromDate',
                     'getWebsiteIds',
-                    'getUsesPerCustomer'
+                    'getUsesPerCustomer',
+                    'getDescription'
                 ]
             )
             ->disableOriginalConstructor()
@@ -223,6 +224,7 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleRepository->method('getById')->with(self::RULE_ID)->willReturn($this->ruleMock);
         
         $this->shippingAddressMock = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
+            ->setMethods(['getDiscountAmount'])
             ->disableOriginalConstructor()
             ->getMock();
         
@@ -281,6 +283,7 @@ class UpdateDiscountTraitTest extends TestCase
                     'isVirtual',
                     'getShippingAddress',
                     'getBillingAddress',
+                    'getQuoteCurrencyCode',
                 ]
             )
             ->disableOriginalConstructor()
@@ -294,6 +297,7 @@ class UpdateDiscountTraitTest extends TestCase
         $quote->method('isVirtual')->willReturn($isVirtual);
         $quote->method('getShippingAddress')->willReturn($shippingAddress);
         $quote->method('getBillingAddress')->willReturn($shippingAddress);
+        $quote->method('getQuoteCurrencyCode')->willReturn('USD');
 
         return $quote;
     }
@@ -596,7 +600,7 @@ class UpdateDiscountTraitTest extends TestCase
         
         $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, null, $quote]);
         
-        $this->assertTrue($result);
+        $this->assertTrue(!empty($result));
     }
     
     /**
@@ -622,7 +626,7 @@ class UpdateDiscountTraitTest extends TestCase
         
         $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, null, $giftcardMock, $quote]);
         
-        $this->assertTrue($result);
+        $this->assertTrue(!empty($result));
     }
     
     /**
@@ -667,21 +671,27 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getDescription')->willReturn('TESTCOUPON');
             
         $this->discountHelper->expects(self::once())->method('setCouponCode')
-            ->with($quote, self::COUPON_CODE);
+            ->with($quote, self::COUPON_CODE);        
+        $this->discountHelper->expects(self::once())->method('convertToBoltDiscountType')
+            ->with(self::COUPON_CODE)->willReturn('fixed_amount');
+        
+        $shippingDiscountAmount = 1000;
+        $this->shippingAddressMock->method('getDiscountAmount')->willReturn($shippingDiscountAmount);
         
         $result = [
             'status'          => 'success',
             'discount_code'   => self::COUPON_CODE,
-            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $quote->getQuoteCurrencyCode())),
-            'description'     => trim(__('Discount ') . $rule->getDescription()),
-            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
+            'discount_amount' => $shippingDiscountAmount,
+            'description'     => 'Discount TESTCOUPON',
+            'discount_type'   => 'fixed_amount',
         ];
             
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
         
-        $this->assertTrue($result);
+        $this->assertTrue(!empty($result));
     }
 
     /**
@@ -923,7 +933,7 @@ class UpdateDiscountTraitTest extends TestCase
 
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
         
-        $this->assertTrue($result);
+        $this->assertTrue(!empty($result));
     }
 
     /**
