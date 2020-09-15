@@ -22,6 +22,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_Sh
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
+use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -89,6 +90,14 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Amasty\Rewards\Helper\Data"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                [
+                    "module" => "Bss_StoreCredit",
+                    "sendClasses" => [
+                        "Bss\StoreCredit\Helper\Data",
+                        "Bss\StoreCredit\Model\ResourceModel\Credit\Collection"
+                    ],
+                    "boltClass" => Bss_StoreCredit::class,
+                ]
             ],
         ],
         "loadGiftcard" => [
@@ -164,7 +173,7 @@ class EventsForThirdPartyModules
                 });
                 if (empty($existClasses)) {
                     return [false,null];
-                }                
+                }
             }
         }
         $sendClasses = [];
@@ -187,7 +196,7 @@ class EventsForThirdPartyModules
                     return [false,null];
                 }
 
-                $sendClasses[] = $classInstance;               
+                $sendClasses[] = $classInstance;
             }
         }
         return [true, $sendClasses];

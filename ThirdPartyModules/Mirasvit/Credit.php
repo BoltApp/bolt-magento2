@@ -57,10 +57,10 @@ class Credit
     protected $mirasvitStoreCreditCalculationConfig;
 
     /**
-     * @param Discount                     $discountHelper
-     * @param EventsForThirdPartyModules   $eventsForThirdPartyModules
-     * @param State                        $appState
-     * @param Bugsnag                      $bugsnagHelper
+     * Credit constructor.
+     * @param Discount $discountHelper
+     * @param State $appState
+     * @param Bugsnag $bugsnagHelper
      */
     public function __construct(
         Discount    $discountHelper,
@@ -72,11 +72,22 @@ class Credit
         $this->bugsnagHelper  = $bugsnagHelper;
     }
 
+    /**
+     * @param $result
+     * @param $mirasvitStoreCreditHelper
+     * @param $mirasvitStoreCreditCalculationService
+     * @param $mirasvitStoreCreditCalculationConfig
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
+     * @return array
+     */
     public function collectDiscounts($result,
                                      $mirasvitStoreCreditHelper,
                                      $mirasvitStoreCreditCalculationService,
                                      $mirasvitStoreCreditCalculationConfig,
                                      $quote,
+                                     $parentQuote,
                                      $paymentOnly)
     {
         list ($discounts, $totalAmount, $diff) = $result;

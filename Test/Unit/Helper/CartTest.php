@@ -4072,63 +4072,6 @@ ORDER
 
         /**
         * @test
-        * that collectDiscounts properly handles BSS Store Credit by reading amount from giftcert balance
-        * using {@see \Bolt\Boltpay\Helper\Discount::getBssStoreCreditAmount}
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withBssStoreCredit_collectsBssStoreCredit()
-        {
-        $appliedDiscount = 10; // $
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $quote->expects(static::any())->method('getTotals')
-            ->willReturn([DiscountHelper::BSS_STORE_CREDIT => $this->quoteAddressTotal]);
-        $this->discountHelper->expects(static::once())->method('isBssStoreCreditAllowed')->willReturn(true);
-        $this->discountHelper->expects(static::once())->method('getBssStoreCreditAmount')->withAnyParameters()
-            ->willReturn($appliedDiscount);
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $quote
-        );
-        static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-        
-        /**
-        * @test
         * that collectDiscounts properly handles Magento Giftcard by reading amount from giftcard balance
         *
         * @covers ::collectDiscounts
