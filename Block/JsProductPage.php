@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use \Magento\Catalog\Model\ProductRepository;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -60,12 +61,13 @@ class JsProductPage extends Js
         Decider $featureSwitches,
         ProductRepository $productRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->_productRepository = $productRepository;
-        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $data);
+        parent::__construct($context, $configHelper, $checkoutSession, $cartHelper, $bugsnag, $featureSwitches, $eventsForThirdPartyModules, $data);
     }
 
     /**

@@ -28,6 +28,7 @@ use Magento\Catalog\Model\Product;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use \Magento\Catalog\Model\ProductRepository;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class JsTest
@@ -104,6 +105,9 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
      * @var SearchCriteriaBuilder
      */
     private $searchCriteriaBuilder;
+    
+    /** @var MockObject|EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
 
     /**
      * @inheritdoc
@@ -122,6 +126,9 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->setMethods(['getQuote'])
             ->getMock();
+        
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
@@ -191,7 +198,8 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
                     $this->productViewMock,
                     $this->featureSwitches,
                     $this->productRepository,
-                    $this->searchCriteriaBuilder
+                    $this->searchCriteriaBuilder,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->getMock();

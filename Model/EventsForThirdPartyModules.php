@@ -22,6 +22,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_Sh
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
+use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -54,7 +55,17 @@ class EventsForThirdPartyModules
                     "boltClass" => IDme_GroupVerification::class,
                 ],
             ]
-        ]
+        ],
+        'beforePrepareQuote' => [
+            "listeners" => [
+                [
+                    "module" => "MW_RewardPoints",
+                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
+                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
+            ]
+        ],
     ];
 
     const filterListeners = [
@@ -91,6 +102,12 @@ class EventsForThirdPartyModules
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
+                    "module" => "MW_RewardPoints",
+                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
+                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
+                [
                     "module" => "Bss_StoreCredit",
                     "sendClasses" => [
                         "Bss\StoreCredit\Helper\Data",
@@ -115,6 +132,15 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "checkClasses" => ["Mirasvit\Credit\Model\Config"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+            ],
+        ],
+        "getAdditionalJS" => [
+            "listeners" => [
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
                 ],
             ],
         ],
