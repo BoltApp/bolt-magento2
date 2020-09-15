@@ -55,6 +55,7 @@ class Rewards
     public function collectDiscounts($result,
                                      $amastyRewardsHelperData,
                                      $quote,
+                                     $parentQuote,
                                      $paymentOnly)
     {
         list ($discounts, $totalAmount, $diff) = $result;
