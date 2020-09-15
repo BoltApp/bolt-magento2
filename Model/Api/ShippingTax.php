@@ -333,7 +333,7 @@ abstract class ShippingTax
      * @return ShippingTaxDataInterface
      * @throws BoltException
      */
-    public function handleRequest($cart, $shipping_address, $shipping_option)
+    public function handleRequest($cart = null, $shipping_address = null, $shipping_option = null)
     {
         // get immutable quote id stored with transaction
         $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
