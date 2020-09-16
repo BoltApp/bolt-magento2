@@ -59,6 +59,6 @@ class SalesRuleQuoteDiscountPluginTest extends TestCase
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltCollectSaleRuleDiscounts')
                             ->with([]);                    
-        $this->plugin->beforeCollecte($this->subject, null, null, null);
+        $this->plugin->beforeCollect($this->subject, null, null, null);
     }
 }

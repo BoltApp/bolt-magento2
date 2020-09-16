@@ -79,7 +79,6 @@ class SalesRuleActionDiscountPluginTest extends TestCase
                             ->method('setBoltCollectSaleRuleDiscounts')
                             ->with([2 => 126.0,]);                    
         $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
-        $this->assertEquals([2 => 126.0,], $boltCollectSaleRuleDiscounts);
     }
 
     /**
@@ -110,6 +109,5 @@ class SalesRuleActionDiscountPluginTest extends TestCase
                             ->method('setBoltCollectSaleRuleDiscounts')
                             ->with([2 => 20.0,]);                    
         $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
-        $this->assertEquals([2 => 20.0,], $boltCollectSaleRuleDiscounts);
     }
 }
