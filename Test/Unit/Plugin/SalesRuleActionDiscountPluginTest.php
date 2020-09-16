@@ -69,7 +69,7 @@ class SalesRuleActionDiscountPluginTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $result->expects(self::once())
-            ->method('getId')
+            ->method('getAmount')
             ->willReturn(20.0);
         $boltCollectSaleRuleDiscounts = [2 => 106.0,];
         $this->checkoutSession->expects(self::once())
@@ -100,7 +100,7 @@ class SalesRuleActionDiscountPluginTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         $result->expects(self::once())
-            ->method('getId')
+            ->method('getAmount')
             ->willReturn(20.0);
         $boltCollectSaleRuleDiscounts = [];
         $this->checkoutSession->expects(self::once())

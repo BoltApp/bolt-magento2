@@ -3731,7 +3731,7 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount - $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
             [
                 'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
@@ -4523,7 +4523,7 @@ ORDER
         $quote->method('getAppliedRuleIds')->willReturn('2');
         $this->checkoutSession->expects(static::once())
                               ->method('getBoltCollectSaleRuleDiscounts')
-                              ->willReturn([2 => ($discountAmount - $giftVoucherDiscount),]);
+                              ->willReturn([2 => ($discountAmount),]);
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
             ->disableOriginalConstructor()
