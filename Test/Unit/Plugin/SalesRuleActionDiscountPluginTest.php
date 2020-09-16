@@ -22,6 +22,7 @@ use Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin;
 use Magento\Framework\DataObject;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * Class SalesRuleActionDiscountPluginTest

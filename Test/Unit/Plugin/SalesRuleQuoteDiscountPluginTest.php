@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Quote\Discount;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
