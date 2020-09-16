@@ -96,12 +96,6 @@
         </arguments>
     </virtualType>
 
-    <type name="Bolt\Boltpay\Model\Api\DiscountCodeValidation">
-        <arguments>
-            <argument name="moduleUnirgyGiftCert" xsi:type="object">boltUnirgyGiftCert</argument>
-            <argument name="moduleUnirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
-        </arguments>
-    </type>
     <!-- For Amasty Gift Card v1.8.15 and before -->
     <virtualType name="boltAmastyLegacyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -173,13 +167,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltUnirgyCertRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
-            <argument name="className" xsi:type="string">Unirgy\Giftcert\Model\GiftcertRepository</argument>
-        </arguments>
-    </virtualType>
-
     <virtualType name="boltMirasvitRewardsPurchaseHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Mirasvit_Rewards</argument>
@@ -246,7 +233,6 @@
             <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
-            <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyCertRepository</argument>
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
             <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
@@ -256,6 +242,8 @@
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
+            <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
+            <argument name="unirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
     </type>
 

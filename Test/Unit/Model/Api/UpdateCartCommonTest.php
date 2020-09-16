@@ -49,6 +49,8 @@ use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Magento\Framework\App\CacheInterface;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class UpdateCartCommonTest
@@ -138,14 +140,9 @@ class UpdateCartCommonTest extends TestCase
     private $configHelper;
 
     /**
-     * @var QuoteRepository|MockObject
-     */
-    private $quoteRepositoryForUnirgyGiftCert;
-
-    /**
      * @var CheckoutSession|MockObject
      */
-    private $checkoutSessionForUnirgyGiftCert;
+    private $checkoutSession;
 
     /**
      * @var DiscountHelper|MockObject
@@ -171,6 +168,16 @@ class UpdateCartCommonTest extends TestCase
      * @var UpdateCartCommon|MockObject
      */
     private $currentMock;
+    
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     protected function setUp()
     {
@@ -183,8 +190,7 @@ class UpdateCartCommonTest extends TestCase
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->quoteRepositoryForUnirgyGiftCert = $this->createMock(QuoteRepository::class);
-        $this->checkoutSessionForUnirgyGiftCert = $this->createMock(CheckoutSession::class);
+        $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->ruleRepository = $this->createMock(RuleRepository::class);
         $this->usageFactory = $this->createMock(UsageFactory::class);
         $this->objectFactory = $this->createMock(DataObjectFactory::class);
@@ -194,6 +200,8 @@ class UpdateCartCommonTest extends TestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->totalsCollector = $this->createMock(TotalsCollector::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
+        $this->cache = $this->createMock(CacheInterface::class);
+        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
 
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -207,8 +215,7 @@ class UpdateCartCommonTest extends TestCase
                     $this->regionModel,
                     $this->orderHelper,
                     $this->cartHelper,
-                    $this->quoteRepositoryForUnirgyGiftCert,
-                    $this->checkoutSessionForUnirgyGiftCert,
+                    $this->checkoutSession,
                     $this->ruleRepository,
                     $this->usageFactory,
                     $this->objectFactory,
@@ -217,7 +224,9 @@ class UpdateCartCommonTest extends TestCase
                     $this->configHelper,
                     $this->discountHelper,
                     $this->totalsCollector,
-                    $this->sessionHelper
+                    $this->sessionHelper,
+                    $this->cache,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->enableProxyingToOriginalMethods()

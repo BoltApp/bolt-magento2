@@ -23,7 +23,6 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Webapi\Exception as WebApiException;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Model\Coupon;
@@ -33,6 +32,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -43,6 +43,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class UpdateCartContext
@@ -127,14 +128,9 @@ class UpdateCartContext
     protected $configHelper;
 
     /**
-     * @var QuoteRepository
-     */
-    protected $quoteRepositoryForUnirgyGiftCert;
-
-    /**
      * @var CheckoutSession
      */
-    protected $checkoutSessionForUnirgyGiftCert;
+    protected $checkoutSession;
 
     /**
      * @var DiscountHelper
@@ -150,6 +146,16 @@ class UpdateCartContext
      * @var SessionHelper
      */
     protected $sessionHelper;
+    
+    /**
+     * @var CacheInterface
+     */
+    protected $cache;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     /**
      * UpdateCartContext constructor.
@@ -165,8 +171,7 @@ class UpdateCartContext
      * @param RegionModel             $regionModel
      * @param OrderHelper             $orderHelper
      * @param CartHelper              $cartHelper
-     * @param QuoteRepository         $quoteRepositoryForUnirgyGiftCert
-     * @param CheckoutSession         $checkoutSessionForUnirgyGiftCert
+     * @param CheckoutSession         $checkoutSession
      * @param RuleRepository          $ruleRepository
      * @param UsageFactory            $usageFactory
      * @param DataObjectFactory       $objectFactory
@@ -176,6 +181,8 @@ class UpdateCartContext
      * @param DiscountHelper          $discountHelper
      * @param TotalsCollector         $totalsCollector
      * @param SessionHelper           $sessionHelper
+     * @param CacheInterface          $cache
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         Request $request,
@@ -187,8 +194,7 @@ class UpdateCartContext
         RegionModel $regionModel,
         OrderHelper $orderHelper,  
         CartHelper $cartHelper,
-        QuoteRepository $quoteRepositoryForUnirgyGiftCert,
-        CheckoutSession $checkoutSessionForUnirgyGiftCert,
+        CheckoutSession $checkoutSession,
         RuleRepository $ruleRepository,
         UsageFactory $usageFactory,
         DataObjectFactory $objectFactory,
@@ -197,7 +203,9 @@ class UpdateCartContext
         ConfigHelper $configHelper,
         DiscountHelper $discountHelper,
         TotalsCollector $totalsCollector,
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        CacheInterface $cache = null,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -208,8 +216,7 @@ class UpdateCartContext
         $this->regionModel = $regionModel;
         $this->orderHelper = $orderHelper;
         $this->cartHelper = $cartHelper;
-        $this->quoteRepositoryForUnirgyGiftCert = $quoteRepositoryForUnirgyGiftCert;
-        $this->checkoutSessionForUnirgyGiftCert = $checkoutSessionForUnirgyGiftCert;
+        $this->checkoutSession = $checkoutSession;
         $this->ruleRepository = $ruleRepository;
         $this->usageFactory = $usageFactory;
         $this->objectFactory = $objectFactory;
@@ -219,6 +226,9 @@ class UpdateCartContext
         $this->discountHelper = $discountHelper;
         $this->totalsCollector = $totalsCollector;
         $this->sessionHelper = $sessionHelper;
+        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Framework\App\CacheInterface::class);
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -342,19 +352,11 @@ class UpdateCartContext
     }
 
     /**
-     * @return QuoteRepository
-     */
-    public function getQuoteRepositoryForUnirgyGiftCert()
-    {
-        return $this->quoteRepositoryForUnirgyGiftCert;
-    }
-
-    /**
      * @return CheckoutSession
      */
-    public function getCheckoutSessionForUnirgyGiftCert()
+    public function getCheckoutSession()
     {
-        return $this->checkoutSessionForUnirgyGiftCert;
+        return $this->checkoutSession;
     }
 
     /**
@@ -379,6 +381,22 @@ class UpdateCartContext
     public function getSessionHelper()
     {
         return $this->sessionHelper;
+    }
+    
+    /**
+     * @return Cache
+     */
+    public function getCache()
+    {
+        return $this->cache;
+    }
+    
+    /**
+     * @return EventsForThirdPartyModules
+     */
+    public function getEventsForThirdPartyModules()
+    {
+        return $this->eventsForThirdPartyModules;
     }
     
 }

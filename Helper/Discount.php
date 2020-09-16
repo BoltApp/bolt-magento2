@@ -21,6 +21,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
@@ -124,6 +125,11 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
      */
     protected $unirgyCertRepository;
+    
+    /**
+     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
+     */
+    protected $unirgyGiftCertHelper;
 
     /**
      * Mirasvit Rewards Points entry point
@@ -212,6 +218,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
      * @param ThirdPartyModuleFactory $unirgyCertRepository
+     * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
      * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
      * @param ThirdPartyModuleFactory $mageplazaGiftCardCollection
      * @param ThirdPartyModuleFactory $mageplazaGiftCardFactory
@@ -243,6 +250,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
         ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
         ThirdPartyModuleFactory $unirgyCertRepository,
+        ThirdPartyModuleFactory $unirgyGiftCertHelper,
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $mageplazaGiftCardCollection,
         ThirdPartyModuleFactory $mageplazaGiftCardFactory,
@@ -273,6 +281,7 @@ class Discount extends AbstractHelper
         $this->amastyGiftCardAccountManagement = $amastyGiftCardAccountManagement;
         $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
+        $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
@@ -651,6 +660,66 @@ class Discount extends AbstractHelper
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             return null;
+        }
+    }
+    
+    /**
+     * @param string $code
+     * @param string|int $storeId
+     *
+     * @return null|\Unirgy\Giftcert\Model\Cert
+     * @throws NoSuchEntityException
+     */
+    public function loadUnirgyGiftCertData($code, $storeId)
+    {
+        $result = null;
+
+        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
+        $giftCertRepository = $this->unirgyCertRepository->getInstance();
+
+        if ($giftCertRepository) {
+            $this->logHelper->addInfoLog('### GiftCert ###');
+            $this->logHelper->addInfoLog('# Code: ' . $code);
+
+            try {
+                /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+                $giftCert = $giftCertRepository->get($code);
+
+                $gcStoreId = $giftCert->getStoreId();
+
+                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
+                          ? $giftCert : null;
+
+            } catch (NoSuchEntityException $e) {
+                //We must ignore the exception, because it is thrown when data does not exist.
+                $result = null;
+            }
+        }
+
+        $this->logHelper->addInfoLog('# loadUnirgyGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
+
+        return $result;
+    }
+    
+    /**
+     * Apply Unirgy Gift Cert to quote
+     *
+     * @param Quote $quote
+     * @param string $giftCard
+     * 
+     */
+    public function addUnirgyGiftCertToQuote($quote, $giftCard)
+    {
+        $unirgyHelper = $this->unirgyGiftCertHelper->getInstance();
+        
+        if ($unirgyHelper) {
+            if (empty($quote->getData($giftCard::GIFTCERT_CODE))) {
+                $unirgyHelper->addCertificate(
+                    $giftCard->getCertNumber(),
+                    $quote,
+                    $this->quoteRepository
+                );
+            }
         }
     }
 

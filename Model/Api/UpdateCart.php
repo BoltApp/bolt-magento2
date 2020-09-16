@@ -266,7 +266,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @return array
      * @throws \Exception
      */
-    protected function sendSuccessResponse($result)
+    protected function sendSuccessResponse($result, $quote = null)
     {
         $this->logHelper->addInfoLog('### sendSuccessResponse');
         $this->logHelper->addInfoLog(json_encode($result));
