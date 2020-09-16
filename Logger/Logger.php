@@ -19,8 +19,6 @@ namespace Bolt\Boltpay\Logger;
 
 /**
  * Class Logger. Custom logger.
- *
- * @package Bolt\Boltpay\Logger
  */
 class Logger extends \Monolog\Logger
 {

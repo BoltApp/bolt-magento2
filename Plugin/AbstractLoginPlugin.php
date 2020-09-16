@@ -91,7 +91,8 @@ abstract class AbstractLoginPlugin
      */
     protected function hasCart()
     {
-        return $this->checkoutSession->hasQuote() && count($this->checkoutSession->getQuote()->getAllVisibleItems()) > 0;
+        return $this->checkoutSession->hasQuote()
+            && count($this->checkoutSession->getQuote()->getAllVisibleItems()) > 0;
     }
 
     /**

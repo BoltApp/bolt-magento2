@@ -21,11 +21,6 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\App\ProductMetadataInterface;
 
-/**
- * Class OrderCreateProcessDataObserver
- *
- * @package Bolt\Boltpay\Observer\Adminhtml\Sales
- */
 class OrderCreateProcessDataObserver implements ObserverInterface
 {
     private $productMetadata;

@@ -24,8 +24,6 @@ use Magento\Framework\UrlInterface;
  * Class PurchasePlugin
  *
  * This overrides {@see \Mirasvit\Rewards\Model\Purchase}
- *
- * @package Bolt\Boltpay\Plugin
  */
 class PurchasePlugin
 {

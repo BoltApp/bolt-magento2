@@ -647,8 +647,7 @@ class Config extends AbstractHelper
      * Get Bolt color from config
      *
      * @param int|string $storeId
-     *
-     * @return  string
+     * @return string
      */
     public function getButtonColor($storeId = null)
     {

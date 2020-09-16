@@ -20,11 +20,6 @@ use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\OrderManagementInterface;
 use Zend_Http_Client_Exception;
 
-/**
- * Class NonBoltOrderPlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class NonBoltOrderPlugin
 {
     /**
@@ -222,7 +217,7 @@ class NonBoltOrderPlugin
      */
     protected function getEmail($cart, $customer)
     {
-        if (!is_null($customer->getEmail())) {
+        if ($customer->getEmail() !== null) {
             return $customer->getEmail();
         }
 
@@ -240,7 +235,7 @@ class NonBoltOrderPlugin
      */
     protected function getFirstName($cart, $customer)
     {
-        if (!is_null($customer->getFirstname())) {
+        if ($customer->getFirstname() !== null) {
             return $customer->getFirstname();
         }
 
@@ -258,7 +253,7 @@ class NonBoltOrderPlugin
      */
     protected function getLastName($cart, $customer)
     {
-        if (!is_null($customer->getLastname())) {
+        if ($customer->getLastname() !== null) {
             return $customer->getLastname();
         }
 
