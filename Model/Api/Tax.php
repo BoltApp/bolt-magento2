@@ -30,8 +30,6 @@ use Magento\Quote\Api\Data\TotalsInterface;
 /**
  * Class Tax
  * Tax hook endpoint. Get resulting tax data.
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class Tax extends ShippingTax implements TaxInterface
 {
@@ -139,7 +137,10 @@ class Tax extends ShippingTax implements TaxInterface
     public function createShippingOption($totalsInformation, $currencyCode, $shipping_option)
     {
         $shippingOption = $this->shippingOptionFactory->create();
-        $shippingOption->setTaxAmount(CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode));
+        $shippingOption->setTaxAmount(CurrencyUtils::toMinor(
+            $totalsInformation->getShippingTaxAmount(),
+            $currencyCode
+        ));
         $shippingOption->setService($shipping_option['service'] ?? null);
         $shippingOption->setCost(CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode));
         $shippingOption->setReference($shipping_option['reference'] ?? null);

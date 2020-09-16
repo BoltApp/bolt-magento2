@@ -17,11 +17,6 @@
 
 namespace Bolt\Boltpay\Model;
 
-/**
- * Class ErrorResponse
- *
- * @package Bolt\Boltpay\Model
- */
 class ErrorResponse
 {
     const ERR_INSUFFICIENT_INFORMATION     = 6200;
@@ -70,7 +65,7 @@ class ErrorResponse
      * @return string
      */
     public function prepareUpdateCartErrorMessage($errCode, $message, $additionalData = [])
-    {        
+    {
         $errResponse = [
             'status' => 'failure',
             'errors' => [

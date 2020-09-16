@@ -26,10 +26,6 @@ use Magento\Sales\Model\Order as OrderModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 
-/**
- * Class CustomerCreditCard
- * @package Bolt\Boltpay\Model
- */
 class CustomerCreditCard extends AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
 {
     const CACHE_TAG = 'bolt_customer_credit_cards';
@@ -86,10 +82,9 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
-
     protected function _construct()
     {
-        $this->_init('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard');
+        $this->_init(Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class);
     }
 
     /**

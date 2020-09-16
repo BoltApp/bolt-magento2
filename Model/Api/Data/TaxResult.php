@@ -21,7 +21,6 @@ use Bolt\Boltpay\Api\Data\TaxResultInterface;
 
 /**
  * Class TaxResult. SubtotalAmount property of Tax.
- * @package Bolt\Boltpay\Model\Api\Data
  */
 class TaxResult implements TaxResultInterface, \JsonSerializable
 {

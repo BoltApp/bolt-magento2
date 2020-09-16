@@ -33,7 +33,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mageplaza_ShippingRestriction",
-                    "checkClasses" => ["Mageplaza\ShippingRestriction\Helper\Data"],
+                    "checkClasses" => [Mageplaza\ShippingRestriction\Helper\Data::class],
                     "boltClass" => Mageplaza_ShippingRestriction::class,
                 ],
             ],
@@ -42,7 +42,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["\Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin"],
+                    "sendClasses" => [\Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin::class],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],
@@ -59,8 +59,8 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "MW_RewardPoints",
-                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
-                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "sendClasses" => [MW\RewardPoints\Helper\Data::class,
+                                      MW\RewardPoints\Model\CustomerFactory::class],
                     "boltClass" => MW_RewardPoints::class,
                 ],
             ]
@@ -72,7 +72,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
+                    "sendClasses" => [Aheadworks\Giftcard\Api\GiftcardCartManagementInterface::class],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],
@@ -81,31 +81,32 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
+                    "sendClasses" => [Aheadworks\Giftcard\Api\GiftcardCartManagementInterface::class],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
-                                      "Mirasvit\Credit\Service\Calculation",
-                                      // For old version of Mirasvit Store Credit plugin,
-                                      // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
-                                      // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
-                                      ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
-                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],],
+                    "sendClasses" => [Mirasvit\Credit\Helper\Data::class,
+                                      Mirasvit\Credit\Service\Calculation::class,
+                                      /* For old version of Mirasvit Store Credit plugin,
+                                      \Magento\Framework\ObjectManagerInterface can not create instance of
+                                      \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+                                      so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead. */
+                                      [Mirasvit\Credit\Api\Config\CalculationConfigInterface::class,
+                                      Mirasvit\Credit\Service\Config\CalculationConfig::class],],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
                 [
                     "module" => "MW_RewardPoints",
-                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
-                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "sendClasses" => [MW\RewardPoints\Helper\Data::class,
+                                      MW\RewardPoints\Model\CustomerFactory::class],
                     "boltClass" => MW_RewardPoints::class,
                 ],
                 [
                     "module" => "Bss_StoreCredit",
                     "sendClasses" => [
-                        "Bss\StoreCredit\Helper\Data",
-                        "Bss\StoreCredit\Model\ResourceModel\Credit\Collection"
+                        Bss\StoreCredit\Helper\Data::class,
+                        Bss\StoreCredit\Model\ResourceModel\Credit\Collection::class
                     ],
                     "boltClass" => Bss_StoreCredit::class,
                 ]
@@ -115,7 +116,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardRepositoryInterface"],
+                    "sendClasses" => [Aheadworks\Giftcard\Api\GiftcardRepositoryInterface::class],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],
@@ -124,7 +125,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Credit",
-                    "checkClasses" => ["Mirasvit\Credit\Model\Config"],
+                    "checkClasses" => [Mirasvit\Credit\Model\Config::class],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
@@ -133,7 +134,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "MW_RewardPoints",
-                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "checkClasses" => [MW\RewardPoints\Helper\Data::class],
                     "boltClass" => MW_RewardPoints::class,
                 ],
             ],
@@ -188,7 +189,7 @@ class EventsForThirdPartyModules
                 // so there are cases that the class does not exist,
                 // then we use sub-array to include classes for supported versions.
                 $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
-                $existClasses = array_filter($classNames, function($className) {
+                $existClasses = array_filter($classNames, function ($className) {
                     return $this->doesClassExist($className);
                 });
                 if (empty($existClasses)) {
@@ -227,7 +228,8 @@ class EventsForThirdPartyModules
      *
      * Call all filter listeners that relates to existing module and if necessary classes exist
      */
-    public function runFilter($filterName, $result, ...$arguments) {
+    public function runFilter($filterName, $result, ...$arguments)
+    {
         if (!isset(static::filterListeners[$filterName])) {
             return;
         }
@@ -256,7 +258,8 @@ class EventsForThirdPartyModules
      *
      * Call all listeners that relates to existing module and if necessary classes exist
      */
-    public function dispatchEvent($eventName, ...$arguments) {
+    public function dispatchEvent($eventName, ...$arguments)
+    {
         if (!isset(static::eventListeners[$eventName])) {
             return;
         }

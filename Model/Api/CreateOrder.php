@@ -44,8 +44,6 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 /**
  * Class CreateOrder
  * Web hook endpoint. Create the order.
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class CreateOrder implements CreateOrderInterface
 {
@@ -445,7 +443,9 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateMinimumAmount($quote)
     {
-        if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE && !$quote->validateMinimumAmount()) {
+        if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE
+            && !$quote->validateMinimumAmount()
+        ) {
             $minAmount = $this->configHelper->getMinimumOrderAmount($quote->getStoreId());
             $this->bugsnag->registerCallback(function ($report) use ($quote, $minAmount) {
                 $report->setMetaData([
@@ -503,7 +503,9 @@ class CreateOrder implements CreateOrderInterface
         );
 
         $total = $quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+        if (isset($total['giftwrapping'])
+            && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())
+        ) {
             $giftWrapping = $total['giftwrapping'];
             $sku = trim($giftWrapping->getCode());
             $quoteSkus[] = $sku;
@@ -545,7 +547,8 @@ class CreateOrder implements CreateOrderInterface
         $errorInfos = $quoteItem->getErrorInfos();
         $message = '';
         foreach ($errorInfos as $errorInfo) {
-            $message .= '(' . $errorInfo['origin'] . '): ' . (is_string($errorInfo['message']) ?  $errorInfo['message'] : $errorInfo['message']->render()) . PHP_EOL;
+            $message .= '(' . $errorInfo['origin'] . '): ' . (is_string($errorInfo['message'])
+                    ? $errorInfo['message'] : $errorInfo['message']->render()) . PHP_EOL;
         }
         $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 
@@ -570,8 +573,6 @@ class CreateOrder implements CreateOrderInterface
             null,
             $boltErrorCode
         );
-
-        return false;
     }
 
     /**
@@ -693,7 +694,7 @@ class CreateOrder implements CreateOrderInterface
         $boltTotal = $this->getTotalAmountFromTransaction($transaction);
         $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
 
-        if (abs($quoteTotal - $boltTotal) > $priceFaultTolerance ) {
+        if (abs($quoteTotal - $boltTotal) > $priceFaultTolerance) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $boltTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [

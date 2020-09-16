@@ -38,11 +38,12 @@ use Bolt\Boltpay\Model\Api\UpdateCartContext;
 
 /**
  * Trait UpdateDiscountTrait
- * 
+ *
  * @package Bolt\Boltpay\Model\Api
  */
 trait UpdateDiscountTrait
-{  
+{
+
     /**
      * @var RuleRepository
      */
@@ -93,9 +94,9 @@ trait UpdateDiscountTrait
      *
      * @param UpdateCartContext $updateCartContext
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext
-    ) {        
+    ) {
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->logHelper = $updateCartContext->getLogHelper();
         $this->usageFactory = $updateCartContext->getUsageFactory();
@@ -116,7 +117,7 @@ trait UpdateDiscountTrait
      *
      * @return object|null
      */
-    protected function verifyCouponCode( $couponCode, $websiteId, $storeId )
+    protected function verifyCouponCode($couponCode, $websiteId, $storeId)
     {
         // Check if empty coupon was sent
         if ($couponCode === '') {
@@ -173,7 +174,7 @@ trait UpdateDiscountTrait
      *
      * @return boolean
      */
-    protected function applyDiscount( $couponCode, $coupon, $giftCard, $quote )
+    protected function applyDiscount($couponCode, $coupon, $giftCard, $quote)
     {
         if ($coupon && $coupon->getCouponId()) {
             $result = $this->applyingCouponCode($couponCode, $coupon, $quote);
@@ -348,14 +349,16 @@ trait UpdateDiscountTrait
      * @param string $couponCode
      * @param object $giftCard
      * @param Quote $quote
-     * 
+     *
      * @return boolean
      * @throws \Exception
      */
     private function applyingGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account
+                || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account
+            ) {
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)
@@ -369,10 +372,10 @@ trait UpdateDiscountTrait
                 $this->discountHelper->removeMageplazaGiftCard($couponCode, $quote);
 
                 // Apply Mageplaza Gift Card to the parent quote
-                $this->discountHelper->applyMageplazaGiftCard($couponCode, $quote);                
+                $this->discountHelper->applyMageplazaGiftCard($couponCode, $quote);
             } else {
                 try {
-                    // on subsequest validation calls from Bolt checkout
+                    // on subsequent validation calls from Bolt checkout
                     // try removing the gift card before adding it
                     $giftCard->removeFromCart(true, $quote);
                 } catch (\Exception $e) {
@@ -409,12 +412,12 @@ trait UpdateDiscountTrait
      */
     protected function removeDiscount($couponCode, $discounts, $quote, $websiteId, $storeId)
     {
-        try{
-            if(array_key_exists($couponCode, $discounts)){
+        try {
+            if (array_key_exists($couponCode, $discounts)) {
                 if ($discounts[$couponCode] == 'coupon') {
                     $this->removeCouponCode($quote);
                 } else {
-                    $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
+                    $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
                     list(, $giftCard) = $result;
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
                 }
@@ -474,7 +477,9 @@ trait UpdateDiscountTrait
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {              
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account
+                || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account
+            ) {
                 $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
             } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
                 // Remove Mageplaza Gift Card if it was already applied
@@ -484,7 +489,7 @@ trait UpdateDiscountTrait
             } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 $giftCard->removeFromCart(true, $quote);
             } else {
-                throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             
+                throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -500,5 +505,4 @@ trait UpdateDiscountTrait
 
         return true;
     }
-
 }

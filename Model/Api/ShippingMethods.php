@@ -49,8 +49,6 @@ use Magento\Framework\Serialize\Serializer\Serialize;
 /**
  * Class ShippingMethods
  * Shipping and Tax hook endpoint. Get shipping methods using shipping address and cart details
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class ShippingMethods implements ShippingMethodsInterface
 {
@@ -279,11 +277,16 @@ class ShippingMethods implements ShippingMethodsInterface
                 $quoteItems['total'][$sku] = 0;
             }
             $quoteItems['quantity'][$sku] += $quantity;
-            $quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
+            $quoteItems['total'][$sku] += CurrencyUtils::toMinor(
+                $unitPrice * $quantity,
+                $this->quote->getQuoteCurrencyCode()
+            );
         }
 
         $total = $this->quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+        if (isset($total['giftwrapping'])
+            && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())
+        ) {
             $giftWrapping = $total['giftwrapping'];
             $sku = trim($giftWrapping->getCode());
             if (!isset($quoteItems['quantity'][$sku])) {
@@ -293,7 +296,12 @@ class ShippingMethods implements ShippingMethodsInterface
                 $quoteItems['total'][$sku] = 0;
             }
             $quoteItems['quantity'][$sku] += 1;
-            $quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
+            $quoteItems['total'][$sku] += CurrencyUtils::toMinor(
+                $giftWrapping->getGwPrice()
+                    + $giftWrapping->getGwItemsPrice()
+                    + $giftWrapping->getGwCardPrice(),
+                $this->quote->getQuoteCurrencyCode()
+            );
         }
 
         if (!$quoteItems['quantity'] && !$quoteItems['total']) {
@@ -322,7 +330,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 ]);
             });
             throw new BoltException(
-                __('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
+                __('Something in your cart has changed. Please reload the page and checkout again.'),
                 null,
                 6103
             );
@@ -437,7 +445,7 @@ class ShippingMethods implements ShippingMethodsInterface
         if ($this->taxAdjusted) {
             $this->bugsnag->registerCallback(function ($report) use ($shippingOptionsModel) {
                 $report->setMetaData([
-                    'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)]
+                    'SHIPPING OPTIONS' => [print_r($shippingOptionsModel, 1)] // @codingStandardsIgnoreLine
                 ]);
             });
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted.");
@@ -446,8 +454,12 @@ class ShippingMethods implements ShippingMethodsInterface
         /** @var \Magento\Quote\Model\Quote $parentQuote */
         $parentQuote = $this->getQuoteById($cart['order_reference']);
         if ($this->couponInvalidForShippingAddress($parentQuote->getCouponCode())) {
-            $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-            $additionalAmount = abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode()));
+            $address = $parentQuote->isVirtual() ?
+                $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
+            $additionalAmount = abs(CurrencyUtils::toMinor(
+                $address->getDiscountAmount(),
+                $parentQuote->getQuoteCurrencyCode()
+            ));
 
             $shippingOptionsModel->addAmountToShippingOptions($additionalAmount);
         }
@@ -541,7 +553,6 @@ class ShippingMethods implements ShippingMethodsInterface
         $email = $addressData['email'] ?? null;
         $company = $addressData['company'] ?? null;
 
-
         ////////////////////////////////////////////////////////////////////////////////////////
         // Check cache storage for estimate. If the quote_id, total_amount, items, country_code,
         // applied rules (discounts), region and postal_code match then use the cached version.
@@ -575,8 +586,9 @@ class ShippingMethods implements ShippingMethodsInterface
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
 
-                // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
-                // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
+                /* we must use the PHP native unserialize method because the unserialize method
+                from the Magento framework doesn't unserialize objects.
+                See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail */
                 return unserialize($serialized); // @codingStandardsIgnoreLine
             }
         }
@@ -614,7 +626,12 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Cache the calculated result
         if ($prefetchShipping) {
-            $this->cache->save($this->serialize->serialize($shippingOptionsModel), $cacheIdentifier, [self::BOLT_SHIPPING_TAX_CACHE_TAG], 3600);
+            $this->cache->save(
+                $this->serialize->serialize($shippingOptionsModel),
+                $cacheIdentifier,
+                [self::BOLT_SHIPPING_TAX_CACHE_TAG],
+                3600
+            );
         }
 
         return $shippingOptionsModel;
@@ -774,7 +791,10 @@ class ShippingMethods implements ShippingMethodsInterface
             $currencyCode = $quote->getQuoteCurrencyCode();
             $diff = CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $roundedCost;
 
-            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), $currencyCode) + $diff);
+            $taxAmount = round(CurrencyUtils::toMinorWithoutRounding(
+                $shippingAddress->getTaxAmount(),
+                $currencyCode
+            ) + $diff);
 
             if ($discountAmount) {
                 if ($cost == 0) {
@@ -783,7 +803,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     $discount = $this->priceHelper->currency($discountAmount, true, false);
                     $service .= " [$discount" . "&nbsp;discount]";
                 }
-                $service = html_entity_decode($service);
+                $service = html_entity_decode($service); // @codingStandardsIgnoreLine
             }
 
             if (abs($diff) >= $this->threshold) {
@@ -923,7 +943,9 @@ class ShippingMethods implements ShippingMethodsInterface
     protected function couponInvalidForShippingAddress(
         $parentQuoteCoupon
     ) {
-        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
+        $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons(
+            $this->quote->getStoreId()
+        );
 
         return $parentQuoteCoupon &&
                 in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&

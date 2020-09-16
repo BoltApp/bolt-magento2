@@ -21,7 +21,6 @@ use Bolt\Boltpay\Api\Data\ShippingTaxInterface;
 
 /**
  * Class ShippingTax. Tax property of the Shipping and Tax.
- * @package Bolt\Boltpay\Model\Api\Data
  */
 class ShippingTax implements ShippingTaxInterface
 {

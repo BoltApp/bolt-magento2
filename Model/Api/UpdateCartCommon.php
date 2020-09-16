@@ -36,11 +36,12 @@ use Bolt\Boltpay\Helper\ArrayHelper;
 
 /**
  * Class UpdateCartCommon
- * 
+ *
  * @package Bolt\Boltpay\Model\Api
  */
 abstract class UpdateCartCommon
-{   
+{
+
     /**
      * @var Request
      */
@@ -93,13 +94,12 @@ abstract class UpdateCartCommon
      */
     public function __construct(
         UpdateCartContext $updateCartContext
-    )
-    {
+    ) {
         $this->request = $updateCartContext->getRequest();
         $this->response = $updateCartContext->getResponse();
         $this->hookHelper = $updateCartContext->getHookHelper();
         $this->errorResponse = $updateCartContext->getBoltErrorResponse();
-        $this->logHelper = $updateCartContext->getLogHelper();   
+        $this->logHelper = $updateCartContext->getLogHelper();
         $this->bugsnag = $updateCartContext->getBugsnag();
         $this->regionModel = $updateCartContext->getRegionModel();
         $this->orderHelper = $updateCartContext->getOrderHelper();
@@ -128,7 +128,7 @@ abstract class UpdateCartCommon
 
             $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
 
-            if(empty($parentQuoteId)) {
+            if (empty($parentQuoteId)) {
                 $this->bugsnag->notifyError(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                     'Parent quote does not exist'
@@ -189,10 +189,10 @@ abstract class UpdateCartCommon
     /**
      *
      * Set the shipment if request payload has that info.
-     * 
+     *
      * @param array $shipment
      * @param Quote $immutableQuote
-     * 
+     *
      * @throws LocalizedException
      * @throws WebApiException
      */
@@ -201,11 +201,16 @@ abstract class UpdateCartCommon
         $shippingAddress = $immutableQuote->getShippingAddress();
         $address = $shipment['shipping_address'];
         $address = $this->cartHelper->handleSpecialAddressCases($address);
-        $region = $this->regionModel->loadByName(ArrayHelper::getValueFromArray($address, 'region', ''), ArrayHelper::getValueFromArray($address, 'country_code', ''));
+        $region = $this->regionModel->loadByName(
+            ArrayHelper::getValueFromArray($address, 'region', ''),
+            ArrayHelper::getValueFromArray($address, 'country_code', '')
+        );
+        $streetAddress1 = ArrayHelper::getValueFromArray($address, 'street_address1', '');
+        $streetAddress2 = ArrayHelper::getValueFromArray($address, 'street_address2', '');
         $addressData = [
                     'firstname'    => ArrayHelper::getValueFromArray($address, 'first_name', ''),
                     'lastname'     => ArrayHelper::getValueFromArray($address, 'last_name', ''),
-                    'street'       => trim(ArrayHelper::getValueFromArray($address, 'street_address1', '') . "\n" . ArrayHelper::getValueFromArray($address, 'street_address2', '')),
+                    'street'       => trim($streetAddress1. "\n" . $streetAddress2),
                     'city'         => ArrayHelper::getValueFromArray($address, 'locality', ''),
                     'country_id'   => ArrayHelper::getValueFromArray($address, 'country_code', ''),
                     'region'       => ArrayHelper::getValueFromArray($address, 'region', ''),
@@ -246,7 +251,7 @@ abstract class UpdateCartCommon
         $content =  $this->request->getContent();
         $this->logHelper->addInfoLog($content);
         return json_decode($content);
-    }    
+    }
 
     /**
      * @param int        $errCode
@@ -266,5 +271,4 @@ abstract class UpdateCartCommon
      * @throws \Exception
      */
     abstract protected function sendSuccessResponse($result);
-
 }

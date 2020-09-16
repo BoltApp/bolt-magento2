@@ -53,8 +53,7 @@ class StoreCredit
     public function __construct(
         Discount $discountHelper,
         Bugsnag $bugsnagHelper
-    )
-    {
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
     }
@@ -75,8 +74,7 @@ class StoreCredit
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->bssStoreCreditHelper = $bssStoreCreditHelper;
         $this->bssStoreCreditCollection = $bssStoreCreditCollection;
         list ($discounts, $totalAmount, $diff) = $result;
@@ -90,8 +88,10 @@ class StoreCredit
                     'description' => 'Store Credit',
                     'amount' => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -112,7 +112,8 @@ class StoreCredit
     private function getBssStoreCreditAmount($immutableQuote, $parentQuote)
     {
         try {
-            $isAppliedToShippingAndTax = $this->bssStoreCreditHelper->getGeneralConfig('used_shipping') || $this->bssStoreCreditHelper->getGeneralConfig('used_tax');
+            $isAppliedToShippingAndTax = $this->bssStoreCreditHelper
+                    ->getGeneralConfig('used_shipping') || $this->bssStoreCreditHelper->getGeneralConfig('used_tax');
 
             $storeCreditAmount = $immutableQuote->getBaseBssStorecreditAmountInput();
             if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {

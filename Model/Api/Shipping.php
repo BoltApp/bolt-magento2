@@ -32,8 +32,6 @@ use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
 /**
  * Class Shipping
  * Shipping options hook endpoint. Get shipping methods using shipping address and cart details
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class Shipping extends ShippingTax implements ShippingInterface
 {

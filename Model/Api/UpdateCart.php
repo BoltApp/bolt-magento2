@@ -29,14 +29,10 @@ use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 
-/**
- * Class UpdateCart
- * 
- * @package Bolt\Boltpay\Model\Api
- */
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
-    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
+    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor;
+    }
 
     /**
      * @var CartDataInterfaceFactory
@@ -57,8 +53,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @var SessionHelper
      */
     protected $sessionHelper;
-    
-    
+
     /**
      * UpdateCart constructor.
      *
@@ -66,7 +61,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @param CartDataInterfaceFactory $cartDataFactory
      * @param UpdateCartResultInterfaceFactory $updateCartResultFactory
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext,
         CartDataInterfaceFactory $cartDataFactory,
         UpdateCartResultInterfaceFactory $updateCartResultFactory
@@ -89,8 +84,13 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @param mixed $discount_codes_to_remove
      * @return \Bolt\Boltpay\Api\Data\UpdateCartResultInterface
      */
-    public function execute($cart, $add_items = null, $remove_items = null, $discount_codes_to_add = null, $discount_codes_to_remove = null)
-    {
+    public function execute(
+        $cart,
+        $add_items = null,
+        $remove_items = null,
+        $discount_codes_to_add = null,
+        $discount_codes_to_remove = null
+    ) {
         try {
             $this->cartRequest = $cart;
             
@@ -99,7 +99,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             
             $result = $this->validateQuote($immutableQuoteId);
             
-            if(!$result){
+            if (!$result) {
                 // Already sent a response with error, so just return.
                 return false;
             }
@@ -125,35 +125,35 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             // TODO : cache issue https://github.com/BoltApp/bolt-magento2/pull/833
             
             // Add discounts
-            if( !empty($discount_codes_to_add) ){
+            if (!empty($discount_codes_to_add)) {
                 // Get the coupon code
                 $discount_code = $discount_codes_to_add[0];
                 $couponCode = trim($discount_code);
                 
                 $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
-                if( ! $result ){
+                if (! $result) {
                     // Already sent a response with error, so just return.
                     return false;
                 }
     
-                list($coupon, $giftCard) = $result;                
+                list($coupon, $giftCard) = $result;
 
                 $result = $this->applyDiscount($couponCode, $coupon, $giftCard, $parentQuote);
     
                 if (!$result) {
                     // Already sent a response with error, so just return.
                     return false;
-                }    
+                }
             }
   
             // Remove discounts
-            if( !empty($discount_codes_to_remove) ){
+            if (!empty($discount_codes_to_remove)) {
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
 
                 $discounts = $this->getQuoteDiscounts($parentQuote);
 
-                if(empty($discounts)){
+                if (empty($discounts)) {
                     $this->sendErrorResponse(
                         BoltErrorResponse::ERR_CODE_INVALID,
                         'Coupon code does not exist!',
@@ -284,7 +284,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     public function generateResult($quote)
     {
-        $cartData = $this->cartDataFactory->create();        
+        $cartData = $this->cartDataFactory->create();
         $quoteCart = $this->getQuoteCart($quote);
       
         $cartData->setDisplayId($quoteCart['display_id']);
@@ -294,7 +294,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         $cartData->setTotalAmount($quoteCart['total_amount']);
         $cartData->setTaxAmount($quoteCart['tax_amount']);
         $cartData->setOrderReference($quoteCart['order_reference']);
-        $cartData->setShipments( (!empty($quoteCart['shipments'])) ? $quoteCart['shipments'] : [] );
+        $cartData->setShipments((!empty($quoteCart['shipments'])) ? $quoteCart['shipments'] : []);
 
         $updateCartResult = $this->updateCartResultFactory->create();
         $updateCartResult->setOrderCreate($cartData);
@@ -303,5 +303,4 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         return $updateCartResult->getCartResult();
     }
-    
 }

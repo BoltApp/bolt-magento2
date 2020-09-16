@@ -23,8 +23,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 
 /**
  * Class TaxData. Tax result and Shipping option properties of Tax.
- *
- * @package Bolt\Boltpay\Model\Api\Data
  */
 class TaxData implements TaxDataInterface, \JsonSerializable
 {

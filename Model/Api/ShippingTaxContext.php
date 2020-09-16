@@ -33,8 +33,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 /**
  * Class ShippingTaxContext
  * Common DI objects for Shipping Aand Tax endpoint handlers
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class ShippingTaxContext
 {

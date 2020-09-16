@@ -32,8 +32,7 @@ class GroupVerification
      */
     public function __construct(
         Session $customerSession
-    )
-    {
+    ) {
         $this->customerSession = $customerSession;
     }
 

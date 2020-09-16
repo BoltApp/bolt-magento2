@@ -34,8 +34,6 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 /**
  * Class OrderManagement
  * Web hook endpoint. Save the order / Update order and payment status.
- *
- * @package Bolt\Boltpay\Model\Api
  */
 class OrderManagement implements OrderManagementInterface
 {
@@ -244,7 +242,9 @@ class OrderManagement implements OrderManagementInterface
                 return;
             }
 
-            if ($type === 'rejected_irreversible' && $this->orderHelper->tryDeclinedPaymentCancelation($display_id, $immutableQuoteId)) {
+            if ($type === 'rejected_irreversible'
+                && $this->orderHelper->tryDeclinedPaymentCancelation($display_id, $immutableQuoteId)
+            ) {
                 $this->setSuccessResponse('Order was canceled due to declined payment: ' . $display_id);
                 return;
             }

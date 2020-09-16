@@ -48,8 +48,6 @@ use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepo
 /**
  * Class Payment.
  * Bolt Payment method model.
- *
- * @package Bolt\Boltpay\Model
  */
 class Payment extends AbstractMethod
 {
@@ -604,7 +602,8 @@ class Payment extends AbstractMethod
      */
     public function canReviewPayment()
     {
-        return $this->getInfoInstance()->getAdditionalInformation('transaction_state') == OrderHelper::TS_REJECTED_REVERSIBLE;
+        return $this->getInfoInstance()
+                ->getAdditionalInformation('transaction_state') == OrderHelper::TS_REJECTED_REVERSIBLE;
     }
 
     /**

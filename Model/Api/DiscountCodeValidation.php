@@ -48,7 +48,6 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
- * Discount Code Validation class
  * @api
  */
 class DiscountCodeValidation implements DiscountCodeValidationInterface
@@ -679,7 +678,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $immutableQuote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor(
+                $address->getDiscountAmount(),
+                $immutableQuote->getQuoteCurrencyCode()
+            )),
             'description'     => trim(__('Discount ') . $rule->getDescription()),
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
@@ -702,7 +704,9 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     {
         $result = [];
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
+            if ($giftCard instanceof \Amasty\GiftCard\Model\Account
+                || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account
+            ) {
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)
@@ -783,7 +787,14 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
                 $giftAmount = $parentQuote->getGiftCardsAmount();
             } else {
                 // TODO: move all cases above into filter
-                $result = $this->eventsForThirdPartyModules->runFilter("applyGiftcard", null, $code, $giftCard, $immutableQuote, $parentQuote);
+                $result = $this->eventsForThirdPartyModules->runFilter(
+                    "applyGiftcard",
+                    null,
+                    $code,
+                    $giftCard,
+                    $immutableQuote,
+                    $parentQuote
+                );
                 if (empty($result)) {
                     throw new \Exception('Unknown giftCard class');
                 }
@@ -970,7 +981,10 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         return $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor(
+                $address->getDiscountAmount(),
+                $parentQuote->getQuoteCurrencyCode()
+            )),
             'description'     =>  __('Discount ') . $address->getDiscountDescription(),
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];

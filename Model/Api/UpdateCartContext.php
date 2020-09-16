@@ -44,11 +44,6 @@ use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 
-/**
- * Class UpdateCartContext
- *
- * @package Bolt\Boltpay\Model\Api
- */
 class UpdateCartContext
 {
     /**
@@ -153,7 +148,7 @@ class UpdateCartContext
 
     /**
      * UpdateCartContext constructor.
-     * 
+     *
      * Assigns local references to global resources
      *
      * @param Request                 $request
@@ -182,10 +177,10 @@ class UpdateCartContext
         Response $response,
         HookHelper $hookHelper,
         BoltErrorResponse $errorResponse,
-        LogHelper $logHelper,      
-        Bugsnag $bugsnag,        
+        LogHelper $logHelper,
+        Bugsnag $bugsnag,
         RegionModel $regionModel,
-        OrderHelper $orderHelper,  
+        OrderHelper $orderHelper,
         CartHelper $cartHelper,
         QuoteRepository $quoteRepositoryForUnirgyGiftCert,
         CheckoutSession $checkoutSessionForUnirgyGiftCert,
@@ -203,7 +198,7 @@ class UpdateCartContext
         $this->response = $response;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
-        $this->logHelper = $logHelper;       
+        $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
         $this->regionModel = $regionModel;
         $this->orderHelper = $orderHelper;
@@ -380,5 +375,4 @@ class UpdateCartContext
     {
         return $this->sessionHelper;
     }
-    
 }

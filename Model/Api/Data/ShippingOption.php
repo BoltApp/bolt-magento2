@@ -21,8 +21,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 
 /**
  * Class ShippingOption. Represents a single shipping option object.
- *
- * @package Bolt\Boltpay\Model\Api\Data
  */
 class ShippingOption implements ShippingOptionInterface, \JsonSerializable
 {

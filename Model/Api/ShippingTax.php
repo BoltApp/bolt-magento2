@@ -305,24 +305,43 @@ abstract class ShippingTax
         // echo statement initially
         $startTime = $this->metricsClient->getCurrentTime();
         $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
-        $this->logHelper->addInfoLog(file_get_contents('php://input'));
+        $this->logHelper->addInfoLog(file_get_contents('php://input')); // @codingStandardsIgnoreLine
         try {
             $result = $this->handleRequest($cart, $shipping_address, $shipping_option);
-            $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
+            $this->metricsClient->processMetric(
+                static::METRICS_SUCCESS_KEY,
+                1,
+                static::METRICS_LATENCY_KEY,
+                $startTime
+            );
             return $result;
         } catch (\Magento\Framework\Webapi\Exception $e) {
-            $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
+            $this->metricsClient->processMetric(
+                static::METRICS_FAILURE_KEY,
+                1,
+                static::METRICS_LATENCY_KEY,
+                $startTime
+            );
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode(), $e->getHttpCode());
         } catch (BoltException $e) {
-            $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
+            $this->metricsClient->processMetric(
+                static::METRICS_FAILURE_KEY,
+                1,
+                static::METRICS_LATENCY_KEY,
+                $startTime
+            );
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
-            $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
+            $this->metricsClient->processMetric(
+                static::METRICS_FAILURE_KEY,
+                1,
+                static::METRICS_LATENCY_KEY,
+                $startTime
+            );
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
         }
     }
-
 
     /**
      * Handles the split shipping and tax request

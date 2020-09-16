@@ -17,11 +17,6 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-/**
- * Class PluginVersion. Represents a single plugin version object.
- *
- * @package Bolt\Boltpay\Model\Api\Data
- */
 class BoltConfigSetting implements \JsonSerializable
 {
     /**

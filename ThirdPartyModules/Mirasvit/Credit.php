@@ -85,14 +85,15 @@ class Credit
      * @param $paymentOnly
      * @return array
      */
-    public function collectDiscounts($result,
-                                     $mirasvitStoreCreditHelper,
-                                     $mirasvitStoreCreditCalculationService,
-                                     $mirasvitStoreCreditCalculationConfig,
-                                     $quote,
-                                     $parentQuote,
-                                     $paymentOnly)
-    {
+    public function collectDiscounts(
+        $result,
+        $mirasvitStoreCreditHelper,
+        $mirasvitStoreCreditCalculationService,
+        $mirasvitStoreCreditCalculationConfig,
+        $quote,
+        $parentQuote,
+        $paymentOnly
+    ) {
         list ($discounts, $totalAmount, $diff) = $result;
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationService = $mirasvitStoreCreditCalculationService;
@@ -109,8 +110,10 @@ class Credit
                     'description'       => 'Store Credit',
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
     
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -118,7 +121,7 @@ class Credit
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -134,7 +137,7 @@ class Credit
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
             
-        if (!$paymentOnly) {       
+        if (!$paymentOnly) {
             if ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded()
                 || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded()) {
                 return $miravitBalanceAmount;

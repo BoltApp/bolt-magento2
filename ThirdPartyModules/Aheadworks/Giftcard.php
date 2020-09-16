@@ -69,7 +69,7 @@ class Giftcard
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -103,8 +103,14 @@ class Giftcard
      * @param $parentQuote
      * @return array|null
      */
-    public function applyGiftcard($result, $aheadworksGiftcardManagement, $code, $giftCard, $immutableQuote, $parentQuote)
-    {
+    public function applyGiftcard(
+        $result,
+        $aheadworksGiftcardManagement,
+        $code,
+        $giftCard,
+        $immutableQuote,
+        $parentQuote
+    ) {
         if (!empty($result)) {
             return $result;
         }
@@ -115,9 +121,12 @@ class Giftcard
             // on subsequent validation calls from Bolt checkout
             // try removing the gift card before adding it
             $aheadworksGiftcardManagement->remove($parentQuote->getId(), $giftCard->getCode(), false);
+
+        // phpcs:disable
         } catch (\Exception $e) {
             // gift card not yet added
         }
+        // phpcs:enable
         try {
             $aheadworksGiftcardManagement->set($parentQuote->getId(), $giftCard->getCode(), false);
 

@@ -19,17 +19,13 @@ namespace Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard;
 
 use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
-/**
- * Class Collection
- * @package Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard
- */
 class Collection extends AbstractCollection
 {
     protected function _construct()
     {
         $this->_init(
-            'Bolt\Boltpay\Model\CustomerCreditCard',
-            'Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'
+            Bolt\Boltpay\Model\CustomerCreditCard::class,
+            Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class
         );
     }
 

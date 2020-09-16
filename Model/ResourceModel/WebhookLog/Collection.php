@@ -19,17 +19,13 @@ namespace Bolt\Boltpay\Model\ResourceModel\WebhookLog;
 
 use \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
-/**
- * Class Collection
- * @package Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard
- */
 class Collection extends AbstractCollection
 {
     protected function _construct()
     {
         $this->_init(
-            'Bolt\Boltpay\Model\WebhookLog',
-            'Bolt\Boltpay\Model\ResourceModel\WebhookLog'
+            Bolt\Boltpay\Model\WebhookLog::class,
+            Bolt\Boltpay\Model\ResourceModel\WebhookLog::class
         );
     }
 
