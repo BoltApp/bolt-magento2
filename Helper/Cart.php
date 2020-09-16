@@ -1528,7 +1528,7 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Return user group id. "0" for guest users
+     * Return user group id for logged in users and "0" for guest users
      *
      */
     private function getUserGroupId() {
