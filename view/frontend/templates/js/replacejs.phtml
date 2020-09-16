@@ -262,12 +262,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          */
         cartRestricted: false,
 
-        /**
-         * @var bool true if we know that next bolt cart update is already unactual
-         *           and we need to skip it
-         */
-        skipNextBoltCartUpdate: false,
-
     };
 
     ////////////////////////////////////////////////////
@@ -751,12 +745,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         }
 
         var callConfigureWithPromises = function() {
-            // Set the flag in case bolt cart updating will not be finished
-            // because page loading breaks
-            // We check the flag when next page is loaded
-            if (localStorage) {
-                localStorage.setItem("bolt_cart_is_updating", "true");
-            }
             if (waitingForResolvingPromises) {
                 return;
             }
@@ -816,7 +804,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             // we rely on current bolt cart
             if (waitingForResolvingPromises) {
                 // if bolt checkout is opened we can't show new button now
-                // and will show it only if user closes bolt checkout
+                // and will show it only if user close bolt checkout
                 if (popUpOpen) {
                     return;
                 }
@@ -999,11 +987,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
                 });
             } else {
-                // If flag set it means the previous page didn't update bolt cart properly
-                // Magento continue cart updating now and we know that bolt cart isn't actual
-                if (localStorage && localStorage.getItem("bolt_cart_is_updating") == "true") {
-                    BoltState.skipNextBoltCartUpdate = true;
-                }
                 callConfigureWithPromises();
 
                 magentoCartDataListener = function(data) {
@@ -1023,13 +1006,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
 
                 boltCartDataListener = function(data) {
-                    if (localStorage) {
-                        localStorage.setItem("bolt_cart_is_updating", "false");
-                    }
-                    if (BoltState.skipNextBoltCartUpdate) {
-                        BoltState.skipNextBoltCartUpdate = false;
-                        return;
-                    }
                     boltCartDataID = data.data_id;
 
                     cart = data.cart !== undefined ? data.cart : {};
