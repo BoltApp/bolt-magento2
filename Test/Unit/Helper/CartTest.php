@@ -442,11 +442,11 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer','handleVirtualProductsAsPhysical']);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
-        $this->currentMock = $this->getCurrentMock(null);
         $this->ruleRepository = $this->createPartialMock(
             RuleRepository::class,
             ['getById']
         );
+        $this->currentMock = $this->getCurrentMock(null);
 
         $this->objectsToClean = array();
     }
