@@ -48,13 +48,13 @@ class CollectionTest extends TestCase
     public function construct()
     {
         $this->webhookLogCollectionMock->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\WebhookLog', 'Bolt\Boltpay\Model\ResourceModel\WebhookLog')
+            ->with(Bolt\Boltpay\Model\WebhookLog::class, Bolt\Boltpay\Model\ResourceModel\WebhookLog::class)
             ->willReturnSelf();
 
         TestHelper::invokeMethod($this->webhookLogCollectionMock, '_construct');
 
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\WebhookLog'));
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\WebhookLog'));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\ResourceModel\WebhookLog::class));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\WebhookLog::class));
     }
 
     /**

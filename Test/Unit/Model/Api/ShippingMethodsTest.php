@@ -1357,7 +1357,7 @@ Room 4000',
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionCode(6103);
-        $this->expectExceptionMessage('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.');
+        $this->expectExceptionMessage('Something in your cart has changed. Please reload the page and checkout again.');
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($quote, $cart) {

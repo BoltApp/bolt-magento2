@@ -60,14 +60,14 @@ class CollectionTest extends TestCase
     public function testConstruct()
     {
         $this->mockCustomerCreditCardCollection->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\CustomerCreditCard', 'Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard')
+            ->with(Bolt\Boltpay\Model\CustomerCreditCard::class, Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class)
             ->willReturnSelf();
 
         $testMethod = new \ReflectionMethod(Collection::class, '_construct');
         $testMethod->setAccessible(true);
         $testMethod->invokeArgs($this->mockCustomerCreditCardCollection, []);
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'));
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\CustomerCreditCard'));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\CustomerCreditCard::class));
     }
 
     /**

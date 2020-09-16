@@ -151,13 +151,13 @@ class CustomerCreditCardTest extends TestCase
     public function testConstruct()
     {
         $this->mockCustomerCreditCard->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard')
+            ->with(Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class)
             ->willReturnSelf();
 
         $testMethod = new \ReflectionMethod(CustomerCreditCard::class, '_construct');
         $testMethod->setAccessible(true);
         $testMethod->invokeArgs($this->mockCustomerCreditCard, []);
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard::class));
     }
 
     /**

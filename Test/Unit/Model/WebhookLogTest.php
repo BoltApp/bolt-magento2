@@ -97,11 +97,11 @@ class WebhookLogTest extends TestCase
     public function construct()
     {
         $this->webhookLogMock->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\ResourceModel\WebhookLog')
+            ->with(Bolt\Boltpay\Model\ResourceModel\WebhookLog::class)
             ->willReturnSelf();
 
         TestHelper::invokeMethod($this->webhookLogMock, '_construct');
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\WebhookLog'));
+        $this->assertTrue(class_exists(Bolt\Boltpay\Model\ResourceModel\WebhookLog::class));
     }
 
     /**
