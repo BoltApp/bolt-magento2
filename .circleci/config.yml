@@ -274,12 +274,6 @@ workflows:
       - unit-php71-magento22
       - unit-php70-magento22
       - integration-magento-php72-magento23
-      - integration-php72-magento23:
-          context: integration-tests-secrets
-          filters:
-            branches:
-              only:
-                - master
   tagger:
     triggers:
       - schedule:
@@ -290,6 +284,17 @@ workflows:
                 - master
     jobs:
       - tag-release-candidate
+  integration-tests:
+    triggers:
+      - schedule:
+          cron: "0 */6 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - integration-php72-magento23:
+          context: integration-tests-secrets
   merchant-branch-test:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
