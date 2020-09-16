@@ -804,7 +804,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             // we rely on current bolt cart
             if (waitingForResolvingPromises) {
                 // if bolt checkout is opened we can't show new button now
-                // and will show it only if user close bolt checkout
+                // and will show it only if user closes bolt checkout
                 if (popUpOpen) {
                     return;
                 }
@@ -1015,7 +1015,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                 boltCartDataListener = function(data) {
                     if (BoltState.magentoCart === null) {
-                        // We haven't see magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
+                        // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
                         return;
                     }
                     boltCartDataID = data.data_id;
