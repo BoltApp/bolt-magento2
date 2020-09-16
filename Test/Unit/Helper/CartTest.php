@@ -88,6 +88,8 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\Serializer\Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\SalesRule\Model\RuleRepository;
+use Magento\SalesRule\Api\Data\RuleInterface;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -301,6 +303,9 @@ class CartTest extends BoltTestCase
 
     /** @var MockObject|Serialize */
     private $serialize;
+    
+    /** @var MockObject|RuleRepository */
+    private $ruleRepository;
 
     /**
      * Setup test dependencies, called before each test
@@ -383,7 +388,7 @@ class CartTest extends BoltTestCase
             'assignCustomer','setIsActive','getGiftMessageId',
             'getGwId'
         ]);
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote']);
+        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
@@ -438,6 +443,10 @@ class CartTest extends BoltTestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->currentMock = $this->getCurrentMock(null);
+        $this->ruleRepository = $this->createPartialMock(
+            RuleRepository::class,
+            ['getById']
+        );
 
         $this->objectsToClean = array();
     }
@@ -491,6 +500,7 @@ class CartTest extends BoltTestCase
                     $this->deciderHelper,
                     $this->serialize,
                     $this->eventsForThirdPartyModules,
+                    $this->ruleRepository
                 ]
             )
             ->getMock();
@@ -695,7 +705,8 @@ class CartTest extends BoltTestCase
             $this->metricsClient,
             $this->deciderHelper,
             $this->serialize,
-            $this->eventsForThirdPartyModules
+            $this->eventsForThirdPartyModules,
+            $this->ruleRepository
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -723,6 +734,7 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->customerRepository, 'customerRepository', $instance);
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
         static::assertAttributeEquals($this->serialize, 'serialize', $instance);
+        static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
     }
 
     /**
@@ -3670,8 +3682,42 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getMageplazaGiftCardCodes');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $appliedDiscount = 10; // $
+        $appliedDiscountNoCoupon = 15; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
+        $this->checkoutSession->expects(static::once())
+                              ->method('getBoltCollectSaleRuleDiscounts')
+                              ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon]);
+        $rule2 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
+        $rule2->expects(static::once())->method('getDescription')
+            ->willReturn(self::COUPON_DESCRIPTION);
+        
+        $rule3 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule3->expects(static::once())->method('getCouponType')
+            ->willReturn('NO_COUPON');
+        $rule3->expects(static::once())->method('getDescription')
+            ->willReturn('Shopping cart price rule for the cart over $10');
+        $rule3->expects(static::once())->method('getSimpleAction')
+            ->willReturn('by_fixed');
+        
+        $this->ruleRepository->expects(static::exactly(2))
+            ->method('getById')
+            ->withConsecutive(
+                [2],
+                [3]
+            )
+            ->willReturnOnConsecutiveCalls($rule2, $rule3);
+        
+        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+            
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = false;
@@ -3684,6 +3730,7 @@ ORDER
 
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
             [
@@ -3691,6 +3738,13 @@ ORDER
                 'amount'      => $expectedDiscountAmount,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
+            ],
+            [
+                'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+                'amount'      => $expectedDiscountAmountNoCoupon,
+                'discount_category' => 'automatic_promotion',
                 'discount_type'   => 'fixed_amount',
                 'type'   => 'fixed_amount',
             ]
