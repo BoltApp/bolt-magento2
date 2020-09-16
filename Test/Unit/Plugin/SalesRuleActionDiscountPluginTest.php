@@ -44,10 +44,15 @@ class SalesRuleActionDiscountPluginTest extends TestCase
 
     public function setUp()
     {
-        $this->plugin = (new ObjectManager($this))->getObject(SalesRuleActionDiscountPlugin::class);
         $this->subject = $this->createMock(AbstractDiscount::class);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts', 'setBoltCollectSaleRuleDiscounts']
+        );
+        $this->plugin = (new ObjectManager($this))->getObject(
+            SalesRuleActionDiscountPlugin::class,
+            [
+                'checkoutSession' => $this->checkoutSession
+            ]
         );
     }
 

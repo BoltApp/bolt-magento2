@@ -1931,6 +1931,8 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
+            // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
+            // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
             $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
             $salesruleIds = explode(',', $quote->getAppliedRuleIds());
             foreach ($salesruleIds as $salesruleId) {

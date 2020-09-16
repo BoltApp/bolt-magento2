@@ -31,6 +31,8 @@ class SalesRuleQuoteDiscountPlugin
     
     public function beforeCollect(\Magento\SalesRule\Model\Quote\Discount $subject, $quote, $shippingAssignment, $total)
     {
+        // Each time when collecting address discount amount, the BoltCollectSaleRuleDiscounts session data would be reset,
+        // then it can store the updated info of applied sale rules.
         $this->checkoutSession->setBoltCollectSaleRuleDiscounts([]);
        
         return [$quote, $shippingAssignment, $total];

@@ -32,6 +32,8 @@ class SalesRuleActionDiscountPlugin
     public function afterCalculate(\Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount $subject,
                                    $result, $rule, $item, $qty)
     {
+        // If the sale rule has no coupon, its discount amount can not be retrieved directly,
+        // so we store the discount amount in the checkout session with the rule id as key.
         $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
         $ruleId = $rule->getId();
         if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
