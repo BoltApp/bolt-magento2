@@ -6,8 +6,15 @@ set -x
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
+git clone --depth 1 git@github.com:BoltApp/integration-tests.git
+
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
+cd integration-tests/operations/docker/m2
+gzip -d create_test_data.sql.gz
+ls 
+sudo mysql magento2 < create_test_data.sql
+cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
 
@@ -23,6 +30,7 @@ php bin/magento config:set payment/boltpay/active 1
 php bin/magento config:set payment/boltpay/api_key $BOLT_STAGING_MERCHANT_API_KEY
 php bin/magento config:set payment/boltpay/signing_secret $BOLT_STAGING_MERCHANT_SIGNING_SECRET
 php bin/magento config:set payment/boltpay/publishable_key_checkout $BOLT_STAGING_MERCHANT_PUBLISHABLE_KEY
+php bin/magento config:set payment/boltpay/product_page_checkout 1
 
 # install and run ngrok
 wget -O ngrok.zip https://bolt-devops.s3-us-west-2.amazonaws.com/testing/ngrok.zip
@@ -65,10 +73,14 @@ mkdir log
 sudo service apache2 restart
 echo "restarted apache2"
 
-git clone --depth 1 git@github.com:BoltApp/integration-tests.git
-cd integration-tests
+cd project/integration-tests
+mkdir test-results
 npm install
-TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2QuickCheckout.spec.ts
-TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/discounts/magento2PercentageDiscount.spec.ts
-TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/discounts/magento2ShippingDiscount.spec.ts
-TEST_ENV=plugin_ci WDIO_CONFIG=localChrome npm run test-spec bolt/integration-tests/checkout/specs/magento2/magento2LoggedInQuickCheckout.spec.ts
+npm run build
+export JUNIT_REPORT_DIR=./test-results
+export SCREENSHOT_DIR=./screenshots
+export TEST_SUITE=checkout_magento2_front
+export WDIO_CONFIG=localChrome
+export TEST_ENV=plugin_ci
+export THREAD_COUNT=1 
+npm run test-retry-runner
