@@ -991,6 +991,14 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                 magentoCartDataListener = function(data) {
                     BoltState.magentoCart = data;
+                    if (boltCartDataID === undefined) {
+                        var boltCart = customerData.get('boltcart')();
+                        if (boltCart !== undefined && boltCart.data_id !== undefined && data.data_id<=boltCart.data_id) {
+                            // If we have bolt cart, haven't processed it before and timestamp is actual
+                            // we need process it now. We haven't done it before because wanted to check if bolt cart is present
+                            boltCartDataListener(boltCart);
+                        }
+                    }
                     resolveCheckPromise();
                     // Call invalidateBoltCartIfOutdated with zero delay
                     // to make sure that it is added into the end of event loop.
@@ -1006,6 +1014,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
 
                 boltCartDataListener = function(data) {
+                    if (BoltState.magentoCart === null) {
+                        // We haven't see magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
+                        return;
+                    }
                     boltCartDataID = data.data_id;
 
                     cart = data.cart !== undefined ? data.cart : {};
