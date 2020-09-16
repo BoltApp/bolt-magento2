@@ -276,6 +276,10 @@ workflows:
       - integration-magento-php72-magento23
       - integration-php72-magento23:
           context: integration-tests-secrets
+          filters:
+            branches:
+              only:
+                - master
   tagger:
     triggers:
       - schedule:
