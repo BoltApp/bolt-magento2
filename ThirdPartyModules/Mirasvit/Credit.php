@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
 use Magento\Framework\App\State;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\Event\Observer;
 
@@ -32,13 +33,18 @@ class Credit
     /**
      * @var State
      */
-    private $appState;
+    protected $appState;
     
     /**
      * @var DiscountHelper
      */
     protected $discountHelper;
     
+    /**
+     * @var SessionHelper
+     */
+    protected $sessionHelper;
+
     /**
      * @var Bugsnag
      */
@@ -61,18 +67,21 @@ class Credit
 
     /**
      * Credit constructor.
-     * @param Discount $discountHelper
-     * @param State $appState
-     * @param Bugsnag $bugsnagHelper
+     * @param Discount                     $discountHelper
+     * @param State                        $appState
+     * @param SessionHelper                $sessionHelper
+     * @param Bugsnag                      $bugsnagHelper
      */
     public function __construct(
-        Discount    $discountHelper,
-        State       $appState,
-        Bugsnag     $bugsnagHelper
+        Discount      $discountHelper,
+        State         $appState,
+        SessionHelper $sessionHelper,
+        Bugsnag       $bugsnagHelper
     ) {
-        $this->discountHelper = $discountHelper;
-        $this->appState       = $appState;
-        $this->bugsnagHelper  = $bugsnagHelper;
+        $this->discountHelper  = $discountHelper;
+        $this->appState        = $appState;
+        $this->sessionHelper   = $sessionHelper;
+        $this->bugsnagHelper   = $bugsnagHelper;
     }
 
     /**
@@ -135,8 +144,7 @@ class Credit
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
             
         if (!$paymentOnly) {       
-            if ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded()
-                || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded()) {
+            if ($this->ifMirasvitCreditIsShippingTaxIncluded($quote)) {
                 return $miravitBalanceAmount;
             }
         }
@@ -199,5 +207,54 @@ class Credit
         }
 
         return false;
+    }
+    
+    /**
+     * To run filter to check if the Mirasvit credit amount can be applied to shipping/tax.
+     *
+     * @param boolean $result
+     * @param Mirasvit\Credit\Api\Config\CalculationConfigInterface|Mirasvit\Credit\Service\Config\CalculationConfig $mirasvitStoreCreditCalculationConfig
+     * @param Quote|object $quote
+     * 
+     * @return boolean
+     */
+    public function checkMirasvitCreditIsShippingTaxIncluded($result,
+                                     $mirasvitStoreCreditCalculationConfig,
+                                     $quote)
+    {
+        $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
+        
+        return $this->ifMirasvitCreditIsShippingTaxIncluded($quote);
+    }
+    
+    /**
+     * If the Mirasvit credit amount can be applied to shipping/tax.
+     *
+     * @param Quote|object $quote
+     * 
+     * @return boolean
+     */
+    private function ifMirasvitCreditIsShippingTaxIncluded($quote)
+    {   
+        return ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded($quote->getStore())
+                || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded($quote->getStore()));
+    }
+    
+    /**
+     * Exclude the Mirasvit credit amount from shipping discount, so the Bolt can apply Mirasvit credit to shipping properly.
+     *
+     * @param float $result
+     * @param Quote|object $quote
+     * @param Address|object $shippingAddress
+     * 
+     * @return float
+     */
+    public function collectShippingDiscounts($result,
+                                     $quote,
+                                     $shippingAddress)
+    {
+        $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitStoreCreditShippingDiscountAmount(0);
+        $result -= $mirasvitStoreCreditShippingDiscountAmount;
+        return $result;
     }
 }

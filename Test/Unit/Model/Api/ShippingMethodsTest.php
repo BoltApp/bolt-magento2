@@ -48,6 +48,8 @@ use Magento\SalesRule\Model\RuleFactory as RuleFactory;
 use Magento\SalesRule\Model\Rule;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Framework\Serialize\Serializer\Serialize;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+
 /**
  * Class ShippingMethodsTest
  *
@@ -186,6 +188,9 @@ class ShippingMethodsTest extends TestCase
      * @var Serialize
      */
     private $serialize;
+    
+    /** @var MockObject|EventsForThirdPartyModules */
+    private $eventsForThirdPartyModules;
 
     /**
      * @inheritdoc
@@ -319,6 +324,9 @@ class ShippingMethodsTest extends TestCase
         $this->shippingAddressMock->method('setCollectShippingRates')->with(true)->willReturnSelf();
         $this->shippingAddressMock->method('getShippingDiscountAmount')->willReturn(0);
         $this->shippingAddressMock->method('getShippingAmount')->willReturn(5);
+        
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
     }
 
     /**
@@ -1588,7 +1596,8 @@ Room 4000',
                 $this->sessionHelper,
                 $this->discountHelper,
                 $this->ruleFactory,
-                $this->serialize
+                $this->serialize,
+                $this->eventsForThirdPartyModules,
                 ]
             )
             ->setMethods($methods);

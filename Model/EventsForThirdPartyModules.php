@@ -126,6 +126,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "collectShippingDiscounts" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
+            ],
+        ],
         "checkMirasvitCreditAdminQuoteUsed" => [
             "listeners" => [
                 [
@@ -135,6 +144,18 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+
+        "checkMirasvitCreditIsShippingTaxIncluded" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => [["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                                      "Mirasvit\Credit\Service\Config\CalculationConfig"]],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
+             ],
+         ],
+
         "getAdditionalJS" => [
             "listeners" => [
                 [
@@ -183,7 +204,7 @@ class EventsForThirdPartyModules
      * bool $result true if we should run the method
      * array $sendClasses array of classed we should pass into the method
      */
-    private function prepareForListenerRun($listener)
+    private function prepareForListenerRun($listener, $createInstance = true)
     {
         if (!$this->isModuleAvailable($listener["module"])) {
             return [false, null];
@@ -239,12 +260,14 @@ class EventsForThirdPartyModules
         }
         try {
             foreach (static::filterListeners[$filterName]["listeners"] as $listener) {
-                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                // By default, we create instance for running filter
+                $createInstance = isset($listener["createInstance"]) ? $listener["createInstance"] : true;
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener, $createInstance);
                 if (!$active) {
                     continue;
                 }
                 $boltClass = $this->objectManager->get($listener["boltClass"]);
-                if ($sendClasses) {
+                if ($createInstance && $sendClasses) {
                     $result = $boltClass->$filterName($result, ...$sendClasses, ...$arguments);
                 } else {
                     $result = $boltClass->$filterName($result, ...$arguments);
