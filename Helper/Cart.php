@@ -2292,8 +2292,21 @@ class Cart extends AbstractHelper
      *
      * @return array cart_data in bolt format
      * @throws \Exception
+     * @throws BoltException
      */
     public function createCartByRequest($request)
+    {
+        return $this->createCart($request['items'], $request['metadata']);
+    }
+
+    /**
+     * Create a cart with the provided items
+     * @param $items - cart items
+     * @param $metadata - cart metadata
+     * @return array cart_data in bolt format
+     * @throws BoltException
+     */
+    public function createCart($items, $metadata = null)
     {
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
@@ -2301,12 +2314,12 @@ class Cart extends AbstractHelper
         $quote->setBoltParentQuoteId($quoteId);
         $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_PPC);
 
-        if (isset($request['metadata']['encrypted_user_id'])) {
-            $this->assignQuoteCustomerByEncryptedUserId($quote, $request['metadata']['encrypted_user_id']);
+        if (isset($metadata['encrypted_user_id'])) {
+            $this->assignQuoteCustomerByEncryptedUserId($quote, $metadata['encrypted_user_id']);
         }
 
         //add item to quote
-        foreach ($request['items'] as $item) {
+        foreach ($items as $item) {
             $product = $this->productRepository->getbyId($item['reference']);
 
             $options = json_decode($item['options'], true);
@@ -2342,7 +2355,6 @@ class Cart extends AbstractHelper
 
         $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
-
         return $cart_data;
     }
 
