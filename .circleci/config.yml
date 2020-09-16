@@ -274,8 +274,6 @@ workflows:
       - unit-php71-magento22
       - unit-php70-magento22
       - integration-magento-php72-magento23
-      - integration-php72-magento23:
-          context: integration-tests-secrets
   tagger:
     triggers:
       - schedule:
