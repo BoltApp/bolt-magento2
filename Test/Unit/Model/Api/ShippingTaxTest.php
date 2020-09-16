@@ -818,4 +818,167 @@ class ShippingTaxTest extends TestCase
 
         $this->assertEquals($address, $this->currentMock->populateAddress($addressData));
     }
+
+
+    /**
+     * @test
+     * that handleRequest throws web api exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_WebApiException()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $this->initCurrentMock(['getQuoteById', 'preprocessHook']);
+
+        $immutableQuote = $this->createMock(Quote::class);
+        $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
+            ->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn($immutableQuote);
+
+        $e = new WebapiException(__('Precondition Failed'), 6001, 422);
+        $this->currentMock->method('preprocessHook')->willThrowException($e);
+        $this->currentMock->expects(self::once())->method('preprocessHook')
+            ->willThrowException($e);
+
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $this->expectException(WebapiException::class);
+        $this->currentMock->handleRequest($cart, []);
+    }
+
+    /**
+     * @test
+     * that handleRequest would throw bolt exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_BoltException()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $shipping_address = [
+            'email' => 'invalid email'
+        ];
+        $shipping_option = null;
+
+        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'validateEmail']);
+
+        $immutableQuote = $this->getQuoteMock();
+        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
+
+        $this->currentMock->expects(self::once())->method('preprocessHook')
+            ->with(self::STORE_ID);
+        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
+            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($immutableQuote, $parentQuote);
+
+        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
+
+        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
+            ->with(self::CURRENCY_CODE);
+        $this->sessionHelper->expects(self::once())->method('loadSession')
+            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
+        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
+            ->with($shipping_address)->willReturn($shipping_address);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
+
+        $e = new BoltException(
+            __('Invalid email: %1', 'invalid email'),
+            null,
+            BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
+        );
+
+        $this->currentMock->method('validateEmail')->willThrowException($e);
+        $this->expectException(BoltException::class);
+        $this->currentMock->handleRequest($cart, $shipping_address);
+    }
+
+    /**
+     * @test
+     * that handleRequest throws exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_Exception()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $this->initCurrentMock(['loadQuote']);
+
+        $message = 'test message';
+        $e = new \Exception($message);
+        $this->currentMock->expects(self::once())->method('loadQuote')->willThrowException($e);
+        $this->expectException(\Exception::class);
+
+        $this->currentMock->handleRequest($cart, []);
+    }
+
+    /**
+     * @test
+     * that handleRequest would return result regarding address data and shipping option
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_happyPath()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $shipping_address = [
+            'email' => self::EMAIL
+        ];
+        $shipping_option = null;
+
+        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'getResult']);
+
+        $immutableQuote = $this->getQuoteMock();
+        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
+
+        $this->currentMock->expects(self::once())->method('preprocessHook')
+            ->with(self::STORE_ID);
+        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
+            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
+            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($immutableQuote, $parentQuote);
+
+        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
+
+        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
+            ->with(self::CURRENCY_CODE);
+        $this->sessionHelper->expects(self::once())->method('loadSession')
+            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
+        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
+            ->with($shipping_address)->willReturn($shipping_address);
+        $this->cartHelper->expects(self::once())->method('validateEmail')
+            ->with(self::EMAIL)->willReturn(true);
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $this->currentMock->expects(self::once())->method('getResult')
+            ->with($shipping_address, $shipping_option);
+        $this->logHelper->expects(self::exactly(2))->method('addInfoLog');
+
+        $this->currentMock->handleRequest($cart, $shipping_address);
+    }
 }

@@ -976,8 +976,7 @@ class Order extends AbstractHelper
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
 
             if (!$quote) {
-                // TODO(vitaliy): use helper in the next PR
-                $immutableQuoteId = @$transaction->order->cart->metadata->immutable_quote_id;
+                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
                 $quote = $this->cartHelper->getQuoteById($immutableQuoteId);
             }
 
@@ -1112,7 +1111,8 @@ class Order extends AbstractHelper
     {
         /** @var OrderModel $order */
         $order = $this->quoteManagement->submit($quote);
-        if ($order === null) {
+
+        if (!$order) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
                 $report->setMetaData([
                     'CREATE ORDER' => [
@@ -1130,6 +1130,21 @@ class Order extends AbstractHelper
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
         }
+        // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
+        // It updates the order prior to the create_order hook (thread 1) process.
+        // This ensures that the returned order in the create_order hook is the latest updated order.
+        $existingOrder =  $this->cartHelper->getOrderById($order->getId());
+        $orderPayment = $existingOrder->getPayment();
+        if ($orderPayment && $orderPayment->getMethod() !== Payment::METHOD_CODE) {
+            throw new LocalizedException(__(
+                'Payment method assigned to order %1 is: %2',
+                $order->getIncrementId(),
+                $orderPayment->getMethod()
+            ));
+        }
+
+        $order = $existingOrder;
+
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );

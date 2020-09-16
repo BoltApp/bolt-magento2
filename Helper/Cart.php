@@ -450,6 +450,24 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Load Order by order id
+     *
+     * @param $orderId
+     * @return OrderInterface|mixed
+     */
+    public function getOrderById($orderId)
+    {
+        $searchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('main_table.entity_id', $orderId)->create();
+
+        $collection = $this->orderRepository
+            ->getList($searchCriteria)
+            ->getItems();
+
+        return reset($collection);
+    }
+
+    /**
      * Save quote via repository
      *
      * @param CartInterface $quote
@@ -712,7 +730,10 @@ class Cart extends AbstractHelper
             } else {
                 // check if cart was created in plugin version before 2.14.0
                 if (isset($response->cart->display_id)) {
-                 list(, $immutableQuoteId) = explode(' / ', $response->cart->display_id);
+                    $result = explode(' / ', $response->cart->display_id);
+                    if (count($result) == 2) {
+                        list(, $immutableQuoteId) = $result;
+                    }
                 }
             }
         }

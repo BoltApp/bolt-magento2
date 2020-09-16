@@ -21,6 +21,8 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
+use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -53,7 +55,17 @@ class EventsForThirdPartyModules
                     "boltClass" => IDme_GroupVerification::class,
                 ],
             ]
-        ]
+        ],
+        'beforePrepareQuote' => [
+            "listeners" => [
+                [
+                    "module" => "MW_RewardPoints",
+                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
+                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
+            ]
+        ],
     ];
 
     const filterListeners = [
@@ -83,6 +95,17 @@ class EventsForThirdPartyModules
                                       ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
                                       "Mirasvit\Credit\Service\Config\CalculationConfig"],],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Helper\Data"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
+                [
+                    "module" => "MW_RewardPoints",
+                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
+                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "boltClass" => MW_RewardPoints::class,
                 ],
                 [
                     "module" => "Bss_StoreCredit",
@@ -121,6 +144,7 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+
         "checkMirasvitCreditIsShippingTaxIncluded" => [
             "listeners" => [
                 [
@@ -128,6 +152,16 @@ class EventsForThirdPartyModules
                     "sendClasses" => [["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
                                       "Mirasvit\Credit\Service\Config\CalculationConfig"]],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+             ],
+         ],
+
+        "getAdditionalJS" => [
+            "listeners" => [
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
                 ],
             ],
         ],

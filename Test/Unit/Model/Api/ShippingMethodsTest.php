@@ -356,7 +356,9 @@ class ShippingMethodsTest extends TestCase
         $this->initCurrentMock(['catchExceptionAndSendError']);
 
         $exception =  new BoltException(
-            __('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID)
+            __('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID),
+            null,
+            6103
         );
 
         $this->currentMock->expects(self::once())->method('catchExceptionAndSendError')

@@ -492,6 +492,11 @@ class OrderManagementTest extends TestCase
             CreateOrder::E_BOLT_GENERAL_ERROR
         );
 
+        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
+        ->willReturn($this->mockTransactionData());
+        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
+        ->willReturn(self::QUOTE_ID);
+
         $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
             ->with(self::DISPLAY_ID)->willThrowException($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);

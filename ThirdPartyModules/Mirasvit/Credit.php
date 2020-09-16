@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 
+use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
@@ -24,6 +25,8 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
 use Magento\Framework\App\State;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Backend\App\Area\FrontNameResolver;
+use Magento\Framework\Event\Observer;
 
 class Credit
 {
@@ -105,20 +108,23 @@ class Credit
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
 
         try {
-            $amount = abs($this->getMirasvitStoreCreditAmount($quote, $paymentOnly));
-            $currencyCode = $quote->getQuoteCurrencyCode();
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-
-            $discounts[] = [
-                'description'       => 'Store Credit',
-                'amount'            => $roundedAmount,
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
+            // Check whether the Mirasvit Store Credit is allowed for quote
+            if ($quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditUsedAmount($quote) > 0) {
+                $amount = abs($this->getMirasvitStoreCreditAmount($quote, $paymentOnly));
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+    
+                $discounts[] = [
+                    'description'       => 'Store Credit',
+                    'amount'            => $roundedAmount,
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                ];
+    
+                $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
+                $totalAmount -= $roundedAmount;
+            }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         } finally {        
