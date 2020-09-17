@@ -133,8 +133,28 @@ class ThirdPartyModuleFactoryTest extends TestCase
      * @test
      * @covers ::isExists
      */
-    public function isExists()
+    public function isExists_withClass_returnTrue()
     {
+        $this->assertTrue($this->currentMock->isExists());
+    }
+
+    /**
+     * @test
+     * @covers ::isExists
+     */
+    public function isExists_withInterface_returnTrue()
+    {
+        $this->currentMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
+        ->setConstructorArgs([
+            $this->_moduleManager,
+            $this->_objectManager,
+            $this->logHelper,
+            "Bolt\Boltpay\Api\CreateOrderInterface",
+            $this->className
+        ])
+        ->enableProxyingToOriginalMethods()
+        ->getMock();
+
         $this->assertTrue($this->currentMock->isExists());
     }
 }
