@@ -30,6 +30,7 @@ use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class UpdateCart
@@ -103,11 +104,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             $immutableQuoteId = $cart['order_reference'];
             
             $result = $this->validateQuote($immutableQuoteId);
-            
-            if(!$result){
-                // Already sent a response with error, so just return.
-                return false;
-            }
             
             list($parentQuote, $immutableQuote) = $result;
             
@@ -226,6 +222,14 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 
             $this->sendSuccessResponse($result);
             
+        } catch (BoltException $e) {
+            $this->sendErrorResponse(
+                $e->getCode(),
+                $e->getMessage(),
+                $e->getHttpCode()
+            );
+
+            return false;
         } catch (WebApiException $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,

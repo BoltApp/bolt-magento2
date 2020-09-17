@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Exception\BoltException;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Webapi\Rest\Request;
@@ -462,31 +464,34 @@ class UpdateCartCommonTest extends TestCase
     
     /**
      * @test
-     * that validateQuote would return false if parent quote id is empty
+     * that validateQuote will throw an exception if parent quote id is empty
      *
      * @covers ::validateQuote
      */
-    public function validateQuote_parentQuoteIdEmpty_returnFalse()
+    public function validateQuote_parentQuoteIdEmpty_throwsException()
     {
         $this->initCurrentMock();
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
         ->with(self::IMMUTABLE_QUOTE_ID)
         ->willReturn($this->getQuoteMock(
-            null,
-            self::PARENT_QUOTE_ID
+            self::IMMUTABLE_QUOTE_ID,
+            null
         ));
+        $this->expectExceptionMessage('Parent quote does not exist');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION);
+        $this->expectException(BoltException::class);
 
-        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
+        $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID);
     }
     
     /**
      * @test
-     * that validateQuote would return false if order already was created
+     * that validateQuote will throw an exception if order already was created
      *
      * @covers ::validateQuote
      */
-    public function validateQuote_orderAlreadyCreated_returnFalse()
+    public function validateQuote_orderAlreadyCreated_throwsException()
     {
         $this->initCurrentMock();
         
@@ -507,32 +512,40 @@ class UpdateCartCommonTest extends TestCase
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
             ->with(null,self::PARENT_QUOTE_ID)->willReturn(true);
 
-        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
+        $this->expectExceptionMessage(sprintf('The order with quote #%s has already been created ', self::PARENT_QUOTE_ID));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION);
+        $this->expectException(BoltException::class);
+
+        $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
      * @test
-     * that validateQuote would return false if immutable quote does not exist
+     * that validateQuote will throw an exception if immutable quote does not exist
      *
      * @covers ::validateQuote
      */
-    public function validateQuote_immutableQuoteNotExist_returnFalse()
+    public function validateQuote_immutableQuoteNotExist_throwsException()
     {
         $this->initCurrentMock();
 
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
 
-        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
+        $this->expectExceptionMessage(sprintf('The cart reference [%s] cannot be found.', self::IMMUTABLE_QUOTE_ID));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION);
+        $this->expectException(BoltException::class);
+
+        $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
      * @test
-     * that validateQuote would return false if immutable quote does not have any item
+     * that validateQuote will throw an exception if immutable quote does not have any item
      *
      * @covers ::validateQuote
      */
-    public function validateQuote_immutableQuoteNoItem_returnFalse()
+    public function validateQuote_immutableQuoteNoItem_throwsException()
     {
         $this->initCurrentMock();
         
@@ -557,8 +570,12 @@ class UpdateCartCommonTest extends TestCase
         
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($immutableQuoteMock);
+
+        $this->expectExceptionMessage(sprintf(sprintf('The cart for order reference [%s] is empty.', self::IMMUTABLE_QUOTE_ID)));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION);
+        $this->expectException(BoltException::class);
         
-        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
+        $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID);
     }
     
     /**
@@ -598,19 +615,20 @@ class UpdateCartCommonTest extends TestCase
     
     /**
      * @test
-     * that validateQuote would return false if has exception
+     * that validateQuote will throw exceptions it encounters
      *
      * @covers ::validateQuote
      */
-    public function validateQuote_hasException_returnFalse()
+    public function validateQuote_hasException_throwsException()
     {
         $this->initCurrentMock();
         
         $exception = new NoSuchEntityException();
         $this->cartHelper->expects(self::once())->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)->willThrowException($exception);
-        
-        $this->assertFalse($this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID));
+
+        $this->expectException(NoSuchEntityException::class);
+        $this->currentMock->validateQuote(self::IMMUTABLE_QUOTE_ID);
     }
     
     /**

@@ -38,6 +38,7 @@ use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class UpdateCartCommon
@@ -146,81 +147,73 @@ abstract class UpdateCartCommon
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->cartRepository = $updateCartContext->getCartRepositoryInterface();
     }
-    
+
     /**
      * Validate the related quote.
      *
-     * @param  object $request
-     * @return bool
+     * @param $immutableQuoteId
+     * @return array
+     * @throws BoltException
      */
     public function validateQuote($immutableQuoteId)
     {
-        try {
-            // check the existence of child quote
-            $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
-            if (!$immutableQuote) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId),
-                    404
-                );
-                return false;
-            }
-
-            $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
-
-            if(empty($parentQuoteId)) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'Parent quote does not exist',
-                    404
-                );
-                return false;
-            }
-
-            /** @var Quote $parentQuote */
-            if ($immutableQuoteId == $parentQuoteId) {
-                // Product Page Checkout - quotes are created as inactive
-                $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-            } else {
-                $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
-            }
-            
-            // check if the order has already been created
-            if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The order with quote #%s has already been created ', $parentQuoteId),
-                    422
-                );
-                return false;
-            }
-
-            // check if cart is empty
-            if (!$immutableQuote->getItemsCount()) {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId),
-                    422
-                );
-
-                return false;
-            }
-            
-            return [
-                $parentQuote,
-                $immutableQuote,
-            ];
-
-        } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                $e->getMessage(),
-                404
+        // check the existence of child quote
+        $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
+        if (!$immutableQuote) {
+            throw new BoltException(
+                __(sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId)),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
-            return false;
         }
+
+        $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
+
+        if(empty($parentQuoteId)) {
+            $this->bugsnag->notifyError(
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+                'Parent quote does not exist'
+            );
+            throw new BoltException(
+                __('Parent quote does not exist'),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+            );
+        }
+
+        /** @var Quote $parentQuote */
+        if ($immutableQuoteId == $parentQuoteId) {
+            // Product Page Checkout - quotes are created as inactive
+            $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        } else {
+            $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+        }
+
+        // check if the order has already been created
+        if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
+            throw new BoltException(
+                __(sprintf('The order with quote #%s has already been created ', $parentQuoteId)),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+            );
+        }
+
+        // check if cart is empty
+        if (!$immutableQuote->getItemsCount()) {
+            throw new BoltException(
+                __(sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId)),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+            );
+        }
+
+        return [
+            $parentQuote,
+            $immutableQuote,
+        ];
     }
+
+
     
     /**
      *
