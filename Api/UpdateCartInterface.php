@@ -33,5 +33,11 @@ interface UpdateCartInterface
      * @param mixed $discount_codes_to_remove
      * @return \Bolt\Boltpay\Api\Data\UpdateCartResultInterface
      */
-    public function execute($cart, $add_items = null, $remove_items = null, $discount_codes_to_add = null, $discount_codes_to_remove = null);
+    public function execute(
+        $cart,
+        $add_items = null,
+        $remove_items = null,
+        $discount_codes_to_add = null,
+        $discount_codes_to_remove = null
+    );
 }

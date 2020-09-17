@@ -196,10 +196,7 @@ class UpdateCartTest extends TestCase
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
-        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);        
-        TestHelper::setProperty($this->currentMock, 'response', $this->response);
-        TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
-        TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
+        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
     }
     
     /**

@@ -24,10 +24,6 @@ use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 
-/**
- * Class OrderCreateProcessDataObserver
- * @package Bolt\Boltpay\Observer\Adminhtml\Sales
- */
 class RechargeCustomer implements ObserverInterface
 {
     /**
@@ -75,7 +71,9 @@ class RechargeCustomer implements ObserverInterface
             $event = $observer->getEvent();
             $order = $event->getOrder();
 
-            if (!$order->getPayment() || $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+            if (!$order->getPayment()
+                || $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
+            ) {
                 return false;
             }
 
@@ -94,7 +92,7 @@ class RechargeCustomer implements ObserverInterface
                         )
                     );
                 }
-                $order->setData('is_recharged_order',true);
+                $order->setData('is_recharged_order', true);
 
                 return true;
             }

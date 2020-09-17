@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Block;
+
 /**
  * MinifiedJs Block. The block class used in replace.phtml and boltglobaljs blocks.
  */

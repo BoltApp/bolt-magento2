@@ -27,11 +27,6 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Exception\LocalizedException;
 
-/**
- * Class TrackingSaveObserver
- *
- * @package Bolt\Boltpay\Observer
- */
 class TrackingSaveObserver implements ObserverInterface
 {
     /**
@@ -102,7 +97,8 @@ class TrackingSaveObserver implements ObserverInterface
         $properties = [];
         foreach ($itemOptions['attributes_info'] as $attributeInfo) {
             // Convert attribute to string if it's a boolean before sending to the Bolt API
-            $attributeValue = is_bool($attributeInfo['value']) ? var_export($attributeInfo['value'], true) : $attributeInfo['value'];
+            $attributeValue = is_bool($attributeInfo['value']) ?
+                var_export($attributeInfo['value'], true) : $attributeInfo['value'];
             $attributeLabel = $attributeInfo['label'];
             $properties[] = (object) [
                 'name' => $attributeLabel,
@@ -135,10 +131,15 @@ class TrackingSaveObserver implements ObserverInterface
                 $transactionReference = $payment->getAdditionalInformation('transaction_reference');
             }
 
-            if (is_null($transactionReference)) {
+            if ($transactionReference === null) {
                 $quoteId = $order->getQuoteId();
                 $this->bugsnag->notifyError("Missing transaction reference", "QuoteID: {$quoteId}");
-                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                $this->metricsClient->processMetric(
+                    "tracking_creation.failure",
+                    1,
+                    "tracking_creation.latency",
+                    $startTime
+                );
                 return;
             }
 
@@ -176,16 +177,36 @@ class TrackingSaveObserver implements ObserverInterface
             $result = $this->apiHelper->sendRequest($request);
 
             if ($result != 200) {
-                $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+                $this->metricsClient->processMetric(
+                    "tracking_creation.failure",
+                    1,
+                    "tracking_creation.latency",
+                    $startTime
+                );
                 return;
             }
-            $this->metricsClient->processMetric("tracking_creation.success", 1, "tracking_creation.latency", $startTime);
+            $this->metricsClient->processMetric(
+                "tracking_creation.success",
+                1,
+                "tracking_creation.latency",
+                $startTime
+            );
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+            $this->metricsClient->processMetric(
+                "tracking_creation.failure",
+                1,
+                "tracking_creation.latency",
+                $startTime
+            );
         } catch (LocalizedException $e) {
             $this->bugsnag->notifyException($e);
-            $this->metricsClient->processMetric("tracking_creation.failure", 1, "tracking_creation.latency", $startTime);
+            $this->metricsClient->processMetric(
+                "tracking_creation.failure",
+                1,
+                "tracking_creation.latency",
+                $startTime
+            );
         }
     }
 }

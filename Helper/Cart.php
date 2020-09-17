@@ -1556,6 +1556,17 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Return user group id for logged in users and "0" for guest users
+     *
+     */
+    private function getUserGroupId() {
+        if (!$this->customerSession->isLoggedIn()) {
+            return "0";
+        }
+        return $this->customerSession->getCustomer()->getGroupId();
+    }
+
+    /**
      * Get the address for totals calculation based on the quote physical / virtual type
      *
      * @param Quote $quote
@@ -1652,6 +1663,10 @@ class Cart extends AbstractHelper
         // This is the constraint field on Bolt side and this way
         // duplicate payments / orders are prevented
         $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+
+        if ($this->deciderHelper->isIncludeUserGroupIntoCart()) {
+            $cart['metadata']['user_group_id'] = $this->getUserGroupId();
+        }
 
         $this->sessionHelper->cacheFormKey($immutableQuote);
 
@@ -2330,8 +2345,21 @@ class Cart extends AbstractHelper
      *
      * @return array cart_data in bolt format
      * @throws \Exception
+     * @throws BoltException
      */
     public function createCartByRequest($request)
+    {
+        return $this->createCart($request['items'], $request['metadata']);
+    }
+
+    /**
+     * Create a cart with the provided items
+     * @param $items - cart items
+     * @param $metadata - cart metadata
+     * @return array cart_data in bolt format
+     * @throws BoltException
+     */
+    public function createCart($items, $metadata = null)
     {
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
@@ -2339,12 +2367,12 @@ class Cart extends AbstractHelper
         $quote->setBoltParentQuoteId($quoteId);
         $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_PPC);
 
-        if (isset($request['metadata']['encrypted_user_id'])) {
-            $this->assignQuoteCustomerByEncryptedUserId($quote, $request['metadata']['encrypted_user_id']);
+        if (isset($metadata['encrypted_user_id'])) {
+            $this->assignQuoteCustomerByEncryptedUserId($quote, $metadata['encrypted_user_id']);
         }
 
         //add item to quote
-        foreach ($request['items'] as $item) {
+        foreach ($items as $item) {
             $product = $this->productRepository->getbyId($item['reference']);
 
             $options = json_decode($item['options'], true);
@@ -2380,7 +2408,6 @@ class Cart extends AbstractHelper
 
         $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
-
         return $cart_data;
     }
 

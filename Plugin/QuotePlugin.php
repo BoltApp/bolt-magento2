@@ -18,11 +18,6 @@ namespace Bolt\Boltpay\Plugin;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 
-/**
- * Class QuotePlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class QuotePlugin
 {
     /**

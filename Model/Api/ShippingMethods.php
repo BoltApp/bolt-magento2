@@ -45,6 +45,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
 use Magento\Framework\Serialize\Serializer\Serialize;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ShippingMethods
@@ -170,6 +171,11 @@ class ShippingMethods implements ShippingMethodsInterface
     private $serialize;
 
     protected $_oldShippingAddress;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
 
     /**
      * Assigns local references to global resources
@@ -195,6 +201,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param DiscountHelper                  $discountHelper
      * @param RuleFactory                     $ruleFactory
      * @param Serialize                       $serialize
+     * @param EventsForThirdPartyModules      $eventsForThirdPartyModules
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -217,7 +224,8 @@ class ShippingMethods implements ShippingMethodsInterface
         SessionHelper $sessionHelper,
         DiscountHelper $discountHelper,
         RuleFactory $ruleFactory,
-        Serialize $serialize
+        Serialize $serialize,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -240,6 +248,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->discountHelper = $discountHelper;
         $this->ruleFactory = $ruleFactory;
         $this->serialize = $serialize;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -766,7 +775,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
             }
 
-            $discountAmount = $shippingAddress->getShippingDiscountAmount();
+            $discountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $shippingAddress->getShippingDiscountAmount(), $quote, $shippingAddress);
 
             $cost        = $shippingAddress->getShippingAmount() - $discountAmount;
             $roundedCost = CurrencyUtils::toMinor($cost, $quote->getQuoteCurrencyCode());

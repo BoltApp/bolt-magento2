@@ -20,11 +20,6 @@ use Bolt\Boltpay\Model\Payment;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 
-/**
- * Class OrderSenderPlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class OrderSenderPlugin
 {
     /**

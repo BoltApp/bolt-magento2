@@ -35,6 +35,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Trait UpdateDiscountTrait
@@ -87,6 +88,11 @@ trait UpdateDiscountTrait
      * @var TotalsCollector
      */
     protected $totalsCollector;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     /**
      * UpdateDiscountTrait constructor.
@@ -105,6 +111,7 @@ trait UpdateDiscountTrait
         $this->bugsnag = $updateCartContext->getBugsnag();
         $this->discountHelper = $updateCartContext->getDiscountHelper();
         $this->totalsCollector = $updateCartContext->getTotalsCollector();
+        $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
     }
     
     /**
@@ -129,18 +136,26 @@ trait UpdateDiscountTrait
             return false;
         }
 
-        // Load the gift card by code
+        // Load the Magento_GiftCardAccount object
         $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
+        
+        // Load the Unirgy_GiftCert object
+        if (empty($giftCard)) {
+            $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
+        }
 
         // Load Amasty Gift Card account object
         if (empty($giftCard)) {
             $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode, $websiteId);
         }
 
-        // Apply Mageplaza_GiftCard
+        // Load Mageplaza_GiftCard object
         if (empty($giftCard)) {
-            // Load the gift card by code
             $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode, $storeId);
+        }
+        
+        if (empty($giftCard)) {
+            $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $storeId);
         }
 
         $coupon = null;
@@ -187,7 +202,7 @@ trait UpdateDiscountTrait
     }
 
     /**
-     * Applying coupon code to immutable and parent quote.
+     * Applying coupon code to quote.
      *
      * @param string $couponCode
      * @param Coupon $coupon
@@ -197,7 +212,7 @@ trait UpdateDiscountTrait
      * @throws LocalizedException
      * @throws \Exception
      */
-    private function applyingCouponCode($couponCode, $coupon, $quote)
+    protected function applyingCouponCode($couponCode, $coupon, $quote, $addQuote = null)
     {
         // get coupon entity id and load the coupon discount rule
         $couponId = $coupon->getId();
@@ -312,7 +327,10 @@ trait UpdateDiscountTrait
         }
 
         try {
-            // try applying to parent first
+            if (!is_null($addQuote)) {
+                $this->discountHelper->setCouponCode($addQuote, $couponCode);
+            }
+
             $this->discountHelper->setCouponCode($quote, $couponCode);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -341,7 +359,15 @@ trait UpdateDiscountTrait
             $quote->getShippingAddress();
         $this->totalsCollector->collectAddressTotals($quote, $address);
 
-        return true;
+        $result = [
+            'status'          => 'success',
+            'discount_code'   => $couponCode,
+            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $quote->getQuoteCurrencyCode())),
+            'description'     => trim(__('Discount ') . $rule->getDescription()),
+            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
+        ];
+       
+        return $result;
     }
 
     /**

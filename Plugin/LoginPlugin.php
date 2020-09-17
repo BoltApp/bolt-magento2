@@ -24,8 +24,6 @@ use Magento\Framework\Controller\ResultFactory;
 /**
  * Class LoginPlugin
  * Redirect to shopping cart page after customer has logged in from Ajax controller.
- *
- * @package Bolt\Boltpay\Plugin
  */
 class LoginPlugin extends AbstractLoginPlugin
 {

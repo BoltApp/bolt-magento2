@@ -19,10 +19,6 @@ namespace Bolt\Boltpay\Logger;
 
 use Magento\Framework\Logger\Handler\Base;
 
-/**
- * Class Handler
- * @package Bolt\Boltpay\Logger
- */
 class Handler extends Base
 {
     /**

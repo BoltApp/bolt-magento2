@@ -33,7 +33,6 @@ class BoltHints implements SectionSourceInterface
      */
     private $configHelper;
 
-
     public function __construct(
         CartHelper $cartHelper,
         ConfigHelper $configHelper

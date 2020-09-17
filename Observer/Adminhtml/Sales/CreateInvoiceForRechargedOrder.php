@@ -8,11 +8,6 @@ use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-/**
- * Class CreateInvoiceForRechargedOrder
- *
- * @package Bolt\Boltpay\Observer\Adminhtml\Sales
- */
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
 
@@ -37,11 +32,7 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
      * @param InvoiceSender $invoiceSender
      * @param Bugsnag $bugsnag
      */
-    public function __construct(
-        InvoiceService $invoiceService,
-        InvoiceSender $invoiceSender,
-        Bugsnag $bugsnag
-    )
+    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag)
     {
         $this->bugsnag = $bugsnag;
         $this->invoiceService = $invoiceService;

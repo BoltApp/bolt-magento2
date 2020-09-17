@@ -17,11 +17,6 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
-/**
- * Cart data interface.
- *
- * @api
- */
 interface CartDataInterface
 {
     /**
