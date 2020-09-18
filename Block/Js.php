@@ -219,6 +219,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional Html
+     *
+     * @return string
+     */
+    public function getAdditionalHtml()
+    {
+        return $this->eventsForThirdPartyModules->runFilter("getAdditionalHtml", null);
+    }
+
+    /**
      * Gets the auto-open Bolt checkout session flag, and then unsets it so that it is only used once.
      *
      * @return bool
@@ -327,7 +337,7 @@ class Js extends Template
      */
     protected function getOnEmailEnter()
     {
-        return $this->configHelper->getOnEmailEnter();
+        return $this->eventsForThirdPartyModules->runFilter("getOnEmailEnter", $this->configHelper->getOnEmailEnter());
     }
 
     /**

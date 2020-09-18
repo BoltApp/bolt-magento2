@@ -127,6 +127,11 @@ class Definitions
      */
     const M2_INCLUDE_USER_GROUP_ID_INTO_CART = "M2_INCLUDE_USER_GROUP_ID_INTO_CART";
 
+    /**
+     * Capture email to Listrak
+     */
+    const M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED = "M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED";
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -235,6 +240,12 @@ class Definitions
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED =>  [
+            self::NAME_KEY            => self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
         ],
     ];
 }
