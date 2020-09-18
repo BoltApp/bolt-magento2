@@ -84,7 +84,11 @@ class ThirdPartyModuleFactory
         // Return false instead if any uncaught exceptions.
         ///////////////////////////////////////////////////////////////
         try {
-            return class_exists($this->className);
+            if (substr($this->className, -9) === "Interface") {
+                return interface_exists($this->className);
+            } else {
+                return class_exists($this->className);
+            }
         } catch (\Exception $e) {
             return false;
         }
