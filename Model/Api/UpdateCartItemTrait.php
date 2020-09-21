@@ -82,6 +82,14 @@ trait UpdateCartItemTrait
             );
 
             return false;
+        } catch (\Exception $e) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,
+                $e->getMessage(),
+                422
+            );
+            
+            return false;
         }
         
         return $product;

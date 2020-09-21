@@ -30,6 +30,9 @@ use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Framework\App\CacheInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockStateInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -156,6 +159,21 @@ class UpdateCartContextTest extends TestCase
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
+    
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepositoryInterface;
+    
+    /**
+     * @var StockStateInterface
+     */
+    protected $stockStateInterface;
+    
+    /**
+     * @var CartRepositoryInterface
+     */
+    protected $cartRepositoryInterface;
 
     /**
      * @var UpdateCartContext|MockObject
@@ -185,6 +203,9 @@ class UpdateCartContextTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $this->productRepositoryInterface = $this->createMock(ProductRepositoryInterface::class);
+        $this->stockStateInterface = $this->createMock(StockStateInterface::class);
+        $this->cartRepositoryInterface = $this->createMock(CartRepositoryInterface::class);
 
         $this->currentMock = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -209,7 +230,10 @@ class UpdateCartContextTest extends TestCase
                     $this->totalsCollector,
                     $this->sessionHelper,
                     $this->cache,
-                    $this->eventsForThirdPartyModules
+                    $this->eventsForThirdPartyModules,
+                    $this->productRepositoryInterface,
+                    $this->stockStateInterface,
+                    $this->cartRepositoryInterface
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -246,7 +270,10 @@ class UpdateCartContextTest extends TestCase
             $this->totalsCollector,
             $this->sessionHelper,
             $this->cache,
-            $this->eventsForThirdPartyModules
+            $this->eventsForThirdPartyModules,
+            $this->productRepositoryInterface,
+            $this->stockStateInterface,
+            $this->cartRepositoryInterface
         );
         
         $this->assertAttributeInstanceOf(Request::class, 'request', $instance);
@@ -270,6 +297,9 @@ class UpdateCartContextTest extends TestCase
         $this->assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
         $this->assertAttributeInstanceOf(CacheInterface::class, 'cache', $instance);
         $this->assertAttributeInstanceOf(EventsForThirdPartyModules::class, 'eventsForThirdPartyModules', $instance);
+        $this->assertAttributeInstanceOf(ProductRepositoryInterface::class, 'productRepositoryInterface', $instance);
+        $this->assertAttributeInstanceOf(StockStateInterface::class, 'stockStateInterface', $instance);
+        $this->assertAttributeInstanceOf(CartRepositoryInterface::class, 'cartRepositoryInterface', $instance);
     }
 
     /**
@@ -501,5 +531,38 @@ class UpdateCartContextTest extends TestCase
     public function getEventsForThirdPartyModules_always_returnsEventsForThirdPartyModules()
     {
         $this->assertEquals($this->eventsForThirdPartyModules, $this->currentMock->getEventsForThirdPartyModules());
+    }
+    
+    /**
+     * @test
+     * that getProductRepositoryInterface would returns ProductRepositoryInterface instance
+     *
+     * @covers ::getProductRepositoryInterface
+     */
+    public function getProductRepositoryInterface_always_returnsProductRepositoryInterface()
+    {
+        $this->assertEquals($this->productRepositoryInterface, $this->currentMock->getProductRepositoryInterface());
+    }
+    
+    /**
+     * @test
+     * that getStockStateInterface would returns StockStateInterface instance
+     *
+     * @covers ::getStockStateInterface
+     */
+    public function getStockStateInterface_always_returnsStockStateInterface()
+    {
+        $this->assertEquals($this->stockStateInterface, $this->currentMock->getStockStateInterface());
+    }
+    
+    /**
+     * @test
+     * that getCartRepositoryInterface would returns CartRepositoryInterface instance
+     *
+     * @covers ::getCartRepositoryInterface
+     */
+    public function getCartRepositoryInterface_always_returnsCartRepositoryInterface()
+    {
+        $this->assertEquals($this->cartRepositoryInterface, $this->currentMock->getCartRepositoryInterface());
     }
 }

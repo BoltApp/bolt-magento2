@@ -293,7 +293,7 @@ abstract class UpdateCartCommon
      * Collect and update quote totals.
      * @param Quote $quote
      */
-    protected function updateTotals(Quote $quote)
+    protected function updateTotals($quote)
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setTotalsCollectedFlag(false);

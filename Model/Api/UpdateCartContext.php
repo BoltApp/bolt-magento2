@@ -252,6 +252,7 @@ class UpdateCartContext
         $this->sessionHelper = $sessionHelper;
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Magento\Framework\App\CacheInterface::class);
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockStateInterface = $stockStateInterface;
         $this->cartRepositoryInterface = $cartRepositoryInterface;
