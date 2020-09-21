@@ -101,7 +101,7 @@ trait UpdateDiscountTrait
      */
     final public function __construct(
         UpdateCartContext $updateCartContext
-    ) {        
+    ) {
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->logHelper = $updateCartContext->getLogHelper();
         $this->usageFactory = $updateCartContext->getUsageFactory();
