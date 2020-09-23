@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<ruleset name="Magento2">
-    <description>Magento2 Coding Standard</description>
-
-    <!-- File extensions to be checked. -->
-    <arg name="extensions" value="php,phtml"/>
-    <rule ref="Magento2" />
-
-</ruleset>
