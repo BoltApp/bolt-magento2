@@ -2625,6 +2625,7 @@ ORDER
                         'sku'          => self::PRODUCT_SKU,
                         'type'         => 'physical',
                         'description'  => 'Product Description',
+                        'quote_item_id'=> '2'
                     ]
                 ],
                 'discounts'       => [],
