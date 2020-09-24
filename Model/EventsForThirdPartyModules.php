@@ -27,9 +27,9 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
-
 
 class EventsForThirdPartyModules
 {
@@ -87,6 +87,15 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        'applyExternalDiscountData' => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
+        ]
     ];
 
     const filterListeners = [
@@ -147,7 +156,12 @@ class EventsForThirdPartyModules
                         "Mageplaza\GiftCard\Model\ResourceModel\GiftCard\CollectionFactory",
                     ],
                     "boltClass" => Mageplaza_GiftCard::class,
-                ]
+                ],
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
             ],
         ],
         "loadGiftcard" => [
@@ -246,7 +260,16 @@ class EventsForThirdPartyModules
                     "boltClass" => Listrak_Remarketing::class,
                 ],
             ],
-        ]
+        ],
+        "filterApplyExternalQuoteData" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ],
+        ],
     ];
 
     /**
