@@ -118,7 +118,7 @@ trait UpdateCartItemTrait
         
         if (!$this->stockState->verifyStock($itemToAdd['product_id'])) {
             $this->sendErrorResponse(
-                BoltErrorResponse::ERR_PPC_OUT_OF_STOCK,
+                BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
                 sprintf('The item [%s] is out of stock.', $itemToAdd['product_id']),
                 422
             );
@@ -135,7 +135,7 @@ trait UpdateCartItemTrait
         );
         if ($checkQty->getHasError()) {
             $this->sendErrorResponse(
-                BoltErrorResponse::ERR_PPC_INVALID_QUANTITY,
+                BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
                 $checkQty->getMessage(),
                 422
             );

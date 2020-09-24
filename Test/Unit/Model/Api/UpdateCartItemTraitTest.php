@@ -161,7 +161,7 @@ class UpdateCartItemTraitTest extends TestCase
              ->with(100)->willReturn(false);
             
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_PPC_OUT_OF_STOCK,'The item [100] is out of stock.',422);
+            ->with(BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,'The item [100] is out of stock.',422);
         
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 1]);
         
@@ -195,7 +195,7 @@ class UpdateCartItemTraitTest extends TestCase
              ->with(100,1,1,1,3)->willReturn($checkQtyResult);
         
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_PPC_INVALID_QUANTITY,'The fewest you may purchase is 2.',422);
+            ->with(BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,'The fewest you may purchase is 2.',422);
         
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 3]);
         
