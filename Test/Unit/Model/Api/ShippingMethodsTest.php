@@ -658,7 +658,6 @@ class ShippingMethodsTest extends TestCase
     public function applyExternalQuoteData_thirdPartyRewards()
     {
         $amRewardsPoint = 100;
-        $mirasvitRewardsPoint = 200;
         $this->initCurrentMock();
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods(['getAmrewardsPoint'])
@@ -668,11 +667,8 @@ class ShippingMethodsTest extends TestCase
         $this->discountHelper->expects(self::once())->method('applyExternalDiscountData')->with($quote);
         $quote->expects(self::atLeastOnce())->method('getAmrewardsPoint')->willReturn($amRewardsPoint);
 
-        $this->discountHelper->expects(self::once())->method('getMirasvitRewardsAmount')->with($quote)
-            ->willReturn($mirasvitRewardsPoint);
-
         self::assertEquals(
-            $amRewardsPoint.$mirasvitRewardsPoint,
+            $amRewardsPoint,
             $this->currentMock->applyExternalQuoteData($quote)
         );
     }
