@@ -4694,6 +4694,7 @@ ORDER
                 'getName',
                 'getSku',
                 'getIsVirtual',
+                'getId'
             ]
         );
         $productMock = $this->createMock(Product::class);
@@ -4704,6 +4705,7 @@ ORDER
         $quoteItem->method('getIsVirtual')->willReturn(false);
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
+        $quoteItem->method('getId')->willReturn(1);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
         $this->imageHelper->method('init')
@@ -4725,6 +4727,7 @@ ORDER
                                 'sku'          => self::PRODUCT_SKU,
                                 'type'         => 'physical',
                                 'description'  => '',
+                                'quote_item_id'=> 1,
                             ]
                         ]
                     );
@@ -4757,6 +4760,7 @@ ORDER
                     'sku'          => self::PRODUCT_SKU,
                     'type'         => 'physical',
                     'description'  => '',
+                    'quote_item_id'=> 1,
                 ],
             ],
             $products
@@ -4784,6 +4788,7 @@ ORDER
                 'getName',
                 'getSku',
                 'getIsVirtual',
+                'getId'
             ]
         );
         $productMock = $this->createMock(Product::class);
@@ -4794,6 +4799,7 @@ ORDER
         $quoteItem->method('getIsVirtual')->willReturn(true);
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
+        $quoteItem->method('getId')->willReturn(1);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
         $this->imageHelper->method('init')
@@ -4819,6 +4825,7 @@ ORDER
                     'sku'          => self::PRODUCT_SKU,
                     'type'         => 'physical',
                     'description'  => '',
+                    'quote_item_id'=> 1,
                 ],
             ],
             $products
@@ -4846,6 +4853,7 @@ ORDER
                   'getName',
                   'getSku',
                   'getIsVirtual',
+                  'getId'
               ]
           );
           $productMock = $this->createMock(Product::class);
@@ -4856,6 +4864,7 @@ ORDER
           $quoteItem->method('getIsVirtual')->willReturn(false);
           $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
           $quoteItem->method('getProduct')->willReturn($productMock);
+          $quoteItem->method('getId')->willReturn(1);
           $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
           $this->imageHelper->method('init')
@@ -4896,6 +4905,7 @@ ORDER
                       'sku'          => self::PRODUCT_SKU,
                       'type'         => 'physical',
                       'description'  => '',
+                      'quote_item_id'=> 1
                   ],
                   [
                       'reference' => 1,
@@ -5022,11 +5032,12 @@ ORDER
       /**
        * @return MockObject
        */
-      private function getQuoteItemMock()
+      private function getQuoteItemMock($itemId = 1)
       {
         $quoteItem = $this->getMockBuilder(Item::class)
             ->setMethods(
                 [
+                    'getId',
                     'getSku',
                     'getQty',
                     'getCalculationPrice',
@@ -5045,6 +5056,7 @@ ORDER
         $quoteItem->method('getIsVirtual')->willReturn(false);
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($this->productMock);
+        $quoteItem->method('getId')->willReturn($itemId);
 
         return $quoteItem;
         }

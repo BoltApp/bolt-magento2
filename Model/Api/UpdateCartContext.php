@@ -33,6 +33,9 @@ use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Framework\App\CacheInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockStateInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -156,56 +159,77 @@ class UpdateCartContext
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
+    
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepositoryInterface;
+    
+    /**
+     * @var StockStateInterface
+     */
+    protected $stockStateInterface;
+    
+    /**
+     * @var CartRepositoryInterface
+     */
+    protected $cartRepositoryInterface;
 
     /**
      * UpdateCartContext constructor.
      * 
      * Assigns local references to global resources
      *
-     * @param Request                 $request
-     * @param Response                $response
-     * @param HookHelper              $hookHelper
-     * @param BoltErrorResponse       $errorResponse
-     * @param LogHelper               $logHelper
-     * @param Bugsnag                 $bugsnag
-     * @param RegionModel             $regionModel
-     * @param OrderHelper             $orderHelper
-     * @param CartHelper              $cartHelper
-     * @param CheckoutSession         $checkoutSession
-     * @param RuleRepository          $ruleRepository
-     * @param UsageFactory            $usageFactory
-     * @param DataObjectFactory       $objectFactory
-     * @param TimezoneInterface       $timezone
-     * @param CustomerFactory         $customerFactory
-     * @param ConfigHelper            $configHelper
-     * @param DiscountHelper          $discountHelper
-     * @param TotalsCollector         $totalsCollector
-     * @param SessionHelper           $sessionHelper
-     * @param CacheInterface          $cache
-     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param Request                     $request
+     * @param Response                    $response
+     * @param HookHelper                  $hookHelper
+     * @param BoltErrorResponse           $errorResponse
+     * @param LogHelper                   $logHelper
+     * @param Bugsnag                     $bugsnag
+     * @param RegionModel                 $regionModel
+     * @param OrderHelper                 $orderHelper
+     * @param CartHelper                  $cartHelper
+     * @param CheckoutSession             $checkoutSession
+     * @param RuleRepository              $ruleRepository
+     * @param UsageFactory                $usageFactory
+     * @param DataObjectFactory           $objectFactory
+     * @param TimezoneInterface           $timezone
+     * @param CustomerFactory             $customerFactory
+     * @param ConfigHelper                $configHelper
+     * @param DiscountHelper              $discountHelper
+     * @param TotalsCollector             $totalsCollector
+     * @param SessionHelper               $sessionHelper
+     * @param CacheInterface              $cache
+     * @param EventsForThirdPartyModules  $eventsForThirdPartyModules
+     * @param ProductRepositoryInterface  $productRepositoryInterface
+     * @param StockStateInterface         $stockStateInterface
+     * @param CartRepositoryInterface     $cartRepositoryInterface
      */
     public function __construct(
-        Request $request,
-        Response $response,
-        HookHelper $hookHelper,
-        BoltErrorResponse $errorResponse,
-        LogHelper $logHelper,      
-        Bugsnag $bugsnag,        
-        RegionModel $regionModel,
-        OrderHelper $orderHelper,  
-        CartHelper $cartHelper,
-        CheckoutSession $checkoutSession,
-        RuleRepository $ruleRepository,
-        UsageFactory $usageFactory,
-        DataObjectFactory $objectFactory,
-        TimezoneInterface $timezone,
-        CustomerFactory $customerFactory,
-        ConfigHelper $configHelper,
-        DiscountHelper $discountHelper,
-        TotalsCollector $totalsCollector,
-        SessionHelper $sessionHelper,
-        CacheInterface $cache = null,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        Request                     $request,
+        Response                    $response,
+        HookHelper                  $hookHelper,
+        BoltErrorResponse           $errorResponse,
+        LogHelper                   $logHelper,      
+        Bugsnag                     $bugsnag,        
+        RegionModel                 $regionModel,
+        OrderHelper                 $orderHelper,  
+        CartHelper                  $cartHelper,
+        CheckoutSession             $checkoutSession,
+        RuleRepository              $ruleRepository,
+        UsageFactory                $usageFactory,
+        DataObjectFactory           $objectFactory,
+        TimezoneInterface           $timezone,
+        CustomerFactory             $customerFactory,
+        ConfigHelper                $configHelper,
+        DiscountHelper              $discountHelper,
+        TotalsCollector             $totalsCollector,
+        SessionHelper               $sessionHelper,
+        CacheInterface              $cache = null,
+        EventsForThirdPartyModules  $eventsForThirdPartyModules,
+        ProductRepositoryInterface  $productRepositoryInterface,
+        StockStateInterface         $stockStateInterface,
+        CartRepositoryInterface     $cartRepositoryInterface
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -229,6 +253,9 @@ class UpdateCartContext
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Magento\Framework\App\CacheInterface::class);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->productRepositoryInterface = $productRepositoryInterface;
+        $this->stockStateInterface = $stockStateInterface;
+        $this->cartRepositoryInterface = $cartRepositoryInterface;
     }
 
     /**
@@ -397,6 +424,30 @@ class UpdateCartContext
     public function getEventsForThirdPartyModules()
     {
         return $this->eventsForThirdPartyModules;
+    }
+    
+    /**
+     * @return ProductRepositoryInterface
+     */
+    public function getProductRepositoryInterface()
+    {
+        return $this->productRepositoryInterface;
+    }
+    
+    /**
+     * @return StockStateInterface
+     */
+    public function getStockStateInterface()
+    {
+        return $this->stockStateInterface;
+    }
+    
+    /**
+     * @return CartRepositoryInterface
+     */
+    public function getCartRepositoryInterface()
+    {
+        return $this->cartRepositoryInterface;
     }
     
 }
