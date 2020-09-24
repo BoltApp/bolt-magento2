@@ -30,6 +30,7 @@ use \Magento\Framework\App\State as AppState;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\RuleRepository;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Boltpay Discount helper class
@@ -117,13 +118,6 @@ class Discount extends AbstractHelper
     protected $unirgyGiftCertHelper;
 
     /**
-     * Mirasvit Rewards Points entry point
-     *
-     * @var ThirdPartyModuleFactory
-     */
-    protected $mirasvitRewardsPurchaseHelper;
-
-    /**
      * @var ThirdPartyModuleFactory
      */
     protected $amastyRewardsResourceQuote;
@@ -189,35 +183,40 @@ class Discount extends AbstractHelper
     protected $ruleRepository;
 
     /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
+    /**
      * Discount constructor.
      *
-     * @param Context                 $context
-     * @param ResourceConnection      $resource
-     * @param ThirdPartyModuleFactory $amastyLegacyAccountFactory
-     * @param ThirdPartyModuleFactory $amastyLegacyGiftCardManagement
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteFactory
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteResource
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteRepository
-     * @param ThirdPartyModuleFactory $amastyLegacyAccountCollection
-     * @param ThirdPartyModuleFactory $amastyAccountFactory
-     * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
-     * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
-     * @param ThirdPartyModuleFactory $unirgyCertRepository
-     * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
-     * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
-     * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
-     * @param ThirdPartyModuleFactory $amastyRewardsQuote
-     * @param ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
-     * @param CartRepositoryInterface $quoteRepository
-     * @param ConfigHelper            $configHelper
-     * @param Bugsnag                 $bugsnag
-     * @param AppState                $appState
-     * @param Session                 $sessionHelper
-     * @param LogHelper               $logHelper
-     * @param CouponFactory           $couponFactory
-     * @param RuleRepository          $ruleRepository
+     * @param Context                               $context
+     * @param ResourceConnection                    $resource
+     * @param ThirdPartyModuleFactory               $amastyLegacyAccountFactory
+     * @param ThirdPartyModuleFactory               $amastyLegacyGiftCardManagement
+     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteFactory
+     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteResource
+     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteRepository
+     * @param ThirdPartyModuleFactory               $amastyLegacyAccountCollection
+     * @param ThirdPartyModuleFactory               $amastyAccountFactory
+     * @param ThirdPartyModuleFactory               $amastyGiftCardAccountManagement
+     * @param ThirdPartyModuleFactory               $amastyGiftCardAccountCollection
+     * @param ThirdPartyModuleFactory               $unirgyCertRepository
+     * @param ThirdPartyModuleFactory               $unirgyGiftCertHelper
+     * @param ThirdPartyModuleFactory               $amastyRewardsResourceQuote
+     * @param ThirdPartyModuleFactory               $amastyRewardsQuote
+     * @param ThirdPartyModuleFactory               $aheadworksCustomerStoreCreditManagement
+     * @param ThirdPartyModuleFactory               $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory               $moduleGiftCardAccountHelper
+     * @param CartRepositoryInterface               $quoteRepository
+     * @param ConfigHelper                          $configHelper
+     * @param Bugsnag                               $bugsnag
+     * @param AppState                              $appState
+     * @param Session                               $sessionHelper
+     * @param LogHelper                             $logHelper
+     * @param CouponFactory                         $couponFactory
+     * @param RuleRepository                        $ruleRepository
+     * @param EventsForThirdPartyModules            $eventsForThirdPartyModules
      */
     public function __construct(
         Context $context,
@@ -233,7 +232,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
-        ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
@@ -246,7 +244,8 @@ class Discount extends AbstractHelper
         Session $sessionHelper,
         LogHelper $logHelper,
         CouponFactory $couponFactory,
-        RuleRepository $ruleRepository
+        RuleRepository $ruleRepository,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         parent::__construct($context);
         $this->resource = $resource;
@@ -261,7 +260,6 @@ class Discount extends AbstractHelper
         $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
         $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
-        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
@@ -275,6 +273,7 @@ class Discount extends AbstractHelper
         $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
     
     /**
@@ -730,26 +729,6 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * If enabled, gets the Mirasvit Rewards amount used
-     *
-     * @param \Magento\Quote\Model\Quote $quote  The parent quote of this order which contains Rewards points references
-     *
-     * @return float  If enabled, the currency amount used in the order, otherwise 0
-     */
-    public function getMirasvitRewardsAmount($quote)
-    {
-        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
-        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
-
-        if (!$mirasvitRewardsPurchaseHelper) {
-            return 0;
-        }
-
-        $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
-        return $miravitRewardsPurchase->getSpendAmount();
-    }
-
-    /**
      * Check whether the Amasty Reward Points module is available (installed and enabled)
      *
      * @return bool
@@ -885,41 +864,7 @@ class Discount extends AbstractHelper
         $this->setAmastyRewardPoints($quote);
         // Miravist reward points are held in a separate table
         // and are not assigned to the quote
-        $this->applyMiravistRewardPoint($quote);
-    }
-
-    /**
-     * Copy Miravist Reward Point data from parent quote to immutable quote.
-     * The reward points are fetched from the 3rd party module DB table (mst_rewards_purchase)
-     * and assigned to the parent quote temporarily (they are not persisted in the quote table).
-     * The data needs to be set on the immutable quote before the quote totals are calculated
-     * in the Shipping and Tax call in order to get correct tax
-     *
-     * @param $immutableQuote
-     */
-    public function applyMiravistRewardPoint($immutableQuote)
-    {
-        $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
-        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
-        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper->getInstance();
-        if (!$mirasvitRewardsPurchaseHelper || !$parentQuoteId) {
-            return;
-        }
-
-        try {
-            $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
-            if (abs($parentPurchase->getSpendAmount()) > 0) {
-                $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
-                    ->setSpendPoints($parentPurchase->getSpendPoints())
-                    ->setSpendMinAmount($parentPurchase->getSpendMinAmount())
-                    ->setSpendMaxAmount($parentPurchase->getSpendMaxAmount())
-                    ->setSpendAmount($parentPurchase->getSpendAmount())
-                    ->setBaseSpendAmount($parentPurchase->getBaseSpendAmount())
-                    ->save();
-            }
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
+        $this->eventsForThirdPartyModules->dispatchEvent("applyExternalDiscountData", $quote);
     }
     
     /**
