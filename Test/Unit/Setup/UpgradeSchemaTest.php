@@ -223,10 +223,6 @@ class UpgradeSchemaTest extends TestCase
     {
         return [
             [
-                'methodName' => 'setupFeatureSwitchTable',
-                'tableName'  => 'bolt_feature_switches',
-            ],
-            [
                 'methodName' => 'setupWebhookLogTable',
                 'tableName'  => 'bolt_webhook_log',
             ],
@@ -240,12 +236,10 @@ class UpgradeSchemaTest extends TestCase
     /**
      * @test
      * that
-     * @see UpgradeSchema::setupFeatureSwitchTable
      * @see UpgradeSchema::setupWebhookLogTable
      * @see UpgradeSchema::setupFeatureBoltCustomerCreditCardsTable
      * don't alter the database if the tables were already created
      *
-     * @covers ::setupFeatureSwitchTable
      * @covers ::setupWebhookLogTable
      * @covers ::setupFeatureBoltCustomerCreditCardsTable
      *
@@ -268,79 +262,6 @@ class UpgradeSchemaTest extends TestCase
                 )
             );
         TestHelper::invokeMethod($this->currentMock, $methodName, [$this->schemaSetup]);
-    }
-
-    /**
-     * @test
-     * that setupFeatureSwitchTable creates bolt_feature_switches table if it was not already created
-     *
-     * @covers ::setupFeatureSwitchTable
-     *
-     * @throws ReflectionException if setupFeatureSwitchTable method doesn't exist
-     */
-    public function setupFeatureSwitchTable_ifBoltFeatureSwitchesTableDoesNotExist_createsTheTable()
-    {
-        $this->schemaSetup->expects(static::exactly(3))->method('getConnection')->willReturnSelf();
-        $this->schemaSetup->expects(static::once())
-            ->method('isTableExists')
-            ->with('bolt_feature_switches')
-            ->willReturn(false);
-
-        $boltFeatureSwitchTable = 'bolt_feature_switches';
-        $this->schemaSetup->expects(static::once())
-            ->method('getTable')
-            ->with('bolt_feature_switches')
-            ->willReturn($boltFeatureSwitchTable);
-        $this->schemaSetup->expects(static::once())
-            ->method('newTable')
-            ->with($boltFeatureSwitchTable)
-            ->willReturnSelf();
-        $this->schemaSetup->expects(static::exactly(5))->method('addColumn')
-            ->withConsecutive(
-                [
-                    'id',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-                    'ID',
-                ],
-                [
-                    'switch_name',
-                    Table::TYPE_TEXT,
-                    255,
-                    ['nullable' => false],
-                    'Switch name',
-                ],
-                [
-                    'switch_value',
-                    Table::TYPE_BOOLEAN,
-                    null,
-                    ['nullable' => false, 'default' => '0'],
-                    'switch value',
-                ],
-                [
-                    'default_value',
-                    Table::TYPE_BOOLEAN,
-                    null,
-                    ['nullable' => false, 'default' => '0'],
-                    'default value',
-                ],
-                [
-                    'rollout_percentage',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['nullable' => false, 'default' => '0'],
-                    'rollout percentage',
-                ]
-            )->willReturnSelf();
-        $this->schemaSetup->expects(static::once())
-            ->method('setComment')
-            ->with('Bolt feature switch table')
-            ->willReturn($this->customTable);
-
-        $this->schemaSetup->expects(static::once())->method('createTable')->with($this->customTable)->willReturnSelf();
-
-        TestHelper::invokeMethod($this->currentMock, 'setupFeatureSwitchTable', [$this->schemaSetup]);
     }
 
     /**
