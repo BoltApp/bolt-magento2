@@ -24,8 +24,10 @@ use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerificat
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
+
 
 class EventsForThirdPartyModules
 {
@@ -76,6 +78,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
+                [
+                    "module" => "Mageplaza_GiftCard",
+                    "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
+                    "boltClass" => Mageplaza_GiftCard::class,
+                ]
             ],
         ],
         "collectDiscounts" => [
@@ -114,6 +121,13 @@ class EventsForThirdPartyModules
                         "Bss\StoreCredit\Model\ResourceModel\Credit\Collection"
                     ],
                     "boltClass" => Bss_StoreCredit::class,
+                ],
+                [
+                    "module" => "Mageplaza_GiftCard",
+                    "sendClasses" => [
+                        "Mageplaza\GiftCard\Model\ResourceModel\GiftCard\CollectionFactory",
+                    ],
+                    "boltClass" => Mageplaza_GiftCard::class,
                 ]
             ],
         ],
@@ -123,6 +137,11 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardRepositoryInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+                [
+                    "module" => "Mageplaza_GiftCard",
+                    "sendClasses" => ["Mageplaza\GiftCard\Model\GiftCardFactory"],
+                    "boltClass" => Mageplaza_GiftCard::class,
                 ],
             ],
         ],
@@ -165,6 +184,24 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "filterApplyingGiftCardCode" => [
+            "listeners" => [
+                [
+                    "module" => "Mageplaza_GiftCard",
+                    "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
+                    "boltClass" => Mageplaza_GiftCard::class,
+                ],
+            ],
+        ],
+        'filterRemovingGiftCardCode' => [
+            "listeners" => [
+                [
+                    "module" => "Mageplaza_GiftCard",
+                    "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
+                    "boltClass" => Mageplaza_GiftCard::class,
+                ],
+            ],
+        ]
     ];
 
     /**

@@ -1014,68 +1014,6 @@ class DiscountCodeValidationTest extends TestCase
 
     /**
      * @test
-     */
-    public function applyingGiftCardCode_mageplaza()
-    {
-        $this->initCurrentMock();
-        $discountAmount = 100;
-        $giftCardId = 1;
-
-        $giftCardMock = $this->getMockBuilder('\Mageplaza\GiftCard\Model\GiftCard')
-            ->setMethods(['getId', 'getBalance'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $giftCardMock->expects(self::any())->method('getId')->willReturn($giftCardId);
-        $giftCardMock->expects(self::once())->method('getBalance')->willReturn($discountAmount);
-
-        $parentQuoteMock = $this->getQuoteMock(
-            self::COUPON_CODE,
-            null,
-            null,
-            false,
-            self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID
-        );
-        $immutableQuoteMock = $this->getQuoteMock(self::COUPON_CODE);
-
-        $this->discountHelper->expects(self::exactly(2))->method('removeMageplazaGiftCard')
-            ->withConsecutive(
-                [$giftCardId, $immutableQuoteMock],
-                [$giftCardId, $parentQuoteMock]
-            );
-        $this->discountHelper->expects(self::exactly(2))->method('applyMageplazaGiftCard')
-            ->withConsecutive(
-                [self::COUPON_CODE, $immutableQuoteMock],
-                [self::COUPON_CODE, $parentQuoteMock]
-            );
-        
-        $this->discountHelper->expects(self::once())->method('getBoltDiscountType')
-            ->with('by_fixed')->willReturn('fixed_amount');
-
-        $expected = [
-            'status'          => 'success',
-            'discount_code'   => self::COUPON_CODE,
-            'discount_amount' => $discountAmount * 100,
-            'description'     => __('Gift Card'),
-            'discount_type'   => 'fixed_amount',
-        ];
-
-        $result = $this->invokeNonAccessibleMethod(
-            'applyingGiftCardCode',
-            [
-                self::COUPON_CODE,
-                $giftCardMock,
-                $immutableQuoteMock,
-                $parentQuoteMock,
-            ]
-        );
-
-        self::assertEquals($expected, $result);
-    }
-
-    /**
-     * @test
      * @covers ::getParentQuoteDiscountResult
      */
     public function getParentQuoteDiscountResult_couponNotFound()

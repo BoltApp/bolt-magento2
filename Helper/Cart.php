@@ -222,8 +222,7 @@ class Cart extends AbstractHelper
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
-        Discount::GIFT_VOUCHER => '',
-        Discount::MAGEPLAZA_GIFTCARD => ''
+        Discount::GIFT_VOUCHER => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
@@ -2146,26 +2145,6 @@ class Cart extends AbstractHelper
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
                     foreach($giftCardCodes as $giftCardCode) {
                         $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
-                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                        $discountItem = [
-                            'description'       => $description . $giftCardCode,
-                            'amount'            => $roundedAmount,
-                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
-                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-                        ];
-                        $discountAmount += $amount;
-                        $roundedDiscountAmount += $roundedAmount;
-                        $discounts[] = $discountItem;
-                    }
-                } elseif ($discount == Discount::MAGEPLAZA_GIFTCARD) {
-                    ///////////////////////////////////////////////////////////////////////////
-                    // Change giftcards balance as discount amount to giftcard balances to the discount amount
-                    ///////////////////////////////////////////////////////////////////////////
-                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
-                    foreach($giftCardCodes as $giftCardCode) {
-                        $amount = abs($this->discountHelper->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
                             'description'       => $description . $giftCardCode,

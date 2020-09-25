@@ -17,17 +17,13 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\Address;
 use Magento\SalesRule\Model\RuleRepository;
-use Magento\SalesRule\Model\Coupon;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -45,7 +41,6 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\Api\UpdateCartCommon;
-use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\MockObject\MockObject;
