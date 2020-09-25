@@ -1354,7 +1354,6 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
                 $product['sku']          = trim($item->getSku());
-                $product['quote_item_id']= $item->getId();
 
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
                 // It means we don't support taxes for virtual product and should handle all products as physical

@@ -204,7 +204,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             
             // Remove items
             if ( !empty($remove_items) ) {
-                list ($cartItems) = $this->cartHelper->getCartItems($parentQuote, $storeId);                    
+                $cartItems = $this->getCartItems($parentQuote);                    
                     
                 foreach ($remove_items as $remove_item) {
                     $result = $this->removeItemFromQuote($cartItems, $remove_item, $parentQuote);

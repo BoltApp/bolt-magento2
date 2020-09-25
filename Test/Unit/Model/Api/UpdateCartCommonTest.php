@@ -705,4 +705,42 @@ class UpdateCartCommonTest extends TestCase
         $this->cartRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
         TestHelper::invokeMethod($this->currentMock, 'updateTotals', [$quote]);
     }
+    
+    /**
+     * @test
+     * @covers ::getCartItems
+     *
+     */
+    public function getCartItems_returnItemsWithProperties()
+    {
+        $this->initCurrentMock();
+        
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods(['getProductId', 'getQty', 'getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('getProductId')->willReturn(100);
+        $quoteItem->method('getQty')->willReturn(1);
+        $quoteItem->method('getId')->willReturn(60);
+        
+        $quote = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID,
+            [
+                'getAllVisibleItems',
+            ]
+        );
+        
+        $quote->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        
+        $expected_result = [
+            [
+                'reference'     => 100,
+                'quantity'      => 1,
+                'quote_item_id' => 60,
+            ]
+        ];
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getCartItems', [$quote]);
+    }
 }

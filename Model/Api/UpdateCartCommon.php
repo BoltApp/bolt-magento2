@@ -301,6 +301,30 @@ abstract class UpdateCartCommon
         $quote->setDataChanges(true);
         $this->cartRepository->save($quote);
     }
+    
+    /**
+     * Create cart data items array.
+     * @param Quote $quote
+     */
+    protected function getCartItems($quote)
+    {
+        $items = $quote->getAllVisibleItems();
+
+        $products = array_map(
+            function ($item) {
+                $product = [];
+
+                $product['reference']    = $item->getProductId();
+                $product['quantity']     = round($item->getQty());
+                $product['quote_item_id']= $item->getId();
+
+                return  $product;
+            },
+            $items
+        );
+        
+        return $products;
+    }
 
     /**
      * @param int        $errCode
