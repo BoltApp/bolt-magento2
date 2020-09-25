@@ -64,6 +64,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Magento\Framework\Serialize\Serializer\Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\SalesRule\Model\RuleRepository;
+use Magento\SalesRule\Api\Data\RuleInterface;
 
 /**
  * Boltpay Cart helper
@@ -192,6 +194,11 @@ class Cart extends AbstractHelper
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
+    
+    /**
+     * @var RuleRepository
+     */
+    private $ruleRepository;
 
     // Billing / shipping address fields that are required when the address data is sent to Bolt.
     private $requiredAddressFields = [
@@ -215,8 +222,7 @@ class Cart extends AbstractHelper
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
-        Discount::GIFT_VOUCHER => '',
-        Discount::MAGEPLAZA_GIFTCARD => ''
+        Discount::GIFT_VOUCHER => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
 
@@ -294,6 +300,7 @@ class Cart extends AbstractHelper
      * @param DeciderHelper              $deciderHelper
      * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param RuleRepository             $ruleRepository
      */
     public function __construct(
         Context $context,
@@ -325,7 +332,8 @@ class Cart extends AbstractHelper
         MetricsClient $metricsClient,
         DeciderHelper $deciderHelper,
         Serialize $serialize,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        RuleRepository $ruleRepository
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -357,6 +365,7 @@ class Cart extends AbstractHelper
         $this->deciderHelper = $deciderHelper;
         $this->serialize = $serialize;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->ruleRepository = $ruleRepository;
     }
 
     /**
@@ -1936,19 +1945,47 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+            // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
+            // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
+            $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
+            $salesruleIds = explode(',', $quote->getAppliedRuleIds());
+            foreach ($salesruleIds as $salesruleId) {
+                if (!isset($boltCollectSaleRuleDiscounts[$salesruleId])) {
+                    continue;
+                }
+                $rule = $this->ruleRepository->getById($salesruleId);
+                if ($rule) {
+                    $ruleDiscountAmount = $boltCollectSaleRuleDiscounts[$salesruleId];
+                    $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
+                    switch ($rule->getCouponType()) {
+                        case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
+                        case RuleInterface::COUPON_TYPE_AUTO:
+                            $discounts[] = [
+                                'description'       => trim(__('Discount ') . $rule->getDescription()),
+                                'amount'            => $roundedAmount,
+                                'reference'         => $quote->getCouponCode(),
+                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
+                                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
+                                'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
+                            ];            
 
-            $discounts[] = [
-                'description'       => trim(__('Discount ') . $address->getDiscountDescription()),
-                'amount'            => $roundedAmount,
-                'reference'         => $quote->getCouponCode(),
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
+                            break;
+                        case RuleInterface::COUPON_TYPE_NO_COUPON:
+                        default:
+                            $discounts[] = [
+                                'description'       => trim(__('Discount ') . $rule->getDescription()),
+                                'amount'            => $roundedAmount,
+                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
+                                'discount_type'     => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/discounts.code.apply and v2/cart.update
+                                'type'              => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/merchant/order
+                            ];
+                            
+                            break;
+                    }
+                    $diff -= CurrencyUtils::toMinorWithoutRounding($ruleDiscountAmount, $currencyCode) - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
+                }
+            }
         }
         /////////////////////////////////////////////////////////////////////////////////
 
@@ -2108,26 +2145,6 @@ class Cart extends AbstractHelper
                     $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
                     foreach($giftCardCodes as $giftCardCode) {
                         $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
-                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                        $discountItem = [
-                            'description'       => $description . $giftCardCode,
-                            'amount'            => $roundedAmount,
-                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
-                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-                        ];
-                        $discountAmount += $amount;
-                        $roundedDiscountAmount += $roundedAmount;
-                        $discounts[] = $discountItem;
-                    }
-                } elseif ($discount == Discount::MAGEPLAZA_GIFTCARD) {
-                    ///////////////////////////////////////////////////////////////////////////
-                    // Change giftcards balance as discount amount to giftcard balances to the discount amount
-                    ///////////////////////////////////////////////////////////////////////////
-                    $giftCardCodes = $this->discountHelper->getMageplazaGiftCardCodes($quote);
-                    foreach($giftCardCodes as $giftCardCode) {
-                        $amount = abs($this->discountHelper->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
                             'description'       => $description . $giftCardCode,

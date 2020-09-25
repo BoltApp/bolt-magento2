@@ -19,10 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Model\Quote;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\SalesRule\Model\RuleRepository;
-use Magento\SalesRule\Model\Coupon;
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
@@ -40,7 +38,6 @@ use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;

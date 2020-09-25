@@ -148,11 +148,6 @@ trait UpdateDiscountTrait
         if (empty($giftCard)) {
             $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode, $websiteId);
         }
-
-        // Load Mageplaza_GiftCard object
-        if (empty($giftCard)) {
-            $giftCard = $this->discountHelper->loadMageplazaGiftCard($couponCode, $storeId);
-        }
         
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $storeId);
@@ -381,6 +376,12 @@ trait UpdateDiscountTrait
     private function applyingGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
+            $result = $this->eventsForThirdPartyModules->runFilter("filterApplyingGiftCardCode", false, $couponCode, $giftCard, $quote);
+
+            if ($result) {
+                return true;
+            }
+
             if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
@@ -388,14 +389,6 @@ trait UpdateDiscountTrait
                 $this->discountHelper->removeAmastyGiftCard($couponCode, $quote);
                 // Apply Amasty Gift Card to the parent quote
                 $giftAmount = $this->discountHelper->applyAmastyGiftCard($couponCode, $giftCard, $quote);
-            } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
-                // Remove Mageplaza Gift Card if it was already applied
-                // to avoid errors on multiple calls to the discount validation API
-                // (e.g. changing the address, going back and forth)
-                $this->discountHelper->removeMageplazaGiftCard($couponCode, $quote);
-
-                // Apply Mageplaza Gift Card to the parent quote
-                $this->discountHelper->applyMageplazaGiftCard($couponCode, $quote);                
             } else {
                 try {
                     // on subsequest validation calls from Bolt checkout
@@ -500,13 +493,13 @@ trait UpdateDiscountTrait
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
+            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter("filterRemovingGiftCardCode", false, $giftCard, $quote);
+            if ($filterRemoveGiftCardCode) {
+                return true;
+            }
+
             if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {              
                 $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
-            } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
-                // Remove Mageplaza Gift Card if it was already applied
-                // to avoid errors on multiple calls to the discount validation API
-                // (e.g. changing the address, going back and forth)
-                $this->discountHelper->removeMageplazaGiftCard($giftCard->getCode(), $quote);
             } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 $giftCard->removeFromCart(true, $quote);
             } else {

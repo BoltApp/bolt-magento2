@@ -18,10 +18,6 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
-
-use Bolt\Boltpay\Model\Api\UpdateCartCommon;
-use Bolt\Boltpay\Model\Api\UpdateCartContext;
-use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
@@ -221,18 +217,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 // The Unirgy_GiftCert require double call the function addCertificate().
                 // Look on Unirgy/Giftcert/Controller/Checkout/Add::execute()
                 $this->discountHelper->addUnirgyGiftCertToQuote($this->checkoutSession->getQuote(), $giftCard);
-
-                $giftAmount = $giftCard->getBalance();
-            } elseif ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
-                // Remove Mageplaza Gift Card if it was already applied
-                // to avoid errors on multiple calls to the discount validation API
-                // (e.g. changing the address, going back and forth)
-                $this->discountHelper->removeMageplazaGiftCard($giftCard->getId(), $immutableQuote);
-                $this->discountHelper->removeMageplazaGiftCard($giftCard->getId(), $parentQuote);
-
-                // Apply Mageplaza Gift Card to the parent quote
-                $this->discountHelper->applyMageplazaGiftCard($code, $immutableQuote);
-                $this->discountHelper->applyMageplazaGiftCard($code, $parentQuote);
 
                 $giftAmount = $giftCard->getBalance();
             } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {

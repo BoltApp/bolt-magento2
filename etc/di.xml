@@ -182,27 +182,6 @@
         <plugin name="Bolt_Boltpay_Mirasvit_Store_Credit_Model_Total_Quote_CreditPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Credit\Model\Total\Quote\CreditPlugin" sortOrder="1" />
     </type>
 
-    <virtualType name="boltMageplazaGiftCardFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
-            <argument name="className" xsi:type="string">Mageplaza\GiftCard\Model\GiftCard</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltMageplazaGiftCardCollection" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
-            <argument name="className" xsi:type="string">Mageplaza\GiftCard\Model\ResourceModel\GiftCard\Collection</argument>
-        </arguments>
-    </virtualType>
-    
-    <virtualType name="boltMageplazaGiftCardCheckoutHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mageplaza_GiftCard</argument>
-            <argument name="className" xsi:type="string">Mageplaza\GiftCard\Helper\Checkout</argument>
-        </arguments>
-    </virtualType>
-
     <virtualType name="boltAmastyRewardsResourceQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
@@ -238,9 +217,6 @@
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
-            <argument name="mageplazaGiftCardCollection" xsi:type="object">boltMageplazaGiftCardCollection</argument>
-            <argument name="mageplazaGiftCardFactory" xsi:type="object">boltMageplazaGiftCardFactory</argument>
-            <argument name="mageplazaGiftCardCheckoutHelper" xsi:type="object">boltMageplazaGiftCardCheckoutHelper</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
