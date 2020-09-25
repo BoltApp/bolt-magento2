@@ -318,7 +318,7 @@ abstract class UpdateCartCommon
                 $product['quantity']     = round($item->getQty());
                 $product['quote_item_id']= $item->getId();
 
-                return  $product;
+                return $product;
             },
             $items
         );
