@@ -189,7 +189,6 @@ class UpdateCartTest extends TestCase
             ->setMethods(
                 [
                     'replicateQuoteData',
-                    'getCartItems'
                 ]
             )
             ->disableOriginalConstructor()
@@ -775,28 +774,18 @@ class UpdateCartTest extends TestCase
         $cartItems = [
             [
                 'reference'    => 100,
-                'name'         => 'Test Product',
-                'total_amount' => 4500,
-                'unit_price'   => 4500,
                 'quantity'     => 1,
-                'sku'          => 'test-product-100',
-                'type'         => 'physical',
-                'description'  => '',
+                'quote_item_id'=> 60,
             ],
             [
                 'reference'    => 101,
-                'name'         => 'Beaded Long Dress',
-                'total_amount' => 50000,
-                'unit_price'   => 50000,
                 'quantity'     => 1,
-                'sku'          => 'test-product-101',
-                'type'         => 'physical',
-                'description'  => '',
+                'quote_item_id'=> 61,
             ]
         ];
         $this->currentMock->expects(self::once())->method('getCartItems')
-            ->with($parentQuoteMock, self::STORE_ID)
-            ->willReturn([$cartItems,null,null]);
+            ->with($parentQuoteMock)
+            ->willReturn($cartItems);
         
         $this->currentMock->expects(self::once())->method('removeItemFromQuote')
             ->with($cartItems, $remove_items[0], $parentQuoteMock)
