@@ -746,7 +746,8 @@ class UpdateCartTest extends TestCase
             'setShipment',
             'generateResult',
             'removeItemFromQuote',
-            'updateTotals'
+            'updateTotals',
+            'getCartItems'
         ], $sessionHelper);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -793,7 +794,7 @@ class UpdateCartTest extends TestCase
                 'description'  => '',
             ]
         ];
-        $this->cartHelper->expects(self::once())->method('getCartItems')
+        $this->currentMock->expects(self::once())->method('getCartItems')
             ->with($parentQuoteMock, self::STORE_ID)
             ->willReturn([$cartItems,null,null]);
         

@@ -742,5 +742,7 @@ class UpdateCartCommonTest extends TestCase
         ];
         
         $result = TestHelper::invokeMethod($this->currentMock, 'getCartItems', [$quote]);
+        
+        $this->assertEquals($expected_result, $result);
     }
 }
