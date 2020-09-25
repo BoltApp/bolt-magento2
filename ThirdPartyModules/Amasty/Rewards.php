@@ -68,34 +68,17 @@ class Rewards
                 $amount = $pointsUsed / $pointsRate;
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                $newDiscounts = array();
-                // Amasty Rewards plugin applies discount amount to the quote as same as coupon code,
-                // so we need to collect the amount discounted with reward points separately. 
-                foreach ($discounts as $discount) {
-                    if ($discount['discount_category'] === Discount::BOLT_DISCOUNT_CATEGORY_COUPON) {
-                        if (!empty($discount['reference'])) {
-                            $couponAmount = $discount['amount'] - $roundedAmount;
-                            $newDiscounts[] = [
-                                'description'       => trim(current(explode(',',$discount['description']))),
-                                'amount'            => $couponAmount,
-                                'reference'         => $discount['reference'],
-                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                                'discount_type'     => $discount['discount_type'], // For v1/discounts.code.apply and v2/cart.update
-                                'type'              => $discount['type'], // For v1/merchant/order
-                            ];
-                        }
-                    } else {
-                        $newDiscounts[] = $discount;
-                    }
-                }
-                $newDiscounts[] = [
+                
+                $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                     'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                 ];
-                $discounts = $newDiscounts;
+                
+                $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
+                $totalAmount -= $roundedAmount;
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
