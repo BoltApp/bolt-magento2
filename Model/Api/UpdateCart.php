@@ -66,7 +66,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @param CartDataInterfaceFactory $cartDataFactory
      * @param UpdateCartResultInterfaceFactory $updateCartResultFactory
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext,
         CartDataInterfaceFactory $cartDataFactory,
         UpdateCartResultInterfaceFactory $updateCartResultFactory

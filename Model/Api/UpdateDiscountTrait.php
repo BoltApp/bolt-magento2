@@ -99,7 +99,7 @@ trait UpdateDiscountTrait
      *
      * @param UpdateCartContext $updateCartContext
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext
     ) {        
         $this->ruleRepository = $updateCartContext->getRuleRepository();
