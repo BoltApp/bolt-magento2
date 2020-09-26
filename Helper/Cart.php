@@ -1177,6 +1177,9 @@ class Cart extends AbstractHelper
 
         // If Amasty Reward Points extension is present clone applied reward points
         $this->discountHelper->setAmastyRewardPoints($source, $destination);
+        
+        // Third-party plugins can replicate required data.
+        $this->eventsForThirdPartyModules->dispatchEvent("replicateQuoteData", $source, $destination);
     }
 
     /**
