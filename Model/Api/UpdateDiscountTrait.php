@@ -386,7 +386,7 @@ trait UpdateDiscountTrait
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)
-                $this->discountHelper->removeAmastyGiftCard($couponCode, $quote);
+                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
                 // Apply Amasty Gift Card to the parent quote
                 $giftAmount = $this->discountHelper->applyAmastyGiftCard($couponCode, $giftCard, $quote);
             } else {

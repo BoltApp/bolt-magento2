@@ -206,6 +206,12 @@ class DiscountTest extends TestCase
     private $ruleRepositoryMock;
 
     /**
+     * @var ThirdPartyModuleFactory|MockObject
+     * mocked instance of the Quote Extension Attribute repository added by Amasty Giftcard
+     */
+    private $amastyGiftCardAccountQuoteExtensionRepositoryFactory;
+
+    /**
      * Setup test dependencies, called before each test
      */
     protected function setUp()
@@ -220,7 +226,8 @@ class DiscountTest extends TestCase
         $this->amastyLegacyAccountCollection = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyAccountFactory = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyGiftCardAccountManagement = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->amastyGiftCardAccountCollection = $this->createMock(ThirdPartyModuleFactory::class);        
+        $this->amastyGiftCardAccountCollection = $this->createMock(ThirdPartyModuleFactory::class);
+        $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory = $this->createMock(ThirdPartyModuleFactory::class);
         $this->unirgyCertRepository = $this->createMock(ThirdPartyModuleFactory::class);
         $this->unirgyGiftCertHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->mirasvitRewardsPurchaseHelper = $this->createMock(ThirdPartyModuleFactory::class);
@@ -270,6 +277,7 @@ class DiscountTest extends TestCase
                     $this->amastyAccountFactory,
                     $this->amastyGiftCardAccountManagement,
                     $this->amastyGiftCardAccountCollection,
+                    $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory,
                     $this->unirgyCertRepository,
                     $this->unirgyGiftCertHelper,
                     $this->mirasvitRewardsPurchaseHelper,
@@ -317,6 +325,7 @@ class DiscountTest extends TestCase
             $this->amastyAccountFactory,
             $this->amastyGiftCardAccountManagement,
             $this->amastyGiftCardAccountCollection,
+            $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory,
             $this->unirgyCertRepository,
             $this->unirgyGiftCertHelper,
             $this->mirasvitRewardsPurchaseHelper,
@@ -861,7 +870,9 @@ class DiscountTest extends TestCase
         $totalsAmastyGiftCard,
         $expectedResult
     ) {
-        $this->initCurrentMock(['isAmastyGiftCardAvailable', 'isAmastyGiftCardLegacyVersion', 'getAmastyPayForEverything']);
+        $this->initCurrentMock(
+            ['isAmastyGiftCardAvailable', 'isAmastyGiftCardLegacyVersion', 'getAmastyPayForEverything']
+        );
         $code = 321312;
         $quoteId = 2;
         
@@ -869,21 +880,23 @@ class DiscountTest extends TestCase
         $this->currentMock->expects(static::once())->method('isAmastyGiftCardLegacyVersion')->willReturn(false);
 
         // mock for class Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory that doesn't exist
-        $accountModel = $this->getMockBuilder(\stdclass::class)
+        $accountModel = $this->getMockBuilder(\stdClass::class)
             ->setMethods(['getCurrentValue'])
             ->disableOriginalConstructor()
             ->getMock();
 
         $accountModel->expects(static::once())->method('getCurrentValue')->willReturn($giftAmount);
 
-        $quote = $this->createPartialMock(
+        $quoteMock = $this->createPartialMock(
             Quote::class,
             [
                 'getId',
-                'getTotals'
+                'getTotals',
+                'getExtensionAttributes',
+                'setAmGiftcardQuote',
             ]
         );
-        $quote->expects(static::once())->method('getId')->willReturn($quoteId);
+        $quoteMock->expects(static::once())->method('getId')->willReturn($quoteId);
 
         $amastyGiftCardMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
             ->setMethods(['getInstance', 'applyGiftCardToCart'])
@@ -895,18 +908,35 @@ class DiscountTest extends TestCase
         $amastyGiftCardMock->expects(static::once())->method('getInstance')->willReturnSelf();
         $amastyGiftCardMock->expects(static::once())->method('applyGiftCardToCart')->with($quoteId, $code)->willReturn($code);
 
-        $this->currentMock->expects(static::once())
-            ->method('getAmastyPayForEverything')
+        $amastyGiftCardAccountQuoteExtensionRepositoryMock = $this->getMockBuilder('\Amasty\GiftCardAccount\Model\GiftCardExtension\Quote\Repository')
+            ->setMethods(['getByQuoteId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory->expects(static::once())->method('getInstance')
+            ->willReturn($amastyGiftCardAccountQuoteExtensionRepositoryMock);
+
+        $quoteMock->expects(static::once())->method('getExtensionAttributes')->willReturnSelf();
+
+        $amastyGiftCardQuoteMock = $this->getMockBuilder('\Amasty\GiftCardAccount\Api\Data\GiftCardQuoteInterface')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $amastyGiftCardAccountQuoteExtensionRepositoryMock->expects(static::once())->method('getByQuoteId')
+            ->with($quoteId)->willReturn($amastyGiftCardQuoteMock);
+
+        $quoteMock->expects(static::once())->method('setAmGiftcardQuote')->with($amastyGiftCardQuoteMock);
+
+
+        $this->currentMock->expects(static::once())->method('getAmastyPayForEverything')
             ->willReturn($amastyPayForEverything);
 
-        $quote->expects(!$amastyPayForEverything ? static::once() : static::never())
+        $quoteMock->expects(!$amastyPayForEverything ? static::once() : static::never())
             ->method('getTotals')
             ->willReturn([Discount::AMASTY_GIFTCARD => new DataObject(['value' => $totalsAmastyGiftCard])]);
             
         $this->quoteRepository->expects(!$amastyPayForEverything ? static::once() : static::never())
-            ->method('getActive')->with($quoteId)->willReturn($quote);
+            ->method('getActive')->with($quoteId)->willReturn($quoteMock);
 
-        static::assertEquals($expectedResult, $this->currentMock->applyAmastyGiftCard($code, $accountModel, $quote));
+        static::assertEquals($expectedResult, $this->currentMock->applyAmastyGiftCard($code, $accountModel, $quoteMock));
     }
 
     /**
@@ -1146,6 +1176,28 @@ class DiscountTest extends TestCase
 
         $this->connectionMock->expects(static::once())->method('commit')->willReturnSelf();
 
+        $this->currentMock->cloneAmastyGiftCards($sourceQuoteId, $destinationQuoteId);
+    }
+
+    /**
+     * @test
+     * that cloneAmastyGiftCards doesn't try to clone the Amasty GiftCards
+     * when the source quote id is equal to the destination quote id
+     * This prevents losing the applied giftcards on PPC
+     *
+     * @covers ::cloneAmastyGiftCards
+     */
+    public function cloneAmastyGiftCards_ifSourceEqualToDestinationQuote_doesNotClone()
+    {
+        $this->initCurrentMock(['isAmastyGiftCardAvailable', 'isAmastyGiftCardLegacyVersion']);
+        $this->currentMock->expects(static::once())->method('isAmastyGiftCardAvailable')->willReturn(true);
+        $this->currentMock->expects(static::never())->method('isAmastyGiftCardLegacyVersion');
+        $sourceQuoteId = 232;
+        $destinationQuoteId = $sourceQuoteId;
+        $this->resource->expects(static::never())->method('getConnection')->willReturn($this->connectionMock);
+        $this->connectionMock->expects(static::never())->method('beginTransaction')->willReturnSelf();
+        $this->connectionMock->expects(static::never())->method('query');
+        $this->connectionMock->expects(static::never())->method('commit');
         $this->currentMock->cloneAmastyGiftCards($sourceQuoteId, $destinationQuoteId);
     }
     
