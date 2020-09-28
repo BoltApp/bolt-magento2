@@ -328,7 +328,6 @@ trait UpdateDiscountTrait
 
             $this->discountHelper->setCouponCode($quote, $couponCode);
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -401,7 +400,6 @@ trait UpdateDiscountTrait
                 }
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -441,7 +439,6 @@ trait UpdateDiscountTrait
                 throw new \Exception(__('Coupon code %1 does not exist!', $couponCode));
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -467,7 +464,6 @@ trait UpdateDiscountTrait
         try {
             $this->discountHelper->setCouponCode($quote, '');
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -506,7 +502,6 @@ trait UpdateDiscountTrait
                 throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
