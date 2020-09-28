@@ -131,10 +131,6 @@ class UpdateCartTest extends TestCase
         $this->response = $this->createMock(Response::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->logHelper = $this->createMock(LogHelper::class);
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException'])
-            ->disableOriginalConstructor()
-            ->getMock();
     }
 
     /**
@@ -203,10 +199,16 @@ class UpdateCartTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         
+        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
+            ->setMethods(['notifyException'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
+        TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
     }
     
     /**
