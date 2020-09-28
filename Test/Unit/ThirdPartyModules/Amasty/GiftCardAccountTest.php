@@ -70,17 +70,17 @@ class GiftCardAccountTest extends TestCase
         $this->bugsnagHelperMock = $this->createMock(\Bolt\Boltpay\Helper\Bugsnag::class);
         $this->giftcardRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'
-        )->setMethods([])->disableOriginalConstructor()->getMock();
+        )->setMethods(['save', 'getById'])->disableOriginalConstructor()->getMock();
         $this->giftcardOrderRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository'
-        )->setMethods([])->disableOriginalConstructor()->getMock();
+        )->setMethods(['getByOrderId'])->disableOriginalConstructor()->getMock();
         $this->orderMock = $this->createMock(\Magento\Sales\Model\Order::class);
         $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
         $this->currentMock = $this->getMockBuilder(GiftCardAccount::class)
             ->setMethods(null)->setConstructorArgs([$this->bugsnagHelperMock])->getMock();
         $this->giftcardOrderExtensionMock = $this->getMockBuilder(
-            '\Amasty\GiftCardAccount\Api\Data\GiftCardOrderInterface'
-        )->setMethods([])->disableOriginalConstructor()->getMock();
+            '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Order'
+        )->setMethods(['getGiftCards'])->disableOriginalConstructor()->getMock();
     }
 
     /**
@@ -165,14 +165,14 @@ class GiftCardAccountTest extends TestCase
 
     /**
      * Creates a mocked instance of the Amasty Giftcard Account
-     * @return \Amasty\GiftCardAccount\Api\Data\GiftCardAccountInterface|MockObject
+     * @return MockObject|\Amasty\GiftCardAccount\Model\GiftCardAccount\Account
      */
     private function createGiftcardMock()
     {
-        return $this->getMockBuilder('Amasty\GiftCardAccount\Api\Data\GiftCardAccountInterface')
+        return $this->getMockBuilder('\Amasty\GiftCardAccount\Model\GiftCardAccount\Account')
             ->setMethods(['setCurrentValue', 'getCurrentValue', 'setStatus'])
             ->disableOriginalConstructor()
             ->disableOriginalClone()
-            ->getMockForAbstractClass();
+            ->getMock();
     }
 }
