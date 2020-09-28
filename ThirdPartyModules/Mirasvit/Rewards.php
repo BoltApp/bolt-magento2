@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Discount;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Rewards
@@ -29,6 +30,26 @@ class Rewards
      * @var \Mirasvit\Rewards\Helper\Purchase
      */
     private $mirasvitRewardsPurchaseHelper;
+
+    /**
+     * @var \Mirasvit\Rewards\Helper\Balance
+     */
+    private $mirasvitRewardsBalanceHelper;
+    
+    /**
+     * @var \Mirasvit\Rewards\Helper\Balance\SpendRulesList
+     */
+    private $mirasvitRewardsBalanceSpendRulesListHelper;
+    
+    /**
+     * @var \Mirasvit\Rewards\Helper\Checkout
+     */
+    private $mirasvitRewardsCheckoutHelper;
+    
+    /**
+     * @var \Mirasvit\Rewards\Model\Config
+     */
+    private $mirasvitRewardsModelConfig;
 
     /**
      * @var Bugsnag
@@ -44,29 +65,37 @@ class Rewards
      * @var ScopeConfigInterface
      */
     private $scopeConfigInterface;
+    
+    /**
+     * @var CustomerFactory
+     */
+    private $customerFactory;
 
     /**
      * Rewards constructor.
      * @param Bugsnag $bugsnagHelper
      * @param Discount $discountHelper
      * @param ScopeInterface $scopeConfigInterface
+     * @param CustomerFactory $customerFactory
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         Discount $discountHelper,
-        ScopeConfigInterface $scopeConfigInterface
+        ScopeConfigInterface $scopeConfigInterface,
+        CustomerFactory $customerFactory
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->scopeConfigInterface = $scopeConfigInterface;
+        $this->customerFactory = $customerFactory;
     }
 
     /**
      * @param $immutableQuote
      * @param $mirasvitRewardsPurchaseHelper
      */
-    public function applyExternalDiscountData($immutableQuote, $mirasvitRewardsPurchaseHelper)
+    public function applyExternalDiscountData($mirasvitRewardsPurchaseHelper, $immutableQuote)
     {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->applyMiravistRewardPoint($immutableQuote);
@@ -82,13 +111,20 @@ class Rewards
      */
     public function collectDiscounts(
         $result,
+        $mirasvitRewardsBalanceHelper,
+        $mirasvitRewardsBalanceSpendRulesListHelper,                                   
         $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsModelConfig,
         $quote,
         $parentQuote,
         $paymentOnly
     )
     {
+        $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
+        $this->mirasvitRewardsBalanceSpendRulesListHelper = $mirasvitRewardsBalanceSpendRulesListHelper;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
+        $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        
         list ($discounts, $totalAmount, $diff) = $result;
         $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
         try {
@@ -172,14 +208,113 @@ class Rewards
      */
     private function getMirasvitRewardsAmount($quote)
     {
-        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
-        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper;
+        try {
+            $spendAmount = $this->getCurrentQuoteSpendAmount($quote);
+            // If the setting "Allow to spend points for shipping charges" is set to Yes,
+            // we need to send full balance to the Bolt server.
+            if($this->isSpendShippingTax()) {
+                $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
+                $customer = $this->customerFactory->create()->load($quote->getCustomer()->getId());
+                $points = 0;
+                $websiteId = $quote->getStore()->getWebsiteId();
+                $rules = $this->mirasvitRewardsBalanceSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
+                if ($rules->count()) {
+                    $pointsMoney = [0];
+                    /** @var \Mirasvit\Rewards\Model\Spending\Rule $rule */
+                    foreach ($rules as $rule) {
+                        $tier = $rule->getTier($customer);
+                        $spendPoints = $tier->getSpendPoints();
+                        if ($spendPoints <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+                            continue;
+                        }
 
-        if (!$mirasvitRewardsPurchaseHelper) {
+                        $pointsMoney[] = ($balancePoints / $spendPoints) * $tier->getMonetaryStep($spendAmount);  
+                    }    
+                    $points = max($pointsMoney);
+                }
+                
+                $spendAmount = max($points, $spendAmount);
+            }
+            
+            return $spendAmount;
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
             return 0;
         }
-
-        $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
-        return $miravitRewardsPurchase->getSpendAmount();
+    }
+    
+    /**
+     * Skip shipping validation if allow to spend Mirasvit rewards points for shipping charges
+     * @return bool
+     */
+    public function skipValidateShippingCost(
+        $result,
+        $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsModelConfig,
+        $quote,
+        $transaction
+    )
+    {
+        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
+        $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        
+        if ($this->getCurrentQuoteSpendAmount($quote)) {
+            return $result || $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Check if allow to spend Mirasvit rewards points for shipping or tax charges
+     * @return bool
+     */
+    private function isSpendShippingTax()
+    {
+        return $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping() || $this->mirasvitRewardsModelConfig->getGeneralIsIncludeTaxSpending();
+    }
+    
+    /**
+     * Update Mirasvit rewards points for quote
+     */
+    public function beforeValidateQuoteData(
+        $mirasvitRewardsBalanceHelper,
+        $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsCheckoutHelper,
+        $mirasvitRewardsModelConfig,
+        $quote,
+        $transaction
+    )
+    {
+        $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
+        $this->mirasvitRewardsCheckoutHelper = $mirasvitRewardsCheckoutHelper;
+        $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
+        $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;        
+        
+        try {            
+            if($this->getCurrentQuoteSpendAmount($quote) && $this->isSpendShippingTax()) {
+                $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
+                $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
+                $this->mirasvitRewardsCheckoutHelper->updatePurchase($miravitRewardsPurchase, $balancePoints);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param int|\Magento\Quote\Model\Quote $quote
+     *
+     * @return int
+     */
+    private function getCurrentQuoteSpendAmount($quote)
+    {
+        try {
+            $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
+            return $miravitRewardsPurchase->getSpendAmount();
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+            return 0;
+        }
     }
 }
