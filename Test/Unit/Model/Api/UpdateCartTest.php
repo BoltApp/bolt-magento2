@@ -36,6 +36,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -106,6 +107,11 @@ class UpdateCartTest extends TestCase
      * @var CartHelper|MockObject
      */
     private $cartHelper;
+    
+    /**
+     * @var Bugsnag|MockObject
+     */
+    private $bugsnag;
 
     /**
      * @var UpdateCart|MockObject
@@ -125,6 +131,10 @@ class UpdateCartTest extends TestCase
         $this->response = $this->createMock(Response::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->logHelper = $this->createMock(LogHelper::class);
+        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
+            ->setMethods(['notifyException'])
+            ->disableOriginalConstructor()
+            ->getMock();
     }
 
     /**
@@ -368,6 +378,9 @@ class UpdateCartTest extends TestCase
         $encodeErrorResult = '';
         $this->errorResponse->expects(self::once())->method('prepareUpdateCartErrorMessage')
             ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with(
+            new \Exception($message)
+        );
         $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
         $this->response->expects(self::once())->method('setBody')->with($encodeErrorResult);
         $this->response->expects(self::once())->method('sendResponse');

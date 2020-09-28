@@ -1192,7 +1192,7 @@ class DiscountCodeValidationTest extends TestCase
             ->getMock();
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException', 'notifyError'])
+            ->setMethods(['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
 
