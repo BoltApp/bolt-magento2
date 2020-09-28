@@ -70,17 +70,17 @@ class GiftCardAccountTest extends TestCase
         $this->bugsnagHelperMock = $this->createMock(\Bolt\Boltpay\Helper\Bugsnag::class);
         $this->giftcardRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'
-        )->setMethods(['save', 'getById'])->disableOriginalConstructor()->getMock();
+        )->setMethods(['save', 'getById'])->disableOriginalConstructor()->disableAutoload()->getMock();
         $this->giftcardOrderRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository'
-        )->setMethods(['getByOrderId'])->disableOriginalConstructor()->getMock();
+        )->setMethods(['getByOrderId'])->disableOriginalConstructor()->disableAutoload()->getMock();
         $this->orderMock = $this->createMock(\Magento\Sales\Model\Order::class);
         $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
         $this->currentMock = $this->getMockBuilder(GiftCardAccount::class)
             ->setMethods(null)->setConstructorArgs([$this->bugsnagHelperMock])->getMock();
         $this->giftcardOrderExtensionMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Order'
-        )->setMethods(['getGiftCards'])->disableOriginalConstructor()->getMock();
+        )->setMethods(['getGiftCards'])->disableOriginalConstructor()->disableAutoload()->getMock();
     }
 
     /**
@@ -172,6 +172,7 @@ class GiftCardAccountTest extends TestCase
         return $this->getMockBuilder('\Amasty\GiftCardAccount\Model\GiftCardAccount\Account')
             ->setMethods(['setCurrentValue', 'getCurrentValue', 'setStatus'])
             ->disableOriginalConstructor()
+            ->disableAutoload()
             ->disableOriginalClone()
             ->getMock();
     }
