@@ -92,8 +92,8 @@ class Rewards
     }
 
     /**
-     * @param $immutableQuote
      * @param $mirasvitRewardsPurchaseHelper
+     * @param $immutableQuote
      */
     public function applyExternalDiscountData($mirasvitRewardsPurchaseHelper, $immutableQuote)
     {
@@ -124,7 +124,7 @@ class Rewards
         $this->mirasvitRewardsBalanceSpendRulesListHelper = $mirasvitRewardsBalanceSpendRulesListHelper;
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
-        
+
         list ($discounts, $totalAmount, $diff) = $result;
         $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
         try {
@@ -132,8 +132,11 @@ class Rewards
                 $currencyCode = $parentQuote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [
-                    'description' =>
-                        $this->scopeConfigInterface->getValue('rewards/general/point_unit_name', ScopeInterface::SCOPE_STORE, $quote->getStoreId()),
+                    'description' => $this->scopeConfigInterface->getValue(
+                        'rewards/general/point_unit_name',
+                        ScopeInterface::SCOPE_STORE,
+                        $quote->getStoreId()
+                    ),
                     'amount' => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
