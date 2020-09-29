@@ -21,6 +21,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Quote\Api\CartRepositoryInterface as CartRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\Address;
 use Magento\SalesRule\Model\RuleRepository;
@@ -30,6 +31,8 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockStateInterface;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -173,6 +176,22 @@ class UpdateCartCommonTest extends TestCase
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
+    
+    /**
+     * @var CartRepository
+     */
+    protected $cartRepository;
+    
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepositoryInterface;
+    
+    /**
+     * @var StockStateInterface
+     */
+    protected $stockStateInterface;
+
 
     protected function setUp()
     {
@@ -197,6 +216,9 @@ class UpdateCartCommonTest extends TestCase
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $this->cartRepository = $this->createMock(CartRepository::class);
+        $this->productRepositoryInterface = $this->createMock(ProductRepositoryInterface::class);
+        $this->stockStateInterface = $this->createMock(StockStateInterface::class);
 
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -221,7 +243,10 @@ class UpdateCartCommonTest extends TestCase
                     $this->totalsCollector,
                     $this->sessionHelper,
                     $this->cache,
-                    $this->eventsForThirdPartyModules
+                    $this->eventsForThirdPartyModules,
+                    $this->productRepositoryInterface,
+                    $this->stockStateInterface,
+                    $this->cartRepository
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -646,5 +671,74 @@ class UpdateCartCommonTest extends TestCase
         $immutableQuoteMock->expects(self::once())->method('getShippingAddress')->willReturn($quoteAddress);
         
         $this->currentMock->setShipment($shipment, $immutableQuoteMock);
+    }
+    
+    /**
+     * @test
+     * @covers ::updateTotals
+     *
+     */
+    public function updateTotals_always_collectsTotalsAndSavesTheQuote()
+    {
+        $this->initCurrentMock();
+        
+        $quote = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID,
+            [
+                'getShippingAddress',
+                'setTotalsCollectedFlag',
+                'collectTotals',
+                'setDataChanges',
+            ]
+        );
+
+        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
+        $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
+        $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
+        $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
+
+        $this->cartRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
+        TestHelper::invokeMethod($this->currentMock, 'updateTotals', [$quote]);
+    }
+    
+    /**
+     * @test
+     * @covers ::getCartItems
+     *
+     */
+    public function getCartItems_returnItemsWithProperties()
+    {
+        $this->initCurrentMock();
+        
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods(['getProductId', 'getQty', 'getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('getProductId')->willReturn(100);
+        $quoteItem->method('getQty')->willReturn(1);
+        $quoteItem->method('getId')->willReturn(60);
+        
+        $quote = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID,
+            [
+                'getAllVisibleItems',
+            ]
+        );
+        
+        $quote->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        
+        $expected_result = [
+            [
+                'reference'     => 100,
+                'quantity'      => 1,
+                'quote_item_id' => 60,
+            ]
+        ];
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getCartItems', [$quote]);
+        
+        $this->assertEquals($expected_result, $result);
     }
 }

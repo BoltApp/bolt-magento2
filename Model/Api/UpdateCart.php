@@ -24,6 +24,7 @@ use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Model\Api\UpdateCartCommon;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
+use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
@@ -37,7 +38,9 @@ use Magento\Quote\Model\Quote;
  */
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
-    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
+    use UpdateDiscountTrait { UpdateDiscountTrait::__construct as private UpdateDiscountTraitConstructor; }
+    
+    use UpdateCartItemTrait { UpdateCartItemTrait::__construct as private UpdateCartItemTraitConstructor; }
 
     /**
      * @var CartDataInterfaceFactory
@@ -74,6 +77,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     ) {
         parent::__construct($updateCartContext);
         $this->UpdateDiscountTraitConstructor($updateCartContext);
+        $this->UpdateCartItemTraitConstructor($updateCartContext);
         $this->cartDataFactory = $cartDataFactory;
         $this->updateCartResultFactory = $updateCartResultFactory;
         $this->sessionHelper = $updateCartContext->getSessionHelper();
@@ -174,6 +178,46 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     // Already sent a response with error, so just return.
                     return false;
                 }
+            }
+            
+            // Add items
+            if ( !empty($add_items) ) {
+                foreach ($add_items as $add_item) {
+                    $product = $this->getProduct($add_item['product_id'], $storeId);
+                    if (!$product) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                    
+                    $result = $this->verifyItemData($product, $add_item, $websiteId);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                    
+                    $result = $this->addItemToQuote($product, $parentQuote, $add_item);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                }
+                
+                $this->updateTotals($parentQuote);
+            }
+            
+            // Remove items
+            if ( !empty($remove_items) ) {
+                $cartItems = $this->getCartItems($parentQuote);                    
+                    
+                foreach ($remove_items as $remove_item) {
+                    $result = $this->removeItemFromQuote($cartItems, $remove_item, $parentQuote);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                }
+                
+                $this->updateTotals($parentQuote);
             }
 
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);

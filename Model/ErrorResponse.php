@@ -35,7 +35,13 @@ class ErrorResponse
     const ERR_SERVICE                      = 6001;
 
     const ERR_PPC_OUT_OF_STOCK = 6301;
-    const ERR_PPC_INVALID_QUANTITY = 6303;
+    const ERR_PPC_INVALID_QUANTITY = 6303;    
+    
+    const ERR_ITEM_PRICE_HAS_BEEN_UPDATED  = 6604;
+    const ERR_ITEM_OUT_OF_STOCK            = 6605;
+    const ERR_PRODUCT_DOES_NOT_EXIST       = 6611;
+    const ERR_CART_ITEM_ADD_FAILED         = 6612;
+    const ERR_CART_ITEM_REMOVE_FAILED      = 6613;
 
     /**
      * @param       $errCode

@@ -24,7 +24,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Quote\Api\CartRepositoryInterface as CartRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\RuleRepository;
@@ -117,6 +117,11 @@ abstract class UpdateCartCommon
     protected $ruleRepository;
     
     /**
+     * @var CartRepository
+     */
+    protected $cartRepository;
+    
+    /**
      * UpdateCartCommon constructor.
      *
      * @param UpdateCartContext $updateCartContext
@@ -139,6 +144,7 @@ abstract class UpdateCartCommon
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
         $this->checkoutSession = $updateCartContext->getCheckoutSession();
         $this->ruleRepository = $updateCartContext->getRuleRepository();
+        $this->cartRepository = $updateCartContext->getCartRepositoryInterface();
     }
     
     /**
@@ -281,7 +287,44 @@ abstract class UpdateCartCommon
         $content = $this->request->getContent();
         $this->logHelper->addInfoLog($content);
         return json_decode($content);
-    }    
+    }
+    
+    /**
+     * Collect and update quote totals.
+     * @param Quote $quote
+     */
+    protected function updateTotals($quote)
+    {
+        $quote->getShippingAddress()->setCollectShippingRates(true);
+        $quote->setTotalsCollectedFlag(false);
+        $quote->collectTotals();
+        $quote->setDataChanges(true);
+        $this->cartRepository->save($quote);
+    }
+    
+    /**
+     * Create cart data items array.
+     * @param Quote $quote
+     */
+    protected function getCartItems($quote)
+    {
+        $items = $quote->getAllVisibleItems();
+
+        $products = array_map(
+            function ($item) {
+                $product = [];
+
+                $product['reference']    = $item->getProductId();
+                $product['quantity']     = round($item->getQty());
+                $product['quote_item_id']= $item->getId();
+
+                return $product;
+            },
+            $items
+        );
+        
+        return $products;
+    }
 
     /**
      * @param int        $errCode
