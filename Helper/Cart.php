@@ -2498,4 +2498,14 @@ class Cart extends AbstractHelper
             return $result;
         }
     }
+    
+    /**
+     * Reset checkout session
+     *
+     * @param $checkoutSession
+     */
+    public function resetCheckoutSession($checkoutSession)
+    {
+        $this->checkoutSession = $checkoutSession;
+    }
 }

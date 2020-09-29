@@ -352,7 +352,6 @@ trait UpdateDiscountTrait
         $address = $quote->isVirtual() ?
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
-        $this->totalsCollector->collectAddressTotals($quote, $address);
 
         $result = [
             'status'          => 'success',

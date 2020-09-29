@@ -3052,19 +3052,29 @@ class DiscountTest extends TestCase
     public function setCouponCode_savesProperly()
     {
         $this->initCurrentMock();
-        $quoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getShippingAddress','setCollectShippingRates','setCouponCode','collectTotals','save'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        
+         $couponCode = 'testcoupon';
+        
+        $quote = $this->createPartialMock(
+            Quote::class,
+            [
+                'getShippingAddress',
+                'setTotalsCollectedFlag',
+                'collectTotals',
+                'setDataChanges',
+                'setCouponCode'
+            ]
+        );
 
-        $couponCode = 'testcoupon';
-        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturnSelf();
-        $quoteMock->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $quoteMock->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
-        $quoteMock->expects(static::once())->method('collectTotals')->willReturnSelf();
-        $quoteMock->expects(static::once())->method('save')->willReturnSelf();
+        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
+        $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
+        $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
+        $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
+        $quote->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
 
-        static::assertNull($this->currentMock->setCouponCode($quoteMock,$couponCode));
+        $this->quoteRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
+
+        static::assertNull($this->currentMock->setCouponCode($quote,$couponCode));
     }
 
     /**
