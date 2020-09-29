@@ -297,5 +297,17 @@
                 type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
                 sortOrder="1"/>
     </type>
+    
+    <type name="Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount">
+        <plugin name="Bolt_Boltpay_SalesRule_Action_Discount_Plugin"
+                type="Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin"
+                sortOrder="20"/>
+    </type>
+    
+    <type name="Magento\SalesRule\Model\Quote\Discount">
+        <plugin name="Bolt_Boltpay_SalesRule_Quote_Discount_Plugin"
+                type="Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin"
+                sortOrder="1"/>
+    </type>
 
 </config>

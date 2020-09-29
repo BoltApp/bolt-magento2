@@ -116,6 +116,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             // Load logged in customer checkout and customer sessions from cached session id.
             // Replace the quote with $parentQuote in checkout session.
             $this->sessionHelper->loadSession($parentQuote);
+            $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
             
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
@@ -151,7 +152,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
 
-                $discounts = $this->getQuoteDiscounts($parentQuote);
+                $quoteCart = $this->getQuoteCart($parentQuote);
+                $discounts = $quoteCart['discounts'];
 
                 if(empty($discounts)){
                     $this->sendErrorResponse(
@@ -208,18 +210,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         }
 
         return true;
-    }
-    
-    /**
-     * @param Quote $quote
-     * @return array
-     * @throws \Exception
-     */
-    protected function getQuoteDiscounts($quote)
-    {
-        $is_has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
-        list ($discounts, ,) = $this->cartHelper->collectDiscounts(0, 0, $is_has_shipment, $quote);
-        return $discounts;
     }
     
     /**

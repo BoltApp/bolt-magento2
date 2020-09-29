@@ -1067,7 +1067,7 @@ class Discount extends AbstractHelper
      */
     public function setCouponCode($quote, $couponCode)
     {
-        $quote->getShippingAddress()->setCollectShippingRates(true);
-        $quote->setCouponCode($couponCode)->collectTotals()->save();
+        $quote->setCouponCode($couponCode);
+        $this->updateTotals($quote);
     }
 }
