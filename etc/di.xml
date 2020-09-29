@@ -166,6 +166,13 @@
             <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardAccount\ResourceModel\Collection</argument>
         </arguments>
     </virtualType>
+    <!-- For Amasty Gift Card v2.0.0 and later -->
+    <virtualType name="boltAmastyGiftCardAccountQuoteExtensionRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardExtension\Quote\Repository</argument>
+        </arguments>
+    </virtualType>
 
     <virtualType name="boltMirasvitRewardsPurchaseHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -216,6 +223,8 @@
             <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
+            <argument name="amastyGiftCardAccountQuoteExtensionRepository" xsi:type="object">boltAmastyGiftCardAccountQuoteExtensionRepository</argument>
+
             <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>

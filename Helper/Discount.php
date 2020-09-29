@@ -189,6 +189,11 @@ class Discount extends AbstractHelper
     protected $ruleRepository;
 
     /**
+     * @var ThirdPartyModuleFactory Amasty GiftCard V2 quote extension attribute repository factory
+     */
+    private $amastyGiftCardAccountQuoteExtensionRepository;
+
+    /**
      * Discount constructor.
      *
      * @param Context                 $context
@@ -202,6 +207,7 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyAccountFactory
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository
      * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
      * @param ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper
@@ -231,6 +237,7 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyAccountFactory,
         ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
         ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
+        ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
         ThirdPartyModuleFactory $mirasvitRewardsPurchaseHelper,
@@ -275,6 +282,7 @@ class Discount extends AbstractHelper
         $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
+        $this->amastyGiftCardAccountQuoteExtensionRepository = $amastyGiftCardAccountQuoteExtensionRepository;
     }
     
     /**
@@ -312,7 +320,7 @@ class Discount extends AbstractHelper
      * Load Amasty Gift Card account object.
      * @param string $code Gift Card coupon code
      * @param string|int $websiteId
-     * @return \Amasty\GiftCard\Model\Account|null
+     * @return \Amasty\GiftCard\Model\Account|\Amasty\GiftCardAccount\Model\GiftCardAccount\Account|null
      */
     public function loadAmastyGiftCard($code, $websiteId)
     {
@@ -343,10 +351,12 @@ class Discount extends AbstractHelper
      * Apply Amasty Gift Card coupon to cart
      *
      * @param string $code Gift Card coupon code
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Account $accountModel
-     * @param Quote $quote
-     * @return float
-     * @throws LocalizedException
+     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Account|\Amasty\GiftCard\Model\Account $accountModel
+     * @param Quote $quote to apply the giftcard to
+
+     * @return float|null applied discount amount or null if module not available
+     *
+     * @throws LocalizedException if unable to apply Amasty GiftCard
      */
     public function applyAmastyGiftCard($code, $accountModel, $quote)
     {
@@ -402,8 +412,15 @@ class Discount extends AbstractHelper
                 throw new LocalizedException(__('Gift card can\'t be applied.'));
             }
         } else {
-            $giftCardCode = $this->amastyGiftCardAccountManagement->getInstance()->applyGiftCardToCart($quoteId, $code);
-            
+            /** @var \Amasty\GiftCardAccount\Api\GiftCardAccountManagementInterface $amastyGiftcardManagement */
+            $amastyGiftcardManagement = $this->amastyGiftCardAccountManagement->getInstance();
+            $amastyGiftcardManagement->applyGiftCardToCart($quoteId, $code);
+
+            /** @var \Amasty\GiftCardAccount\Model\GiftCardExtension\Quote\Repository $amGcQuoteExtensionRepository */
+            $amGcQuoteExtensionRepository = $this->amastyGiftCardAccountQuoteExtensionRepository->getInstance();
+            $quote->getExtensionAttributes()
+                ->setAmGiftcardQuote($amGcQuoteExtensionRepository->getByQuoteId($quoteId));
+
             if ($this->getAmastyPayForEverything()) {
                 // pay for everything, items, shipping, tax
                 return $giftAmount;
@@ -425,7 +442,7 @@ class Discount extends AbstractHelper
      */
     public function cloneAmastyGiftCards($sourceQuoteId, $destinationQuoteId)
     {
-        if (! $this->isAmastyGiftCardAvailable()) {
+        if (! $this->isAmastyGiftCardAvailable() || $sourceQuoteId == $destinationQuoteId) {
             return;
         }
         $connection = $this->resource->getConnection();
@@ -542,7 +559,7 @@ class Discount extends AbstractHelper
         
         try {
             $connection = $this->resource->getConnection();
-            if ($this->isAmastyGiftCardLegacyVersion()) {                
+            if ($this->isAmastyGiftCardLegacyVersion()) {
                 $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
 
                 $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";

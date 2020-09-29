@@ -40,7 +40,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Class UpdateDiscountTraitTest
- * @coversDefaultClass \Bolt\Boltpay\Controller\UpdateDiscountTrait
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateDiscountTrait
  */
 class UpdateDiscountTraitTest extends TestCase
 {
@@ -971,23 +971,26 @@ class UpdateDiscountTraitTest extends TestCase
         
         $this->assertFalse($result);
     }
-    
+
     /**
      * @test
      *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyingGiftCardCode
      */
     public function applyingGiftCardCode_amastyGiftCard()
     {
         $quote = $this->getQuoteMock();
-        
+
         $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->setMethods(['getCodeId'])
             ->disableOriginalConstructor()
-            ->getMock();        
-        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_CODE, $quote);            
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('getCodeId')->willReturn(self::COUPON_ID);
+        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_ID, $quote);
         $this->discountHelper->expects(static::once())->method('applyAmastyGiftCard')->with(self::COUPON_CODE, $giftcardMock, $quote);
-        
+
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
-        
+
         $this->assertTrue($result);
     }
     

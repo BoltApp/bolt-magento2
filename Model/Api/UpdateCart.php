@@ -28,6 +28,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class UpdateCart
@@ -174,7 +175,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             }
 
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
-           
+
             $result = $this->generateResult($immutableQuote);
                 
             $this->sendSuccessResponse($result);
@@ -230,6 +231,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     protected function getQuoteCart($quote)
     {
         $has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
+        //make sure we recollect totals
+        $quote->setTotalsCollectedFlag(false);
         return $this->cartHelper->getCartData($has_shipment, null, $quote);
     }
     
