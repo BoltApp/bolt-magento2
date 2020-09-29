@@ -174,14 +174,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
-            ->setMethods(['collectAddressTotals'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->totalsCollector->method('collectAddressTotals')
-            ->withAnyParameters()
-            ->willReturnSelf();
-
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
