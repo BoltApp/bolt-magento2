@@ -2998,15 +2998,28 @@ class DiscountTest extends TestCase
      */
     public function setCouponCode_savesProperly()
     {
-        $this->initCurrentMock(['updateTotals']);
-        $quoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['setCouponCode'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->initCurrentMock();
+        
+         $couponCode = 'testcoupon';
+        
+        $quote = $this->createPartialMock(
+            Quote::class,
+            [
+                'getShippingAddress',
+                'setTotalsCollectedFlag',
+                'collectTotals',
+                'setDataChanges',
+                'setCouponCode'
+            ]
+        );
 
-        $couponCode = 'testcoupon';
-        $quoteMock->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
-        $this->currentMock->expects(static::once())->method('updateTotals')->with($quoteMock);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
+        $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
+        $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
+        $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
+        $quote->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
+
+        $this->quoteRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
 
         static::assertNull($this->currentMock->setCouponCode($quoteMock,$couponCode));
     }

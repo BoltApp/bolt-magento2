@@ -451,9 +451,6 @@ class UpdateCartTest extends TestCase
         $checkoutSession = $this->createMock(CheckoutSession::class);
         $sessionHelper->expects(self::once())->method('getCheckoutSession')
             ->willReturn($checkoutSession);
-        
-        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
-            ->with($checkoutSession);
 
         $this->initCurrentMock([
             'validateQuote',
@@ -488,6 +485,8 @@ class UpdateCartTest extends TestCase
             ->with(self::COUPON_CODE, $this->couponMock, null, $parentQuoteMock)
             ->willReturn(true);
         
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
@@ -552,9 +551,6 @@ class UpdateCartTest extends TestCase
         $checkoutSession = $this->createMock(CheckoutSession::class);
         $sessionHelper->expects(self::once())->method('getCheckoutSession')
             ->willReturn($checkoutSession);
-        
-        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
-            ->with($checkoutSession);
             
         $this->initCurrentMock([
             'validateQuote',
@@ -598,6 +594,8 @@ class UpdateCartTest extends TestCase
             ->with(self::COUPON_CODE, [self::COUPON_CODE => 'coupon'], $parentQuoteMock, self::WEBSITE_ID, self::STORE_ID)
             ->willReturn(true);
         
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
