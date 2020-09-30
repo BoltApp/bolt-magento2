@@ -551,13 +551,9 @@ class DiscountCodeValidationTest extends TestCase
         
         $this->currentMock->expects(self::never())->method('preProcessWebhook')->with(self::STORE_ID);
 
-        $this->bugsnag->expects(self::once())->method('notifyError')->with(
-            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            'The cart.order_reference is not set or empty.'
-        );
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            'The cart reference is not found.',
+            'The cart.order_reference is not set or empty.',
             404
         );
 
@@ -1196,7 +1192,7 @@ class DiscountCodeValidationTest extends TestCase
             ->getMock();
 
         $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException', 'notifyError'])
+            ->setMethods(['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -1352,6 +1348,9 @@ class DiscountCodeValidationTest extends TestCase
         $encodeErrorResult = '';
         $this->errorResponse->expects(self::once())->method('prepareErrorMessage')
             ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with(
+            new \Exception($message)
+        );
         $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
         $this->response->expects(self::once())->method('setBody')->with($encodeErrorResult);
         $this->response->expects(self::once())->method('sendResponse');
