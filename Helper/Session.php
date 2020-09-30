@@ -78,6 +78,7 @@ class Session extends AbstractHelper
     /**
      * @param Context                    $context
      * @param CheckoutSession            $checkoutSession
+     * @param AdminCheckoutSession       $adminCheckoutSession
      * @param CustomerSession            $customerSession
      * @param LogHelper                  $logHelper
      * @param CacheInterface             $cache
