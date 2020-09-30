@@ -692,6 +692,12 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('updateTotals')
             ->with($parentQuoteMock);
         
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);    
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
@@ -782,6 +788,12 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('updateTotals')
             ->with($parentQuoteMock);
         
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
         
