@@ -138,11 +138,6 @@ class DiscountTest extends TestCase
     private $amastyRewardsQuote;
 
     /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Aheadworks Customer Store Credit management model
-     */
-    private $aheadworksCustomerStoreCreditManagement;
-
-    /**
      * @var MockObject|CartRepositoryInterface mocked instance of the the Quote repository model
      */
     private $quoteRepository;
@@ -229,7 +224,6 @@ class DiscountTest extends TestCase
         $this->unirgyGiftCertHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsResourceQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsQuote = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->aheadworksCustomerStoreCreditManagement = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountHelperMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->quoteRepository = $this->createMock(CartRepositoryInterface::class);
@@ -281,7 +275,6 @@ class DiscountTest extends TestCase
                     $this->unirgyGiftCertHelper,
                     $this->amastyRewardsResourceQuote,
                     $this->amastyRewardsQuote,
-                    $this->aheadworksCustomerStoreCreditManagement,
                     $this->moduleGiftCardAccountMock,
                     $this->moduleGiftCardAccountHelperMock,
                     $this->quoteRepository,
@@ -329,7 +322,6 @@ class DiscountTest extends TestCase
             $this->unirgyGiftCertHelper,
             $this->amastyRewardsResourceQuote,
             $this->amastyRewardsQuote,
-            $this->aheadworksCustomerStoreCreditManagement,
             $this->moduleGiftCardAccountMock,
             $this->moduleGiftCardAccountHelperMock,
             $this->quoteRepository,
@@ -357,12 +349,6 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->unirgyGiftCertHelper, 'unirgyGiftCertHelper', $instance);
         static::assertAttributeEquals($this->amastyRewardsResourceQuote, 'amastyRewardsResourceQuote', $instance);
         static::assertAttributeEquals($this->amastyRewardsQuote, 'amastyRewardsQuote', $instance);
-        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
-        static::assertAttributeEquals(
-            $this->aheadworksCustomerStoreCreditManagement,
-            'aheadworksCustomerStoreCreditManagement',
-            $instance
-        );
         static::assertAttributeEquals($this->moduleGiftCardAccountMock, 'moduleGiftCardAccount', $instance);
         static::assertAttributeEquals($this->moduleGiftCardAccountHelperMock, 'moduleGiftCardAccountHelper', $instance);
         static::assertAttributeEquals($this->quoteRepository, 'quoteRepository', $instance);
@@ -373,6 +359,7 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         static::assertAttributeEquals($this->couponFactoryMock, 'couponFactory', $instance);
         static::assertAttributeEquals($this->ruleRepositoryMock, 'ruleRepository', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
@@ -2451,97 +2438,6 @@ class DiscountTest extends TestCase
         $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
 
         $this->currentMock->clearAmastyRewardPoints($quoteMock);
-    }
-
-    /**
-     * @test
-     * that isAheadworksStoreCreditAvailable returns availability of Aheadworks Store Credit module
-     *
-     * @covers ::isAheadworksStoreCreditAvailable
-     *
-     * @dataProvider isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilitiesProvider
-     *
-     * @param bool $aheadworksStoreCreditAvailable stubbed result of {@see \Bolt\Boltpay\Model\ThirdPartyModuleFactory::isAvailable}
-     * @param bool $expectedResult of the method call
-     */
-    public function isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilities_returnsAvailability(
-        $aheadworksStoreCreditAvailable,
-        $expectedResult
-    ) {
-        $this->initCurrentMock();
-        $this->aheadworksCustomerStoreCreditManagement->expects(static::once())
-            ->method('isAvailable')
-            ->willReturn($aheadworksStoreCreditAvailable);
-
-        static::assertEquals($expectedResult, $this->currentMock->isAheadworksStoreCreditAvailable());
-    }
-
-    /**
-     * Data provider for {@see isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilities_returnsAvailability}
-     *
-     * @return array[] containing Aheadworks Store Credit module availability and expected result of the method call
-     */
-    public function isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilitiesProvider()
-    {
-        return [
-            ['aheadworksStoreCreditAvailable' => true, 'expectedResult' => true],
-            ['aheadworksStoreCreditAvailable' => false, 'expectedResult' => false],
-        ];
-    }
-
-    /**
-     * @test
-     * that getAheadworksStoreCredit returns Aheadworks user store credit when Aheadworks store credit is available
-     *
-     * @covers ::getAheadworksStoreCredit
-     *
-     * @dataProvider getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilitiesProvider
-     *
-     * @param bool  $AheadworksStoreCreditAvailable stubbed result of {@see \Bolt\Boltpay\Helper\Discount::isAheadworksStoreCreditAvailable}
-     * @param float $expectedResult of the tested method call
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilities_returnsUserStoreCredit(
-        $AheadworksStoreCreditAvailable,
-        $expectedResult
-    ) {
-        $this->initCurrentMock(['isAheadworksStoreCreditAvailable']);
-        $customerId = 87;
-
-        $this->currentMock->expects(static::once())
-            ->method('isAheadworksStoreCreditAvailable')
-            ->willReturn($AheadworksStoreCreditAvailable);
-
-        $aheadworksCustomerMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getCustomerStoreCreditBalance'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'aheadworksCustomerStoreCreditManagement', $aheadworksCustomerMock);
-        $aheadworksCustomerMock->expects($AheadworksStoreCreditAvailable ? static::once() : static::never())
-            ->method('getInstance')
-            ->willReturnSelf();
-        $aheadworksCustomerMock->expects($AheadworksStoreCreditAvailable ? static::once() : static::never())
-            ->method('getCustomerStoreCreditBalance')
-            ->with($customerId)
-            ->willReturn($expectedResult);
-
-        static::assertEquals($expectedResult, $this->currentMock->getAheadworksStoreCredit($customerId));
-    }
-
-    /**
-     * Data provider for
-     * @see getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilities_returnsUserStoreCredit
-     *
-     * @return array[] containing Aheadwork Store Credit flag and expected result of the tested method
-     */
-    public function getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilitiesProvider()
-    {
-        return [
-            ["AheadworksStoreCreditAvailable" => true, "expectedResult" => 595.3],
-            ["AheadworksStoreCreditAvailable" => false, "expectedResult" => 0],
-        ];
     }
 
     /**
