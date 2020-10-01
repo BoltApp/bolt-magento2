@@ -170,10 +170,6 @@ abstract class UpdateCartCommon
             $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
 
             if(empty($parentQuoteId)) {
-                $this->bugsnag->notifyError(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'Parent quote does not exist'
-                );
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                     'Parent quote does not exist',
@@ -217,7 +213,6 @@ abstract class UpdateCartCommon
             ];
 
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                 $e->getMessage(),

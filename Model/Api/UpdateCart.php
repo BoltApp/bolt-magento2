@@ -227,7 +227,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             $this->sendSuccessResponse($result);
             
         } catch (WebApiException $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -291,6 +290,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);
+        
+        $this->bugsnag->notifyException(new \Exception($message));
 
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);

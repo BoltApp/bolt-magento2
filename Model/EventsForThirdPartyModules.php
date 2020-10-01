@@ -77,6 +77,15 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        'replicateQuoteData' => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ]
+        ],
     ];
 
     const filterListeners = [
@@ -200,6 +209,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
                     "boltClass" => Mageplaza_GiftCard::class,
                 ],
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
+                    "boltClass" => Aheadworks_Giftcard::class,
+                ],
             ],
         ],
         'filterRemovingGiftCardCode' => [
@@ -208,6 +222,11 @@ class EventsForThirdPartyModules
                     "module" => "Mageplaza_GiftCard",
                     "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
                     "boltClass" => Mageplaza_GiftCard::class,
+                ],
+                [
+                    "module" => "Aheadworks_Giftcard",
+                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
+                    "boltClass" => Aheadworks_Giftcard::class,
                 ],
             ],
         ]

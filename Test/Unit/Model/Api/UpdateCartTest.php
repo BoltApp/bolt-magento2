@@ -38,6 +38,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -108,6 +109,11 @@ class UpdateCartTest extends TestCase
      * @var CartHelper|MockObject
      */
     private $cartHelper;
+    
+    /**
+     * @var Bugsnag|MockObject
+     */
+    private $bugsnag;
 
     /**
      * @var UpdateCart|MockObject
@@ -196,10 +202,16 @@ class UpdateCartTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
         
+        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
+            ->setMethods(['notifyException'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
+        TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
     }
     
     /**
@@ -373,6 +385,9 @@ class UpdateCartTest extends TestCase
         $encodeErrorResult = '';
         $this->errorResponse->expects(self::once())->method('prepareUpdateCartErrorMessage')
             ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with(
+            new \Exception($message)
+        );
         $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
         $this->response->expects(self::once())->method('setBody')->with($encodeErrorResult);
         $this->response->expects(self::once())->method('sendResponse');
@@ -644,7 +659,7 @@ class UpdateCartTest extends TestCase
         );
         
         $sessionHelper = $this->getMockBuilder(SessionHelper::class)
-            ->setMethods(['loadSession'])
+            ->setMethods(['loadSession','getCheckoutSession'])
             ->disableOriginalConstructor()
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
@@ -692,6 +707,12 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('updateTotals')
             ->with($parentQuoteMock);
         
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);    
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
@@ -748,7 +769,7 @@ class UpdateCartTest extends TestCase
         );
         
         $sessionHelper = $this->getMockBuilder(SessionHelper::class)
-            ->setMethods(['loadSession'])
+            ->setMethods(['loadSession','getCheckoutSession'])
             ->disableOriginalConstructor()
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
@@ -782,6 +803,12 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('updateTotals')
             ->with($parentQuoteMock);
         
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
         

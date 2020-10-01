@@ -919,7 +919,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE)->willThrowException($exception);
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
 
@@ -1060,8 +1059,6 @@ class UpdateDiscountTraitTest extends TestCase
         ];
         $quote = $this->getQuoteMock();
         
-        $exception = new \Exception('Coupon code ' . self::COUPON_CODE . ' does not exist!');
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'Coupon code ' . self::COUPON_CODE . ' does not exist!',422,$quote);
 
@@ -1097,7 +1094,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, '')->willThrowException($exception);
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
         
@@ -1152,9 +1148,7 @@ class UpdateDiscountTraitTest extends TestCase
     public function removeGiftCardCode_throwException()
     {
         $quote = $this->getQuoteMock();
-        $exception = new \Exception('The GiftCard '.self::COUPON_CODE.' does not support removal');
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'The GiftCard '.self::COUPON_CODE.' does not support removal',422,$quote);
         
