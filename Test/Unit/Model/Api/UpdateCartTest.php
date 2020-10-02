@@ -21,7 +21,9 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Coupon;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterface;
@@ -36,6 +38,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
@@ -106,6 +109,11 @@ class UpdateCartTest extends TestCase
      * @var CartHelper|MockObject
      */
     private $cartHelper;
+    
+    /**
+     * @var Bugsnag|MockObject
+     */
+    private $bugsnag;
 
     /**
      * @var UpdateCart|MockObject
@@ -188,8 +196,14 @@ class UpdateCartTest extends TestCase
             ->setMethods(
                 [
                     'replicateQuoteData',
+                    'resetCheckoutSession',
                 ]
             )
+            ->disableOriginalConstructor()
+            ->getMock();
+        
+        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
+            ->setMethods(['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
         
@@ -197,6 +211,7 @@ class UpdateCartTest extends TestCase
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
+        TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
     }
     
     /**
@@ -319,6 +334,8 @@ class UpdateCartTest extends TestCase
             'shipments' => [
                 0 => $this->getShipments(),
             ],
+            'add_items' => [],
+            'remove_items' => [],
         ];
         
         return $request_cart;
@@ -340,7 +357,7 @@ class UpdateCartTest extends TestCase
             'items' => [
                 [
                     'name'         => 'Beaded Long Dress',
-                    'reference'    => '123ABC',
+                    'reference'    => 101,
                     'total_amount' => 50000,
                     'unit_price'   => 50000,
                     'quantity'     => 1,
@@ -368,6 +385,9 @@ class UpdateCartTest extends TestCase
         $encodeErrorResult = '';
         $this->errorResponse->expects(self::once())->method('prepareUpdateCartErrorMessage')
             ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with(
+            new \Exception($message)
+        );
         $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
         $this->response->expects(self::once())->method('setBody')->with($encodeErrorResult);
         $this->response->expects(self::once())->method('sendResponse');
@@ -441,10 +461,14 @@ class UpdateCartTest extends TestCase
         );
         
         $sessionHelper = $this->getMockBuilder(SessionHelper::class)
-            ->setMethods(['loadSession'])
+            ->setMethods(['loadSession','getCheckoutSession'])
             ->disableOriginalConstructor()
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
+        
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
 
         $this->initCurrentMock([
             'validateQuote',
@@ -479,6 +503,8 @@ class UpdateCartTest extends TestCase
             ->with(self::COUPON_CODE, $this->couponMock, null, $parentQuoteMock)
             ->willReturn(true);
         
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
@@ -535,17 +561,21 @@ class UpdateCartTest extends TestCase
         );
         
         $sessionHelper = $this->getMockBuilder(SessionHelper::class)
-            ->setMethods(['loadSession'])
+            ->setMethods(['loadSession','getCheckoutSession'])
             ->disableOriginalConstructor()
             ->getMock();
         $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
+        
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
             
         $this->initCurrentMock([
             'validateQuote',
             'preProcessWebhook',
             'setShipment',
             'generateResult',
-            'getQuoteDiscounts',
+            'getQuoteCart',
             'removeDiscount'
         ], $sessionHelper);        
         
@@ -574,14 +604,16 @@ class UpdateCartTest extends TestCase
                 'discount_type'   => 'fixed_amount',
             ]
         ];
-        $this->currentMock->expects(self::once())->method('getQuoteDiscounts')
+        $this->currentMock->expects(self::once())->method('getQuoteCart')
             ->with($parentQuoteMock)
-            ->willReturn($quoteDiscount);
+            ->willReturn(['discounts' => $quoteDiscount]);
         
         $this->currentMock->expects(self::once())->method('removeDiscount')
             ->with(self::COUPON_CODE, [self::COUPON_CODE => 'coupon'], $parentQuoteMock, self::WEBSITE_ID, self::STORE_ID)
             ->willReturn(true);
         
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
 
@@ -600,6 +632,221 @@ class UpdateCartTest extends TestCase
         $this->expectSuccessResponse($result);
 
         $this->assertTrue($this->currentMock->execute($requestCart, null, null, null, $discount_codes_to_remove));
+    }
+    
+    /**
+     * @test
+     * that that execute would send success response and return true if add item successfully
+     *
+     * @covers ::execute
+     */
+    public function execute_addItem_sendSuccessResponse_returnTrue()
+    {
+        $requestCart = $this->getRequestCart();
+        $add_items = [
+            [
+                'price'      => 4500,
+                'currency'   => 'USD',
+                'product_id' => 100,
+                'quantity'   => 1,
+            ]
+        ];
+        $requestCart['add_items'] = $add_items;
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+        
+        $sessionHelper = $this->getMockBuilder(SessionHelper::class)
+            ->setMethods(['loadSession','getCheckoutSession'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
+            
+        $this->initCurrentMock([
+            'validateQuote',
+            'preProcessWebhook',
+            'setShipment',
+            'generateResult',
+            'getProduct',
+            'verifyItemData',
+            'addItemToQuote',
+            'updateTotals'
+        ], $sessionHelper);
+        
+        $immutableQuoteMock = $this->getQuoteMock();
+        
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShipment')
+            ->withConsecutive(
+                [$requestCart['shipments'][0], $immutableQuoteMock],
+                [$requestCart['shipments'][0], $parentQuoteMock]
+            );
+            
+        $this->currentMock->expects(self::once())->method('validateQuote')
+            ->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
+            
+        $this->currentMock->expects(self::once())->method('preProcessWebhook')
+            ->with(self::STORE_ID);
+        
+        $product = $this->createMock(ProductInterface::class);
+        $this->currentMock->expects(self::once())->method('getProduct')
+            ->with(100,self::STORE_ID)
+            ->willReturn($product);
+        
+        $this->currentMock->expects(self::once())->method('verifyItemData')
+            ->with($product, $add_items[0], self::WEBSITE_ID)
+            ->willReturn(true);
+        
+        $this->currentMock->expects(self::once())->method('addItemToQuote')
+            ->with($product, $parentQuoteMock, $add_items[0])
+            ->willReturn(true);
+        
+        $this->currentMock->expects(self::once())->method('updateTotals')
+            ->with($parentQuoteMock);
+        
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);    
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($parentQuoteMock, $immutableQuoteMock);
+
+        $cartData = $this->getTestCartData();
+        $cartData['items'][] = [
+            'name'         => 'Test Product',
+            'reference'    => 100,
+            'total_amount' => 4500,
+            'unit_price'   => 4500,
+            'quantity'     => 1,
+            'image_url'    => 'https://images.example.com/dress1.jpg',
+            'type'         => 'physical',
+            'properties'   => [],
+        ];
+        $result = [
+            'status' => 'success',
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'order_create' => [
+                'cart' => $cartData,
+            ]
+        ];
+        
+        $this->currentMock->expects(self::once())->method('generateResult')
+            ->with($immutableQuoteMock)
+            ->willReturn($result);
+            
+        $this->expectSuccessResponse($result);
+
+        $this->assertTrue($this->currentMock->execute($requestCart, $add_items, null, null, null));
+    }
+    
+    /**
+     * @test
+     * that that execute would send success response and return true if remove item successfully
+     *
+     * @covers ::execute
+     */
+    public function execute_removeItem_sendSuccessResponse_returnTrue()
+    {
+        $requestCart = $this->getRequestCart();
+        $remove_items = [
+            [
+                'price'      => 4500,
+                'currency'   => 'USD',
+                'product_id' => 100,
+                'quantity'   => 1,
+            ]
+        ];
+        $requestCart['remove_items'] = $remove_items;
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+        
+        $sessionHelper = $this->getMockBuilder(SessionHelper::class)
+            ->setMethods(['loadSession','getCheckoutSession'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $sessionHelper->expects(self::once())->method('loadSession')->with($parentQuoteMock);
+            
+        $this->initCurrentMock([
+            'validateQuote',
+            'preProcessWebhook',
+            'setShipment',
+            'generateResult',
+            'removeItemFromQuote',
+            'updateTotals',
+            'getCartItems'
+        ], $sessionHelper);
+        
+        $immutableQuoteMock = $this->getQuoteMock();
+        
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShipment')
+            ->withConsecutive(
+                [$requestCart['shipments'][0], $immutableQuoteMock],
+                [$requestCart['shipments'][0], $parentQuoteMock]
+            );
+        
+        $this->currentMock->expects(self::once())->method('validateQuote')
+            ->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
+            
+        $this->currentMock->expects(self::once())->method('preProcessWebhook')
+            ->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateTotals')
+            ->with($parentQuoteMock);
+        
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        $sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($parentQuoteMock, $immutableQuoteMock);
+        
+        $cartItems = [
+            [
+                'reference'    => 100,
+                'quantity'     => 1,
+                'quote_item_id'=> 60,
+            ],
+            [
+                'reference'    => 101,
+                'quantity'     => 1,
+                'quote_item_id'=> 61,
+            ]
+        ];
+        $this->currentMock->expects(self::once())->method('getCartItems')
+            ->with($parentQuoteMock)
+            ->willReturn($cartItems);
+        
+        $this->currentMock->expects(self::once())->method('removeItemFromQuote')
+            ->with($cartItems, $remove_items[0], $parentQuoteMock)
+            ->willReturn(true);
+        
+        $result = [
+            'status' => 'success',
+            'order_reference' => self::PARENT_QUOTE_ID,
+            'order_create' => [
+                'cart' => $this->getTestCartData(),
+            ]
+        ];
+        
+        $this->currentMock->expects(self::once())->method('generateResult')
+            ->with($immutableQuoteMock)
+            ->willReturn($result);
+            
+        $this->expectSuccessResponse($result);
+
+        $this->assertTrue($this->currentMock->execute($requestCart, null, $remove_items, null, null));
     }
     
     /**

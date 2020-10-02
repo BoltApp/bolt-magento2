@@ -167,6 +167,14 @@
         </arguments>
     </virtualType>
 
+    <!-- For Amasty Gift Card v2.0.0 and later -->
+    <virtualType name="boltAmastyGiftCardAccountQuoteExtensionRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
+        <arguments>
+            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
+            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardExtension\Quote\Repository</argument>
+        </arguments>
+    </virtualType>
+
     <type name="Mirasvit\Rewards\Model\Purchase">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
@@ -209,6 +217,7 @@
             <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
+            <argument name="amastyGiftCardAccountQuoteExtensionRepository" xsi:type="object">boltAmastyGiftCardAccountQuoteExtensionRepository</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
@@ -287,6 +296,18 @@
     <type name="Magento\Reward\Observer\PreparePaymentMethod">
         <plugin name="BoltPreparePaymentMethodPlugin"
                 type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
+                sortOrder="1"/>
+    </type>
+
+    <type name="Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount">
+        <plugin name="Bolt_Boltpay_SalesRule_Action_Discount_Plugin"
+                type="Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin"
+                sortOrder="20"/>
+    </type>
+
+    <type name="Magento\SalesRule\Model\Quote\Discount">
+        <plugin name="Bolt_Boltpay_SalesRule_Quote_Discount_Plugin"
+                type="Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin"
                 sortOrder="1"/>
     </type>
 

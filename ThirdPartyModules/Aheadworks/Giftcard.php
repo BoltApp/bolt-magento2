@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
@@ -33,17 +34,25 @@ class Giftcard
      * @var Bugsnag
      */
     private $bugsnagHelper;
+    
+    /**
+     * @var Discount
+     */
+    protected $discountHelper;
 
     /**
      * @param OrderService $orderService Magento order service instance
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
+     * @param Discount $discountHelper
      */
     public function __construct(
-        OrderService $orderService,
-        Bugsnag $bugsnagHelper
+        OrderService  $orderService,
+        Bugsnag       $bugsnagHelper,
+        Discount      $discountHelper
     ) {
-        $this->orderService = $orderService;
-        $this->bugsnagHelper = $bugsnagHelper;
+        $this->orderService   = $orderService;
+        $this->bugsnagHelper  = $bugsnagHelper;
+        $this->discountHelper = $discountHelper;
     }
 
     /**
@@ -61,9 +70,12 @@ class Giftcard
             $currencyCode = $quote->getQuoteCurrencyCode();
             foreach ($aheadworksGiftcardManagement->get($parentQuoteId, false) as $giftcardQuote) {
                 $discounts[] = [
-                    'description' => "Gift Card ({$giftcardQuote->getGiftcardCode()})",
-                    'amount'      => CurrencyUtils::toMinor($giftcardQuote->getGiftcardBalance(), $currencyCode),
-                    'type'        => 'fixed_amount'
+                    'reference'         => $giftcardQuote->getGiftcardCode(),
+                    'description'       => "Gift Card ({$giftcardQuote->getGiftcardCode()})",
+                    'amount'            => CurrencyUtils::toMinor($giftcardQuote->getGiftcardBalance(), $currencyCode),
+                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                 ];
                 $totalAmount -= CurrencyUtils::toMinor($giftcardQuote->getGiftcardAmount(), $currencyCode);
             }
@@ -139,6 +151,52 @@ class Giftcard
             return $result;
         }
     }
+    
+    /**
+     * @param $result
+     * @param $aheadworksGiftcardCartService
+     * @param $quote
+     * @param $couponCode
+     * @param $giftCard
+     * @param $quote
+     * @return bool
+     */
+    public function filterApplyingGiftCardCode($result, $aheadworksGiftcardCartService, $couponCode, $giftCard, $quote)
+    {
+        if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
+            try {
+                // on subsequent validation calls from Bolt checkout
+                // try removing the gift card before adding it
+                $aheadworksGiftcardCartService->remove($quote->getId(), $couponCode, false);
+            } catch (\Exception $e) {
+                
+            }
+            
+            $aheadworksGiftcardCartService->set($quote->getId(), $couponCode, false);
+          
+            $result = true;
+        }
+
+        return $result;
+    }
+    
+    /**
+     * @param $result
+     * @param $aheadworksGiftcardCartService
+     * @param $giftCard
+     * @param $quote
+     * @return bool
+     */
+    public function filterRemovingGiftCardCode($result, $aheadworksGiftcardCartService, $giftCard, $quote)
+    {
+        if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
+            $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
+            
+            $result = true;
+        }
+
+        return $result;
+    }
 
     /**
      * Fetch transaction details info
@@ -161,5 +219,22 @@ class Giftcard
             },
             $order->getId()
         );
+    }
+    
+    /**
+     * @param $aheadworksGiftcardOrderServicePlugin
+     * @param $sourceQuote
+     * @param $destinationQuote
+     */
+    public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $sourceQuote, $destinationQuote)
+    {
+        if ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()) {
+            $giftcards = $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes();
+            /** @var GiftcardQuoteInterface $giftcard */
+            foreach ($giftcards as $giftcard) {
+                $giftcardCode = $giftcard->getGiftcardCode();
+                $aheadworksGiftcardOrderServicePlugin->set($destinationQuote->getId(), $giftcardCode, false);
+            }
+        }
     }
 }

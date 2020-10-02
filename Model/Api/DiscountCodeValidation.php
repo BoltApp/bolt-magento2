@@ -71,13 +71,9 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                     $immutableQuoteId = $parentQuoteId;
                 }                
             } else {
-                $this->bugsnag->notifyError(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The cart.order_reference is not set or empty.'
-                );
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The cart reference is not found.',
+                    'The cart.order_reference is not set or empty.',
                     404
                 );
                 return false;
@@ -154,7 +150,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
             $this->sendSuccessResponse($result, $immutableQuote);
         } catch (WebApiException $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -257,7 +252,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 }
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -321,6 +315,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);
+        
+        $this->bugsnag->notifyException(new \Exception($message));
 
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);

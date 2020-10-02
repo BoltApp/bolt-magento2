@@ -24,10 +24,12 @@ use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Model\Api\UpdateCartCommon;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
+use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class UpdateCart
@@ -36,7 +38,9 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
  */
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
-    use UpdateDiscountTrait { __construct as private UpdateDiscountTraitConstructor; }
+    use UpdateDiscountTrait { UpdateDiscountTrait::__construct as private UpdateDiscountTraitConstructor; }
+    
+    use UpdateCartItemTrait { UpdateCartItemTrait::__construct as private UpdateCartItemTraitConstructor; }
 
     /**
      * @var CartDataInterfaceFactory
@@ -66,13 +70,14 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @param CartDataInterfaceFactory $cartDataFactory
      * @param UpdateCartResultInterfaceFactory $updateCartResultFactory
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext,
         CartDataInterfaceFactory $cartDataFactory,
         UpdateCartResultInterfaceFactory $updateCartResultFactory
     ) {
         parent::__construct($updateCartContext);
         $this->UpdateDiscountTraitConstructor($updateCartContext);
+        $this->UpdateCartItemTraitConstructor($updateCartContext);
         $this->cartDataFactory = $cartDataFactory;
         $this->updateCartResultFactory = $updateCartResultFactory;
         $this->sessionHelper = $updateCartContext->getSessionHelper();
@@ -116,6 +121,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             // Load logged in customer checkout and customer sessions from cached session id.
             // Replace the quote with $parentQuote in checkout session.
             $this->sessionHelper->loadSession($parentQuote);
+            $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
             
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
@@ -151,7 +157,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
 
-                $discounts = $this->getQuoteDiscounts($parentQuote);
+                $quoteCart = $this->getQuoteCart($parentQuote);
+                $discounts = $quoteCart['discounts'];
 
                 if(empty($discounts)){
                     $this->sendErrorResponse(
@@ -172,15 +179,54 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     return false;
                 }
             }
+            
+            // Add items
+            if ( !empty($add_items) ) {
+                foreach ($add_items as $add_item) {
+                    $product = $this->getProduct($add_item['product_id'], $storeId);
+                    if (!$product) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                    
+                    $result = $this->verifyItemData($product, $add_item, $websiteId);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                    
+                    $result = $this->addItemToQuote($product, $parentQuote, $add_item);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                }
+                
+                $this->updateTotals($parentQuote);
+            }
+            
+            // Remove items
+            if ( !empty($remove_items) ) {
+                $cartItems = $this->getCartItems($parentQuote);                    
+                    
+                foreach ($remove_items as $remove_item) {
+                    $result = $this->removeItemFromQuote($cartItems, $remove_item, $parentQuote);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                }
+                
+                $this->updateTotals($parentQuote);
+            }
 
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
-           
+
             $result = $this->generateResult($immutableQuote);
                 
             $this->sendSuccessResponse($result);
             
         } catch (WebApiException $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -215,21 +261,11 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @return array
      * @throws \Exception
      */
-    protected function getQuoteDiscounts($quote)
-    {
-        $is_has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
-        list ($discounts, ,) = $this->cartHelper->collectDiscounts(0, 0, $is_has_shipment, $quote);
-        return $discounts;
-    }
-    
-    /**
-     * @param Quote $quote
-     * @return array
-     * @throws \Exception
-     */
     protected function getQuoteCart($quote)
     {
         $has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
+        //make sure we recollect totals
+        $quote->setTotalsCollectedFlag(false);
         return $this->cartHelper->getCartData($has_shipment, null, $quote);
     }
     
@@ -254,6 +290,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);
+        
+        $this->bugsnag->notifyException(new \Exception($message));
 
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);

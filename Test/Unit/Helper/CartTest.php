@@ -441,8 +441,9 @@ class CartTest extends BoltTestCase
         $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart']);
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
         $this->ruleRepository = $this->createPartialMock(
             RuleRepository::class,
             ['getById']

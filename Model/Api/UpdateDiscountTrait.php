@@ -99,9 +99,9 @@ trait UpdateDiscountTrait
      *
      * @param UpdateCartContext $updateCartContext
      */
-    final public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext
-    ) {        
+    ) {
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->logHelper = $updateCartContext->getLogHelper();
         $this->usageFactory = $updateCartContext->getUsageFactory();
@@ -328,7 +328,6 @@ trait UpdateDiscountTrait
 
             $this->discountHelper->setCouponCode($quote, $couponCode);
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -352,7 +351,6 @@ trait UpdateDiscountTrait
         $address = $quote->isVirtual() ?
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
-        $this->totalsCollector->collectAddressTotals($quote, $address);
 
         $result = [
             'status'          => 'success',
@@ -386,7 +384,7 @@ trait UpdateDiscountTrait
                 // Remove Amasty Gift Card if already applied
                 // to avoid errors on multiple calls to discount validation API
                 // from the Bolt checkout (changing the address, going back and forth)
-                $this->discountHelper->removeAmastyGiftCard($couponCode, $quote);
+                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
                 // Apply Amasty Gift Card to the parent quote
                 $giftAmount = $this->discountHelper->applyAmastyGiftCard($couponCode, $giftCard, $quote);
             } else {
@@ -401,7 +399,6 @@ trait UpdateDiscountTrait
                 }
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -441,7 +438,6 @@ trait UpdateDiscountTrait
                 throw new \Exception(__('Coupon code %1 does not exist!', $couponCode));
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -467,7 +463,6 @@ trait UpdateDiscountTrait
         try {
             $this->discountHelper->setCouponCode($quote, '');
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
@@ -506,7 +501,6 @@ trait UpdateDiscountTrait
                 throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),

@@ -40,7 +40,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Class UpdateDiscountTraitTest
- * @coversDefaultClass \Bolt\Boltpay\Controller\UpdateDiscountTrait
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateDiscountTrait
  */
 class UpdateDiscountTraitTest extends TestCase
 {
@@ -173,14 +173,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
             ->disableOriginalConstructor()
             ->getMock();
-
-        $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
-            ->setMethods(['collectAddressTotals'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->totalsCollector->method('collectAddressTotals')
-            ->withAnyParameters()
-            ->willReturnSelf();
 
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
@@ -927,7 +919,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE)->willThrowException($exception);
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
 
@@ -971,23 +962,26 @@ class UpdateDiscountTraitTest extends TestCase
         
         $this->assertFalse($result);
     }
-    
+
     /**
      * @test
      *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyingGiftCardCode
      */
     public function applyingGiftCardCode_amastyGiftCard()
     {
         $quote = $this->getQuoteMock();
-        
+
         $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->setMethods(['getCodeId'])
             ->disableOriginalConstructor()
-            ->getMock();        
-        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_CODE, $quote);            
+            ->getMock();
+        $giftcardMock->expects(static::once())->method('getCodeId')->willReturn(self::COUPON_ID);
+        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_ID, $quote);
         $this->discountHelper->expects(static::once())->method('applyAmastyGiftCard')->with(self::COUPON_CODE, $giftcardMock, $quote);
-        
+
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
-        
+
         $this->assertTrue($result);
     }
     
@@ -1065,8 +1059,6 @@ class UpdateDiscountTraitTest extends TestCase
         ];
         $quote = $this->getQuoteMock();
         
-        $exception = new \Exception('Coupon code ' . self::COUPON_CODE . ' does not exist!');
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'Coupon code ' . self::COUPON_CODE . ' does not exist!',422,$quote);
 
@@ -1102,7 +1094,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, '')->willThrowException($exception);
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
         
@@ -1157,9 +1148,7 @@ class UpdateDiscountTraitTest extends TestCase
     public function removeGiftCardCode_throwException()
     {
         $quote = $this->getQuoteMock();
-        $exception = new \Exception('The GiftCard '.self::COUPON_CODE.' does not support removal');
 
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_SERVICE,'The GiftCard '.self::COUPON_CODE.' does not support removal',422,$quote);
         
