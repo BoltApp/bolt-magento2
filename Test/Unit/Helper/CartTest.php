@@ -3712,7 +3712,7 @@ ORDER
             ->disableOriginalConstructor()
             ->getMock();
             
-        $this->ruleRepository->expects(static::exactly(2))
+        $this->ruleRepository->expects(static::exactly(3))
             ->method('getById')
             ->withConsecutive(
                 [2],
