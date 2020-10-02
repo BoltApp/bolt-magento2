@@ -218,7 +218,6 @@ class Cart extends AbstractHelper
     /////////////////////////////////////////////////////////////////////////////
     protected $discountTypes = [
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
-        Discount::AMASTY_STORECREDIT => '',
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
@@ -2186,12 +2185,6 @@ class Cart extends AbstractHelper
                         'description' => $description . @$totals[$discount]->getTitle(),
                         'amount'      => $roundedDiscountAmount,
                     ];
-
-                    if ($discount == Discount::AMASTY_STORECREDIT) {
-                        $discountItem['discount_type']      = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/discounts.code.apply and v2/cart.update
-                        $discountItem['type']               = $this->discountHelper->getBoltDiscountType('by_fixed'); // For v1/merchant/order
-                        $discountItem['discount_category']  = Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT;
-                    }
 
                     $discounts[] = $discountItem;
                 }
