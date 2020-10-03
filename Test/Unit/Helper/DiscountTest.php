@@ -3053,7 +3053,19 @@ class DiscountTest extends TestCase
     {
         $this->initCurrentMock();
         
-         $couponCode = 'testcoupon';
+        $couponCode = 'testcoupon';
+        
+        $addressMock = $this->getMockBuilder(Quote\Address::class)
+            ->setMethods(
+                [
+                    'setAppliedRuleIds',
+                    'setCollectShippingRates'
+                ]
+            )
+            ->disableOriginalConstructor()
+            ->getMock();
+        $addressMock->expects(static::once())->method('setAppliedRuleIds')->with('')->willReturnSelf();
+        $addressMock->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
         
         $quote = $this->createPartialMock(
             Quote::class,
@@ -3062,15 +3074,19 @@ class DiscountTest extends TestCase
                 'setTotalsCollectedFlag',
                 'collectTotals',
                 'setDataChanges',
-                'setCouponCode'
+                'setCouponCode',
+                'isVirtual',
+                'setAppliedRuleIds'
             ]
         );
-
-        $quote->expects(static::once())->method('getShippingAddress')->willReturnSelf();
+        
+        $quote->expects(static::once())->method('isVirtual')->willReturn(false);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($addressMock);
         $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
         $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
         $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
         $quote->expects(static::once())->method('setCouponCode')->with($couponCode)->willReturnSelf();
+        $quote->expects(static::once())->method('setAppliedRuleIds')->with('')->willReturnSelf();
 
         $this->quoteRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
 
