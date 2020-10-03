@@ -3081,7 +3081,7 @@ class DiscountTest extends TestCase
         );
         
         $quote->expects(static::once())->method('isVirtual')->willReturn(false);
-        $quote->expects(static::once())->method('getShippingAddress')->willReturn($addressMock);
+        $quote->expects(static::exactly(2))->method('getShippingAddress')->willReturn($addressMock);
         $quote->expects(static::once())->method('setTotalsCollectedFlag')->with(false)->willReturnSelf();
         $quote->expects(static::once())->method('collectTotals')->willReturnSelf();
         $quote->expects(static::once())->method('setDataChanges')->with(true)->willReturnSelf();
