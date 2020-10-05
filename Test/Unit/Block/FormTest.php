@@ -193,4 +193,21 @@ class FormTest extends \PHPUnit\Framework\TestCase
 
         $this->assertEquals("backoffice-key", $this->block->getPublishableKeyBackOffice());
     }
+
+    /**
+     * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes from
+     */
+    public function getAdditionalCheckoutButtonAttributes_always_returnsAdditionalCheckoutButtonAttributesFromConfig()
+    {
+        $additionalCheckoutButtonAttributes = (object)["data-btn-txt" => "Pay now"];
+        $this->configHelperMock->expects(static::once())
+            ->method('getAdditionalCheckoutButtonAttributes')
+            ->willReturn($additionalCheckoutButtonAttributes);
+
+        static::assertEquals(
+            $additionalCheckoutButtonAttributes,
+            $this->configHelperMock->getAdditionalCheckoutButtonAttributes()
+        );
+    }
 }
