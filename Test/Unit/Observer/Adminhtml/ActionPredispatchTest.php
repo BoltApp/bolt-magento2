@@ -65,7 +65,7 @@ class ActionPredispatchTest extends TestCase
      * @test
      * that excute redirects the predispatch event to the Events for Third Party Modules
      *
-     * @dataProvider executeDataProvider
+     * @dataProvider execute_withVariousActionProvider
      *
      * @covers ::execute
      * @covers ::convertEventName
@@ -96,7 +96,7 @@ class ActionPredispatchTest extends TestCase
     }
 
     /**
-     * Data provider for {@see execute_withVariousAction}
+     * Data provider for {@see execute_withVariousActions_dispatchesThirdPartyEvents}
      */
     public function execute_withVariousActionProvider()
     {
