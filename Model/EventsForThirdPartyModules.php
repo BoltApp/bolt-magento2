@@ -124,7 +124,8 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Helper\Data"],
+                    "sendClasses" => ["Amasty\Rewards\Helper\Data",
+                                      "Amasty\Rewards\Model\ResourceModel\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
