@@ -25,6 +25,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -227,6 +228,22 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+            ],
+        ],
+        "getAdditionalHtml" => [
+            "listeners" => [
+                [
+                    "module" => "Listrak_Remarketing",
+                    "boltClass" => Listrak_Remarketing::class,
+                ],
+            ],
+        ],
+        "getOnEmailEnter" => [
+            "listeners" => [
+                [
+                    "module" => "Listrak_Remarketing",
+                    "boltClass" => Listrak_Remarketing::class,
                 ],
             ],
         ]

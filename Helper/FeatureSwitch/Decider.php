@@ -261,4 +261,8 @@ class Decider extends AbstractHelper
     public function isIncludeUserGroupIntoCart() {
         return $this->isSwitchEnabled(Definitions::M2_INCLUDE_USER_GROUP_ID_INTO_CART);
     }
+
+    public function isCaptureEmailToListrakEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED);
+    }
 }
