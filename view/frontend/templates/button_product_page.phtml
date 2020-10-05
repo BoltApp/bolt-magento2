@@ -31,9 +31,13 @@ if (!$block->isSupportableType()) { return;
 }
 
 $additionalClass = $block->getAdditionalCheckoutButtonClass();
+$additionalCheckoutButtonAttributes = '';
+foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
+    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
+}
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
-         style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>"></div>
+         style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
     <script>
         require([
             'jquery',
