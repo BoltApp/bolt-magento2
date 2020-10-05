@@ -2106,30 +2106,6 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
 
         /////////////////////////////////////////////////////////////////////////////////
-        // Process Mirasvit Rewards Points
-        /////////////////////////////////////////////////////////////////////////////////
-        if ($amount = abs($this->discountHelper->getMirasvitRewardsAmount($parentQuote))) {
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-
-            $discounts[] = [
-                'description' =>
-                    $this->configHelper->getScopeConfig()->getValue(
-                        'rewards/general/point_unit_name',
-                        ScopeInterface::SCOPE_STORE,
-                        $quote->getStoreId()
-                    ),
-                'amount'            => $roundedAmount,
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description) {
