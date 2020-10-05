@@ -161,5 +161,7 @@
  ## [v2.14.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.14.0) 2020-09-15
  - Added: Shoppers can now add multiple discounts and remove discounts in Bolt Checkout (Magento discounts only).
  - Improvement: The `display_id` now displays just the `order_id` value in the merchant dashboard and user emails.
- ## [v2.15.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.15.0) 2020-09-23
- - Bug fixes
+ ## [v2.15.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.15.0) 2020-10-05
+ - Improvement: Product Page Checkout now supports cart item grouping (itemGroup). 
+ - Improvement: Bolt now clears the cached shipping and tax information when the shipping method is changed.
+ - Fixed: Resolved compatibility issues with MageWorld Reward Points Pro
