@@ -180,7 +180,7 @@ class UpdateDiscountTraitTest extends TestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnCallback(function($result, $couponCode, $quote) {
+            ->will($this->returnCallback(function($class, $result, $couponCode, $quote) {
                 global $ifRunFilter;
                 if ($ifRunFilter) {
                     return $ifRunFilter;
@@ -1208,7 +1208,7 @@ class UpdateDiscountTraitTest extends TestCase
                 'reference'         => 'amstorecredit',
             ]
         ];
-        $this->assertEquals($expectedDiscount, $result);
+        $this->assertEquals($expectedResult, $result);
     }
     
     /**
