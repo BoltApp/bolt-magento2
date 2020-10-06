@@ -132,7 +132,10 @@ class UpdateDiscountTraitTest extends TestCase
 
 
     public function setUp()
-    {            
+    {
+        global $ifRunFilter;
+        $ifRunFilter = false;
+        
         $this->currentMock = $this->getMockBuilder(UpdateDiscountTrait::class)
             ->setMethods(['sendErrorResponse'])
             ->disableOriginalConstructor()
@@ -177,7 +180,14 @@ class UpdateDiscountTraitTest extends TestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnArgument(1));
+            ->will($this->returnCallback(function($result, $couponCode, $quote) {
+                global $ifRunFilter;
+                if ($ifRunFilter) {
+                    return $ifRunFilter;
+                } else {
+                    return $result;
+                }
+            }));
         
         TestHelper::setProperty($this->currentMock, 'ruleRepository', $this->ruleRepository);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
@@ -192,6 +202,12 @@ class UpdateDiscountTraitTest extends TestCase
         
         $this->initRequiredMocks();
     }
+    
+    public function tearDown() {
+		parent::tearDown();
+		global $ifRunFilter;
+        $ifRunFilter = false;
+	}
     
     protected function initRequiredMocks()
     {
@@ -1028,6 +1044,22 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      *
      */
+    public function removeDiscount_removeStoreCredit()
+    {
+        $discounts = [
+            'amstorecredit' => 'store_credit',    
+        ];
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', ['amstorecredit', $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
     public function removeDiscount_removeGiftCard()
     {
         $couponCode = 'giftcard1234';
@@ -1154,6 +1186,41 @@ class UpdateDiscountTraitTest extends TestCase
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, null, $quote]);
         
+        $this->assertFalse($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function getAppliedStoreCredit_returnArray()
+    {
+        global $ifRunFilter;
+        $ifRunFilter = ['amstorecredit'];
+        
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getAppliedStoreCredit', ['amstorecredit', $quote]);
+        
+        $expectedResult = [
+            [
+                'discount_category' => 'store_credit',
+                'reference'         => 'amstorecredit',
+            ]
+        ];
+        $this->assertEquals($expectedDiscount, $result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function getAppliedStoreCredit_returnFalse()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getAppliedStoreCredit', ['amstorecredit', $quote]);
+
         $this->assertFalse($result);
     }
 

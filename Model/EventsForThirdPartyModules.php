@@ -96,7 +96,17 @@ class EventsForThirdPartyModules
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
             ]
-        ]
+        ],
+        'removeAppliedStoreCredit' => [
+            "listeners" => [
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "checkClasses" => ["Amasty\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["Amasty\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
+                    "boltClass" => Amasty_StoreCredit::class,
+                ],
+            ]
+        ],
     ];
 
     const filterListeners = [
@@ -167,7 +177,7 @@ class EventsForThirdPartyModules
                 [
                     "module" => "Amasty_StoreCredit",
                     "boltClass" => Amasty_StoreCredit::class,
-                ]
+                ],
             ],
         ],
         "loadGiftcard" => [
@@ -283,7 +293,16 @@ class EventsForThirdPartyModules
                     "boltClass" => Amasty_StoreCredit::class,
                 ]
             ],
-        ]
+        ],
+        "filterVerifyAppliedStoreCredit" => [
+            "listeners" => [
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "checkClasses" => ["Amasty\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "boltClass" => Amasty_StoreCredit::class,
+                ]
+            ],
+        ],
     ];
 
     /**
