@@ -28,6 +28,7 @@ use PHPUnit\Framework\TestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\Composer\ComposerFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor
@@ -47,6 +48,13 @@ class ComponentSwitcherProcessorTest extends TestCase
      * @var PHPUnit_Framework_MockObject_MockObject|Context
      */
     protected $helperContextMock;
+
+    /**
+     * Mocked instance of the eventsForThirdPartyModulesMock
+     *
+     * @var PHPUnit_Framework_MockObject_MockObject|Context
+     */
+    protected $eventsForThirdPartyModulesMock;
 
     /**
      * Mocked instance of the class being tested
@@ -77,11 +85,14 @@ class ComponentSwitcherProcessorTest extends TestCase
                 ]
             )
             ->getMock();
+        $this->eventsForThirdPartyModulesMock = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $this->eventsForThirdPartyModulesMock->method('runFilter')->will($this->returnArgument(1));
         $this->currentMock = $this->getMockBuilder(ComponentSwitcherProcessor::class)
             ->setMethods()
             ->setConstructorArgs(
                 [
-                    $this->configHelper
+                    $this->configHelper,
+                    $this->eventsForThirdPartyModulesMock
                 ]
             )
             ->getMock();
@@ -93,7 +104,6 @@ class ComponentSwitcherProcessorTest extends TestCase
      *
      * @param bool $useStoreCreditConfig Configuration value for Store Credit
      * @param bool $useRewardPointsConfig Configuration value for Reward Points
-     * @param bool $useAmastyStoreCreditConfig Configuration value for Amasty Store Credit
      *
      * @dataProvider process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider
      *
@@ -101,15 +111,12 @@ class ComponentSwitcherProcessorTest extends TestCase
      */
     public function process_withVariousConfigurationStates_returnsModifiedJsLayout(
         $useStoreCreditConfig,
-        $useRewardPointsConfig,
-        $useAmastyStoreCreditConfig
+        $useRewardPointsConfig
     ) {
         $this->configHelper->expects(self::once())->method('useStoreCreditConfig')
             ->willReturn($useStoreCreditConfig);
         $this->configHelper->expects(self::once())->method('useRewardPointsConfig')
             ->willReturn($useRewardPointsConfig);
-        $this->configHelper->expects(self::once())->method('useAmastyStoreCreditConfig')
-            ->willReturn($useAmastyStoreCreditConfig);
         $jsLayout = [
             'components' => [
                 'block-totals' => [
@@ -119,14 +126,7 @@ class ComponentSwitcherProcessorTest extends TestCase
                         ],
                         'rewardPoints'        => [
                             'component' => 'Magento_Reward/js/view/payment/reward',
-                        ],
-                        'amstorecredit_total' => [
-                            'component' => 'Amasty_StoreCredit/js/view/checkout/totals/store-credit',
-                            'sortOrder' => '90',
-                        ],
-                        'amstorecredit_form'  => [
-                            'component' => 'Amasty_StoreCredit/js/view/checkout/payment/store-credit',
-                        ],
+                        ]
                     ]
                 ]
             ]
@@ -145,14 +145,6 @@ class ComponentSwitcherProcessorTest extends TestCase
         } else {
             self::assertArrayNotHasKey('rewardPoints', $blockTotalsChildren);
         }
-
-        if ($useAmastyStoreCreditConfig) {
-            self::assertArrayHasKey('amstorecredit_total', $blockTotalsChildren);
-            self::assertArrayHasKey('amstorecredit_form', $blockTotalsChildren);
-        } else {
-            self::assertArrayNotHasKey('amstorecredit_total', $blockTotalsChildren);
-            self::assertArrayNotHasKey('amstorecredit_form', $blockTotalsChildren);
-        }
     }
 
     /**
@@ -163,14 +155,14 @@ class ComponentSwitcherProcessorTest extends TestCase
     public function process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider()
     {
         return [
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => true],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => false],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => true],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => false],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => true],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true, 'useAmastyStoreCreditConfig' => false],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => true],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false, 'useAmastyStoreCreditConfig' => false],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false],
+            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false],
+            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false],
         ];
     }
 }

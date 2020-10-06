@@ -42,7 +42,6 @@ class Discount extends AbstractHelper
 {
     // Discount totals key identifiers
     const AMASTY_GIFTCARD = 'amasty_giftcard';
-    const AMASTY_STORECREDIT = 'amstorecredit';
     const GIFT_VOUCHER_AFTER_TAX = 'giftvoucheraftertax';
     const GIFT_VOUCHER = 'giftvoucher';
     const GIFT_CARD_ACCOUNT = 'giftcardaccount';

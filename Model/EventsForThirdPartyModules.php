@@ -28,6 +28,7 @@ use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -163,6 +164,10 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "boltClass" => Amasty_StoreCredit::class,
+                ]
             ],
         ],
         "loadGiftcard" => [
@@ -271,6 +276,14 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "filterProcessLayout" => [
+            "listeners" => [
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "boltClass" => Amasty_StoreCredit::class,
+                ]
+            ],
+        ]
     ];
 
     /**
