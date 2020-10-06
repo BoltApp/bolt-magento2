@@ -76,8 +76,8 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     trackCallbacks.onCheckoutStart();
                 },
 
-                onShippingDetailsComplete: function() {
-                    trackCallbacks.onShippingDetailsComplete();
+                onShippingDetailsComplete: function(address) {
+                    trackCallbacks.onShippingDetailsComplete(address);
                 },
 
                 onShippingOptionsComplete: function() {

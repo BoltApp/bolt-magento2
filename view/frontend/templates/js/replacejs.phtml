@@ -544,8 +544,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 trackCallbacks.onCheckoutStart();
             },
 
-            onShippingDetailsComplete: function() {
-                trackCallbacks.onShippingDetailsComplete();
+            onShippingDetailsComplete: function(address) {
+                trackCallbacks.onShippingDetailsComplete(address);
             },
 
             onShippingOptionsComplete: function() {
