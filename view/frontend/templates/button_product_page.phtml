@@ -72,8 +72,8 @@ $additionalClass = $block->getAdditionalCheckoutButtonClass();
                     trackCallbacks.onCheckoutStart();
                 },
 
-                onShippingDetailsComplete: function() {
-                    trackCallbacks.onShippingDetailsComplete();
+                onShippingDetailsComplete: function(address) {
+                    trackCallbacks.onShippingDetailsComplete(address);
                 },
 
                 onShippingOptionsComplete: function() {
