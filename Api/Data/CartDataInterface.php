@@ -59,7 +59,7 @@ interface CartDataInterface
      * Get items.
      *
      * @api
-     * @return array
+     * @return mixed[]
      */
     public function getItems();
 
@@ -77,7 +77,7 @@ interface CartDataInterface
      * Get discounts.
      *
      * @api
-     * @return array
+     * @return mixed[]
      */
     public function getDiscounts();
 
@@ -149,7 +149,7 @@ interface CartDataInterface
      * Get shipments.
      *
      * @api
-     * @return array
+     * @return mixed[]
      */
     public function getShipments();
 
@@ -167,7 +167,7 @@ interface CartDataInterface
      * Get cart data.
      *
      * @api
-     * @return array
+     * @return mixed[]
      */
     public function getCartData();
 }
