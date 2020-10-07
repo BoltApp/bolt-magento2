@@ -32,6 +32,7 @@ class ErrorResponse
     const ERR_MINIMUM_CART_AMOUNT_REQUIRED = 6205;
     const ERR_UNIQUE_EMAIL_REQUIRED        = 6206;
     const ERR_ITEMS_NOT_ELIGIBLE           = 6207;
+    const ERR_CODE_REQUIRES_LOGIN          = 6209;
     const ERR_SERVICE                      = 6001;
 
     const ERR_PPC_OUT_OF_STOCK = 6301;

@@ -324,6 +324,19 @@ trait UpdateDiscountTrait
                     return false;
                 }
             }
+        } else {
+            // If coupon requires logged-in users and our user is guest show special error
+            $groupIds = $rule->getCustomerGroupIds();
+            if (!in_array(0, $groupIds)) {
+                $this->logHelper->addInfoLog('Error: coupon requires login.');
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,
+                    sprintf('The coupon code %s requires login', $couponCode),
+                    422,
+                    $quote
+                );
+                return false;
+            }
         }
 
         try {
