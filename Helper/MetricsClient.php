@@ -105,21 +105,11 @@ class MetricsClient extends AbstractHelper
         Decider $featureSwitches
     ) {
         parent::__construct($context);
-
         $this->storeManager = $storeManager;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->cache = $cache;
         $this->featureSwitches = $featureSwitches;
-        //////////////////////////////////////////
-        // Composerless installation.
-        // Make sure libraries are in place:
-        // lib/internal/Bolt/guzzle
-        //////////////////////////////////////////
-        if (!class_exists('\GuzzleHttp\Client')) {
-            // phpcs:ignore
-            require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php';
-        }
         $this->configHelper = $configHelper;
         $this->metricsFile = null;
         $this->guzzleClient = null;

@@ -4866,8 +4866,14 @@ class OrderTest extends TestCase
         $grandTotal,
         $priceFaultTolerance
     ) {
+
         $transaction = new \stdClass();
-        $boltTotalAmount = @$transaction->order->cart->total_amount->amount = $cartTotalAmount;
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->total_amount = new \stdClass();
+
+
+        $boltTotalAmount = $transaction->order->cart->total_amount->amount = $cartTotalAmount;
         $currencyCode = 'USD';
         $this->orderMock->expects(static::once())->method('getOrderCurrencyCode')->willReturn($currencyCode);
         $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);

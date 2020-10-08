@@ -62,7 +62,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Api\Data\RuleInterface;
@@ -530,9 +530,8 @@ class Cart extends AbstractHelper
         if (!$cached) {
             return false;
         }
-        // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
-        // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
-        return $unserialize ? unserialize($cached) : $cached; //@codingStandardsIgnoreLine
+
+        return $unserialize ? $this->serialize->unserialize($cached) : $cached;
     }
 
     /**
@@ -2168,7 +2167,7 @@ class Cart extends AbstractHelper
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
 
                     $discountItem = [
-                        'description' => $description . @$totals[$discount]->getTitle(),
+                        'description' => $description . $totalDiscount->getTitle(),
                         'amount'      => $roundedDiscountAmount,
                     ];
 

@@ -33,7 +33,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 
 /**
  * Class SessionTest
@@ -168,7 +168,7 @@ class SessionTest extends TestCase
             ['isSessionEmulationEnabled']
         );
 
-        $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
+        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
     }
 
     private function initCurrentMock()
