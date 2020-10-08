@@ -2038,26 +2038,6 @@ class Cart extends AbstractHelper
                 }
             }
         }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process Aheadworks Store Credit
-        /////////////////////////////////////////////////////////////////////////////////
-        if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
-            $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-            $discounts[] = [
-                'description'       => 'Store Credit',
-                'amount'            => $roundedAmount,
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
-
-        }
 
         /////////////////////////////////////////////////////////////////////////////////
 

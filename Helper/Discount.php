@@ -127,11 +127,6 @@ class Discount extends AbstractHelper
     protected $amastyRewardsQuote;
 
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $aheadworksCustomerStoreCreditManagement;
-
-    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -193,35 +188,33 @@ class Discount extends AbstractHelper
 
     /**
      * Discount constructor.
-     *
-     * @param Context                               $context
-     * @param ResourceConnection                    $resource
-     * @param ThirdPartyModuleFactory               $amastyLegacyAccountFactory
-     * @param ThirdPartyModuleFactory               $amastyLegacyGiftCardManagement
-     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteFactory
-     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteResource
-     * @param ThirdPartyModuleFactory               $amastyLegacyQuoteRepository
-     * @param ThirdPartyModuleFactory               $amastyLegacyAccountCollection
-     * @param ThirdPartyModuleFactory               $amastyAccountFactory
-     * @param ThirdPartyModuleFactory               $amastyGiftCardAccountManagement
-     * @param ThirdPartyModuleFactory               $amastyGiftCardAccountCollection
-     * @param ThirdPartyModuleFactory               $amastyGiftCardAccountQuoteExtensionRepository
-     * @param ThirdPartyModuleFactory               $unirgyCertRepository
-     * @param ThirdPartyModuleFactory               $unirgyGiftCertHelper
-     * @param ThirdPartyModuleFactory               $amastyRewardsResourceQuote
-     * @param ThirdPartyModuleFactory               $amastyRewardsQuote
-     * @param ThirdPartyModuleFactory               $aheadworksCustomerStoreCreditManagement
-     * @param ThirdPartyModuleFactory               $moduleGiftCardAccount
-     * @param ThirdPartyModuleFactory               $moduleGiftCardAccountHelper
-     * @param CartRepositoryInterface               $quoteRepository
-     * @param ConfigHelper                          $configHelper
-     * @param Bugsnag                               $bugsnag
-     * @param AppState                              $appState
-     * @param Session                               $sessionHelper
-     * @param LogHelper                             $logHelper
-     * @param CouponFactory                         $couponFactory
-     * @param RuleRepository                        $ruleRepository
-     * @param EventsForThirdPartyModules            $eventsForThirdPartyModules
+     * @param Context $context
+     * @param ResourceConnection $resource
+     * @param ThirdPartyModuleFactory $amastyLegacyAccountFactory
+     * @param ThirdPartyModuleFactory $amastyLegacyGiftCardManagement
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteFactory
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteResource
+     * @param ThirdPartyModuleFactory $amastyLegacyQuoteRepository
+     * @param ThirdPartyModuleFactory $amastyLegacyAccountCollection
+     * @param ThirdPartyModuleFactory $amastyAccountFactory
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
+     * @param ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository
+     * @param ThirdPartyModuleFactory $unirgyCertRepository
+     * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
+     * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
+     * @param ThirdPartyModuleFactory $amastyRewardsQuote
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
+     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
+     * @param CartRepositoryInterface $quoteRepository
+     * @param Config $configHelper
+     * @param Bugsnag $bugsnag
+     * @param AppState $appState
+     * @param Session $sessionHelper
+     * @param Log $logHelper
+     * @param CouponFactory $couponFactory
+     * @param RuleRepository $ruleRepository
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         Context $context,
@@ -240,7 +233,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
-        ThirdPartyModuleFactory $aheadworksCustomerStoreCreditManagement,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
@@ -268,7 +260,6 @@ class Discount extends AbstractHelper
         $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
-        $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -837,32 +828,6 @@ class Discount extends AbstractHelper
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);
         }
-    }
-
-    /**
-     * Check if Aheadworks_StoreCredit module is available
-     *
-     * @return bool true if module is available, else false
-     */
-    public function isAheadworksStoreCreditAvailable()
-    {
-        return $this->aheadworksCustomerStoreCreditManagement->isAvailable();
-    }
-
-    /**
-     * Get Aheadworks store credit for the user
-     *
-     * @param int $customerId Logged in customer ID
-     * @return float User store credit
-     */
-    public function getAheadworksStoreCredit($customerId)
-    {
-        if (! $this->isAheadworksStoreCreditAvailable()) {
-            return 0;
-        }
-        return $this->aheadworksCustomerStoreCreditManagement
-                    ->getInstance()
-                    ->getCustomerStoreCreditBalance($customerId);
     }
 
     /**
