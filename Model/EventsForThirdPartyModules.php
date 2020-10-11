@@ -229,6 +229,10 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["MW\RewardPoints\Helper\Data"],
                     "boltClass" => MW_RewardPoints::class,
                 ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "boltClass" => Amasty_Rewards::class,
+                ],
             ],
         ],
         "filterApplyingGiftCardCode" => [
