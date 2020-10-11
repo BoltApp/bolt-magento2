@@ -264,6 +264,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
     };
 
+    var cart = {};
+
     ////////////////////////////////////////////////////
     // DI: Inserting required Magento objects
     // the code below is dependant on.
@@ -515,8 +517,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
-        var cart = {};
-
         var hints = {prefill:{}};
 
         var boltCheckoutConfig = {};
@@ -1456,16 +1456,20 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             ], function ($, quote) {
                 // If quote total was changed through a method we didn't create,
                 // we should reload the bolt cart since totals are probably now out of sync.
-                quote.totals.subscribe(function (newValue) {
-                    if (expectCartRendering) {
-                        expectCartRendering = false;
-                        return;
-                    }
-
-                    expectCartRendering = false;
+                quote.totals.subscribe(function (totals) {
                     if (waitingForResolvingPromises) {
                         return;
                     }
+                    if (expectCartRendering) {
+                        expectCartRendering = false;
+                        try {
+                            if ((totals.base_subtotal+totals.base_discount_amount) * 100 == cart.total_amount.amount) {
+                                return;
+                            }
+                        } catch(err) {}
+                    }
+
+                    expectCartRendering = false;
                     $(document).trigger('bolt:createOrder');
                 });
             })
