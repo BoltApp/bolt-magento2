@@ -27,6 +27,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\Composer\ComposerFactory;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 
 /**
  * Boltpay Configuration helper
@@ -381,6 +382,15 @@ class Config extends AbstractHelper
         \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
         \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
     ];
+
+    /**
+     * Map of human-readable config names to their XML paths
+     */
+    const CONFIG_SETTING_PATHS = [
+        "publishable_key_checkout" => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT 
+        # TODO: Fill in the rest of the config settings
+    ];
+
     /**
      * @var ResourceInterface
      */
@@ -417,7 +427,8 @@ class Config extends AbstractHelper
         ProductMetadataInterface $productMetadata,
         BoltConfigSettingFactory $boltConfigSettingFactory,
         RegionFactory $regionFactory,
-        ComposerFactory $composerFactory
+        ComposerFactory $composerFactory,
+        WriterInterface $configWriter 
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -426,6 +437,7 @@ class Config extends AbstractHelper
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
         $this->regionFactory = $regionFactory;
         $this->composerFactory = $composerFactory;
+        $this->configWriter = $configWriter;
     }
 
     /**
@@ -1759,6 +1771,21 @@ class Config extends AbstractHelper
                                                          ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
 
         return $boltSettings;
+    }
+
+    /**
+     * Set config setting name to the given value
+     *
+     * @param string $settingName
+     * @param mixed $settingValue
+     */
+    public function setConfigSetting($settingName, $settingValue = null)
+    {
+        $this->configWriter->save(
+            self::CONFIG_SETTING_PATHS[$settingName], 
+            $settingValue, 
+            ScopeInterface::SCOPE_STORE
+        );
     }
 
     /**
