@@ -14,9 +14,12 @@
  * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Block\Checkout\Cart;
 
 use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ComponentSwitcherProcessor
@@ -24,6 +27,25 @@ use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
  */
 class ComponentSwitcherProcessor extends LayoutProcessor
 {
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
+    /**
+     * ComponentSwitcherProcessor constructor.
+     * @param ConfigHelper $configHelper
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     */
+    public function __construct(
+        ConfigHelper $configHelper,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
+    )
+    {
+        parent::__construct($configHelper);
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+    }
+
     /**
      * Process the layout
      *
@@ -33,18 +55,14 @@ class ComponentSwitcherProcessor extends LayoutProcessor
     public function process($jsLayout)
     {
         // Store Credit
-        if (! $this->configHelper->useStoreCreditConfig()) {
+        if (!$this->configHelper->useStoreCreditConfig()) {
             unset($jsLayout['components']['block-totals']['children']['storeCredit']);
         }
         // Reward Points
-        if (! $this->configHelper->useRewardPointsConfig()) {
+        if (!$this->configHelper->useRewardPointsConfig()) {
             unset($jsLayout['components']['block-totals']['children']['rewardPoints']);
         }
-        // Amasty Store Credit
-        if (! $this->configHelper->useAmastyStoreCreditConfig()) {
-            unset($jsLayout['components']['block-totals']['children']['amstorecredit_total']);
-            unset($jsLayout['components']['block-totals']['children']['amstorecredit_form']);
-        }
-        return $jsLayout;
+
+        return $this->eventsForThirdPartyModules->runFilter('filterProcessLayout', $jsLayout);
     }
 }

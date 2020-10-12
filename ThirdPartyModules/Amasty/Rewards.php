@@ -54,6 +54,7 @@ class Rewards
      */
     public function collectDiscounts($result,
                                      $amastyRewardsHelperData,
+                                     $amastyRewardsResourceModelQuote,
                                      $quote,
                                      $parentQuote,
                                      $paymentOnly)
@@ -63,7 +64,7 @@ class Rewards
         try {
             if ($quote->getData('amrewards_point')) {
                 $rewardData = $amastyRewardsHelperData->getRewardsData();
-                $pointsUsed = $rewardData['pointsUsed'];
+                $pointsUsed = $amastyRewardsResourceModelQuote->getUsedRewards($quote->getId());
                 $pointsRate = $rewardData['rateForCurrency'];
                 $amount = $pointsUsed / $pointsRate;
                 $currencyCode = $quote->getQuoteCurrencyCode();

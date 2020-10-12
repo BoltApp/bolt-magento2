@@ -19,11 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Session;
-use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Magento\Backend\App\Area\FrontNameResolver;
 use Magento\Framework\DataObject;
-use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\LocalizedException;
 use PHPUnit\Framework\MockObject\MockObject;
 use \PHPUnit\Framework\TestCase;
@@ -39,13 +36,13 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use ReflectionException;
 use Zend_Db_Statement_Exception;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
-use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Api\Data\CartExtension;
 use Magento\Framework\Api\ExtensibleDataInterface as GiftCardQuote;
 use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class DiscountTest
@@ -131,11 +128,6 @@ class DiscountTest extends TestCase
     private $unirgyGiftCertHelper;
 
     /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Mirasvit Rewards purchase helper
-     */
-    private $mirasvitRewardsPurchaseHelper;
-
-    /**
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty Rewards resource quote
      */
     private $amastyRewardsResourceQuote;
@@ -144,11 +136,6 @@ class DiscountTest extends TestCase
      * @var MockObject|ThirdPartyModuleFactory mocked instance of the Amasty Rewards quote
      */
     private $amastyRewardsQuote;
-
-    /**
-     * @var MockObject|ThirdPartyModuleFactory mocked instance of the Aheadworks Customer Store Credit management model
-     */
-    private $aheadworksCustomerStoreCreditManagement;
 
     /**
      * @var MockObject|CartRepositoryInterface mocked instance of the the Quote repository model
@@ -206,6 +193,11 @@ class DiscountTest extends TestCase
     private $ruleRepositoryMock;
 
     /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
+    /**
      * @var ThirdPartyModuleFactory|MockObject
      * mocked instance of the Quote Extension Attribute repository added by Amasty Giftcard
      */
@@ -230,16 +222,16 @@ class DiscountTest extends TestCase
         $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory = $this->createMock(ThirdPartyModuleFactory::class);
         $this->unirgyCertRepository = $this->createMock(ThirdPartyModuleFactory::class);
         $this->unirgyGiftCertHelper = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->mirasvitRewardsPurchaseHelper = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsResourceQuote = $this->createMock(ThirdPartyModuleFactory::class);
         $this->amastyRewardsQuote = $this->createMock(ThirdPartyModuleFactory::class);
-        $this->aheadworksCustomerStoreCreditManagement = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->moduleGiftCardAccountHelperMock = $this->createMock(ThirdPartyModuleFactory::class);
         $this->quoteRepository = $this->createMock(CartRepositoryInterface::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->appState = $this->createMock(AppState::class);
+        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->sessionHelper = $this->getMockBuilder(Session::class)
             ->disableOriginalConstructor()
             ->setMethods(['getCheckoutSession', 'getGiftCardsData'])
@@ -252,6 +244,7 @@ class DiscountTest extends TestCase
         );
         $this->couponFactoryMock = $this->createMock(CouponFactory::class);
         $this->ruleRepositoryMock = $this->createMock(RuleRepository::class);
+        $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
     }
 
     /**
@@ -280,10 +273,8 @@ class DiscountTest extends TestCase
                     $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory,
                     $this->unirgyCertRepository,
                     $this->unirgyGiftCertHelper,
-                    $this->mirasvitRewardsPurchaseHelper,
                     $this->amastyRewardsResourceQuote,
                     $this->amastyRewardsQuote,
-                    $this->aheadworksCustomerStoreCreditManagement,
                     $this->moduleGiftCardAccountMock,
                     $this->moduleGiftCardAccountHelperMock,
                     $this->quoteRepository,
@@ -294,6 +285,7 @@ class DiscountTest extends TestCase
                     $this->logHelper,
                     $this->couponFactoryMock,
                     $this->ruleRepositoryMock,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->setMethods($methods);
@@ -328,10 +320,8 @@ class DiscountTest extends TestCase
             $this->amastyGiftCardAccountQuoteExtensionRepositoryFactory,
             $this->unirgyCertRepository,
             $this->unirgyGiftCertHelper,
-            $this->mirasvitRewardsPurchaseHelper,
             $this->amastyRewardsResourceQuote,
             $this->amastyRewardsQuote,
-            $this->aheadworksCustomerStoreCreditManagement,
             $this->moduleGiftCardAccountMock,
             $this->moduleGiftCardAccountHelperMock,
             $this->quoteRepository,
@@ -341,7 +331,8 @@ class DiscountTest extends TestCase
             $this->sessionHelper,
             $this->logHelper,
             $this->couponFactoryMock,
-            $this->ruleRepositoryMock
+            $this->ruleRepositoryMock,
+            $this->eventsForThirdPartyModules
         );
 
         static::assertAttributeEquals($this->resource, 'resource', $instance);
@@ -356,14 +347,8 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->amastyGiftCardAccountCollection, 'amastyGiftCardAccountCollection', $instance);
         static::assertAttributeEquals($this->unirgyCertRepository, 'unirgyCertRepository', $instance);
         static::assertAttributeEquals($this->unirgyGiftCertHelper, 'unirgyGiftCertHelper', $instance);
-        static::assertAttributeEquals($this->mirasvitRewardsPurchaseHelper, 'mirasvitRewardsPurchaseHelper', $instance);
         static::assertAttributeEquals($this->amastyRewardsResourceQuote, 'amastyRewardsResourceQuote', $instance);
         static::assertAttributeEquals($this->amastyRewardsQuote, 'amastyRewardsQuote', $instance);
-        static::assertAttributeEquals(
-            $this->aheadworksCustomerStoreCreditManagement,
-            'aheadworksCustomerStoreCreditManagement',
-            $instance
-        );
         static::assertAttributeEquals($this->moduleGiftCardAccountMock, 'moduleGiftCardAccount', $instance);
         static::assertAttributeEquals($this->moduleGiftCardAccountHelperMock, 'moduleGiftCardAccountHelper', $instance);
         static::assertAttributeEquals($this->quoteRepository, 'quoteRepository', $instance);
@@ -374,6 +359,7 @@ class DiscountTest extends TestCase
         static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         static::assertAttributeEquals($this->couponFactoryMock, 'couponFactory', $instance);
         static::assertAttributeEquals($this->ruleRepositoryMock, 'ruleRepository', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
@@ -2018,21 +2004,6 @@ class DiscountTest extends TestCase
 
     /**
      * @test
-     * that getMirasvitRewardsAmount returns zero if the Mirasvit rewards purchase helper is unavailable
-     *
-     * @covers ::getMirasvitRewardsAmount
-     */
-    public function getMirasvitRewardsAmount_ifPurchaseIsDisabled_returnsZeroAmount()
-    {
-        $this->initCurrentMock();
-        $quote = $this->createMock(Quote::class);
-        $this->mirasvitRewardsPurchaseHelper->expects(static::once())->method('getInstance')->willReturn(false);
-
-        static::assertEquals(0, $this->currentMock->getMirasvitRewardsAmount($quote));
-    }
-
-    /**
-     * @test
      * that isAmastyRewardPointsAvailable returns the Amasty Reward Points module availability
      *
      * @covers ::isAmastyRewardPointsAvailable
@@ -2471,97 +2442,6 @@ class DiscountTest extends TestCase
 
     /**
      * @test
-     * that isAheadworksStoreCreditAvailable returns availability of Aheadworks Store Credit module
-     *
-     * @covers ::isAheadworksStoreCreditAvailable
-     *
-     * @dataProvider isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilitiesProvider
-     *
-     * @param bool $aheadworksStoreCreditAvailable stubbed result of {@see \Bolt\Boltpay\Model\ThirdPartyModuleFactory::isAvailable}
-     * @param bool $expectedResult of the method call
-     */
-    public function isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilities_returnsAvailability(
-        $aheadworksStoreCreditAvailable,
-        $expectedResult
-    ) {
-        $this->initCurrentMock();
-        $this->aheadworksCustomerStoreCreditManagement->expects(static::once())
-            ->method('isAvailable')
-            ->willReturn($aheadworksStoreCreditAvailable);
-
-        static::assertEquals($expectedResult, $this->currentMock->isAheadworksStoreCreditAvailable());
-    }
-
-    /**
-     * Data provider for {@see isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilities_returnsAvailability}
-     *
-     * @return array[] containing Aheadworks Store Credit module availability and expected result of the method call
-     */
-    public function isAheadworksStoreCreditAvailable_withVariousAheadWorksAvailabilitiesProvider()
-    {
-        return [
-            ['aheadworksStoreCreditAvailable' => true, 'expectedResult' => true],
-            ['aheadworksStoreCreditAvailable' => false, 'expectedResult' => false],
-        ];
-    }
-
-    /**
-     * @test
-     * that getAheadworksStoreCredit returns Aheadworks user store credit when Aheadworks store credit is available
-     *
-     * @covers ::getAheadworksStoreCredit
-     *
-     * @dataProvider getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilitiesProvider
-     *
-     * @param bool  $AheadworksStoreCreditAvailable stubbed result of {@see \Bolt\Boltpay\Helper\Discount::isAheadworksStoreCreditAvailable}
-     * @param float $expectedResult of the tested method call
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilities_returnsUserStoreCredit(
-        $AheadworksStoreCreditAvailable,
-        $expectedResult
-    ) {
-        $this->initCurrentMock(['isAheadworksStoreCreditAvailable']);
-        $customerId = 87;
-
-        $this->currentMock->expects(static::once())
-            ->method('isAheadworksStoreCreditAvailable')
-            ->willReturn($AheadworksStoreCreditAvailable);
-
-        $aheadworksCustomerMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getCustomerStoreCreditBalance'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'aheadworksCustomerStoreCreditManagement', $aheadworksCustomerMock);
-        $aheadworksCustomerMock->expects($AheadworksStoreCreditAvailable ? static::once() : static::never())
-            ->method('getInstance')
-            ->willReturnSelf();
-        $aheadworksCustomerMock->expects($AheadworksStoreCreditAvailable ? static::once() : static::never())
-            ->method('getCustomerStoreCreditBalance')
-            ->with($customerId)
-            ->willReturn($expectedResult);
-
-        static::assertEquals($expectedResult, $this->currentMock->getAheadworksStoreCredit($customerId));
-    }
-
-    /**
-     * Data provider for
-     * @see getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilities_returnsUserStoreCredit
-     *
-     * @return array[] containing Aheadwork Store Credit flag and expected result of the tested method
-     */
-    public function getAheadworksStoreCredit_withVariousAheadworksStoreCreditAvailabilitiesProvider()
-    {
-        return [
-            ["AheadworksStoreCreditAvailable" => true, "expectedResult" => 595.3],
-            ["AheadworksStoreCreditAvailable" => false, "expectedResult" => 0],
-        ];
-    }
-
-    /**
-     * @test
      * that applyExternalDiscountData sets the Amasty reward points and applies the Miravist reward points
      * by calling {@see \Bolt\Boltpay\Helper\Discount::setAmastyRewardPoints} and
      * {@see \Bolt\Boltpay\Helper\Discount::applyMiravistRewardPoint}
@@ -2574,220 +2454,7 @@ class DiscountTest extends TestCase
         $quote = $this->createMock(Quote::class);
 
         $this->currentMock->expects(static::once())->method('setAmastyRewardPoints')->with($quote)->willReturnSelf();
-        $this->currentMock->expects(static::once())->method('applyMiravistRewardPoint')->with($quote)->willReturnSelf();
-
         $this->currentMock->applyExternalDiscountData($quote);
-    }
-
-    /**
-     * @test
-     * that applyMiravistRewardPoint returns null when the Mirasvit Rewards Purchase module is not available
-     *
-     * @covers ::applyMiravistRewardPoint
-     */
-    public function applyMiravistRewardPoint_whenMirasvitRewardsPurchaseHelperIsNotSet_returnsNull()
-    {
-        $this->initCurrentMock();
-        $immutableQuote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $immutableQuote->expects(static::once())->method('getBoltParentQuoteId')->willReturnSelf();
-        $this->mirasvitRewardsPurchaseHelper->expects(static::once())->method('getInstance')->willReturn(null);
-
-        static::assertNull($this->currentMock->applyMiravistRewardPoint($immutableQuote));
-    }
-
-    /**
-     * @test
-     * that applyMiravistRewardPoint sets the points if the parent quote rewards spend amount is greater than zero
-     *
-     * @covers ::applyMiravistRewardPoint
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function applyMiravistRewardPoint_whenPurchaseHelperIsAvailable_savesRewards()
-    {
-        $this->initCurrentMock();
-        $immutableQuote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $parentQuoteId = 4;
-        $immutableQuote->expects(static::once())->method('getBoltParentQuoteId')->willReturn($parentQuoteId);
-        $mirasvitRewardsMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(
-                [
-                    'getInstance',
-                    'getByQuote',
-                    'getSpendPoints',
-                    'setSpendPoints',
-                    'getSpendMinAmount',
-                    'setSpendMinAmount',
-                    'getSpendMaxAmount',
-                    'setSpendMaxAmount',
-                    'getSpendAmount',
-                    'setSpendAmount',
-                    'getBaseSpendAmount',
-                    'setBaseSpendAmount',
-                    'save',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'mirasvitRewardsPurchaseHelper', $mirasvitRewardsMock);
-
-        $mirasvitRewardsMock->expects(static::once())->method('getInstance')->willReturnSelf();
-        $parentPurchase = 423;
-        $mirasvitRewardsMock->expects(static::exactly(2))
-            ->method('getByQuote')
-            ->withConsecutive([$parentQuoteId], [$immutableQuote])
-            ->willReturnSelf();
-
-        $spendAmount = 77;
-        $mirasvitRewardsMock->expects(static::exactly(2))
-            ->method('getSpendAmount')
-            ->willReturnOnConsecutiveCalls($parentPurchase, $spendAmount);
-
-        $spendPoints = 132;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendPoints')->willReturn($spendPoints);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendPoints')->willReturnSelf();
-
-        $spendMinAmount = 23;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendMinAmount')->willReturn($spendMinAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendMinAmount')->willReturnSelf();
-
-        $spendMaxAmount = 83;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendMaxAmount')->willReturn($spendMaxAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendMaxAmount')->willReturnSelf();
-
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendAmount')->willReturnSelf();
-
-        $baseSpendAmount = 79;
-        $mirasvitRewardsMock->expects(static::once())->method('getBaseSpendAmount')->willReturn($baseSpendAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setBaseSpendAmount')->willReturnSelf();
-
-        $mirasvitRewardsMock->expects(static::once())->method('save')->willReturnSelf();
-
-        static::assertNull($this->currentMock->applyMiravistRewardPoint($immutableQuote));
-    }
-
-    /**
-     * @test
-     * that applyMiravistRewardPoint doesn't apply the reward points if parent quote rewards spend amount is below zero
-     *
-     * @covers ::applyMiravistRewardPoint
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function applyMiravistRewardPoint_ifSpendAmountIsZero_setsParentPurchase()
-    {
-        $this->initCurrentMock();
-        $immutableQuote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $parentQuoteId = 4;
-        $immutableQuote->expects(static::once())->method('getBoltParentQuoteId')->willReturn($parentQuoteId);
-        $mirasvitRewardsMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(['getInstance', 'getByQuote', 'getSpendAmount'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'mirasvitRewardsPurchaseHelper', $mirasvitRewardsMock);
-
-        $mirasvitRewardsMock->expects(static::once())->method('getInstance')->willReturnSelf();
-        $parentPurchase = 0;
-        $mirasvitRewardsMock->expects(static::once())
-            ->method('getByQuote')
-            ->with($parentQuoteId)
-            ->willReturnSelf();
-
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendAmount')->willReturn($parentPurchase);
-
-        $this->currentMock->applyMiravistRewardPoint($immutableQuote);
-    }
-
-    /**
-     * @test
-     * that applyMiravistRewardPoint only notifies Bugsnag if an exception is thrown during points application
-     *
-     * @covers ::applyMiravistRewardPoint
-     *
-     * @throws ReflectionException if unable to set internal mock properties
-     */
-    public function applyMiravistRewardPoint_throwsException_notifiesBugSnag()
-    {
-        $this->initCurrentMock();
-        $immutableQuote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $parentQuoteId = 4;
-        $immutableQuote->expects(static::once())->method('getBoltParentQuoteId')->willReturn($parentQuoteId);
-        $mirasvitRewardsMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setMethods(
-                [
-                    'getInstance',
-                    'getByQuote',
-                    'getSpendPoints',
-                    'setSpendPoints',
-                    'getSpendMinAmount',
-                    'setSpendMinAmount',
-                    'getSpendMaxAmount',
-                    'setSpendMaxAmount',
-                    'getSpendAmount',
-                    'setSpendAmount',
-                    'getBaseSpendAmount',
-                    'setBaseSpendAmount',
-                    'save',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'mirasvitRewardsPurchaseHelper', $mirasvitRewardsMock);
-
-        $mirasvitRewardsMock->expects(static::once())->method('getInstance')->willReturnSelf();
-        $parentPurchase = 423;
-        $mirasvitRewardsMock->expects(static::exactly(2))
-            ->method('getByQuote')
-            ->withConsecutive([$parentQuoteId], [$immutableQuote])
-            ->willReturnSelf();
-
-        $spendAmount = 77;
-        $mirasvitRewardsMock->expects(static::exactly(2))
-            ->method('getSpendAmount')
-            ->willReturnOnConsecutiveCalls($parentPurchase, $spendAmount);
-
-        $spendPoints = 132;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendPoints')->willReturn($spendPoints);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendPoints')->willReturnSelf();
-
-        $spendMinAmount = 23;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendMinAmount')->willReturn($spendMinAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendMinAmount')->willReturnSelf();
-
-        $spendMaxAmount = 83;
-        $mirasvitRewardsMock->expects(static::once())->method('getSpendMaxAmount')->willReturn($spendMaxAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendMaxAmount')->willReturnSelf();
-
-        $mirasvitRewardsMock->expects(static::once())->method('setSpendAmount')->willReturnSelf();
-
-        $baseSpendAmount = 79;
-        $mirasvitRewardsMock->expects(static::once())->method('getBaseSpendAmount')->willReturn($baseSpendAmount);
-        $mirasvitRewardsMock->expects(static::once())->method('setBaseSpendAmount')->willReturnSelf();
-
-        $exception = $this->createMock(\Exception::class);
-        $mirasvitRewardsMock->expects(static::once())->method('save')->willThrowException($exception);
-
-        $this->bugsnag->expects(static::once())->method('notifyException')->with($exception)->willReturnSelf();
-
-        static::assertNull($this->currentMock->applyMiravistRewardPoint($immutableQuote));
     }
 
     /**
@@ -3066,7 +2733,7 @@ class DiscountTest extends TestCase
             ->getMock();
         $addressMock->expects(static::once())->method('setAppliedRuleIds')->with('')->willReturnSelf();
         $addressMock->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        
+
         $quote = $this->createPartialMock(
             Quote::class,
             [

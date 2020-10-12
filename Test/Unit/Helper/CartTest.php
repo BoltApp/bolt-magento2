@@ -3633,7 +3633,6 @@ ORDER
             ->willReturn($shippingAddress);
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn(0);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
@@ -3676,7 +3675,6 @@ ORDER
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
         $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
@@ -3684,10 +3682,10 @@ ORDER
         $appliedDiscountNoCoupon = 15; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
         
-        $quote->method('getAppliedRuleIds')->willReturn('2,3');
+        $quote->method('getAppliedRuleIds')->willReturn('2,3,4');
         $this->checkoutSession->expects(static::once())
                               ->method('getBoltCollectSaleRuleDiscounts')
-                              ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon]);
+                              ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0]);
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
             ->disableOriginalConstructor()
@@ -3708,13 +3706,18 @@ ORDER
         $rule3->expects(static::exactly(2))->method('getSimpleAction')
             ->willReturn('by_fixed');
         
-        $this->ruleRepository->expects(static::exactly(2))
+        $rule4 = $this->getMockBuilder(DataObject::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->ruleRepository->expects(static::exactly(3))
             ->method('getById')
             ->withConsecutive(
                 [2],
-                [3]
+                [3],
+                [4]
             )
-            ->willReturnOnConsecutiveCalls($rule2, $rule3);
+            ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4);
         
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
             
@@ -3774,7 +3777,6 @@ ORDER
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -3835,7 +3837,6 @@ ORDER
             ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
 
@@ -3963,79 +3964,6 @@ ORDER
 
         /**
         * @test
-        * that collectDiscounts properly handles Mirasvit Reward Points using
-        * @see \Bolt\Boltpay\Helper\Discount::getMirasvitRewardsAmount to retrieve discount amount and
-        * rewards/general/point_unit_name config value for discount description
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withMirasvitRewardPoints_collectsDiscount()
-        {
-        $currentMock = $this->getCurrentMock(
-            [
-                'getWebsiteId',
-                'getQuoteById',
-                'getCalculationAddress'
-            ]
-        );
-        $shippingAddress = $this->getAddressMock();
-
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($shippingAddress);
-
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $this->immutableQuoteMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->immutableQuoteMock->expects(static::once())->method('getTotals')->willReturn([]);
-        $this->immutableQuoteMock->expects(static::once())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
-        $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
-
-        $appliedDiscount = 10; // $
-        $this->discountHelper->expects(static::once())->method('getMirasvitRewardsAmount')->with($this->quoteMock)
-            ->willReturn($appliedDiscount);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
-        $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
-        $scopeConfigMock->expects(static::once())->method('getValue')->with(
-            'rewards/general/point_unit_name',
-            ScopeInterface::SCOPE_STORE,
-            self::STORE_ID
-        )->willReturn('Mirasvit Reward Points');
-
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = false;
-
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $this->immutableQuoteMock
-        );
-
-        static::assertEquals($diffResult, $diff);
-
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => 'Mirasvit Reward Points',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
         * that collectDiscounts collects Reward Points from quote property if checkout type is payment
         *
         * @covers ::collectDiscounts
@@ -4088,63 +4016,6 @@ ORDER
 
         /**
         * @test
-        * that collectDiscounts properly handles Aheadworks Store Credit by reading amount from giftcert balance
-        * using {@see \Bolt\Boltpay\Helper\Discount::getAheadworksStoreCredit}
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withAheadworksStoreCredit_collectsAheadworksStoreCredit()
-        {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        /** @var Quote|MockObject $quote */
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $appliedDiscount = 10; // $
-        $quote->expects(static::any())->method('getTotals')->willReturn(
-            [DiscountHelper::AHEADWORKS_STORE_CREDIT => $this->quoteAddressTotal]
-        );
-        $this->discountHelper->expects(static::once())->method('getAheadworksStoreCredit')
-            ->with($quote->getCustomerId())->willReturn($appliedDiscount);
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $quote
-        );
-        static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
         * that collectDiscounts properly handles Magento Giftcard by reading amount from giftcard balance
         *
         * @covers ::collectDiscounts
@@ -4163,7 +4034,6 @@ ORDER
             $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
             $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
             $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-            $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
             $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
             $this->discountHelper->expects(static::never())->method('getAmastyGiftCardCodesFromTotals');
             $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
@@ -4235,7 +4105,6 @@ ORDER
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $appliedDiscount1 = 5; // $
@@ -4290,71 +4159,6 @@ ORDER
 
         /**
         * @test
-        * that collectDiscounts collects Amasty Store Credit if it exists in quote totals
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withAmastyStoreCreditInQuoteTotals_collectsAmastyStoreCredit()
-        {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $appliedDiscount = 10; // $
-        $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($appliedDiscount);
-        $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn('Store Credit');
-        $quote->expects(static::any())->method('getTotals')
-            ->willReturn([DiscountHelper::AMASTY_STORECREDIT => $this->quoteAddressTotal]);
-
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $quote
-        );
-        $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $appliedDiscount * 100,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals(
-            $expectedDiscount,
-            $discounts
-        );
-
-        static::assertEquals($diffResult, $diff);
-
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
         * that collectDiscounts properly handles Unirgy Giftcert by reading amount from giftcert balance instead of total
         *
         * @covers ::collectDiscounts
@@ -4373,7 +4177,6 @@ ORDER
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $appliedDiscount = 10; // $
         $unirgyGiftcertCode = "12345";
         $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
@@ -4427,7 +4230,6 @@ ORDER
         $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $giftVoucherDiscount = 5; // $
         $discountAmount = 10; // $
         $giftVaucher = "12345";
@@ -4510,7 +4312,6 @@ ORDER
             ->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAheadworksStoreCredit');
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
         $appliedDiscount = 10; // $

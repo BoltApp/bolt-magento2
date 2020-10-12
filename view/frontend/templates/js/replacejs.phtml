@@ -544,8 +544,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 trackCallbacks.onCheckoutStart();
             },
 
-            onShippingDetailsComplete: function() {
-                trackCallbacks.onShippingDetailsComplete();
+            onShippingDetailsComplete: function(address) {
+                trackCallbacks.onShippingDetailsComplete(address);
             },
 
             onShippingOptionsComplete: function() {
@@ -861,6 +861,75 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             return;
         }
 
+        /////////////////////////////////////////////////////
+        // Flag that is true if checkout buttons exists on the page
+        var checkout_buttons = false;
+
+        //////////////////////////////////////////////////////////
+        // loop through selectors array and set up the replacement
+        //////////////////////////////////////////////////////////
+        var setupReplacement = function() {
+            for (var i = 0, length = settings.selectors.length; i < length; i++) {
+                var selector = settings.selectors[i];
+                ! function(selector) {
+                    var parts = selector.split('|');
+                    // the CSS selector
+                    var identifier = parts[0].trim();
+                    // button placement regarding the selector element, prepend, append
+                    var position =  parts[1];
+                    /////////////////////////////////////////////////////
+                    // replace the selectors with bolt button identifiers
+                    // if / when selectors are in the DOM
+                    /////////////////////////////////////////////////////
+                    onElementReady(identifier, function(element) {
+                        if (getCheckoutKey() === '') return;
+                        var bolt_button = document.createElement('div');
+                        if(settings.is_instant_checkout_button){
+                            bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
+                            var button_object = document.createElement('object');
+                            var checkout_button_url = settings.cdn_url
+                                +'/v1/checkout_button?publishable_key='
+                                +settings.publishable_key_checkout
+                            button_object.setAttribute('data',checkout_button_url);
+                            bolt_button.appendChild(button_object);
+                        } else {
+                            bolt_button.setAttribute('class', bolt_button_css_class);
+                            if (bolt_button_css_styles.length) {
+                                bolt_button.setAttribute('style', bolt_button_css_styles);
+                            }
+                            if (getCheckoutType() === 'checkout') {
+                                bolt_button.classList.add(multi_step_css_class);
+                            }
+
+                            for (var attribute_name in additional_button_attributes) {
+                                if (additional_button_attributes.hasOwnProperty(attribute_name)) {
+                                    bolt_button.setAttribute(attribute_name, additional_button_attributes[attribute_name]);
+                                }
+                            }
+                        }
+                        // place the button before or after selector element
+                        if (position && position.trim().toLowerCase() === 'append') {
+                            element.parentNode.insertBefore(bolt_button, element.nextSibling);
+                        } else {
+                            element.parentNode.insertBefore(bolt_button, element);
+                        }
+                        // if no position is specified remove the selector element
+                        if (!position) {
+                            $(element).hide();
+                        }
+                        // if the replacement takes place after BoltCheckout.configure call
+                        // call it again to set up the button. Skip if BoltCheckout is not available,
+                        // ie. connect.js not loaded / executed yet,
+                        // the button will be processed after connect.js loads.
+                        if (window.BoltCheckout && !waitingForResolvingPromises) {
+                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
+                        }
+                    });
+                    /////////////////////////////////////////////////////
+                }(selector);
+            }
+        };
+
         var boltCheckoutSetup = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
@@ -875,6 +944,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             BoltState.beforeConfigureBarrier = boltBarrier();
             // resolve promise for now, extensions can initialize it again
             BoltState.beforeConfigureBarrier.resolve(true);
+
+            setupReplacement();
 
             // check and set payment_only flag
             if (getCheckoutType() === 'payment') {
@@ -1131,76 +1202,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             }
         });
         }
-
-        /////////////////////////////////////////////////////
-        // Flag that is true if checkout buttons exists on the page
-        var checkout_buttons = false;
-
-        //////////////////////////////////////////////////////////
-        // loop through selectors array and set up the replacement
-        //////////////////////////////////////////////////////////
-        var setupReplacement = function() {
-            for (var i = 0, length = settings.selectors.length; i < length; i++) {
-                var selector = settings.selectors[i];
-                ! function(selector) {
-                    var parts = selector.split('|');
-                    // the CSS selector
-                    var identifier = parts[0].trim();
-                    // button placement regarding the selector element, prepend, append
-                    var position =  parts[1];
-                    /////////////////////////////////////////////////////
-                    // replace the selectors with bolt button identifiers
-                    // if / when selectors are in the DOM
-                    /////////////////////////////////////////////////////
-                    onElementReady(identifier, function(element) {
-                        if (getCheckoutKey() === '') return;
-                        var bolt_button = document.createElement('div');
-                        if(settings.is_instant_checkout_button){
-                            bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
-                            var button_object = document.createElement('object');
-                            var checkout_button_url = settings.cdn_url
-                                +'/v1/checkout_button?publishable_key='
-                                +settings.publishable_key_checkout
-                            button_object.setAttribute('data',checkout_button_url);
-                            bolt_button.appendChild(button_object);
-                        } else {
-                            bolt_button.setAttribute('class', bolt_button_css_class);
-                            if (bolt_button_css_styles.length) {
-                                bolt_button.setAttribute('style', bolt_button_css_styles);
-                            }
-                            if (getCheckoutType() === 'checkout') {
-                                bolt_button.classList.add(multi_step_css_class);
-                            }
-
-                            for (var attribute_name in additional_button_attributes) {
-                                if (additional_button_attributes.hasOwnProperty(attribute_name)) {
-                                    bolt_button.setAttribute(attribute_name, additional_button_attributes[attribute_name]);
-                                }
-                            }
-                        }
-                        // place the button before or after selector element
-                        if (position && position.trim().toLowerCase() === 'append') {
-                            element.parentNode.insertBefore(bolt_button, element.nextSibling);
-                        } else {
-                            element.parentNode.insertBefore(bolt_button, element);
-                        }
-                        // if no position is specified remove the selector element
-                        if (!position) {
-                            $(element).hide();
-                        }
-                        // if the replacement takes place after BoltCheckout.configure call
-                        // call it again to set up the button. Skip if BoltCheckout is not available,
-                        // ie. connect.js not loaded / executed yet,
-                        // the button will be processed after connect.js loads.
-                        if (window.BoltCheckout && !waitingForResolvingPromises) {
-                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
-                        }
-                    });
-                    /////////////////////////////////////////////////////
-                }(selector);
-            }
-        };
-        setupReplacement();
 
         ///////////////////////////////////////////////////////////
         // Run function fn on element underlying data change

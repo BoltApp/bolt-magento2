@@ -25,10 +25,13 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
+use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
-
 
 class EventsForThirdPartyModules
 {
@@ -86,6 +89,15 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        'applyExternalDiscountData' => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
+        ]
     ];
 
     const filterListeners = [
@@ -123,7 +135,8 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Helper\Data"],
+                    "sendClasses" => ["Amasty\Rewards\Helper\Data",
+                                      "Amasty\Rewards\Model\ResourceModel\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
@@ -146,6 +159,22 @@ class EventsForThirdPartyModules
                         "Mageplaza\GiftCard\Model\ResourceModel\GiftCard\CollectionFactory",
                     ],
                     "boltClass" => Mageplaza_GiftCard::class,
+                ],
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "boltClass" => Amasty_StoreCredit::class,
+                ],
+                [
+                    "module" => "Aheadworks_StoreCredit",
+                    "sendClasses" => [
+                        "Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface",
+                    ],
+                    "boltClass" => Aheadworks_StoreCredit::class,
                 ]
             ],
         ],
@@ -228,6 +257,39 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
+            ],
+        ],
+        "getAdditionalHtml" => [
+            "listeners" => [
+                [
+                    "module" => "Listrak_Remarketing",
+                    "boltClass" => Listrak_Remarketing::class,
+                ],
+            ],
+        ],
+        "getOnEmailEnter" => [
+            "listeners" => [
+                [
+                    "module" => "Listrak_Remarketing",
+                    "boltClass" => Listrak_Remarketing::class,
+                ],
+            ],
+        ],
+        "filterApplyExternalQuoteData" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ],
+        ],
+        "filterProcessLayout" => [
+            "listeners" => [
+                [
+                    "module" => "Amasty_StoreCredit",
+                    "boltClass" => Amasty_StoreCredit::class,
+                ]
             ],
         ]
     ];

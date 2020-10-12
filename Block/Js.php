@@ -130,6 +130,13 @@ class Js extends Template
             && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
     }
 
+    public function getPrefetchShipping()
+    {
+        $storeId = $this->getStoreId();
+        return $this->configHelper->getPrefetchShipping($storeId)
+            && $this->featureSwitches->isPrefetchShippingEnabled();
+    }
+
     /**
      * Get account js url
      *
@@ -219,6 +226,16 @@ class Js extends Template
     }
 
     /**
+     * Get Additional Html
+     *
+     * @return string
+     */
+    public function getAdditionalHtml()
+    {
+        return $this->eventsForThirdPartyModules->runFilter("getAdditionalHtml", null);
+    }
+
+    /**
      * Gets the auto-open Bolt checkout session flag, and then unsets it so that it is only used once.
      *
      * @return bool
@@ -256,7 +273,7 @@ class Js extends Template
             'get_hints_url' => $this->getUrl(Config::GET_HINTS_ACTION),
             'selectors' => $this->getReplaceSelectors(),
             'shipping_prefetch_url' => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping' => $this->configHelper->getPrefetchShipping(),
+            'prefetch_shipping' => $this->getPrefetchShipping(),
             'save_email_url' => $this->getUrl(Config::SAVE_EMAIL_ACTION),
             'pay_by_link_url' => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
             'quote_is_virtual' => $this->getQuoteIsVirtual(),
@@ -327,7 +344,7 @@ class Js extends Template
      */
     protected function getOnEmailEnter()
     {
-        return $this->configHelper->getOnEmailEnter();
+        return $this->eventsForThirdPartyModules->runFilter("getOnEmailEnter", $this->configHelper->getOnEmailEnter());
     }
 
     /**

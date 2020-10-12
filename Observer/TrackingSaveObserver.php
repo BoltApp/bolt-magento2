@@ -120,6 +120,21 @@ class TrackingSaveObserver implements ObserverInterface
         try {
             $startTime = $this->metricsClient->getCurrentTime();
             $tracking = $observer->getEvent()->getTrack();
+
+            $origData = $tracking->getOrigData();
+            // If we update track (don't create) and carrier and number are the same do nothing
+            if ($origData &&
+            $origData['track_number'] == $tracking->getTrackNumber() &&
+            $origData['carrier_code'] == $tracking->getCarrierCode()) {
+                $this->metricsClient->processMetric(
+                    "tracking_creation.success",
+                    1,
+                    "tracking_creation.latency",
+                    $startTime
+                );
+                return;
+            }
+
             $shipment = $tracking->getShipment();
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
@@ -164,6 +179,7 @@ class TrackingSaveObserver implements ObserverInterface
                 'carrier'               => $tracking->getCarrierCode(),
                 'items'                 => $items,
                 'is_non_bolt_order'     => $isNonBoltOrder,
+                'tracking_entity_id'    => $tracking->getId(),
             ];
 
             //Request Data

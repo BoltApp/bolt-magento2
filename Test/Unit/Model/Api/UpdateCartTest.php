@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
@@ -434,10 +435,14 @@ class UpdateCartTest extends TestCase
     public function execute_validateQuoteFail_returnFalse()
     {            
         $this->initCurrentMock(['validateQuote']);
-        
+        $exception = new BoltException(
+            __(sprintf('The cart reference [%s] cannot be found.', SELF::IMMUTABLE_QUOTE_ID)),
+            null,
+            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+        );
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn(false);
+            ->willThrowException($exception);
         
         $requestCart = $this->getRequestCart();
 
