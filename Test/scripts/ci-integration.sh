@@ -82,5 +82,5 @@ export SCREENSHOT_DIR=./screenshots
 export TEST_SUITE=checkout_magento2_front
 export WDIO_CONFIG=localChrome
 export TEST_ENV=plugin_ci
-export THREAD_COUNT=1 
+export THREAD_COUNT=6 
 npm run test-retry-runner
