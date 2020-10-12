@@ -74,7 +74,7 @@ interface UpdateCartResultInterface
      * Get result.
      *
      * @api
-     * @return array
+     * @return mixed[]
      */
     public function getCartResult();
 }

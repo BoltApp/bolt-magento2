@@ -36,6 +36,7 @@ use Bolt\Boltpay\Model\Request;
  */
 class TrackingSaveObserverTest extends TestCase
 {
+    const ENTITY_ID = 123;
     /**
      * @var ConfigHelper
      */
@@ -143,6 +144,7 @@ class TrackingSaveObserverTest extends TestCase
         $track->expects($this->once())
               ->method("getCarrierCode")
               ->willReturn("United States Postal Service");
+        $track->method("getId")->willReturn(SELF::ENTITY_ID);
 
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
@@ -203,6 +205,7 @@ class TrackingSaveObserverTest extends TestCase
                 ],
             ],
             'is_non_bolt_order' => false,
+            'tracking_entity_id' => SELF::ENTITY_ID,
         ];
 
         $this->dataObject->expects($this->once())
@@ -251,6 +254,7 @@ class TrackingSaveObserverTest extends TestCase
         $track->expects($this->once())
             ->method("getCarrierCode")
             ->willReturn("United States Postal Service");
+        $track->method("getId")->willReturn(SELF::ENTITY_ID);
 
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
@@ -302,6 +306,7 @@ class TrackingSaveObserverTest extends TestCase
                 ],
             ],
             'is_non_bolt_order' => true,
+            'tracking_entity_id' => SELF::ENTITY_ID,
         ];
 
         $this->dataObject->expects($this->once())
@@ -423,6 +428,40 @@ class TrackingSaveObserverTest extends TestCase
         $shipment->expects($this->never())
             ->method('getItemsCollection')
             ->willReturn([$shipmentItem]);
+
+        $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
+        $this->apiHelper->expects($this->never())->method('sendRequest');
+        $this->observer->execute($eventObserver);
+    }
+
+    /**
+     * @test
+     */
+    public function testExecute_trackWasNotUpdated()
+    {
+        $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
+
+        $track->method("getTrackNumber")->willReturn("EZ4000000004");
+        $track->method("getCarrierCode")->willReturn("United States Postal Service");
+        $track->method("getOrigData")->willReturn(
+            [
+                "track_number" => "EZ4000000004",
+                "carrier_code" => "United States Postal Service",
+            ]
+            );
+        $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
+            ->setMethods(['getTrack'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($event);
+        $event->expects($this->once())
+            ->method('getTrack')
+            ->willReturn($track);
 
         $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
         $this->apiHelper->expects($this->never())->method('sendRequest');

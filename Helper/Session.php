@@ -30,7 +30,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 
 /**
  * Boltpay Session helper
@@ -178,9 +178,7 @@ class Session extends AbstractHelper
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
         if ($serialized = $this->cache->load($cacheIdentifier)) {
-            // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
-            // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
-            $sessionData = unserialize($serialized); // @codingStandardsIgnoreLine
+            $sessionData = $this->serialize->unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
             $storeId = $quote->getStoreId();
 

@@ -26,6 +26,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAcco
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
+use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
@@ -183,6 +184,13 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_StoreCredit",
                     "boltClass" => Amasty_StoreCredit::class,
                 ],
+                [
+                    "module" => "Aheadworks_StoreCredit",
+                    "sendClasses" => [
+                        "Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface",
+                    ],
+                    "boltClass" => Aheadworks_StoreCredit::class,
+                ]
             ],
         ],
         "loadGiftcard" => [
@@ -235,6 +243,10 @@ class EventsForThirdPartyModules
                     "module" => "MW_RewardPoints",
                     "checkClasses" => ["MW\RewardPoints\Helper\Data"],
                     "boltClass" => MW_RewardPoints::class,
+                ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "boltClass" => Amasty_Rewards::class,
                 ],
             ],
         ],

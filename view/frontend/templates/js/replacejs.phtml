@@ -544,8 +544,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 trackCallbacks.onCheckoutStart();
             },
 
-            onShippingDetailsComplete: function() {
-                trackCallbacks.onShippingDetailsComplete();
+            onShippingDetailsComplete: function(address) {
+                trackCallbacks.onShippingDetailsComplete(address);
             },
 
             onShippingOptionsComplete: function() {
@@ -1085,6 +1085,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
 
                 boltCartDataListener = function(data) {
+                    if (localStorage && localStorage.getItem("bolt_cart_is_invalid") == "true") {
+                        localStorage.setItem("bolt_cart_is_invalid", "false");
+                        invalidateBoltCart();
+                        return;
+                    }
+
                     if (BoltState.magentoCart === null) {
                         // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
                         return;

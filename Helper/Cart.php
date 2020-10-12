@@ -62,7 +62,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Api\Data\RuleInterface;
@@ -530,9 +530,8 @@ class Cart extends AbstractHelper
         if (!$cached) {
             return false;
         }
-        // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
-        // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
-        return $unserialize ? unserialize($cached) : $cached; //@codingStandardsIgnoreLine
+
+        return $unserialize ? $this->serialize->unserialize($cached) : $cached;
     }
 
     /**
@@ -1962,15 +1961,18 @@ class Cart extends AbstractHelper
                     switch ($rule->getCouponType()) {
                         case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
                         case RuleInterface::COUPON_TYPE_AUTO:
+                            $couponCode = $quote->getCouponCode();
+                            $description = trim(__('Discount ') . $rule->getDescription());
                             $discounts[] = [
-                                'description'       => trim(__('Discount ') . $rule->getDescription()),
+                                'description'       => $description,
                                 'amount'            => $roundedAmount,
-                                'reference'         => $quote->getCouponCode(),
+                                'reference'         => $couponCode,
                                 'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
-                                'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
+                                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/discounts.code.apply and v2/cart.update
+                                'type'              => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/merchant/order
                             ];            
-
+                            $this->logEmptyDiscountCode($couponCode, $description);
+                            
                             break;
                         case RuleInterface::COUPON_TYPE_NO_COUPON:
                         default:
@@ -2034,26 +2036,6 @@ class Cart extends AbstractHelper
                     $totalAmount -= $roundedAmount;
                 }
             }
-        }
-        /////////////////////////////////////////////////////////////////////////////////
-
-        /////////////////////////////////////////////////////////////////////////////////
-        // Process Aheadworks Store Credit
-        /////////////////////////////////////////////////////////////////////////////////
-        if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
-            $amount = abs($this->discountHelper->getAheadworksStoreCredit($quote->getCustomerId()));
-            $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-            $discounts[] = [
-                'description'       => 'Store Credit',
-                'amount'            => $roundedAmount,
-                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-            ];
-
-            $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-            $totalAmount -= $roundedAmount;
-
         }
 
         /////////////////////////////////////////////////////////////////////////////////
@@ -2132,6 +2114,7 @@ class Cart extends AbstractHelper
                             'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                             'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
+                        $this->logEmptyDiscountCode($giftCardCode, $description . $giftCardCode);
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
                         $discounts[] = $discountItem;
@@ -2150,15 +2133,16 @@ class Cart extends AbstractHelper
                     }
                     $discountAmount = abs($amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
+                    $gcDescription = $description . $totalDiscount->getTitle();
                     $discountItem = [
-                        'description'       => $description . $totalDiscount->getTitle(),
+                        'description'       => $gcDescription,
                         'amount'            => $roundedDiscountAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $gcCode,
                         'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                         'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                     ];
-
+                    $this->logEmptyDiscountCode($gcCode, $gcDescription);
                     $discounts[] = $discountItem;
                 } elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
                     $giftCardCodes = $this->discountHelper->getMagentoGiftCardAccountGiftCardData($quote);
@@ -2173,6 +2157,7 @@ class Cart extends AbstractHelper
                             'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                             'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                         ];
+                        $this->logEmptyDiscountCode($giftCardCode, 'Gift Card: ' . $giftCardCode);
                         $discountAmount += $amount;
                         $roundedDiscountAmount += $roundedAmount;
                         $discounts[] = $discountItem;
@@ -2182,7 +2167,7 @@ class Cart extends AbstractHelper
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
 
                     $discountItem = [
-                        'description' => $description . @$totals[$discount]->getTitle(),
+                        'description' => $description . $totalDiscount->getTitle(),
                         'amount'      => $roundedDiscountAmount,
                     ];
 
@@ -2479,5 +2464,18 @@ class Cart extends AbstractHelper
     public function resetCheckoutSession($checkoutSession)
     {
         $this->checkoutSession = $checkoutSession;
+    }
+    
+    /**
+     * Report to Bugsnag if the discount code is empty.
+     *
+     * @param $code
+     * @param $description
+     */
+    private function logEmptyDiscountCode($code, $description)
+    {
+        if (empty($code)) {
+            $this->bugsnag->notifyError('Empty discount code', "Info: {$description}");
+        }
     }
 }

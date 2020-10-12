@@ -47,7 +47,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory as RuleFactory;
 use Magento\SalesRule\Model\Rule;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
@@ -285,7 +285,7 @@ class ShippingMethodsTest extends TestCase
         $this->priceHelper->method('currency')->willReturnArgument(0);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
-        $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
+        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->ruleFactory = $this->getMockBuilder(RuleFactory::class)
             ->setMethods(
                 [
