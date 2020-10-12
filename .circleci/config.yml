@@ -311,3 +311,11 @@ workflows:
     jobs:
       - rebase-and-unit-test:
           name: "Rebase and Unit Test << pipeline.parameters.rebase_and_unit_test_branch_name >>"
+  hold:
+    type: approval # requires that an in-app button be clicked by an appropriate member of the project to continue.
+  integration-tests-manual:
+    requires:
+     - hold
+    jobs:
+      - integration-php72-magento23:
+          context: integration-tests-secrets
