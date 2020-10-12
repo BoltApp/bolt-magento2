@@ -442,6 +442,8 @@ trait UpdateDiscountTrait
             if(array_key_exists($couponCode, $discounts)){
                 if ($discounts[$couponCode] == 'coupon') {
                     $this->removeCouponCode($quote);
+                } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
+                    $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
                 } else {
                     $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
                     list(, $giftCard) = $result;
@@ -525,6 +527,35 @@ trait UpdateDiscountTrait
         }
 
         return true;
+    }
+    
+    /**
+     *
+     * @param string $couponCode
+     * @param Quote $quote
+     *
+     * @return array|false
+     */
+    protected function getAppliedStoreCredit($couponCode, $quote)
+    {
+        try {
+            $availableStoreCredits = $this->eventsForThirdPartyModules->runFilter("filterVerifyAppliedStoreCredit", [], $couponCode, $quote);
+ 
+            if (in_array($couponCode, $availableStoreCredits)) {
+                return [
+                    [
+                        'discount_category' => DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
+                        'reference'         => $couponCode,
+                    ]
+                ];
+            } else {
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+
+            return false;
+        }
     }
 
 }

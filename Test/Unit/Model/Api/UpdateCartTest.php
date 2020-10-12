@@ -581,7 +581,8 @@ class UpdateCartTest extends TestCase
             'setShipment',
             'generateResult',
             'getQuoteCart',
-            'removeDiscount'
+            'removeDiscount',
+            'getAppliedStoreCredit'
         ], $sessionHelper);        
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -609,6 +610,9 @@ class UpdateCartTest extends TestCase
                 'discount_type'   => 'fixed_amount',
             ]
         ];
+        $this->currentMock->expects(self::once())->method('getAppliedStoreCredit')
+            ->with(self::COUPON_CODE, $parentQuoteMock)
+            ->willReturn(false);
         $this->currentMock->expects(self::once())->method('getQuoteCart')
             ->with($parentQuoteMock)
             ->willReturn(['discounts' => $quoteDiscount]);

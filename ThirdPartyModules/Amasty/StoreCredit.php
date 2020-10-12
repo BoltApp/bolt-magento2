@@ -84,6 +84,7 @@ class StoreCredit
                 $discounts[] = [
                     'description' => $totals[self::AMASTY_STORECREDIT]->getTitle(),
                     'amount' => $roundedDiscountAmount,
+                    'reference' => self::AMASTY_STORECREDIT,
                     'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
                     'type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT
@@ -110,5 +111,54 @@ class StoreCredit
             unset($result['components']['block-totals']['children']['amstorecredit_form']);
         }
         return $result;
+    }
+    
+    /**
+     * Return code if the quote has Amasty store credits.
+     * 
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
+            $result[] = $couponCode;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove Amasty store credits from the quote.
+     *
+     * @param $amastyApplyStoreCreditToQuote
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $amastyApplyStoreCreditToQuote,
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        try {
+            if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
+                $amastyApplyStoreCreditToQuote->cancel($quote->getId());
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 }
