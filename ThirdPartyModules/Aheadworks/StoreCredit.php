@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 class StoreCredit
 {
@@ -39,19 +40,27 @@ class StoreCredit
      * @var Discount
      */
     protected $discountHelper;
+    
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $quoteRepository;
 
     /**
      * StoreCredit constructor.
      * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
+     * @param CartRepositoryInterface $quoteRepository
      */
     public function __construct(
         Discount $discountHelper,
-        Bugsnag $bugsnagHelper
+        Bugsnag $bugsnagHelper,
+        CartRepositoryInterface $quoteRepository
     )
     {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -96,6 +105,55 @@ class StoreCredit
             $this->bugsnagHelper->notifyException($e);
         } finally {
             return [$discounts, $totalAmount, $diff];
+        }
+    }
+    
+    /**
+     * Return code if the quote has Aheadworks store credits.
+     * 
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::AHEADWORKS_STORE_CREDIT && $quote->getAwUseStoreCredit()) {
+            $result[] = $couponCode;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove Aheadworks store credits from the quote.
+     *
+     * @param $amastyApplyStoreCreditToQuote
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        try {
+            if ($couponCode == self::AHEADWORKS_STORE_CREDIT && $quote->getAwUseStoreCredit()) {
+                $quote->setAwUseStoreCredit(false);
+                $this->quoteRepository->save($quote->collectTotals());
+            }
+        } catch (\Exception $e) {
+            throw $e;
         }
     }
 }

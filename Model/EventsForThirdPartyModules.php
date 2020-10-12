@@ -106,6 +106,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Amasty\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
                     "boltClass" => Amasty_StoreCredit::class,
                 ],
+                [
+                    "module" => "Aheadworks_StoreCredit",
+                    "checkClasses" => ["Aheadworks\StoreCredit\Model\TransactionRepository"],
+                    "boltClass" => Aheadworks_StoreCredit::class,
+                ],
             ]
         ],
     ];
@@ -312,7 +317,12 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_StoreCredit",
                     "checkClasses" => ["Amasty\StoreCredit\Api\Data\SalesFieldInterface"],
                     "boltClass" => Amasty_StoreCredit::class,
-                ]
+                ],
+                [
+                    "module" => "Aheadworks_StoreCredit",
+                    "checkClasses" => ["Aheadworks\StoreCredit\Model\TransactionRepository"],
+                    "boltClass" => Aheadworks_StoreCredit::class,
+                ],
             ],
         ],
     ];
