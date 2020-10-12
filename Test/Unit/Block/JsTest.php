@@ -1579,18 +1579,15 @@ JS;
 
         $currentMock->method('isIPRestricted')->willReturn($isIPRestricted);
         $currentMock->method('isKeyMissing')->willReturn($isKeyMissing);
-        try {
-            static::assertEquals(
-                !$isBoltFeatureEnabled ||
-                !$isEnabled ||
-                $isPageRestricted ||
-                $isIPRestricted ||
-                $isKeyMissing,
-                $currentMock->shouldDisableBoltCheckout()
-            );
-        } catch (Exception $e) {
-            echo 1;
-        }
+
+        static::assertEquals(
+            !$isBoltFeatureEnabled ||
+            !$isEnabled ||
+            $isPageRestricted ||
+            $isIPRestricted ||
+            $isKeyMissing,
+            $currentMock->shouldDisableBoltCheckout()
+        );
     }
 
     /**

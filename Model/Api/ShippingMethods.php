@@ -44,7 +44,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
@@ -395,7 +395,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 'Something went wrong with your cart. Please reload the page and checkout again.' :
                 $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, $e->getCode());
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
             $this->catchExceptionAndSendError($e, $msg, 6009, 422);
@@ -581,10 +581,7 @@ class ShippingMethods implements ShippingMethodsInterface
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
-
-                // we must use the PHP native unserialize method because the unserialize method from the Magento framework doesn't unserialize objects.
-                // See \Magento\Framework\Serialize\Serializer\Serialize::unserialize for more detail
-                return unserialize($serialized); // @codingStandardsIgnoreLine
+                return $this->serialize->unserialize($serialized);
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////

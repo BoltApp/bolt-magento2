@@ -54,7 +54,7 @@ trait UpdateCartItemTrait
      *
      * @param UpdateCartContext $updateCartContext
      */
-    final public function __construct(
+     public function __construct(
         UpdateCartContext $updateCartContext
     ) {
         $this->productRepository = $updateCartContext->getProductRepositoryInterface();
