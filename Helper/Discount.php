@@ -993,6 +993,11 @@ class Discount extends AbstractHelper
      */
     public function setCouponCode($quote, $couponCode)
     {
+        $address = $quote->isVirtual() ?
+                $quote->getBillingAddress() :
+                $quote->getShippingAddress();
+        $address->setAppliedRuleIds('');
+        $quote->setAppliedRuleIds('');
         $quote->setCouponCode($couponCode);
         $this->updateTotals($quote);
     }
