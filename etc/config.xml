@@ -54,7 +54,7 @@ tr.shipping.totals td.amount span.price,
 .payment-method-boltpay .payment-method-title img.payment-icon {padding: 8px; border: 1px solid #cccccc; width: 200px;}</global_css>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
-                <prefetch_shipping>1</prefetch_shipping>
+                <prefetch_shipping>0</prefetch_shipping>
                 <reset_shipping_calculation>0</reset_shipping_calculation>
                 <minicart_support>1</minicart_support>
                 <store_credit>0</store_credit>

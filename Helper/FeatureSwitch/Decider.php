@@ -265,4 +265,8 @@ class Decider extends AbstractHelper
     public function isCaptureEmailToListrakEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED);
     }
+
+    public function isPrefetchShippingEnabled() {
+        return $this->isSwitchEnabled(Definitions::M2_PREFETCH_SHIPPING);
+    }
 }

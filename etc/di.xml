@@ -196,13 +196,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltAheadworksCustomerStoreCreditManagementInterface" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Aheadworks_StoreCredit</argument>
-            <argument name="className" xsi:type="string">Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface</argument>
-        </arguments>
-    </virtualType>
-
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
             <!-- For Amasty Gift Card v1.8.15 and before -->
@@ -219,7 +212,6 @@
             <argument name="amastyGiftCardAccountQuoteExtensionRepository" xsi:type="object">boltAmastyGiftCardAccountQuoteExtensionRepository</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
-            <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
             <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
