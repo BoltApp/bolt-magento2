@@ -4234,10 +4234,10 @@ ORDER
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $giftVoucherDiscount = 5; // $
         $discountAmount = 10; // $
-        $giftVaucher = "12345";
-        $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVaucher);
+        $giftVoucher = "12345";
+        $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVoucher);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with($giftVaucher)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with($giftVoucher)->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($discountAmount);
@@ -4278,9 +4278,9 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedRegularDiscountAmount - $expectedGiftVoucherAmount;
         $expectedDiscount = [
             [
-                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION . ' (' . self::COUPON_CODE . ')'),
+                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION . ' (' . $giftVoucher. ')'),
                 'amount'      => $expectedRegularDiscountAmount,
-                'reference'   => $giftVaucher,
+                'reference'   => $giftVoucher,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
                 'type'   => 'fixed_amount',
