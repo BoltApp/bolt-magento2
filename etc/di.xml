@@ -174,13 +174,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltMirasvitRewardsPurchaseHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mirasvit_Rewards</argument>
-            <argument name="className" xsi:type="string">Mirasvit\Rewards\Helper\Purchase</argument>
-        </arguments>
-    </virtualType>
-
     <type name="Mirasvit\Rewards\Model\Purchase">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
@@ -203,13 +196,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltAheadworksCustomerStoreCreditManagementInterface" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Aheadworks_StoreCredit</argument>
-            <argument name="className" xsi:type="string">Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface</argument>
-        </arguments>
-    </virtualType>
-
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
             <!-- For Amasty Gift Card v1.8.15 and before -->
@@ -224,27 +210,12 @@
             <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
             <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
             <argument name="amastyGiftCardAccountQuoteExtensionRepository" xsi:type="object">boltAmastyGiftCardAccountQuoteExtensionRepository</argument>
-
-            <argument name="mirasvitRewardsPurchaseHelper" xsi:type="object">boltMirasvitRewardsPurchaseHelper</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
-            <argument name="aheadworksCustomerStoreCreditManagement" xsi:type="object">boltAheadworksCustomerStoreCreditManagementInterface</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
             <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
             <argument name="unirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
-        </arguments>
-    </type>
-
-    <virtualType name="boltMageplazaShippingRestrictonHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Mageplaza_ShippingRestriction</argument>
-            <argument name="className" xsi:type="string">Mageplaza\ShippingRestriction\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-    <type name="Bolt\Boltpay\Helper\Session">
-        <arguments>
-            <argument name="mageplazaShippingRestrictonHelper" xsi:type="object">boltMageplazaShippingRestrictonHelper</argument>
         </arguments>
     </type>
 
@@ -306,13 +277,13 @@
                 type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
                 sortOrder="1"/>
     </type>
-    
+
     <type name="Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount">
         <plugin name="Bolt_Boltpay_SalesRule_Action_Discount_Plugin"
                 type="Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin"
                 sortOrder="20"/>
     </type>
-    
+
     <type name="Magento\SalesRule\Model\Quote\Discount">
         <plugin name="Bolt_Boltpay_SalesRule_Quote_Discount_Plugin"
                 type="Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin"

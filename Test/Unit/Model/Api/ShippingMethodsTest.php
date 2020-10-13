@@ -47,7 +47,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory as RuleFactory;
 use Magento\SalesRule\Model\Rule;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Magento\Framework\Serialize\Serializer\Serialize;
+use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
@@ -285,7 +285,7 @@ class ShippingMethodsTest extends TestCase
         $this->priceHelper->method('currency')->willReturnArgument(0);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->discountHelper = $this->createMock(DiscountHelper::class);
-        $this->serialize = $this->getMockBuilder(Serialize::class)->enableProxyingToOriginalMethods()->getMock();
+        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->ruleFactory = $this->getMockBuilder(RuleFactory::class)
             ->setMethods(
                 [
@@ -658,7 +658,6 @@ class ShippingMethodsTest extends TestCase
     public function applyExternalQuoteData_thirdPartyRewards()
     {
         $amRewardsPoint = 100;
-        $mirasvitRewardsPoint = 200;
         $this->initCurrentMock();
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods(['getAmrewardsPoint'])
@@ -668,11 +667,8 @@ class ShippingMethodsTest extends TestCase
         $this->discountHelper->expects(self::once())->method('applyExternalDiscountData')->with($quote);
         $quote->expects(self::atLeastOnce())->method('getAmrewardsPoint')->willReturn($amRewardsPoint);
 
-        $this->discountHelper->expects(self::once())->method('getMirasvitRewardsAmount')->with($quote)
-            ->willReturn($mirasvitRewardsPoint);
-
         self::assertEquals(
-            $amRewardsPoint.$mirasvitRewardsPoint,
+            $amRewardsPoint,
             $this->currentMock->applyExternalQuoteData($quote)
         );
     }

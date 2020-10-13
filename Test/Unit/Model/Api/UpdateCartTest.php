@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Exception\BoltException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
@@ -434,10 +435,14 @@ class UpdateCartTest extends TestCase
     public function execute_validateQuoteFail_returnFalse()
     {            
         $this->initCurrentMock(['validateQuote']);
-        
+        $exception = new BoltException(
+            __(sprintf('The cart reference [%s] cannot be found.', SELF::IMMUTABLE_QUOTE_ID)),
+            null,
+            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+        );
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn(false);
+            ->willThrowException($exception);
         
         $requestCart = $this->getRequestCart();
 
@@ -576,7 +581,8 @@ class UpdateCartTest extends TestCase
             'setShipment',
             'generateResult',
             'getQuoteCart',
-            'removeDiscount'
+            'removeDiscount',
+            'getAppliedStoreCredit'
         ], $sessionHelper);        
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -604,6 +610,9 @@ class UpdateCartTest extends TestCase
                 'discount_type'   => 'fixed_amount',
             ]
         ];
+        $this->currentMock->expects(self::once())->method('getAppliedStoreCredit')
+            ->with(self::COUPON_CODE, $parentQuoteMock)
+            ->willReturn(false);
         $this->currentMock->expects(self::once())->method('getQuoteCart')
             ->with($parentQuoteMock)
             ->willReturn(['discounts' => $quoteDiscount]);

@@ -30,6 +30,7 @@ use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class UpdateCart
@@ -104,11 +105,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             
             $result = $this->validateQuote($immutableQuoteId);
             
-            if(!$result){
-                // Already sent a response with error, so just return.
-                return false;
-            }
-            
             list($parentQuote, $immutableQuote) = $result;
             
             $storeId = $parentQuote->getStoreId();
@@ -156,9 +152,13 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             if( !empty($discount_codes_to_remove) ){
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
-
-                $quoteCart = $this->getQuoteCart($parentQuote);
-                $discounts = $quoteCart['discounts'];
+               
+                $discounts = $this->getAppliedStoreCredit($couponCode, $parentQuote);
+               
+                if (!$discounts) {
+                    $quoteCart = $this->getQuoteCart($parentQuote);
+                    $discounts = $quoteCart['discounts'];
+                }
 
                 if(empty($discounts)){
                     $this->sendErrorResponse(
@@ -226,6 +226,14 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 
             $this->sendSuccessResponse($result);
             
+        } catch (BoltException $e) {
+            $this->sendErrorResponse(
+                $e->getCode(),
+                $e->getMessage(),
+                422
+            );
+
+            return false;
         } catch (WebApiException $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
