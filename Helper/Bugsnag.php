@@ -64,26 +64,6 @@ class Bugsnag extends AbstractHelper
         parent::__construct($context);
 
         $this->storeManager = $storeManager;
-
-        //////////////////////////////////////////
-        // Composerless installation.
-        // Make sure libraries are in place:
-        // lib/internal/Bolt/bugsnag
-        // lib/internal/Bolt/guzzle
-        //////////////////////////////////////////
-        if (!class_exists('\GuzzleHttp\Client')) {
-            // @codeCoverageIgnoreStart
-            require_once $directoryList->getPath('lib_internal') . '/Bolt/guzzle/autoloader.php'; // phpcs:ignore
-            // @codeCoverageIgnoreEnd
-        }
-
-        if (!class_exists('\Bugsnag\Client')) {
-            // @codeCoverageIgnoreStart
-            require_once $directoryList->getPath('lib_internal') . '/Bolt/bugsnag/autoloader.php'; // phpcs:ignore
-            // @codeCoverageIgnoreEnd
-        }
-        //////////////////////////////////////////
-
         $this->configHelper = $configHelper;
 
         $this->bugsnag = \Bugsnag\Client::make(self::API_KEY);

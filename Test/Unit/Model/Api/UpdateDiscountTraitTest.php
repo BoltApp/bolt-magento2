@@ -132,7 +132,10 @@ class UpdateDiscountTraitTest extends TestCase
 
 
     public function setUp()
-    {            
+    {
+        global $ifRunFilter;
+        $ifRunFilter = false;
+        
         $this->currentMock = $this->getMockBuilder(UpdateDiscountTrait::class)
             ->setMethods(['sendErrorResponse'])
             ->disableOriginalConstructor()
@@ -177,7 +180,14 @@ class UpdateDiscountTraitTest extends TestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnArgument(1));
+            ->will($this->returnCallback(function($class, $result, $couponCode, $quote) {
+                global $ifRunFilter;
+                if ($ifRunFilter) {
+                    return $ifRunFilter;
+                } else {
+                    return $result;
+                }
+            }));
         
         TestHelper::setProperty($this->currentMock, 'ruleRepository', $this->ruleRepository);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
@@ -193,6 +203,12 @@ class UpdateDiscountTraitTest extends TestCase
         $this->initRequiredMocks();
     }
     
+    public function tearDown() {
+		parent::tearDown();
+		global $ifRunFilter;
+        $ifRunFilter = false;
+	}
+    
     protected function initRequiredMocks()
     {
         $this->ruleMock = $this->getMockBuilder(Rule::class)
@@ -203,7 +219,8 @@ class UpdateDiscountTraitTest extends TestCase
                     'getFromDate',
                     'getWebsiteIds',
                     'getUsesPerCustomer',
-                    'getDescription'
+                    'getDescription',
+                    'getCustomerGroupIds',
                 ]
             )
             ->disableOriginalConstructor()
@@ -546,6 +563,8 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
             
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
@@ -623,7 +642,10 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
-        $this->ruleMock->expects(self::once())->method('getDescription')->willReturn('TESTCOUPON');
+        $this->ruleMock->expects(self::once())->method('getDescription')
+            ->willReturn('TESTCOUPON');
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
             
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);        
@@ -857,6 +879,39 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      *
      */
+    public function applyingCouponCode_codeRequiresLogin()
+    {
+        $coupon = $this->getCouponMock([
+                'getId' => [
+                    'expects' => 'once'
+                ],
+                'getRuleId' => [
+                    'expects' => 'once'
+                ]
+            ]);
+        $quote = $this->getQuoteMock(self::COUPON_CODE,null,0);
+
+        $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
+        $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getToDate')
+            ->willReturn(date('Y-m-d', strtotime('tomorrow')));
+        $this->ruleMock->expects(self::once())->method('getFromDate')
+            ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([1]);
+
+        $this->currentMock->expects(self::once())->method('sendErrorResponse')
+            ->with(BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,'The coupon code '.self::COUPON_CODE.' requires login',422,$quote);
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * @test
+     *
+     */
     public function applyingCouponCode_virtualImmutableQuote()
     {
         $coupon = $this->getCouponMock([
@@ -876,6 +931,8 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
 
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
@@ -909,6 +966,8 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
 
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
@@ -948,6 +1007,8 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
 
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
@@ -1020,6 +1081,22 @@ class UpdateDiscountTraitTest extends TestCase
             ->with($quote, '');
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [self::COUPON_CODE, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
+        
+        $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function removeDiscount_removeStoreCredit()
+    {
+        $discounts = [
+            'amstorecredit' => 'store_credit',    
+        ];
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', ['amstorecredit', $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
         
         $this->assertTrue($result);
     }
@@ -1154,6 +1231,41 @@ class UpdateDiscountTraitTest extends TestCase
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, null, $quote]);
         
+        $this->assertFalse($result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function getAppliedStoreCredit_returnArray()
+    {
+        global $ifRunFilter;
+        $ifRunFilter = ['amstorecredit'];
+        
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getAppliedStoreCredit', ['amstorecredit', $quote]);
+        
+        $expectedResult = [
+            [
+                'discount_category' => 'store_credit',
+                'reference'         => 'amstorecredit',
+            ]
+        ];
+        $this->assertEquals($expectedResult, $result);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function getAppliedStoreCredit_returnFalse()
+    {
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getAppliedStoreCredit', ['amstorecredit', $quote]);
+
         $this->assertFalse($result);
     }
 

@@ -1579,18 +1579,15 @@ JS;
 
         $currentMock->method('isIPRestricted')->willReturn($isIPRestricted);
         $currentMock->method('isKeyMissing')->willReturn($isKeyMissing);
-        try {
-            static::assertEquals(
-                !$isBoltFeatureEnabled ||
-                !$isEnabled ||
-                $isPageRestricted ||
-                $isIPRestricted ||
-                $isKeyMissing,
-                $currentMock->shouldDisableBoltCheckout()
-            );
-        } catch (Exception $e) {
-            echo 1;
-        }
+
+        static::assertEquals(
+            !$isBoltFeatureEnabled ||
+            !$isEnabled ||
+            $isPageRestricted ||
+            $isIPRestricted ||
+            $isKeyMissing,
+            $currentMock->shouldDisableBoltCheckout()
+        );
     }
 
     /**
@@ -1701,6 +1698,68 @@ JS;
                 'isAlwaysPresentCheckoutConfigurationEnabled' => true,
                 'isAlwaysPresentCheckoutFeatureSwitchEnabled' => false,
                 'expectedResult'                              => false
+            ],
+        ];
+    }
+
+
+    /**
+     * @test
+     * that getPrefetchShipping returns true only if both:
+     * 1. prefetch shipping is enabled for the current store in the configuration
+     * {@see \Bolt\Boltpay\Helper\Config::getPrefetchShipping returns true}
+     * 2. feature switch M2_PREFETCH_SHIPPING is enabled
+     * {@see \Bolt\Boltpay\Helper\FeatureSwitch\Decider::isPrefetchShippingEnabled returns true}
+     *
+     * @covers ::getPrefetchShipping
+     *
+     * @dataProvider getPrefetchShipping_withVariousConfigAndDeciderStatesProvider
+     *
+     * @param bool $isAlwaysPresentCheckoutConfigurationEnabled flag
+     * @param bool $isAlwaysPresentCheckoutFeatureSwitchEnabled flag
+     * @param bool $expectedResult of the tested method call
+     */
+    public function getPrefetchShipping_withVariousConfigAndDeciderStates_returnsPluginSettings(
+        $isPrefetchShippingConfigurationEnabled,
+        $isPrefetchShippingFeatureSwitchEnabled,
+        $expectedResult
+    ) {
+        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
+        $this->configHelper->expects(static::once())
+            ->method('getPrefetchShipping')
+            ->with(static::STORE_ID)
+            ->willReturn($isPrefetchShippingConfigurationEnabled);
+
+        $this->deciderMock->expects($isPrefetchShippingConfigurationEnabled ? static::once() : static::never())
+            ->method('isPrefetchShippingEnabled')
+            ->willReturn($isPrefetchShippingFeatureSwitchEnabled);
+
+        static::assertEquals($expectedResult, $this->currentMock->getPrefetchShipping());
+    }
+
+    /**
+     * Data provider for {@see getPrefetchShipping_withVariousConfigAndDeciderStates_returnsPluginSettings}
+     *
+     * @return array[] containing flags is config checkout enabled, is decider switch enabled and
+     * expected result of the tested method call
+     */
+    public function getPrefetchShipping_withVariousConfigAndDeciderStatesProvider()
+    {
+        return [
+            [
+                'isPrefetchShippingConfigurationEnabled' => true,
+                'isPrefetchShippingFeatureSwitchEnabled' => true,
+                'expectedResult'                         => true
+            ],
+            [
+                'isPrefetchShippingConfigurationEnabled' => false,
+                'isPrefetchShippingFeatureSwitchEnabled' => true,
+                'expectedResult'                         => false
+            ],
+            [
+                'isPrefetchShippingConfigurationEnabled' => true,
+                'isPrefetchShippingFeatureSwitchEnabled' => false,
+                'expectedResult'                         => false
             ],
         ];
     }

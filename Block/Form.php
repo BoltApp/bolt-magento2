@@ -190,4 +190,12 @@ class Form extends PaymentForm
     {
         return $this->configHelper->getPublishableKeyPayment();
     }
+
+    /**
+     * @return string
+     */
+    public function getAdditionalCheckoutButtonAttributes()
+    {
+        return $this->configHelper->getAdditionalCheckoutButtonAttributes();
+    }
 }

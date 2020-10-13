@@ -54,6 +54,7 @@ class Rewards
      */
     public function collectDiscounts($result,
                                      $amastyRewardsHelperData,
+                                     $amastyRewardsResourceModelQuote,
                                      $quote,
                                      $parentQuote,
                                      $paymentOnly)
@@ -63,7 +64,7 @@ class Rewards
         try {
             if ($quote->getData('amrewards_point')) {
                 $rewardData = $amastyRewardsHelperData->getRewardsData();
-                $pointsUsed = $rewardData['pointsUsed'];
+                $pointsUsed = $amastyRewardsResourceModelQuote->getUsedRewards($quote->getId());
                 $pointsRate = $rewardData['rateForCurrency'];
                 $amount = $pointsUsed / $pointsRate;
                 $currencyCode = $quote->getQuoteCurrencyCode();
@@ -85,5 +86,21 @@ class Rewards
         } finally {        
             return [$discounts, $totalAmount, $diff];
         }
+    }
+
+    public function getAdditionalJS($result)
+    {
+        $result .= 'var selectorsForInvalidate = ["apply-amreward","cancel-amreward"];
+        for (var i = 0; i < selectorsForInvalidate.length; i++) {
+            var button = document.getElementById(selectorsForInvalidate[i]);
+            if (button) {
+                button.addEventListener("click", function() {
+                    if (localStorage) {
+                        localStorage.setItem("bolt_cart_is_invalid", "true");
+                    }
+                }, false);
+            }
+        }';
+        return $result;
     }
 }

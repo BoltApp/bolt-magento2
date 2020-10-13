@@ -141,7 +141,7 @@ class TestHelper extends TestCase
      */
     public static function serialize ($class, $data){
         return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
-            ->getObject(\Magento\Framework\Serialize\Serializer\Serialize::class)->serialize($data);
+            ->getObject(\Zend\Serializer\Adapter\PhpSerialize::class)->serialize($data);
     }
 }
 class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');
