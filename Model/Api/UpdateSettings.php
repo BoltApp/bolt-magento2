@@ -64,9 +64,16 @@ class UpdateSettings implements UpdateSettingsInterface
             # extract bolt config data
             $config_data = $debug_info["pluginConfigSettings"];
 
-            # TODO: Loop through config settings 
             # Don't set "api_key" or "signing_secret" since their values are not displayed in the debug info
-            # $configHelper->setConfigSetting("configSettingName", configSettingValue)
+            foreach ($config_data as $settingName => $settingValue) {
+                if ($settingName == "api_key" || $settingName == "signing_secret") {
+                    continue;
+                }
+                else {
+                    $configHelper->setConfigSetting($settingName, $settingValue);
+                }
+            }
+            
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
