@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 class DebugSave implements DebugSaveInterface
 {
@@ -27,12 +28,20 @@ class DebugSave implements DebugSaveInterface
     private $configHelper;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
      * @param ConfigHelper $configHelper
+     * @param Bugsnag $bugsnag
      */
     public function __construct(
-        ConfigHelper $configHelper
+        ConfigHelper $configHelper,
+        Bugsnag $bugsnag
     ) {
         $this->configHelper = $configHelper;
+        $this->bugsnag = $bugsnag;
     }
     
     /**
@@ -48,14 +57,19 @@ class DebugSave implements DebugSaveInterface
         # verify request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
 
-        # parse debug_info into array
-        $debug_info_decoded = json_decode($debug_info, true);
+        try {
+            # parse debug_info into array
+            $debug_info_decoded = json_decode($debug_info, true);
 
-        # extract bolt config data
-        $config_data = $debug_info["pluginConfigSettings"];
+            # extract bolt config data
+            $config_data = $debug_info["pluginConfigSettings"];
 
-        # TODO: Loop through config settings 
-        # Don't set "api_key" or "signing_secret" since their values are not displayed in the debug info
-        # $configHelper->setConfigSetting("configSettingName", configSettingValue)
+            # TODO: Loop through config settings 
+            # Don't set "api_key" or "signing_secret" since their values are not displayed in the debug info
+            # $configHelper->setConfigSetting("configSettingName", configSettingValue)
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+        
     }
 }
