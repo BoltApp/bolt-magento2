@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Api;
 
-interface DebugSaveInterface
+interface UpdateSettingsInterface
 {
     /**
      * Set configuration using debug config.

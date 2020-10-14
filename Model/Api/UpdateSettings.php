@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-class DebugSave implements DebugSaveInterface
+class UpdateSettings implements UpdateSettingsInterface
 {
     /**
      * @var ConfigHelper

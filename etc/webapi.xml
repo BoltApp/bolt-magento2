@@ -82,9 +82,9 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-    <!--Debug Save Endpoint-->
-    <route url="/V1/bolt/boltpay/debug" method="POST">
-        <service class="Bolt\Boltpay\Api\DebugSaveInterface" method="execute"/>
+    <!--Update Settings Endpoint-->
+    <route url="/V1/bolt/boltpay/updatesettings" method="POST">
+        <service class="Bolt\Boltpay\Api\UpdateSettingsInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
