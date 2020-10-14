@@ -1781,11 +1781,19 @@ class Config extends AbstractHelper
      */
     public function setConfigSetting($settingName, $settingValue = null)
     {
-        $this->configWriter->save(
-            self::CONFIG_SETTING_PATHS[$settingName], 
-            $settingValue, 
-            ScopeInterface::SCOPE_STORE
+        $currentValue = $this->getScopeConfig()->getValue(
+            self::CONFIG_SETTING_PATHS[$settingName],
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
+
+        if ($currentValue != $settingValue) {
+            $this->configWriter->save(
+                self::CONFIG_SETTING_PATHS[$settingName], 
+                $settingValue, 
+                ScopeInterface::SCOPE_STORE
+            );
+        }
     }
 
     /**
