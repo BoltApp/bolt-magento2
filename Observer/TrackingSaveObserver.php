@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Exception\LocalizedException;
+use Exception;
 
 class TrackingSaveObserver implements ObserverInterface
 {
