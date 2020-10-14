@@ -45,6 +45,9 @@ class DebugSave implements DebugSaveInterface
     public function execute(
         $debug_info
     ) {
+        # verify request
+        $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
+
         # parse debug_info into array
         $debug_info_decoded = json_decode($debug_info, true);
 
