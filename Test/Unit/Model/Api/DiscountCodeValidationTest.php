@@ -616,7 +616,7 @@ class DiscountCodeValidationTest extends TestCase
             'status'          => 'success',
             'discount_code'   => self::COUPON_CODE,
             'discount_amount' => $shippingDiscountAmount * 100,
-            'description'     => 'Discount Test Shipping Discount Description (' . self::COUPON_CODE . ')')',,
+            'description'     => 'Discount Test Shipping Discount Description (' . self::COUPON_CODE . ')',
             'discount_type'   => 'fixed_amount',
             'cart'            => [
                 'total_amount' => 10000,
