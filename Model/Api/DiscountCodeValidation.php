@@ -399,7 +399,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
-            'description'     =>  __('Discount ') . $address->getDiscountDescription(),
+            'description'     =>  __('Discount ') . $address->getDiscountDescription() . " ({$couponCode})",
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
     }
