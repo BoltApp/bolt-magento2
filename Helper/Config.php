@@ -427,8 +427,7 @@ class Config extends AbstractHelper
         ProductMetadataInterface $productMetadata,
         BoltConfigSettingFactory $boltConfigSettingFactory,
         RegionFactory $regionFactory,
-        ComposerFactory $composerFactory,
-        WriterInterface $configWriter 
+        ComposerFactory $composerFactory
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -437,7 +436,6 @@ class Config extends AbstractHelper
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
         $this->regionFactory = $regionFactory;
         $this->composerFactory = $composerFactory;
-        $this->configWriter = $configWriter;
     }
 
     /**
@@ -962,6 +960,14 @@ class Config extends AbstractHelper
     public function getScopeConfig()
     {
         return $this->scopeConfig;
+    }
+
+    /**
+     * @return \Magento\Framework\App\Config\WriterInterface
+     */
+    public function getConfigWriter()
+    {
+        return $this->configWriter;
     }
 
     /**
@@ -1788,7 +1794,7 @@ class Config extends AbstractHelper
         );
 
         if ($currentValue != $settingValue) {
-            $this->configWriter->save(
+            $this->getConfigWriter()->save(
                 self::CONFIG_SETTING_PATHS[$settingName], 
                 $settingValue, 
                 ScopeInterface::SCOPE_STORE
