@@ -82,20 +82,6 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
-            <argument name="className" xsi:type="string">Unirgy\Giftcert\Model\GiftcertRepository</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltUnirgyGiftCertHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
-            <argument name="className" xsi:type="string">Unirgy\Giftcert\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-
     <!-- For Amasty Gift Card v1.8.15 and before -->
     <virtualType name="boltAmastyLegacyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
@@ -214,8 +200,6 @@
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
-            <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
-            <argument name="unirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
     </type>
 

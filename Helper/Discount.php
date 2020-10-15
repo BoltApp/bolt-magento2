@@ -21,7 +21,6 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
@@ -45,7 +44,6 @@ class Discount extends AbstractHelper
     const GIFT_VOUCHER_AFTER_TAX = 'giftvoucheraftertax';
     const GIFT_VOUCHER = 'giftvoucher';
     const GIFT_CARD_ACCOUNT = 'giftcardaccount';
-    const UNIRGY_GIFT_CERT = 'ugiftcert';
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
@@ -105,17 +103,7 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory
      */
     protected $amastyGiftCardAccountCollection;
-
-    /**
-     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
-     */
-    protected $unirgyCertRepository;
     
-    /**
-     * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
-     */
-    protected $unirgyGiftCertHelper;
-
     /**
      * @var ThirdPartyModuleFactory
      */
@@ -200,8 +188,6 @@ class Discount extends AbstractHelper
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
      * @param ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository
-     * @param ThirdPartyModuleFactory $unirgyCertRepository
-     * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
      * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
@@ -229,8 +215,6 @@ class Discount extends AbstractHelper
         ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
         ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
         ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository,
-        ThirdPartyModuleFactory $unirgyCertRepository,
-        ThirdPartyModuleFactory $unirgyGiftCertHelper,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
         ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
@@ -256,8 +240,6 @@ class Discount extends AbstractHelper
         $this->amastyAccountFactory = $amastyAccountFactory;
         $this->amastyGiftCardAccountManagement = $amastyGiftCardAccountManagement;
         $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
-        $this->unirgyCertRepository = $unirgyCertRepository;
-        $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->quoteRepository = $quoteRepository;
@@ -644,96 +626,7 @@ class Discount extends AbstractHelper
             return null;
         }
     }
-    
-    /**
-     * @param string $code
-     * @param string|int $storeId
-     *
-     * @return null|\Unirgy\Giftcert\Model\Cert
-     * @throws NoSuchEntityException
-     */
-    public function loadUnirgyGiftCertData($code, $storeId)
-    {
-        $result = null;
 
-        /** @var \Unirgy\Giftcert\Model\GiftcertRepository $giftCertRepository */
-        $giftCertRepository = $this->unirgyCertRepository->getInstance();
-
-        if ($giftCertRepository) {
-            $this->logHelper->addInfoLog('### GiftCert ###');
-            $this->logHelper->addInfoLog('# Code: ' . $code);
-
-            try {
-                /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-                $giftCert = $giftCertRepository->get($code);
-
-                $gcStoreId = $giftCert->getStoreId();
-
-                $result = ((!$gcStoreId || $gcStoreId == $storeId) && $giftCert->getData('status') === 'A')
-                          ? $giftCert : null;
-
-            } catch (NoSuchEntityException $e) {
-                //We must ignore the exception, because it is thrown when data does not exist.
-                $result = null;
-            }
-        }
-
-        $this->logHelper->addInfoLog('# loadUnirgyGiftCertData Result is empty: ' . ((!$result) ? 'yes' : 'no'));
-
-        return $result;
-    }
-    
-    /**
-     * Apply Unirgy Gift Cert to quote
-     *
-     * @param Quote $quote
-     * @param string $giftCard
-     * 
-     */
-    public function addUnirgyGiftCertToQuote($quote, $giftCard)
-    {
-        $unirgyHelper = $this->unirgyGiftCertHelper->getInstance();
-        
-        if ($unirgyHelper) {
-            if (empty($quote->getData($giftCard::GIFTCERT_CODE))) {
-                $unirgyHelper->addCertificate(
-                    $giftCard->getCertNumber(),
-                    $quote,
-                    $this->quoteRepository
-                );
-            }
-        }
-    }
-
-
-    /**
-     * Get Unirgy_Giftcert balance.
-     *
-     * @param string $giftcertCode
-     * @return float
-     * @throws \Magento\Framework\Exception\NoSuchEntityException
-     */
-    public function getUnirgyGiftCertBalanceByCode($giftcertCode)
-    {
-        $result = 0;
-
-        /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
-        $unirgyInstance = $this->unirgyCertRepository->getInstance();
-
-        if ($unirgyInstance) {
-
-            $giftCodes = array_map('trim', explode(',', $giftcertCode));
-
-            foreach ($giftCodes as $giftCode) {
-                $giftCert = $unirgyInstance->get($giftCode);
-                if ($giftCert && $giftCert->getStatus() === 'A' && $giftCert->getBalance() > 0) {
-                    $result += $giftCert->getBalance();
-                }
-            }
-        }
-
-        return (float) $result;
-    }
 
     /**
      * Check whether the Amasty Reward Points module is available (installed and enabled)

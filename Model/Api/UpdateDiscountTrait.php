@@ -138,11 +138,6 @@ trait UpdateDiscountTrait
 
         // Load the Magento_GiftCardAccount object
         $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
-        
-        // Load the Unirgy_GiftCert object
-        if (empty($giftCard)) {
-            $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
-        }
 
         // Load Amasty Gift Card account object
         if (empty($giftCard)) {

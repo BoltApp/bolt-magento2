@@ -219,7 +219,6 @@ class Cart extends AbstractHelper
     protected $discountTypes = [
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
         Discount::GIFT_CARD_ACCOUNT => '',
-        Discount::UNIRGY_GIFT_CERT => '',
         Discount::AMASTY_GIFTCARD => 'Gift Card ',
         Discount::GIFT_VOUCHER => ''
     ];
@@ -2119,32 +2118,7 @@ class Cart extends AbstractHelper
                         $roundedDiscountAmount += $roundedAmount;
                         $discounts[] = $discountItem;
                     }
-                } elseif ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
-                    ///////////////////////////////////////////////////////////////////////////
-                    /// Was added a proper Unirgy_Giftcert Amount to the discount.
-                    /// The GiftCert accumulate correct balance only after each collectTotals.
-                    ///  The Unirgy_Giftcert add the only discount which covers only product price.
-                    ///  We should get the whole balance at first of the Giftcert.
-                    ///////////////////////////////////////////////////////////////////////////
-                    $gcCode = $quote->getData('giftcert_code');
-                    $giftCertBalance = $this->discountHelper->getUnirgyGiftCertBalanceByCode($gcCode);
-                    if ($giftCertBalance > 0) {
-                        $amount = $giftCertBalance;
-                    }
-                    $discountAmount = abs($amount);
-                    $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
-                    $gcDescription = $description . $totalDiscount->getTitle();
-                    $discountItem = [
-                        'description'       => $gcDescription,
-                        'amount'            => $roundedDiscountAmount,
-                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                        'reference'         => $gcCode,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-                    ];
-                    $this->logEmptyDiscountCode($gcCode, $gcDescription);
-                    $discounts[] = $discountItem;
-                } elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
+                }  elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
                     $giftCardCodes = $this->discountHelper->getMagentoGiftCardAccountGiftCardData($quote);
                     foreach($giftCardCodes as $giftCardCode => $giftCardAmount) {
                         $amount = abs($giftCardAmount);

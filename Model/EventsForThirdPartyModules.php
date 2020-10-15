@@ -30,6 +30,7 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCre
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Unirgy\Giftcert as Unirgy_Giftcert;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -122,6 +123,11 @@ class EventsForThirdPartyModules
                     "module" => "Mageplaza_GiftCard",
                     "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
                     "boltClass" => Mageplaza_GiftCard::class,
+                ],
+                [
+                    "module" => "Unirgy_Giftcert",
+                    "sendClasses" => ["Unirgy\Giftcert\Helper\Data"],
+                    "boltClass" => Unirgy_Giftcert::class,
                 ]
             ],
         ],
@@ -185,6 +191,13 @@ class EventsForThirdPartyModules
                         "Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface",
                     ],
                     "boltClass" => Aheadworks_StoreCredit::class,
+                ],
+                [
+                    "module" => "Unirgy_Giftcert",
+                    "sendClasses" => [
+                        "Unirgy\Giftcert\Model\GiftcertRepository"
+                    ],
+                    "boltClass" => Unirgy_Giftcert::class,
                 ]
             ],
         ],
@@ -199,6 +212,11 @@ class EventsForThirdPartyModules
                     "module" => "Mageplaza_GiftCard",
                     "sendClasses" => ["Mageplaza\GiftCard\Model\GiftCardFactory"],
                     "boltClass" => Mageplaza_GiftCard::class,
+                ],
+                [
+                    "module" => "Unirgy_Giftcert",
+                    "sendClasses" => ["Unirgy\Giftcert\Helper\Data"],
+                    "boltClass" => Unirgy_Giftcert::class,
                 ],
             ],
         ],

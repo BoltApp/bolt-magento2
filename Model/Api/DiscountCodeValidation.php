@@ -204,20 +204,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 $giftAmount = $this->discountHelper->applyAmastyGiftCard($code, $giftCard, $parentQuote);
                 // Reset and apply Amasty Gift Cards to the immutable quote
                 $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
-            } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
-                if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->discountHelper->addUnirgyGiftCertToQuote($immutableQuote, $giftCard);
-                }
-
-                if (empty($parentQuote->getData($giftCard::GIFTCERT_CODE))) {
-                    $this->discountHelper->addUnirgyGiftCertToQuote($parentQuote, $giftCard);
-                }
-
-                // The Unirgy_GiftCert require double call the function addCertificate().
-                // Look on Unirgy/Giftcert/Controller/Checkout/Add::execute()
-                $this->discountHelper->addUnirgyGiftCertToQuote($this->checkoutSession->getQuote(), $giftCard);
-
-                $giftAmount = $giftCard->getBalance();
             } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
                     try {

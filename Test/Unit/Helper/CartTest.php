@@ -3637,7 +3637,6 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
 
         $totalAmount = 10000;
         $diff = 0;
@@ -3679,7 +3678,6 @@ ORDER
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $appliedDiscount = 10; // $
         $appliedDiscountNoCoupon = 15; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
@@ -3782,7 +3780,6 @@ ORDER
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $appliedDiscount = 10; // $
         $quote->expects(static::once())->method('getCustomerBalanceAmountUsed')->willReturn($appliedDiscount);
         $totalAmount = 10000; // cents
@@ -3988,7 +3985,6 @@ ORDER
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
@@ -4036,7 +4032,6 @@ ORDER
             $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
             $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
             $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-            $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
             $this->discountHelper->expects(static::never())->method('getAmastyGiftCardCodesFromTotals');
             $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
@@ -4107,7 +4102,6 @@ ORDER
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $appliedDiscount1 = 5; // $
         $appliedDiscount2 = 10; // $
@@ -4151,61 +4145,6 @@ ORDER
                 'amount'      => 1000,
                 'discount_category' => 'giftcard',
                 'reference' => '67890',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
-        * that collectDiscounts properly handles Unirgy Giftcert by reading amount from giftcert balance instead of total
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withUnirgyGiftcert_collectsUnirgyGiftcert()
-        {
-        $mock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $mock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $mock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $appliedDiscount = 10; // $
-        $unirgyGiftcertCode = "12345";
-        $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
-        $this->discountHelper->expects(static::once())->method('getUnirgyGiftCertBalanceByCode')
-            ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
-        $quote->expects(static::any())->method('getTotals')
-            ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-        list($discounts, $totalAmountResult, $diffResult) = $mock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $quote
-        );
-        static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * $appliedDiscount;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => '',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'giftcard',
-                'reference' => '12345',
                 'discount_type'   => 'fixed_amount',
                 'type'   => 'fixed_amount',
             ]
