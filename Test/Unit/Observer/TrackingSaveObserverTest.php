@@ -467,4 +467,29 @@ class TrackingSaveObserverTest extends TestCase
         $this->apiHelper->expects($this->never())->method('sendRequest');
         $this->observer->execute($eventObserver);
     }
+
+    /**
+     * @test
+     */
+    public function testExecute_throwException()
+    {
+        $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
+        $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
+            ->setMethods(['getTrack'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($event);
+        $e = new \Exception(__('Exception'));
+        $event->expects($this->once())
+            ->method('getTrack')
+            ->willThrowException($e);
+
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($e)->willReturnSelf();
+        $this->observer->execute($eventObserver);
+    }
 }
