@@ -1785,7 +1785,7 @@ class Config extends AbstractHelper
      * @param string $settingName
      * @param mixed $settingValue
      */
-    public function setConfigSetting($settingName, $settingValue = null)
+    public function setConfigSetting($settingName, $settingValue = null, $storeId = null)
     {
         $currentValue = $this->getScopeConfig()->getValue(
             self::CONFIG_SETTING_PATHS[$settingName],
@@ -1797,7 +1797,8 @@ class Config extends AbstractHelper
             $this->getConfigWriter()->save(
                 self::CONFIG_SETTING_PATHS[$settingName], 
                 $settingValue, 
-                ScopeInterface::SCOPE_STORE
+                ScopeInterface::SCOPE_STORE,
+                $storeId
             );
         }
     }
