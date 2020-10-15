@@ -17,8 +17,11 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
+use Bolt\Boltpay\Api\UpdateSettingsInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Store\Model\StoreManagerInterface;
 
 class UpdateSettings implements UpdateSettingsInterface
 {
@@ -33,15 +36,31 @@ class UpdateSettings implements UpdateSettingsInterface
     private $bugsnag;
 
     /**
+     * @var HookHelper
+     */
+    private $hookHelper;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
+     * @param HookHelper $hookHelper
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         ConfigHelper $configHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        HookHelper $hookHelper,
+        StoreManagerInterface $storeManager
     ) {
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
+        $this->hookHelper = $hookHelper;
+        $this->storeManager = $storeManager;
     }
     
     /**
@@ -62,15 +81,17 @@ class UpdateSettings implements UpdateSettingsInterface
             $debug_info_decoded = json_decode($debug_info, true);
 
             # extract bolt config data
-            $config_data = $debug_info["pluginConfigSettings"];
+            $config_data = $debug_info_decoded['division']['pluginIntegrationInfo']['pluginConfigSettings'];
 
             # Don't set "api_key" or "signing_secret" since their values are not displayed in the debug info
-            foreach ($config_data as $settingName => $settingValue) {
-                if ($settingName == "api_key" || $settingName == "signing_secret") {
+            foreach ($config_data as $i => $setting) {
+                $settingName = $setting['name'];
+                $settingValue = $setting['value'];
+                if ($settingName == 'api_key' || $settingName == 'signing_secret') {
                     continue;
                 }
                 else {
-                    $configHelper->setConfigSetting($settingName, $settingValue);
+                    $this->configHelper->setConfigSetting($settingName, $settingValue);
                 }
             }
             
