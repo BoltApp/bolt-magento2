@@ -165,4 +165,9 @@ class JsProductPage extends Js
     {
         return $this->featureSwitches->isSaveHintsInSections();
     }
+
+    public function isBoltProductPage()
+    {
+        return contains('bolt_pcc', $this->_product->getAttributes()) && parent::isBoltProductPage();
+    }
 }
