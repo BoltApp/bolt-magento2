@@ -22,6 +22,7 @@ use Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Quote\Discount;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
@@ -38,12 +39,18 @@ class SalesRuleQuoteDiscountPluginTest extends TestCase
     /** @var CheckoutSession */
     protected $checkoutSession;
     
+    /** @var SessionHelper */
+    protected $sessionHelper;
+    
     /** @var Discount */
     protected $subject;
 
     public function setUp()
     {
         $this->subject = $this->createMock(Discount::class);
+        $this->sessionHelper = $this->createPartialMock(SessionHelper::class,
+            ['getCheckoutSession']
+        );
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['setBoltCollectSaleRuleDiscounts']
         );
@@ -63,7 +70,10 @@ class SalesRuleQuoteDiscountPluginTest extends TestCase
     {
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([]);                    
+                            ->with([]);
+        $this->sessionHelper->expects(self::once())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
         $this->plugin->beforeCollect($this->subject, null, null, null);
     }
 }

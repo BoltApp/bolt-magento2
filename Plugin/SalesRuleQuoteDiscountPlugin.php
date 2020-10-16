@@ -16,24 +16,25 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 class SalesRuleQuoteDiscountPlugin
 {
-    /** @var CheckoutSession */
-    private $checkoutSession;
+    /** @var SessionHelper */
+    private $sessionHelper;
     
     public function __construct(
-        CheckoutSession $checkoutSession
+        SessionHelper $sessionHelper
     ) {
-        $this->checkoutSession = $checkoutSession;
+        $this->sessionHelper = $sessionHelper;
     }
     
     public function beforeCollect(\Magento\SalesRule\Model\Quote\Discount $subject, $quote, $shippingAssignment, $total)
     {
+        $checkoutSession = $this->sessionHelper->getCheckoutSession();
         // Each time when collecting address discount amount, the BoltCollectSaleRuleDiscounts session data would be reset,
         // then it can store the updated info of applied sale rules.
-        $this->checkoutSession->setBoltCollectSaleRuleDiscounts([]);
+        $checkoutSession->setBoltCollectSaleRuleDiscounts([]);
        
         return [$quote, $shippingAssignment, $total];
     }

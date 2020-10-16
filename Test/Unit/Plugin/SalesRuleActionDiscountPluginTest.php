@@ -23,6 +23,7 @@ use Magento\Framework\DataObject;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class SalesRuleActionDiscountPluginTest
@@ -35,9 +36,12 @@ class SalesRuleActionDiscountPluginTest extends TestCase
      * @var SalesRuleActionDiscountPlugin
      */
     protected $plugin;
-
+    
     /** @var CheckoutSession */
     protected $checkoutSession;
+
+    /** @var SessionHelper */
+    protected $sessionHelper;
     
     /** @var AbstractDiscount */
     protected $subject;
@@ -45,6 +49,9 @@ class SalesRuleActionDiscountPluginTest extends TestCase
     public function setUp()
     {
         $this->subject = $this->createMock(AbstractDiscount::class);
+        $this->sessionHelper = $this->createPartialMock(SessionHelper::class,
+            ['getCheckoutSession']
+        );
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts', 'setBoltCollectSaleRuleDiscounts']
         );
@@ -82,7 +89,10 @@ class SalesRuleActionDiscountPluginTest extends TestCase
                             ->willReturn($boltCollectSaleRuleDiscounts);
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([2 => 126.0,]);                    
+                            ->with([2 => 126.0,]);
+        $this->sessionHelper->expects(self::once())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
         $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
     }
 
@@ -112,7 +122,10 @@ class SalesRuleActionDiscountPluginTest extends TestCase
                             ->willReturn($boltCollectSaleRuleDiscounts);
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([2 => 20.0,]);                    
+                            ->with([2 => 20.0,]);
+        $this->sessionHelper->expects(self::once())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
         $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
     }
 }
