@@ -125,6 +125,11 @@ class Config extends AbstractHelper
     const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
 
     /**
+     * Enable product page checkout for select products.
+     */
+    const XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/select_product_page_checkout';
+
+    /**
      * Enable Bolt order management
      */
     const XML_PATH_PRODUCT_ORDER_MANAGEMENT = 'payment/boltpay/order_management';
@@ -802,6 +807,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get select product page checkout flag from config.
+     * Used to specify if product page is only enabled for specific products.
+     * @param int|string|Store $store
+     * @return boolean
+     */
+
+    public function getSelectProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
             $store
         );
