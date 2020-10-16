@@ -168,6 +168,7 @@ class JsProductPage extends Js
 
     public function isBoltProductPage()
     {
-        return contains('bolt_pcc', $this->_product->getAttributes()) && parent::isBoltProductPage();
+        $specific = $this->configHelper->getSelectProductPageCheckoutFlag() && contains('bolt_pcc', $this->_product->getAttributes());
+        return $specific && parent::isBoltProductPage();
     }
 }
