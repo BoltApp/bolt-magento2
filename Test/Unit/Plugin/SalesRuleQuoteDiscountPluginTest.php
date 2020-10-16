@@ -57,7 +57,7 @@ class SalesRuleQuoteDiscountPluginTest extends TestCase
         $this->plugin = (new ObjectManager($this))->getObject(
             SalesRuleQuoteDiscountPlugin::class,
             [
-                'checkoutSession' => $this->checkoutSession
+                'sessionHelper' => $this->sessionHelper
             ]
         );
     }
