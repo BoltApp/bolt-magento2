@@ -30,12 +30,14 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -121,6 +123,11 @@ class UpdateDiscountTraitTest extends TestCase
     private $dataObjectMock;
     
     /**
+     * @var MockObject|SessionHelper
+     */
+    protected $sessionHelper;
+    
+    /**
      * @var MockObject|EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
@@ -176,6 +183,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
             ->disableOriginalConstructor()
             ->getMock();
+        
+        $this->sessionHelper = $this->getMockBuilder(SessionHelper::class)
+            ->setMethods(['getCheckoutSession'])
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
@@ -198,6 +210,7 @@ class UpdateDiscountTraitTest extends TestCase
         TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
         TestHelper::setProperty($this->currentMock, 'discountHelper', $this->discountHelper);
         TestHelper::setProperty($this->currentMock, 'totalsCollector', $this->totalsCollector);
+        TestHelper::setProperty($this->currentMock, 'sessionHelper', $this->sessionHelper);
         TestHelper::setProperty($this->currentMock, 'eventsForThirdPartyModules', $this->eventsForThirdPartyModules);
         
         $this->initRequiredMocks();
@@ -569,6 +582,15 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
         
+        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([self::RULE_ID => 10]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
+        
         $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, null, $quote]);
         
         $this->assertTrue(!empty($result));
@@ -653,7 +675,15 @@ class UpdateDiscountTraitTest extends TestCase
             ->with(self::COUPON_CODE)->willReturn('fixed_amount');
         
         $shippingDiscountAmount = 1000;
-        $this->shippingAddressMock->method('getDiscountAmount')->willReturn($shippingDiscountAmount);
+        
+        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([self::RULE_ID => 10]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
         
         $result = [
             'status'          => 'success',
@@ -939,6 +969,15 @@ class UpdateDiscountTraitTest extends TestCase
         
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
+        
+        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([self::RULE_ID => 10]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
         
