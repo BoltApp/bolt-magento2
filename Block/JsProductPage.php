@@ -171,11 +171,13 @@ class JsProductPage extends Js
         if ($this->configHelper->getSelectProductPageCheckoutFlag())
         {
             $attributes = $this->getProduct()->getAttributes();
-            $codes = [];
             foreach ($attributes as $attribute) {
-                array_push($codes, $attribute->getName());
+                if ($attribute->getName() == 'bolt_ppc')
+                {
+                    return parent::isBoltProductPage();
+                }
             }
-            return in_array('bolt_ppc', $codes) && parent::isBoltProductPage();
+            return false;
         }
         return parent::isBoltProductPage();
     }
