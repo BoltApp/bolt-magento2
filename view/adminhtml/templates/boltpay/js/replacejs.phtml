@@ -274,6 +274,40 @@ require([
 
     var hints = {prefill:{}};
 
+
+    var isValidToken = function () {
+        var errors = [],
+            // shipping address mask overlay
+            addressShippingOverlay = $('#address-shipping-overlay')[0],
+            // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
+            shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
+            isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length,
+            email = $('input[name="order[account][email]"]').val();
+
+        if (!cart.orderToken) {
+            errors.push('Invalid Order Token');
+        }
+
+        if (!email || !email.trim()) {
+            errors.push('Please specify the "Email"!');
+        }
+
+        if (shippingRequired && ! isShippingMethodSelected) {
+            errors.push('Please specify the "Shipping Method"!');
+        }
+
+        if (errors.length) {
+            var errorMsg = errors.join(', ');
+
+            console.error('BoltPay Check: ', errorMsg);
+            alert(errorMsg);
+
+            return false;
+        }
+
+        return true;
+    };
+
     var callbacks = {
 
         close: function () {
@@ -326,36 +360,7 @@ require([
         // the Bolt order is created right after the checkout button is clicked
         // and the checkout modal popup is opened only if order creation was successfull
         check: function () {
-            var errors = [],
-                // shipping address mask overlay
-                addressShippingOverlay = $('#address-shipping-overlay')[0],
-                // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
-                shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
-                isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length,
-                email = $('input[name="order[account][email]"]').val();
-
-            if (!cart.orderToken) {
-                errors.push('Invalid Order Token');
-            }
-
-            if (!email || !email.trim()) {
-                errors.push('Please specify the "Email"!');
-            }
-
-            if (shippingRequired && ! isShippingMethodSelected) {
-                errors.push('Please specify the "Shipping Method"!');
-            }
-
-            if (errors.length) {
-                var errorMsg = errors.join(', ');
-
-                console.error('BoltPay Check: ', errorMsg);
-                alert(errorMsg);
-
-                return false;
-            }
-
-            return true;
+            return isValidToken();
         }
     };
 
@@ -395,8 +400,8 @@ require([
             if (data.backOfficeKey) {
                 insertConnectScript(data.backOfficeKey);
             }
-            if (data.paymentOnlyKey && settings.pay_by_link_url) {
-                $(".bolt-checkout-pay-by-link").html("Send <a href='"
+            if (data.paymentOnlyKey && settings.pay_by_link_url && data.cart.orderToken ) {
+                $(".bolt-checkout-pay-by-link").html("Send <a id='bolt-pay-by-link' href='"
                     + settings.pay_by_link_url + "?publishable_key=" + data.paymentOnlyKey
                     + "&token=" + data.cart.orderToken
                     + "'>this link</a> to consumer to receive payment");
@@ -415,6 +420,16 @@ require([
                           .fail(onError);
     };
     /////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////
+    // Prevent using the pay by link if the token is invalid
+    ////////////////////////////////////////////////////////////
+    $(document).on('click', '#bolt-pay-by-link', function(e){
+        if (!isValidToken()) {
+            e.preventDefault();
+        }
+    });
+    ////////////////////////////////////////////////
 
     ////////////////////////////////////////////////
     // process the button when available on the page
