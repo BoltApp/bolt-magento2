@@ -1949,7 +1949,8 @@ class Cart extends AbstractHelper
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
             // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
             // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
-            $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
+            $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+
             $salesruleIds = explode(',', $quote->getAppliedRuleIds());
             foreach ($salesruleIds as $salesruleId) {
                 if (!isset($boltCollectSaleRuleDiscounts[$salesruleId])) {
