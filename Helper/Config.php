@@ -1654,6 +1654,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('product_page_checkout')
                                                          ->setValue(var_export($this->getProductPageCheckoutFlag(), true));
+        // Select Product Page Checkout
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+                                                         ->setName('select_product_page_checkout')
+                                                         ->setValue(var_export($this->getSelectProductPageCheckoutFlag(), true));
         // Geolocation API Key (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('geolocation_api_key')
