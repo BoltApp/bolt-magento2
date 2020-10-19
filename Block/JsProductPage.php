@@ -168,13 +168,15 @@ class JsProductPage extends Js
 
     public function isBoltProductPage()
     {
-        $attributes = $this->getProduct()->getAttributes();
-        $codes = [];
-        foreach ($attributes as $attribute) {
-            array_push($codes, $attribute->getName());
+        if ($this->configHelper->getSelectProductPageCheckoutFlag())
+        {
+            $attributes = $this->getProduct()->getAttributes();
+            $codes = [];
+            foreach ($attributes as $attribute) {
+                array_push($codes, $attribute->getName());
+            }
+            return in_array('bolt_ppc', $codes) && parent::isBoltProductPage();
         }
-        //note to self: getAttributes is returning an array that is not a string. Looking for the attribute code, not the attribute itself here.
-        $specific = $this->configHelper->getSelectProductPageCheckoutFlag() && in_array('bolt_ppc', $codes);
-        return $specific && parent::isBoltProductPage();
+        return parent::isBoltProductPage();
     }
 }
