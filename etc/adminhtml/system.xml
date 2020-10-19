@@ -91,6 +91,7 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
                     <field id="select_product_page_checkout" translate="label" type="select" sortOrder="81" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <depends><field id="product_page_checkout">1</field></depends>
                         <label>Limited product page checkout</label>
                         <comment>Enable Bolt Checkout only for products with "bolt_ppc" attribute</comment>
                         <config_path>payment/boltpay/select_product_page_checkout</config_path>
