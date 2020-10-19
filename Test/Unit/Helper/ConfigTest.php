@@ -1181,6 +1181,7 @@ JSON;
             ['sandbox_mode', 'true'],
             ['is_pre_auth', 'true'],
             ['product_page_checkout', 'true'],
+            ['select_product_page_checkout', 'true'],
             ['geolocation_api_key', 'geo***key'],
             ['replace_selectors', '#replace'],
             ['totals_change_selectors', '.totals'],
@@ -1214,7 +1215,7 @@ JSON;
             ['track_checkout_funnel', 'false'],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(41, count($actual));
+        $this->assertEquals(42, count($actual));
         for ($i = 0; $i < 2; $i ++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
