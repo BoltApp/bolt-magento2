@@ -52,7 +52,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
 {
 
     /** @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings} */
-    const SETTINGS_NUMBER = 27;
+    const SETTINGS_NUMBER = 26;
 
     /** @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks} */
     const TRACK_CALLBACK_NUMBER = 7;
