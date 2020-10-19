@@ -1651,6 +1651,7 @@ class Cart extends AbstractHelper
                 )
             );
         }
+
         $immutableQuote->collectTotals();
 
         $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
@@ -1946,64 +1947,48 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
-            if ($paymentOnly) {
-                $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+            // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
+            // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
+            $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
+            $salesruleIds = explode(',', $quote->getAppliedRuleIds());
+            foreach ($salesruleIds as $salesruleId) {
+                if (!isset($boltCollectSaleRuleDiscounts[$salesruleId])) {
+                    continue;
+                }
+                $rule = $this->ruleRepository->getById($salesruleId);
+                $ruleDiscountAmount = $boltCollectSaleRuleDiscounts[$salesruleId];
+                if ($rule && $ruleDiscountAmount) {
+                    $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
+                    switch ($rule->getCouponType()) {
+                        case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
+                        case RuleInterface::COUPON_TYPE_AUTO:
+                            $couponCode = $quote->getCouponCode();
+                            $description = trim(__('Discount ') . $rule->getDescription());
+                            $discounts[] = [
+                                'description'       => $description,
+                                'amount'            => $roundedAmount,
+                                'reference'         => $couponCode,
+                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
+                                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/discounts.code.apply and v2/cart.update
+                                'type'              => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/merchant/order
+                            ];
+                            $this->logEmptyDiscountCode($couponCode, $description);
 
-                $discounts[] = [
-                    'description'       => trim(__('Discount ') . $address->getDiscountDescription()),
-                    'amount'            => $roundedAmount,
-                    'reference'         => $quote->getCouponCode(),
-                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                    'discount_type'     => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->convertToBoltDiscountType($quote->getCouponCode()), // For v1/merchant/order
-                ];
+                            break;
+                        case RuleInterface::COUPON_TYPE_NO_COUPON:
+                        default:
+                            $discounts[] = [
+                                'description'       => trim(__('Discount ') . $rule->getDescription()),
+                                'amount'            => $roundedAmount,
+                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
+                                'discount_type'     => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/discounts.code.apply and v2/cart.update
+                                'type'              => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/merchant/order
+                            ];
 
-                $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
-                $totalAmount -= $roundedAmount;
-            } else {
-                // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
-                // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
-                $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
-                $salesruleIds = explode(',', $quote->getAppliedRuleIds());
-                foreach ($salesruleIds as $salesruleId) {
-                    if (!isset($boltCollectSaleRuleDiscounts[$salesruleId])) {
-                        continue;
+                            break;
                     }
-                    $rule = $this->ruleRepository->getById($salesruleId);
-                    $ruleDiscountAmount = $boltCollectSaleRuleDiscounts[$salesruleId];
-                    if ($rule && $ruleDiscountAmount) {
-                        $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
-                        switch ($rule->getCouponType()) {
-                            case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
-                            case RuleInterface::COUPON_TYPE_AUTO:
-                                $couponCode = $quote->getCouponCode();
-                                $description = trim(__('Discount ') . $rule->getDescription());
-                                $discounts[] = [
-                                    'description'       => $description,
-                                    'amount'            => $roundedAmount,
-                                    'reference'         => $couponCode,
-                                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                                    'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/discounts.code.apply and v2/cart.update
-                                    'type'              => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/merchant/order
-                                ];
-                                $this->logEmptyDiscountCode($couponCode, $description);
-
-                                break;
-                            case RuleInterface::COUPON_TYPE_NO_COUPON:
-                            default:
-                                $discounts[] = [
-                                    'description'       => trim(__('Discount ') . $rule->getDescription()),
-                                    'amount'            => $roundedAmount,
-                                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
-                                    'discount_type'     => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/discounts.code.apply and v2/cart.update
-                                    'type'              => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/merchant/order
-                                ];
-
-                                break;
-                        }
-                        $diff -= CurrencyUtils::toMinorWithoutRounding($ruleDiscountAmount, $currencyCode) - $roundedAmount;
-                        $totalAmount -= $roundedAmount;
-                    }
+                    $diff -= CurrencyUtils::toMinorWithoutRounding($ruleDiscountAmount, $currencyCode) - $roundedAmount;
+                    $totalAmount -= $roundedAmount;
                 }
             }
         }

@@ -4244,6 +4244,24 @@ ORDER
         $quote->expects(static::any())->method('getTotals')->willReturn(
             [DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]
         );
+        
+        $quote->method('getAppliedRuleIds')->willReturn('2');	
+        $this->checkoutSession->expects(static::once())	
+                              ->method('getBoltCollectSaleRuleDiscounts')	
+                              ->willReturn([2 => ($discountAmount),]);	
+        $rule2 = $this->getMockBuilder(DataObject::class)	
+            ->setMethods(['getCouponType', 'getDescription'])	
+            ->disableOriginalConstructor()	
+            ->getMock();	
+        $rule2->expects(static::once())->method('getCouponType')	
+            ->willReturn('SPECIFIC_COUPON');	
+        $rule2->expects(static::once())->method('getDescription')	
+            ->willReturn(self::COUPON_DESCRIPTION);	
+
+        $this->ruleRepository->expects(static::once())	
+            ->method('getById')	
+            ->with(2)	
+            ->willReturn($rule2);
 
         $totalAmount = 10000; // cents
         $diff = 0;
