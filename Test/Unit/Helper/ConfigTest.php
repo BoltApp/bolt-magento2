@@ -780,7 +780,7 @@ JSON;
                           ->with(BoltConfig::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT)
                           ->will($this->returnValue(false));
         $this->assertFalse(
-            $this->currentMock->getProductPageCheckoutFlag(),
+            $this->currentMock->getSelectProductPageCheckoutFlag(),
             'getSelectProductPageCheckoutFlag() method: not working properly'
         );
     }
