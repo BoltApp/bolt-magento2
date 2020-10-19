@@ -3685,9 +3685,7 @@ ORDER
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
         $quote->method('getAppliedRuleIds')->willReturn('2,3,4');
-        $this->checkoutSession->expects(static::once())
-                              ->method('getBoltCollectSaleRuleDiscounts')
-                              ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0]);
+        
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
             ->disableOriginalConstructor()
@@ -3722,6 +3720,16 @@ ORDER
             ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4);
 
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        
+        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
+
 
         $totalAmount = 10000; // cents
         $diff = 0;
@@ -4246,9 +4254,7 @@ ORDER
         );
         
         $quote->method('getAppliedRuleIds')->willReturn('2');	
-        $this->checkoutSession->expects(static::once())	
-                              ->method('getBoltCollectSaleRuleDiscounts')	
-                              ->willReturn([2 => ($discountAmount),]);	
+
         $rule2 = $this->getMockBuilder(DataObject::class)	
             ->setMethods(['getCouponType', 'getDescription'])	
             ->disableOriginalConstructor()	
@@ -4262,6 +4268,15 @@ ORDER
             ->method('getById')	
             ->with(2)	
             ->willReturn($rule2);
+        
+        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([2 => ($discountAmount),]);	
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
 
         $totalAmount = 10000; // cents
         $diff = 0;
