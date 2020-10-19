@@ -771,6 +771,22 @@ JSON;
 
     /**
      * @test
+     *
+     */
+
+    public function testGetSelectProductPageCheckoutFlag()
+    {
+        $this->scopeConfig->method('isSetFlag')
+                          ->with(BoltConfig::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT)
+                          ->will($this->returnValue(false));
+        $this->assertFalse(
+            $this->currentMock->getProductPageCheckoutFlag(),
+            'getSelectProductPageCheckoutFlag() method: not working properly'
+        );
+    }
+
+    /**
+     * @test
      * @covers ::getScopeConfig
      */
     public function getScopeConfig()
@@ -1076,6 +1092,7 @@ JSON;
             'isSandboxModeSet',
             'getIsPreAuth',
             'getProductPageCheckoutFlag',
+            'getSelectProductPageCheckoutFlag',
             'getGeolocationApiKey',
             'getReplaceSelectors',
             'getTotalsChangeSelectors',
@@ -1119,6 +1136,7 @@ JSON;
         $this->currentMock->method('isSandboxModeSet')->willReturn(true);
         $this->currentMock->method('getIsPreAuth')->willReturn(true);
         $this->currentMock->method('getProductPageCheckoutFlag')->willReturn(true);
+        $this->currentMock->method('getSelectProductPageCheckoutFlag')->willReturn(true);
         $this->currentMock->method('getGeolocationApiKey')->willReturn('geolocation api key');
         $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
         $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
