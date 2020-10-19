@@ -165,7 +165,7 @@
  - Improvement: Product Page Checkout now supports cart item grouping (itemGroup).
  - Improvement: Bolt now clears the cached shipping and tax information when the shipping method is changed.
  - Fixed: Resolved compatibility issues with MageWorld Reward Points Pro
- -  ## [v2.16.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.16.0) 2020-10-19
+ ## [v2.16.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.16.0) 2020-10-19
  - Fixed: Resolved issue where shoppers were unable to apply Aheadworks Store Credit to their cart.
  - Fixed: Resolved issues with Amasty Gift Cards being applied to orders placed in the back-office and storefront.  
  - Added: The M2 Plugin now supports product addons (removing and adding suggested items to checkout).
