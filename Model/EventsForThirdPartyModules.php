@@ -106,6 +106,12 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Amasty\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
                     "boltClass" => Amasty_StoreCredit::class,
                 ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface",
+                                      "Amasty\Rewards\Model\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
             ]
         ],
     ];
@@ -314,6 +320,11 @@ class EventsForThirdPartyModules
                     "boltClass" => Amasty_StoreCredit::class,
                 ]
             ],
+            [
+                    "module" => "Amasty_Rewards",
+                    "checkClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
         ],
     ];
 
