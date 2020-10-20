@@ -403,6 +403,7 @@ class Config extends AbstractHelper
         "sandbox_mode" => self::XML_PATH_SANDBOX_MODE,
         "is_pre_auth" => self::XML_PATH_IS_PRE_AUTH,
         "product_page_checkout" => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+        "select_product_page_checkout" => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
         "geolocation_api_key" => self::XML_PATH_GEOLOCATION_API_KEY,
         "replace_selectors" => self::XML_PATH_REPLACE_SELECTORS,
         "totals_change_selectors" => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
