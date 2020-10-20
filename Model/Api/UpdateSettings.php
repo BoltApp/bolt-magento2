@@ -22,6 +22,9 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Magento\Framework\Webapi\Rest\Response;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 
 class UpdateSettings implements UpdateSettingsInterface
 {
@@ -46,21 +49,41 @@ class UpdateSettings implements UpdateSettingsInterface
     private $storeManager;
 
     /**
+     * @var Response
+     */
+    protected $response;
+
+    /**
+     * @var LogHelper
+     */
+    protected $logHelper;
+
+    /**
      * @param ConfigHelper $configHelper
      * @param Bugsnag $bugsnag
      * @param HookHelper $hookHelper
      * @param StoreManagerInterface $storeManager
+     * @param Response $response
+     * @param HookHelper $hookHelper
+     * @param BoltErrorResponse $errorResponse
+     * @param LogHelper $logHelper
      */
     public function __construct(
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         HookHelper $hookHelper,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        Response $response,
+        BoltErrorResponse $errorResponse,
+        LogHelper $logHelper
     ) {
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
         $this->hookHelper = $hookHelper;
         $this->storeManager = $storeManager;
+        $this->response = $response;
+        $this->errorResponse = $errorResponse;
+        $this->logHelper = $logHelper;   
     }
     
     /**
