@@ -95,9 +95,49 @@ class UpdateSettings implements UpdateSettingsInterface
                 }
             }
             
+            $this->response->setHttpResponseCode(200);
+            $this->response->sendResponse();
+            
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                500
+            );
         }
         
+    }
+
+    /**
+     * @param int        $errCode
+     * @param string     $message
+     * @param int        $httpStatusCode
+     * @param null|Quote $quote
+     *
+     * @return void
+     * @throws \Exception
+     */
+    protected function sendErrorResponse($errCode, $message, $httpStatusCode)
+    {
+        $errResponse = [
+            'status' => 'failure',
+            'errors' => [
+                [
+                    'code' => $errCode,
+                    'message' => $message,
+                ]
+            ],
+        ];
+
+        $encodeErrorResult = json_encode($errResponse);
+
+        $this->logHelper->addInfoLog('### sendErrorResponse');
+        $this->logHelper->addInfoLog($encodeErrorResult);
+        
+        $this->bugsnag->notifyException(new \Exception($message));
+
+        $this->response->setHttpResponseCode($httpStatusCode);
+        $this->response->setBody($encodeErrorResult);
+        $this->response->sendResponse();
     }
 }
