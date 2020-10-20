@@ -16,32 +16,35 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
-use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 class SalesRuleActionDiscountPlugin
-{
-    /** @var CheckoutSession */
-    private $checkoutSession;
+{    
+    /** @var SessionHelper */
+    private $sessionHelper;
     
     public function __construct(
-        CheckoutSession $checkoutSession
+        SessionHelper $sessionHelper
     ) {
-        $this->checkoutSession = $checkoutSession;
+        $this->sessionHelper = $sessionHelper;
     }
     
     public function afterCalculate(\Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount $subject,
                                    $result, $rule, $item, $qty)
     {
+        $checkoutSession = $this->sessionHelper->getCheckoutSession();
+
         // If the sale rule has no coupon, its discount amount can not be retrieved directly,
         // so we store the discount amount in the checkout session with the rule id as key.
-        $boltCollectSaleRuleDiscounts = $this->checkoutSession->getBoltCollectSaleRuleDiscounts([]);
+        $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
         $ruleId = $rule->getId();
         if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
             $boltCollectSaleRuleDiscounts[$ruleId] = $result->getAmount();            
         } else {
             $boltCollectSaleRuleDiscounts[$ruleId] += $result->getAmount();
         }
-        $this->checkoutSession->setBoltCollectSaleRuleDiscounts($boltCollectSaleRuleDiscounts);      
+        $checkoutSession->setBoltCollectSaleRuleDiscounts($boltCollectSaleRuleDiscounts);
+
         return $result;
     }
 }

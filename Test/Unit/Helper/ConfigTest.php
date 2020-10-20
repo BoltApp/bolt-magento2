@@ -32,6 +32,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Composer\ComposerFactory;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 
 /**
  * Class ConfigTest
@@ -140,6 +141,11 @@ JSON;
     private $boltConfigSettingFactoryMock;
 
     /**
+     * @var WriterInterface
+     */
+    private $configWriter; 
+
+    /**
      * @inheritdoc
      */
     public function setUp()
@@ -151,11 +157,16 @@ JSON;
                                   ->disableOriginalConstructor()
                                   ->getMock();
 
+        $this->configWriter = $this->getMockBuilder(WriterInterface::class)
+                                    ->disableOriginalConstructor()
+                                    ->getMock();
+
         $this->context = $this->getMockBuilder(Context::class)
                               ->disableOriginalConstructor()
-                              ->setMethods(['getScopeConfig'])
+                              ->setMethods(['getScopeConfig','getConfigWriter'])
                               ->getMock();
         $this->context->method('getScopeConfig')->willReturn($this->scopeConfig);
+        $this->context->method('getConfigWriter')->willReturn($this->configWriter);
 
         $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
         $this->request = $this->createMock(Request::class);
@@ -173,11 +184,13 @@ JSON;
 
         $this->composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
 
-        $methods = ['getScopeConfig'];
+        $methods = ['getScopeConfig','getConfigWriter'];
         $this->initCurrentMock($methods);
 
         $this->currentMock->method('getScopeConfig')
                           ->willReturn($this->scopeConfig);
+        $this->currentMock->method('getConfigWriter')
+                          ->willReturn($this->configWriter);
     }
 
     /**
@@ -1548,5 +1561,104 @@ Room 4000',
         $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturn(null);
         $this->composerFactory->expects(self::never())->method('getVersion');
         $this->assertNull($this->currentMock->getComposerVersion());
+    }
+
+    /**
+     * @test
+     * @covers ::setConfigSetting
+     */
+    public function setConfigSetting_withNewSettingValue() {
+        $this->initCurrentMock([
+            'getScopeConfig',
+            'getConfigWriter'
+        ]);
+
+         $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        $this->currentMock
+            ->expects(self::once())
+            ->method('getConfigWriter')
+            ->willReturn($this->configWriter);
+
+        // check bolt settings
+        $key_name = 'publishable_key_checkout';
+        $original = 'original key';
+        $expected = 'bolt test publishable key - checkout';
+        $localMock = $this->currentMock;
+        // property that save will update
+        $localMock->setting = $original;
+
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn($original);
+
+        $this->configWriter
+            ->expects(self::once())
+            ->method('save')
+            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $expected, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturnCallback(
+                function($settingPath, $settingValue, $store, $storeId) use ($localMock) {
+                    $localMock->setting = $settingValue;
+                }
+            );
+        
+        $localMock->setConfigSetting($key_name, $expected);
+        
+        $result = $localMock->setting;
+        $this->assertEquals($expected, $result);
+    }
+
+    /**
+     * @test
+     * @covers ::setConfigSetting
+     */
+    public function setConfigSetting_withCurrentSettingValue() {
+        $this->initCurrentMock([
+            'getScopeConfig',
+            'getConfigWriter'
+        ]);
+
+         $this->currentMock
+            ->expects(self::once())
+            ->method('getScopeConfig')
+            ->willReturn($this->scopeConfig);
+        // Check that we do not get the config writer
+        $this->currentMock
+            ->expects(self::never())
+            ->method('getConfigWriter')
+            ->willReturn($this->configWriter);
+
+        // check bolt settings
+        $key_name = 'publishable_key_checkout';
+        $original = 'bolt test publishable key - checkout';
+        $localMock = $this->currentMock;
+        $localMock->setting = $original;
+
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn($original);
+
+        // Check that the "save" call is never made
+        $this->configWriter
+            ->expects(self::never())
+            ->method('save')
+            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $original, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturnCallback(
+                function($settingPath, $settingValue, $store, $storeId) use ($localMock) {
+                    $localMock->setting = $settingValue;
+                }
+            );
+        
+        // Value of property should not have changed
+        $localMock->setConfigSetting($key_name, $original);
+        
+        $result = $localMock->setting;
+        $this->assertEquals($original, $result);
     }
 }
