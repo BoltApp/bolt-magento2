@@ -168,17 +168,27 @@ class JsProductPage extends Js
 
     public function isBoltProductPage()
     {
-        if ($this->configHelper->getSelectProductPageCheckoutFlag())
+        // If this flag is not enabled, we ignore this check and only use the parent check
+        if (!$this->configHelper->getSelectProductPageCheckoutFlag())
         {
-            $attributes = $this->getProduct()->getAttributes();
-            foreach ($attributes as $attribute) {
-                if ($attribute->getName() == 'bolt_ppc')
-                {
-                    return parent::isBoltProductPage();
-                }
-            }
+            return parent::isBoltProductPage();
+        }
+
+        // If the parent check is false, this check is automatically false
+        if (!parent::isBoltProductPage())
+        {
             return false;
         }
-        return parent::isBoltProductPage();
+
+        // By this point we know that the Select flag is true, the parent check is true, so
+        // all that remains is to check if this product has the ppc attribute or not.
+        $attributes = $this->getProduct()->getAttributes();
+        foreach ($attributes as $attribute) {
+            if ($attribute->getName() == 'bolt_ppc')
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
