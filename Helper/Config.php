@@ -126,6 +126,11 @@ class Config extends AbstractHelper
     const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
 
     /**
+     * Enable product page checkout for select products.
+     */
+    const XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/select_product_page_checkout';
+
+    /**
      * Enable Bolt order management
      */
     const XML_PATH_PRODUCT_ORDER_MANAGEMENT = 'payment/boltpay/order_management';
@@ -398,6 +403,7 @@ class Config extends AbstractHelper
         "sandbox_mode" => self::XML_PATH_SANDBOX_MODE,
         "is_pre_auth" => self::XML_PATH_IS_PRE_AUTH,
         "product_page_checkout" => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+        "select_product_page_checkout" => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
         "geolocation_api_key" => self::XML_PATH_GEOLOCATION_API_KEY,
         "replace_selectors" => self::XML_PATH_REPLACE_SELECTORS,
         "totals_change_selectors" => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
@@ -852,6 +858,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get select product page checkout flag from config.
+     * Used to specify if product page is only enabled for specific products.
+     * @param int|string|Store $store
+     * @return boolean
+     */
+
+    public function getSelectProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
             ScopeInterface::SCOPE_STORE,
             $store
         );
@@ -1691,6 +1713,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('product_page_checkout')
                                                          ->setValue(var_export($this->getProductPageCheckoutFlag(), true));
+        // Select Product Page Checkout
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+                                                         ->setName('select_product_page_checkout')
+                                                         ->setValue(var_export($this->getSelectProductPageCheckoutFlag(), true));
         // Geolocation API Key (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('geolocation_api_key')

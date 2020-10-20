@@ -784,6 +784,22 @@ JSON;
 
     /**
      * @test
+     *
+     */
+
+    public function testGetSelectProductPageCheckoutFlag()
+    {
+        $this->scopeConfig->method('isSetFlag')
+                          ->with(BoltConfig::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT)
+                          ->will($this->returnValue(false));
+        $this->assertFalse(
+            $this->currentMock->getSelectProductPageCheckoutFlag(),
+            'getSelectProductPageCheckoutFlag() method: not working properly'
+        );
+    }
+
+    /**
+     * @test
      * @covers ::getScopeConfig
      */
     public function getScopeConfig()
@@ -1089,6 +1105,7 @@ JSON;
             'isSandboxModeSet',
             'getIsPreAuth',
             'getProductPageCheckoutFlag',
+            'getSelectProductPageCheckoutFlag',
             'getGeolocationApiKey',
             'getReplaceSelectors',
             'getTotalsChangeSelectors',
@@ -1132,6 +1149,7 @@ JSON;
         $this->currentMock->method('isSandboxModeSet')->willReturn(true);
         $this->currentMock->method('getIsPreAuth')->willReturn(true);
         $this->currentMock->method('getProductPageCheckoutFlag')->willReturn(true);
+        $this->currentMock->method('getSelectProductPageCheckoutFlag')->willReturn(true);
         $this->currentMock->method('getGeolocationApiKey')->willReturn('geolocation api key');
         $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
         $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
@@ -1176,6 +1194,7 @@ JSON;
             ['sandbox_mode', 'true'],
             ['is_pre_auth', 'true'],
             ['product_page_checkout', 'true'],
+            ['select_product_page_checkout', 'true'],
             ['geolocation_api_key', 'geo***key'],
             ['replace_selectors', '#replace'],
             ['totals_change_selectors', '.totals'],
@@ -1209,7 +1228,7 @@ JSON;
             ['track_checkout_funnel', 'false'],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(41, count($actual));
+        $this->assertEquals(42, count($actual));
         for ($i = 0; $i < 2; $i ++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
