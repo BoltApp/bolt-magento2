@@ -86,6 +86,7 @@ class Order extends AbstractHelper
     const TS_REJECTED_REVERSIBLE   = 'cc_payment:rejected_reversible';
     const TS_REJECTED_IRREVERSIBLE = 'cc_payment:rejected_irreversible';
     const TS_ZERO_AMOUNT           = 'zero_amount:completed';
+    const TS_CREDIT_IN_PROGRESS    = 'cc_credit:in_progress';
     const TS_CREDIT_COMPLETED      = 'cc_credit:completed';
 
     const MISMATCH_TOLERANCE = 1;
@@ -1639,6 +1640,7 @@ class Order extends AbstractHelper
             self::TS_CANCELED => 'CANCELED',
             self::TS_REJECTED_REVERSIBLE => 'REVERSIBLE REJECTED',
             self::TS_REJECTED_IRREVERSIBLE => 'IRREVERSIBLE REJECTED',
+            self::TS_CREDIT_IN_PROGRESS => 'Refund is in progress. See actual refund status in Bolt merchant dashboard',
             self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? 'REFUNDED UNSYNCHRONISED' : 'REFUNDED'
         ][$transactionState];
     }
@@ -1773,10 +1775,11 @@ class Order extends AbstractHelper
      */
     public function transactionToOrderState($transactionState, $order)
     {
-        $orderStateForCredit = (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING;
-
-        if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid()) {
-            $orderStateForCredit = OrderModel::STATE_CLOSED;
+        if ($transactionState == self::TS_CREDIT_IN_PROGRESS || $transactionState == self::TS_CREDIT_COMPLETED) {
+            if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid()) {
+                return OrderModel::STATE_CLOSED;
+            }
+            return (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING;
         }
 
         return [
@@ -1788,9 +1791,6 @@ class Order extends AbstractHelper
             self::TS_CANCELED => OrderModel::STATE_CANCELED,
             self::TS_REJECTED_REVERSIBLE => OrderModel::STATE_PAYMENT_REVIEW,
             self::TS_REJECTED_IRREVERSIBLE => OrderModel::STATE_CANCELED,
-            // Refunds need to be initiated from the store admin (Invoice -> Credit Memo)
-            // If called from Bolt merchant dashboard there is no enough info to sync the totals
-            self::TS_CREDIT_COMPLETED => $orderStateForCredit
         ][$transactionState];
     }
 
@@ -1931,6 +1931,7 @@ class Order extends AbstractHelper
                 $transactionId = $transaction->id.'-rejected_irreversible';
                 break;
 
+            case self::TS_CREDIT_IN_PROGRESS:
             case self::TS_CREDIT_COMPLETED:
                 if (in_array($transaction->id, $processedRefunds)) {
                     return;

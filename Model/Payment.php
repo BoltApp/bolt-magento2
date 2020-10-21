@@ -53,6 +53,7 @@ use \Magento\Sales\Model\Order\Payment\Transaction\Repository as TransactionRepo
  */
 class Payment extends AbstractMethod
 {
+    const TRANSACTION_IN_PROGRESS = 'in_progress';
     const TRANSACTION_AUTHORIZED = 'authorized';
     const TRANSACTION_COMPLETED = 'completed';
     const TRANSACTION_CANCELLED = 'cancelled';
@@ -534,7 +535,7 @@ class Payment extends AbstractMethod
             }
             $status = $response->status ?? null;
 
-            if ($status != self::TRANSACTION_COMPLETED) {
+            if (!in_array($status, [self::TRANSACTION_COMPLETED, self::TRANSACTION_IN_PROGRESS])) {
                 throw new LocalizedException(__('Payment refund error.'));
             }
 
