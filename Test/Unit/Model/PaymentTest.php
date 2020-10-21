@@ -503,6 +503,21 @@ class PaymentTest extends TestCase
     /**
      * @test
      */
+    public function refundPayment_transactionInProgress_Success()
+    {
+        $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
+        $this->mockApiResponse(
+            "merchant/transactions/credit",
+            '{"status": "in_progress", "reference": "ABCD-1234-XXXX"}'
+        );
+        $this->orderHelper->expects($this->once())->method('updateOrderPayment');
+
+        $this->currentMock->refund($this->paymentMock, 100);
+    }
+
+    /**
+     * @test
+     */
     public function refundPayment_mustRoundingAmountBeforeCallingRefundApi()
     {
         $orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();

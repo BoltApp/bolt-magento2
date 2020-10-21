@@ -36,6 +36,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Trait UpdateDiscountTrait
@@ -90,6 +91,11 @@ trait UpdateDiscountTrait
     protected $totalsCollector;
     
     /**
+     * @var SessionHelper
+     */
+    protected $sessionHelper;
+    
+    /**
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
@@ -111,6 +117,7 @@ trait UpdateDiscountTrait
         $this->bugsnag = $updateCartContext->getBugsnag();
         $this->discountHelper = $updateCartContext->getDiscountHelper();
         $this->totalsCollector = $updateCartContext->getTotalsCollector();
+        $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
     }
     
@@ -364,15 +371,26 @@ trait UpdateDiscountTrait
         $address = $quote->isVirtual() ?
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
+            
+        $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+        if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                sprintf('Fail to apply the coupon code %s.', $couponCode),
+                422,
+                $quote
+            );
+            return false;
+        }
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $quote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$ruleId], $quote->getQuoteCurrencyCode())),
             'description'     => trim(__('Discount ') . $rule->getDescription()),
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
-       
+    
         return $result;
     }
 
