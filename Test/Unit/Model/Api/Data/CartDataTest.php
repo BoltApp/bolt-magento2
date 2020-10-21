@@ -20,6 +20,8 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Model\Api\Data\CartData;
 use PHPUnit\Framework\TestCase;
+use Magento\Framework\Reflection\TypeProcessor;
+use Zend\Code\Reflection\ClassReflection;
 
 /**
  * Class CartDataTest
@@ -42,6 +44,11 @@ class CartDataTest extends TestCase
      */
     private $cartData;
 
+    /**
+     * @var TypeProcessor
+     */
+    private $typeProcessor;
+
     public function setUp()
     {
         $this->cartData = new CartData;
@@ -53,6 +60,7 @@ class CartDataTest extends TestCase
         $this->cartData->setTaxAmount(self::TAXAMOUNT);
         $this->cartData->setOrderReference(self::ORDERREFERENCE);
         $this->cartData->setShipments(self::SHIPMENTS);
+        $this->typeProcessor = new TypeProcessor();
     }
 
     /**
@@ -258,5 +266,32 @@ class CartDataTest extends TestCase
             'tax_amount' => self::TAXAMOUNT,
             'order_reference' => self::ORDERREFERENCE,
         ], $result);
+    }
+
+    /**
+     * @test
+     * to ensure the return type annotation of methods
+     * {getItems,getDiscounts,getShipments,getCartData}
+     * in class Bolt\Boltpay\Api\Data\CartDataInterface are correct
+     *
+     * @dataProvider processTypeNameDataProvider
+     *
+     * @param $methodName
+     * @throws \ReflectionException
+     */
+    public function processTypeName($methodName){
+        $classReflection = new ClassReflection(CartDataInterface::class);
+        $methodReflection = $classReflection->getMethod($methodName);
+
+        self::assertEquals('mixed[]', $this->typeProcessor->register($this->typeProcessor->getGetterReturnType($methodReflection)['type']));
+    }
+
+    public function processTypeNameDataProvider(){
+        return [
+            ['getItems'],
+            ['getDiscounts'],
+            ['getShipments'],
+            ['getCartData'],
+        ];
     }
 }
