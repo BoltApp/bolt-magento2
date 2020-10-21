@@ -3747,7 +3747,7 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount - $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
             [
-                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION . ' (' . self::COUPON_CODE . ')'),
+                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
                 'amount'      => $expectedDiscountAmount,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
@@ -4293,7 +4293,7 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedRegularDiscountAmount - $expectedGiftVoucherAmount;
         $expectedDiscount = [
             [
-                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION . ' (' . $giftVoucher. ')'),
+                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
                 'amount'      => $expectedRegularDiscountAmount,
                 'reference'   => $giftVoucher,
                 'discount_category' => 'coupon',
