@@ -1964,7 +1964,7 @@ class Cart extends AbstractHelper
                         case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
                         case RuleInterface::COUPON_TYPE_AUTO:
                             $couponCode = $quote->getCouponCode();
-                            $description = trim(__('Discount ') . $rule->getDescription());
+                            $description = trim(__('Discount ') . ($rule->getDescription() !== '' ? $rule->getDescription() : "({$couponCode})"));
                             $discounts[] = [
                                 'description'       => $description,
                                 'amount'            => $roundedAmount,
