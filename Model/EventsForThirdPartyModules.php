@@ -111,6 +111,17 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Aheadworks\StoreCredit\Model\TransactionRepository"],
                     "boltClass" => Aheadworks_StoreCredit::class,
                 ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface",
+                                      "Amasty\Rewards\Model\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
             ]
         ],
     ];
@@ -323,7 +334,17 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Aheadworks\StoreCredit\Model\TransactionRepository"],
                     "boltClass" => Aheadworks_StoreCredit::class,
                 ],
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
             ],
+            [
+                    "module" => "Amasty_Rewards",
+                    "checkClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
         ],
     ];
 

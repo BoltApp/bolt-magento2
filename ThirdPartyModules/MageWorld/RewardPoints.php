@@ -20,9 +20,12 @@ namespace Bolt\Boltpay\ThirdPartyModules\MageWorld;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Framework\Session\SessionManagerInterface as SessionManager;
 
 class RewardPoints
-{    
+{
+    const MW_REWARDPOINTS = 'mw_reward_points';
+    
     /**
      * @var Discount
      */
@@ -32,6 +35,11 @@ class RewardPoints
      * @var Bugsnag
      */
     protected $bugsnagHelper;
+    
+    /**
+     * @var SessionManager
+     */
+    protected $sessionManager;
     
     /**
      * @var \Mirasvit\Credit\Helper\Data
@@ -48,11 +56,13 @@ class RewardPoints
      * @param Bugsnag        $bugsnagHelper
      */
     public function __construct(
-        Discount               $discountHelper,
-        Bugsnag                $bugsnagHelper
+        Discount        $discountHelper,
+        Bugsnag         $bugsnagHelper,
+        SessionManager  $sessionManager
     ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper  = $bugsnagHelper;
+        $this->sessionManager  = $sessionManager;
     }
 
     /**
@@ -93,6 +103,7 @@ class RewardPoints
                 $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
+                    'reference'         => self::MW_REWARDPOINTS,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                     'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
@@ -168,6 +179,69 @@ class RewardPoints
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * Return code if the quote has MW reward points
+     * 
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::MW_REWARDPOINTS && $quote->getMwRewardpoint()) {
+            $result[] = $couponCode;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove MW reward points from the quote.
+     *
+     * @param $amastyApplyStoreCreditToQuote
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        try {
+            if ($couponCode == self::MW_REWARDPOINTS && $quote->getMwRewardpoint()) {
+                $this->sessionManager->setMwRewardpointDiscountShowTotal(0)
+                                     ->setMwRewardpointDiscountTotal(0)
+                                     ->setMwRewardpointAfterDrop(0);
+    
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+                $address->setMwRewardpoint(0)
+                        ->setMwRewardpointDiscount(0)
+                        ->setMwRewardpointDiscountShow(0)
+                        ->setMwRewardpointDiscount(0);
+
+                $quote->setMwRewardpoint(0)
+                      ->setMwRewardpointDiscount(0)
+                      ->setMwRewardpointDiscountShow(0)
+                      ->setSpendRewardpointCart(0)
+                      ->collectTotals()
+                      ->save();
+            }
+        } catch (\Exception $e) {
+            throw $e;
         }
     }
     

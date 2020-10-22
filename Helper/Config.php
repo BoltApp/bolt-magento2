@@ -27,6 +27,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\Composer\ComposerFactory;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 
 /**
  * Boltpay Configuration helper
@@ -123,6 +124,11 @@ class Config extends AbstractHelper
      * Enable product page checkout
      */
     const XML_PATH_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/product_page_checkout';
+
+    /**
+     * Enable product page checkout for select products.
+     */
+    const XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT = 'payment/boltpay/select_product_page_checkout';
 
     /**
      * Enable Bolt order management
@@ -381,6 +387,56 @@ class Config extends AbstractHelper
         \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
         \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
     ];
+
+    /**
+     * Map of human-readable config names to their XML paths
+     */
+    const CONFIG_SETTING_PATHS = [
+        "publishable_key_checkout" => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+        "active" => self::XML_PATH_ACTIVE,
+        "title" => self::XML_PATH_TITLE,
+        "api_key" => self::XML_PATH_API_KEY,
+        "signing_secret" => self::XML_PATH_SIGNING_SECRET,
+        "publishable_key_checkout" => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+        "publishable_key_payment" => self::XML_PATH_PUBLISHABLE_KEY_PAYMENT,
+        "publishable_key_back_office" => self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE,
+        "sandbox_mode" => self::XML_PATH_SANDBOX_MODE,
+        "is_pre_auth" => self::XML_PATH_IS_PRE_AUTH,
+        "product_page_checkout" => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+        "select_product_page_checkout" => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
+        "geolocation_api_key" => self::XML_PATH_GEOLOCATION_API_KEY,
+        "replace_selectors" => self::XML_PATH_REPLACE_SELECTORS,
+        "totals_change_selectors" => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
+        "global_css" => self::XML_PATH_GLOBAL_CSS,
+        "additional_checkout_button_class" => self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
+        "success_page" => self::XML_PATH_SUCCESS_PAGE_REDIRECT,
+        "prefetch_shipping" => self::XML_PATH_PREFETCH_SHIPPING,
+        "prefetch_address_fields" => self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
+        "reset_shipping_calculation" => self::XML_PATH_RESET_SHIPPING_CALCULATION,
+        "javascript_success" => self::XML_PATH_JAVASCRIPT_SUCCESS,
+        "debug" => self::XML_PATH_DEBUG,
+        "additional_js" => self::XML_PATH_ADDITIONAL_JS,
+        "track_on_checkout_start" => self::XML_PATH_TRACK_CHECKOUT_START,
+        "track_on_email_enter" => self::XML_PATH_TRACK_EMAIL_ENTER,
+        "track_on_shipping_details_complete" => self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
+        "track_on_shipping_options_complete" => self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
+        "track_on_payment_submit" => self::XML_PATH_TRACK_PAYMENT_SUBMIT,
+        "track_on_success" => self::XML_PATH_TRACK_SUCCESS,
+        "track_on_close" => self::XML_PATH_TRACK_CLOSE,
+        "additional_config" => self::XML_PATH_ADDITIONAL_CONFIG,
+        "minicart_support" => self::XML_PATH_MINICART_SUPPORT,
+        "ip_whitelist" => self::XML_PATH_IP_WHITELIST,
+        "store_credit" => self::XML_PATH_STORE_CREDIT,
+        "reward_points" => self::XML_PATH_REWARD_POINTS,
+        "reward_points_minicart" => self::XML_PATH_REWARD_POINTS_MINICART,
+        "enable_payment_only_checkout" => self::XML_PATH_PAYMENT_ONLY_CHECKOUT,
+        "bolt_order_caching" => self::XML_PATH_BOLT_ORDER_CACHING,
+        "api_emulate_session" => self::XML_PATH_API_EMULATE_SESSION,
+        "should_minify_javascript" => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+        "capture_merchant_metrics" => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
+        "track_checkout_funnel" => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
+    ];
+
     /**
      * @var ResourceInterface
      */
@@ -808,6 +864,22 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get select product page checkout flag from config.
+     * Used to specify if product page is only enabled for specific products.
+     * @param int|string|Store $store
+     * @return boolean
+     */
+
+    public function getSelectProductPageCheckoutFlag($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
      * Get Order management flag from config
      *
      * @param int|string|Store $store
@@ -950,6 +1022,14 @@ class Config extends AbstractHelper
     public function getScopeConfig()
     {
         return $this->scopeConfig;
+    }
+
+    /**
+     * @return \Magento\Framework\App\Config\WriterInterface
+     */
+    public function getConfigWriter()
+    {
+        return $this->configWriter;
     }
 
     /**
@@ -1633,6 +1713,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('product_page_checkout')
                                                          ->setValue(var_export($this->getProductPageCheckoutFlag(), true));
+        // Select Product Page Checkout
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+                                                         ->setName('select_product_page_checkout')
+                                                         ->setValue(var_export($this->getSelectProductPageCheckoutFlag(), true));
         // Geolocation API Key (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('geolocation_api_key')
@@ -1759,6 +1843,30 @@ class Config extends AbstractHelper
                                                          ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
 
         return $boltSettings;
+    }
+
+    /**
+     * Set config setting name to the given value
+     *
+     * @param string $settingName
+     * @param mixed $settingValue
+     */
+    public function setConfigSetting($settingName, $settingValue = null, $storeId = null)
+    {
+        $currentValue = $this->getScopeConfig()->getValue(
+            self::CONFIG_SETTING_PATHS[$settingName],
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        if ($currentValue != $settingValue) {
+            $this->getConfigWriter()->save(
+                self::CONFIG_SETTING_PATHS[$settingName], 
+                $settingValue, 
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+        }
     }
 
     /**
