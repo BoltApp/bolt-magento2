@@ -23,6 +23,8 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 
 class Rewards
 {
+    const AMASTY_REWARD = 'amasty_rewards_point';
+    
     /**
      * @var Bugsnag
      */
@@ -73,6 +75,7 @@ class Rewards
                 $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
+                    'reference'         => self::AMASTY_REWARD,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
                     'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
@@ -102,5 +105,61 @@ class Rewards
             }
         }';
         return $result;
+    }
+    
+    /**
+     * Return code if the quote has Amasty reward points.
+     * 
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
+            $result[] = $couponCode;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove Amasty reward points from the quote.
+     *
+     * @param $amastyRewardsManagement
+     * @param $amastyRewardsQuote
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $amastyRewardsManagement,
+        $amastyRewardsQuote,
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        try {
+            if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
+                $amastyRewardsManagement->collectCurrentTotals($quote, 0);
+
+                $amastyRewardsQuote->addReward(
+                    $quote->getId(),
+                    0
+                );
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 }
