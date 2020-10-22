@@ -133,6 +133,7 @@ class Rewards
      * Remove Amasty reward points from the quote.
      *
      * @param $amastyRewardsManagement
+     * @param $amastyRewardsQuote
      * @param $couponCode
      * @param $quote
      * @param $websiteId
