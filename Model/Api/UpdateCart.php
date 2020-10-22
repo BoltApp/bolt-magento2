@@ -152,7 +152,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             if( !empty($discount_codes_to_remove) ){
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
-               
+
                 $discounts = $this->getAppliedStoreCredit($couponCode, $parentQuote);
                
                 if (!$discounts) {

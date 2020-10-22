@@ -82,4 +82,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!--Update Settings Endpoint-->
+    <route url="/V1/bolt/boltpay/updatesettings" method="POST">
+        <service class="Bolt\Boltpay\Api\UpdateSettingsInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>

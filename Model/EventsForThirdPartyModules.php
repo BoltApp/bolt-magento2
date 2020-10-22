@@ -112,6 +112,11 @@ class EventsForThirdPartyModules
                                       "Amasty\Rewards\Model\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
             ]
         ],
     ];
@@ -318,7 +323,12 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_StoreCredit",
                     "checkClasses" => ["Amasty\StoreCredit\Api\Data\SalesFieldInterface"],
                     "boltClass" => Amasty_StoreCredit::class,
-                ]
+                ],
+                [
+                    "module" => "MW_RewardPoints",
+                    "checkClasses" => ["MW\RewardPoints\Helper\Data"],
+                    "boltClass" => MW_RewardPoints::class,
+                ],
             ],
             [
                     "module" => "Amasty_Rewards",

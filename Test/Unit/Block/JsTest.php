@@ -176,6 +176,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'getModuleVersion',
             'shouldMinifyJavascript',
             'getProductPageCheckoutFlag',
+            'getSelectProductPageCheckoutFlag',
             'isOrderManagementEnabled',
             'isAlwaysPresentCheckoutEnabled',
             'isShowTermsPaymentButton',
