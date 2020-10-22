@@ -3772,7 +3772,7 @@ ORDER
                 'type'   => 'fixed_amount',
             ],
             [
-                'description' => trim(__('Discount (' . self::COUPON_CODE . ')')),
+                'description' => trim(__('Discount ' . self::COUPON_CODE)),
                 'amount'      => $expectedDiscountAmount,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
