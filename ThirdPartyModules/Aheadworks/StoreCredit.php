@@ -92,6 +92,7 @@ class StoreCredit
                 $discounts[] = [
                     'description' => 'Store Credit',
                     'amount' => $roundedAmount,
+                    'reference' => self::AHEADWORKS_STORE_CREDIT,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
                     'type' => $discountType, // For v1/merchant/order
