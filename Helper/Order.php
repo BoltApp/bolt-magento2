@@ -1097,14 +1097,18 @@ class Order extends AbstractHelper
             }
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-                throw new BoltException(
-                    __(
-                        'Order is in pending payment. Waiting for the hook update. Quote ID: %1',
-                        $quote->getId()
-                    ),
-                    null,
-                    CreateOrder::E_BOLT_GENERAL_ERROR
+                // Order for same quote is created, it is in pending payment status
+                // and we try to create a new one
+                // It means order was created for unsuccessful payment attempt and wasn't delete yet.
+                // We can safely delete it
+                $incrementId = $order->getIncrementId();
+                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
+                $this->bugsnag->notifyError(
+                    "Delete order in pending payment",
+                    "OrderNo: {$incrementId}, quote id: ".$quote->getId()
                 );
+                $this->deleteOrderByIncrementId($incrementId, $immutableQuoteId);
+                return false;
             }
 
             if ($this->hasSamePrice($order, $transaction)) {
