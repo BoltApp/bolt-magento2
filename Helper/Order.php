@@ -1278,7 +1278,7 @@ class Order extends AbstractHelper
         }
         // reset PPC quote checkout type so it can be treated as active
         if ($parentQuote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE) {
-            $parentQuote->SetBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
+            $parentQuote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
     }
