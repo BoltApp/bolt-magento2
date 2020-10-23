@@ -195,16 +195,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     {
         $result = [];
         try {
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
-                // Remove Amasty Gift Card if already applied
-                // to avoid errors on multiple calls to discount validation API
-                // from the Bolt checkout (changing the address, going back and forth)
-                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $parentQuote);
-                // Apply Amasty Gift Card to the parent quote
-                $giftAmount = $this->discountHelper->applyAmastyGiftCard($code, $giftCard, $parentQuote);
-                // Reset and apply Amasty Gift Cards to the immutable quote
-                $this->discountHelper->cloneAmastyGiftCards($parentQuote->getId(), $immutableQuote->getId());
-            } elseif ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
+            if ($giftCard instanceof \Unirgy\Giftcert\Model\Cert) {
                 if (empty($immutableQuote->getData($giftCard::GIFTCERT_CODE))) {
                     $this->discountHelper->addUnirgyGiftCertToQuote($immutableQuote, $giftCard);
                 }
@@ -247,7 +238,14 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 $giftAmount = $parentQuote->getGiftCardsAmount();
             } else {
                 // TODO: move all cases above into filter
-                $result = $this->eventsForThirdPartyModules->runFilter("applyGiftcard", null, $code, $giftCard, $immutableQuote, $parentQuote);
+                $result = $this->eventsForThirdPartyModules->runFilter(
+                    "applyGiftcard",
+                    null,
+                    $code,
+                    $giftCard,
+                    $immutableQuote,
+                    $parentQuote
+                );
                 if (empty($result)) {
                     throw new \Exception('Unknown giftCard class');
                 }

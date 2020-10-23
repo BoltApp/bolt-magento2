@@ -453,19 +453,16 @@ class UpdateDiscountTraitTest extends TestCase
      */
     public function verifyCouponCode_returnAmastyGiftCard()
     {
+        global $ifRunFilter;
         $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
             ->disableOriginalConstructor()
             ->getMock();
-        
+        $ifRunFilter = $giftcardMock;
+
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
-        
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
-            
-        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn($giftcardMock);
-        
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
         
         $this->assertEquals([null,$giftcardMock], $result);
@@ -481,9 +478,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(null);
         
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
-            ->willReturn(null);
-            
-        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
@@ -513,9 +507,6 @@ class UpdateDiscountTraitTest extends TestCase
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
             
-        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn(null);
-            
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
         
@@ -540,9 +531,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(null);
         
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
-            ->willReturn(null);
-            
-        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
@@ -1070,15 +1058,17 @@ class UpdateDiscountTraitTest extends TestCase
      */
     public function applyingGiftCardCode_amastyGiftCard()
     {
+        global $ifRunFilter;
         $quote = $this->getQuoteMock();
 
         $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
             ->setMethods(['getCodeId'])
             ->disableOriginalConstructor()
             ->getMock();
-        $giftcardMock->expects(static::once())->method('getCodeId')->willReturn(self::COUPON_ID);
-        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with(self::COUPON_ID, $quote);
-        $this->discountHelper->expects(static::once())->method('applyAmastyGiftCard')->with(self::COUPON_CODE, $giftcardMock, $quote);
+        $ifRunFilter = $giftcardMock;
+        $giftcardMock->expects(static::never())->method('getCodeId')->willReturn(self::COUPON_ID);
+        $this->discountHelper->expects(static::never())->method('removeAmastyGiftCard')->with(self::COUPON_ID, $quote);
+        $this->discountHelper->expects(static::never())->method('applyAmastyGiftCard')->with(self::COUPON_CODE, $giftcardMock, $quote);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
 
@@ -1156,8 +1146,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(null);
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with($couponCode, self::STORE_ID)
             ->willReturn(null);
-        $this->discountHelper->expects(static::once())->method('loadAmastyGiftCard')->with($couponCode, self::WEBSITE_ID)
-            ->willReturn(null);
         
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [$couponCode, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
         
@@ -1224,14 +1212,16 @@ class UpdateDiscountTraitTest extends TestCase
      */
     public function removeGiftCardCode_amastyGiftCard()
     {
+        global $ifRunFilter;
+        $ifRunFilter = true;
         $codeId = 100;
         $quote = $this->getQuoteMock();
         $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
             ->setMethods(['getCodeId'])
             ->disableOriginalConstructor()
             ->getMock();
-        $giftcardMock->expects(static::once())->method('getCodeId')->willReturn($codeId);        
-        $this->discountHelper->expects(static::once())->method('removeAmastyGiftCard')->with($codeId, $quote);            
+        $giftcardMock->expects(static::never())->method('getCodeId')->willReturn($codeId);
+        $this->discountHelper->expects(static::never())->method('removeAmastyGiftCard')->with($codeId, $quote);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
         

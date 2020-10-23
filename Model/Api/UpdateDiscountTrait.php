@@ -150,11 +150,6 @@ trait UpdateDiscountTrait
         if (empty($giftCard)) {
             $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
         }
-
-        // Load Amasty Gift Card account object
-        if (empty($giftCard)) {
-            $giftCard = $this->discountHelper->loadAmastyGiftCard($couponCode, $websiteId);
-        }
         
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $storeId);
@@ -405,20 +400,19 @@ trait UpdateDiscountTrait
     private function applyingGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            $result = $this->eventsForThirdPartyModules->runFilter("filterApplyingGiftCardCode", false, $couponCode, $giftCard, $quote);
+            $result = $this->eventsForThirdPartyModules->runFilter(
+                "filterApplyingGiftCardCode",
+                false,
+                $couponCode,
+                $giftCard,
+                $quote
+            );
 
             if ($result) {
                 return true;
             }
 
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {
-                // Remove Amasty Gift Card if already applied
-                // to avoid errors on multiple calls to discount validation API
-                // from the Bolt checkout (changing the address, going back and forth)
-                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
-                // Apply Amasty Gift Card to the parent quote
-                $giftAmount = $this->discountHelper->applyAmastyGiftCard($couponCode, $giftCard, $quote);
-            } else {
+            if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 try {
                     // on subsequest validation calls from Bolt checkout
                     // try removing the gift card before adding it
@@ -521,14 +515,17 @@ trait UpdateDiscountTrait
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter("filterRemovingGiftCardCode", false, $giftCard, $quote);
+            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter(
+                "filterRemovingGiftCardCode",
+                false,
+                $giftCard,
+                $quote
+            );
             if ($filterRemoveGiftCardCode) {
                 return true;
             }
 
-            if ($giftCard instanceof \Amasty\GiftCard\Model\Account || $giftCard instanceof \Amasty\GiftCardAccount\Model\GiftCardAccount\Account) {              
-                $this->discountHelper->removeAmastyGiftCard($giftCard->getCodeId(), $quote);
-            } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+            if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
                 $giftCard->removeFromCart(true, $quote);
             } else {
                 throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             

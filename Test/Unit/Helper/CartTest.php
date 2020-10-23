@@ -1727,8 +1727,6 @@ class CartTest extends BoltTestCase
         $sourceQuote->getBillingAddress()->method('getData')->willReturn([]);
         $sourceQuote->getShippingAddress()->method('getData')->willReturn([]);
         $currentMock->expects(static::once())->method('quoteResourceSave')->with($destinationQuote);
-        $this->discountHelper->expects(static::once())->method('cloneAmastyGiftCards')
-            ->with(self::PARENT_QUOTE_ID, self::IMMUTABLE_QUOTE_ID);
         $this->discountHelper->expects(static::once())->method('setAmastyRewardPoints')
             ->with($sourceQuote, $destinationQuote);
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
@@ -4045,7 +4043,6 @@ ORDER
             $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
             $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
             $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-            $this->discountHelper->expects(static::never())->method('getAmastyGiftCardCodesFromTotals');
             $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
             $appliedCode1     = '12345';
@@ -4091,80 +4088,6 @@ ORDER
             ];
             static::assertEquals($expectedDiscount, $discounts);
             static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
-
-        /**
-        * @test
-        * that collectDiscounts properly handles Amasty Giftcert by reading amount from giftcert balance
-        * using {@see \Bolt\Boltpay\Helper\Discount::getAmastyGiftCardCodesCurrentValue} instead of quote total
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withAmastyGiftcard_collectsAmastyGiftcard()
-        {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::exactly(4))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $appliedDiscount1 = 5; // $
-        $appliedDiscount2 = 10; // $
-        $amastyGiftCode = ["12345", "67890"];
-        $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
-        $this->discountHelper->expects(static::once())->method('getAmastyGiftCardCodesFromTotals')
-            ->willReturn($amastyGiftCode);
-        $this->discountHelper->expects(static::exactly(2))
-            ->method('getAmastyGiftCardCodesCurrentValue')
-            ->withConsecutive(
-                [["12345"]],
-                [["67890"]]
-            )
-            ->willReturnOnConsecutiveCalls($appliedDiscount1, $appliedDiscount2);
-        $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
-        $quote->expects(static::any())->method('getTotals')
-            ->willReturn([DiscountHelper::AMASTY_GIFTCARD => $this->quoteAddressTotal]);
-        $totalAmount = 10000; // cents
-        $diff = 0;
-        $paymentOnly = true;
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-            $totalAmount,
-            $diff,
-            $paymentOnly,
-            $quote
-        );
-        static::assertEquals($diffResult, $diff);
-        $expectedDiscountAmount = 100 * ($appliedDiscount1+$appliedDiscount2);
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-        $expectedDiscount = [
-            [
-                'description' => 'Gift Card 12345',
-                'amount'      => 500,
-                'discount_category' => 'giftcard',
-                'reference' => '12345',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ],
-            [
-                'description' => 'Gift Card 67890',
-                'amount'      => 1000,
-                'discount_category' => 'giftcard',
-                'reference' => '67890',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
 
         /**

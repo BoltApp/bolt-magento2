@@ -2253,7 +2253,7 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
         $quoteMock->expects(static::once())->method('getBoltCheckoutType')
             ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $quoteMock->expects(static::once())->method('SetBoltCheckoutType')
+        $quoteMock->expects(static::once())->method('setBoltCheckoutType')
             ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
         $quoteMock->expects(static::once())->method('setIsActive')->with(false)->WillReturnSelf();
         $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($quoteMock);
@@ -2291,7 +2291,7 @@ class OrderTest extends TestCase
         $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
             ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $this->quoteMock->expects(static::once())->method('SetBoltCheckoutType')
+        $this->quoteMock->expects(static::once())->method('setBoltCheckoutType')
             ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
