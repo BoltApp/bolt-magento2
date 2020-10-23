@@ -1748,6 +1748,13 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_pendingOrder()
     {
+        $this->initCurrentMock(['getExistingOrder','deleteOrderByIncrementId']);
+        $transaction = new stdClass();
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->metadata = new \stdClass();
+        $transaction->order->cart->metadata->immutable_quote_id = self::IMMUTABLE_QUOTE_ID;
+
         $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
@@ -1756,15 +1763,11 @@ class OrderTest extends BoltTestCase
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
             ->willReturn(Order::STATE_PENDING_PAYMENT);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionMessage(
-            sprintf(
-                'Order is in pending payment. Waiting for the hook update. Quote ID: %s',
-                self::QUOTE_ID
-            )
-        );
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::INCREMENT_ID,self::IMMUTABLE_QUOTE_ID);
+
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, $transaction));
     }
 
     /**
