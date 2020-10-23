@@ -43,6 +43,10 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Mageplaza\ShippingRestriction\Helper\Data"],
                     "boltClass" => Mageplaza_ShippingRestriction::class,
                 ],
+                [
+                    "module" => "IDme_GroupVerification",
+                    "boltClass" => IDme_GroupVerification::class,
+                ],
             ],
         ],
         "beforeDeleteOrder" => [
@@ -465,7 +469,7 @@ class EventsForThirdPartyModules
     {
         return $this->moduleManager->isEnabled($moduleName);
     }
-    
+
     /**
      * Check whether the class exists
      * @return bool

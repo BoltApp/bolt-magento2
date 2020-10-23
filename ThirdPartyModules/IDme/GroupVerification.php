@@ -42,6 +42,23 @@ class GroupVerification
      */
     public function beforeApplyDiscount($quote)
     {
+        $this->applyIDMeDataToCustomerSession($quote);
+    }
+
+    /**
+     * @param $quote
+     */
+    public function afterLoadSession($quote)
+    {
+        $this->applyIDMeDataToCustomerSession($quote);
+    }
+
+    /**
+     * Apply IdMe data to customer Session to correct the discount
+     * @param $quote
+     */
+    private function applyIDMeDataToCustomerSession($quote)
+    {
         if ($idMeUuid = $quote->getIdmeUuid()) {
             $this->customerSession->setIdmeUuid($idMeUuid);
         }
