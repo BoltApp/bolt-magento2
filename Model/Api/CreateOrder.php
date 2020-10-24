@@ -301,6 +301,7 @@ class CreateOrder implements CreateOrderInterface
         $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
 
         if (! $createdOrder) {
+            $this->eventsForThirdPartyModules->dispatchEvent("beforeValidateQuoteDataForProcessNewOrder", $quote);
             $this->validateQuoteData($quote, $transaction);
             $createdOrder = $this->orderHelper->processNewOrder($quote, $transaction);
         }
@@ -649,7 +650,8 @@ class CreateOrder implements CreateOrderInterface
     {
         // Skip validation if Mirasvit_Credit is used.
         // Rely on Model\Api\CreateOrder::validateTotalAmount which is called next.
-        if ($quote->getShippingAddress()->getCreditAmount()) {
+        if ($quote->getShippingAddress()->getCreditAmount()
+            || $this->eventsForThirdPartyModules->runFilter("filterSkipValidateShippingForProcessNewOrder", $quote, $transaction)) {
             return;
         }
         if ($quote->getShippingAddress() && !$quote->isVirtual()) {
