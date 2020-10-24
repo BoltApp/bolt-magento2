@@ -104,13 +104,11 @@ class EventsForThirdPartyModules
                 ],
                 'Amasty Giftcard V2' => [
                     "module"      => "Amasty_GiftCardAccount",
-                    "sendClasses" => [],
                     "boltClass"   => Amasty_GiftCardAccount::class,
                 ],
                 'Amasty Giftcard V1' => [
                     "module"      => "Amasty_GiftCard",
                     "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
-                    "sendClasses" => [],
                     "boltClass"   => Amasty_GiftCard::class,
                 ],
             ]
