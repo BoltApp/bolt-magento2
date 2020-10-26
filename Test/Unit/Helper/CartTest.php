@@ -3673,7 +3673,7 @@ ORDER
             ->willReturn($shippingAddress);
         $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(4))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -3682,7 +3682,7 @@ ORDER
         $appliedDiscountNoCoupon = 15; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
-        $quote->method('getAppliedRuleIds')->willReturn('2,3,4');
+        $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
         
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
@@ -3708,14 +3708,24 @@ ORDER
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->ruleRepository->expects(static::exactly(3))
+        $rule5 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule5->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
+        $rule5->expects(static::once())->method('getDescription')
+            ->willReturn('');
+
+        $this->ruleRepository->expects(static::exactly(4))
             ->method('getById')
             ->withConsecutive(
                 [2],
                 [3],
-                [4]
+                [4],
+                [5]
             )
-            ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4);
+            ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
 
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         
@@ -3724,7 +3734,7 @@ ORDER
         );
         $checkoutSession->expects(static::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
-                        ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0]);
+                        ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
@@ -3742,7 +3752,7 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
-        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount - $expectedDiscountAmountNoCoupon;
+        $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
             [
                 'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
@@ -3758,7 +3768,15 @@ ORDER
                 'discount_category' => 'automatic_promotion',
                 'discount_type'   => 'fixed_amount',
                 'type'   => 'fixed_amount',
-            ]
+            ],
+            [
+                'description' => trim(__('Discount ' . self::COUPON_CODE)),
+                'amount'      => $expectedDiscountAmount,
+                'reference'   => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type'     => 'fixed_amount',
+                'type'              => 'fixed_amount',
+            ],
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
@@ -4165,10 +4183,10 @@ ORDER
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $giftVoucherDiscount = 5; // $
         $discountAmount = 10; // $
-        $giftVaucher = "12345";
-        $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVaucher);
+        $giftVoucher = "12345";
+        $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVoucher);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with($giftVaucher)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with($giftVoucher)->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($discountAmount);
@@ -4218,7 +4236,7 @@ ORDER
             [
                 'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
                 'amount'      => $expectedRegularDiscountAmount,
-                'reference'   => $giftVaucher,
+                'reference'   => $giftVoucher,
                 'discount_category' => 'coupon',
                 'discount_type'   => 'fixed_amount',
                 'type'   => 'fixed_amount',
