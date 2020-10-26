@@ -1099,6 +1099,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         return;
                     }
                     boltCartDataID = data.data_id;
+                    if (BoltState.magentoCart.data_id > boltCartDataID) {
+                        // bolt cart is unactual
+                        return;
+                    }
 
                     BoltState.boltCart = data.cart !== undefined ? data.cart : {};
                     if ((JSON.stringify(BoltState.boltCart) === oldBoltCartValue) && !waitingForResolvingPromises) {
