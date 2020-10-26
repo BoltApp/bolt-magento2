@@ -23,6 +23,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCard as Amasty_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
@@ -59,13 +60,23 @@ class EventsForThirdPartyModules
         ],
         "beforeDeleteOrder" => [
             "listeners" => [
-                [
+                'Amasty Giftcard V2' => [
                     "module"      => "Amasty_GiftCardAccount",
                     "sendClasses" => [
-                        '\Amasty\GiftCardAccount\Model\GiftCardAccount\Repository',
-                        '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository',
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository',
+                        'Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository',
                     ],
                     "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"      => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses" => [
+                        'Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory',
+                        'Amasty\GiftCard\Api\CodeRepositoryInterface',
+                        'Amasty\GiftCard\Api\AccountRepositoryInterface'
+                    ],
+                    "boltClass"   => Amasty_GiftCard::class,
                 ],
                 [
                     "module" => "Aheadworks_Giftcard",
@@ -98,6 +109,15 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"      => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "boltClass"   => Amasty_GiftCard::class,
                 ],
             ]
         ],
@@ -150,7 +170,22 @@ class EventsForThirdPartyModules
                     "module" => "Mageplaza_GiftCard",
                     "sendClasses" => ["Mageplaza\GiftCard\Helper\Checkout"],
                     "boltClass" => Mageplaza_GiftCard::class,
-                ]
+                ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "sendClasses" => [
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor',
+                    ],
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"             => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses"        => [
+                        'Amasty\GiftCard\Model\GiftCardManagementFactory'
+                    ],
+                    "boltClass"          => Amasty_GiftCard::class,
+                ],
             ],
         ],
         "collectDiscounts" => [
@@ -213,9 +248,26 @@ class EventsForThirdPartyModules
                         "Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface",
                     ],
                     "boltClass" => Aheadworks_StoreCredit::class,
-                ]
+                ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "sendClasses" => [
+                        'Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface',
+                        'Amasty\GiftCardAccount\Api\GiftCardQuoteRepositoryInterface',
+                    ],
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"      => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses" => [
+                        'Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory',
+                    ],
+                    "boltClass"   => Amasty_GiftCard::class,
+                ],
             ],
         ],
+        /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
         "loadGiftcard" => [
             "listeners" => [
                 [
@@ -227,6 +279,21 @@ class EventsForThirdPartyModules
                     "module" => "Mageplaza_GiftCard",
                     "sendClasses" => ["Mageplaza\GiftCard\Model\GiftCardFactory"],
                     "boltClass" => Mageplaza_GiftCard::class,
+                ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "sendClasses" => [
+                        'Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface',
+                    ],
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"      => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses" => [
+                        'Amasty\GiftCard\Model\AccountFactory',
+                    ],
+                    "boltClass"   => Amasty_GiftCard::class,
                 ],
             ],
         ],
@@ -285,6 +352,21 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "sendClasses" => [
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor'
+                    ],
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"             => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses"        => [
+                        'Amasty\GiftCard\Model\GiftCardManagement'
+                    ],
+                    "boltClass"          => Amasty_GiftCard::class,
+                ],
             ],
         ],
         'filterRemovingGiftCardCode' => [
@@ -298,6 +380,21 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+                'Amasty Giftcard V2' => [
+                    "module"      => "Amasty_GiftCardAccount",
+                    "sendClasses" => [
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor'
+                    ],
+                    "boltClass"   => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"             => "Amasty_GiftCard",
+                    "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "sendClasses"        => [
+                        'Amasty\GiftCard\Model\GiftCardManagement'
+                    ],
+                    "boltClass"          => Amasty_GiftCard::class,
                 ],
             ],
         ],
@@ -358,6 +455,17 @@ class EventsForThirdPartyModules
                     "boltClass" => Amasty_Rewards::class,
                 ],
         ],
+    ];
+
+    /**
+     * @var array Classes used to verify that Amasty Giftcard module version is 1.x
+     */
+    const AMASTY_GIFTCARD_V1_CHECK_CLASSES = [
+        'Amasty\GiftCard\Model\GiftCardManagement',
+        'Amasty\GiftCard\Model\AccountFactory',
+        'Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory',
+        'Amasty\GiftCard\Api\CodeRepositoryInterface',
+        'Amasty\GiftCard\Api\AccountRepositoryInterface',
     ];
 
     /**

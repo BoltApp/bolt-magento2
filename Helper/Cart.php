@@ -220,7 +220,6 @@ class Cart extends AbstractHelper
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
         Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
-        Discount::AMASTY_GIFTCARD => 'Gift Card ',
         Discount::GIFT_VOUCHER => ''
     ];
     /////////////////////////////////////////////////////////////////////////////
@@ -1170,9 +1169,6 @@ class Cart extends AbstractHelper
 
         $this->quoteResourceSave($destination);
 
-        // If Amasty Gif Cart Extension is present clone applied gift cards
-        $this->discountHelper->cloneAmastyGiftCards($source->getId(), $destination->getId());
-
         // If Amasty Reward Points extension is present clone applied reward points
         $this->discountHelper->setAmastyRewardPoints($source, $destination);
         
@@ -2097,31 +2093,7 @@ class Cart extends AbstractHelper
                 $roundedDiscountAmount = 0;
                 $discountAmount = 0;
 
-                ///////////////////////////////////////////////////////////////////////////
-                // If Amasty gift cards can be used for shipping and tax (PayForEverything)
-                // accumulate all the applied gift cards balance as discount amount. If the
-                // final discounts sum is greater than the cart total amount ($totalAmount < 0)
-                // the "fixed_amount" type is added below.
-                ///////////////////////////////////////////////////////////////////////////
-                if ($discount == Discount::AMASTY_GIFTCARD && $this->discountHelper->getAmastyPayForEverything()) {
-                    $giftCardCodes = $this->discountHelper->getAmastyGiftCardCodesFromTotals($totals);
-                    foreach($giftCardCodes as $giftCardCode) {
-                        $amount = abs($this->discountHelper->getAmastyGiftCardCodesCurrentValue(array($giftCardCode)));
-                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                        $discountItem = [
-                            'description'       => $description . $giftCardCode,
-                            'amount'            => $roundedAmount,
-                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => $giftCardCode,
-                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-                        ];
-                        $this->logEmptyDiscountCode($giftCardCode, $description . $giftCardCode);
-                        $discountAmount += $amount;
-                        $roundedDiscountAmount += $roundedAmount;
-                        $discounts[] = $discountItem;
-                    }
-                } elseif ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
+                if ($discount == Discount::UNIRGY_GIFT_CERT && $quote->getData('giftcert_code')) {
                     ///////////////////////////////////////////////////////////////////////////
                     /// Was added a proper Unirgy_Giftcert Amount to the discount.
                     /// The GiftCert accumulate correct balance only after each collectTotals.
@@ -2187,7 +2159,13 @@ class Cart extends AbstractHelper
             }
         }
         // TODO: move all third party plugins support into filter
-        return $this->eventsForThirdPartyModules->runFilter("collectDiscounts", [$discounts, $totalAmount, $diff], $quote, $parentQuote, $paymentOnly);
+        return $this->eventsForThirdPartyModules->runFilter(
+            "collectDiscounts",
+            [$discounts, $totalAmount, $diff],
+            $quote,
+            $parentQuote,
+            $paymentOnly
+        );
     }
 
     /**
