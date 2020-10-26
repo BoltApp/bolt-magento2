@@ -190,7 +190,7 @@ class Definitions
             self::NAME_KEY            => self::M2_PAY_BY_LINK,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::ROLLOUT_KEY         => 100
         ],
         self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION =>  [
             self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
