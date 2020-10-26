@@ -216,7 +216,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
     /**
      * BoltState contains all global variables we need for interaction between
      * this module and extensions.
-     * TODO(vitaliy): Move into BoltState cart, hints, callbacks
+     * TODO(vitaliy): Move into BoltState hints, callbacks
      */
     var BoltState = {
         /**
@@ -229,6 +229,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          * @var object|null magento cart. null means cart isn't retrieved yet
          */
         magentoCart: null,
+
+        /**
+         * @var object magento cart. empty object means cart isn't retrieved yet
+         */
+        boltCart: {},
 
         /**
          * @var bool|null true - logged in user, false - guest user, null - not known at the moment
@@ -515,8 +520,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         ////////////////////////////////////
         // BoltCheckout.configure parameters
         ////////////////////////////////////
-        var cart = {};
-
         var hints = {prefill:{}};
 
         var boltCheckoutConfig = {};
@@ -680,12 +683,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         var prefetch_list = [];
         var prefetchShipping = function() {
 
-            if (!settings.prefetch_shipping || !cart.cartReference) return;
+            if (!settings.prefetch_shipping || !BoltState.boltCart.cartReference) return;
 
             var params = [];
 
             params.push('form_key=' + $('[name="form_key"]').val());
-            params.push('cartReference=' + cart.cartReference);
+            params.push('cartReference=' + BoltState.boltCart.cartReference);
 
             // parse Estimate Shipping and Tax location fields
             var country  = $('select[name=country_id]').val(),
@@ -789,10 +792,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 if (magentoTotal === undefined) {
                     return;
                 }
-                if ((cart.total_amount === undefined) || (cart.total_amount.amount === undefined)) {
+                if ((BoltState.boltCart.total_amount === undefined) || (BoltState.boltCart.total_amount.amount === undefined)) {
                     return;
                 }
-                var boltTotal = cart.total_amount.amount;
+                var boltTotal = BoltState.boltCart.total_amount.amount;
                 if (Math.round(parseFloat(magentoTotal) * 100) != boltTotal) {
                     invalidateBoltCart();
                 }
@@ -811,10 +814,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
                 return;
             }
-            if (!cart) {
+            if (!BoltState.boltCart) {
                 return;
             }
-            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
+            boltCheckoutConfigure(BoltState.boltCart, hints, callbacks, boltCheckoutConfig);
         }
 
         var showAuthenticationPopup = function() {
@@ -922,7 +925,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         // ie. connect.js not loaded / executed yet,
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout && !waitingForResolvingPromises) {
-                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(BoltState.boltCart, hints, callbacks, boltCheckoutConfig);
                         }
                     });
                     /////////////////////////////////////////////////////
@@ -997,7 +1000,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                 hintBarrier = boltBarrier();
 
-                cart = new Promise(function (resolve, reject) {
+                BoltState.boltCart = new Promise(function (resolve, reject) {
 
                     createRequest = true;
 
@@ -1055,7 +1058,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         .always(function() {
                             createRequest = false;
                         })
-                        boltCheckoutConfigure(cart, hintBarrier.promise, callbacks);
+                        boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
                 });
             } else {
                 callConfigureWithPromises();
@@ -1097,8 +1100,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     }
                     boltCartDataID = data.data_id;
 
-                    cart = data.cart !== undefined ? data.cart : {};
-                    if ((JSON.stringify(cart) === oldBoltCartValue) && !waitingForResolvingPromises) {
+                    BoltState.boltCart = data.cart !== undefined ? data.cart : {};
+                    if ((JSON.stringify(BoltState.boltCart) === oldBoltCartValue) && !waitingForResolvingPromises) {
                         return;
                     }
 
@@ -1107,7 +1110,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                         // Stop if Bolt checkout is restricted
                         if (BoltState.cartRestricted) {
-                            cart = {};
+                            BoltState.boltCart = {};
                             hints = {};
                         } else {
                             var prefill = isObject(data.hints.prefill)
@@ -1122,19 +1125,19 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         // If we set always_present_checkout when we call configure with promises
                         // always present button is appear even if cart is empty
                         if (waitingForResolvingPromises && !boltConfig.always_present_checkout) {
-                            cartBarrier.resolve(cart);
+                            cartBarrier.resolve(BoltState.boltCart);
                             hintBarrier.resolve(hints);
                         } else {
                             if (boltConfig.always_present_checkout) {
-                                boltCheckoutConfig = (cart.orderToken && cart.orderToken !== "") ?
+                                boltCheckoutConfig = (BoltState.boltCart.orderToken && BoltState.boltCart.orderToken !== "") ?
                                     {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover"} : {};
                                 newItemAddedToCart = false;
                             }
                             // reconfigure bolt checkout with new values
-                            boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
+                            boltCheckoutConfigure(BoltState.boltCart, hints, callbacks, boltCheckoutConfig);
                         }
                         waitingForResolvingPromises = false;
-                        oldBoltCartValue = JSON.stringify(cart);
+                        oldBoltCartValue = JSON.stringify(BoltState.boltCart);
 
                         // open the checkout if auto-open flag is set
                         // one time only on page load
@@ -1272,13 +1275,13 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         var configureHints = function() {
             // Check if cart exists (orderToken received).
             // Othervise, do not update hints until it becomes available.
-            if (!cart.orderToken) {
-                whenDefined(cart, 'orderToken', configureHints);
+            if (!BoltState.boltCart.orderToken) {
+                whenDefined(BoltState.boltCart, 'orderToken', configureHints);
                 return;
             }
             var new_hints = JSON.stringify(hints);
             if ((old_hints !== new_hints) && !waitingForResolvingPromises) {
-                boltCheckoutConfigure(cart, hints, callbacks, boltCheckoutConfig);
+                boltCheckoutConfigure(BoltState.boltCart, hints, callbacks, boltCheckoutConfig);
                 old_hints = new_hints;
             }
         };
@@ -1462,16 +1465,20 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             ], function ($, quote) {
                 // If quote total was changed through a method we didn't create,
                 // we should reload the bolt cart since totals are probably now out of sync.
-                quote.totals.subscribe(function (newValue) {
-                    if (expectCartRendering) {
-                        expectCartRendering = false;
-                        return;
-                    }
-
-                    expectCartRendering = false;
+                quote.totals.subscribe(function (totals) {
                     if (waitingForResolvingPromises) {
                         return;
                     }
+                    if (expectCartRendering) {
+                        expectCartRendering = false;
+                        try {
+                            if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount) {
+                                return;
+                            }
+                        } catch(err) {}
+                    }
+
+                    expectCartRendering = false;
                     $(document).trigger('bolt:createOrder');
                 });
             })
