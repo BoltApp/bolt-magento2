@@ -36,6 +36,14 @@ use Exception;
 class EventsForThirdPartyModules
 {
     const eventListeners = [
+        'adminhtmlControllerActionPredispatchSalesOrderCreateIndex' => [
+            "listeners" => [
+                [
+                    "module" => "Aheadworks_Sarp2",
+                    "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Aheadworks\Sarp2::class,
+                ],
+            ]
+        ],
         "afterLoadSession" => [
             "listeners" => [
                 [
