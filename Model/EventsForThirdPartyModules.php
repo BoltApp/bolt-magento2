@@ -156,6 +156,19 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        'beforeValidateQuoteDataForProcessNewOrder' => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config",
+                                      "Mirasvit\Rewards\Helper\Checkout"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
+        ],
     ];
 
     const filterListeners = [
@@ -235,7 +248,10 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
@@ -418,7 +434,10 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
             ],
@@ -454,6 +473,15 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
+        ],
+        'filterSkipValidateShippingForProcessNewOrder' => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Model\Config"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
         ],
     ];
 
