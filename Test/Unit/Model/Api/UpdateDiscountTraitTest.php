@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Quote\Model\Quote;
@@ -39,7 +38,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use PHPUnit\Framework\TestCase;
-
+use Magento\SalesRule\Model\Data\RuleLabel;
 /**
  * Class UpdateDiscountTraitTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateDiscountTrait
@@ -137,6 +136,11 @@ class UpdateDiscountTraitTest extends TestCase
      */
     private $currentMock;
 
+    /**
+     * @var RuleLabel
+     */
+    private $ruleLabel;
+
 
     public function setUp()
     {
@@ -149,7 +153,12 @@ class UpdateDiscountTraitTest extends TestCase
             ->getMockForTrait();
             
         $this->ruleRepository = $this->getMockBuilder(RuleRepository::class)
-            ->setMethods(['getById'])
+            ->setMethods(['getById','getDescription','getStoreLabels'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->ruleLabel = $this->getMockBuilder(RuleLabel::class)
+            ->setMethods(['getStoreLabel'])
             ->disableOriginalConstructor()
             ->getMock();
         
@@ -1308,4 +1317,30 @@ class UpdateDiscountTraitTest extends TestCase
         $this->assertFalse($result);
     }
 
+    /**
+     * @test
+     */
+    public function getRuleDescription_willReturnRuleLabel()
+    {
+        $this->ruleLabel->method('getStoreLabel')->willReturn('storelabel');
+
+        $this->ruleRepository->method('getStoreLabels')->willReturn([$this->ruleLabel]);
+        $this->ruleRepository->method('getDescription')->willReturn('description');
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'getRuleDescription',[$this->ruleRepository]);
+        $this->assertEquals('storelabel',$result);
+    }
+
+    /**
+     * @test
+     */
+    public function getRuleDescription_throwException_willReturnRuleDescription()
+    {
+        $this->ruleRepository->method('getDescription')->willReturn('description');
+        $e = new \Exception(__('resource not set'));
+        $this->ruleRepository->method('getStoreLabels')->willThrowException($e);
+
+        $result = TestHelper::invokeMethod($this->currentMock, 'getRuleDescription',[$this->ruleRepository]);
+        $this->assertEquals('description',$result);
+    }
 }

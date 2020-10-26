@@ -387,11 +387,30 @@ trait UpdateDiscountTrait
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$ruleId], $quote->getQuoteCurrencyCode())),
-            'description'     => trim(__('Discount ') . $rule->getDescription()),
+            'description'     => trim(__('Discount ') . $this->getRuleDescription($rule)),
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
     
         return $result;
+    }
+
+    /**
+     * @param $rule
+     * @return mixed
+     */
+    private function getRuleDescription($rule) {
+        $description = $rule->getDescription();
+        try {
+            $discountLabels = $rule->getStoreLabels();
+            if (!empty($discountLabels)) {
+                $description = $discountLabels[0]->getStoreLabel();
+            }
+        } catch (\Exception $e) {
+            //Ignore "resource not set" Exception
+            $this->bugsnag->notifyException($e);
+        }
+
+        return $description;
     }
 
     /**
