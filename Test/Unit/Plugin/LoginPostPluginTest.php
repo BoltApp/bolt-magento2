@@ -24,6 +24,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Controller\Account\LoginPost;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class LoginPostPluginTest
@@ -52,10 +53,14 @@ class LoginPostPluginTest extends TestCase
     /** @var Bugsnag */
     protected $bugsnag;
 
+    /** @var @var Decider */
+    private $decider;
+
     public function setUp()
     {
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
+        $this->decider = $this->createMock(CheckoutSession::class);
         $this->resultFactory = $this->createPartialMock(
             ResultFactory::class,
             [
@@ -65,6 +70,10 @@ class LoginPostPluginTest extends TestCase
         );
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->loginPost = $this->createMock(LoginPost::class);
+        $this->decider = $this->createPartialMock(
+            Decider::class,
+            ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
+        );
         $this->plugin = $this->getMockBuilder(LoginPostPlugin::class)
             ->setMethods([
                 'shouldRedirectToCartPage',
@@ -74,7 +83,8 @@ class LoginPostPluginTest extends TestCase
                 $this->customerSession,
                 $this->checkoutSession,
                 $this->resultFactory,
-                $this->bugsnag
+                $this->bugsnag,
+                $this->decider
             ])
             ->getMock();
     }

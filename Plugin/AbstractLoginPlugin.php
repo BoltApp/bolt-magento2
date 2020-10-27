@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Controller\ResultFactory;
@@ -24,7 +25,8 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-abstract class AbstractLoginPlugin
+abstract class
+AbstractLoginPlugin
 {
     const SHOPPING_CART_PATH = 'checkout/cart';
 
@@ -49,23 +51,30 @@ abstract class AbstractLoginPlugin
     private $bugsnag;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * AbstractLoginPlugin constructor.
-     *
      * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
      * @param ResultFactory $resultFactory
      * @param Bugsnag $bugsnag
+     * @param Decider $decider
      */
     public function __construct(
         CustomerSession $customerSession,
         CheckoutSession $checkoutSession,
         ResultFactory $resultFactory,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        Decider $decider
     ) {
         $this->customerSession = $customerSession;
         $this->checkoutSession = $checkoutSession;
         $this->resultFactory = $resultFactory;
         $this->bugsnag = $bugsnag;
+        $this->decider = $decider;
     }
 
     /**
@@ -100,7 +109,9 @@ abstract class AbstractLoginPlugin
      */
     protected function shouldRedirectToCartPage()
     {
-        return $this->isCustomerLoggedIn() && $this->hasCart();
+        return $this->isCustomerLoggedIn()
+            && !$this->decider->ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn()
+            && $this->hasCart();
     }
 
     /**

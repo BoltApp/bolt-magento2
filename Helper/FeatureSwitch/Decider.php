@@ -269,4 +269,8 @@ class Decider extends AbstractHelper
     public function isPrefetchShippingEnabled() {
         return $this->isSwitchEnabled(Definitions::M2_PREFETCH_SHIPPING);
     }
+
+    public function ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn() {
+        return $this->isSwitchEnabled(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN);
+    }
 }

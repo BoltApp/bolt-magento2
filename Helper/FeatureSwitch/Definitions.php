@@ -118,6 +118,11 @@ class Definitions
     const M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER = "M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER";
 
     /**
+     * Disable redirect customers to the cart page after they log in
+     */
+    const M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN = "M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN";
+
+    /**
      * Handle virtual cart as physical. Workarond for known issue with taxable virtual products.
      */
     const M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL = "M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL";
@@ -254,6 +259,12 @@ class Definitions
         ],
         self::M2_PREFETCH_SHIPPING =>  [
             self::NAME_KEY            => self::M2_PREFETCH_SHIPPING,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN =>  [
+            self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
