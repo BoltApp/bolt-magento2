@@ -298,4 +298,35 @@ class Rewards
         return $result || $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
     
+    /**
+     * To run filter to check if the Mirasvit rewards can be applied to shipping.
+     *
+     * @param boolean $result
+     * @param Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * 
+     * @return boolean
+     */
+    public function checkMirasvitRewardsIsShippingIncluded($result, $mirasvitRewardsModelConfig)
+    {
+        return $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
+    }
+    
+    /**
+     * Exclude the Mirasvit rewards points from shipping discount, so the Bolt can apply Mirasvit rewards points to shipping properly.
+     *
+     * @param float $result
+     * @param Quote|object $quote
+     * @param Address|object $shippingAddress
+     * 
+     * @return float
+     */
+    public function collectShippingDiscounts($result,
+                                     $quote,
+                                     $shippingAddress)
+    {
+        $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitRewardsShippingDiscountAmount(0);
+        $result -= $mirasvitRewardsShippingDiscountAmount;
+        return $result;
+    }
+    
 }

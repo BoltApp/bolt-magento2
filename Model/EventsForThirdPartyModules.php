@@ -320,6 +320,11 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "checkClasses" => ["Mirasvit\Rewards\Model\Config"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
             ],
         ],
         "checkMirasvitCreditAdminQuoteUsed" => [
@@ -331,7 +336,6 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-
         "checkMirasvitCreditIsShippingTaxIncluded" => [
             "listeners" => [
                 [
@@ -340,9 +344,17 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Credit\Service\Config\CalculationConfig"]],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
-             ],
-         ],
-
+            ],
+        ],
+        "checkMirasvitRewardsIsShippingIncluded" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Model\Config"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ],
+        ],
         "getAdditionalJS" => [
             "listeners" => [
                 [
