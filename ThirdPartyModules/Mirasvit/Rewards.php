@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Discount;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -65,6 +66,11 @@ class Rewards
      * @var CustomerFactory
      */
     private $customerFactory;
+    
+    /**
+     * @var SessionHelper
+     */
+    private $sessionHelper;
 
     /**
      * Rewards constructor.
@@ -72,18 +78,21 @@ class Rewards
      * @param Discount $discountHelper
      * @param ScopeInterface $scopeConfigInterface
      * @param CustomerFactory $customerFactory
+     * @param SessionHelper $sessionHelper
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         Discount $discountHelper,
         ScopeConfigInterface $scopeConfigInterface,
-        CustomerFactory $customerFactory
+        CustomerFactory $customerFactory,
+        SessionHelper $sessionHelper
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->customerFactory = $customerFactory;
+        $this->sessionHelper   = $sessionHelper;
     }
 
     /**
