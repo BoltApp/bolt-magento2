@@ -228,7 +228,8 @@ class Giftcard
      */
     public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $sourceQuote, $destinationQuote)
     {
-        if ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()) {
+        if ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()
+            && (!$destinationQuote->getExtensionAttributes() || empty($destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()))) {
             $giftcards = $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes();
             /** @var GiftcardQuoteInterface $giftcard */
             foreach ($giftcards as $giftcard) {
