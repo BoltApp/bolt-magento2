@@ -212,6 +212,14 @@ class EventsForThirdPartyModules
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
                 [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
                     "module" => "Mirasvit_Credit",
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation",
@@ -248,14 +256,6 @@ class EventsForThirdPartyModules
                         "Mageplaza\GiftCard\Model\ResourceModel\GiftCard\CollectionFactory",
                     ],
                     "boltClass" => Mageplaza_GiftCard::class,
-                ],
-                [
-                    "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config"],
-                    "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
                     "module" => "Amasty_StoreCredit",
