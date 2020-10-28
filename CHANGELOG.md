@@ -173,3 +173,4 @@
  - Fixed: Resolved issue where discounts applied to an order placed from the M2 Admin Console did not apply in Bolt Checkout Modal.
  - Improvement: Refunds for Paypal transactions now support an `in-progress` status for situations where the merchant does not yet have sufficient funds.
  - Improvement: Made general improvements related to Mirasvit rewards points usage such as tax calculations and shipping discounts.
+ - Added: Merchants can now selectively configure Product Page Checkout to display only for specific products that have the `bolt_ppc` attribute.
