@@ -112,6 +112,7 @@ class Order extends AbstractHelper
         'paypal' => 'PayPal',
         'afterpay' => 'Afterpay',
         'affirm' => 'Affirm',
+        'applepay' => 'ApplePay',
     ];
 
     /**
