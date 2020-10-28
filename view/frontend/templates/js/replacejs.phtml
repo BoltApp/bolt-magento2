@@ -1082,10 +1082,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
 
                 customerData.get('cart').subscribe(magentoCartDataListener);
-                // check if magento section was initialized before our code execution
-                if (customerData.get('cart')().data_id !== undefined) {
-                    magentoCartDataListener(customerData.get('cart')());
-                }
 
                 boltCartDataListener = function(data) {
                     if (localStorage && localStorage.getItem("bolt_cart_is_invalid") == "true") {
@@ -1155,6 +1151,9 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 }
                 customerData.get('boltcart').subscribe(boltCartDataListener);
                 // check if magento section was initialized before our code execution
+                if (customerData.get('cart')().data_id !== undefined) {
+                    magentoCartDataListener(customerData.get('cart')());
+                }
                 if (customerData.get('boltcart')().data_id !== undefined) {
                     boltCartDataListener(customerData.get('boltcart')());
                 }
