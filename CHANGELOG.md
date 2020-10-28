@@ -169,3 +169,7 @@
  - Fixed: Resolved issue where shoppers were unable to apply Aheadworks Store Credit to their cart.
  - Fixed: Resolved issues with Amasty Gift Cards being applied to orders placed in the back-office and storefront.  
  - Added: The M2 Plugin now supports product addons (removing and adding suggested items to checkout).
+ ## [v2.17.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.17.0) 2020-11-02
+ - Fixed: Resolved issue where discounts applied to an order placed from the M2 Admin Console did not apply in Bolt Checkout Modal.
+ - Improvement: Refunds for Paypal transactions now support an `in-progress` status for situations where the merchant does not yet have sufficient funds.
+ - Improvement: Made general improvements related to Mirasvit rewards points usage such as tax calculations and shipping discounts.
