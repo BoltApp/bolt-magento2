@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Discount;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
@@ -68,6 +69,11 @@ class Rewards
     private $customerFactory;
     
     /**
+     * @var SessionHelper
+     */
+    private $sessionHelper;
+
+    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -78,6 +84,7 @@ class Rewards
      * @param Discount $discountHelper
      * @param ScopeInterface $scopeConfigInterface
      * @param CustomerFactory $customerFactory
+     * @param SessionHelper $sessionHelper
      * @param CartHelper $cartHelper
      */
     public function __construct(
@@ -85,6 +92,7 @@ class Rewards
         Discount $discountHelper,
         ScopeConfigInterface $scopeConfigInterface,
         CustomerFactory $customerFactory,
+        SessionHelper $sessionHelper,
         CartHelper $cartHelper
     )
     {
@@ -92,6 +100,7 @@ class Rewards
         $this->discountHelper = $discountHelper;
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->customerFactory = $customerFactory;
+        $this->sessionHelper   = $sessionHelper;
         $this->cartHelper = $cartHelper;
     }
 
@@ -324,5 +333,36 @@ class Rewards
     {
         return $result || $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
-
+    
+    /**
+     * To run filter to check if the Mirasvit rewards can be applied to shipping.
+     *
+     * @param boolean $result
+     * @param Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * 
+     * @return boolean
+     */
+    public function checkMirasvitRewardsIsShippingIncluded($result, $mirasvitRewardsModelConfig)
+    {
+        return $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
+    }
+    
+    /**
+     * Exclude the Mirasvit rewards points from shipping discount, so the Bolt can apply Mirasvit rewards points to shipping properly.
+     *
+     * @param float $result
+     * @param Quote|object $quote
+     * @param Address|object $shippingAddress
+     * 
+     * @return float
+     */
+    public function collectShippingDiscounts($result,
+                                     $quote,
+                                     $shippingAddress)
+    {
+        $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitRewardsShippingDiscountAmount(0);
+        $result -= $mirasvitRewardsShippingDiscountAmount;
+        return $result;
+    }
+    
 }

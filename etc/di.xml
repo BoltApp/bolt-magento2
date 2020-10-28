@@ -181,6 +181,10 @@
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
     
+    <type name="Mirasvit\Rewards\Model\Total\Quote\Discount">
+        <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_Total_Quote_DiscountPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\Total\Quote\DiscountPlugin" sortOrder="1" />
+    </type>
+    
     <type name="Mirasvit\Credit\Model\Total\Quote\Credit">
         <plugin name="Bolt_Boltpay_Mirasvit_Store_Credit_Model_Total_Quote_CreditPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Credit\Model\Total\Quote\CreditPlugin" sortOrder="1" />
     </type>
