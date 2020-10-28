@@ -125,7 +125,10 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase"],
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
             ]

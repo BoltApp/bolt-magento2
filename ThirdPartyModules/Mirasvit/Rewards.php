@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Mirasvit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Discount;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -65,6 +66,11 @@ class Rewards
      * @var CustomerFactory
      */
     private $customerFactory;
+    
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
     /**
      * Rewards constructor.
@@ -72,27 +78,40 @@ class Rewards
      * @param Discount $discountHelper
      * @param ScopeInterface $scopeConfigInterface
      * @param CustomerFactory $customerFactory
+     * @param CartHelper $cartHelper
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         Discount $discountHelper,
         ScopeConfigInterface $scopeConfigInterface,
-        CustomerFactory $customerFactory
+        CustomerFactory $customerFactory,
+        CartHelper $cartHelper
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->customerFactory = $customerFactory;
+        $this->cartHelper = $cartHelper;
     }
 
     /**
      * @param $mirasvitRewardsPurchaseHelper
      * @param $immutableQuote
      */
-    public function applyExternalDiscountData($mirasvitRewardsPurchaseHelper, $immutableQuote)
+    public function applyExternalDiscountData(
+        $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsBalanceHelper,
+        $mirasvitRewardsSpendRulesListHelper,
+        $mirasvitRewardsModelConfig,
+        $immutableQuote
+    )
     {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
+        $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
+        $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
+        $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+
         $this->applyMiravistRewardPoint($immutableQuote);
     }
 
@@ -189,16 +208,24 @@ class Rewards
     private function applyMiravistRewardPoint($immutableQuote)
     {
         $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
-        /** @var \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper */
-        $mirasvitRewardsPurchaseHelper = $this->mirasvitRewardsPurchaseHelper;
-        if (!$mirasvitRewardsPurchaseHelper || !$parentQuoteId) {
+        if (!$parentQuoteId) {
             return;
         }
-
+        
+        $immutableQuoteId = $immutableQuote->getId();
+        
+        if ($immutableQuoteId == $parentQuoteId) {
+            // Product Page Checkout - quotes are created as inactive
+            $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        } else {
+            $parentQuote = $this->cartHelper->getActiveQuoteById($parentQuoteId);
+        }
+        
         try {
-            $parentPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
-            if (abs($parentPurchase->getSpendAmount()) > 0) {
-                $mirasvitRewardsPurchaseHelper->getByQuote($immutableQuote)
+            if (abs($this->getMirasvitRewardsAmount($parentQuote)) > 0) {
+                $parentPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
+               
+                $this->mirasvitRewardsPurchaseHelper->getByQuote($immutableQuoteId)
                     ->setSpendPoints($parentPurchase->getSpendPoints())
                     ->setSpendMinAmount($parentPurchase->getSpendMinAmount())
                     ->setSpendMaxAmount($parentPurchase->getSpendMaxAmount())
@@ -246,7 +273,7 @@ class Rewards
                 }                
                 $spendAmount = max($points, $spendAmount);
             }
-           
+
             return $spendAmount;
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
@@ -276,7 +303,7 @@ class Rewards
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
         
         try{           
-            if($this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping() && $this->getMirasvitRewardsAmount($quote)) {
+            if($this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping() && abs($this->getMirasvitRewardsAmount($quote)) > 0) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
                 $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
                 $mirasvitRewardsCheckoutHelper->updatePurchase($miravitRewardsPurchase, $balancePoints);
@@ -297,5 +324,5 @@ class Rewards
     {
         return $result || $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
-    
+
 }
