@@ -25,6 +25,7 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
@@ -65,6 +66,11 @@ class AbstractLoginPluginTest extends TestCase
      */
     private $quoteItem;
 
+    /**
+     * @var Decider
+     */
+    private $decider;
+
     public function setUp()
     {
         $this->customerSession = $this->createPartialMock(
@@ -91,12 +97,18 @@ class AbstractLoginPluginTest extends TestCase
             ['notifyException']
         );
 
+        $this->decider = $this->createPartialMock(
+            Decider::class,
+            ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
+        );
+
         $this->abstractLoginPlugin = $this->getMockBuilder(AbstractLoginPlugin::class)
             ->setConstructorArgs([
                     $this->customerSession,
                     $this->checkoutSession,
                     $this->resultFactory,
-                    $this->bugsnag
+                    $this->bugsnag,
+                    $this->decider
                 ]
             )
             ->setMethods([])
@@ -185,5 +197,29 @@ class AbstractLoginPluginTest extends TestCase
     {
         $this->bugsnag->expects(self::once())->method('notifyException')->with(new \Exception('test'))->willReturnSelf();
         TestHelper::invokeMethod($this->abstractLoginPlugin, 'notifyException', [new \Exception('test')]);
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRedirectToCartPage_ifShouldDisableRedirectCustomerToCartPageAfterTheyLogInIsFalse_willReturnFalse()
+    {
+        $this->decider->method('ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn')->willReturn(true);
+        $this->assertFalse(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
+    }
+
+    /**
+     * @test
+     */
+    public function shouldRedirectToCartPage_willReturnTrue()
+    {
+        $this->decider->method('ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn')->willReturn(false);
+        $this->customerSession->method('isLoggedIn')->willReturn(true);
+
+        $this->checkoutSession->method('hasQuote')->willReturn(true);
+        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
+        $this->quote->method('getAllVisibleItems')->willReturn([$this->quoteItem]);
+
+        $this->assertTrue(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
     }
 }
