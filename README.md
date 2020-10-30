@@ -6,7 +6,7 @@
 
 ### 1. Requirements
 
-+ **Magento 2.2.0 or greater**
++ **Magento 2.3.0 or greater**
 + **Composer PHP Dependency Manager**
 
 ### 2. Plugin installation
