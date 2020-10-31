@@ -257,4 +257,21 @@ class Credit
         $result -= $mirasvitStoreCreditShippingDiscountAmount;
         return $result;
     }
+    
+    /**
+     * Get Additional Javascript to invalidate BoltCart.
+     *
+     * @param $result
+     * @return string
+     */
+    public function getAdditionalInvalidateBoltCartJavascript($result)
+    {
+        $result .= 'var credit = customerData.get("credit")();
+                    if (credit.data_id >= boltCartDataID) {
+                        invalidateBoltCart();
+                        return;
+                    }';
+        
+        return $result;
+    }
 }

@@ -551,4 +551,14 @@ function($argName) {
     }
 }";
     }
+    
+    /**
+     * Get Additional Javascript to invalidate BoltCart.
+     *
+     * @return string
+     */
+    public function getAdditionalInvalidateBoltCartJavascript()
+    {
+        return $this->eventsForThirdPartyModules->runFilter("getAdditionalInvalidateBoltCartJavascript", null);
+    }
 }

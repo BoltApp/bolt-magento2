@@ -498,6 +498,15 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        "getAdditionalInvalidateBoltCartJavascript" => [
+            "listeners" => [
+                [
+                    "module" => "Mirasvit_Credit",
+                    "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
+            ],
+        ],
     ];
 
     /**

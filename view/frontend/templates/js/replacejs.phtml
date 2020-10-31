@@ -800,6 +800,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     invalidateBoltCart();
                 }
             }
+            
+            <?= /* @noEscape */ $block->getAdditionalInvalidateBoltCartJavascript(); ?>
         }
 
         var callConfigureAfterAddingNewButton = function() {
