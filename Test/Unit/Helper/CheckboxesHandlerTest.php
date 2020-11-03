@@ -153,17 +153,17 @@ class CheckboxesHandlerTest extends TestCase
             Order::class,
             [
                 'save',
-                'addCommentToStatusHistory'
+                'addStatusHistoryComment'
             ]
         );
 
         if ($comment) {
             $commentPrefix = 'BOLTPAY INFO :: checkboxes';
-            $this->orderMock->expects($this->once())->method('addCommentToStatusHistory')
+            $this->orderMock->expects($this->once())->method('addStatusHistoryComment')
                 ->with($commentPrefix.$comment);
             $this->orderMock->expects($this->once())->method('save');
         } else {
-            $this->orderMock->expects($this->never())->method('addCommentToStatusHistory');
+            $this->orderMock->expects($this->never())->method('addStatusHistoryComment');
             $this->orderMock->expects($this->never())->method('save');
         }
         if ($needSubscribe) {

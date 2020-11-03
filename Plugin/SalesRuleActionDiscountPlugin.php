@@ -29,9 +29,11 @@ class SalesRuleActionDiscountPlugin
         $this->sessionHelper = $sessionHelper;
     }
     
-    public function afterCalculate(\Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount $subject,
-                                   $result, $rule, $item, $qty)
+    public function aroundCalculate(\Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount $subject,
+                                    callable $proceed, $rule, $item, $qty)
     {
+        $result = $proceed($rule, $item, $qty);
+
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
         // If the sale rule has no coupon, its discount amount can not be retrieved directly,

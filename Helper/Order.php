@@ -1899,7 +1899,7 @@ class Order extends AbstractHelper
             case self::TS_PARTIAL_VOIDED:
                 $authorizationTransaction = $payment->getAuthorizationTransaction();
                 $authorizationTransaction->closeAuthorization();
-                $order->addCommentToStatusHistory($this->getVoidMessage($payment));
+                $order->addStatusHistoryComment($this->getVoidMessage($payment));
                 $order->save();
                 return;
 
