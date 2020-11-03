@@ -446,7 +446,6 @@ class OrderTest extends TestCase
                 'getTotalPaid',
                 'setIsVisibleOnFront',
                 'getTotalDue',
-                'addCommentToStatusHistory',
                 'setTaxAmount',
                 'setBaseGrandTotal',
                 'setGrandTotal',
@@ -3705,7 +3704,7 @@ class OrderTest extends TestCase
         $paymentMock->expects(self::once())->method('getAuthorizationTransaction')->willReturnSelf();
         $paymentMock->expects(self::once())->method('closeAuthorization')->willReturnSelf();
         $this->currentMock->expects(self::once())->method('getVoidMessage')->with($paymentMock)->willReturn('test');
-        $this->orderMock->expects(self::once())->method('addCommentToStatusHistory')->with('test');
+        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')->with('test');
         $this->orderMock->expects(self::once())->method('save');
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
     }
