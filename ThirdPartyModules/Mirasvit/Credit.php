@@ -30,6 +30,8 @@ use Magento\Framework\Event\Observer;
 
 class Credit
 {
+    const MIRASVIT_STORECREDIT = 'mirasvitstorecredit';
+    
     /**
      * @var State
      */
@@ -116,6 +118,7 @@ class Credit
     
                 $discounts[] = [
                     'description'       => 'Store Credit',
+                    'reference'         => self::MIRASVIT_STORECREDIT,
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
@@ -256,5 +259,66 @@ class Credit
         $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitStoreCreditShippingDiscountAmount(0);
         $result -= $mirasvitStoreCreditShippingDiscountAmount;
         return $result;
+    }
+    
+    /**
+     * Return code if the quote has Mirasvit store credits.
+     * 
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::MIRASVIT_STORECREDIT && $quote->getCreditAmountUsed() > 0) {
+            $result[] = $couponCode;
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove Mirasvit store credits from the quote.
+     *
+     * @param $mirasvitStoreCreditHelper
+     * @param $mirasvitStoreCreditCalculationService
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $mirasvitStoreCreditHelper,
+        $mirasvitStoreCreditCalculationService,
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
+        $this->mirasvitStoreCreditCalculationService = $mirasvitStoreCreditCalculationService;
+        
+        try {
+            if ($couponCode == self::MIRASVIT_STORECREDIT
+                && $quote->getCreditAmountUsed() > 0
+                && $this->getMirasvitStoreCreditUsedAmount($quote) > 0) {
+                $quote->setUseCredit(\Mirasvit\Credit\Model\Config::USE_CREDIT_NO)
+                    ->setBaseCreditAmountUsed(0)
+                    ->setCreditAmountUsed(0)
+                    ->setManualUsedCredit(0)
+                    ->collectTotals()
+                    ->save();
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
 }
