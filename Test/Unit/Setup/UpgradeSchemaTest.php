@@ -171,6 +171,16 @@ class UpgradeSchemaTest extends TestCase
                 ],
             ],
             [
+                'sales_order',
+                'bolt_failed_payment',
+                [
+                    'type' => Table::TYPE_BOOLEAN,
+                    'nullable' => false,
+                    'default' => false,
+                    'comment' => 'Is Bolt Failed Payment'
+                ],
+            ],
+            [
                 $quoteTable,
                 'bolt_dispatched',
                 [

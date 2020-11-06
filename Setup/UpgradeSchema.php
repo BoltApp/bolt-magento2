@@ -88,6 +88,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
 
         $setup->getConnection()->addColumn(
+            $setup->getTable('sales_order'),
+            'bolt_failed_payment',
+            [
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                'nullable' => false,
+                'default'  => false,
+                'comment'  => 'Is Bolt Failed Payment'
+            ]
+        );
+
+        $setup->getConnection()->addColumn(
             $setup->getTable('quote'),
             'bolt_dispatched',
             [

@@ -124,6 +124,7 @@ class OrderManagementTest extends TestCase
             [
                 'saveUpdateOrder',
                 'getStoreIdByQuoteId',
+                'cancelFailedPaymentOrder',
                 'tryDeclinedPaymentCancelation',
                 'deleteOrderByIncrementId',
                 'saveCustomerCreditCard',
@@ -141,7 +142,11 @@ class OrderManagementTest extends TestCase
         $this->quoteMock = $this->createMock(Quote::class);
         $this->decider = $this->createPartialMock(
             Decider::class,
-            ['isIgnoreHookForInvoiceCreationEnabled','isIgnoreHookForCreditMemoCreationEnabled']
+            [
+                'isIgnoreHookForInvoiceCreationEnabled',
+                'isIgnoreHookForCreditMemoCreationEnabled',
+                'isCancelFailedPaymentOrderInstadOfDeleting'
+            ]
         );
 
         $this->order->expects(self::any())->method('getData')
@@ -356,21 +361,34 @@ class OrderManagementTest extends TestCase
     /**
      * @test
      * @depends manage_common
+     * @dataProvider isCancelFailedPaymentOrderInstadOfDeletingProvider
      * @covers ::manage
      * @covers ::saveUpdateOrder
+     * @param bool $isCancelFailedPaymentOrderInstadOfDeleting
      */
-    public function manage_failedPayment_success()
+    public function manage_failedPayment_success($isCancelFailedPaymentOrderInstadOfDeleting)
     {
         $type = "failed_payment";
 
-        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
-            ->with(self::DISPLAY_ID);
         $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
             ->willReturn($this->mockTransactionData());
+        $this->decider->method('isCancelFailedPaymentOrderInstadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInstadOfDeleting);
+        if ($isCancelFailedPaymentOrderInstadOfDeleting) {
+            $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
+                ->willReturn(self::QUOTE_ID);
+            $this->orderHelperMock->expects(static::once())->method('cancelFailedPaymentOrder')
+                ->with(self::DISPLAY_ID, self::QUOTE_ID);
+        } else {
+            $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID);
+        }
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order was deleted: ' . self::DISPLAY_ID,
+            'message' => $isCancelFailedPaymentOrderInstadOfDeleting
+                ? 'Order was canceled: ' . self::DISPLAY_ID
+                : 'Order was deleted: ' . self::DISPLAY_ID,
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('webhooks.success', 1, "webhooks.latency", self::anything());
@@ -392,8 +410,10 @@ class OrderManagementTest extends TestCase
      * @depends manage_common
      * @covers ::manage
      * @covers ::saveUpdateOrder
+     * @dataProvider isCancelFailedPaymentOrderInstadOfDeletingProvider
+     * @param bool $isCancelFailedPaymentOrderInstadOfDeleting
      */
-    public function manage_failedPayment_exception()
+    public function manage_failedPayment_exception($isCancelFailedPaymentOrderInstadOfDeleting)
     {
         $type = "failed_payment";
         $exception = new BoltException(
@@ -408,9 +428,11 @@ class OrderManagementTest extends TestCase
             null,
             CreateOrder::E_BOLT_GENERAL_ERROR
         );
+        $this->decider->method('isCancelFailedPaymentOrderInstadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInstadOfDeleting);
+        $this->orderHelperMock->expects(self::once())->method($isCancelFailedPaymentOrderInstadOfDeleting ? 'cancelFailedPaymentOrder' : 'deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID)->willThrowException($exception);
 
-        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
-            ->with(self::DISPLAY_ID)->willThrowException($exception);
         $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
             ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
@@ -441,19 +463,26 @@ class OrderManagementTest extends TestCase
      * @depends manage_common
      * @covers ::manage
      * @covers ::saveUpdateOrder
+     * @dataProvider isCancelFailedPaymentOrderInstadOfDeletingProvider
+     * @param bool $isCancelFailedPaymentOrderInstadOfDeleting
      */
-    public function manage_failed_success()
+    public function manage_failed_success($isCancelFailedPaymentOrderInstadOfDeleting)
     {
         $type = "failed";
 
-        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
-            ->with(self::DISPLAY_ID);
+        $this->decider->method('isCancelFailedPaymentOrderInstadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInstadOfDeleting);
+        $this->orderHelperMock->expects($isCancelFailedPaymentOrderInstadOfDeleting ? self::never() : self::once())
+                ->method('deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID);
         $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
             ->willReturn($this->mockTransactionData());
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'success',
-            'message' => 'Order was deleted: ' . self::DISPLAY_ID,
+            'message' => $isCancelFailedPaymentOrderInstadOfDeleting
+                ? 'Order was canceled: ' . self::DISPLAY_ID
+                : 'Order was deleted: ' . self::DISPLAY_ID,
         ]));
         $this->metricsClient->expects(self::once())->method('processMetric')
             ->with('webhooks.success', 1, "webhooks.latency", self::anything());
@@ -475,8 +504,10 @@ class OrderManagementTest extends TestCase
      * @depends manage_common
      * @covers ::manage
      * @covers ::saveUpdateOrder
+     * @dataProvider isCancelFailedPaymentOrderInstadOfDeletingProvider
+     * @param bool $isCancelFailedPaymentOrderInstadOfDeleting
      */
-    public function manage_failed_exception()
+    public function manage_failed_exception($isCancelFailedPaymentOrderInstadOfDeleting)
     {
         $type = "failed";
         $exception = new BoltException(
@@ -497,8 +528,12 @@ class OrderManagementTest extends TestCase
         $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
         ->willReturn(self::QUOTE_ID);
 
-        $this->orderHelperMock->expects(self::once())->method('deleteOrderByIncrementId')
-            ->with(self::DISPLAY_ID)->willThrowException($exception);
+        $this->decider->method('isCancelFailedPaymentOrderInstadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInstadOfDeleting);
+
+        $this->orderHelperMock->expects(self::once())->method(
+            $isCancelFailedPaymentOrderInstadOfDeleting ? 'cancelFailedPaymentOrder' : 'deleteOrderByIncrementId'
+        )->with(self::DISPLAY_ID, self::QUOTE_ID)->willThrowException($exception);
         $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
         $this->response->expects(self::once())->method('setBody')->with(json_encode([
             'status' => 'failure',
@@ -522,7 +557,18 @@ class OrderManagementTest extends TestCase
         );
     }
 
-
+    /**
+     * Data provider for tests that depend on isCancelFailedPaymentOrderInstadOfDeleting feature switch
+     *
+     * @return array
+     */
+    public function isCancelFailedPaymentOrderInstadOfDeletingProvider()
+    {
+        return [
+            ['isCancelFailedPaymentOrderInstadOfDeleting' => false],
+            ['isCancelFailedPaymentOrderInstadOfDeleting' => true],
+        ];
+    }
 
     /**
      * @test

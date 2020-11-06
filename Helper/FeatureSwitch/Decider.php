@@ -273,4 +273,9 @@ class Decider extends AbstractHelper
     public function ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn() {
         return $this->isSwitchEnabled(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN);
     }
+
+    public function isCancelFailedPaymentOrderInstadOfDeleting()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING);
+    }
 }
