@@ -70,6 +70,7 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 + Scroll down to the `URL Configurations` section
 + Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`
 + Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods`
++ Set **Create Order** URL to: `[store_url]/rest/V1/bolt/boltpay/order/create`
 
 # Success!
 Your Bolt Payment Plugin is now installed and configured.
