@@ -76,7 +76,7 @@ class CheckboxesHandler extends AbstractHelper
             $comment .= '<br>' . $checkbox['text'] . ': ' . ($checkbox['value'] ? 'Yes' : 'No');
         }
         if ($comment) {
-            $order->addCommentToStatusHistory(self::COMMENT_PREFIX_TEXT.$comment);
+            $order->addStatusHistoryComment(self::COMMENT_PREFIX_TEXT.$comment);
             $order->save();
         }
         if ($needSubscribe) {

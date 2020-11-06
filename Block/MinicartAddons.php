@@ -15,24 +15,21 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\ViewModel;
+namespace Bolt\Boltpay\Block;
+
+use Magento\Framework\View\Element\Template;
 
 /**
- * MinicartAddons view model
+ * MinicartAddons Block
  *
- * @package Bolt\Boltpay\ViewModel
+ * @package \Bolt\Boltpay\Block\MinicartAddons
  */
-class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentInterface
+class MinicartAddons extends Template
 {
     /**
      * @var \Bolt\Boltpay\Helper\Config instance of the Bolt configuration helper
      */
     public $configHelper;
-
-    /**
-     * @var \Magento\Framework\Serialize\SerializerInterface JSON serializer instance
-     */
-    private $serializer;
 
     /**
      * @var \Magento\Framework\App\Http\Context request context data
@@ -42,64 +39,66 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
     /**
      * @var array layout updates that need to be applied to minicart Ui component layout
      */
-    private $_layout;
+    private $_miniCartLayout;
 
     /**
      * MinicartAddons constructor.
-     *
-     * @param \Magento\Framework\Serialize\SerializerInterface $serializer JSON serializer instance
-     * @param \Magento\Framework\App\Http\Context              $httpContext request context data
-     * @param \Bolt\Boltpay\Helper\Config                      $config instance of the Bolt configuration helper
+     * @param Template\Context $context
+     * @param \Magento\Framework\App\Http\Context $httpContext
+     * @param \Bolt\Boltpay\Helper\Config $config
+     * @param array $data
      */
     public function __construct(
-        \Magento\Framework\Serialize\SerializerInterface $serializer,
+        Template\Context $context,
         \Magento\Framework\App\Http\Context $httpContext,
-        \Bolt\Boltpay\Helper\Config $config
-    ) {
+        \Bolt\Boltpay\Helper\Config $config,
+        array $data = [])
+    {
         $this->configHelper = $config;
-        $this->serializer = $serializer;
         $this->httpContext = $httpContext;
+        parent::__construct($context, $data);
     }
+
 
     /**
      * Gets layout updates that need to be applied to minicart Ui component layout
      *
      * @return array minicart layout updates
      */
-    protected function getLayout()
+    protected function getMiniCartLayout()
     {
-        if ($this->_layout === null) {
-            $this->_layout = [];
-            if ($this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH)
-                && $this->configHelper->displayRewardPointsInMinicartConfig()) {
-                $this->_layout[] = [
-                    'parent'    => 'minicart_content.extra_info',
-                    'name'      => 'minicart_content.extra_info.rewards',
+        if ($this->_miniCartLayout === null) {
+            $this->_miniCartLayout = [];
+            if ($this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH) && $this->displayRewardPointsInMinicartConfig())
+            {
+                $this->_miniCartLayout[] = [
+                    'parent' => 'minicart_content.extra_info',
+                    'name' => 'minicart_content.extra_info.rewards',
                     'component' => 'Magento_Reward/js/view/payment/reward',
-                    'config'    => [],
+                    'config' => [],
                 ];
-                $this->_layout[] = [
-                    'parent'    => 'minicart_content.extra_info',
-                    'name'      => 'minicart_content.extra_info.rewards_total',
+                $this->_miniCartLayout[] = [
+                    'parent' => 'minicart_content.extra_info',
+                    'name' => 'minicart_content.extra_info.rewards_total',
                     'component' => 'Magento_Reward/js/view/cart/reward',
-                    'config'    => [
+                    'config' => [
                         'template' => 'Magento_Reward/cart/reward',
-                        'title'    => 'Reward Points',
+                        'title' => 'Reward Points',
                     ],
                 ];
             }
         }
-        return $this->_layout;
+        return $this->_miniCartLayout;
     }
 
     /**
      * Gets layout updates that need to be applied to minicart Ui component layout in JSON
      *
-     * @return string JSON minicart layout updates
+     * @return false|string JSON minicart layout updates
      */
     public function getLayoutJSON()
     {
-        return $this->serializer->serialize($this->getLayout());
+        return json_encode($this->getMiniCartLayout());
     }
 
     /**
@@ -110,7 +109,13 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
      */
     public function shouldShow()
     {
-        return $this->configHelper->getMinicartSupport() && !empty($this->getLayout());
+        return $this->configHelper->getMinicartSupport() && !empty($this->getMiniCartLayout());
     }
 
+    /**
+     * @return bool
+     */
+    public function displayRewardPointsInMinicartConfig() {
+        return $this->configHelper->displayRewardPointsInMinicartConfig();
+    }
 }

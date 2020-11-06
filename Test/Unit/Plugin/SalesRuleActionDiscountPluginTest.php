@@ -46,6 +46,10 @@ class SalesRuleActionDiscountPluginTest extends TestCase
     /** @var AbstractDiscount */
     protected $subject;
 
+    protected $proceed;
+
+    protected $callback;
+
     public function setUp()
     {
         $this->subject = $this->createMock(AbstractDiscount::class);
@@ -55,6 +59,13 @@ class SalesRuleActionDiscountPluginTest extends TestCase
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts', 'setBoltCollectSaleRuleDiscounts']
         );
+        /** @var callable $callback */
+        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
+            ->setMethods(['__invoke'])->getMock();
+
+        $this->proceed = function ($rule, $item, $qty) use ($callback) {
+            return $callback($rule, $item, $qty);
+        };
         $this->plugin = (new ObjectManager($this))->getObject(
             SalesRuleActionDiscountPlugin::class,
             [
@@ -65,9 +76,9 @@ class SalesRuleActionDiscountPluginTest extends TestCase
 
     /**
      * @test
-     * @covers ::afterCalculate
+     * @covers ::aroundCalculate
      */
-    public function afterCalculate_saveSaleRuleDiscountsToCheckoutSession_sessionExists()
+    public function aroundCalculate_saveSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
         $rule = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getId'])
@@ -83,6 +94,7 @@ class SalesRuleActionDiscountPluginTest extends TestCase
         $result->expects(self::once())
             ->method('getAmount')
             ->willReturn(20.0);
+        $this->callback->expects(self::once())->method('__invoke')->with($rule, null, null)->willReturn($result);
         $boltCollectSaleRuleDiscounts = [2 => 106.0,];
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltCollectSaleRuleDiscounts')
@@ -93,15 +105,16 @@ class SalesRuleActionDiscountPluginTest extends TestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
+        $this->plugin->aroundCalculate($this->subject, $this->proceed, $rule, null, null);
     }
 
     /**
      * @test
-     * @covers ::afterCalculate
+     * @covers ::aroundCalculate
      */
-    public function afterCalculate_saveSaleRuleDiscountsToCheckoutSession_sessionNotExists()
+    public function aroundCalculate_saveSaleRuleDiscountsToCheckoutSession_sessionNotExists()
     {
+
         $rule = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getId'])
             ->disableOriginalConstructor()
@@ -109,10 +122,12 @@ class SalesRuleActionDiscountPluginTest extends TestCase
         $rule->expects(self::once())
             ->method('getId')
             ->willReturn(2);
+
         $result = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getAmount'])
             ->disableOriginalConstructor()
             ->getMock();
+        $this->callback->expects(self::once())->method('__invoke')->with($rule, null, null)->willReturn($result);
         $result->expects(self::once())
             ->method('getAmount')
             ->willReturn(20.0);
@@ -126,6 +141,6 @@ class SalesRuleActionDiscountPluginTest extends TestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterCalculate($this->subject, $result, $rule, null, null);
+        $this->plugin->aroundCalculate($this->subject, $this->proceed, $rule, null, null);
     }
 }
