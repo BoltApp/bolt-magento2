@@ -378,11 +378,14 @@ trait UpdateDiscountTrait
             return false;
         }
 
+        $description = $rule->getDescription();
+        $display = trim(__('Discount ') . ($description != '' ? $description : $couponCode));
+
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$ruleId], $quote->getQuoteCurrencyCode())),
-            'description'     => trim(__('Discount ') . $rule->getDescription()),
+            'description'     => $display,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
     
