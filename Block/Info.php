@@ -54,7 +54,10 @@ class Info extends \Magento\Payment\Block\Info
     {
         $info = $this->getInfo();
         $boltProcessor = $info->getAdditionalInformation('processor');
-        if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
+        if ($info->getAdditionalInformation('test')) {
+            $paymentTitle = "this is a test";
+        }
+        else if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
             $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
         } else {
             $paymentTitle = array_key_exists($boltProcessor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
