@@ -1721,7 +1721,8 @@ class OrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
-        $this->orderMock->method('getData')->with('bolt_failed_payment')->willReturn(false);
+	    $this->orderMock->method('getData')->with('bolt_failed_payment')->willReturn(false);
+	    $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
         $this->featureSwitches->method('isCancelFailedPaymentOrderInstadOfDeleting')->willReturn(false);
 
         $this->expectException(BoltException::class);
@@ -3617,8 +3618,8 @@ class OrderTest extends TestCase
     /**
      * Data provider for {@see updateOrderPayment_variousTxStates}
      *
-     * @return array containing 
-     * 1. stubbed transaction state from {@see \Bolt\Boltpay\Helper\Order::getTransactionState} 
+     * @return array containing
+     * 1. stubbed transaction state from {@see \Bolt\Boltpay\Helper\Order::getTransactionState}
      * 2. stubbed transaction type from current transaction
      * 3. stubbed transaction id from current transaction
      */
@@ -3672,14 +3673,14 @@ class OrderTest extends TestCase
             ],
         ];
     }
-    
+
     /**
      * @test
      * that updateOrderPayment returns null if
-     * 1. Transaction state is {@see \Bolt\Boltpay\Helper\Order::TS_CREDIT_COMPLETED} 
-     * 2. no state changed between current transaction and previous 
+     * 1. Transaction state is {@see \Bolt\Boltpay\Helper\Order::TS_CREDIT_COMPLETED}
+     * 2. no state changed between current transaction and previous
      * 3. Order is not already canceled
-     * 
+     *
      * @covers ::updateOrderPayment
      *
      * @throws LocalizedException from the tested method
@@ -4978,7 +4979,7 @@ class OrderTest extends TestCase
                 $callback($reportMock);
             }
         );
-        
+
         TestHelper::invokeMethod(
             $this->currentMock, 'adjustPriceMismatch',
             [$transaction, $this->orderMock, $quoteMock]
