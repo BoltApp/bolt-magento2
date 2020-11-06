@@ -108,7 +108,7 @@ class Order extends AbstractHelper
     const TP_VANTIV = 'vantiv';
     const TP_PAYPAL = 'paypal';
     const TP_AFTERPAY = 'afterpay';
-    const TP_METHOD_DISPLAY = [
+    const TP_MEHOD_DISPLAY = [
         'paypal' => 'PayPal',
         'afterpay' => 'Afterpay',
         'affirm' => 'Affirm',
@@ -718,6 +718,8 @@ class Order extends AbstractHelper
         }
         if (empty($payment->getCcType()) && ! empty($transaction->from_credit_card->network)) {
             $payment->setCcType($transaction->from_credit_card->network);
+        }
+        if (!emtpy($transaction->from_credit_card->token_type) && $transaction->from_credit_card->token_type == "applepay") {
         }
         $payment->save();
     }
