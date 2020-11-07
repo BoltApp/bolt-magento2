@@ -1341,7 +1341,7 @@ class Cart extends AbstractHelper
                 $unitPrice   = $item->getCalculationPrice();
                 $itemTotalAmount = $unitPrice * $item->getQty();
 
-                $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
+                $roundedTotalAmount = CurrencyUtils::toMinor($unitPrice, $currencyCode) * round($item->getQty());
 
                 // Aggregate eventual total differences if prices are stored with more than 2 decimal places
                 $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) -$roundedTotalAmount;

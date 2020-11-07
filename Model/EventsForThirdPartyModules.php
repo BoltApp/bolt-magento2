@@ -157,6 +157,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["MW\RewardPoints\Helper\Data"],
                     "boltClass" => MW_RewardPoints::class,
                 ],
+                [
+                    "module" => "Mirasvit_Credit",
+                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
+                                      "Mirasvit\Credit\Service\Calculation"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
             ]
         ],
         'beforeValidateQuoteDataForProcessNewOrder' => [
@@ -482,12 +488,17 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["MW\RewardPoints\Helper\Data"],
                     "boltClass" => MW_RewardPoints::class,
                 ],
-            ],
-            [
+                [
                     "module" => "Amasty_Rewards",
                     "checkClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                [
+                    "module" => "Mirasvit_Credit",
+                    "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
+                    "boltClass" => Mirasvit_Credit::class,
+                ],
+            ]
         ],
         'filterSkipValidateShippingForProcessNewOrder' => [
             "listeners" => [
