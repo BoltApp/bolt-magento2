@@ -485,7 +485,7 @@ class OrderTest extends TestCase
                 'isLogMissingQuoteFailedHooksEnabled',
                 'isCreatingCreditMemoFromWebHookEnabled',
                 'isIgnoreHookForInvoiceCreationEnabled',
-                'isCancelFailedPaymentOrderInstadOfDeleting'
+                'isCancelFailedPaymentOrderInsteadOfDeleting'
             ]
         );
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
@@ -1721,9 +1721,8 @@ class OrderTest extends TestCase
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
-	    $this->orderMock->method('getData')->with('bolt_failed_payment')->willReturn(false);
-	    $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $this->featureSwitches->method('isCancelFailedPaymentOrderInstadOfDeleting')->willReturn(false);
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(false);
 
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
@@ -5133,8 +5132,7 @@ class OrderTest extends TestCase
         }
         $this->eventsForThirdPartyModules->expects(static::once())->method('dispatchEvent')
             ->with("beforeDeleteOrder", $this->orderMock);
-        $this->orderMock->method('addData')->with(['bolt_failed_payment' => true, 'quote_id' => null])
-            ->willReturn(self::ORDER_ID);
+        $this->orderMock->method('addData')->with(['quote_id' => null])->willReturn(self::ORDER_ID);
         $this->orderMock->method('addCommentToStatusHistory')
             ->with(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
 

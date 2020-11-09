@@ -239,7 +239,7 @@ class OrderManagement implements OrderManagementInterface
             $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
 
             if ($type === 'failed_payment' || $type === 'failed') {
-                if ($this->decider->isCancelFailedPaymentOrderInstadOfDeleting()) {
+                if ($this->decider->isCancelFailedPaymentOrderInsteadOfDeleting()) {
                     /** @see \Bolt\Boltpay\Helper\Order::deleteOrderByIncrementId */
                     $this->orderHelper->cancelFailedPaymentOrder($display_id, $immutableQuoteId);
                     $this->setSuccessResponse('Order was canceled: ' . $display_id);

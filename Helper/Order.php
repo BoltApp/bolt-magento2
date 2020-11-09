@@ -1082,10 +1082,6 @@ class Order extends AbstractHelper
         if ($order = $this->getExistingOrder(null, $quote->getId())) {
 
             if ($order->isCanceled()) {
-                if ($this->featureSwitches->isCancelFailedPaymentOrderInstadOfDeleting()
-                    && $order->getData('bolt_failed_payment')) {
-                    return false;
-                }
                 throw new BoltException(
                     __(
                         'Order has been canceled due to the previously declined payment. Quote ID: %1 Order Increment ID %2',
@@ -2361,7 +2357,7 @@ class Order extends AbstractHelper
         }
         $this->eventsForThirdPartyModules->dispatchEvent("beforeDeleteOrder", $order);
 
-        $order->addData(['bolt_failed_payment' => true, 'quote_id' => null]);
+        $order->addData(['quote_id' => null]);
         $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
         $this->orderRepository->save($order);
     }
