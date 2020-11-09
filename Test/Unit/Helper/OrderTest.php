@@ -5131,7 +5131,7 @@ class OrderTest extends TestCase
             $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
         }
         $this->eventsForThirdPartyModules->expects(static::once())->method('dispatchEvent')
-            ->with("beforeDeleteOrder", $this->orderMock);
+            ->with("beforeFailedPaymentOrderSave", $this->orderMock);
         $this->orderMock->method('addData')->with(['quote_id' => null])->willReturn(self::ORDER_ID);
         $this->orderMock->method('addCommentToStatusHistory')
             ->with(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));

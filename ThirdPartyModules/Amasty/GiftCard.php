@@ -67,7 +67,7 @@ class GiftCard
      * @param \Amasty\GiftCard\Api\AccountRepositoryInterface              $giftcardAccountRepository
      * @param \Magento\Sales\Model\Order                                   $order
      */
-    public function beforeDeleteOrder(
+    public function beforeFailedPaymentOrderSave(
         $giftcardQuoteCollectionFactory,
         $giftcardCodeRepository,
         $giftcardAccountRepository,

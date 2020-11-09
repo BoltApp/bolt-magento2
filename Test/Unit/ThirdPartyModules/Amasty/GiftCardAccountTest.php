@@ -225,16 +225,16 @@ class GiftCardAccountTest extends TestCase
 
     /**
      * @test
-     * that beforeDeleteOrder doesn't affect any giftcards if non are applied to the order
+     * that beforeFailedPaymentOrderSave doesn't affect any giftcards if non are applied to the order
      *
-     * @covers ::beforeDeleteOrder
+     * @covers ::beforeFailedPaymentOrderSave
      */
-    public function beforeDeleteOrder_withNoGiftcardsOnOrder_doesNotRestoreBalance()
+    public function beforeFailedPaymentOrderSave_withNoGiftcardsOnOrder_doesNotRestoreBalance()
     {
         $this->giftcardOrderRepositoryMock->expects(static::once())->method('getByOrderId')
             ->with(self::ORDER_ID)->willThrowException(new NoSuchEntityException(__('Gift Card Order not found.')));
         $this->giftcardRepositoryMock->expects(static::never())->method('save');
-        $this->currentMock->beforeDeleteOrder(
+        $this->currentMock->beforeFailedPaymentOrderSave(
             $this->giftcardRepositoryMock,
             $this->giftcardOrderRepositoryMock,
             $this->orderMock
@@ -243,11 +243,11 @@ class GiftCardAccountTest extends TestCase
 
     /**
      * @test
-     * that beforeDeleteOrder doesn't affect any giftcards if non are applied to the order
+     * that beforeFailedPaymentOrderSave doesn't affect any giftcards if non are applied to the order
      *
-     * @covers ::beforeDeleteOrder
+     * @covers ::beforeFailedPaymentOrderSave
      */
-    public function beforeDeleteOrder_withGiftcardsAppliedToOrder_restoresGiftcardBalance()
+    public function beforeFailedPaymentOrderSave_withGiftcardsAppliedToOrder_restoresGiftcardBalance()
     {
         $this->giftcardOrderRepositoryMock->expects(static::once())->method('getByOrderId')
             ->with(self::ORDER_ID)->willReturn($this->giftcardOrderExtensionMock);
@@ -284,7 +284,7 @@ class GiftCardAccountTest extends TestCase
         $this->giftcardRepositoryMock->expects(static::exactly(2))->method('save')
             ->withConsecutive([$giftcard1], [$giftcard3]);
         $this->bugsnagHelperMock->expects(static::once())->method('notifyException')->with($exception);
-        $this->currentMock->beforeDeleteOrder(
+        $this->currentMock->beforeFailedPaymentOrderSave(
             $this->giftcardRepositoryMock,
             $this->giftcardOrderRepositoryMock,
             $this->orderMock

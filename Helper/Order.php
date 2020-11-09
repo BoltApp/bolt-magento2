@@ -1195,7 +1195,7 @@ class Order extends AbstractHelper
      */
     protected function deleteOrder($order)
     {
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeDeleteOrder", $order);
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
@@ -2355,7 +2355,7 @@ class Order extends AbstractHelper
             $parentQuote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeDeleteOrder", $order);
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
 
         $order->addData(['quote_id' => null]);
         $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
