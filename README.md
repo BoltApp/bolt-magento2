@@ -51,6 +51,8 @@ used for signature verification in checking the authenticity of webhook requests
 used to open the Bolt Payment Popup typically on Shopping cart and product pages
 + **Publishable Key - Payment Only**
 used to open the Bolt Payment Popup typically on checkout pages
++ **Publishable Key - Back Office**
+used to open the Bolt Payment Popup typically on the admin order creation page 
 + **Sandbox Mode**
 setting up testing vs. production execution environment
 + **Replace Button Selectors**
@@ -66,8 +68,9 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 >
 > **Sandbox**: https://merchant-sandbox.bolt.com"
 
-+ Navigate to `Settings` > `Keys and URLs`
-+ Scroll down to the `URL Configurations` section
++ Navigate to `Developers`
++ Click on the `API` tab
++ Scroll down to the `Merchant API` section
 + Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`
 + Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods`
 + Set **Create Order** URL to: `[store_url]/rest/V1/bolt/boltpay/order/create`
