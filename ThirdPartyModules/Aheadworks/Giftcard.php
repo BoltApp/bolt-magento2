@@ -34,7 +34,7 @@ class Giftcard
      * @var Bugsnag
      */
     private $bugsnagHelper;
-    
+
     /**
      * @var Discount
      */
@@ -81,7 +81,7 @@ class Giftcard
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -151,7 +151,7 @@ class Giftcard
             return $result;
         }
     }
-    
+
     /**
      * @param $result
      * @param $aheadworksGiftcardCartService
@@ -169,17 +169,17 @@ class Giftcard
                 // try removing the gift card before adding it
                 $aheadworksGiftcardCartService->remove($quote->getId(), $couponCode, false);
             } catch (\Exception $e) {
-                
+
             }
-            
+
             $aheadworksGiftcardCartService->set($quote->getId(), $couponCode, false);
-          
+
             $result = true;
         }
 
         return $result;
     }
-    
+
     /**
      * @param $result
      * @param $aheadworksGiftcardCartService
@@ -191,7 +191,7 @@ class Giftcard
     {
         if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
             $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
-            
+
             $result = true;
         }
 
@@ -210,7 +210,7 @@ class Giftcard
      * @param \Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin $aheadworksGiftcardOrderServicePlugin
      * @param \Magento\Sales\Model\Order $order to be deleted
      */
-    public function beforeDeleteOrder($aheadworksGiftcardOrderServicePlugin, $order)
+    public function beforeFailedPaymentOrderSave($aheadworksGiftcardOrderServicePlugin, $order)
     {
         $aheadworksGiftcardOrderServicePlugin->aroundCancel(
             $this->orderService,
@@ -220,7 +220,7 @@ class Giftcard
             $order->getId()
         );
     }
-    
+
     /**
      * @param $aheadworksGiftcardOrderServicePlugin
      * @param $sourceQuote

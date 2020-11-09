@@ -58,7 +58,7 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-        "beforeDeleteOrder" => [
+        "beforeFailedPaymentOrderSave" => [
             "listeners" => [
                 'Amasty Giftcard V2' => [
                     "module"      => "Amasty_GiftCardAccount",

@@ -36,6 +36,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
@@ -247,6 +248,11 @@ class Order extends AbstractHelper
     private $transactionInfo;
 
     /**
+     * @var OrderManagementInterface
+     */
+    private $orderManagement;
+
+    /**
      * Order constructor.
      * @param Context $context
      * @param Api $apiHelper
@@ -277,6 +283,7 @@ class Order extends AbstractHelper
      * @param CreditmemoFactory $creditmemoFactory
      * @param CreditmemoManagementInterface $creditmemoManagement
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param OrderManagementInterface|null $orderManagement
      */
     public function __construct(
         Context $context,
@@ -307,7 +314,8 @@ class Order extends AbstractHelper
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
         CreditmemoManagementInterface $creditmemoManagement,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        OrderManagementInterface $orderManagement = null
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -338,6 +346,8 @@ class Order extends AbstractHelper
         $this->creditmemoFactory = $creditmemoFactory;
         $this->creditmemoManagement = $creditmemoManagement;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->orderManagement = $orderManagement
+            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
     }
 
     /**
@@ -1074,8 +1084,9 @@ class Order extends AbstractHelper
             if ($order->isCanceled()) {
                 throw new BoltException(
                     __(
-                        'Order has been canceled due to the previously declined payment. Quote ID: %1',
-                        $quote->getId()
+                        'Order has been canceled due to the previously declined payment. Quote ID: %1 Order Increment ID %2',
+                        $quote->getId(),
+                        $order->getIncrementId()
                     ),
                     null,
                     CreateOrder::E_BOLT_REJECTED_ORDER
@@ -1184,7 +1195,7 @@ class Order extends AbstractHelper
      */
     protected function deleteOrder($order)
     {
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeDeleteOrder", $order);
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
@@ -1228,6 +1239,8 @@ class Order extends AbstractHelper
 
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
             $this->cancelOrder($order);
+            $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Bolt rejection before authorization'));
+            $this->orderRepository->save($order);
         }
         return $order->getState() === OrderModel::STATE_CANCELED;
     }
@@ -2292,5 +2305,60 @@ class Order extends AbstractHelper
         $order = $this->getExistingOrder($displayId);
 
         return ($order && $order->getStoreId()) ? $order->getStoreId() : null;
+    }
+
+    /**
+     * Cancels an order while allowing its quote to be re-used, used for failed_payment webhook
+     *
+     * @param string $displayId
+     * @param string $immutableQuoteId
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    public function cancelFailedPaymentOrder($displayId, $immutableQuoteId)
+    {
+        $order = $this->getExistingOrder($displayId);
+        if (!$order || $order->getState() == OrderModel::STATE_CANCELED) {
+            return;
+        }
+        if ($order->getState() !== OrderModel::STATE_PENDING_PAYMENT) {
+            throw new BoltException(
+                __(
+                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+                    $displayId,
+                    $order->getState(),
+                    $immutableQuoteId
+                ),
+                null,
+                CreateOrder::E_BOLT_GENERAL_ERROR
+            );
+        }
+        $this->orderManagement->cancel($order->getId());
+        /** reload order because {@see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId} */
+        $order = $this->orderRepository->get($order->getId());
+
+        $parentQuoteId = $order->getQuoteId();
+        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        $this->_eventManager->dispatch(
+            'sales_model_service_quote_submit_failure',
+            [
+                'order' => $order,
+                'quote' => $parentQuote
+            ]
+        );
+
+        // reactivate session quote - the condiotion excludes PPC quotes
+        if ($parentQuoteId != $immutableQuoteId) {
+            $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
+        }
+        // reset PPC quote checkout type so it can be treated as active
+        if ($parentQuote->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE) {
+            $parentQuote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
+            $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
+        }
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
+
+        $order->addData(['quote_id' => null]);
+        $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
+        $this->orderRepository->save($order);
     }
 }

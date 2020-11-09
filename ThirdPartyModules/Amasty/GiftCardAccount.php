@@ -71,7 +71,7 @@ class GiftCardAccount
      * @param \Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository $giftcardOrderRepository
      * @param Order                                                            $order
      */
-    public function beforeDeleteOrder($giftcardRepository, $giftcardOrderRepository, $order)
+    public function beforeFailedPaymentOrderSave($giftcardRepository, $giftcardOrderRepository, $order)
     {
         try {
             $giftcardOrderExtension = $giftcardOrderRepository->getByOrderId($order->getId());

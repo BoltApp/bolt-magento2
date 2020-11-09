@@ -252,6 +252,11 @@ class OrderTest extends TestCase
     private $eventsForThirdPartyModules;
 
     /**
+     * @var \Magento\Sales\Api\OrderManagementInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $orderManagementMock;
+
+    /**
      * Setup test dependencies, called before each test
      *
      * @throws ReflectionException from initRequiredMocks and initCurrentMock methods
@@ -326,6 +331,7 @@ class OrderTest extends TestCase
                     $this->creditmemoFactory,
                     $this->creditmemoManagement,
                     $this->eventsForThirdPartyModules,
+                    $this->orderManagementMock
                 ]
             )
             ->setMethods($methods);
@@ -456,7 +462,10 @@ class OrderTest extends TestCase
                 'getCustomerId',
                 'getBillingAddress',
                 'getStoreId',
-                'getTotalRefunded'
+                'getTotalRefunded',
+                'setData',
+                'addData',
+                'getData',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -470,10 +479,19 @@ class OrderTest extends TestCase
 
         $this->context->method('getEventManager')->willReturn($this->eventManager);
         $this->resourceConnection->method('getConnection')->willReturn($this->connection);
-        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isLogMissingQuoteFailedHooksEnabled','isCreatingCreditMemoFromWebHookEnabled','isIgnoreHookForInvoiceCreationEnabled']);
+        $this->featureSwitches = $this->createPartialMock(
+            Decider::class,
+            [
+                'isLogMissingQuoteFailedHooksEnabled',
+                'isCreatingCreditMemoFromWebHookEnabled',
+                'isIgnoreHookForInvoiceCreationEnabled',
+                'isCancelFailedPaymentOrderInsteadOfDeleting'
+            ]
+        );
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
         $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $this->orderManagementMock = $this->createMock(\Magento\Sales\Api\OrderManagementInterface::class);
     }
 
     /**
@@ -1697,18 +1715,21 @@ class OrderTest extends TestCase
      *
      * @throws Exception
      */
-    public function processExistingOrder_canceledOrder()
-    {
+    public function processExistingOrder_withCanceledOrder_throwsException() {
         $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('isCanceled')->willReturn(true);
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(false);
+
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                'Order has been canceled due to the previously declined payment. Quote ID: %s',
-                self::QUOTE_ID
+                'Order has been canceled due to the previously declined payment. Quote ID: %s Order Increment ID %s',
+                self::QUOTE_ID,
+                self::INCREMENT_ID
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_REJECTED_ORDER);
@@ -2102,6 +2123,9 @@ class OrderTest extends TestCase
         $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
             ->willReturn($this->orderMock);
         $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
+        $this->orderMock->expects(static::once())->method('addCommentToStatusHistory')
+            ->with(__('BOLTPAY INFO :: Order was canceled due to Bolt rejection before authorization'));
+        $this->orderRepository->expects(static::once())->method('save')->with($this->orderMock);
 
         self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
     }
@@ -3593,8 +3617,8 @@ class OrderTest extends TestCase
     /**
      * Data provider for {@see updateOrderPayment_variousTxStates}
      *
-     * @return array containing 
-     * 1. stubbed transaction state from {@see \Bolt\Boltpay\Helper\Order::getTransactionState} 
+     * @return array containing
+     * 1. stubbed transaction state from {@see \Bolt\Boltpay\Helper\Order::getTransactionState}
      * 2. stubbed transaction type from current transaction
      * 3. stubbed transaction id from current transaction
      */
@@ -3648,14 +3672,14 @@ class OrderTest extends TestCase
             ],
         ];
     }
-    
+
     /**
      * @test
      * that updateOrderPayment returns null if
-     * 1. Transaction state is {@see \Bolt\Boltpay\Helper\Order::TS_CREDIT_COMPLETED} 
-     * 2. no state changed between current transaction and previous 
+     * 1. Transaction state is {@see \Bolt\Boltpay\Helper\Order::TS_CREDIT_COMPLETED}
+     * 2. no state changed between current transaction and previous
      * 3. Order is not already canceled
-     * 
+     *
      * @covers ::updateOrderPayment
      *
      * @throws LocalizedException from the tested method
@@ -4954,7 +4978,7 @@ class OrderTest extends TestCase
                 $callback($reportMock);
             }
         );
-        
+
         TestHelper::invokeMethod(
             $this->currentMock, 'adjustPriceMismatch',
             [$transaction, $this->orderMock, $quoteMock]
@@ -4996,5 +5020,135 @@ class OrderTest extends TestCase
             TestHelper::invokeMethod($this->currentMock, 'getExistingOrder', [self::INCREMENT_ID, self::QUOTE_ID])
         );
 
+    }
+
+    /**
+     * @test
+     * that cancelFailedPaymentOrder does not attempt to cancel if an existing order to be canceled cannot be found
+     *
+     * @covers ::cancelFailedPaymentOrder
+     */
+    public function cancelFailedPaymentOrder_ifOrderDoesNotExist_doesNotCancel()
+    {
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::DISPLAY_ID)
+            ->willReturn(false);
+        $this->orderManagementMock->expects(static::never())->method('cancel');
+        $this->orderRepository->expects(static::never())->method('save');
+        $this->currentMock->cancelFailedPaymentOrder(self::DISPLAY_ID, self::IMMUTABLE_QUOTE_ID);
+    }
+
+    /**
+     * @test
+     * that cancelFailedPaymentOrder throws an exception if order to be canceled is not in the pending payment state
+     *
+     * @covers ::cancelFailedPaymentOrder
+     *
+     * @dataProvider cancelFailedPaymentOrder_ifOrderStateIsNotPendingPaymentProvider
+     *
+     * @param string $orderState current order state
+     *
+     * @throws AlreadyExistsException from the tested method
+     */
+    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException($orderState)
+    {
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                "Order Delete Error. Order is in invalid state. Order #: %d State: %s Immutable Quote ID: %d",
+                self::DISPLAY_ID,
+                $orderState,
+                self::IMMUTABLE_QUOTE_ID
+            )
+        );
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::DISPLAY_ID)
+            ->willReturn($this->orderMock);
+        $this->orderMock->expects(static::atLeastOnce())->method('getState')->willReturn($orderState);
+        $this->orderManagementMock->expects(static::never())->method('cancel');
+        $this->orderRepository->expects(static::never())->method('save');
+        $this->currentMock->cancelFailedPaymentOrder(self::DISPLAY_ID, self::IMMUTABLE_QUOTE_ID);
+    }
+
+    /**
+     * Data provider for {@see cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException}
+     *
+     * @return array[] containing non-pending payment order statuses
+     */
+    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPaymentProvider()
+    {
+        return [
+            ['orderState' => OrderModel::STATE_CLOSED],
+            ['orderState' => OrderModel::STATE_HOLDED],
+            ['orderState' => OrderModel::STATE_NEW],
+            ['orderState' => OrderModel::STATE_PAYMENT_REVIEW],
+            ['orderState' => OrderModel::STATE_PROCESSING],
+        ];
+    }
+
+    /**
+     * @test
+     * that cancelFailedPaymentOrder does not attempt to cancel if an existing order to be canceled cannot be found
+     *
+     * @covers ::cancelFailedPaymentOrder
+     *
+     * @dataProvider cancelFailedPaymentOrderProvider
+     *
+     * @param bool $isPPC
+     *
+     * @throws AlreadyExistsException
+     */
+    public function cancelFailedPaymentOrder_withVariousOrderTypes_cancelsOrder($isPPC)
+    {
+        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::DISPLAY_ID)
+            ->willReturn($this->orderMock);
+        $this->orderManagementMock->expects(static::once())->method('cancel')->with(self::ORDER_ID);
+        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
+        $this->orderMock->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
+        $this->orderMock->method('getQuoteId')->willReturn($isPPC ? self::IMMUTABLE_QUOTE_ID : self::QUOTE_ID);
+        $this->orderRepository->expects(static::once())->method('get')->with(self::ORDER_ID)
+            ->willReturn($this->orderMock);
+        $this->cartHelper->expects(static::once())->method('getQuoteById')
+            ->with($isPPC ? self::IMMUTABLE_QUOTE_ID : self::QUOTE_ID)
+            ->willReturn($this->quoteMock);
+        $this->eventManager->expects(static::once())->method('dispatch')->with(
+            'sales_model_service_quote_submit_failure',
+            [
+                'order' => $this->orderMock,
+                'quote' => $this->quoteMock,
+            ]
+        );
+        if ($isPPC) {
+            $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
+                ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+            $this->quoteMock->expects(static::once())->method('setBoltCheckoutType')
+                ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
+            $this->quoteMock->expects(static::once())->method('setIsActive')->with(false)->willReturnSelf();
+            $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
+        } else {
+            $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
+                ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP);
+            $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
+            $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
+        }
+        $this->eventsForThirdPartyModules->expects(static::once())->method('dispatchEvent')
+            ->with("beforeFailedPaymentOrderSave", $this->orderMock);
+        $this->orderMock->method('addData')->with(['quote_id' => null])->willReturn(self::ORDER_ID);
+        $this->orderMock->method('addCommentToStatusHistory')
+            ->with(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
+
+        $this->orderRepository->expects(static::once())->method('save');
+        $this->currentMock->cancelFailedPaymentOrder(self::DISPLAY_ID, self::IMMUTABLE_QUOTE_ID);
+    }
+
+    /**
+     * Data provider for {@see cancelFailedPaymentOrder_withVariousOrderTypes_cancelsOrder}
+     *
+     * @return array
+     */
+    public function cancelFailedPaymentOrderProvider(){
+        return [
+            ['isPPC' => true],
+            ['isPPC' => false],
+        ];
     }
 }
