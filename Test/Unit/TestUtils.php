@@ -7,14 +7,26 @@ use Magento\Catalog\Model\Product\Type;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Sales\Model\Order\Address as OrderAddress;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Sales\Api\OrderRepositoryInterface;
 
 class TestUtils {
 
+    /**
+     * @param $quote
+     */
     public static function setQuoteToSession($quote)
     {
         Bootstrap::getObjectManager()->get(SessionManagerInterface::class)->setQuote($quote);
     }
 
+    /**
+     * @return mixed
+     */
     public static function createQuote()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -23,11 +35,19 @@ class TestUtils {
         return $quote;
     }
 
+    /**
+     * @param $quote_id
+     * @return mixed
+     */
     public static function getQuoteById($quote_id)
     {
         return Bootstrap::getObjectManager()->get(CartRepositoryInterface::class)->get($quote_id);
     }
 
+    /**
+     * @param $quote
+     * @return mixed
+     */
     public static function createProduct($quote)
     {
         $quote = self::createQuote();
@@ -37,8 +57,98 @@ class TestUtils {
         return $quote;
     }
 
+    /**
+     * @param array $data
+     * @return Order
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public static function createDumpyOrder($data = [])
+    {
+        $objectManager = Bootstrap::getObjectManager();
+
+        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        if ($productCollection->getSize() > 0) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
+            $product =  $productCollection->getFirstItem();
+        }else {
+            $product = self::createSimpleProduct();
+        }
+
+        $addressData = [
+            'firstname' => 'John',
+            'lastname' => 'McCombs',
+            'street' => "4553 Annalee Way",
+            'city' => 'Knoxville',
+            'postcode' => '37921',
+            'telephone' => '111111111',
+            'country_id' => 'US',
+            'region_id' => '56'
+        ];
+
+        $billingAddress = $objectManager->create(OrderAddress::class, ['data' => $addressData]);
+        $billingAddress->setAddressType('billing');
+
+        $shippingAddress = clone $billingAddress;
+        $shippingAddress->setId(null)->setAddressType('shipping');
+
+        /** @var Payment $payment */
+        $payment = $objectManager->create(Payment::class);
+        $payment->setMethod('boltpay')
+            ->setAdditionalInformation('last_trans_id', '11122')
+            ->setAdditionalInformation(
+                'metadata',
+                [
+                    'type' => 'free',
+                    'fraudulent' => false,
+                ]
+            );
+
+        /** @var OrderItem $orderItem */
+        $orderItem = $objectManager->create(OrderItem::class);
+        $orderItem->setProductId($product->getId())
+            ->setQtyOrdered(2)
+            ->setBasePrice($product->getPrice())
+            ->setPrice($product->getPrice())
+            ->setRowTotal($product->getPrice())
+            ->setProductType('simple')
+            ->setName($product->getName());
+
+        /** @var Order $order */
+        $order = $objectManager->create(Order::class);
+        $order->setIncrementId('100000001')
+            ->setState(Order::STATE_PENDING_PAYMENT)
+            ->setStatus($order->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT))
+            ->setSubtotal(100)
+            ->setGrandTotal(100)
+            ->setBaseSubtotal(100)
+            ->setBaseGrandTotal(100)
+            ->setCustomerIsGuest(true)
+            ->setCustomerEmail('johnmc@bolt.com')
+            ->setBillingAddress($billingAddress)
+            ->setShippingAddress($shippingAddress)
+            ->setStoreId($objectManager->get(StoreManagerInterface::class)->getStore()->getId())
+            ->addItem($orderItem)
+            ->setPayment($payment);
+
+        if ($data){
+            foreach ($data as $key => $value) {
+                $order->setData($key, $value);
+            }
+        }
+
+        /** @var OrderRepositoryInterface $orderRepository */
+        $orderRepository = $objectManager->create(OrderRepositoryInterface::class);
+        $orderRepository->save($order);
+        return $order;
+    }
+
+    /**
+     * @return mixed
+     */
     public static function createSimpleProduct()
     {
+
         $product = Bootstrap::getObjectManager()->create(Product::class);
         $product->setTypeId(\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE)
             ->setAttributeSetId(4)
@@ -68,11 +178,18 @@ class TestUtils {
         }
     }
 
+    /**
+     * @return bool
+     */
     private static function isMagentoIntegrationMode()
     {
         return class_exists('\Magento\TestFramework\Helper\Bootstrap');
     }
 
+    /**
+     * @param $objects
+     * @throws \Exception
+     */
     public static function cleanupSharedFixtures($objects)
     {
         // don't need to clean up on unit test mode

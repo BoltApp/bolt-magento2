@@ -90,11 +90,14 @@ use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Api\CreditmemoManagementInterface;
 use Magento\Sales\Model\Order\Creditmemo;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
  */
-class OrderTest extends TestCase
+class OrderTest extends BoltTestCase
 {
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
@@ -2193,107 +2196,52 @@ class OrderTest extends TestCase
      *
      * @throws Exception
      */
-    public function deleteOrderByIncrementId_noError()
+    public function deleteOrderByIncrementId_ifParentQuoteIdIsNotEqualToImmutableQuoteId_reactivateSessionQuote()
     {
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $this->quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
+        $this->skipTestInUnitTestsFlow();
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+        $incrementId = $order->getIncrementId();
+
+        $registry->register('isSecureArea', true);
+        Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, self::IMMUTABLE_QUOTE_ID);
+        $registry->unregister('isSecureArea');
+
+        $quote = TestUtils::getQuoteById($quote->getId());
+
+        self::assertEquals('1', $quote->getData('is_active'));
     }
 
     /**
      * @test
-     * that deleteOrderByIncrementId resets PPC quote checkout type when following conditions is met:
-     * 1. has existing order
-     * 2. order state is not equals to the OrderModel::STATE_PENDING_PAYMENT
-     * 3. parent quote id equals to the immutable quote id
-     * 4. Bolt checkout type equals to the CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE
-     *
-     * @covers ::deleteOrderByIncrementId
-     *
-     * @throws ReflectionException if unable to create Quote partial mock
-     * @throws Exception from the tested method
+     * @throws LocalizedException
      */
-    public function deleteOrderByIncrementId_whenBoltCheckoutTypeIsComplete_resetsPPCQuoteCheckoutType()
+    public function deleteOrderByIncrementId_ifBoltCheckoutTypeIsComplete_changesCheckoutTypeToPPC()
     {
-        $quoteMock = $this->createPartialMock(
-            Quote::class,
-            ['getBoltCheckoutType', 'setBoltCheckoutType', 'setIsActive']
-        );
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $quoteMock->expects(static::once())->method('setIsActive')->with(false)->WillReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
-    }
+        $this->skipTestInUnitTestsFlow();
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
 
-    /**
-     * @test
-     * that deleteOrderByIncrementId sets deleted order's parent quote Bolt checkout type to PPC and active status false
-     * if checkout type is PPC complete
-     *
-     * @covers ::deleteOrderByIncrementId
-     *
-     * @throws Exception from the tested method
-     */
-    public function deleteOrderByIncrementId_ifCheckoutTYpePPCComplete_changesCheckoutTypeToPPC()
-    {
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $this->quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false)->willReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $this->quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+        $incrementId = $order->getIncrementId();
+
+        $registry->register('isSecureArea', true);
+        Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, $quote->getId());
+        $registry->unregister('isSecureArea');
+
+        $quote = TestUtils::getQuoteById($quote->getId());
+
+        self::assertEquals(CartHelper::BOLT_CHECKOUT_TYPE_PPC, $quote->getBoltCheckoutType());
     }
 
     /**

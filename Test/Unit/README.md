@@ -39,9 +39,9 @@ Create dedicated database for running the test
 `CREATE DATABASE magento_integration_tests;`
 `GRANT ALL ON magento_integration_tests.* TO 'magento2_test_user'@'localhost' IDENTIFIED BY '<your-password>';`
 
-Copy configruration file template `mage2ce/dev/tests/integration/etc/install-config-mysql.php.dist` to 'install-config-mysql.php' in the same directory and add your test database access credentials.
+Copy configuration file template `mage2ce/dev/tests/integration/etc/install-config-mysql.php.dist` to 'install-config-mysql.php' in the same directory and add your test database access credentials.
 
-Copy xml congiguration file
+Copy xml configuration file
 
 `cp app/code/Bolt/Boltpay/Test/Unit/integration_phpunit.xml dev/tests/integration/bolt_phpunit.xml`
 
