@@ -194,7 +194,7 @@ class Cart extends AbstractHelper
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
-    
+
     /**
      * @var RuleRepository
      */
@@ -348,7 +348,7 @@ class Cart extends AbstractHelper
         $this->totalsCollector = $totalsCollector;
         $this->quoteRepository = $quoteRepository;
         $this->orderRepository = $orderRepository;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder; 
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
@@ -1171,7 +1171,7 @@ class Cart extends AbstractHelper
 
         // If Amasty Reward Points extension is present clone applied reward points
         $this->discountHelper->setAmastyRewardPoints($source, $destination);
-        
+
         // Third-party plugins can replicate required data.
         $this->eventsForThirdPartyModules->dispatchEvent("replicateQuoteData", $source, $destination);
     }
@@ -2266,7 +2266,30 @@ class Cart extends AbstractHelper
      */
     public function createCartByRequest($request)
     {
-        return $this->createCart($request['items'], $request['metadata']);
+    	// TODO: extract getting store id into a separate method
+    	$options = json_decode($request['items'][0]['options'], 1);
+	    $storeId = $options['storeId'];
+
+	    // try returning from cache
+	    if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
+		    $cacheIdentifier = hash('md5', json_encode($request));
+		    if ($cart = $this->loadFromCache($cacheIdentifier)) {
+			    return $cart;
+		    }
+	    }
+
+	    $cart = $this->createCart($request['items'], $request['metadata']);
+
+	    // cache and return
+	    if ($isBoltOrderCachingEnabled) {
+		    $this->saveToCache(
+			    $cart,
+			    $cacheIdentifier,
+			    [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
+			    self::BOLT_ORDER_CACHE_LIFETIME
+		    );
+	    }
+	    return $cart;
     }
 
     /**
@@ -2436,7 +2459,7 @@ class Cart extends AbstractHelper
             return $result;
         }
     }
-    
+
     /**
      * Reset checkout session
      *
@@ -2446,7 +2469,7 @@ class Cart extends AbstractHelper
     {
         $this->checkoutSession = $checkoutSession;
     }
-    
+
     /**
      * Report to Bugsnag if the discount code is empty.
      *

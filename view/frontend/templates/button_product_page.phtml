@@ -60,6 +60,10 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             // the last request to be aborted before new one is sent.
             var save_request;
 
+            // form_key cookie holder, unique per browser session
+            // essential in generating unique cache identifier for caching the quote
+            var formKey = $.mage.cookies.get('form_key');
+
             var callbacks = {
 
                 close: function () {
@@ -169,6 +173,9 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
+                    if (!formKey) {
+                        return false;
+                    }
                     return true;
                 },
 
@@ -236,6 +243,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
+                options['form_key'] = formKey;
 
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
@@ -277,6 +285,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             };
 
             setupProductPage();
+
             $('#qty').on('change', setupProductPage);
             $('.table-wrapper.grouped .input-text.qty').on('change', setupProductPage);
 
@@ -313,6 +322,18 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                             finalPrice && typeof finalPrice === 'object' && finalPrice.amount ? finalPrice.amount : 0;
                         itemPrice = sum(itemPrices);
                     }
+                    setupProductPage();
+                }
+            });
+
+            // Get / wait for the form_key cookie and reconfigure BoltCheckout.
+            // On full-page-cache cached pages the session (cookie) is instantiated
+            // with the first ajax response, if the magento cache was cleared before that
+            $(document).ajaxComplete(function (event, xhr, settings) {
+                if (formKey) {
+                    return;
+                }
+                if (formKey = $.mage.cookies.get('form_key')) {
                     setupProductPage();
                 }
             });
