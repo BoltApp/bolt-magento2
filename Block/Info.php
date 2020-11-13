@@ -20,6 +20,13 @@ namespace Bolt\Boltpay\Block;
 class Info extends \Magento\Payment\Block\Info
 {
     protected $_template = 'Bolt_Boltpay::info/default.phtml';
+
+    protected $logger;
+    public function __construct(\Psr\Log\LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     
     /**
      * @param null $transport
@@ -53,11 +60,12 @@ class Info extends \Magento\Payment\Block\Info
     public function displayPaymentMethodTitle()
     {
         $info = $this->getInfo();
+        // $this->logger->debug($info);
         $boltProcessor = $info->getAdditionalInformation('processor');
-        if ($info->getAdditionalInformation('test')) {
-            $paymentTitle = "this is a test";
-        }
-        else if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
+        // if ($info->getAdditionalInformation('test')) {
+        //     $paymentTitle = "this is a test";
+        // }
+        if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
             $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
         } else {
             $paymentTitle = array_key_exists($boltProcessor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
