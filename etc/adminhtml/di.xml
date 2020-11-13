@@ -29,4 +29,12 @@
     <type name="Magento\Sales\Model\AdminOrder\Create">
         <plugin name="BoltBoltpayCreatePlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin" sortOrder="1"/>
     </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider">
+        <plugin sortOrder="1"
+                name="bolt_boltpay_ui_dataprovider"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\DataProviderPlugin"/>
+    </type>
+    <type name="Magento\Ui\Component\Form\Element\Select">
+        <plugin sortOrder="1" name="bolt_boltpay_ui_form_element_select" type="Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin"/>
+    </type>
 </config>
