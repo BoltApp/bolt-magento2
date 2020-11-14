@@ -1985,7 +1985,6 @@ class Cart extends AbstractHelper
 
                             break;
                     }
-                    $diff -= CurrencyUtils::toMinorWithoutRounding($ruleDiscountAmount, $currencyCode) - $roundedAmount;
                     $totalAmount -= $roundedAmount;
                 }
             }
