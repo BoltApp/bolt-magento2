@@ -182,6 +182,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isShowTermsPaymentButton',
             'getOrderManagementSelector',
             'getAdditionalCheckoutButtonAttributes',
+            'isBoltOrderCachingEnabled',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
