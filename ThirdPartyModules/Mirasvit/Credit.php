@@ -262,6 +262,23 @@ class Credit
     }
     
     /**
+     * Get Additional Javascript to invalidate BoltCart.
+     *
+     * @param $result
+     * @return string
+     */
+    public function getAdditionalInvalidateBoltCartJavascript($result)
+    {
+        $result .= 'var credit = customerData.get("credit")();
+                    if (credit.data_id >= boltCartDataID) {
+                        invalidateBoltCart();
+                        return;
+                    }';
+        
+        return $result;
+    }
+
+    /**
      * Return code if the quote has Mirasvit store credits.
      * 
      * @param $result
