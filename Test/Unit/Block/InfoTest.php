@@ -120,7 +120,7 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getAdditionalData')->willReturn('applepay');
         $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
         $this->assertEquals(
-            'Bolt-APPLEPAY',
+            'Bolt-Applepay',
             $data
         );
     }
