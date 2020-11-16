@@ -41,13 +41,12 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
     <script>
         require([
             'jquery',
-            'underscore',
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
             'mage/validation/validation',
             'mage/cookies',
             'domReady!'
-        ], function ($, _, authenticationPopup, customerData) {
+        ], function ($, authenticationPopup, customerData) {
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
@@ -278,6 +277,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
 
                 return items;
             };
+
             var cart;
             var setupProductPage = function () {
                 cart = {
@@ -336,7 +336,8 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             /**
              * Wait for the form_key cookie and reconfigure BoltCheckout.
              * @see mage.formKey._create
+             * @see https://api.jqueryui.com/jQuery.widget/ (widgetEventPrefix)
              */
-            $('body').on('formkeycreate', setupProductPage);
+            $('body').on('formkeycreate formkey:create', setupProductPage);
         });
     </script>
