@@ -49,7 +49,7 @@ class Js extends Template
 
     /** @var array */
     private static $blockAlreadyShown;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -563,5 +563,15 @@ function($argName) {
     public function isBoltOrderCachingEnabled($storeId = null)
     {
         return $this->configHelper->isBoltOrderCachingEnabled($storeId);
+    }
+
+    /**
+     * Get Additional Javascript to invalidate BoltCart.
+     *
+     * @return string
+     */
+    public function getAdditionalInvalidateBoltCartJavascript()
+    {
+        return $this->eventsForThirdPartyModules->runFilter("getAdditionalInvalidateBoltCartJavascript", null);
     }
 }
