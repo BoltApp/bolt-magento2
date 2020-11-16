@@ -60,7 +60,7 @@ class Info extends \Magento\Payment\Block\Info
         $boltProcessor = $info->getAdditionalInformation('processor');
         if (!empty($token) && $token == "applepay")
         {
-            $paymentTitle = 'Bolt-APPLEPAY';
+            $paymentTitle = 'Bolt-' . strtoupper($token);
         }
         else if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
             $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());

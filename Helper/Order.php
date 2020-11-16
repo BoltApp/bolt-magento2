@@ -730,7 +730,7 @@ class Order extends AbstractHelper
             $payment->setCcType($transaction->from_credit_card->network);
         }
         if (!empty($transaction->from_credit_card->token_type) && $transaction->from_credit_card->token_type == "applepay") {
-            $payment->setAdditionalData("applepay");
+            $payment->setAdditionalData($transaction->from_credit_card->token_type);
         }
         $payment->save();
     }
