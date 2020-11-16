@@ -20,8 +20,6 @@ namespace Bolt\Boltpay\Block;
 class Info extends \Magento\Payment\Block\Info
 {
     protected $_template = 'Bolt_Boltpay::info/default.phtml';
-
-
     
     /**
      * @param null $transport
