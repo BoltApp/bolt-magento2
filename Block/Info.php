@@ -60,14 +60,14 @@ class Info extends \Magento\Payment\Block\Info
         //processors after the vantiv check then the display would be wrong.
         if (!empty($token) && $token == "applepay")
         {
-            $paymentTitle = 'Bolt-' . strtoupper($token);
+            $paymentTitle = 'Bolt-' . ucfirst($token);
         }
         else if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
             $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
         } else {
             $paymentTitle = array_key_exists($boltProcessor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
                 ? 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[ $boltProcessor ]
-                : 'Bolt-' . strtoupper($boltProcessor);
+                : 'Bolt-' . ucfirst($boltProcessor);
         }
         
         return $paymentTitle;
