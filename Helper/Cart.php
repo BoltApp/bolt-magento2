@@ -630,9 +630,10 @@ class Cart extends AbstractHelper
         unset($cart['display_id']);
         $identifier  = json_encode($cart);
         // extend cache identifier with custom address fields
-        $immutableQuote = $this->getLastImmutableQuote();
-        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
-        $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
+        if ($immutableQuote = $this->getLastImmutableQuote()) {
+            $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
+            $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
+        }
 
         return hash('md5', $identifier);
     }
@@ -2266,30 +2267,29 @@ class Cart extends AbstractHelper
      */
     public function createCartByRequest($request)
     {
-    	// TODO: extract getting store id into a separate method
-    	$options = json_decode($request['items'][0]['options'], 1);
-	    $storeId = $options['storeId'];
+        $options = json_decode($request['items'][0]['options'], true);
+        $storeId = $options['storeId'];
 
-	    // try returning from cache
-	    if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
-		    $cacheIdentifier = hash('md5', json_encode($request));
-		    if ($cart = $this->loadFromCache($cacheIdentifier)) {
-			    return $cart;
-		    }
-	    }
+        // try returning from cache
+        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
+            $cacheIdentifier = $this->getCartCacheIdentifier($request);
+            if ($cart = $this->loadFromCache($cacheIdentifier)) {
+                return $cart;
+            }
+        }
 
-	    $cart = $this->createCart($request['items'], $request['metadata']);
+        $cart = $this->createCart($request['items'], $request['metadata']);
 
-	    // cache and return
-	    if ($isBoltOrderCachingEnabled) {
-		    $this->saveToCache(
-			    $cart,
-			    $cacheIdentifier,
-			    [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
-			    self::BOLT_ORDER_CACHE_LIFETIME
-		    );
-	    }
-	    return $cart;
+        // cache and return
+        if ($isBoltOrderCachingEnabled) {
+            $this->saveToCache(
+                $cart,
+                $cacheIdentifier,
+                [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
+                self::BOLT_ORDER_CACHE_LIFETIME
+            );
+        }
+        return $cart;
     }
 
     /**

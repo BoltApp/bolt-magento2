@@ -123,8 +123,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $this->setShipment($cart['shipments'][0], $parentQuote);
             }
 
-            // TODO : cache issue https://github.com/BoltApp/bolt-magento2/pull/833
-
             // Add discounts
             if( !empty($discount_codes_to_add) ){
                 // Get the coupon code
@@ -221,7 +219,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
 
-            // TODO: not yet tested manually
 	        $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
 
             $result = $this->generateResult($immutableQuote);

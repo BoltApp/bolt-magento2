@@ -551,4 +551,17 @@ function($argName) {
     }
 }";
     }
+
+    /**
+     * Returns configuration value for Bolt Order Caching
+     * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled
+     *
+     * @param null $storeId
+     *
+     * @return bool
+     */
+    public function isBoltOrderCachingEnabled($storeId = null)
+    {
+        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
+    }
 }

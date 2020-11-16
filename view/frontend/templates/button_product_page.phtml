@@ -41,12 +41,13 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
     <script>
         require([
             'jquery',
+            'underscore',
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
             'mage/validation/validation',
             'mage/cookies',
             'domReady!'
-        ], function ($, authenticationPopup, customerData) {
+        ], function ($, _, authenticationPopup, customerData) {
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
@@ -59,10 +60,6 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             // resulting in making the success call multiple times. This variable stores
             // the last request to be aborted before new one is sent.
             var save_request;
-
-            // form_key cookie holder, unique per browser session
-            // essential in generating unique cache identifier for caching the quote
-            var formKey = $.mage.cookies.get('form_key');
 
             var callbacks = {
 
@@ -173,9 +170,19 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
-                    if (!formKey) {
+
+                    <?php if($block->isBoltOrderCachingEnabled()): ?>
+                    //if order caching is enabled cart request must contain a valid form key
+                    try {
+                        var options = cart['items'][0]['options'];
+                        if (!JSON.parse(options)['form_key']) {
+                            return false;
+                        }
+                    }
+                    catch {
                         return false;
                     }
+                    <?php endif; ?>
                     return true;
                 },
 
@@ -243,7 +250,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
-                options['form_key'] = formKey;
+                options['form_key'] = $.mage.cookies.get('form_key');
 
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
@@ -271,9 +278,9 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
 
                 return items;
             };
-
+            var cart;
             var setupProductPage = function () {
-                var cart = {
+                cart = {
                     currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
                     items: getItemsData()
                 };
@@ -326,16 +333,10 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                 }
             });
 
-            // Get / wait for the form_key cookie and reconfigure BoltCheckout.
-            // On full-page-cache cached pages the session (cookie) is instantiated
-            // with the first ajax response, if the magento cache was cleared before that
-            $(document).ajaxComplete(function (event, xhr, settings) {
-                if (formKey) {
-                    return;
-                }
-                if (formKey = $.mage.cookies.get('form_key')) {
-                    setupProductPage();
-                }
-            });
+            /**
+             * Wait for the form_key cookie and reconfigure BoltCheckout.
+             * @see mage.formKey._create
+             */
+            $('body').on('formkeycreate', setupProductPage);
         });
     </script>
