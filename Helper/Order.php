@@ -1285,7 +1285,7 @@ class Order extends AbstractHelper
             ]
         );
         $this->deleteOrder($order);
-        // reactivate session quote - the condiotion excludes PPC quotes
+        // reactivate session quote - the condition excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
         }
