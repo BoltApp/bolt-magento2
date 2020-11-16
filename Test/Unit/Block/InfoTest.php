@@ -110,4 +110,18 @@ class InfoTest extends \PHPUnit\Framework\TestCase
             $data
         );
     }
+    
+    /**
+     * @test
+     */
+    public function displayPaymentMethodTitleApplePay()
+    {
+        $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getAdditionalData')->willReturn('applepay');
+        $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
+        $this->assertEquals(
+            'Bolt-APPLEPAY',
+            $data
+        );
+    }
 }
