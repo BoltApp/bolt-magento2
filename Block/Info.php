@@ -58,6 +58,8 @@ class Info extends \Magento\Payment\Block\Info
         $token = $info->getAdditionalData();
 
         $boltProcessor = $info->getAdditionalInformation('processor');
+        //this check must be done first as applepay is not a processor. If done with the rest of the alternative
+        //processors after the vantiv check then the display would be wrong.
         if (!empty($token) && $token == "applepay")
         {
             $paymentTitle = 'Bolt-' . strtoupper($token);
