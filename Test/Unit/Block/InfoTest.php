@@ -31,7 +31,7 @@ class InfoTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp()
     {
-        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder']);
+        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder', 'getAdditionalData']);
     }
 
     /**
