@@ -31,7 +31,7 @@ class InfoTest extends \PHPUnit\Framework\TestCase
 
     protected function setUp()
     {
-        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder']);
+        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder', 'getAdditionalData']);
     }
 
     /**
@@ -107,6 +107,20 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
         $this->assertEquals(
             'Bolt-PayPal',
+            $data
+        );
+    }
+    
+    /**
+     * @test
+     */
+    public function displayPaymentMethodTitleApplePay()
+    {
+        $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getAdditionalData')->willReturn('applepay');
+        $data = TestHelper::invokeMethod($this->mock, 'displayPaymentMethodTitle', [null]);
+        $this->assertEquals(
+            'Bolt-Applepay',
             $data
         );
     }
