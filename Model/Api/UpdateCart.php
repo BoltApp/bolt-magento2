@@ -219,7 +219,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
 
-	        $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
+            $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
 
             $result = $this->generateResult($immutableQuote);
 
