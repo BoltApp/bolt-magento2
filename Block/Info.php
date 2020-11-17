@@ -53,13 +53,21 @@ class Info extends \Magento\Payment\Block\Info
     public function displayPaymentMethodTitle()
     {
         $info = $this->getInfo();
+        $token = $info->getAdditionalData();
+
         $boltProcessor = $info->getAdditionalInformation('processor');
-        if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
+        //this check must be done first as applepay is not a processor. If done with the rest of the alternative
+        //processors after the vantiv check then the display would be wrong.
+        if (!empty($token) && $token == "applepay")
+        {
+            $paymentTitle = 'Bolt-' . ucfirst($token);
+        }
+        else if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
             $paymentTitle = $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
         } else {
             $paymentTitle = array_key_exists($boltProcessor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
                 ? 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[ $boltProcessor ]
-                : 'Bolt-' . strtoupper($boltProcessor);
+                : 'Bolt-' . ucfirst($boltProcessor);
         }
         
         return $paymentTitle;
