@@ -268,19 +268,52 @@ class Rewards
                 $websiteId = $quote->getStore()->getWebsiteId();
                 $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
                 if ($rules->count()) {
+                    $totalAmount = 0;
+                    $totalPoints = 0;
+        
+                    $mockSubtotal = 999999999;
                     $pointsMoney = [0];
                     /** @var \Mirasvit\Rewards\Model\Spending\Rule $rule */
                     foreach ($rules as $rule) {
+                        $rule->afterLoad();
                         $tier = $rule->getTier($customer);
-                        $spendPoints = $tier->getSpendPoints(); 
-                        if ($spendPoints <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+                      
+                        $rulePointsNumber = $balancePoints;
+        
+                        if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_PARTIAL) {
+                            $stepsSecond = round($rulePointsNumber / $tier->getSpendPoints(), 2, PHP_ROUND_HALF_DOWN);
+                        } else {
+                            $spendPoints = $tier->getSpendPoints();
+                            $rulePointsNumber = floor($rulePointsNumber / $spendPoints) * $spendPoints;
+                            $stepsSecond = floor($rulePointsNumber / $spendPoints);
+                        }
+        
+                        if ($rulePointsNumber < $tier->getSpendMinAmount($mockSubtotal)) {
                             continue;
                         }
-                        $pointsMoney[] = ($balancePoints / $spendPoints) * $tier->getMonetaryStep($spendAmount);  
-                    } 
-                    $points = max($pointsMoney);
-                }                
-                $spendAmount = max($points, $spendAmount);
+        
+                        $stepsFirst = round($mockSubtotal / $tier->getMonetaryStep($mockSubtotal), 2, PHP_ROUND_HALF_DOWN);
+                        if ($stepsFirst != $mockSubtotal / $tier->getMonetaryStep($mockSubtotal)) {
+                            ++$stepsFirst;
+                        }
+        
+                        $steps = min($stepsFirst, $stepsSecond);
+        
+                        $amount = $steps * $tier->getMonetaryStep($mockSubtotal);
+                        $amount = min($amount, $mockSubtotal);
+        
+                        $totalAmount += $amount;
+        
+                        $balancePoints = $balancePoints - $rulePointsNumber;
+                        $totalPoints += $rulePointsNumber;
+
+                        if ($rule->getIsStopProcessing()) {
+                            break;
+                        }
+                    }
+                }
+
+                $spendAmount = max($spendAmount, $totalAmount);
             }
 
             return $spendAmount;
