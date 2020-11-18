@@ -55,6 +55,9 @@ class Discount extends AbstractHelper
     const BOLT_DISCOUNT_CATEGORY_COUPON = 'coupon';
     const BOLT_DISCOUNT_CATEGORY_GIFTCARD = 'giftcard';
     const BOLT_DISCOUNT_CATEGORY_AUTO_PROMO = 'automatic_promotion';
+    
+    // In Magento 2, if the discount amount is less than 0.005, we can treat it as zero.
+    const ZERO_VALUE = 0.004;
 
     /**
      * @var ResourceConnection $resource
