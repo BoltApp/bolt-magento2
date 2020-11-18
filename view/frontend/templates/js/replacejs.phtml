@@ -347,7 +347,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          */
         var getCheckoutType = function() {
             return trim(location.pathname, '/') === 'checkout'
-            && (settings.quote_is_virtual || location.hash === '#payment')
+            && (settings.quote_is_virtual || location.hash === '#payment' || location.hash === '#shipping')
                 ? 'payment' : 'checkout';
         };
 
@@ -621,6 +621,30 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             },
 
             check: function () {
+
+                /**
+                 * On Magento checkout page - Bolt payment only checkout
+                 * trigger click on boltpay radio if the button clicked is
+                 * in minicart panel or other (voluntary) location
+                 * and trigger email validation.
+                 */
+                if (getCheckoutType() === 'payment') {
+                    // trigger click on boltpay radio
+                    if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
+
+                    // stop if customer email field exists and is not valid on paymtnt only page
+                    var customer_email = $(customer_email_selector);
+                    if (customer_email.get(0)) {
+                        var form = customer_email.closest('form');
+                        if (form.validation() && form.validation('isValid') === false) {
+                            customer_email.get(0).scrollIntoView();
+                            return false;
+                        }
+                    }
+                    popUpOpen = true;
+                    return true;
+                }
+
                 /**
                  * On Bolt button click check if guest checkout is allowed.
                  * Display login popup to guest customers if it is not. The
@@ -639,28 +663,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     }
                     popUpOpen = false;
                     return false;
-                }
-
-                /**
-                 * On Magento checkout page - Bolt payment only checkout
-                 * trigger click on boltpay radio if the button clicked is
-                 * in minicart panel or other (voluntary) location
-                 * and trigger email validation.
-                 */
-                if (getCheckoutType() === 'payment') {
-
-                    // trigger click on boltpay radio
-                    if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
-
-                    // stop if customer email field exists and is not valid on paymtnt only page
-                    var customer_email = $(customer_email_selector);
-                    if (customer_email.get(0)) {
-                        var form = customer_email.closest('form');
-                        if (form.validation() && form.validation('isValid') === false) {
-                            customer_email.get(0).scrollIntoView();
-                            return false;
-                        }
-                    }
                 }
 
                 popUpOpen = true;
@@ -766,6 +768,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         }
 
         var invalidateBoltCart = function() {
+            if (getCheckoutType() === 'payment') {
+                updateCartPaymentOnly();
+                return;
+            }
             customerData.reload(['boltcart'], true);
             callConfigureWithPromises();
         }
@@ -935,25 +941,10 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             }
         };
 
-        var boltCheckoutSetup = function (el, dataChanged) {
-            // Check if BoltCheckout is defined (connect.js executed).
-            // If not, postpone processing until it is
-            if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', boltCheckoutSetup);
+        var updateCartPaymentOnly = function() {
+            if (getCheckoutType() !== 'payment') {
                 return;
             }
-
-            // we know that connect.js was initiated and can use promises in IE11
-            BoltState.check = boltBarrier();
-            BoltState.codeIsLoaded = boltBarrier();
-            BoltState.beforeConfigureBarrier = boltBarrier();
-            // resolve promise for now, extensions can initialize it again
-            BoltState.beforeConfigureBarrier.resolve(true);
-
-            setupReplacement();
-
-            // check and set payment_only flag
-            if (getCheckoutType() === 'payment') {
 
                 // define the params sent with the request variable
                 var params = [];
@@ -1062,6 +1053,26 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         })
                         boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
                 });
+        }
+
+        var boltCheckoutSetup = function (el, dataChanged) {
+            // Check if BoltCheckout is defined (connect.js executed).
+            // If not, postpone processing until it is
+            if (!window.BoltCheckout) {
+                whenDefined(window, 'BoltCheckout', boltCheckoutSetup);
+                return;
+            }
+
+            // we know that connect.js was initiated and can use promises in IE11
+            BoltState.check = boltBarrier();
+            BoltState.codeIsLoaded = boltBarrier();
+            BoltState.beforeConfigureBarrier = boltBarrier();
+            // resolve promise for now, extensions can initialize it again
+            BoltState.beforeConfigureBarrier.resolve(true);
+
+            setupReplacement();
+            if (getCheckoutType() === 'payment') {
+                updateCartPaymentOnly();
             } else {
                 callConfigureWithPromises();
 
@@ -1462,7 +1473,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         ////////////////////////////////////////////////////
     });
 
-    if (trim(location.pathname, '/') === 'checkout/cart') {
+    if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
         require(['domReady!'], function() {
             require([
             'jquery',

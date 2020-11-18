@@ -1740,14 +1740,19 @@ class Cart extends AbstractHelper
                     'last_name'       => $billAddress->lastname ?? null,
                     'company'         => $billAddress->company ?? null,
                     'phone'           => $billAddress->telephone ?? null,
-                    'street_address1' => (string) $billingStreetAddress[0] ?? null,
-                    'street_address2' => (string) $billingStreetAddress[1] ?? null,
+                    'street_address1' => isset($billingStreetAddress[0]) ? (string)$billingStreetAddress[0] : null,
+                    'street_address2' => isset($billingStreetAddress[1]) ? (string)$billingStreetAddress[1] : null,
                     'locality'        => $billAddress->city ?? null,
                     'region'          => $billAddress->region ?? null,
                     'postal_code'     => $billAddress->postcode ?? null,
                     'country_code'    => $billAddress->countryId ?? null,
                     'email'           => $placeOrderPayload->email ?? $email
                 ];
+            }
+
+            // For payment only we use email from payload if we don't have any email in quote
+            if (!$email && isset($placeOrderPayload->email) && $placeOrderPayload->email) {
+                $email = $placeOrderPayload->email;
             }
         }
 

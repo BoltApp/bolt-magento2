@@ -729,6 +729,9 @@ class Order extends AbstractHelper
         if (empty($payment->getCcType()) && ! empty($transaction->from_credit_card->network)) {
             $payment->setCcType($transaction->from_credit_card->network);
         }
+        if (!empty($transaction->from_credit_card->token_type) && $transaction->from_credit_card->token_type == "applepay") {
+            $payment->setAdditionalData($transaction->from_credit_card->token_type);
+        }
         $payment->save();
     }
 
@@ -1286,7 +1289,7 @@ class Order extends AbstractHelper
             ]
         );
         $this->deleteOrder($order);
-        // reactivate session quote - the condiotion excludes PPC quotes
+        // reactivate session quote - the condition excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
         }
