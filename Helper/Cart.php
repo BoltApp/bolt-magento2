@@ -2277,6 +2277,10 @@ class Cart extends AbstractHelper
 
         // try returning from cache
         if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
+            // $request contains Magento form_id as an item options property.
+            // The form_id is unique per browser session, making the request unique for each user.
+            // Before sending the request, we ensure that the form_id exists.
+            // Therefore, we can rely on it in generating the cache identifier.
             $cacheIdentifier = $this->getCartCacheIdentifier($request);
             if ($cart = $this->loadFromCache($cacheIdentifier)) {
                 return $cart;
