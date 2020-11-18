@@ -5102,4 +5102,52 @@ class OrderTest extends BoltTestCase
             ['isPPC' => false],
         ];
     }
+
+    /**
+     * @test
+     *
+     * @covers ::deleteOrCancelFailedPaymentOrder
+     *
+     * @dataProvider deleteOrCancelFailedPaymentOrderProvider
+     *
+     * @param bool $isPPC
+     *
+     * @throws AlreadyExistsException
+     */
+    public function deleteOrCancelFailedPaymentOrder($isCancelFailedPaymentOrderInsteadOfDeleting)
+    {
+        $this->initCurrentMock(['cancelFailedPaymentOrder','deleteOrderByIncrementId']);
+
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInsteadOfDeleting);
+        if ($isCancelFailedPaymentOrderInsteadOfDeleting) {
+            $this->currentMock->expects(static::once())->method('cancelFailedPaymentOrder')
+                ->with(self::DISPLAY_ID, self::QUOTE_ID);
+        } else {
+            $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID);
+        }
+        $expected_message = $isCancelFailedPaymentOrderInsteadOfDeleting
+                ? 'Order was canceled: ' . self::DISPLAY_ID
+                : 'Order was deleted: ' . self::DISPLAY_ID;
+        $message = $this->currentMock->deleteOrCancelFailedPaymentOrder(
+            self::DISPLAY_ID,
+            self::QUOTE_ID
+        );
+        static::assertEquals($expected_message, $message);
+    }
+
+        /**
+     * Data provider for tests that depend on isCancelFailedPaymentOrderInsteadOfDeleting feature switch
+     *
+     * @return array
+     */
+    public function deleteOrCancelFailedPaymentOrderProvider()
+    {
+        return [
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => false],
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => true],
+        ];
+    }
+
 }
