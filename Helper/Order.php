@@ -1111,7 +1111,28 @@ class Order extends AbstractHelper
     public function processNewOrder($quote, $transaction)
     {
         /** @var OrderModel $order */
-        $order = $this->quoteManagement->submit($quote);
+        try {
+            $order = $this->quoteManagement->submit($quote);
+        } catch (NoSuchEntityException $e) {
+            $order = $this->getOrderByQuoteId($quote->getId());
+            if ($order && $order->getPayment() && $order->getPayment()->getMethod() === Payment::METHOD_CODE){
+                $this->bugsnag->notifyException($e);
+                $this->bugsnag->registerCallback(
+                    function ($report) use ($order) {
+                        $report->setMetaData(
+                            [
+                                'CREATE ORDER' => [
+                                    'order_id' => $order->getId(),
+                                    'order_increment_id' => $order->getIncrementId(),
+                                ]
+                            ]
+                        );
+                    }
+                );
+            } else {
+                throw $e;
+            }
+          }
 
         if (!$order) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
