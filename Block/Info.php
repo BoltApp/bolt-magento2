@@ -30,7 +30,6 @@ class Info extends \Magento\Payment\Block\Info
     {
         $transport = parent::_prepareSpecificInformation($transport);
         $info = $this->getInfo();
-        $boltProcessor = $info->getAdditionalInformation('processor');
         $data = [];
         
         if ($ccType = $info->getCcType()) {
