@@ -69,7 +69,7 @@ class DataProviderPlugin
                     return $item['payment_method'] == \Bolt\Boltpay\Model\Payment::METHOD_CODE;
                 }
             ),
-            key_exists('order_id', $result['items'][0]) ? 'order_id' : 'entity_id' //todo: both
+            key_exists('order_id', $result['items'][0]) ? 'order_id' : 'entity_id'
         );
         $paymentCollection = $this->paymentCollectionFactory->create()
             ->addFieldToFilter('parent_id', ['in' => $ids]);
@@ -81,9 +81,11 @@ class DataProviderPlugin
             if (!$payment) {
                 continue;
             }
-            $processor = $payment->getData('additional_information/processor');
-            if (key_exists($processor, \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)) {
-                $item['payment_method'] .= '_' . $processor;
+            if ($intersection = array_intersect(
+                [$payment->getData('additional_information/processor'), $payment->getAdditionalData()],
+                array_keys(\Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
+            )) {
+                $item['payment_method'] .= '_' . reset($intersection);
             }
         }
         return $result;

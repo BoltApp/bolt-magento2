@@ -88,16 +88,21 @@ class SelectPluginTest extends \PHPUnit\Framework\TestCase
                 'label'         => 'Bolt-Afterpay',
                 '__disableTmpl' => true,
             ],
-	        [
+            [
 		        'value'         => 'boltpay_affirm',
 		        'label'         => 'Bolt-Affirm',
 		        '__disableTmpl' => true,
-	        ],
+            ],
 	        [
 		        'value'         => 'boltpay_braintree',
 		        'label'         => 'Bolt-Braintree',
 		        '__disableTmpl' => true,
-	        ],
+            ],
+            [
+                'value'         => 'boltpay_applepay',
+                'label'         => 'Bolt-ApplePay',
+                '__disableTmpl' => true,
+            ],
         ];
         return [
             'Order grid, payment method column - appends options' => [

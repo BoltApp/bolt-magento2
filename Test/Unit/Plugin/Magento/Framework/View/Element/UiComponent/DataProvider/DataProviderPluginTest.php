@@ -93,12 +93,13 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
      *
      * @covers ::afterGetData
      *
-     * @dataProvider afterGetDataProvider
+     * @dataProvider afterGetData_withVariousOrderGridDataProvider
      *
      * @param string $name
      * @param array  $resultBefore
      * @param array  $expectedIds
      * @param array  $processors
+     * @param array  $additionalData
      * @param array  $resultAfter
      */
     public function afterGetData_withVariousOrderGridData_appendsProcessorToPaymentMethod(
@@ -106,6 +107,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
         $resultBefore,
         $expectedIds,
         $processors,
+        $additionalData,
         $resultAfter
     ) {
         $this->subjectMock->expects(static::once())->method('getName')->willReturn($name);
@@ -121,11 +123,18 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
             );
         $this->paymentMock->method('getData')->with('additional_information/processor')
             ->willReturnOnConsecutiveCalls(...$processors);
+        $this->paymentMock->method('getAdditionalData')
+            ->willReturnOnConsecutiveCalls(...$additionalData);
         $resultActual = $this->currentMock->afterGetData($this->subjectMock, $resultBefore);
         static::assertEquals($resultAfter, $resultActual);
     }
 
-    public function afterGetDataProvider()
+    /**
+     * Data provider for {@see afterGetData_withVariousOrderGridData}
+     *
+     * @return array[]
+     */
+    public function afterGetData_withVariousOrderGridDataProvider()
     {
         return [
             [
@@ -137,16 +146,25 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                         ['entity_id' => '3', 'payment_method' => 'boltpay'],
                         ['entity_id' => '4', 'payment_method' => 'boltpay'],
                         ['entity_id' => '5', 'payment_method' => 'boltpay'],
-                        ['entity_id' => '6', 'payment_method' => 'cashondelivery'],
+                        ['entity_id' => '6', 'payment_method' => 'boltpay'],
+                        ['entity_id' => '7', 'payment_method' => 'cashondelivery'],
                     ],
                     'totalRecords' => 170,
                 ],
-                'expectedIds'    => [2, 3, 4, 5],
+                'expectedIds'    => [2, 3, 4, 5, 6],
                 'processors'     => [
                     'paypal',
                     'affirm',
                     'afterpay',
+                    null,
                     'paypal',
+                ],
+                'additionalData' => [
+                    null,
+                    null,
+                    null,
+                    'applepay',
+                    null
                 ],
                 'resultAfter'    => [
                     'items'        => [
@@ -154,8 +172,9 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                         ['entity_id' => '2', 'payment_method' => 'boltpay_paypal'],
                         ['entity_id' => '3', 'payment_method' => 'boltpay_affirm'],
                         ['entity_id' => '4', 'payment_method' => 'boltpay_afterpay'],
-                        ['entity_id' => '5', 'payment_method' => 'boltpay_paypal'],
-                        ['entity_id' => '6', 'payment_method' => 'cashondelivery'],
+                        ['entity_id' => '5', 'payment_method' => 'boltpay_applepay'],
+                        ['entity_id' => '6', 'payment_method' => 'boltpay_paypal'],
+                        ['entity_id' => '7', 'payment_method' => 'cashondelivery'],
                     ],
                     'totalRecords' => 170,
                 ]
@@ -180,6 +199,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                     'afterpay',
                     'paypal',
                 ],
+                'additionalData' => [],
                 'resultAfter'    => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -212,6 +232,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                     'afterpay',
                     'paypal',
                 ],
+                'additionalData' => [],
                 'resultAfter'    => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -244,6 +265,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                     'afterpay',
                     'paypal',
                 ],
+                'additionalData' => [],
                 'resultAfter'    => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -271,6 +293,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
                 ],
                 'expectedIds'    => [],
                 'processors'     => [],
+                'additionalData' => [],
                 'resultAfter'    => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
