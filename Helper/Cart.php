@@ -628,6 +628,7 @@ class Cart extends AbstractHelper
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
         unset($cart['display_id']);
+        unset($cart['metadata']['immutable_quote_id']);
         $identifier  = json_encode($cart);
         // extend cache identifier with custom address fields
         if ($immutableQuote = $this->getLastImmutableQuote()) {
