@@ -42,7 +42,6 @@ class InfoTest extends \PHPUnit\Framework\TestCase
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
         $this->mock->expects(self::once())->method('getCcType')->willReturn('visa');
         $this->mock->expects(self::once())->method('getCcLast4')->willReturn('1111');
-        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('vantiv');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
             [
@@ -59,7 +58,8 @@ class InfoTest extends \PHPUnit\Framework\TestCase
     public function prepareSpecificInformationPaypal()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
-        $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('paypal');
+        $this->mock->expects(self::once())->method('getCcType')->willReturn('');
+        $this->mock->expects(self::once())->method('getCcLast4')->willReturn('');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
         $this->assertEquals(
             [],
