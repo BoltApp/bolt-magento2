@@ -47,6 +47,11 @@ class Rewards
      * @var ThirdPartyModuleFactory
      */
     private $mirasvitRewardsBalanceHelper;
+    
+    /**
+     * @var ThirdPartyModuleFactory
+     */
+    private $mirasvitRewardsRuleQuoteSubtotalCalc;
 
     /**
      * @var Bugsnag
@@ -113,6 +118,7 @@ class Rewards
         $mirasvitRewardsBalanceHelper,
         $mirasvitRewardsSpendRulesListHelper,
         $mirasvitRewardsModelConfig,
+        $mirasvitRewardsRuleQuoteSubtotalCalc,
         $immutableQuote
     )
     {
@@ -120,6 +126,7 @@ class Rewards
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
 
         $this->applyMiravistRewardPoint($immutableQuote);
     }
@@ -141,6 +148,7 @@ class Rewards
         $mirasvitRewardsBalanceHelper,
         $mirasvitRewardsSpendRulesListHelper,
         $mirasvitRewardsModelConfig,
+        $mirasvitRewardsRuleQuoteSubtotalCalc,
         $quote,
         $parentQuote,
         $paymentOnly
@@ -150,6 +158,8 @@ class Rewards
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
+        
         list ($discounts, $totalAmount, $diff) = $result;
         $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
         try {
@@ -190,6 +200,7 @@ class Rewards
         $mirasvitRewardsBalanceHelper,
         $mirasvitRewardsSpendRulesListHelper,
         $mirasvitRewardsModelConfig,
+        $mirasvitRewardsRuleQuoteSubtotalCalc,
         $quote
     )
     {
@@ -197,8 +208,9 @@ class Rewards
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
 
-        if ($rewardsAmount = $this->getMirasvitRewardsAmount($quote)) {
+        if ($rewardsAmount = abs($this->getMirasvitRewardsAmount($quote))) {
             $result .= $rewardsAmount;
         }
 
@@ -264,56 +276,19 @@ class Rewards
             if(($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
                 $customer = $this->customerFactory->create()->load($quote->getCustomer()->getId());
-                $points = 0;
                 $websiteId = $quote->getStore()->getWebsiteId();
                 $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
+                
                 if ($rules->count()) {
-                    $totalAmount = 0;
-                    $totalPoints = 0;
-        
+                    // To collect all of available rewards points for Bolt cart,
+                    // we create a mock for the subtotal of quote which is large enough.
                     $mockSubtotal = 999999999;
-                    $pointsMoney = [0];
-                    /** @var \Mirasvit\Rewards\Model\Spending\Rule $rule */
-                    foreach ($rules as $rule) {
-                        $rule->afterLoad();
-                        $tier = $rule->getTier($customer);
-                      
-                        $rulePointsNumber = $balancePoints;
-        
-                        if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_PARTIAL) {
-                            $stepsSecond = round($rulePointsNumber / $tier->getSpendPoints(), 2, PHP_ROUND_HALF_DOWN);
-                        } else {
-                            $spendPoints = $tier->getSpendPoints();
-                            $rulePointsNumber = floor($rulePointsNumber / $spendPoints) * $spendPoints;
-                            $stepsSecond = floor($rulePointsNumber / $spendPoints);
-                        }
-        
-                        if ($rulePointsNumber < $tier->getSpendMinAmount($mockSubtotal)) {
-                            continue;
-                        }
-        
-                        $stepsFirst = round($mockSubtotal / $tier->getMonetaryStep($mockSubtotal), 2, PHP_ROUND_HALF_DOWN);
-                        if ($stepsFirst != $mockSubtotal / $tier->getMonetaryStep($mockSubtotal)) {
-                            ++$stepsFirst;
-                        }
-        
-                        $steps = min($stepsFirst, $stepsSecond);
-        
-                        $amount = $steps * $tier->getMonetaryStep($mockSubtotal);
-                        $amount = min($amount, $mockSubtotal);
-        
-                        $totalAmount += $amount;
-        
-                        $balancePoints = $balancePoints - $rulePointsNumber;
-                        $totalPoints += $rulePointsNumber;
-
-                        if ($rule->getIsStopProcessing()) {
-                            break;
-                        }
-                    }
+                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, $mockSubtotal);                    
+                    $cartMaxPointsNumber = min($cartRange->getMaxPoints(), $balancePoints);
+                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, $mockSubtotal);
+                } else {
+                    $spendAmount = 0;
                 }
-
-                $spendAmount = max($spendAmount, $totalAmount);
             }
 
             return $spendAmount;
@@ -321,6 +296,174 @@ class Rewards
             $this->bugsnagHelper->notifyException($e);
             return 0;
         }        
+    }
+    
+    /**
+     * @param \Mirasvit\Rewards\Model\Spending\Rule $rule
+     * @param \Magento\Customer\Model\Customer      $customer
+     * @param float                                 $pointsNumber
+     * @param float                                 $quoteSubTotal
+     *
+     * @return float
+     */
+    private function calMaxSpendAmount($rules, $customer, $pointsNumber, $quoteSubTotal)
+    {
+        $totalAmount = 0;
+        
+        foreach ($rules as $rule) {
+            $rule->afterLoad();
+            if ($pointsNumber > 0) {
+                $rulePointsNumber = $pointsNumber;
+                
+                $tier = $rule->getTier($customer);
+
+                if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_PARTIAL) {
+                    $stepsSecond = round($rulePointsNumber / $tier->getSpendPoints(), 2, PHP_ROUND_HALF_DOWN);
+                } else {
+                    $spendPoints = $tier->getSpendPoints();
+                    $rulePointsNumber = floor($rulePointsNumber / $spendPoints) * $spendPoints;
+                    $stepsSecond = floor($rulePointsNumber / $spendPoints);
+                }
+
+                if ($rulePointsNumber < $tier->getSpendMinAmount($quoteSubTotal)) {
+                    continue;
+                }
+
+                $stepsFirst = round($quoteSubTotal / $tier->getMonetaryStep($quoteSubTotal), 2, PHP_ROUND_HALF_DOWN);
+                if ($stepsFirst != $quoteSubTotal / $tier->getMonetaryStep($quoteSubTotal)) {
+                    ++$stepsFirst;
+                }
+
+                $steps = min($stepsFirst, $stepsSecond);
+
+                $amount = $steps * $tier->getMonetaryStep($quoteSubTotal);
+                $amount = min($amount, $quoteSubTotal);
+
+                $totalAmount += $amount;
+          
+                $pointsNumber -= $rulePointsNumber;
+
+                if ($rule->getIsStopProcessing()) {
+                    break;
+                }
+            }
+        }
+        
+        return $totalAmount;
+    }
+    
+    /**
+     * Calcs min and max amount of spend points for quote
+     *
+     * @param \Magento\Quote\Model\Quote               $quote
+     * @param \Magento\Customer\Model\Customer         $customer
+     * @param \Magento\Quote\Model\Quote\Address\Total $totals
+     *
+     * @return \Magento\Framework\DataObject
+     */
+    private function getCartPointsRange($quote, $customer, $rules, $balancePoints, $quoteSubTotal)
+    {
+        $minPoints     = 0;
+        $totalPoints   = 0;
+
+        $data = new \Mirasvit\Rewards\Helper\Balance\SpendCartRangeData($quoteSubTotal, $balancePoints, $minPoints, $totalPoints);
+
+        foreach ($rules as $rule) {
+            $rule->afterLoad();
+            
+            $ruleSubTotal = $this->mirasvitRewardsRuleQuoteSubtotalCalc->getLimitedSubtotal($quote, $rule);
+            if ($ruleSubTotal <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+                continue;
+            }
+            
+            $tier = $rule->getTier($customer);
+            $data = $this->calcPointsPerRule($tier, $data);
+
+            if ($rule->getIsStopProcessing()) {
+                break;
+            }
+        }
+
+        if ($data->minPoints > $data->maxPoints) {
+            $data->minPoints = $data->maxPoints = 0;
+        }
+
+        return new \Magento\Framework\DataObject([
+            'min_points'  => $data->minPoints,
+            'max_points'  => $data->maxPoints,
+        ]);
+    }
+    
+    /**
+     * @param \Mirasvit\Rewards\Model\Spending\Tier $tier
+     * @param SpendCartRangeData                    $data
+     *
+     * @return SpendCartRangeData
+     */
+    private function calcPointsPerRule($tier, $data)
+    {        
+        $ruleSubTotal = $data->subtotal;       
+
+        $monetaryStep    = $tier->getMonetaryStep($ruleSubTotal);
+        $ruleMinPoints   = $tier->getSpendMinAmount($ruleSubTotal);
+        $ruleMaxPoints   = $tier->getSpendMaxAmount($ruleSubTotal);
+        $ruleSpendPoints = $tier->getSpendPoints();
+
+        if (!$this->isRuleValid($ruleMinPoints, $ruleMaxPoints, $monetaryStep, $ruleSpendPoints, $data)) {
+            return $data;
+        }
+
+        $ruleMinPoints = $ruleMinPoints ? max($ruleMinPoints, $ruleSpendPoints) : $ruleSpendPoints;
+
+        $data->minPoints = $data->minPoints ? min($data->minPoints, $ruleMinPoints) : $ruleMinPoints;
+
+        if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_FULL) {
+            $roundedTotalPoints = floor($ruleMaxPoints / $ruleSpendPoints) * $ruleSpendPoints;
+            if ($roundedTotalPoints < $ruleMaxPoints) {
+                $ruleMaxPoints = $roundedTotalPoints + $ruleSpendPoints;
+            } else {
+                $ruleMaxPoints = $roundedTotalPoints;
+            }
+            if ($ruleMinPoints <= $ruleMaxPoints) {
+                $data->subtotal  -= $ruleMaxPoints / $ruleSpendPoints * $monetaryStep;
+                $data->maxPoints += $ruleMaxPoints;
+            }
+            if ($data->maxPoints > $data->balancePoints) {
+                $data->maxPoints = floor($data->balancePoints / $ruleSpendPoints) * $ruleSpendPoints;
+            }
+        } elseif ($ruleMinPoints <= $ruleMaxPoints) {
+            $data->subtotal  -= $ruleMaxPoints / $ruleSpendPoints * $monetaryStep;
+            $data->maxPoints += $ruleMaxPoints;
+        }
+
+        return $data;
+    }
+    
+    /**
+     * @param float              $ruleMinPoints
+     * @param float              $ruleMaxPoints
+     * @param float              $monetaryStep
+     * @param float              $ruleSpendPoints
+     * @param SpendCartRangeData $data
+     *
+     * @return bool
+     */
+    private function isRuleValid($ruleMinPoints, $ruleMaxPoints, $monetaryStep, $ruleSpendPoints, $data)
+    {
+        if ($ruleMinPoints > $ruleMaxPoints) {
+            return false;
+        }
+        if ($ruleMinPoints && ($data->subtotal / $monetaryStep) < 1) {
+            return false;
+        }
+        if ($ruleMinPoints > $data->balancePoints || $ruleSpendPoints <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+            return false;
+        }
+        if ($monetaryStep <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+            return false;
+        }
+
+        return true;
     }
     
     /**
@@ -336,6 +479,7 @@ class Rewards
         $mirasvitRewardsSpendRulesListHelper,
         $mirasvitRewardsModelConfig,
         $mirasvitRewardsCheckoutHelper,
+        $mirasvitRewardsRuleQuoteSubtotalCalc,
         $quote
     )
     {
@@ -343,6 +487,7 @@ class Rewards
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+        $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
         
         try{           
             if($this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping() && abs($this->getMirasvitRewardsAmount($quote)) > 0) {
@@ -389,9 +534,7 @@ class Rewards
      * 
      * @return float
      */
-    public function collectShippingDiscounts($result,
-                                     $quote,
-                                     $shippingAddress)
+    public function collectShippingDiscounts($result, $quote, $shippingAddress)
     {
         $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitRewardsShippingDiscountAmount(0);
         $result -= $mirasvitRewardsShippingDiscountAmount;
