@@ -30,17 +30,14 @@ class Info extends \Magento\Payment\Block\Info
     {
         $transport = parent::_prepareSpecificInformation($transport);
         $info = $this->getInfo();
-        $boltProcessor = $info->getAdditionalInformation('processor');
         $data = [];
         
-        if (empty($boltProcessor) || $boltProcessor == \Bolt\Boltpay\Helper\Order::TP_VANTIV) {
-            if ($ccType = $info->getCcType()) {
-                $data[(string)__('Credit Card Type')] = strtoupper($ccType);
-            }
+        if ($ccType = $info->getCcType()) {
+            $data[(string)__('Credit Card Type')] = strtoupper($ccType);
+        }
     
-            if ($ccLast4 = $info->getCcLast4()) {
-                $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
-            }
+        if ($ccLast4 = $info->getCcLast4()) {
+            $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
         }
 
         if ($data) {

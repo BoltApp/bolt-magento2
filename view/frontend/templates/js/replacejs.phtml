@@ -1094,8 +1094,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     setTimeout(invalidateBoltCartIfOutdated, 0);
                 }
 
-                customerData.get('cart').subscribe(magentoCartDataListener);
-
                 boltCartDataListener = function(data) {
                     if (localStorage && localStorage.getItem("bolt_cart_is_invalid") == "true") {
                         localStorage.setItem("bolt_cart_is_invalid", "false");
@@ -1162,6 +1160,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         // prefetch Shipping and Tax for multi-step checkout
                         prefetchShipping();
                 }
+
+                customerData.get('cart').subscribe(magentoCartDataListener);
                 customerData.get('boltcart').subscribe(boltCartDataListener);
                 // check if magento section was initialized before our code execution
                 if (customerData.get('cart')().data_id !== undefined) {

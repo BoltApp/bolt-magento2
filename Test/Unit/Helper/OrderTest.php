@@ -1748,6 +1748,13 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_pendingOrder()
     {
+        $this->initCurrentMock(['getExistingOrder','deleteOrderByIncrementId']);
+        $transaction = new stdClass();
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->metadata = new \stdClass();
+        $transaction->order->cart->metadata->immutable_quote_id = self::IMMUTABLE_QUOTE_ID;
+
         $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
@@ -1756,15 +1763,11 @@ class OrderTest extends BoltTestCase
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
             ->willReturn(Order::STATE_PENDING_PAYMENT);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionMessage(
-            sprintf(
-                'Order is in pending payment. Waiting for the hook update. Quote ID: %s',
-                self::QUOTE_ID
-            )
-        );
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::INCREMENT_ID,self::IMMUTABLE_QUOTE_ID);
+
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, $transaction));
     }
 
     /**
@@ -5099,4 +5102,52 @@ class OrderTest extends BoltTestCase
             ['isPPC' => false],
         ];
     }
+
+    /**
+     * @test
+     *
+     * @covers ::deleteOrCancelFailedPaymentOrder
+     *
+     * @dataProvider deleteOrCancelFailedPaymentOrderProvider
+     *
+     * @param bool $isPPC
+     *
+     * @throws AlreadyExistsException
+     */
+    public function deleteOrCancelFailedPaymentOrder($isCancelFailedPaymentOrderInsteadOfDeleting)
+    {
+        $this->initCurrentMock(['cancelFailedPaymentOrder','deleteOrderByIncrementId']);
+
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInsteadOfDeleting);
+        if ($isCancelFailedPaymentOrderInsteadOfDeleting) {
+            $this->currentMock->expects(static::once())->method('cancelFailedPaymentOrder')
+                ->with(self::DISPLAY_ID, self::QUOTE_ID);
+        } else {
+            $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID);
+        }
+        $expected_message = $isCancelFailedPaymentOrderInsteadOfDeleting
+                ? 'Order was canceled: ' . self::DISPLAY_ID
+                : 'Order was deleted: ' . self::DISPLAY_ID;
+        $message = $this->currentMock->deleteOrCancelFailedPaymentOrder(
+            self::DISPLAY_ID,
+            self::QUOTE_ID
+        );
+        static::assertEquals($expected_message, $message);
+    }
+
+        /**
+     * Data provider for tests that depend on isCancelFailedPaymentOrderInsteadOfDeleting feature switch
+     *
+     * @return array
+     */
+    public function deleteOrCancelFailedPaymentOrderProvider()
+    {
+        return [
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => false],
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => true],
+        ];
+    }
+
 }

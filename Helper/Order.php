@@ -1070,6 +1070,25 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Cancel or detete the failed payment order depending on settings via feature switches
+     *
+     * @param string $displayId
+     * @param string $immutableQuoteId
+     * @return string log message
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    public function deleteOrCancelFailedPaymentOrder($display_id, $immutableQuoteId)
+    {
+        if ($this->featureSwitches->isCancelFailedPaymentOrderInsteadOfDeleting()) {
+            /** @see \Bolt\Boltpay\Helper\Order::deleteOrderByIncrementId */
+            $this->cancelFailedPaymentOrder($display_id, $immutableQuoteId);
+            return 'Order was canceled: ' . $display_id;
+        }
+        $this->deleteOrderByIncrementId($display_id, $immutableQuoteId);
+        return 'Order was deleted: ' . $display_id;
+    }
+
+    /**
      * Try to fetch and price-validate already existing order.
      * Use case: order has been created but the payment fails due to the invalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
@@ -1097,14 +1116,18 @@ class Order extends AbstractHelper
             }
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-                throw new BoltException(
-                    __(
-                        'Order is in pending payment. Waiting for the hook update. Quote ID: %1',
-                        $quote->getId()
-                    ),
-                    null,
-                    CreateOrder::E_BOLT_GENERAL_ERROR
+                // Order for the same quote is created, it is in pending payment status
+                // and we try to create a new one
+                // It means order was created for unsuccessful payment attempt and wasn't deleted yet.
+                // We can safely delete it
+                $incrementId = $order->getIncrementId();
+                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
+                $message = $this->deleteOrCancelFailedPaymentOrder($incrementId, $immutableQuoteId);
+                $this->bugsnag->notifyError(
+                    "Existing order is in pending payment",
+                    $message . "quote id: " . $quote->getId()
                 );
+                return false;
             }
 
             if ($this->hasSamePrice($order, $transaction)) {
