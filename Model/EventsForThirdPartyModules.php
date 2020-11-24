@@ -159,6 +159,12 @@ class EventsForThirdPartyModules
                     "boltClass" => MW_RewardPoints::class,
                 ],
                 [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Checkout"],
+                    "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
                     "module" => "Mirasvit_Credit",
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation"],
@@ -497,6 +503,16 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_Rewards",
                     "checkClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface"],
                     "boltClass" => Amasty_Rewards::class,
+                ],
+                [
+                    "module" => "Mirasvit_Rewards",
+                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
+                                      "Mirasvit\Rewards\Helper\Balance",
+                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                                      "Mirasvit\Rewards\Model\Config",
+                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "checkClasses" => ["Mirasvit\Rewards\Helper\Balance\SpendCartRangeData"],
+                    "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
                     "module" => "Mirasvit_Credit",

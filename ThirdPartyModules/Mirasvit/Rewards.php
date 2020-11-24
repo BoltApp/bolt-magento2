@@ -28,6 +28,8 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Rewards
 {
+    const MIRASVIT_REWARDS = 'mirasvitrewards';
+    
     /**
      * @var \Mirasvit\Rewards\Helper\Purchase
      */
@@ -179,6 +181,7 @@ class Rewards
                         $quote->getStoreId()
                     ),
                     'amount' => $roundedAmount,
+                    'reference' => self::MIRASVIT_REWARDS,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
                     'type' => $discountType, // For v1/merchant/order
@@ -554,6 +557,80 @@ class Rewards
         $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitRewardsShippingDiscountAmount(0);
         $result -= $mirasvitRewardsShippingDiscountAmount;
         return $result;
+    }
+    
+    /**
+     * Return code if the quote has Mirasvit rewards.
+     * 
+     * @param $result
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $couponCode
+     * @param $quote
+     * 
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsBalanceHelper,
+        $mirasvitRewardsSpendRulesListHelper,
+        $mirasvitRewardsModelConfig,
+        $mirasvitRewardsRuleQuoteSubtotalCalc,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::MIRASVIT_REWARDS) {
+            $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
+            $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
+            $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
+            $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
+            $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
+            
+            try {
+                if (abs($this->getMirasvitRewardsAmount($quote)) > 0) {
+                    $result[] = $couponCode;
+                }
+            } catch (\Exception $e) {
+                $this->bugsnagHelper->notifyException($e);
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Remove Mirasvit rewards from the quote.
+     *
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Checkout $mirasvitRewardsCheckoutHelper
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * 
+     */
+    public function removeAppliedStoreCredit (
+        $mirasvitRewardsPurchaseHelper,
+        $mirasvitRewardsCheckoutHelper,
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    )
+    {
+        try {
+            if ($couponCode == self::MIRASVIT_REWARDS) {
+                $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
+                $mirasvitRewardsCheckoutHelper->updatePurchase($miravitRewardsPurchase, 0);
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
     }
     
 }
