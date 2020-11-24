@@ -42,11 +42,11 @@ use Bolt\Boltpay\Exception\BoltException;
 
 /**
  * Class UpdateCartCommon
- * 
+ *
  * @package Bolt\Boltpay\Model\Api
  */
 abstract class UpdateCartCommon
-{   
+{
     /**
      * @var Request
      */
@@ -91,37 +91,37 @@ abstract class UpdateCartCommon
      * @var OrderHelper
      */
     protected $orderHelper;
-    
+
     /**
      * @var ConfigHelper
      */
     protected $configHelper;
-    
+
     /**
      * @var CacheInterface
      */
     protected $cache;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
-    
+
     /**
      * @var CheckoutSession
      */
     protected $checkoutSession;
-    
+
     /**
      * @var RuleRepository
      */
     protected $ruleRepository;
-    
+
     /**
      * @var CartRepository
      */
     protected $cartRepository;
-    
+
     /**
      * UpdateCartCommon constructor.
      *
@@ -135,7 +135,7 @@ abstract class UpdateCartCommon
         $this->response = $updateCartContext->getResponse();
         $this->hookHelper = $updateCartContext->getHookHelper();
         $this->errorResponse = $updateCartContext->getBoltErrorResponse();
-        $this->logHelper = $updateCartContext->getLogHelper();   
+        $this->logHelper = $updateCartContext->getLogHelper();
         $this->bugsnag = $updateCartContext->getBugsnag();
         $this->regionModel = $updateCartContext->getRegionModel();
         $this->orderHelper = $updateCartContext->getOrderHelper();
@@ -152,7 +152,7 @@ abstract class UpdateCartCommon
      * Validate the related quote.
      *
      * @param $immutableQuoteId
-     * @return array
+     * @return Quote[]
      * @throws BoltException
      */
     public function validateQuote($immutableQuoteId)
@@ -214,14 +214,14 @@ abstract class UpdateCartCommon
     }
 
 
-    
+
     /**
      *
      * Set the shipment if request payload has that info.
-     * 
+     *
      * @param array $shipment
      * @param Quote $immutableQuote
-     * 
+     *
      * @throws LocalizedException
      * @throws WebApiException
      */
@@ -276,7 +276,7 @@ abstract class UpdateCartCommon
         $this->logHelper->addInfoLog($content);
         return json_decode($content);
     }
-    
+
     /**
      * Collect and update quote totals.
      * @param Quote $quote
@@ -289,7 +289,7 @@ abstract class UpdateCartCommon
         $quote->setDataChanges(true);
         $this->cartRepository->save($quote);
     }
-    
+
     /**
      * Create cart data items array.
      * @param Quote $quote
@@ -310,7 +310,7 @@ abstract class UpdateCartCommon
             },
             $items
         );
-        
+
         return $products;
     }
 

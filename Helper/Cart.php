@@ -194,7 +194,7 @@ class Cart extends AbstractHelper
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
-    
+
     /**
      * @var RuleRepository
      */
@@ -348,7 +348,7 @@ class Cart extends AbstractHelper
         $this->totalsCollector = $totalsCollector;
         $this->quoteRepository = $quoteRepository;
         $this->orderRepository = $orderRepository;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder; 
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->quoteResource = $quoteResource;
         $this->sessionHelper = $sessionHelper;
         $this->checkoutHelper = $checkoutHelper;
@@ -628,11 +628,13 @@ class Cart extends AbstractHelper
         // display_id is always different for every new cart / immutable quote
         // unset it in the cache identifier so the rest of the data can be matched
         unset($cart['display_id']);
+        unset($cart['metadata']['immutable_quote_id']);
         $identifier  = json_encode($cart);
         // extend cache identifier with custom address fields
-        $immutableQuote = $this->getLastImmutableQuote();
-        $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
-        $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
+        if ($immutableQuote = $this->getLastImmutableQuote()) {
+            $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
+            $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
+        }
 
         return hash('md5', $identifier);
     }
@@ -1171,7 +1173,7 @@ class Cart extends AbstractHelper
 
         // If Amasty Reward Points extension is present clone applied reward points
         $this->discountHelper->setAmastyRewardPoints($source, $destination);
-        
+
         // Third-party plugins can replicate required data.
         $this->eventsForThirdPartyModules->dispatchEvent("replicateQuoteData", $source, $destination);
     }
@@ -2270,7 +2272,33 @@ class Cart extends AbstractHelper
      */
     public function createCartByRequest($request)
     {
-        return $this->createCart($request['items'], $request['metadata']);
+        $options = json_decode($request['items'][0]['options'], true);
+        $storeId = $options['storeId'];
+
+        // try returning from cache
+        if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
+            // $request contains Magento form_id as an item options property.
+            // The form_id is unique per browser session, making the request unique for each user.
+            // Before sending the request, we ensure that the form_id exists.
+            // Therefore, we can rely on it in generating the cache identifier.
+            $cacheIdentifier = $this->getCartCacheIdentifier($request);
+            if ($cart = $this->loadFromCache($cacheIdentifier)) {
+                return $cart;
+            }
+        }
+
+        $cart = $this->createCart($request['items'], $request['metadata']);
+
+        // cache and return
+        if ($isBoltOrderCachingEnabled) {
+            $this->saveToCache(
+                $cart,
+                $cacheIdentifier,
+                [self::BOLT_ORDER_TAG, self::BOLT_ORDER_TAG . '_' . $cart['order_reference']],
+                self::BOLT_ORDER_CACHE_LIFETIME
+            );
+        }
+        return $cart;
     }
 
     /**
@@ -2440,7 +2468,7 @@ class Cart extends AbstractHelper
             return $result;
         }
     }
-    
+
     /**
      * Reset checkout session
      *
@@ -2450,7 +2478,7 @@ class Cart extends AbstractHelper
     {
         $this->checkoutSession = $checkoutSession;
     }
-    
+
     /**
      * Report to Bugsnag if the discount code is empty.
      *

@@ -3683,7 +3683,7 @@ ORDER
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
         $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
-        
+
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
             ->disableOriginalConstructor()
@@ -3728,7 +3728,7 @@ ORDER
             ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
 
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        
+
         $checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
@@ -4193,29 +4193,29 @@ ORDER
         $quote->expects(static::any())->method('getTotals')->willReturn(
             [DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]
         );
-        
-        $quote->method('getAppliedRuleIds')->willReturn('2');	
 
-        $rule2 = $this->getMockBuilder(DataObject::class)	
-            ->setMethods(['getCouponType', 'getDescription'])	
-            ->disableOriginalConstructor()	
-            ->getMock();	
-        $rule2->expects(static::once())->method('getCouponType')	
-            ->willReturn('SPECIFIC_COUPON');	
-        $rule2->expects(static::once())->method('getDescription')	
-            ->willReturn(self::COUPON_DESCRIPTION);	
+        $quote->method('getAppliedRuleIds')->willReturn('2');
 
-        $this->ruleRepository->expects(static::once())	
-            ->method('getById')	
-            ->with(2)	
+        $rule2 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
+        $rule2->expects(static::once())->method('getDescription')
+            ->willReturn(self::COUPON_DESCRIPTION);
+
+        $this->ruleRepository->expects(static::once())
+            ->method('getById')
+            ->with(2)
             ->willReturn($rule2);
-        
+
         $checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
-                        ->willReturn([2 => ($discountAmount),]);	
+                        ->willReturn([2 => ($discountAmount),]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
@@ -4878,7 +4878,8 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
 
-        $currentMock = $this->getCurrentMock(['getCartData']);
+        $currentMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+        $currentMock->method('isBoltOrderCachingEnabled')->willReturn(false);
         return [$request, $payload, $expectedCartData, $currentMock];
         }
 
@@ -4893,78 +4894,79 @@ ORDER
         */
         public function createCartByRequest_withGuestUserAndSimpleProduct_returnsExpectedCartData()
         {
-        $request = [
-            'type'     => 'cart.create',
-            'items'    =>
-                [
+            $request = [
+                'type'     => 'cart.create',
+                'items'    =>
                     [
-                        'reference'    => CartTest::PRODUCT_ID,
-                        'name'         => 'Product name',
-                        'description'  => null,
-                        'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
-                        'total_amount' => CartTest::PRODUCT_PRICE,
-                        'unit_price'   => CartTest::PRODUCT_PRICE,
-                        'tax_amount'   => 0,
+                        [
+                            'reference'    => CartTest::PRODUCT_ID,
+                            'name'         => 'Product name',
+                            'description'  => null,
+                            'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                            'total_amount' => CartTest::PRODUCT_PRICE,
+                            'unit_price'   => CartTest::PRODUCT_PRICE,
+                            'tax_amount'   => 0,
+                            'quantity'     => 1,
+                            'uom'          => null,
+                            'upc'          => null,
+                            'sku'          => null,
+                            'isbn'         => null,
+                            'brand'        => null,
+                            'manufacturer' => null,
+                            'category'     => null,
+                            'tags'         => null,
+                            'properties'   => null,
+                            'color'        => null,
+                            'size'         => null,
+                            'weight'       => null,
+                            'weight_unit'  => null,
+                            'image_url'    => null,
+                            'details_url'  => null,
+                            'tax_code'     => null,
+                            'type'         => 'unknown'
+                        ]
+                    ],
+                'currency' => self::CURRENCY_CODE,
+                'metadata' => null,
+            ];
+
+            $expectedCartData = [
+                'order_reference' => self::IMMUTABLE_QUOTE_ID,
+                'display_id'      => '',
+                'currency'        => self::CURRENCY_CODE,
+                'items'           => [
+                    [
+                        'reference'    => self::PRODUCT_ID,
+                        'name'         => 'Affirm Water Bottle ',
+                        'total_amount' => self::PRODUCT_PRICE,
+                        'unit_price'   => self::PRODUCT_PRICE,
                         'quantity'     => 1,
-                        'uom'          => null,
-                        'upc'          => null,
-                        'sku'          => null,
-                        'isbn'         => null,
-                        'brand'        => null,
-                        'manufacturer' => null,
-                        'category'     => null,
-                        'tags'         => null,
-                        'properties'   => null,
-                        'color'        => null,
-                        'size'         => null,
-                        'weight'       => null,
-                        'weight_unit'  => null,
-                        'image_url'    => null,
-                        'details_url'  => null,
-                        'tax_code'     => null,
-                        'type'         => 'unknown'
-                    ]
+                        'sku'          => self::PRODUCT_SKU,
+                        'type'         => 'physical',
+                        'description'  => 'Product description',
+                    ],
                 ],
-            'currency' => self::CURRENCY_CODE,
-            'metadata' => null,
-        ];
-
-        $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => '',
-            'currency'        => self::CURRENCY_CODE,
-            'items'           => [
-                [
-                    'reference'    => self::PRODUCT_ID,
-                    'name'         => 'Affirm Water Bottle ',
-                    'total_amount' => self::PRODUCT_PRICE,
-                    'unit_price'   => self::PRODUCT_PRICE,
-                    'quantity'     => 1,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product description',
+                'discounts'       => [],
+                'total_amount'    => self::PRODUCT_PRICE,
+                'tax_amount'      => 0,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ],
-            ],
-            'discounts'       => [],
-            'total_amount'    => self::PRODUCT_PRICE,
-            'tax_amount'      => 0,
-            'metadata'        => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
-        ];
+            ];
 
-        $cartMock = $this->getCurrentMock(['getCartData']);
-        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
-            ->willReturn($expectedCartData);
-        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
-            ->willReturn(self::QUOTE_ID);
-        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
-        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
-        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+            $cartMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+            $cartMock->expects(static::once())->method('isBoltOrderCachingEnabled')->willReturn(false);
+            $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+                ->willReturn($expectedCartData);
+            $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+                ->willReturn(self::QUOTE_ID);
+            $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+            $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+            $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+                ->willReturn($this->productMock);
+            $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
-        static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+            static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
         }
 
 
@@ -5240,6 +5242,148 @@ ORDER
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
         }
+
+    /**
+     * @test
+     * that createCartByRequest returns cart frcache if Bolt order caching is enabled and a cart is found by identifier
+     *
+     * @covers ::createCartByRequest
+     */
+    public function createCartByRequest_withOrderCachingAndCartInCache_returnsCartFromCache()
+    {
+
+        $request = [
+            'type'     => 'cart.create',
+            'items'    => [
+                [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(
+                        ['storeId' => CartTest::STORE_ID, 'form_key' => 'Ai6JseqGStjryljF']
+                    ),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'type'         => 'unknown'
+                ]
+            ],
+            'currency' => self::CURRENCY_CODE,
+            'metadata' => null,
+        ];
+        $this->hookHelper->method('verifySignature')->willReturn(true);
+
+        $cartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $currentMock = $this->getCurrentMock(
+            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache']
+        );
+        $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+            ->willReturn(true);
+        $currentMock->expects(static::once())->method('getCartCacheIdentifier')->with($request)
+            ->willReturn(self::CACHE_IDENTIFIER);
+        $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
+            ->willReturn($cartData);
+        $currentMock->expects(static::never())->method('createCart');
+
+        static::assertEquals($cartData, $currentMock->createCartByRequest($request));
+    }
+
+    /**
+     * @test
+     * that createCartByRequest saves cart to cache if Bolt order caching is enabled
+     *
+     * @covers ::createCartByRequest
+     */
+    public function createCartByRequest_withOrderCaching_savesCartToCache()
+    {
+
+        $request = [
+            'type'     => 'cart.create',
+            'items'    => [
+                [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(
+                        ['storeId' => CartTest::STORE_ID, 'form_key' => 'Ai6JseqGStjryljF']
+                    ),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'type'         => 'unknown'
+                ]
+            ],
+            'currency' => self::CURRENCY_CODE,
+            'metadata' => null,
+        ];
+        $this->hookHelper->method('verifySignature')->willReturn(true);
+
+        $cartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $currentMock = $this->getCurrentMock(
+            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache', 'saveToCache']
+        );
+        $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+            ->willReturn(true);
+        $currentMock->expects(static::once())->method('getCartCacheIdentifier')->with($request)
+            ->willReturn(self::CACHE_IDENTIFIER);
+        $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)->willReturn(false);
+        $currentMock->expects(static::once())->method('createCart')->with($request['items'], $request['metadata'])
+            ->willReturn($cartData);
+        $currentMock->expects(static::once())->method('saveToCache')->with(
+            $cartData,
+            self::CACHE_IDENTIFIER,
+            [\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG, \Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $cartData['order_reference']],
+            \Bolt\Boltpay\Helper\Cart::BOLT_ORDER_CACHE_LIFETIME
+        );
+
+        static::assertEquals($cartData, $currentMock->createCartByRequest($request));
+    }
 
     /**
      * @test
