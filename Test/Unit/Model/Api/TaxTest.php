@@ -177,6 +177,17 @@ class TaxTest extends TestCase
             'email' => 'integration@bolt.com',
             'company' => 'Bolt'
         ];
+        
+        $addressDataReformatted = [
+            'country_id' => 'US',
+            'postcode' => '90210',
+            'region' => 'California',
+            'region_id' => 12,
+            'city' => 'San Franciso',
+            'street' => '123 Sesame St.',
+            'email' => 'integration@bolt.com',
+            'company' => 'Bolt'
+        ];
 
         $shipping_option = [
             'reference' => $shippingReference
@@ -186,7 +197,7 @@ class TaxTest extends TestCase
 
         $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
         $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn($address);
+            ->with($addressData)->willReturn([$address,$addressDataReformatted]);
 
         $this->addressInformation->expects(self::once())->method('setAddress')
             ->with($address);
@@ -222,6 +233,17 @@ class TaxTest extends TestCase
             'email' => 'integration@bolt.com',
             'company' => 'Bolt'
         ];
+        
+        $addressDataReformatted = [
+            'country_id' => 'US',
+            'postcode' => '90210',
+            'region' => 'California',
+            'region_id' => 12,
+            'city' => 'San Franciso',
+            'street' => '123 Sesame St.',
+            'email' => 'integration@bolt.com',
+            'company' => 'Bolt'
+        ];
 
         $shipping_option = null;
 
@@ -229,7 +251,7 @@ class TaxTest extends TestCase
 
         $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
         $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn($address);
+            ->with($addressData)->willReturn([$address,$addressDataReformatted]);
 
         $this->addressInformation->expects(self::once())->method('setAddress')
             ->with($address);

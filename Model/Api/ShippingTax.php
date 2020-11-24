@@ -394,7 +394,7 @@ abstract class ShippingTax
         $address = $this->quote->isVirtual() ? $this->quote->getBillingAddress() : $this->quote->getShippingAddress();
         $addressData = $this->reformatAddressData($addressData);
         $address->addData($addressData);
-        return $address;
+        return [$address, $addressData];
     }
 
     /**
