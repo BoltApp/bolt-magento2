@@ -110,7 +110,11 @@ class Rewards
     }
 
     /**
-     * @param $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $immutableQuote
      */
     public function applyExternalDiscountData(
@@ -133,13 +137,15 @@ class Rewards
 
     /**
      * @param $result
-     * @param $mirasvitRewardsPurchaseHelper
-     * @param $mirasvitRewardsBalanceHelper
-     * @param $mirasvitRewardsSpendRulesListHelper
-     * @param $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
      * @param $parentQuote
      * @param $paymentOnly
+     * 
      * @return array
      */
     public function collectDiscounts(
@@ -190,8 +196,13 @@ class Rewards
 
     /**
      * @param $result
-     * @param $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
+     * 
      * @return string
      */
     public function filterApplyExternalQuoteData(
@@ -355,9 +366,11 @@ class Rewards
     /**
      * Calcs min and max amount of spend points for quote
      *
-     * @param \Magento\Quote\Model\Quote               $quote
-     * @param \Magento\Customer\Model\Customer         $customer
-     * @param \Magento\Quote\Model\Quote\Address\Total $totals
+     * @param \Magento\Quote\Model\Quote            $quote
+     * @param \Magento\Customer\Model\Customer      $customer
+     * @param \Mirasvit\Rewards\Model\Spending\Rule $rule
+     * @param float                                 $balancePoints
+     * @param float                                 $quoteSubTotal
      *
      * @return \Magento\Framework\DataObject
      */
@@ -467,10 +480,12 @@ class Rewards
     }
     
     /**
-     * @param $mirasvitRewardsPurchaseHelper
-     * @param $mirasvitRewardsBalanceHelper
-     * @param $mirasvitRewardsSpendRulesListHelper
-     * @param $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Helper\Checkout $mirasvitRewardsCheckoutHelper
+     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
      */
     public function beforeValidateQuoteDataForProcessNewOrder(
@@ -502,7 +517,7 @@ class Rewards
     
     /**
      * @param $result
-     * @param $mirasvitRewardsModelConfig
+     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
      * @param $quote
      * @param $transaction
      * @return boolean
