@@ -1554,19 +1554,8 @@ class Order extends AbstractHelper
                 $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_HOLDED));
             }
         } elseif ($state == OrderModel::STATE_CANCELED) {
-            if ($order->canCancel()){
-                $this->cancelOrder($order);
-                return;
-            }
-
-            try{
-                // Restock product quantity when the payment is irreversibly rejected
-                $order->registerCancellation('', false);
-            } catch (\Exception $e){
-                // Put the order in "cancelled" state even if the previous call fails
-                $order->setState(OrderModel::STATE_CANCELED);
-                $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
-            }
+            // Restock product quantity when the payment is irreversibly rejected
+            $order->registerCancellation('', false);
         } else {
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
