@@ -95,7 +95,7 @@ class Tax extends ShippingTax implements TaxInterface
      */
     public function setAddressInformation($addressData, $shipping_option)
     {
-        $address = $this->populateAddress($addressData);
+        list($address,) = $this->populateAddress($addressData);
         $this->addressInformation->setAddress($address);
 
         if (!$shipping_option) {
