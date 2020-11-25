@@ -170,6 +170,32 @@ class TestUtils {
         return $product;
     }
 
+    /**
+     * @return mixed
+     */
+    public static function createVirtualProduct()
+    {
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Test Virtual Product')
+            ->setSku('TestProduct')
+            ->setPrice(100)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStockData(['use_config_manage_stock' => 0])
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true);
+        $product->save();
+        return $product;
+    }
+
     private static function setSecureAreaIfNeeded()
     {
         $registry = Bootstrap::getObjectManager()->get("\Magento\Framework\Registry");
@@ -207,5 +233,35 @@ class TestUtils {
                     throw new \Exception("Unexpected type for delete:".get_class($object));
             }
         }
+    }
+
+    /**
+     * @param $addressData
+     * @param $quote
+     * @param $addressType
+     */
+    public static function setAddressToQuote($addressData ,$quote, $addressType)
+    {
+        if ($addressType === 'billing') {
+            $address = $quote->getBillingAddress();
+        }
+
+        if ($addressType === 'shipping') {
+            $address = $quote->getShippingAddress();
+        }
+
+        $address->setFirstname($addressData['first_name']);
+        $address->setLastname($addressData['last_name']);
+        $address->setCompany($addressData['company']);
+        $address->setTelephone($addressData['phone']);
+        $address->setStreet([
+            $addressData['street_address1'],
+            $addressData['street_address2']
+        ]);
+        $address->setCity($addressData['locality']);
+        $address->setRegion($addressData['region']);
+        $address->setPostcode($addressData['postal_code']);
+        $address->setCountryId($addressData['country_code']);
+        $address->setEmail($addressData['email']);
     }
 }
