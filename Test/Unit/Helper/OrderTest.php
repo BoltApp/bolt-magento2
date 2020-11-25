@@ -1826,6 +1826,82 @@ class OrderTest extends BoltTestCase
 
     /**
      * @test
+     * that submitQuote returns order created by {@see \Magento\Quote\Model\QuoteManagement::submit}
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withSuccessfulSubmission_returnsCreatedOrder()
+    {
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willReturn($this->orderMock);
+        static::assertEquals($this->orderMock, $this->currentMock->submitQuote($this->quoteMock));
+    }
+
+    /**
+     * @test
+     * that submitQuote returns order if an exception occurs during {@see \Magento\Quote\Model\QuoteManagement::submit}
+     * but an order was successfully created regardless
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withExceptionDuringOrderCreationAndOrderCreated_returnsCreatedOrder()
+    {
+        $this->initCurrentMock(['getOrderByQuoteId']);
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
+            ->getMockForAbstractClass();
+
+        $exception = new Exception('Exception after creating the order');
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willThrowException($exception);
+        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn($this->orderMock);
+        $this->orderMock->expects(static::exactly(2))->method('getPayment')->willReturn($this->paymentMock);
+        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
+        $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
+        $this->orderMock->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function ($callback) {
+                $report = $this->createMock(Report::class);
+                $report->expects(self::once())->method('setMetaData')->with(
+                    [
+                        'CREATE ORDER' => [
+                            'order_id' => self::ORDER_ID,
+                            'order_increment_id' => self::INCREMENT_ID,
+                        ]
+                    ]
+                );
+                $callback($report);
+            }
+        );
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+
+        static::assertEquals($this->orderMock, $this->currentMock->submitQuote($this->quoteMock));
+    }
+
+    /**
+     * @test
+     * that submitQuote rethrows an exception thrown when creating order if the order was not succesfully created
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withExceptionDuringOrderCreationAndOrderNotCreated_reThrowsException()
+    {
+        $this->initCurrentMock(['getOrderByQuoteId']);
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
+            ->getMockForAbstractClass();
+
+        $exception = new Exception('Exception after creating the order');
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willThrowException($exception);
+        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn(false);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage($exception->getMessage());
+
+        $this->currentMock->submitQuote($this->quoteMock);
+    }
+
+    /**
+     * @test
      *
      * @covers ::processNewOrder
      */

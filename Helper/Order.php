@@ -1142,6 +1142,39 @@ class Order extends AbstractHelper
 
     /**
      * @param Quote $quote
+     * @return false|OrderModel|null
+     * @throws \Exception
+     */
+    public function submitQuote($quote)
+    {
+        /** @var OrderModel $order */
+        try {
+            $order = $this->quoteManagement->submit($quote);
+        } catch (\Exception $e) {
+            $order = $this->getOrderByQuoteId($quote->getId());
+            if ($order && $order->getPayment() && $order->getPayment()->getMethod() === Payment::METHOD_CODE) {
+                $this->bugsnag->registerCallback(
+                    function ($report) use ($order) {
+                        $report->setMetaData(
+                            [
+                                'CREATE ORDER' => [
+                                    'order_id' => $order->getId(),
+                                    'order_increment_id' => $order->getIncrementId(),
+                                ]
+                            ]
+                        );
+                    }
+                );
+                $this->bugsnag->notifyException($e);
+            } else {
+                throw $e;
+            }
+        }
+        return $order;
+    }
+
+    /**
+     * @param Quote $quote
      * @param \stdClass $transaction
      * @return OrderModel
      * @throws BoltException
@@ -1149,8 +1182,7 @@ class Order extends AbstractHelper
      */
     public function processNewOrder($quote, $transaction)
     {
-        /** @var OrderModel $order */
-        $order = $this->quoteManagement->submit($quote);
+        $order = $this->submitQuote($quote);
 
         if (!$order) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
