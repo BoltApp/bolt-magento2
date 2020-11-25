@@ -29,6 +29,12 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 class Rewards
 {
     /**
+     * To collect all of available rewards points for Bolt cart,
+     * we create a mock for the subtotal of quote which is large enough.
+     */
+    const MOCK_SUBTOTAL = 999999999;
+    
+    /**
      * @var \Mirasvit\Rewards\Helper\Purchase
      */
     private $mirasvitRewardsPurchaseHelper;
@@ -291,12 +297,9 @@ class Rewards
                 $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
                 
                 if ($rules->count()) {
-                    // To collect all of available rewards points for Bolt cart,
-                    // we create a mock for the subtotal of quote which is large enough.
-                    $mockSubtotal = 999999999;
-                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, $mockSubtotal);                    
+                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, self::MOCK_SUBTOTAL);                    
                     $cartMaxPointsNumber = min($cartRange->getMaxPoints(), $balancePoints);
-                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, $mockSubtotal);
+                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, self::MOCK_SUBTOTAL);
                 } else {
                     $spendAmount = 0;
                 }
