@@ -169,6 +169,19 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     if ( ! $('#product_addtocart_form').validate().form()) {
                         return false;
                     }
+
+                    <?php if($block->isBoltOrderCachingEnabled()): ?>
+                    //if order caching is enabled cart request must contain a valid form key
+                    try {
+                        var options = cart['items'][0]['options'];
+                        if (!JSON.parse(options)['form_key']) {
+                            return false;
+                        }
+                    }
+                    catch {
+                        return false;
+                    }
+                    <?php endif; ?>
                     return true;
                 },
 
@@ -236,6 +249,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
+                options['form_key'] = $.mage.cookies.get('form_key');
 
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
@@ -264,8 +278,9 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                 return items;
             };
 
+            var cart;
             var setupProductPage = function () {
-                var cart = {
+                cart = {
                     currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
                     items: getItemsData()
                 };
@@ -277,6 +292,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             };
 
             setupProductPage();
+
             $('#qty').on('change', setupProductPage);
             $('.table-wrapper.grouped .input-text.qty').on('change', setupProductPage);
 
@@ -316,5 +332,12 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                     setupProductPage();
                 }
             });
+
+            /**
+             * Wait for the form_key cookie and reconfigure BoltCheckout.
+             * @see mage.formKey._create
+             * @see https://api.jqueryui.com/jQuery.widget/ (widgetEventPrefix)
+             */
+            $('body').on('formkeycreate formkey:create', setupProductPage);
         });
     </script>

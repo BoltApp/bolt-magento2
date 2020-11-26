@@ -121,12 +121,17 @@ class UpdateCartTest extends TestCase
      */
     private $currentMock;
 
+    /**
+     * @var \Magento\Framework\App\Cache|MockObject
+     */
+    private $cacheMock;
+
     protected function setUp()
     {
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
-            ->setMethods(['getSessionHelper'])
+            ->setMethods(['getSessionHelper', 'getCache'])
             ->disableOriginalConstructor()
-            ->getMock();        
+            ->getMock();
 
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->cartDataFactory = $this->createMock(CartDataInterfaceFactory::class);
@@ -134,6 +139,8 @@ class UpdateCartTest extends TestCase
         $this->response = $this->createMock(Response::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->logHelper = $this->createMock(LogHelper::class);
+        $this->cacheMock = $this->createMock(\Magento\Framework\App\Cache::class);
+        $this->updateCartContext->method('getCache')->willReturn($this->cacheMock);
     }
 
     /**
@@ -534,6 +541,9 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('generateResult')
             ->with($immutableQuoteMock)
             ->willReturn($result);
+
+        $this->cacheMock->expects(static::once())
+            ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
             
         $this->expectSuccessResponse($result);
 
@@ -633,6 +643,9 @@ class UpdateCartTest extends TestCase
                 'cart' => $this->getTestCartData(),
             ]
         ];
+
+        $this->cacheMock->expects(static::once())
+            ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
         
         $this->currentMock->expects(self::once())->method('generateResult')
             ->with($immutableQuoteMock)
@@ -743,6 +756,9 @@ class UpdateCartTest extends TestCase
                 'cart' => $cartData,
             ]
         ];
+
+        $this->cacheMock->expects(static::once())
+            ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
         
         $this->currentMock->expects(self::once())->method('generateResult')
             ->with($immutableQuoteMock)
@@ -840,6 +856,9 @@ class UpdateCartTest extends TestCase
         $this->currentMock->expects(self::once())->method('removeItemFromQuote')
             ->with($cartItems, $remove_items[0], $parentQuoteMock)
             ->willReturn(true);
+
+        $this->cacheMock->expects(static::once())
+            ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
         
         $result = [
             'status' => 'success',

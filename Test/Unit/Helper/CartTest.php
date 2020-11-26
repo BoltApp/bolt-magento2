@@ -2660,9 +2660,10 @@ ORDER
         */
         public function getCartData_withParentQuoteEmptyAndNoImmutableQuote_returnsEmptyArray()
         {
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([]);
-        static::assertEquals([], $this->currentMock->getCartData(false, '', null));
+            $this->skipTestInUnitTestsFlow();
+            TestUtils::setQuoteToSession(null);
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
         }
 
         /**
@@ -2675,13 +2676,13 @@ ORDER
         */
         public function getCartData_withEmptyImmutableQuote_returnsEmptyArray()
         {
-        $currentMock = $this->getCurrentMock(['createImmutableQuote', 'reserveOrderId']);
-        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([]);
-        static::assertEquals([], $currentMock->getCartData(false, '', null));
+            $this->skipTestInUnitTestsFlow();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = Bootstrap::getObjectManager()->create(Quote::class);
+            TestUtils::setQuoteToSession($quote);
+            $quote->setQuoteCurrencyCode("USD");
+            $quote->save();
+            static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
         }
 
         /**
@@ -2694,164 +2695,22 @@ ORDER
         */
         public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData()
         {
-        $currentMock = $this->getCurrentMock(
-            [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
-            ]
-        );
-        $testDiscounts = [
-            [
-                'description' => 'Test discount',
-                'amount'      => 1000,
-                'reference'   => self::COUPON_CODE,
-                'discount_category' => 'coupon',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
-        ];
-        $testItems = [
-            [
-                'reference'    => 20102,
-                'name'         => 'Test Product',
-                'total_amount' => 10000,
-                'unit_price'   => 10000,
-                'quantity'     => 1.0,
-                'sku'          => self::PRODUCT_SKU,
-                'type'         => 'physical',
-                'description'  => '',
-            ],
-        ];
-        $this->setUpAddressMock($this->quoteShippingAddress);
-        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteShippingAddress);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->quoteShippingAddress->expects(static::atLeastOnce())->method('getShippingMethod')
-            ->willReturn('flatrate_flatrate');
-        $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
-        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $currentMock->expects(static::once())->method('getCartItems')->willReturn([$testItems, 10000, 0]);
-        $currentMock->expects(static::once())->method('collectDiscounts')->willReturn([$testDiscounts, 9000, 0]);
-        static::assertEquals(
-            [
-                'order_reference' => self::PARENT_QUOTE_ID,
-                'display_id'      => '',
-                'currency'        => self::CURRENCY_CODE,
-                'items'           => $testItems,
-                'discounts'       => $testDiscounts,
-                'total_amount'    => 9000.0,
-                'tax_amount'      => 0,
-                'shipments'       => [
-                    [
-                        'cost'             => 0,
-                        'tax_amount'       => 0,
-                        'shipping_address' => [
-                            'first_name'      => 'IntegrationBolt',
-                            'last_name'       => 'BoltTest',
-                            'company'         => '',
-                            'phone'           => '132 231 1234',
-                            'street_address1' => '228 7th Avenue',
-                            'street_address2' => '228 7th Avenue 2',
-                            'locality'        => 'New York',
-                            'region'          => 'New York',
-                            'postal_code'     => '10011',
-                            'country_code'    => 'US',
-                            'email'           => self::EMAIL_ADDRESS,
-                        ],
-                        'service'          => null,
-                        'reference'        => null,
-                    ]
-                ],
-                'metadata'        => [
-                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-                ],
-            ],
-            $currentMock->getCartData(
-                true,
-                json_encode(
-                    [
-                        'billingAddress' => [
-                            'firstname'    => "IntegrationBolt",
-                            'lastname'     => "BoltTest",
-                            'company'      => "Bolt",
-                            'telephone'    => "132 231 1234",
-                            'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                            'city'         => "New York",
-                            'region'       => "New York",
-                            'country'      => "United States",
-                            'country_code' => "US",
-                            'email'        => self::EMAIL_ADDRESS,
-                            'postal_code'  => "10011",
-                        ]
-                    ]
-                )
-            )
-        );
-        }
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
 
-        /**
-        * @test
-        * that getCartData returns empty array and notifies error when billing address data is insufficient
-        * for virtual quote
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
-        {
-        $currentMock = $this->getCurrentMock(
-            [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
-            ]
-        );
-        $this->setUpAddressMock($this->quoteShippingAddress);
-        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteShippingAddress);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
-        $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
-        $this->bugsnag->expects(static::once())->method('notifyError')
-            ->with('Order create error', 'Billing address data insufficient.');
-        $result = $currentMock->getCartData(
+        $product = TestUtils::createSimpleProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product,1);
+
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
+
+        $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->setCollectShippingRates(true);
+        $quote->collectTotals()->save();
+        TestUtils::setQuoteToSession($quote);
+        $result = $boltHelperCart->getCartData(
             true,
             json_encode(
                 [
@@ -2871,7 +2730,101 @@ ORDER
                 ]
             )
         );
-        static::assertEquals([], $result);
+
+        // check image url
+        static::assertRegExp("|http://localhost/pub/static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+                $result['items'][0]['image_url']
+        );
+        unset($result['items'][0]['image_url']);
+
+        static::assertEquals(
+            [
+                'order_reference' => $quote->getId(),
+                'display_id'      => '',
+                'currency'        => self::CURRENCY_CODE,
+                'items'           =>  [
+                    [
+                        'reference'    => $product->getId(),
+                        'name'         => 'Test Product',
+                        'total_amount' => 10000.0,
+                        'unit_price'   => 10000,
+                        'quantity'     => 1.0,
+                        'sku'          => 'TestProduct',
+                        'type'         => 'physical',
+                        'description'  => 'Product Description',
+                    ]
+                ],
+                'discounts' => [],
+                'total_amount'    => 10500.0,
+                'tax_amount'      => 0,
+                'shipments'       => [
+                    [
+                        'cost'             => 500,
+                        'tax_amount'       => 0,
+                        'shipping_address' => [
+                            'first_name'      => 'IntegrationBolt',
+                            'last_name'       => 'BoltTest',
+                            'company'         => '',
+                            'phone'           => '132 231 1234',
+                            'street_address1' => '228 7th Avenue',
+                            'street_address2' => '228 7th Avenue 2',
+                            'locality'        => 'New York',
+                            'region'          => 'New York',
+                            'postal_code'     => '10011',
+                            'country_code'    => 'US',
+                            'email'           => self::EMAIL_ADDRESS,
+                        ],
+                        'service'          => 'Flat Rate - Fixed',
+                        'reference'        => 'flatrate_flatrate',
+                    ]
+                ],
+                'metadata'        => [
+                    'immutable_quote_id' => $quote->getId() + 1,
+                ],
+            ],
+            $result
+        );
+        }
+
+        /**
+        * @test
+        * that getCartData returns empty array and notifies error when billing address data is insufficient
+        * for virtual quote
+        *
+        * @covers ::getCartData
+        *
+        * @throws Exception from tested method
+        */
+        public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
+        {
+            $this->skipTestInUnitTestsFlow();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = Bootstrap::getObjectManager()->create(Quote::class);
+            $quote->setQuoteCurrencyCode("USD");
+            $product = TestUtils::createVirtualProduct();
+            $this->objectsToClean[] = $product;
+            $quote->addProduct($product,1);
+            TestUtils::setQuoteToSession($quote);
+            $result = $boltHelperCart->getCartData(true, json_encode(
+                [
+                    'billingAddress' => [
+                        'firstname'    => "IntegrationBolt",
+                        'lastname'     => "BoltTest",
+                        'company'      => "Bolt",
+                        'telephone'    => "132 231 1234",
+                        'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                        'city'         => "New York",
+                        'region'       => "New York",
+                        'country'      => "United States",
+                        'country_code' => "US",
+                        'email'        => self::EMAIL_ADDRESS,
+                        'postal_code'  => "10011",
+                    ]
+                ]
+                )
+            );
+
+            static::assertEquals([], $result);
         }
 
         /**
@@ -2884,52 +2837,22 @@ ORDER
         */
         public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData()
         {
-        $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
-        ];
-        $getCartItemsResult = [[$testItem], 12345, 0];
-        $collectDiscountsResult = [[], 12345, 0];
-        $currentMock = $this->getCurrentMock(
-            [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
-            ]
-        );
-        $this->setUpAddressMock($this->quoteBillingAddress);
-        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteBillingAddress);
-        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
-        $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
-        $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
-        $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->quoteBillingAddress);
-        $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
-        $result = $currentMock->getCartData(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
+
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product,1);
+        $quote->getBillingAddress()->addData($this->testAddressData);
+        $quote->getShippingAddress()->addData($this->testAddressData);
+        $quote->save();
+
+        TestUtils::setQuoteToSession($quote);
+
+
+        $result = $boltHelperCart->getCartData(
             true,
             json_encode(
                 [
@@ -2949,12 +2872,24 @@ ORDER
                 ]
             )
         );
+        unset($result['items'][0]['image_url']);
         static::assertEquals(
             [
-                'order_reference' => 1000,
+                'order_reference' => $quote->getId(),
                 'display_id'      => '',
                 'currency'        => 'USD',
-                'items'           => [$testItem],
+                'items'           => [
+                    [
+                        'reference'    => $product->getId(),
+                        'name'         => 'Test Virtual Product',
+                        'total_amount' => 10000.0,
+                        'unit_price'   => 10000,
+                        'quantity'     => 1.0,
+                        'sku'          => 'TestProduct',
+                        'type'         => 'digital',
+                        'description'  => 'Product Description',
+                    ]
+                ],
                 'billing_address' =>
                     [
                         'first_name'      => 'IntegrationBolt',
@@ -2970,11 +2905,11 @@ ORDER
                         'email'           => self::EMAIL_ADDRESS,
                     ],
                 'discounts'       => [],
-                'total_amount'    => 12345,
+                'total_amount'    => 10000.0,
                 'tax_amount'      => 0,
                 'metadata'        =>
                     [
-                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                        'immutable_quote_id' => $quote->getId() + 1,
                     ]
             ],
             $result
@@ -3683,7 +3618,7 @@ ORDER
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
         $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
-        
+
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription'])
             ->disableOriginalConstructor()
@@ -3728,7 +3663,7 @@ ORDER
             ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
 
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        
+
         $checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
@@ -4193,29 +4128,29 @@ ORDER
         $quote->expects(static::any())->method('getTotals')->willReturn(
             [DiscountHelper::GIFT_VOUCHER => $this->quoteAddressTotal]
         );
-        
-        $quote->method('getAppliedRuleIds')->willReturn('2');	
 
-        $rule2 = $this->getMockBuilder(DataObject::class)	
-            ->setMethods(['getCouponType', 'getDescription'])	
-            ->disableOriginalConstructor()	
-            ->getMock();	
-        $rule2->expects(static::once())->method('getCouponType')	
-            ->willReturn('SPECIFIC_COUPON');	
-        $rule2->expects(static::once())->method('getDescription')	
-            ->willReturn(self::COUPON_DESCRIPTION);	
+        $quote->method('getAppliedRuleIds')->willReturn('2');
 
-        $this->ruleRepository->expects(static::once())	
-            ->method('getById')	
-            ->with(2)	
+        $rule2 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
+        $rule2->expects(static::once())->method('getDescription')
+            ->willReturn(self::COUPON_DESCRIPTION);
+
+        $this->ruleRepository->expects(static::once())
+            ->method('getById')
+            ->with(2)
             ->willReturn($rule2);
-        
+
         $checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
-                        ->willReturn([2 => ($discountAmount),]);	
+                        ->willReturn([2 => ($discountAmount),]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
@@ -4878,7 +4813,8 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
 
-        $currentMock = $this->getCurrentMock(['getCartData']);
+        $currentMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+        $currentMock->method('isBoltOrderCachingEnabled')->willReturn(false);
         return [$request, $payload, $expectedCartData, $currentMock];
         }
 
@@ -4893,78 +4829,79 @@ ORDER
         */
         public function createCartByRequest_withGuestUserAndSimpleProduct_returnsExpectedCartData()
         {
-        $request = [
-            'type'     => 'cart.create',
-            'items'    =>
-                [
+            $request = [
+                'type'     => 'cart.create',
+                'items'    =>
                     [
-                        'reference'    => CartTest::PRODUCT_ID,
-                        'name'         => 'Product name',
-                        'description'  => null,
-                        'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
-                        'total_amount' => CartTest::PRODUCT_PRICE,
-                        'unit_price'   => CartTest::PRODUCT_PRICE,
-                        'tax_amount'   => 0,
+                        [
+                            'reference'    => CartTest::PRODUCT_ID,
+                            'name'         => 'Product name',
+                            'description'  => null,
+                            'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                            'total_amount' => CartTest::PRODUCT_PRICE,
+                            'unit_price'   => CartTest::PRODUCT_PRICE,
+                            'tax_amount'   => 0,
+                            'quantity'     => 1,
+                            'uom'          => null,
+                            'upc'          => null,
+                            'sku'          => null,
+                            'isbn'         => null,
+                            'brand'        => null,
+                            'manufacturer' => null,
+                            'category'     => null,
+                            'tags'         => null,
+                            'properties'   => null,
+                            'color'        => null,
+                            'size'         => null,
+                            'weight'       => null,
+                            'weight_unit'  => null,
+                            'image_url'    => null,
+                            'details_url'  => null,
+                            'tax_code'     => null,
+                            'type'         => 'unknown'
+                        ]
+                    ],
+                'currency' => self::CURRENCY_CODE,
+                'metadata' => null,
+            ];
+
+            $expectedCartData = [
+                'order_reference' => self::IMMUTABLE_QUOTE_ID,
+                'display_id'      => '',
+                'currency'        => self::CURRENCY_CODE,
+                'items'           => [
+                    [
+                        'reference'    => self::PRODUCT_ID,
+                        'name'         => 'Affirm Water Bottle ',
+                        'total_amount' => self::PRODUCT_PRICE,
+                        'unit_price'   => self::PRODUCT_PRICE,
                         'quantity'     => 1,
-                        'uom'          => null,
-                        'upc'          => null,
-                        'sku'          => null,
-                        'isbn'         => null,
-                        'brand'        => null,
-                        'manufacturer' => null,
-                        'category'     => null,
-                        'tags'         => null,
-                        'properties'   => null,
-                        'color'        => null,
-                        'size'         => null,
-                        'weight'       => null,
-                        'weight_unit'  => null,
-                        'image_url'    => null,
-                        'details_url'  => null,
-                        'tax_code'     => null,
-                        'type'         => 'unknown'
-                    ]
+                        'sku'          => self::PRODUCT_SKU,
+                        'type'         => 'physical',
+                        'description'  => 'Product description',
+                    ],
                 ],
-            'currency' => self::CURRENCY_CODE,
-            'metadata' => null,
-        ];
-
-        $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
-            'display_id'      => '',
-            'currency'        => self::CURRENCY_CODE,
-            'items'           => [
-                [
-                    'reference'    => self::PRODUCT_ID,
-                    'name'         => 'Affirm Water Bottle ',
-                    'total_amount' => self::PRODUCT_PRICE,
-                    'unit_price'   => self::PRODUCT_PRICE,
-                    'quantity'     => 1,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product description',
+                'discounts'       => [],
+                'total_amount'    => self::PRODUCT_PRICE,
+                'tax_amount'      => 0,
+                'metadata'        => [
+                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
                 ],
-            ],
-            'discounts'       => [],
-            'total_amount'    => self::PRODUCT_PRICE,
-            'tax_amount'      => 0,
-            'metadata'        => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
-        ];
+            ];
 
-        $cartMock = $this->getCurrentMock(['getCartData']);
-        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
-            ->willReturn($expectedCartData);
-        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
-            ->willReturn(self::QUOTE_ID);
-        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
-        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
-        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+            $cartMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+            $cartMock->expects(static::once())->method('isBoltOrderCachingEnabled')->willReturn(false);
+            $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+                ->willReturn($expectedCartData);
+            $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+                ->willReturn(self::QUOTE_ID);
+            $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+            $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
+            $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+                ->willReturn($this->productMock);
+            $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
-        static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+            static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
         }
 
 
@@ -5240,6 +5177,148 @@ ORDER
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
         }
+
+    /**
+     * @test
+     * that createCartByRequest returns cart frcache if Bolt order caching is enabled and a cart is found by identifier
+     *
+     * @covers ::createCartByRequest
+     */
+    public function createCartByRequest_withOrderCachingAndCartInCache_returnsCartFromCache()
+    {
+
+        $request = [
+            'type'     => 'cart.create',
+            'items'    => [
+                [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(
+                        ['storeId' => CartTest::STORE_ID, 'form_key' => 'Ai6JseqGStjryljF']
+                    ),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'type'         => 'unknown'
+                ]
+            ],
+            'currency' => self::CURRENCY_CODE,
+            'metadata' => null,
+        ];
+        $this->hookHelper->method('verifySignature')->willReturn(true);
+
+        $cartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $currentMock = $this->getCurrentMock(
+            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache']
+        );
+        $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+            ->willReturn(true);
+        $currentMock->expects(static::once())->method('getCartCacheIdentifier')->with($request)
+            ->willReturn(self::CACHE_IDENTIFIER);
+        $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
+            ->willReturn($cartData);
+        $currentMock->expects(static::never())->method('createCart');
+
+        static::assertEquals($cartData, $currentMock->createCartByRequest($request));
+    }
+
+    /**
+     * @test
+     * that createCartByRequest saves cart to cache if Bolt order caching is enabled
+     *
+     * @covers ::createCartByRequest
+     */
+    public function createCartByRequest_withOrderCaching_savesCartToCache()
+    {
+
+        $request = [
+            'type'     => 'cart.create',
+            'items'    => [
+                [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(
+                        ['storeId' => CartTest::STORE_ID, 'form_key' => 'Ai6JseqGStjryljF']
+                    ),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'type'         => 'unknown'
+                ]
+            ],
+            'currency' => self::CURRENCY_CODE,
+            'metadata' => null,
+        ];
+        $this->hookHelper->method('verifySignature')->willReturn(true);
+
+        $cartData = [
+            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => self::PRODUCT_ID,
+                    'name'         => 'Affirm Water Bottle ',
+                    'total_amount' => self::PRODUCT_PRICE,
+                    'unit_price'   => self::PRODUCT_PRICE,
+                    'quantity'     => 1,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => 'Product description',
+                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => self::PRODUCT_PRICE,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
+        $currentMock = $this->getCurrentMock(
+            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache', 'saveToCache']
+        );
+        $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
+            ->willReturn(true);
+        $currentMock->expects(static::once())->method('getCartCacheIdentifier')->with($request)
+            ->willReturn(self::CACHE_IDENTIFIER);
+        $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)->willReturn(false);
+        $currentMock->expects(static::once())->method('createCart')->with($request['items'], $request['metadata'])
+            ->willReturn($cartData);
+        $currentMock->expects(static::once())->method('saveToCache')->with(
+            $cartData,
+            self::CACHE_IDENTIFIER,
+            [\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG, \Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $cartData['order_reference']],
+            \Bolt\Boltpay\Helper\Cart::BOLT_ORDER_CACHE_LIFETIME
+        );
+
+        static::assertEquals($cartData, $currentMock->createCartByRequest($request));
+    }
 
     /**
      * @test

@@ -816,7 +816,7 @@ class ShippingTaxTest extends TestCase
 
         $address->expects(self::once())->method('addData')->willReturnSelf();
 
-        $this->assertEquals($address, $this->currentMock->populateAddress($addressData));
+        $this->assertEquals([$address,$addressDataReformatted], $this->currentMock->populateAddress($addressData));
     }
 
 

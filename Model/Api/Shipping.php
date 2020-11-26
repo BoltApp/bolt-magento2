@@ -146,7 +146,7 @@ class Shipping extends ShippingTax implements ShippingInterface
      */
     public function getShippingOptions($addressData)
     {
-        $addressData = $this->reformatAddressData($addressData);
+        list(,$addressData) = $this->populateAddress($addressData);
 
         $estimateAddress = $this->estimateAddressFactory->create();
 

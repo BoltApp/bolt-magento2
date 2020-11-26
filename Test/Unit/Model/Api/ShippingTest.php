@@ -273,10 +273,10 @@ class ShippingTest extends TestCase
         $this->shippingTaxContext->method('getBugsnag')
             ->willReturn($bugsnag);
 
-        $this->initCurrentMock(['reformatAddressData', 'formatResult']);
+        $this->initCurrentMock(['populateAddress', 'formatResult']);
 
-        $this->currentMock->expects(self::once())->method('reformatAddressData')->with($addressData)
-            ->willReturn($reformattedAddressData);
+        $this->currentMock->expects(self::once())->method('populateAddress')->with($addressData)
+            ->willReturn([null,$reformattedAddressData]);
 
         $quote = $this->getQuoteMock();
 
@@ -365,10 +365,10 @@ class ShippingTest extends TestCase
         $this->shippingTaxContext->method('getBugsnag')
             ->willReturn($bugsnag);
 
-        $this->initCurrentMock(['reformatAddressData', 'formatResult']);
+        $this->initCurrentMock(['populateAddress', 'formatResult']);
 
-        $this->currentMock->expects(self::once())->method('reformatAddressData')->with($addressData)
-            ->willReturn($reformattedAddressData);
+        $this->currentMock->expects(self::once())->method('populateAddress')->with($addressData)
+            ->willReturn([null,$reformattedAddressData]);
 
         $quote = $this->getQuoteMock();
 

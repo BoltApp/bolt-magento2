@@ -182,6 +182,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
             'isShowTermsPaymentButton',
             'getOrderManagementSelector',
             'getAdditionalCheckoutButtonAttributes',
+            'isBoltOrderCachingEnabled',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -1986,5 +1987,19 @@ JS;
         $this->configHelper
             ->method('getCustomURLValueOrDefault')
             ->willReturnArgument(1);
+    }
+
+    /**
+     * @test
+     * that isBoltOrderCachingEnabled returns Bolt order caching configuration status form config helper
+     * @see \Bolt\Boltpay\Block\Js::isBoltOrderCachingEnabled
+     *
+     * @covers ::isBoltOrderCachingEnabled
+     */
+    public function isBoltOrderCachingEnabled()
+    {
+        $this->configHelper->expects(static::once())->method('isBoltOrderCachingEnabled')
+            ->with(self::STORE_ID)->willReturn(true);
+        static::assertTrue($this->currentMock->isBoltOrderCachingEnabled(self::STORE_ID));
     }
 }

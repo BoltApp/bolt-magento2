@@ -31,6 +31,12 @@ class Rewards
     const MIRASVIT_REWARDS = 'mirasvitrewards';
     
     /**
+     * To collect all of available rewards points for Bolt cart,
+     * we create a mock for the subtotal of quote which is large enough.
+     */
+    const MOCK_SUBTOTAL = 999999999;
+    
+    /**
      * @var \Mirasvit\Rewards\Helper\Purchase
      */
     private $mirasvitRewardsPurchaseHelper;
@@ -294,12 +300,9 @@ class Rewards
                 $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
                 
                 if ($rules->count()) {
-                    // To collect all of available rewards points for Bolt cart,
-                    // we create a mock for the subtotal of quote which is large enough.
-                    $mockSubtotal = 999999999;
-                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, $mockSubtotal);                    
+                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, self::MOCK_SUBTOTAL);                    
                     $cartMaxPointsNumber = min($cartRange->getMaxPoints(), $balancePoints);
-                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, $mockSubtotal);
+                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, self::MOCK_SUBTOTAL);
                 } else {
                     $spendAmount = 0;
                 }
@@ -411,6 +414,9 @@ class Rewards
     }
     
     /**
+     * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
+     * though we have some custom logic in it.
+     *
      * @param \Mirasvit\Rewards\Model\Spending\Tier $tier
      * @param SpendCartRangeData                    $data
      *
@@ -456,6 +462,9 @@ class Rewards
     }
     
     /**
+     * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
+     * and we do not have any custom logic in it.
+     *
      * @param float              $ruleMinPoints
      * @param float              $ruleMaxPoints
      * @param float              $monetaryStep

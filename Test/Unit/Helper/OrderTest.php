@@ -90,11 +90,14 @@ use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Api\CreditmemoManagementInterface;
 use Magento\Sales\Model\Order\Creditmemo;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
  */
-class OrderTest extends TestCase
+class OrderTest extends BoltTestCase
 {
     const INCREMENT_ID = 1234;
     const QUOTE_ID = 5678;
@@ -1745,6 +1748,13 @@ class OrderTest extends TestCase
      */
     public function processExistingOrder_pendingOrder()
     {
+        $this->initCurrentMock(['getExistingOrder','deleteOrderByIncrementId']);
+        $transaction = new stdClass();
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->metadata = new \stdClass();
+        $transaction->order->cart->metadata->immutable_quote_id = self::IMMUTABLE_QUOTE_ID;
+
         $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
@@ -1753,15 +1763,11 @@ class OrderTest extends TestCase
             ->willReturn(false);
         $this->orderMock->expects(self::once())->method('getState')
             ->willReturn(Order::STATE_PENDING_PAYMENT);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionMessage(
-            sprintf(
-                'Order is in pending payment. Waiting for the hook update. Quote ID: %s',
-                self::QUOTE_ID
-            )
-        );
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
+        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+            ->with(self::INCREMENT_ID,self::IMMUTABLE_QUOTE_ID);
+
+        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, $transaction));
     }
 
     /**
@@ -1816,6 +1822,82 @@ class OrderTest extends TestCase
         self::assertFalse(
             $this->currentMock->processExistingOrder($this->quoteMock, $transaction)
         );
+    }
+
+    /**
+     * @test
+     * that submitQuote returns order created by {@see \Magento\Quote\Model\QuoteManagement::submit}
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withSuccessfulSubmission_returnsCreatedOrder()
+    {
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willReturn($this->orderMock);
+        static::assertEquals($this->orderMock, $this->currentMock->submitQuote($this->quoteMock));
+    }
+
+    /**
+     * @test
+     * that submitQuote returns order if an exception occurs during {@see \Magento\Quote\Model\QuoteManagement::submit}
+     * but an order was successfully created regardless
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withExceptionDuringOrderCreationAndOrderCreated_returnsCreatedOrder()
+    {
+        $this->initCurrentMock(['getOrderByQuoteId']);
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
+            ->getMockForAbstractClass();
+
+        $exception = new Exception('Exception after creating the order');
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willThrowException($exception);
+        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn($this->orderMock);
+        $this->orderMock->expects(static::exactly(2))->method('getPayment')->willReturn($this->paymentMock);
+        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
+        $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
+        $this->orderMock->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function ($callback) {
+                $report = $this->createMock(Report::class);
+                $report->expects(self::once())->method('setMetaData')->with(
+                    [
+                        'CREATE ORDER' => [
+                            'order_id' => self::ORDER_ID,
+                            'order_increment_id' => self::INCREMENT_ID,
+                        ]
+                    ]
+                );
+                $callback($report);
+            }
+        );
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+
+        static::assertEquals($this->orderMock, $this->currentMock->submitQuote($this->quoteMock));
+    }
+
+    /**
+     * @test
+     * that submitQuote rethrows an exception thrown when creating order if the order was not succesfully created
+     *
+     * @covers ::submitQuote
+     */
+    public function submitQuote_withExceptionDuringOrderCreationAndOrderNotCreated_reThrowsException()
+    {
+        $this->initCurrentMock(['getOrderByQuoteId']);
+        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
+            ->getMockForAbstractClass();
+
+        $exception = new Exception('Exception after creating the order');
+        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
+            ->willThrowException($exception);
+        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn(false);
+
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage($exception->getMessage());
+
+        $this->currentMock->submitQuote($this->quoteMock);
     }
 
     /**
@@ -2217,107 +2299,52 @@ class OrderTest extends TestCase
      *
      * @throws Exception
      */
-    public function deleteOrderByIncrementId_noError()
+    public function deleteOrderByIncrementId_ifParentQuoteIdIsNotEqualToImmutableQuoteId_reactivateSessionQuote()
     {
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $this->quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(true)->willReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
+        $this->skipTestInUnitTestsFlow();
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+        $incrementId = $order->getIncrementId();
+
+        $registry->register('isSecureArea', true);
+        Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, self::IMMUTABLE_QUOTE_ID);
+        $registry->unregister('isSecureArea');
+
+        $quote = TestUtils::getQuoteById($quote->getId());
+
+        self::assertEquals('1', $quote->getData('is_active'));
     }
 
     /**
      * @test
-     * that deleteOrderByIncrementId resets PPC quote checkout type when following conditions is met:
-     * 1. has existing order
-     * 2. order state is not equals to the OrderModel::STATE_PENDING_PAYMENT
-     * 3. parent quote id equals to the immutable quote id
-     * 4. Bolt checkout type equals to the CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE
-     *
-     * @covers ::deleteOrderByIncrementId
-     *
-     * @throws ReflectionException if unable to create Quote partial mock
-     * @throws Exception from the tested method
+     * @throws LocalizedException
      */
-    public function deleteOrderByIncrementId_whenBoltCheckoutTypeIsComplete_resetsPPCQuoteCheckoutType()
+    public function deleteOrderByIncrementId_ifBoltCheckoutTypeIsComplete_changesCheckoutTypeToPPC()
     {
-        $quoteMock = $this->createPartialMock(
-            Quote::class,
-            ['getBoltCheckoutType', 'setBoltCheckoutType', 'setIsActive']
-        );
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $quoteMock->expects(static::once())->method('setIsActive')->with(false)->WillReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($quoteMock);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
-    }
+        $this->skipTestInUnitTestsFlow();
+        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
 
-    /**
-     * @test
-     * that deleteOrderByIncrementId sets deleted order's parent quote Bolt checkout type to PPC and active status false
-     * if checkout type is PPC complete
-     *
-     * @covers ::deleteOrderByIncrementId
-     *
-     * @throws Exception from the tested method
-     */
-    public function deleteOrderByIncrementId_ifCheckoutTYpePPCComplete_changesCheckoutTypeToPPC()
-    {
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $state = Order::STATE_PENDING_PAYMENT;
-        $this->orderMock->expects(static::once())->method('getState')->willReturn($state);
-        $this->orderMock->expects(static::once())->method('getQuoteId')->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->cartHelper->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->eventManager->expects(self::once())->method('dispatch')
-            ->with(
-                'sales_model_service_quote_submit_failure',
-                [
-                    'order' => $this->orderMock,
-                    'quote' => $this->quoteMock
-                ]
-            );
-        $this->currentMock->expects(static::once())->method('deleteOrder')->with($this->orderMock);
-        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false)->willReturnSelf();
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $this->quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+        $incrementId = $order->getIncrementId();
+
+        $registry->register('isSecureArea', true);
+        Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, $quote->getId());
+        $registry->unregister('isSecureArea');
+
+        $quote = TestUtils::getQuoteById($quote->getId());
+
+        self::assertEquals(CartHelper::BOLT_CHECKOUT_TYPE_PPC, $quote->getBoltCheckoutType());
     }
 
     /**
@@ -5151,4 +5178,52 @@ class OrderTest extends TestCase
             ['isPPC' => false],
         ];
     }
+
+    /**
+     * @test
+     *
+     * @covers ::deleteOrCancelFailedPaymentOrder
+     *
+     * @dataProvider deleteOrCancelFailedPaymentOrderProvider
+     *
+     * @param bool $isPPC
+     *
+     * @throws AlreadyExistsException
+     */
+    public function deleteOrCancelFailedPaymentOrder($isCancelFailedPaymentOrderInsteadOfDeleting)
+    {
+        $this->initCurrentMock(['cancelFailedPaymentOrder','deleteOrderByIncrementId']);
+
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
+            ->willReturn($isCancelFailedPaymentOrderInsteadOfDeleting);
+        if ($isCancelFailedPaymentOrderInsteadOfDeleting) {
+            $this->currentMock->expects(static::once())->method('cancelFailedPaymentOrder')
+                ->with(self::DISPLAY_ID, self::QUOTE_ID);
+        } else {
+            $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
+                ->with(self::DISPLAY_ID);
+        }
+        $expected_message = $isCancelFailedPaymentOrderInsteadOfDeleting
+                ? 'Order was canceled: ' . self::DISPLAY_ID
+                : 'Order was deleted: ' . self::DISPLAY_ID;
+        $message = $this->currentMock->deleteOrCancelFailedPaymentOrder(
+            self::DISPLAY_ID,
+            self::QUOTE_ID
+        );
+        static::assertEquals($expected_message, $message);
+    }
+
+        /**
+     * Data provider for tests that depend on isCancelFailedPaymentOrderInsteadOfDeleting feature switch
+     *
+     * @return array
+     */
+    public function deleteOrCancelFailedPaymentOrderProvider()
+    {
+        return [
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => false],
+            ['isCancelFailedPaymentOrderInsteadOfDeleting' => true],
+        ];
+    }
+
 }

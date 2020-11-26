@@ -113,6 +113,8 @@ class Order extends AbstractHelper
         'paypal' => 'PayPal',
         'afterpay' => 'Afterpay',
         'affirm' => 'Affirm',
+        'braintree' => 'Braintree',
+        'applepay' => 'ApplePay'
     ];
 
     /**
@@ -728,6 +730,9 @@ class Order extends AbstractHelper
         if (empty($payment->getCcType()) && ! empty($transaction->from_credit_card->network)) {
             $payment->setCcType($transaction->from_credit_card->network);
         }
+        if (!empty($transaction->from_credit_card->token_type) && $transaction->from_credit_card->token_type == "applepay") {
+            $payment->setAdditionalData($transaction->from_credit_card->token_type);
+        }
         $payment->save();
     }
 
@@ -1067,6 +1072,25 @@ class Order extends AbstractHelper
     }
 
     /**
+     * Cancel or detete the failed payment order depending on settings via feature switches
+     *
+     * @param string $displayId
+     * @param string $immutableQuoteId
+     * @return string log message
+     * @throws \Magento\Framework\Exception\AlreadyExistsException
+     */
+    public function deleteOrCancelFailedPaymentOrder($display_id, $immutableQuoteId)
+    {
+        if ($this->featureSwitches->isCancelFailedPaymentOrderInsteadOfDeleting()) {
+            /** @see \Bolt\Boltpay\Helper\Order::deleteOrderByIncrementId */
+            $this->cancelFailedPaymentOrder($display_id, $immutableQuoteId);
+            return 'Order was canceled: ' . $display_id;
+        }
+        $this->deleteOrderByIncrementId($display_id, $immutableQuoteId);
+        return 'Order was deleted: ' . $display_id;
+    }
+
+    /**
      * Try to fetch and price-validate already existing order.
      * Use case: order has been created but the payment fails due to the invalid credit card data.
      * Then the customer enters the correct card info, the previously created order is used if the amounts match.
@@ -1094,14 +1118,18 @@ class Order extends AbstractHelper
             }
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-                throw new BoltException(
-                    __(
-                        'Order is in pending payment. Waiting for the hook update. Quote ID: %1',
-                        $quote->getId()
-                    ),
-                    null,
-                    CreateOrder::E_BOLT_GENERAL_ERROR
+                // Order for the same quote is created, it is in pending payment status
+                // and we try to create a new one
+                // It means order was created for unsuccessful payment attempt and wasn't deleted yet.
+                // We can safely delete it
+                $incrementId = $order->getIncrementId();
+                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltOrder($transaction->order);
+                $message = $this->deleteOrCancelFailedPaymentOrder($incrementId, $immutableQuoteId);
+                $this->bugsnag->notifyError(
+                    "Existing order is in pending payment",
+                    $message . "quote id: " . $quote->getId()
                 );
+                return false;
             }
 
             if ($this->hasSamePrice($order, $transaction)) {
@@ -1114,6 +1142,39 @@ class Order extends AbstractHelper
 
     /**
      * @param Quote $quote
+     * @return false|OrderModel|null
+     * @throws \Exception
+     */
+    public function submitQuote($quote)
+    {
+        /** @var OrderModel $order */
+        try {
+            $order = $this->quoteManagement->submit($quote);
+        } catch (\Exception $e) {
+            $order = $this->getOrderByQuoteId($quote->getId());
+            if ($order && $order->getPayment() && $order->getPayment()->getMethod() === Payment::METHOD_CODE) {
+                $this->bugsnag->registerCallback(
+                    function ($report) use ($order) {
+                        $report->setMetaData(
+                            [
+                                'CREATE ORDER' => [
+                                    'order_id' => $order->getId(),
+                                    'order_increment_id' => $order->getIncrementId(),
+                                ]
+                            ]
+                        );
+                    }
+                );
+                $this->bugsnag->notifyException($e);
+            } else {
+                throw $e;
+            }
+        }
+        return $order;
+    }
+
+    /**
+     * @param Quote $quote
      * @param \stdClass $transaction
      * @return OrderModel
      * @throws BoltException
@@ -1121,8 +1182,7 @@ class Order extends AbstractHelper
      */
     public function processNewOrder($quote, $transaction)
     {
-        /** @var OrderModel $order */
-        $order = $this->quoteManagement->submit($quote);
+        $order = $this->submitQuote($quote);
 
         if (!$order) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
@@ -1285,7 +1345,7 @@ class Order extends AbstractHelper
             ]
         );
         $this->deleteOrder($order);
-        // reactivate session quote - the condiotion excludes PPC quotes
+        // reactivate session quote - the condition excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
         }
