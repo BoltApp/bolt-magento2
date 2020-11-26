@@ -411,6 +411,9 @@ class Rewards
     }
     
     /**
+     * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
+     * though we have some custom logic in it.
+     *
      * @param \Mirasvit\Rewards\Model\Spending\Tier $tier
      * @param SpendCartRangeData                    $data
      *
@@ -456,6 +459,9 @@ class Rewards
     }
     
     /**
+     * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
+     * and we do not have any custom logic in it.
+     *
      * @param float              $ruleMinPoints
      * @param float              $ruleMaxPoints
      * @param float              $monetaryStep
