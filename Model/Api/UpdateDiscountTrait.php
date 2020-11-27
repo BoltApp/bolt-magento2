@@ -138,7 +138,7 @@ trait UpdateDiscountTrait
         // Check if empty coupon was sent
         if ($couponCode === '') {
             throw new BoltException(
-                'No coupon code provided',
+                __('No coupon code provided'),
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
