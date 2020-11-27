@@ -31,6 +31,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
