@@ -130,10 +130,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $couponCode = trim($discount_code);
 
                 $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
-                if( ! $result ){
-                    // Already sent a response with error, so just return.
-                    return false;
-                }
 
                 list($coupon, $giftCard) = $result;
 

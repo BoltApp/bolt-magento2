@@ -128,19 +128,19 @@ trait UpdateDiscountTrait
      * @param string|int $websiteId
      * @param string|int $storeId
      *
+     * @throws BoltException
+     * 
      * @return object|null
      */
     protected function verifyCouponCode( $couponCode, $websiteId, $storeId )
     {
         // Check if empty coupon was sent
         if ($couponCode === '') {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
+            throw new BoltException(
                 'No coupon code provided',
-                422
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
 
         // Load the Magento_GiftCardAccount object
@@ -163,13 +163,11 @@ trait UpdateDiscountTrait
 
         // Check if the coupon and gift card does not exist.
         if ((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                sprintf('The coupon code %s is not found', $couponCode),
-                422
+            throw new BoltException(
+                __(sprintf('The coupon code %s is not found', $couponCode)),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
         
         return [$coupon, $giftCard];
