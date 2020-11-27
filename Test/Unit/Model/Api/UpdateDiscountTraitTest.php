@@ -417,16 +417,16 @@ class UpdateDiscountTraitTest extends TestCase
 
     /**
      * @test
+     * that verifyCouponCode will throw an exception if the code string is empty
      *
      */
-    public function verifyCouponCode_withEmptyCode_returnFalse()
+    public function verifyCouponCode_withEmptyCode_throwsException()
     {
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_INVALID,'No coupon code provided',422);
+        $this->expectExceptionMessage('No coupon code provided');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+        $this->expectException(BoltException::class);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', ['', self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertFalse($result);
     }
 
     /**
