@@ -84,9 +84,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
         };
 
         $this->payment = $this->createMock(OrderPaymentInterface::class);
-
         $this->order = $this->createMock(Order::class);
-        $this->order->method('getPayment')->willReturn($this->payment);
 
         $this->event = $this->getMockBuilder(Event::class)->setMethods(['getOrder'])->getMock();
         $this->event->method('getOrder')->willReturn($this->order);
@@ -101,11 +99,22 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
      */
     public function aroundExecute($paymentMethod, $orderStatus, $expects)
     {
+        $this->order->method('getPayment')->willReturn($this->payment);
         $this->payment->method('getMethod')->willReturn($paymentMethod);
         $this->order->method('getStatus')->willReturn($orderStatus);
 
         $this->callback->expects($this->$expects())->method('__invoke')->with($this->observer);
 
+        $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
+    }
+
+    /**
+     * @test
+     */
+    public function aroundExecute_withoutPayment()
+    {
+        $this->order->method('getPayment')->willReturn(null);
+        $this->callback->expects(self::once())->method('__invoke')->with($this->observer);
         $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
     }
 
