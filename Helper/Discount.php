@@ -961,7 +961,7 @@ class Discount extends AbstractHelper
             return $this->getBoltDiscountType($type);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw $e;
+            return "fixed_amount";
         }        
     }
     
