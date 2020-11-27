@@ -474,6 +474,10 @@ class UpdateDiscountTraitTest extends TestCase
      */
     public function verifyCouponCode_couponObjNull_returnFalse()
     {
+        $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+        $this->expectException(BoltException::class);
+
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
 
@@ -484,8 +488,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(null);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertFalse($result);
     }
 
     /**
