@@ -1147,10 +1147,13 @@ class UpdateDiscountTraitTest extends TestCase
         ];
         $quote = $this->getQuoteMock();
 
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->setMethods(['removeFromCart', 'addToCart'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with($couponCode, self::WEBSITE_ID)
-            ->willReturn(null);
-        $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with($couponCode, self::STORE_ID)
-            ->willReturn(null);
+            ->willReturn($giftcardMock);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [$couponCode, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
 
