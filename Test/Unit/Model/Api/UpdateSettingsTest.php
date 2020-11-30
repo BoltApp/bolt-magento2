@@ -147,16 +147,10 @@ class UpdateTest extends TestCase
     public function update_settings_successful()
     {
         $mockDebugInfo = json_encode([
-            'division' => [
-                'pluginIntegrationInfo' => [
-                    'phpVersion' => PHP_VERSION,
-                    'platformVersion' => '2.3.3',
-                    'pluginConfigSettings' => [
-                        [
-                            'name' => 'publishable_key_checkout',
-                            'value' => 'test_key'
-                        ]
-                    ]
+            'pluginConfigSettings' => [
+                [
+                    'name' => 'publishable_key_checkout',
+                    'value' => 'test_key'
                 ]
             ]
         ]);
