@@ -100,11 +100,8 @@ class UpdateSettings implements UpdateSettingsInterface
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
 
         try {
-            # parse debug_info into array
-            $debug_info_decoded = json_decode($debug_info, true);
-
             # extract bolt config data
-            $config_data = $debug_info_decoded['division']['pluginIntegrationInfo']['pluginConfigSettings'];
+            $config_data = $debug_info['pluginConfigSettings'];
 
             # Don't set "api_key" or "signing_secret" since their values are not displayed in the debug info
             foreach ($config_data as $i => $setting) {
@@ -114,7 +111,7 @@ class UpdateSettings implements UpdateSettingsInterface
                     continue;
                 }
                 else {
-                    $this->configHelper->setConfigSetting($settingName, $settingValue);
+                    $this->configHelper->setConfigSetting($settingName, $settingValue, $this->storeManager->getStore()->getId());
                 }
             }
             

@@ -41,6 +41,11 @@ class Config extends AbstractHelper
     const BOLT_COMPOSER_NAME = 'boltpay/bolt-magento2';
 
     /**
+     * @var \Magento\Framework\App\Config\Storage\WriterInterface
+     */
+    protected $configWriter;
+
+    /**
      * @var BoltConfigSettingFactory
      */
     private $boltConfigSettingFactory;
@@ -473,7 +478,8 @@ class Config extends AbstractHelper
         ProductMetadataInterface $productMetadata,
         BoltConfigSettingFactory $boltConfigSettingFactory,
         RegionFactory $regionFactory,
-        ComposerFactory $composerFactory
+        ComposerFactory $composerFactory,
+        WriterInterface $configWriter
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -482,6 +488,7 @@ class Config extends AbstractHelper
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
         $this->regionFactory = $regionFactory;
         $this->composerFactory = $composerFactory;
+        $this->configWriter = $cofigWriter;
     }
 
     /**
