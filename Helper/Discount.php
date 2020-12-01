@@ -55,6 +55,10 @@ class Discount extends AbstractHelper
     const BOLT_DISCOUNT_CATEGORY_COUPON = 'coupon';
     const BOLT_DISCOUNT_CATEGORY_GIFTCARD = 'giftcard';
     const BOLT_DISCOUNT_CATEGORY_AUTO_PROMO = 'automatic_promotion';
+    
+    // In Magento 2, 0.005 would be converted into 0.01 which is greater than 0 while 0.0049999 would be converted into 0,
+    // so we can treat 0.005 as the closest number to zero in M2.
+    const MIN_NONZERO_VALUE = 0.005;
 
     /**
      * @var ResourceConnection $resource

@@ -780,7 +780,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $taxAmount = round(CurrencyUtils::toMinorWithoutRounding($shippingAddress->getTaxAmount(), $currencyCode) + $diff);
 
-            if ($discountAmount) {
+            if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE) {
                 if ($cost == 0) {
                     $service .= ' [free&nbsp;shipping&nbsp;discount]';
                 } else {
