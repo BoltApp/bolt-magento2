@@ -58,13 +58,13 @@ class Recurring implements InstallSchemaInterface
                 'switch_value',
                 \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
                 null,
-                ['nullable' => false, 'default' => false],
+                ['nullable' => false, 'default' => '0'],
                 'switch value'
             )->addColumn(
                 'default_value',
                 \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
                 null,
-                ['nullable' => false, 'default' => false],
+                ['nullable' => false, 'default' => '0'],
                 'default value'
             )->addColumn(
                 'rollout_percentage',
