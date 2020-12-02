@@ -27,10 +27,10 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
 {
     private function checkSwitch($switch, $name, $value, $defaultValue, $rolloutPercentage)
     {
-        $this->assertEquals($switch->getName(),$name);
-        $this->assertEquals($switch->getValue(),$value);
-        $this->assertEquals($switch->getDefaultValue(),$defaultValue);
-        $this->assertEquals($switch->getRolloutPercentage(),$rolloutPercentage);
+        $this->assertEquals($name,$switch->getName());
+        $this->assertEquals($value,$switch->getValue());
+        $this->assertEquals($defaultValue,$switch->getDefaultValue());
+        $this->assertEquals($rolloutPercentage,$switch->getRolloutPercentage());
     }
 
     /**

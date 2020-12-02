@@ -66,8 +66,8 @@ class FeatureSwitchTest extends TestCase
      */
     public function setAndGetValue()
     {
-        $this->mockFeatureSwitch->setValue('value');
-        $this->assertEquals('value', $this->mockFeatureSwitch->getValue());
+        $this->mockFeatureSwitch->setValue(true);
+        $this->assertEquals(true, $this->mockFeatureSwitch->getValue());
     }
 
     /**
@@ -75,8 +75,8 @@ class FeatureSwitchTest extends TestCase
      */
     public function setAndGetDefaultValue()
     {
-        $this->mockFeatureSwitch->setDefaultValue('defaultValue');
-        $this->assertEquals('defaultValue', $this->mockFeatureSwitch->getDefaultValue());
+        $this->mockFeatureSwitch->setDefaultValue(false);
+        $this->assertEquals(false, $this->mockFeatureSwitch->getDefaultValue());
     }
 
     /**
