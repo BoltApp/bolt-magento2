@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Customer\Model\Session as CustomerSession;
 
 class Rewards
 {
@@ -90,6 +91,13 @@ class Rewards
      * @var CartHelper
      */
     private $cartHelper;
+    
+    /**
+     * @var CustomerSession
+     */
+    private $customerSession;
+    
+    private $appliedRewardsMode;
 
     /**
      * Rewards constructor.
@@ -99,6 +107,7 @@ class Rewards
      * @param CustomerFactory $customerFactory
      * @param SessionHelper $sessionHelper
      * @param CartHelper $cartHelper
+     * @param CustomerSession $customerSession
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
@@ -106,7 +115,8 @@ class Rewards
         ScopeConfigInterface $scopeConfigInterface,
         CustomerFactory $customerFactory,
         SessionHelper $sessionHelper,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        CustomerSession $customerSession
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
@@ -115,6 +125,7 @@ class Rewards
         $this->customerFactory = $customerFactory;
         $this->sessionHelper   = $sessionHelper;
         $this->cartHelper = $cartHelper;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -289,8 +300,19 @@ class Rewards
     private function getMirasvitRewardsAmount($quote)
     {        
         try{
+            $this->getAppliedRewardsMode();
+            
+            if ($this->appliedRewardsMode == 'none') {
+                return 0;                
+            }
+            
             $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
             $spendAmount = $miravitRewardsPurchase->getSpendAmount();
+
+            if ($this->appliedRewardsMode == 'part') {
+                return $spendAmount;                
+            }
+
             // If the setting "Allow to spend points for shipping charges" is set to Yes,
             // we need to send full balance to the Bolt server.
             if(($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
@@ -492,6 +514,25 @@ class Rewards
     }
     
     /**
+     * Check whether the customer choose to use maximum
+     *
+     * @return string
+     */
+    private function getAppliedRewardsMode() {
+        if (!$this->customerSession->isLoggedIn()) {
+            $this->appliedRewardsMode = 'none';
+        }
+        
+        $boltCustomerMirasvitRewardsMode = $this->customerSession->getBoltMirasvitRewardsMode();
+
+        if (!empty($boltCustomerMirasvitRewardsMode) && $boltCustomerMirasvitRewardsMode == 'part') {
+            $this->appliedRewardsMode = 'part';       
+        } else {
+            $this->appliedRewardsMode = 'all';
+        }
+    }
+    
+    /**
      * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
      * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
      * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
@@ -516,8 +557,11 @@ class Rewards
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
         $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
         
-        try{           
-            if($this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping() && abs($this->getMirasvitRewardsAmount($quote)) > 0) {
+        try{
+            $appliedMirasvitRewardsAmount = abs($this->getMirasvitRewardsAmount($quote));
+            if($this->appliedRewardsMode == 'all'
+               && $appliedMirasvitRewardsAmount > 0
+               && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
                 $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
                 $mirasvitRewardsCheckoutHelper->updatePurchase($miravitRewardsPurchase, $balancePoints);
