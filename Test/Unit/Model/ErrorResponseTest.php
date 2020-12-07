@@ -104,7 +104,7 @@ class ErrorResponseTest extends TestCase
                 ErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                 'The order reference is invalid.',
                 [],
-                '{"status":"failure","error":[{"code":6200,"message":"The order reference is invalid."}]}'
+                '{"status":"failure","error":{"code":6200,"message":"The order reference is invalid."}}'
             ],
             [
                 ErrorResponse::ERR_INSUFFICIENT_INFORMATION,
@@ -119,8 +119,8 @@ class ErrorResponseTest extends TestCase
                         [
                             'name'         => 'Beaded Long Dress',
                             'description'  => 'Test
-                                               New
-                                               Lines',
+New
+Lines',
                             'reference'    => 101,
                             'total_amount' => 50000,
                             'unit_price'   => 50000,
@@ -138,7 +138,7 @@ class ErrorResponseTest extends TestCase
                     ],
                     'discounts' => [],
                 ],
-                '{"status":"failure","errors":[{"code":6200,"message":"The order reference is invalid."}],"order_reference":100010,"display_id":"","currency":"USD","total_amount":50500,"tax_amount":1000,"items":[{"name":"Beaded Long Dress","description":"Test\n New\n Lines","reference":101,"total_amount":50000,"unit_price":50000,"quantity":1,"image_url":"https:\/\/images.example.com\/dress.jpg","type":"physical","properties":[{"name":"color","value":"blue"}]}],"discounts":[]}'
+                '{"status":"failure","error":{"code":6200,"message":"The order reference is invalid."},"order_reference":100010,"display_id":"","currency":"USD","total_amount":50500,"tax_amount":1000,"items":{"0":{"name":"Beaded Long Dress","description":"Test\nNew\nLines","reference":101,"total_amount":50000,"unit_price":50000,"quantity":1,"image_url":"https:\/\/images.example.com\/dress.jpg","type":"physical","properties":{"0":{"name":"color","value":"blue"}}}},"discounts":{}}'
             ],
         ];
     }
