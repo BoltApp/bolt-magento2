@@ -31,6 +31,12 @@ class Rewards
 {
     const MIRASVIT_REWARDS = 'mirasvitrewards';
     
+    const MIRASVIT_REWARDS_APPLY_MODE_NONE = 'none';
+    
+    const MIRASVIT_REWARDS_APPLY_MODE_PART = 'part';
+    
+    const MIRASVIT_REWARDS_APPLY_MODE_ALL  = 'all';
+    
     /**
      * To collect all of available rewards points for Bolt cart,
      * we create a mock for the subtotal of quote which is large enough.
@@ -302,14 +308,14 @@ class Rewards
         try{
             $this->getAppliedRewardsMode();
             
-            if ($this->appliedRewardsMode == 'none') {
+            if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_NONE) {
                 return 0;                
             }
             
             $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
             $spendAmount = $miravitRewardsPurchase->getSpendAmount();
 
-            if ($this->appliedRewardsMode == 'part') {
+            if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
                 return $spendAmount;                
             }
 
@@ -520,15 +526,15 @@ class Rewards
      */
     private function getAppliedRewardsMode() {
         if (!$this->customerSession->isLoggedIn()) {
-            $this->appliedRewardsMode = 'none';
+            $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_NONE;
         }
         
         $boltCustomerMirasvitRewardsMode = $this->customerSession->getBoltMirasvitRewardsMode();
 
-        if (!empty($boltCustomerMirasvitRewardsMode) && $boltCustomerMirasvitRewardsMode == 'part') {
-            $this->appliedRewardsMode = 'part';       
+        if (!empty($boltCustomerMirasvitRewardsMode) && $boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
+            $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;       
         } else {
-            $this->appliedRewardsMode = 'all';
+            $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
         }
     }
     
@@ -559,7 +565,7 @@ class Rewards
         
         try{
             $appliedMirasvitRewardsAmount = abs($this->getMirasvitRewardsAmount($quote));
-            if($this->appliedRewardsMode == 'all'
+            if($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_ALL
                && $appliedMirasvitRewardsAmount > 0
                && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
