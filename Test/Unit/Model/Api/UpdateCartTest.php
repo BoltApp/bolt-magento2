@@ -403,7 +403,8 @@ class UpdateCartTest extends TestCase
 
     private function expectSuccessResponse($result)
     {
-        $this->response->expects(self::once())->method('setBody')->with(json_encode($result));
+        $result = str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($result));
+        $this->response->expects(self::once())->method('setBody')->with($result);
         $this->response->expects(self::once())->method('sendResponse');
     }
 
