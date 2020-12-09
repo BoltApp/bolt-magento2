@@ -120,7 +120,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             }                
         } else {
             throw new BoltException(
-                'The cart.order_reference is not set or empty.',
+                __('The cart.order_reference is not set or empty.'),
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
