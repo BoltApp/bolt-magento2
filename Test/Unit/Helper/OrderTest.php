@@ -1200,17 +1200,15 @@ class OrderTest extends BoltTestCase
      */
     public function resetOrderState()
     {
-        /** @var MockObject|Order $orderMock */
-        $orderMock = $this->createPartialMock(
-            Order::class,
-            ['setState', 'setStatus', 'addStatusHistoryComment', 'save']
-        );
-        $orderMock->expects(static::once())->method('setState')->with(OrderHelper::BOLT_ORDER_STATE_NEW);
-        $orderMock->expects(static::once())->method('setStatus')->with(OrderHelper::BOLT_ORDER_STATUS_PENDING);
-        $orderMock->expects(static::once())->method('addStatusHistoryComment')
-            ->with('BOLTPAY INFO :: This order was approved by Bolt');
-        $orderMock->expects(static::once())->method('save');
-        $this->currentMock->resetOrderState($orderMock);
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $boltHelperOrder->resetOrderState($order);
+
+        self::assertEquals(OrderHelper::MAGENTO_ORDER_STATUS_PENDING, $order->getStatus());
+        self::assertEquals(OrderModel::STATE_PENDING_PAYMENT, $order->getState());
+        self::assertEquals($order->getAllStatusHistory()[0]->getComment(),'BOLTPAY INFO :: This order was approved by Bolt');
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1222,9 +1220,11 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderByQuoteId()
     {
-        $this->cartHelper->expects(static::once())->method('getOrderByQuoteId')->with(self::QUOTE_ID)
-            ->willReturn($this->orderMock);
-        static::assertEquals($this->orderMock, $this->currentMock->getOrderByQuoteId(self::QUOTE_ID));
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        static::assertEquals($order->getId(), $boltHelperOrder->getOrderByQuoteId(self::QUOTE_ID)->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1704,11 +1704,10 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_noOrder()
     {
-        $this->quoteMock->expects(self::once())->method('getId')
-            ->willReturn(self::QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(null, self::QUOTE_ID)->willReturn(false);
-        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, new stdClass()));
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        self::assertFalse($boltHelperOrder->processExistingOrder($quote, new stdClass()));
     }
 
     /**
@@ -1748,26 +1747,28 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_pendingOrder()
     {
-        $this->initCurrentMock(['getExistingOrder','deleteOrderByIncrementId']);
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
         $transaction = new stdClass();
         $transaction->order = new \stdClass();
         $transaction->order->cart = new \stdClass();
         $transaction->order->cart->metadata = new \stdClass();
-        $transaction->order->cart->metadata->immutable_quote_id = self::IMMUTABLE_QUOTE_ID;
+        $transaction->order->cart->metadata->immutable_quote_id = $quote->getId();
 
-        $this->quoteMock->expects(self::exactly(2))->method('getId')
-            ->willReturn(self::QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
-        $this->orderMock->expects(self::once())->method('isCanceled')
-            ->willReturn(false);
-        $this->orderMock->expects(self::once())->method('getState')
-            ->willReturn(Order::STATE_PENDING_PAYMENT);
-        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
-            ->with(self::INCREMENT_ID,self::IMMUTABLE_QUOTE_ID);
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id' => $quote->getId()
+            ]
+        );
 
-        self::assertFalse($this->currentMock->processExistingOrder($this->quoteMock, $transaction));
+        self::assertFalse($boltHelperOrder->processExistingOrder($quote, $transaction));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1779,22 +1780,35 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_samePriceOrder()
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getId')
-            ->willReturn(self::QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
-        $this->orderMock->expects(self::once())->method('isCanceled')
-            ->willReturn(false);
-        $this->orderMock->expects(self::once())->method('getState')
-            ->willReturn(Order::STATE_CANCELED);
-        $this->currentMock->expects(self::once())->method('hasSamePrice')
-            ->with($this->orderMock, $transaction)->willReturn(true);
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->total_amount = new \stdClass();
+        $transaction->order->cart->total_amount->amount = 10000;
+        $transaction->order->cart->tax_amount = new \stdClass();
+        $transaction->order->cart->tax_amount->amount = 0;
+        $transaction->order->cart->shipping_amount = new \stdClass();
+        $transaction->order->cart->shipping_amount->amount = 0;
+
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id' => $quote->getId(),
+                'state' => OrderModel::STATE_PROCESSING
+            ]
+        );
 
         self::assertEquals(
-            $this->currentMock->processExistingOrder($this->quoteMock, $transaction),
-            $this->orderMock
+            $boltHelperOrder->processExistingOrder($quote, $transaction)->getIncrementId(),
+            $order->getIncrementId()
         );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1806,22 +1820,34 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_deleteOrder()
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+
         $transaction = new stdClass();
-        $this->quoteMock->expects(self::once())->method('getId')
-            ->willReturn(self::QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(null, self::QUOTE_ID)->willReturn($this->orderMock);
-        $this->orderMock->expects(self::once())->method('isCanceled')
-            ->willReturn(false);
-        $this->orderMock->expects(self::once())->method('getState')
-            ->willReturn(Order::STATE_CANCELED);
-        $this->currentMock->expects(self::once())->method('hasSamePrice')
-            ->with($this->orderMock, $transaction)->willReturn(false);
-        $this->currentMock->expects(self::once())->method('deleteOrder')
-            ->with($this->orderMock);
-        self::assertFalse(
-            $this->currentMock->processExistingOrder($this->quoteMock, $transaction)
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->total_amount = new \stdClass();
+        $transaction->order->cart->total_amount->amount = 10001;
+        $transaction->order->cart->tax_amount = new \stdClass();
+        $transaction->order->cart->tax_amount->amount = 0;
+        $transaction->order->cart->shipping_amount = new \stdClass();
+        $transaction->order->cart->shipping_amount->amount = 0;
+
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id' => $quote->getId()
+            ]
         );
+
+        self::assertFalse($boltHelperOrder->processExistingOrder($quote, $transaction));
+        self::assertFalse(
+            $boltHelperOrder->processExistingOrder($this->quoteMock, $transaction)
+        );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2176,6 +2202,8 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_noOrder()
     {
+        $this->skipTestInUnitTestsFlow();
+
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
@@ -2185,10 +2213,9 @@ class OrderTest extends BoltTestCase
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn(false);
 
-        $this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $boltHelperOrder->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
     /**
@@ -2200,16 +2227,14 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_pendingOrder()
     {
-        $this->orderMock->expects(static::exactly(2))->method('getState')
-            ->willReturnOnConsecutiveCalls(Order::STATE_PENDING_PAYMENT, Order::STATE_CANCELED);
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $this->currentMock->expects(static::once())->method('cancelOrder')->with($this->orderMock);
-        $this->orderMock->expects(static::once())->method('addCommentToStatusHistory')
-            ->with(__('BOLTPAY INFO :: Order was canceled due to Bolt rejection before authorization'));
-        $this->orderRepository->expects(static::once())->method('save')->with($this->orderMock);
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
+        $order = TestUtils::createDumpyOrder();
+        $incrementId = $order->getIncrementId();
+
+        self::assertTrue($boltHelperOrder->tryDeclinedPaymentCancelation($incrementId, self::IMMUTABLE_QUOTE_ID));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2221,13 +2246,15 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_canceledOrder()
     {
-        $this->orderMock->expects(static::exactly(2))->method('getState')->willReturn(Order::STATE_CANCELED);
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
-        $this->orderMock->expects(static::never())->method('save');
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
-        self::assertTrue($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
+        $order = TestUtils::createDumpyOrder(
+            ['state' => Order::STATE_CANCELED]
+        );
+        $incrementId = $order->getIncrementId();
+        self::assertTrue($boltHelperOrder->tryDeclinedPaymentCancelation($incrementId, self::IMMUTABLE_QUOTE_ID));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2239,13 +2266,15 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_completeOrder()
     {
-        $this->orderMock->expects(static::exactly(2))->method('getState')->willReturn(Order::STATE_COMPLETE);
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        $this->currentMock->expects(static::never())->method('cancelOrder')->with($this->orderMock);
-        $this->orderMock->expects(static::never())->method('save');
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
-        self::assertFalse($this->currentMock->tryDeclinedPaymentCancelation(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID));
+        $order = TestUtils::createDumpyOrder(
+            ['state' => Order::STATE_COMPLETE]
+        );
+        $incrementId = $order->getIncrementId();
+        self::assertFalse($boltHelperOrder->tryDeclinedPaymentCancelation($incrementId, self::IMMUTABLE_QUOTE_ID));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2302,23 +2331,19 @@ class OrderTest extends BoltTestCase
     public function deleteOrderByIncrementId_ifParentQuoteIdIsNotEqualToImmutableQuoteId_reactivateSessionQuote()
     {
         $this->skipTestInUnitTestsFlow();
-        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
-
         $quote->setQuoteCurrencyCode("USD");
         $quote->save();
 
         $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
         $incrementId = $order->getIncrementId();
 
-        $registry->register('isSecureArea', true);
         Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, self::IMMUTABLE_QUOTE_ID);
-        $registry->unregister('isSecureArea');
-
         $quote = TestUtils::getQuoteById($quote->getId());
 
         self::assertEquals('1', $quote->getData('is_active'));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2328,7 +2353,6 @@ class OrderTest extends BoltTestCase
     public function deleteOrderByIncrementId_ifBoltCheckoutTypeIsComplete_changesCheckoutTypeToPPC()
     {
         $this->skipTestInUnitTestsFlow();
-        $registry = Bootstrap::getObjectManager()->get(\Magento\Framework\Registry::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
@@ -2338,13 +2362,11 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
         $incrementId = $order->getIncrementId();
 
-        $registry->register('isSecureArea', true);
         Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class)->deleteOrderByIncrementId($incrementId, $quote->getId());
-        $registry->unregister('isSecureArea');
-
         $quote = TestUtils::getQuoteById($quote->getId());
 
         self::assertEquals(CartHelper::BOLT_CHECKOUT_TYPE_PPC, $quote->getBoltCheckoutType());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2356,12 +2378,16 @@ class OrderTest extends BoltTestCase
      */
     public function getExistingOrder()
     {
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')->with(self::INCREMENT_ID, true)
-            ->willReturn($this->orderMock);
-        static::assertSame(
-            $this->orderMock,
-            TestHelper::invokeMethod($this->currentMock, 'getExistingOrder', [self::INCREMENT_ID])
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder();
+
+        $incrementId = $order->getIncrementId();
+        $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
+        static::assertEquals(
+            $order->getId(),
+            $orderHelper->getExistingOrder($incrementId)->getId()
         );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -5036,17 +5062,15 @@ class OrderTest extends BoltTestCase
      * @throws ReflectionException
      */
     public function getExistingOrder_byParenQuoteId() {
-        $this->initCurrentMock(['getOrderByQuoteId']);
-        $this->cartHelper->expects(self::once())->method('getOrderByIncrementId')->with(self::INCREMENT_ID, true)
-            ->willReturn(null);
-        $this->currentMock->expects(self::once())->method('getOrderByQuoteId')->with(self::QUOTE_ID)
-            ->willReturn($this->orderMock);
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
 
-        static::assertSame(
-            $this->orderMock,
-            TestHelper::invokeMethod($this->currentMock, 'getExistingOrder', [self::INCREMENT_ID, self::QUOTE_ID])
+        $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
+        static::assertEquals(
+            $order->getId(),
+            $orderHelper->getExistingOrder(self::INCREMENT_ID, self::QUOTE_ID)->getId()
         );
-
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -5067,49 +5091,30 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      * that cancelFailedPaymentOrder throws an exception if order to be canceled is not in the pending payment state
-     *
      * @covers ::cancelFailedPaymentOrder
-     *
-     * @dataProvider cancelFailedPaymentOrder_ifOrderStateIsNotPendingPaymentProvider
      *
      * @param string $orderState current order state
      *
      * @throws AlreadyExistsException from the tested method
      */
-    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException($orderState)
+    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
     {
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
+        $incrementId = $order->getIncrementId();
+        $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
                 "Order Delete Error. Order is in invalid state. Order #: %d State: %s Immutable Quote ID: %d",
-                self::DISPLAY_ID,
-                $orderState,
-                self::IMMUTABLE_QUOTE_ID
+                $order->getIncrementId(),
+                OrderModel::STATE_PROCESSING,
+                self::QUOTE_ID
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::DISPLAY_ID)
-            ->willReturn($this->orderMock);
-        $this->orderMock->expects(static::atLeastOnce())->method('getState')->willReturn($orderState);
-        $this->orderManagementMock->expects(static::never())->method('cancel');
-        $this->orderRepository->expects(static::never())->method('save');
-        $this->currentMock->cancelFailedPaymentOrder(self::DISPLAY_ID, self::IMMUTABLE_QUOTE_ID);
-    }
-
-    /**
-     * Data provider for {@see cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException}
-     *
-     * @return array[] containing non-pending payment order statuses
-     */
-    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPaymentProvider()
-    {
-        return [
-            ['orderState' => OrderModel::STATE_CLOSED],
-            ['orderState' => OrderModel::STATE_HOLDED],
-            ['orderState' => OrderModel::STATE_NEW],
-            ['orderState' => OrderModel::STATE_PAYMENT_REVIEW],
-            ['orderState' => OrderModel::STATE_PROCESSING],
-        ];
+        $orderHelper->cancelFailedPaymentOrder($incrementId, self::QUOTE_ID);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
