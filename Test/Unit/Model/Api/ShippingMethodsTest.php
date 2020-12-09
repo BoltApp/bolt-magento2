@@ -1349,7 +1349,58 @@ Room 4000',
         $cart = [
             'items' => [
                 [
-                    'sku'          => 'TestProduct2',
+                    'sku'          => 'TestProduct',
+                    'quantity'     => 2,
+                    'total_amount' => 100
+                ]
+            ]
+        ];
+
+        $this->initCurrentMock();
+        $quote = $this->getQuoteMock([]);
+        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionCode(6103);
+        $this->expectExceptionMessage('Your cart total has changed and needs to be revised. Please reload the page and checkout again.');
+
+        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
+            function (callable $callback) use ($quote, $cart) {
+                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock->expects(self::once())
+                    ->method('setMetaData')->with(
+                        [
+                            'CART_MISMATCH' => [
+                                'cart_total' => [ 'TestProduct' => 100 ],
+                                'quote_total' => ['TestProduct' => 60000 ],
+                                'cart_items'  => $cart['items'],
+                                'quote_items' => $quote['items'],
+                            ]
+                        ]
+                    );
+                $callback($reportMock);
+            }
+        );
+
+        self::invokeInaccessibleMethod(
+            $this->currentMock,
+            'checkCartItems',
+            [
+                $cart
+            ]
+        );
+    }
+    
+    /**
+     * @test
+     * @covers ::checkCartItems
+     */
+    public function checkCartItems_quantityMismatch()
+    {
+        $cart = [
+            'items' => [
+                [
+                    'sku'          => 'TestProduct',
                     'quantity'     => 5,
                     'total_amount' => 100
                 ]
@@ -1361,7 +1412,7 @@ Room 4000',
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionCode(6103);
-        $this->expectExceptionMessage('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.');
+        $this->expectExceptionMessage('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.');
 
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($quote, $cart) {
@@ -1370,7 +1421,7 @@ Room 4000',
                     ->method('setMetaData')->with(
                         [
                             'CART_MISMATCH' => [
-                                'cart_total' => [ 'TestProduct2' => 100 ],
+                                'cart_total' => [ 'TestProduct' => 100 ],
                                 'quote_total' => ['TestProduct' => 60000 ],
                                 'cart_items'  => $cart['items'],
                                 'quote_items' => null,

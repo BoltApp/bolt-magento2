@@ -330,11 +330,20 @@ class ShippingMethods implements ShippingMethodsInterface
                     ]
                 ]);
             });
-            throw new BoltException(
-                __('Something in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
-                null,
-                6103
-            );
+            if ($cartItems['quantity'] != $quoteItems['quantity']) {
+                throw new BoltException(
+                    __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
+                    null,
+                    6103
+                ); 
+            }
+            else {
+                throw new BoltException(
+                    __('Your cart total has changed and needs to be revised. Please reload the page and checkout again.'),
+                    null,
+                    6103
+                );
+            }
         }
     }
 
