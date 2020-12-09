@@ -181,19 +181,18 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         if ($coupon && $coupon->getCouponId()) {
             if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
-                //throws boltexception
                 $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
             } else {
-                //sends response
                 $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
             }
         } elseif ($giftCard && $giftCard->getId()) {
-            //sends response
             $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
         } else {
             throw new WebApiException(__('Something happened with current code.'));
         }
 
+        // we shouldn't be able to get inside this if statement. Anything resulting in it 
+        // evaluating to true would have thrown an exception already
         if (!$result || (isset($result['status']) && $result['status'] === 'error')) {
             // Already sent a response with error, so just return.
             return false;
@@ -276,14 +275,19 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 }
             }
         } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
+            throw new BoltException(
                 $e->getMessage(),
-                422,
-                $immutableQuote
+                null,
+                BoltErrorResponse::ERR_SERVICE
             );
+            // $this->sendErrorResponse(
+            //     BoltErrorResponse::ERR_SERVICE,
+            //     $e->getMessage(),
+            //     422,
+            //     $immutableQuote
+            // );
 
-            return false;
+            // return false;
         }
 
         if (!$result) {
