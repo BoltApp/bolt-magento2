@@ -221,14 +221,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_INVALID,
-            //     sprintf('The coupon code %s is not found', $couponCode),
-            //     422,
-            //     $quote
-            // );
-
-            //  return false;
         }
         $websiteId = $quote->getStore()->getWebsiteId();
         $ruleWebsiteIDs = $rule->getWebsiteIds();
@@ -240,14 +232,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_INVALID,
-            //     sprintf('The coupon code %s is not found', $couponCode),
-            //     422,
-            //     $quote
-            // );
-
-            // return false;
         }
 
         // get the rule id
@@ -261,14 +245,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_CODE_EXPIRED
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_EXPIRED,
-            //     sprintf('The code [%s] has expired.', $couponCode),
-            //     422,
-            //     $quote
-            // );
-
-            // return false;
         }
 
         // Check date validity if "From" date is set for the rule
@@ -283,14 +259,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_CODE_NOT_AVAILABLE
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
-            //     $desc,
-            //     422,
-            //     $quote
-            // );
-
-            // return false;
         }
 
         // Check coupon usage limits.
@@ -300,14 +268,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_CODE_LIMIT_REACHED
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-            //     sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-            //     422,
-            //     $quote
-            // );
-
-            // return false;
         }
 
         // Check per customer usage limits
@@ -326,14 +286,6 @@ trait UpdateDiscountTrait
                         null,
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED
                     );
-                    // $this->sendErrorResponse(
-                    //     BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-                    //     sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                    //     422,
-                    //     $quote
-                    // );
-
-                    // return false;
                 }
             }
             // rule per customer usage
@@ -345,14 +297,6 @@ trait UpdateDiscountTrait
                         null,
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED
                     );
-                    // $this->sendErrorResponse(
-                    //     BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-                    //     sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                    //     422,
-                    //     $quote
-                    // );
-
-                    // return false;
                 }
             }
         } else {
@@ -365,33 +309,14 @@ trait UpdateDiscountTrait
                         null,
                         BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN
                     );
-                // $this->sendErrorResponse(
-                //     BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,
-                //     sprintf('The coupon code %s requires login', $couponCode),
-                //     422,
-                //     $quote
-                // );
-                // return false;
             }
         }
 
-        // the same exception handling exists in the DiscountCodeValidation method.
-        // try {
-            if (!is_null($addQuote)) {
-                $this->discountHelper->setCouponCode($addQuote, $couponCode);
-            }
+        if (!is_null($addQuote)) {
+            $this->discountHelper->setCouponCode($addQuote, $couponCode);
+        }
 
-            $this->discountHelper->setCouponCode($quote, $couponCode);
-        // } catch (\Exception $e) {
-        //     $this->sendErrorResponse(
-        //         BoltErrorResponse::ERR_SERVICE,
-        //         $e->getMessage(),
-        //         422,
-        //         $quote
-        //     );
-
-        //     return false;
-        // }
+        $this->discountHelper->setCouponCode($quote, $couponCode);
 
         if ($quote->getCouponCode() != $couponCode) {
             throw new BoltException(
@@ -399,13 +324,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_SERVICE,
-            //     __('Coupon code does not equal with a quote code!'),
-            //     422,
-            //     $quote
-            // );
-            // return false;
         }
 
         $address = $quote->isVirtual() ?
@@ -419,13 +337,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_SERVICE,
-            //     sprintf('Fail to apply the coupon code %s.', $couponCode),
-            //     422,
-            //     $quote
-            // );
-            // return false;
         }
 
         $description = $rule->getDescription();

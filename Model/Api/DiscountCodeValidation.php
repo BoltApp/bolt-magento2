@@ -61,12 +61,10 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
      */
     public function validate()
     {
-        // $startTime = $this->metricsClient->getCurrentTime();
         $this->logHelper->addInfoLog('[-= Validate discount request =-]');
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
             list($result, $immutableQuote) = $this->handleRequest();
-            // $this->metricsClient->processMetric(static::METRICS_SUCCSS_KEY,1,static::METRICS_LATENCY_KEY, $startTime);
             $this->sendSuccessResponse($result, $immutableQuote);
         } catch (BoltException $e) {
             $this->sendErrorResponse(
@@ -126,12 +124,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            //     'The cart.order_reference is not set or empty.',
-            //     404
-            // );
-            // return false;
         }
         
         // Get the coupon code
@@ -145,13 +137,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_INVALID,
-            //     'No coupon code provided',
-            //     422
-            // );
-
-            // return false;
         }
         
         $this->requestArray = $requestArray;
@@ -280,14 +265,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_SERVICE,
-            //     $e->getMessage(),
-            //     422,
-            //     $immutableQuote
-            // );
-
-            // return false;
         }
 
         if (!$result) {
@@ -413,13 +390,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_CODE_INVALID,
-            //     sprintf('The coupon code %s is not found', $couponCode),
-            //     404
-            // );
-
-            // return false;
         }
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
