@@ -414,24 +414,20 @@ trait UpdateDiscountTrait
         try{
             if(array_key_exists($couponCode, $discounts)){
                 if ($discounts[$couponCode] == 'coupon') {
-                    //throw \Exception
+                    //sends response
                     $this->removeCouponCode($quote);
                 } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
                     //handles exceptions already, no return value
                     $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
                 } else {
-                    //throws BoltException
+                    //throws BoltException that will be caught in UpdateCart::execute()
                     $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
                     list(, $giftCard) = $result;
-                    //throws BoltException
+                    //sends response
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
                 }
             } else {
-                throw new BoltException(
-                    __('Coupon code %1 does not exist!', $couponCode),
-                    null,
-                    BoltErrorResponse::ERR_CODE_INVALID
-                );
+                throw new \Exception(__('Coupon code %1 does not exist!', $couponCode));
             }
         } catch (\Exception $e) {
             $this->sendErrorResponse(
@@ -452,11 +448,24 @@ trait UpdateDiscountTrait
      *
      * @param Quote $quote
      * 
-     * @throws \Exception
+     * @return boolean
      */
     protected function removeCouponCode($quote)
     {
-        $this->discountHelper->setCouponCode($quote, '');
+        try {
+            $this->discountHelper->setCouponCode($quote, '');
+        } catch (\Exception $e) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                422,
+                $quote
+            );
+
+            return false;
+        }
+
+        return true;
     }
     
     /**
@@ -470,24 +479,31 @@ trait UpdateDiscountTrait
      */
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
-        $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter(
-            "filterRemovingGiftCardCode",
-            false,
-            $giftCard,
-            $quote
-        );
-        if ($filterRemoveGiftCardCode) {
-            return true;
-        }
+        try {
+            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter(
+                "filterRemovingGiftCardCode",
+                false,
+                $giftCard,
+                $quote
+            );
+            if ($filterRemoveGiftCardCode) {
+                return true;
+            }
 
-        if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
-            $giftCard->removeFromCart(true, $quote);
-        } else {
-            throw new BoltException(
-                __('The GiftCard %1 does not support removal', $couponCode),
-                null,
-                BoltErrorResponse::ERR_SERVICE
-            );             
+            if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+                $giftCard->removeFromCart(true, $quote);
+            } else {
+                throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             
+            }
+        } catch (\Exception $e) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                422,
+                $quote
+            );
+
+            return false;
         }
 
         return true;
