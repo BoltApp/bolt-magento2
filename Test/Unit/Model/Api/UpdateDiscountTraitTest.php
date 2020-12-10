@@ -709,12 +709,11 @@ class UpdateDiscountTraitTest extends TestCase
 
         $quote = $this->getQuoteMock();
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_INVALID,'The coupon code ' . self::COUPON_CODE . ' is not found',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -738,12 +737,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_EXPIRED,'The code ['.self::COUPON_CODE.'] has expired.',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The code [%s] has expired', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_EXPIRED);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
