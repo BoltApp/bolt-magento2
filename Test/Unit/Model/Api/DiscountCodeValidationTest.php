@@ -35,6 +35,7 @@ use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\SalesRule\Model\Rule\Condition\AddressFactory;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -551,11 +552,19 @@ class DiscountCodeValidationTest extends TestCase
         
         $this->currentMock->expects(self::never())->method('preProcessWebhook')->with(self::STORE_ID);
 
-        $this->expectErrorResponse(
-            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-            'The cart.order_reference is not set or empty.',
-            404
-        );
+        $e = new BoltException(
+                __('The cart.order_reference is not set or empty.'),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+            );
+
+        $this->currentMock->expects(self::once())->method('validate')->willThrowException($e);
+
+        // $this->expectErrorResponse(
+        //     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+        //     'The cart.order_reference is not set or empty.',
+        //     404
+        // );
 
         self::assertFalse($this->currentMock->validate());
     }
@@ -924,16 +933,10 @@ class DiscountCodeValidationTest extends TestCase
         $this->ruleRepositoryMock->expects(self::once())->method('getById')->with(self::RULE_ID)
             ->willThrowException(new NoSuchEntityException());
 
-        $this->expectErrorResponse(
-            BoltErrorResponse::ERR_CODE_INVALID,
-            sprintf('The coupon code %s is not found', self::COUPON_CODE),
-            404
-        );
-        self::assertFalse(
-            $this->invokeNonAccessibleMethod(
-                'getParentQuoteDiscountResult',
-                [self::COUPON_CODE, $this->couponMock, $this->parentQuoteMock]
-            )
+        $this->expectException(BoltException::class);
+        $this->invokeNonAccessibleMethod(
+            'getParentQuoteDiscountResult',
+            [self::COUPON_CODE, $this->couponMock, $this->parentQuoteMock]
         );
     }
 

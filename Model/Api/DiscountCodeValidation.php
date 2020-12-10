@@ -78,7 +78,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
-                ($immutableQuote) ? $immutableQuote : null
+                (isset($immutableQuote)) ? $immutableQuote : null
             );
 
             return false;
@@ -133,7 +133,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         // Check if empty coupon was sent
         if ($couponCode === '') {
             throw new BoltException(
-                'No coupon code provided',
+                __('No coupon code provided'),
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
