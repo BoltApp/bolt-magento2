@@ -393,15 +393,6 @@ trait UpdateDiscountTrait
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
-
-            // $this->sendErrorResponse(
-            //     BoltErrorResponse::ERR_SERVICE,
-            //     $e->getMessage(),
-            //     422,
-            //     $quote
-            // );
-
-            // return false;
         }
 
         return true;
@@ -423,7 +414,7 @@ trait UpdateDiscountTrait
         try{
             if(array_key_exists($couponCode, $discounts)){
                 if ($discounts[$couponCode] == 'coupon') {
-                    //returns true/false and sends response
+                    //throw \Exception
                     $this->removeCouponCode($quote);
                 } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
                     //handles exceptions already, no return value
@@ -432,7 +423,7 @@ trait UpdateDiscountTrait
                     //throws BoltException
                     $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
                     list(, $giftCard) = $result;
-                    //return true/false and sends response
+                    //throws BoltException
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
                 }
             } else {
@@ -460,25 +451,12 @@ trait UpdateDiscountTrait
      * Remove coupon from quote
      *
      * @param Quote $quote
-     *
-     * @return boolean
+     * 
+     * @throws \Exception
      */
     protected function removeCouponCode($quote)
     {
-        try {
-            $this->discountHelper->setCouponCode($quote, '');
-        } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
-                $e->getMessage(),
-                422,
-                $quote
-            );
-
-            return false;
-        }
-
-        return true;
+        $this->discountHelper->setCouponCode($quote, '');
     }
     
     /**

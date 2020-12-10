@@ -1142,7 +1142,7 @@ class UpdateDiscountTraitTest extends TestCase
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeCouponCode', [$quote]);
 
-        $this->assertTrue($result);
+        $this->assertEquals($quote->getCoupon(), '');
     }
 
     /**
