@@ -976,46 +976,6 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      *
      */
-    // public function applyingCouponCode_errorWhenSetting()
-    // {
-    //     $coupon = $this->getCouponMock([
-    //             'getId' => [
-    //                 'expects' => 'once'
-    //             ],
-    //             'getRuleId' => [
-    //                 'expects' => 'once'
-    //             ]
-    //         ]);
-
-    //     $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
-    //     $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
-    //     $this->ruleMock->expects(self::once())->method('getToDate')
-    //         ->willReturn(date('Y-m-d', strtotime('tomorrow')));
-    //     $this->ruleMock->expects(self::once())->method('getFromDate')
-    //         ->willReturn(date('Y-m-d', strtotime('yesterday')));
-    //     $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
-    //         ->willReturn([0,1]);
-
-    //     $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
-    //     $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
-
-    //     $quote = $this->getQuoteMock();
-
-    //     $exception = new \Exception('General exception');
-    //     $this->discountHelper->expects(self::once())->method('setCouponCode')
-    //         ->with($quote, self::COUPON_CODE)->willThrowException($exception);
-
-    //     // $this->expectException(BoltException::class);
-    //     // $this->expectExceptionMessage('General exception');
-    //     // $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
-
-    //     TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-    // }
-
-    /**
-     * @test
-     *
-     */
     public function applyingCouponCode_couponCodeNotSet()
     {
         $coupon = $this->getCouponMock([
