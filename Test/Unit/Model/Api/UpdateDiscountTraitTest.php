@@ -1149,26 +1149,6 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      *
      */
-    public function removeCouponCode_throwException()
-    {
-        $quote = $this->getQuoteMock();
-
-        $exception = new \Exception('General exception');
-        $this->discountHelper->expects(self::once())->method('setCouponCode')
-            ->with($quote, '')->willThrowException($exception);
-
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeCouponCode', [$quote]);
-
-        $this->assertFalse($result);
-    }
-
-    /**
-     * @test
-     *
-     */
     public function removeGiftCardCode_amastyGiftCard()
     {
         global $ifRunFilter;
