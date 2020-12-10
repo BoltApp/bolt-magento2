@@ -552,12 +552,6 @@ class DiscountCodeValidationTest extends TestCase
         
         $this->currentMock->expects(self::never())->method('preProcessWebhook')->with(self::STORE_ID);
 
-        $e = new BoltException(
-                __('The cart.order_reference is not set or empty.'),
-                null,
-                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
-            );
-
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
             'The cart.order_reference is not set or empty.',
