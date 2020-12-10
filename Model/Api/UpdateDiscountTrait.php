@@ -255,7 +255,7 @@ trait UpdateDiscountTrait
                 \IntlDateFormatter::MEDIUM
             );
             throw new BoltException(
-                $desc,
+                __($desc),
                 null,
                 BoltErrorResponse::ERR_CODE_NOT_AVAILABLE
             );

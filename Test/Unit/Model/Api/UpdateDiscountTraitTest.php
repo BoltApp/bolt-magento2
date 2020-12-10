@@ -775,12 +775,11 @@ class UpdateDiscountTraitTest extends TestCase
             )
             ->willReturn($fromDate);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,'Code available from ' . $fromDate,422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('Code available from %s', $fromDate));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_NOT_AVAILABLE);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
