@@ -165,8 +165,12 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
                 $discounts = array_column($discounts, 'discount_category', 'reference');
 
+                // This throws /Exception now instead of sending a response. This method already has a catch
+                // and handling of this exception type.
                 $result = $this->removeDiscount($couponCode, $discounts, $parentQuote, $websiteId, $storeId);
 
+                // This should never evaluate to true, leaving this in here until we refactor this handler
+                // to use helper methods and centralize the sending of error responses.
                 if (!$result) {
                     // Already sent a response with error, so just return.
                     return false;
