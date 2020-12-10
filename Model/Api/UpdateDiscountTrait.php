@@ -129,7 +129,7 @@ trait UpdateDiscountTrait
      * @param string|int $websiteId
      * @param string|int $storeId
      *
-     * @throws BotlException
+     * @throws BoltException
      * 
      * @return object|null
      */
