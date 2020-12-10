@@ -558,13 +558,11 @@ class DiscountCodeValidationTest extends TestCase
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
 
-        $this->currentMock->expects(self::once())->method('validate')->willThrowException($e);
-
-        // $this->expectErrorResponse(
-        //     BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-        //     'The cart.order_reference is not set or empty.',
-        //     404
-        // );
+        $this->expectErrorResponse(
+            BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
+            'The cart.order_reference is not set or empty.',
+            422
+        );
 
         self::assertFalse($this->currentMock->validate());
     }
