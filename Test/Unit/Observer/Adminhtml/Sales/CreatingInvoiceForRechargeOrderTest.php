@@ -24,7 +24,6 @@ use Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder;
 use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Sales\Api\Data\InvoiceInterface;
 
 /**
  * Class OrderCreateProcessDataObserverTest
@@ -66,11 +65,6 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
      * @var Order\Invoice
      */
     protected $invoice;
-    
-    /**
-     * @var InvoiceInterface
-     */
-    private $invoiceInterface;
 
     protected function setUp()
     {
@@ -89,7 +83,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
 
         $this->invoice = $this->createPartialMock(
             Order\Invoice::class,
-            ['getEmailSent']
+            ['getEmailSent', 'setRequestedCaptureCase', 'register']
         );
         $this->creatingInvoiceForRechargeOrderObserverTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
             ->setConstructorArgs([
@@ -99,9 +93,6 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
             ])
             ->setMethods(['_init'])
             ->getMock();
-        $this->invoiceInterface = $this->getMockBuilder(InvoiceInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
     }
 
     /**
@@ -116,9 +107,9 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
         $this->order->expects(self::once())->method('setIsCustomerNotified')->willReturnSelf();
         $this->observer->expects(self::once())->method('getEvent')->willReturnSelf();
         $this->observer->expects(self::once())->method('getOrder')->willReturn($this->order);
-        $this->invoiceService->expects(self::once())->method('prepareInvoice')->with($this->order)->willReturn($this->invoiceInterface);
-        $this->invoiceInterface->expects(self::once())->method('setRequestedCaptureCase')->with(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)->willReturnSelf();
-        $this->invoiceInterface->expects(self::once())->method('register')->willReturnSelf();
+        $this->invoiceService->expects(self::once())->method('prepareInvoice')->with($this->order)->willReturn($this->invoice);
+        $this->invoice->expects(self::once())->method('setRequestedCaptureCase')->with(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)->willReturnSelf();
+        $this->invoice->expects(self::once())->method('register')->willReturnSelf();
 
         $this->order->expects(self::once())->method('addRelatedObject')->willReturnSelf();
         $this->invoice->expects(self::once())->method('getEmailSent')->willReturn(false);
