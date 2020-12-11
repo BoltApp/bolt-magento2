@@ -68,7 +68,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
 
     protected function setUp()
     {
-        $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice', 'setRequestedCaptureCase', 'register', 'save']);
+        $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice']);
         $this->invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);
         $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
         $this->observer = $this->createPartialMock(
@@ -83,7 +83,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
 
         $this->invoice = $this->createPartialMock(
             Order\Invoice::class,
-            ['getEmailSent', 'setRequestedCaptureCase', 'register']
+            ['getEmailSent', 'setRequestedCaptureCase', 'register', 'save']
         );
         $this->creatingInvoiceForRechargeOrderObserverTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
             ->setConstructorArgs([
@@ -115,7 +115,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
         $this->invoice->expects(self::once())->method('getEmailSent')->willReturn(false);
         $this->invoiceSender->expects(self::once())->method('send')->with($this->invoice)->willReturnSelf();
 
-        $this->invoiceService->expects(self::once())->method('save')->willReturn($this->invoice);
+        $this->invoice->expects(self::once())->method('save')->willReturn($this->invoice);
         $this->creatingInvoiceForRechargeOrderObserverTest->execute($this->observer);
     }
 
