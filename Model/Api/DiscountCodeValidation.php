@@ -70,7 +70,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             $this->sendErrorResponse(
                 $e->getCode(),
                 $e->getMessage(),
-                422
+                422,
+                $e->getQuote()
             );
             return false;
         } catch (WebApiException $e) {
