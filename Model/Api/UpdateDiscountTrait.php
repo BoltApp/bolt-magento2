@@ -219,7 +219,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('The coupon code %1 is not found', $couponCode),
                 null,
-                BoltErrorResponse::ERR_CODE_INVALID
+                BoltErrorResponse::ERR_CODE_INVALID,
+                $quote
             );
         }
         $websiteId = $quote->getStore()->getWebsiteId();
@@ -230,7 +231,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('The coupon code %1 is not found', $couponCode),
                 null,
-                BoltErrorResponse::ERR_CODE_INVALID
+                BoltErrorResponse::ERR_CODE_INVALID,
+                $quote
             );
         }
 
@@ -243,7 +245,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('The code [%1] has expired', $couponCode),
                 null,
-                BoltErrorResponse::ERR_CODE_EXPIRED
+                BoltErrorResponse::ERR_CODE_EXPIRED,
+                $quote
             );
         }
 
@@ -257,7 +260,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __($desc),
                 null,
-                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE
+                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
+                $quote
             );
         }
 
@@ -266,7 +270,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('The code [%1] has exceeded usage limit.', $couponCode),
                 null,
-                BoltErrorResponse::ERR_CODE_LIMIT_REACHED
+                BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
+                $quote
             );
         }
 
@@ -284,7 +289,8 @@ trait UpdateDiscountTrait
                     throw new BoltException(
                         __('The code [%1] has exceeded usage limit', $couponCode),
                         null,
-                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED
+                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
+                        $quote
                     );
                 }
             }
@@ -295,7 +301,8 @@ trait UpdateDiscountTrait
                     throw new BoltException(
                         __('The code [%1] has exceeded usage limit', $couponCode),
                         null,
-                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED
+                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
+                        $quote
                     );
                 }
             }
@@ -307,7 +314,8 @@ trait UpdateDiscountTrait
                     throw new BoltException(
                         __('The coupon code %1 requires login', $couponCode),
                         null,
-                        BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN
+                        BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,
+                        $quote
                     );
             }
         }
@@ -322,7 +330,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('Coupon code does not equal with a quote code'),
                 null,
-                BoltErrorResponse::ERR_SERVICE
+                BoltErrorResponse::ERR_SERVICE,
+                $quote
             );
         }
 
@@ -335,7 +344,8 @@ trait UpdateDiscountTrait
             throw new BoltException(
                 __('Failed to apply the coupon code %1', $couponCode),
                 null,
-                BoltErrorResponse::ERR_SERVICE
+                BoltErrorResponse::ERR_SERVICE,
+                $quote
             );
         }
 
