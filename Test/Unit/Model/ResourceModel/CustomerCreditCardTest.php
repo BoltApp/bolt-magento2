@@ -30,7 +30,7 @@ class CustomerCreditCardTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
             ->disableOriginalConstructor()

@@ -32,7 +32,7 @@ class ErrorResponseTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->currentMock = new ErrorResponse();
     }

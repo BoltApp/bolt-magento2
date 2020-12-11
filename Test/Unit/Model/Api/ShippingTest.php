@@ -72,7 +72,7 @@ class ShippingTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
         $this->shippingDataFactory = $this->createMock(ShippingDataInterfaceFactory::class);

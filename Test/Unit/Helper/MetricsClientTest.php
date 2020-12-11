@@ -127,7 +127,7 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         // common values
         $this->timeStamp = 1567541470604;

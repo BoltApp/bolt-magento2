@@ -48,7 +48,7 @@ class LogRetrieverTest extends TestCase
     private $bugsnag;
     private $file;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $structure = [
             'log' => [

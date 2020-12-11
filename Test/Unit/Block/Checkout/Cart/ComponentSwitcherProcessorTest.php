@@ -68,7 +68,7 @@ class ComponentSwitcherProcessorTest extends TestCase
      *
      * @return void
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->helperContextMock = $this->createMock(Context::class);
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)

@@ -87,7 +87,7 @@ class PrefetchTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

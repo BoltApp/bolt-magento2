@@ -653,7 +653,7 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl->execute();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initAuthentication();

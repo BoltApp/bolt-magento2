@@ -44,7 +44,7 @@ class CreditCardTest extends TestCase
      */
     protected $_view;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->_context = $this->createPartialMock(Context::class, ['getView']);
         $this->_view = $this->createPartialMock(

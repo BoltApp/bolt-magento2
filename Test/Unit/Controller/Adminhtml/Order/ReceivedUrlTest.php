@@ -87,7 +87,7 @@ class ReceivedUrlTest extends TestCase
 
     private $order;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->context = $this->createMock(Context::class, ['getBackendUrl']);
         $this->backendUrl = $this->createMock(UrlInterface::class, ['getUrl']);

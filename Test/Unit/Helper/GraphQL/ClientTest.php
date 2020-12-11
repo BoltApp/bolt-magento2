@@ -82,7 +82,7 @@ class ClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
 
         $this->context = $this->createMock(Context::class);

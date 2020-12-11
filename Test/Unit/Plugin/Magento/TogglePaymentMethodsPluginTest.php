@@ -58,7 +58,7 @@ class TogglePaymentMethodsPluginTest extends TestCase
     /** @var DataObject|MockObject  */
     protected $result;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->plugin = (new ObjectManager($this))->getObject(TogglePaymentMethodsPlugin::class);
         $this->subject = $this->createMock(

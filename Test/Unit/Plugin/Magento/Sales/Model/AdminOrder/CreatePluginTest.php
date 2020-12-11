@@ -69,7 +69,7 @@ Room 1111',
     /** @var CreatePlugin */
     protected $plugin;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isStorePickupFeatureEnabled', 'isPickupInStoreShippingMethodCode', 'getPickupAddressData']);
         $this->adminCheckoutSession = $this->createPartialMock(AdminCheckoutSession::class, ['setData', 'getData', 'unsetData']);

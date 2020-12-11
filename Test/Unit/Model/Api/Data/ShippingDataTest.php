@@ -39,7 +39,7 @@ class ShippingDataTest extends TestCase
      */
     private $shippingOptions;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingOptions = [new ShippingOption];
         $this->shippingData = new ShippingData;

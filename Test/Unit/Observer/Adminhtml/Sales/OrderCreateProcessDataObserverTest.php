@@ -55,7 +55,7 @@ class OrderCreateProcessDataObserverTest extends TestCase
      */
     protected $quote;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->observer = $this->createPartialMock(
             Observer::class,

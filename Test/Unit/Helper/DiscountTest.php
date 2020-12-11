@@ -206,7 +206,7 @@ class DiscountTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(ResourceConnection::class);

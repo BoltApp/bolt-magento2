@@ -49,7 +49,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
      */
     private $paymentMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->paymentCollectionFactoryMock = $this->createPartialMock(
             \Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory::class,

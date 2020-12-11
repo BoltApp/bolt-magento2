@@ -56,7 +56,7 @@ class PurchasePluginTest extends TestCase
     /** @var callable */
     private $callback;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->urlInterface = $this->getMockBuilder(UrlInterface::class)
             ->getMock();

@@ -84,7 +84,7 @@ class SaveTest extends TestCase
      */
     private $dataObjectFactory;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
     }

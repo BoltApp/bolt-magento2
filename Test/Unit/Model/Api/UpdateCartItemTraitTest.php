@@ -53,7 +53,7 @@ class UpdateCartItemTraitTest extends TestCase
     private $currentMock;
 
 
-    public function setUp()
+    public function setUp(): void
     {            
         $this->currentMock = $this->getMockBuilder(UpdateCartItemTrait::class)
             ->setMethods(['sendErrorResponse'])

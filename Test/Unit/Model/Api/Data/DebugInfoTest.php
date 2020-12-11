@@ -31,7 +31,7 @@ class DebugInfoTest extends TestCase
      */
     protected $debugInfo;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->debugInfo = new DebugInfo();
         $this->debugInfo->setPhpVersion('7.1');

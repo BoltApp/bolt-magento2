@@ -52,7 +52,7 @@ class CheckboxesHandlerTest extends TestCase
     private $subscriber;
 
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->context = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()

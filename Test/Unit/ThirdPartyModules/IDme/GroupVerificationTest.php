@@ -52,7 +52,7 @@ class GroupVerificationTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->customerSession = $this->quote = $this->createPartialMock(Session::class, [
             'setIdmeUuid',

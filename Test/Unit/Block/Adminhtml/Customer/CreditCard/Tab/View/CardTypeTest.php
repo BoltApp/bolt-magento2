@@ -26,7 +26,7 @@ class CardTypeTest extends \PHPUnit\Framework\TestCase
     /** @var CardType */
     private $block;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = $this->getMockBuilder(CardType::class)
             ->disableOriginalConstructor()

@@ -79,7 +79,7 @@ class FeatureSwitchesHookTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         $rendererFactory = $this->createMock(RendererFactory::class);
         $errorProcessor = $this->createMock(ErrorProcessor::class);

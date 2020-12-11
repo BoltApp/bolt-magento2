@@ -30,7 +30,7 @@ class MetricTest extends TestCase
      */
     protected $metric;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->metric = new Metric(self::KEY, self::DATA);
     }

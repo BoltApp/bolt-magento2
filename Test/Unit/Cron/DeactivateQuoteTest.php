@@ -50,7 +50,7 @@ class DeactivateQuoteTest extends TestCase
      */
     private $connection;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->resourceConnection = $this->createPartialMock(
             ResourceConnection::class,

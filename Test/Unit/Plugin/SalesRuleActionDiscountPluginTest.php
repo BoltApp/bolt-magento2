@@ -46,7 +46,7 @@ class SalesRuleActionDiscountPluginTest extends TestCase
     /** @var AbstractDiscount */
     protected $subject;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->subject = $this->createMock(AbstractDiscount::class);
         $this->sessionHelper = $this->createPartialMock(SessionHelper::class,

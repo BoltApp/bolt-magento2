@@ -195,7 +195,7 @@ class UpdateCartCommonTest extends TestCase
     protected $stockStateInterface;
 
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->request = $this->createMock(Request::class);
         $this->response = $this->createMock(Response::class);

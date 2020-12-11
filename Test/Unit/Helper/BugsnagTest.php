@@ -64,7 +64,7 @@ class BugsnagTest extends TestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->createMock(Context::class);
         $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);

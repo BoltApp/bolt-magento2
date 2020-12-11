@@ -57,7 +57,7 @@ class MethodPluginTest extends TestCase
 
     private $subject;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->rateResultFactory = $this->createPartialMock(ResultFactory::class, ['create', 'append']);
         $this->resultMethodFactory = $this->createPartialMock(MethodFactory::class, [

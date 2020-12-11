@@ -49,7 +49,7 @@ class CartDataTest extends TestCase
      */
     private $typeProcessor;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->cartData = new CartData;
         $this->cartData->setDisplayId(self::DISPLAYID);

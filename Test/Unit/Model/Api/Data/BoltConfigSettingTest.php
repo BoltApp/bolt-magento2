@@ -31,7 +31,7 @@ class BoltConfigSettingTest extends TestCase
      */
     protected $boltConfigSetting;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->boltConfigSetting = new BoltConfigSetting();
     }

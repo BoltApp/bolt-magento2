@@ -62,7 +62,7 @@ class MinicartAddonsTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->serializer = (new ObjectManager($this))

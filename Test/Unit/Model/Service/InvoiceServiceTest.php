@@ -100,7 +100,7 @@ class InvoiceServiceTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->repository = $this->createMock(InvoiceRepositoryInterface::class);
         $this->commentRepository = $this->createMock(InvoiceCommentRepositoryInterface::class);

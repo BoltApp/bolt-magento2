@@ -130,7 +130,7 @@ class ShippingTaxTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);

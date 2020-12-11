@@ -47,7 +47,7 @@ class HintsTest extends TestCase
     /** @var Hints */
     private $currentMock;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

@@ -61,7 +61,7 @@ class WebhookLogTest extends TestCase
      */
     private $resourceCollection;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->coreDate = $this->createPartialMock(DateTime::class, ['gmtDate']);
         $this->context = $this->createMock(Context::class);

@@ -52,7 +52,7 @@ class OrderSenderPluginTest extends TestCase
     /** @var callable */
     private $callback;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->order = $this->createPartialMock(Order::class, ['getPayment', 'getMethod', 'getState']);
         $this->subject = $this->createPartialMock(OrderSender::class, ['getPayment', 'getMethod']);

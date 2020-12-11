@@ -31,7 +31,7 @@ class WebhookLogTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->wehookLogMock = $this->getMockBuilder(WebhookLog::class)
             ->disableOriginalConstructor()

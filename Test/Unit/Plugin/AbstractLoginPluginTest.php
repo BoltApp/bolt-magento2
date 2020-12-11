@@ -71,7 +71,7 @@ class AbstractLoginPluginTest extends TestCase
      */
     private $decider;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->customerSession = $this->createPartialMock(
             CustomerSession::class,

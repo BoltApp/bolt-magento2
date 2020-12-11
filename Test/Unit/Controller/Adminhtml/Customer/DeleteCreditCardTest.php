@@ -65,7 +65,7 @@ class DeleteCreditCardTest extends TestCase
      */
     private $redirectMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->createMock(Context::class);
 

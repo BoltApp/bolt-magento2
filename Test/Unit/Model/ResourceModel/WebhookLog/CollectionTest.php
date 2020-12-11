@@ -34,7 +34,7 @@ class CollectionTest extends TestCase
     /**
      * Setup for CollectionTest Class
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->webhookLogCollectionMock = $this->getMockBuilder(Collection::class)
             ->disableOriginalConstructor()

@@ -81,7 +81,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

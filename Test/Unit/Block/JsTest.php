@@ -127,7 +127,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      *
      * @throws ReflectionException if unable to create one of the required mocks
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->objectManager = new ObjectManager($this);
         $this->helperContextMock = $this->createMock(Context::class);

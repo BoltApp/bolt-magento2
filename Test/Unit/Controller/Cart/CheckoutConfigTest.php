@@ -48,7 +48,7 @@ class CheckoutConfigTest extends TestCase
     /**
      * Setup method, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $om = new ObjectManager($this);
         $this->context = $om->getObject(\Magento\Framework\App\Action\Context::class);

@@ -38,7 +38,7 @@ class DeleteOldWebHookLogsTest extends TestCase
      */
     private $webhookLogFactory;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->webhookLogFactory = $this->createPartialMock(
             WebhookLogFactory::class,

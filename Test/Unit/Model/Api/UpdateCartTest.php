@@ -126,7 +126,7 @@ class UpdateCartTest extends TestCase
      */
     private $cacheMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
             ->setMethods(['getSessionHelper', 'getCache'])

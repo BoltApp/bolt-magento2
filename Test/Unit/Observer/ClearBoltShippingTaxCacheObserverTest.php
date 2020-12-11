@@ -40,7 +40,7 @@ class ClearBoltShippingTaxCacheObserverTest extends TestCase
      */
     private $cache;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->cache = $this->createPartialMock(CacheInterface::class, ['clean', 'remove', 'save', 'load', 'getFrontend']);
         $this->currentMock = new ClearBoltShippingTaxCacheObserver($this->cache);

@@ -32,7 +32,7 @@ class ShippingTaxTest extends TestCase
      */
     protected $shippingTax;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingTax = new \Bolt\Boltpay\Model\Api\Data\ShippingTax;
     }

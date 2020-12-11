@@ -76,7 +76,7 @@ class TaxTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
 

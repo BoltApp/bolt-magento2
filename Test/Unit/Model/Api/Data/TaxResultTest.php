@@ -35,7 +35,7 @@ class TaxResultTest extends TestCase
      */
     private $taxResult;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->taxResult = new TaxResult;
         $this->taxResult->setSubtotalAmount(self::SUBTOTAL_AMOUNT);

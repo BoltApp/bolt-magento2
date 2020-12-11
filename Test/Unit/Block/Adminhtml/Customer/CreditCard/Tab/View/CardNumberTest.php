@@ -30,7 +30,7 @@ class CardNumberTest extends \PHPUnit\Framework\TestCase
     /** @var CardNumber */
     private $block;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = $this->getMockBuilder(CardNumber::class)
             ->disableOriginalConstructor()

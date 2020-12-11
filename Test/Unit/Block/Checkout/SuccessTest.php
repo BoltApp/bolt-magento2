@@ -39,7 +39,7 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
      */
     protected $block;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);

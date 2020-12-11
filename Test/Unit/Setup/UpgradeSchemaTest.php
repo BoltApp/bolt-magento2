@@ -51,7 +51,7 @@ class UpgradeSchemaTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->dbAdapter = $this->getMockBuilder(AdapterInterface::class)
             ->disableOriginalConstructor()

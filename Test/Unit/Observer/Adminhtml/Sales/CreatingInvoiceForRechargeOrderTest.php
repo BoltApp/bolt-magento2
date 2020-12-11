@@ -66,7 +66,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
      */
     protected $invoice;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice']);
         $this->invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);

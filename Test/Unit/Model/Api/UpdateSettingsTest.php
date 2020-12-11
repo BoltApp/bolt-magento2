@@ -80,7 +80,7 @@ class UpdateTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         // prepare bolt config setting factory
         $this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);

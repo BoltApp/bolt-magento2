@@ -38,7 +38,7 @@ class ActionPredispatchTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->eventsForThirdPartyModulesMock = $this->createMock(
             \Bolt\Boltpay\Model\EventsForThirdPartyModules::class

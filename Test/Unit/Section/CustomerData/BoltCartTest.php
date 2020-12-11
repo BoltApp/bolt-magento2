@@ -42,7 +42,7 @@ class BoltCartTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->cartHelper = $this->createPartialMock(CartHelper::class, ['calculateCartAndHints']);
         $this->boltCart = (new ObjectManager($this))->getObject(

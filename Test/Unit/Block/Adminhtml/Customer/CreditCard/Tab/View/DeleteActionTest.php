@@ -27,7 +27,7 @@ class DeleteActionTest extends \PHPUnit\Framework\TestCase
     /** @var DeleteAction */
     private $block;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = $this->getMockBuilder(DeleteAction::class)
             ->disableOriginalConstructor()

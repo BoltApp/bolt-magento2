@@ -31,7 +31,7 @@ class PluginVersionTest extends TestCase
      */
     protected $pluginVersion;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->pluginVersion = new PluginVersion();
     }

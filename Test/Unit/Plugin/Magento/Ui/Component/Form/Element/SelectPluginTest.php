@@ -37,7 +37,7 @@ class SelectPluginTest extends \PHPUnit\Framework\TestCase
      */
     private $contextMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->subjectMock = $this->createMock(\Magento\Ui\Component\Form\Element\Select::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\UiComponent\Context::class);

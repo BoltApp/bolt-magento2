@@ -36,7 +36,7 @@ class ComponentSwitcherProcessorTest extends TestCase
      */
     private $componentSwitcherProcessor;
 
-    public function setup()
+    public function setUp(): void
     {
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isPaymentOnlyCheckoutEnabled']);
         $this->componentSwitcherProcessor = $this->getMockBuilder(ComponentSwitcherProcessor::class)

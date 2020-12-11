@@ -77,7 +77,7 @@ class RechargeCustomerTest extends TestCase
      */
     private $customerCreditCardFactoryMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

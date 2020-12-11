@@ -47,7 +47,7 @@ class BlockTraitTest extends TestCase
     /** @var Decider */
     private $featureSwitches;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->currentMock = $this->getMockBuilder(BlockTrait::class)
             ->enableOriginalConstructor()

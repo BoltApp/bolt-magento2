@@ -68,7 +68,7 @@ class RecurringDataTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->fsManager = $this->createPartialMock(Manager::class, ['updateSwitchesFromBolt']);
         $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);

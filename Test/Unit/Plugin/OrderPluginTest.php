@@ -53,7 +53,7 @@ class OrderPluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->plugin = (new ObjectManager($this))->getObject(OrderPlugin::class);
         $this->subject = $this->createPartialMock(Order::class, [

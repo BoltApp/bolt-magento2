@@ -57,7 +57,7 @@ class UpdateCartResultTest extends TestCase
      */
     private $typeProcessor;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->updateCartResult = new UpdateCartResult;
         $this->orderCreate = new CartData;
@@ -106,7 +106,7 @@ class UpdateCartResultTest extends TestCase
      *
      * @covers ::getStatus
      */
-    public function getStatus()
+    public function getStatus(): int
     {
         $this->assertEquals(self::STATUS, $this->updateCartResult->getStatus());
     }

@@ -80,7 +80,7 @@ class HookTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->context = $this->createMock(Context::class);
         $this->request = $this->createMock(Request::class);

@@ -37,7 +37,7 @@ class MinifiedJsTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = $this->createPartialMock(MinifiedJs::class, ['minifyJs']);
     }

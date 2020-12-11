@@ -45,7 +45,7 @@ class TaxDataTest extends TestCase
      */
     private $shippingOption;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->taxResult = new TaxResult;
         $this->shippingOption = new ShippingOption;

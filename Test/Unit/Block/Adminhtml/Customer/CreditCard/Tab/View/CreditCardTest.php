@@ -26,7 +26,7 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
      */
     private $block;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->block = $this->createMock(CreditCard::class);
     }

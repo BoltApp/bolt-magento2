@@ -48,7 +48,7 @@ class QuotePluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->subject = $this->getMockBuilder(Quote::class)
             ->setMethods(['getBoltParentQuoteId', 'getId', 'getIsActive', 'getBoltCheckoutType', 'getPayment', 'getMethod'])

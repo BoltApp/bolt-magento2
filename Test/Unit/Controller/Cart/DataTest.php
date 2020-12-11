@@ -74,7 +74,7 @@ class DataTest extends TestCase
      */
     private $resultJsonFactory;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initResponseData();
         $this->initRequiredMocks();

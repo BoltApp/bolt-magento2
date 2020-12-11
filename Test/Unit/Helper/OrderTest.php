@@ -264,7 +264,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException from initRequiredMocks and initCurrentMock methods
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
         $this->initCurrentMock(
@@ -287,7 +287,7 @@ class OrderTest extends BoltTestCase
     /**
      * Cleanup changes made by tests
      */
-    protected function tearDown()
+    protected function tearDown(): void
     {
         Hook::$fromBolt = false;
     }

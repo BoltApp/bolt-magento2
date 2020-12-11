@@ -75,7 +75,7 @@ class ReceivedUrlTraitTest extends TestCase
      */
     private $configHelper;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->currentMock = $this->getMockBuilder(ReceivedUrlTrait::class)
             ->enableOriginalConstructor()

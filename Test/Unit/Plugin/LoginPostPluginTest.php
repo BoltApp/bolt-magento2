@@ -56,7 +56,7 @@ class LoginPostPluginTest extends TestCase
     /** @var @var Decider */
     private $decider;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);

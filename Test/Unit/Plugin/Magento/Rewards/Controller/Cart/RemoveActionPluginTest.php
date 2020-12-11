@@ -52,7 +52,7 @@ class RemoveActionPluginTest extends TestCase
     /**
      * Setup method, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->subject = $this->getMockBuilder('\Magento\Reward\Controller\Cart\Remove')

@@ -112,7 +112,7 @@ class NonBoltOrderObserverTest extends TestCase
      */
     protected $orderManagementInterface;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
     }

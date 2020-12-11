@@ -37,7 +37,7 @@ class ShippingOptionsTest extends TestCase
      */
     protected $shippingOptions;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingOptions = new \Bolt\Boltpay\Model\Api\Data\ShippingOptions();
     }

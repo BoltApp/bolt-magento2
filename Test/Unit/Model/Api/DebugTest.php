@@ -95,7 +95,7 @@ class DebugTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         // prepare response
         $this->responseMock = $this->createMock(Response::class);

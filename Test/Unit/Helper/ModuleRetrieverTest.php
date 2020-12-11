@@ -62,7 +62,7 @@ class ModuleRetrieverTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->dbResult = [
             [

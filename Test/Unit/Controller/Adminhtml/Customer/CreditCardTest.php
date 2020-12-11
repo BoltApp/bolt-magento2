@@ -178,7 +178,7 @@ class CreditCardTest extends TestCase
      */
     private $resultJsonFactoryMock;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->contextMock = $this->createMock(Context::class);
         $this->coreRegistryMock = $this->createMock(Registry::class);

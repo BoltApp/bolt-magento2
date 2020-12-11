@@ -69,7 +69,7 @@ class RestoreQuotePluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->checkoutSession = $this->createPartialMock(
             CheckoutSession::class,

@@ -77,7 +77,7 @@ class TrackingSaveObserverTest extends TestCase
      */
     protected $observer;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
     }

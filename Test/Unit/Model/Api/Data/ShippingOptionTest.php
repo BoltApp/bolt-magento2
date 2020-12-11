@@ -37,7 +37,7 @@ class ShippingOptionTest extends TestCase
      */
     protected $shippingOption;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->shippingOption = new ShippingOption();
         $this->shippingOption->setReference(self::REFERENCE);

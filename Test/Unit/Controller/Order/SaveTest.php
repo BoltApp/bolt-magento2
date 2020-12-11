@@ -94,7 +94,7 @@ class SaveTest extends TestCase
      */
     private $resultJsonFactory;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
     }

@@ -29,7 +29,7 @@ class BoltHintsTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUp(): void
     {
 
         $this->cartHelper = $this->createMock(CartHelper::class);

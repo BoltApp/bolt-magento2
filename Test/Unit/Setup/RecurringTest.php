@@ -56,7 +56,7 @@ class RecurringTest extends TestCase
      */
     private $customTable;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->setup = $this->createMock(ModuleDataSetupInterface::class);
         $this->context = $this->createMock(ModuleContextInterface::class);

@@ -138,7 +138,7 @@ class UpdateDiscountTraitTest extends TestCase
     private $currentMock;
 
 
-    public function setUp()
+    public function setUp(): void
     {
         global $ifRunFilter;
         $ifRunFilter = false;
@@ -216,7 +216,7 @@ class UpdateDiscountTraitTest extends TestCase
         $this->initRequiredMocks();
     }
 
-    public function tearDown() {
+    public function tearDown(): void {
 		parent::tearDown();
 		global $ifRunFilter;
         $ifRunFilter = false;

@@ -172,7 +172,7 @@ class PaymentTest extends TestCase
     /** @var MockObject|Manager */
     private $eventManager;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         global $boltPaymentTestActive;
         $this->initRequiredMocks();

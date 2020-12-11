@@ -83,7 +83,7 @@ class ApiTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initRequiredMocks();
         $this->currentMock = $this->getMockBuilder(ApiHelper::class)

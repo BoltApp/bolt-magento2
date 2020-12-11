@@ -157,7 +157,7 @@ class GiftCardAccountTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->giftcardAccountRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface'

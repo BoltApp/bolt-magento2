@@ -64,7 +64,7 @@ class CheckSettingsUpdateTest extends TestCase
      */
     private $bugsnag;
 
-    public function setUp()
+    public function setUp(): void
     {
         /*
         $this->context = $this->getMockBuilder(Context::class)

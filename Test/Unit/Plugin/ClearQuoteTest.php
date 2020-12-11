@@ -45,7 +45,7 @@ class ClearQuoteTest extends TestCase
      */
     protected $plugin;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods(['getIsActive', 'getQuoteById'])

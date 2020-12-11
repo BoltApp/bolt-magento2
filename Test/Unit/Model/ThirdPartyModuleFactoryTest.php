@@ -57,7 +57,7 @@ class ThirdPartyModuleFactoryTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->_moduleManager = $this->createPartialMock(
             Manager::class,

@@ -93,7 +93,7 @@ class DataTest extends TestCase
      */
     private $request;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->initData();
         $this->initRequiredMocks();
