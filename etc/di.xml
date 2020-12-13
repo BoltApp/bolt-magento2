@@ -181,6 +181,10 @@
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
     
+    <type name="Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost">
+        <plugin name="Bolt_Boltpay_Mirasvit_RewardsCheckout_Controller_Checkout_ApplyPointsPostPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPostPlugin" sortOrder="1" />
+    </type>
+    
     <type name="Mirasvit\Rewards\Model\Total\Quote\Discount">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_Total_Quote_DiscountPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\Total\Quote\DiscountPlugin" sortOrder="1" />
     </type>
