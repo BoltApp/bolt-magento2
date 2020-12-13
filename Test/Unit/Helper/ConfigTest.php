@@ -419,7 +419,7 @@ JSON;
     /**
      * @test
      * @dataProvider dataProvider_getCdnUrl_devModeSet
-     * @covers::getCdnUrl
+     * @covers ::getCdnUrl
      *
      * @param $validateCustomUrl
      * @param $expected
@@ -510,7 +510,7 @@ JSON;
     /**
      * @test
      * @dataProvider dataProvider_getAccountUrl_devModeSet
-     * @covers::getAccountUrl
+     * @covers ::getAccountUrl
      *
      * @param $validateCustomUrl
      * @param $expected
@@ -639,7 +639,7 @@ JSON;
     /**
      * @test
      * @dataProvider dataProvider_getApiUrl_devMode
-     * @covers::getApiUrl
+     * @covers ::getApiUrl
      *
      * @param $validateCustomUrl
      * @param $expected
