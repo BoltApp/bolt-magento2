@@ -379,7 +379,7 @@ trait UpdateDiscountTrait
         }
 
         $description = $rule->getDescription();
-        $display = trim(__('Discount ') . ($description != '' ? $description : $couponCode));
+        $display = $description != '' ? $description : 'Discount (' . $couponCode . ')'; 
 
         $result = [
             'status'          => 'success',
