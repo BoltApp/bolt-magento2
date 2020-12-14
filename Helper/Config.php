@@ -436,6 +436,13 @@ class Config extends AbstractHelper
         "capture_merchant_metrics" => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         "track_checkout_funnel" => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
     ];
+    
+    /**
+     *  Xml path to disable checkout
+     *  From Magento 2.4.1, it makes Magento\Downloadable\Observer\IsAllowedGuestCheckoutObserver::XML_PATH_DISABLE_GUEST_CHECKOUT as private,
+     *  so we need to define this const in class.
+     */
+    const XML_PATH_DISABLE_GUEST_CHECKOUT = 'catalog/downloadable/disable_guest_checkout';
 
     /**
      * @var ResourceInterface
