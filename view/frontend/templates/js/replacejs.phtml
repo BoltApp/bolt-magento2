@@ -983,7 +983,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                     // update payload email, use the value from the page
                     if (customer_email.val()) {
-                        place_order_payload_obj.email = customer_email.val();
+                        place_order_payload_obj.email = encodeURIComponent(customer_email.val());
                     }
                     place_order_payload.value = JSON.stringify(place_order_payload_obj);
 

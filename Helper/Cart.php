@@ -1405,7 +1405,7 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Get product description and image
                 ////////////////////////////////////
-                $product['description'] = strip_tags($_product->getDescription());
+                $product['description'] = str_replace(array("\r\n", "\n", "\r"), ' ', strip_tags($_product->getDescription()));
                 $variantProductToGetImage = $_product;
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
@@ -1968,7 +1968,7 @@ class Cart extends AbstractHelper
                         case RuleInterface::COUPON_TYPE_AUTO:
                             $couponCode = $quote->getCouponCode();
                             $ruleDescription = $rule->getDescription();
-                            $description = trim(__('Discount ') . ($ruleDescription !== '' ? $ruleDescription : $couponCode));
+                            $description = $ruleDescription !== '' ? $ruleDescription : 'Discount (' . $couponCode . ')';
                             $discounts[] = [
                                 'description'       => $description,
                                 'amount'            => $roundedAmount,
