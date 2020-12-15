@@ -18,13 +18,14 @@
 namespace Bolt\Boltpay\Test\Unit\Exception;
 
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * BoltExceptionTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class BoltExceptionTest extends \PHPUnit\Framework\TestCase
+class BoltExceptionTest extends BoltTestCase
 {
 
     /**

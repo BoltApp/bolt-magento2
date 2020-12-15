@@ -26,7 +26,7 @@ use Bolt\Boltpay\Model\Response as BoltResponse;
 use Bolt\Boltpay\Model\RequestFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Zend\Http\Response;
@@ -36,7 +36,7 @@ use Zend\Http\Response;
  * @package Bolt\Boltpay\Test\Unit\Helper\GraphQL
  * @coversDefaultClass \Bolt\Boltpay\Helper\GraphQL\Client
  */
-class ClientTest extends TestCase
+class ClientTest extends BoltTestCase
 {
 
     /**
@@ -82,7 +82,7 @@ class ClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
 
         $this->context = $this->createMock(Context::class);
@@ -126,12 +126,12 @@ class ClientTest extends TestCase
             $this->bugsnag
         );
         
-        $this->assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
-        $this->assertAttributeEquals($this->boltConfig, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
-        $this->assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
-        $this->assertAttributeEquals($this->logger, 'logHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+        static::assertAttributeEquals($this->boltConfig, 'configHelper', $instance);
+        static::assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
+        static::assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
+        static::assertAttributeEquals($this->logger, 'logHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
     }
 
     /**

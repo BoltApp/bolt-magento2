@@ -18,19 +18,20 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CardNumber;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CardNumber
  * @package Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View
  */
-class CardNumberTest extends \PHPUnit\Framework\TestCase
+class CardNumberTest extends BoltTestCase
 {
     const LAST_4_DIGIT_CARD = 'XXXX-4444';
 
     /** @var CardNumber */
     private $block;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->block = $this->getMockBuilder(CardNumber::class)
             ->disableOriginalConstructor()

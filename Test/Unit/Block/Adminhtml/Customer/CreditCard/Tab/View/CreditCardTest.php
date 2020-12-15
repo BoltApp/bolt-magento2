@@ -18,15 +18,16 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CreditCard;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class CreditCardTest extends \PHPUnit\Framework\TestCase
+class CreditCardTest extends BoltTestCase
 {
     /**
      * @var CreditCard
      */
     private $block;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->block = $this->createMock(CreditCard::class);
     }

@@ -25,7 +25,7 @@ use Magento\Framework\App\State;
 use Magento\Quote\Model\Quote;
 use Magento\Store\Model\ScopeInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -56,7 +56,7 @@ use Magento\Framework\Event\Manager;
  * Class PaymentTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Payment
  */
-class PaymentTest extends TestCase
+class PaymentTest extends BoltTestCase
 {
     const TITLE = 'Bolt Pay';
     /**
@@ -172,7 +172,7 @@ class PaymentTest extends TestCase
     /** @var MockObject|Manager */
     private $eventManager;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         global $boltPaymentTestActive;
         $this->initRequiredMocks();

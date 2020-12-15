@@ -17,13 +17,13 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class ShippingOptionsTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  */
-class ShippingOptionsTest extends TestCase
+class ShippingOptionsTest extends BoltTestCase
 {
     const TAX_RESULT = '111';
 
@@ -37,7 +37,7 @@ class ShippingOptionsTest extends TestCase
      */
     protected $shippingOptions;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->shippingOptions = new \Bolt\Boltpay\Model\Api\Data\ShippingOptions();
     }

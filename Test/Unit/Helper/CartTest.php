@@ -312,7 +312,7 @@ class CartTest extends BoltTestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->originalObjectManager = ObjectManager::getInstance();
         $this->testAddressData = [
@@ -455,7 +455,7 @@ class CartTest extends BoltTestCase
         $this->objectsToClean = array();
     }
 
-    protected function tearDown()
+    protected function tearDownInternal()
     {
         TestUtils::cleanupSharedFixtures($this->objectsToClean);
         ObjectManager::setInstance($this->originalObjectManager);

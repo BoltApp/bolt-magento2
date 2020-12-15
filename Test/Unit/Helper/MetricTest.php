@@ -17,10 +17,10 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Metric;
 
-class MetricTest extends TestCase
+class MetricTest extends BoltTestCase
 {
     const KEY = 'key';
     const DATA = ['value' => '2222'];
@@ -30,7 +30,7 @@ class MetricTest extends TestCase
      */
     protected $metric;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->metric = new Metric(self::KEY, self::DATA);
     }

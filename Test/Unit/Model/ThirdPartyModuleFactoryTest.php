@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Magento\Framework\ObjectManagerInterface;
@@ -28,7 +28,7 @@ use Magento\Framework\Module\Manager;
  * @package Bolt\Boltpay\Test\Unit\Model
  * @coversDefaultClass \Bolt\Boltpay\Model\ThirdPartyModuleFactory
  */
-class ThirdPartyModuleFactoryTest extends TestCase
+class ThirdPartyModuleFactoryTest extends BoltTestCase
 {
     const MODULE_NAME = 'Bolt_Boltpay';
     const CLASS_NAME = 'Bolt\Boltpay\Model\ThirdPartyModuleFactory';
@@ -57,7 +57,7 @@ class ThirdPartyModuleFactoryTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->_moduleManager = $this->createPartialMock(
             Manager::class,

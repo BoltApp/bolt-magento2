@@ -18,8 +18,9 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\DeleteAction;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class DeleteActionTest extends \PHPUnit\Framework\TestCase
+class DeleteActionTest extends BoltTestCase
 {
     const ID = '1';
     const DELETE_BUTTON_HTML = '<a href="https://www.bolt.com/admin/boltpay/customer/deletecreditcard/id/1/">Delete</a>';
@@ -27,7 +28,7 @@ class DeleteActionTest extends \PHPUnit\Framework\TestCase
     /** @var DeleteAction */
     private $block;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->block = $this->getMockBuilder(DeleteAction::class)
             ->disableOriginalConstructor()

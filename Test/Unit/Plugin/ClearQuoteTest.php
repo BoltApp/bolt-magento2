@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Plugin\ClearQuote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
  * @package Bolt\Boltpay\Test\Unit\Plugin
  * @coversDefaultClass \Bolt\Boltpay\Plugin\ClearQuote
  */
-class ClearQuoteTest extends TestCase
+class ClearQuoteTest extends BoltTestCase
 {
     /**
      * @var CartHelper
@@ -45,7 +45,7 @@ class ClearQuoteTest extends TestCase
      */
     protected $plugin;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods(['getIsActive', 'getQuoteById'])

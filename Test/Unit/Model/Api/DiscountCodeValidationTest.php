@@ -23,10 +23,11 @@ use Magento\Framework\DataObject;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
@@ -59,7 +60,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\DiscountCodeValidation
  */
-class DiscountCodeValidationTest extends TestCase
+class DiscountCodeValidationTest extends BoltTestCase
 {
     const PARENT_QUOTE_ID = "1000";
     const IMMUTABLE_QUOTE_ID = "1001";
@@ -226,7 +227,7 @@ class DiscountCodeValidationTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();        
     }

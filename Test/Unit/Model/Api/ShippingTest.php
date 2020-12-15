@@ -29,7 +29,7 @@ use Magento\Quote\Api\ShippingMethodManagementInterface;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Model\Api\Shipping;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Magento\Quote\Api\Data\ShippingMethodInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
@@ -39,7 +39,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Shipping
  */
-class ShippingTest extends TestCase
+class ShippingTest extends BoltTestCase
 {
     const IMMUTABLE_QUOTE_ID = 1001;
     const PARENT_QUOTE_ID = 1000;
@@ -72,7 +72,7 @@ class ShippingTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
         $this->shippingDataFactory = $this->createMock(ShippingDataInterfaceFactory::class);
@@ -125,12 +125,12 @@ class ShippingTest extends TestCase
     {
         $this->initCurrentMock();
 
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             ShippingDataInterfaceFactory::class,
             'shippingDataFactory',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             ShippingMethodManagementInterface::class,
             'shippingMethodManagement',
             $this->currentMock

@@ -19,7 +19,9 @@ class TestHelper extends TestCase
      */
     public static function getReflectedClass($class)
     {
-        if (is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
+        if (is_subclass_of($class, '\PHPUnit\Framework\MockObject\MockObject')) {
+            return new ReflectionClass(get_parent_class($class));
+        } else if (is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
             return new ReflectionClass(get_parent_class($class));
         }
         return new ReflectionClass($class);
@@ -139,9 +141,25 @@ class TestHelper extends TestCase
      * @param $data
      * @return mixed
      */
-    public static function serialize ($class, $data){
+    public static function serialize ($class, $data)
+    {
         return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
             ->getObject(\Zend\Serializer\Adapter\PhpSerialize::class)->serialize($data);
+    }
+    
+    /**
+     * @param  $object
+     * @param  $property
+     * @param  $value
+     * @throws \ReflectionException
+     */
+    public static function setInaccessibleProperty($object, $property, $value)
+    {
+        $reflection = self::getReflectedClass($object);
+
+        $reflectionProperty = $reflection->getProperty($property);
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($object, $value);
     }
 }
 class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');

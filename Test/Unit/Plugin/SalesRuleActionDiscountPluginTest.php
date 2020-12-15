@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin;
 use Magento\Framework\DataObject;
 use Magento\Checkout\Model\Session as CheckoutSession;
@@ -30,7 +30,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
  * @package Bolt\Boltpay\Test\Unit\Plugin
  * @coversDefaultClass \Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
  */
-class SalesRuleActionDiscountPluginTest extends TestCase
+class SalesRuleActionDiscountPluginTest extends BoltTestCase
 {
     /**
      * @var SalesRuleActionDiscountPlugin
@@ -46,7 +46,7 @@ class SalesRuleActionDiscountPluginTest extends TestCase
     /** @var AbstractDiscount */
     protected $subject;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->subject = $this->createMock(AbstractDiscount::class);
         $this->sessionHelper = $this->createPartialMock(SessionHelper::class,

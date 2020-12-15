@@ -18,13 +18,13 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor
  */
-class ComponentSwitcherProcessorTest extends TestCase
+class ComponentSwitcherProcessorTest extends BoltTestCase
 {
     /**
      * @var ConfigHelper
@@ -36,7 +36,7 @@ class ComponentSwitcherProcessorTest extends TestCase
      */
     private $componentSwitcherProcessor;
 
-    public function setup()
+    public function setUpInternal()
     {
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isPaymentOnlyCheckoutEnabled']);
         $this->componentSwitcherProcessor = $this->getMockBuilder(ComponentSwitcherProcessor::class)

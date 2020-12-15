@@ -38,13 +38,13 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class UpdateDiscountTraitTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateDiscountTrait
  */
-class UpdateDiscountTraitTest extends TestCase
+class UpdateDiscountTraitTest extends BoltTestCase
 {
     const QUOTE_ID = 1;
     const ORDER_ID = 2;
@@ -138,7 +138,7 @@ class UpdateDiscountTraitTest extends TestCase
     private $currentMock;
 
 
-    public function setUp()
+    public function setUpInternal()
     {
         global $ifRunFilter;
         $ifRunFilter = false;
@@ -216,8 +216,7 @@ class UpdateDiscountTraitTest extends TestCase
         $this->initRequiredMocks();
     }
 
-    public function tearDown() {
-		parent::tearDown();
+    public function tearDownInternal() {
 		global $ifRunFilter;
         $ifRunFilter = false;
 	}

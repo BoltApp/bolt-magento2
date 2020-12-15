@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin\Mirasvit\Rewards\Model;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin;
 use Magento\Framework\UrlInterface;
@@ -26,7 +26,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin
  */
-class PurchasePluginTest extends TestCase
+class PurchasePluginTest extends BoltTestCase
 {
     /**
      * @var PurchasePlugin
@@ -56,7 +56,7 @@ class PurchasePluginTest extends TestCase
     /** @var callable */
     private $callback;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->urlInterface = $this->getMockBuilder(UrlInterface::class)
             ->getMock();

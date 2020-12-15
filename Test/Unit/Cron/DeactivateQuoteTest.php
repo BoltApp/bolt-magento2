@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Cron\DeactivateQuote;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * Class DeactivateQuoteTest
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
-class DeactivateQuoteTest extends TestCase
+class DeactivateQuoteTest extends BoltTestCase
 {
     /**
      * @var DeactivateQuote
@@ -50,7 +50,7 @@ class DeactivateQuoteTest extends TestCase
      */
     private $connection;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->resourceConnection = $this->createPartialMock(
             ResourceConnection::class,

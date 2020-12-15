@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLogFactory;
 use Bolt\Boltpay\Cron\DeleteOldWebHookLogs;
 
@@ -25,7 +25,7 @@ use Bolt\Boltpay\Cron\DeleteOldWebHookLogs;
  * Class DeleteOldWebHookLogsTest
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
-class DeleteOldWebHookLogsTest extends TestCase
+class DeleteOldWebHookLogsTest extends BoltTestCase
 {
 
     /**
@@ -38,7 +38,7 @@ class DeleteOldWebHookLogsTest extends TestCase
      */
     private $webhookLogFactory;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->webhookLogFactory = $this->createPartialMock(
             WebhookLogFactory::class,

@@ -24,7 +24,7 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\Composer\ComposerFactory;
@@ -33,7 +33,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor
  */
-class ComponentSwitcherProcessorTest extends TestCase
+class ComponentSwitcherProcessorTest extends BoltTestCase
 {
     /**
      * Mocked instance of config helper
@@ -68,7 +68,7 @@ class ComponentSwitcherProcessorTest extends TestCase
      *
      * @return void
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->helperContextMock = $this->createMock(Context::class);
         $this->configHelper = $this->getMockBuilder(ConfigHelper::class)

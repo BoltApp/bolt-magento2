@@ -18,9 +18,9 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\SecretObscurer;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class SecretObscurerTest extends TestCase
+class SecretObscurerTest extends BoltTestCase
 {
     /**
      * @test

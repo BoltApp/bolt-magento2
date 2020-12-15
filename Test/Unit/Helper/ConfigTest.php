@@ -27,7 +27,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\App\Request\Http as Request;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ModuleResource;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Directory\Model\RegionFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -39,7 +39,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
  * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Config
  */
-class ConfigTest extends TestCase
+class ConfigTest extends BoltTestCase
 {
     const KEY_ENCRYPTED = 'KeyValue_Encripted';
     const KEY_DECRYPTED = 'KeyValue_Decrypted';
@@ -148,7 +148,7 @@ JSON;
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->encryptor = $this->createMock(EncryptorInterface::class);
         $this->moduleResource = $this->createMock(ModuleResource::class);
@@ -250,12 +250,12 @@ JSON;
             $this->composerFactory
         );
         
-        $this->assertAttributeEquals($this->encryptor, 'encryptor', $instance);
-        $this->assertAttributeEquals($this->moduleResource, 'moduleResource', $instance);
-        $this->assertAttributeEquals($this->productMetadata, 'productMetadata', $instance);
-        $this->assertAttributeEquals($this->boltConfigSettingFactoryMock, 'boltConfigSettingFactory', $instance);
-        $this->assertAttributeEquals($this->regionFactory, 'regionFactory', $instance);
-        $this->assertAttributeEquals($this->composerFactory, 'composerFactory', $instance);
+        static::assertAttributeEquals($this->encryptor, 'encryptor', $instance);
+        static::assertAttributeEquals($this->moduleResource, 'moduleResource', $instance);
+        static::assertAttributeEquals($this->productMetadata, 'productMetadata', $instance);
+        static::assertAttributeEquals($this->boltConfigSettingFactoryMock, 'boltConfigSettingFactory', $instance);
+        static::assertAttributeEquals($this->regionFactory, 'regionFactory', $instance);
+        static::assertAttributeEquals($this->composerFactory, 'composerFactory', $instance);
     }
 
     /**
@@ -829,7 +829,7 @@ JSON;
     public function getClientIp()
     {
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
-        $this->setInaccessibleProperty($this->currentMock, '_request', $request);
+        TestHelper::setInaccessibleProperty($this->currentMock, '_request', $request);
         $request->method('getServer')->with('HTTP_CLIENT_IP', false)->willReturn(self::TEST_IP[2]);
         $this->assertEquals(self::TEST_IP[2], $this->currentMock->getClientIp());
     }
@@ -840,7 +840,7 @@ JSON;
     public function getClientIp_false()
     {
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
-        $this->setInaccessibleProperty($this->currentMock, '_request', $request);
+        TestHelper::setInaccessibleProperty($this->currentMock, '_request', $request);
         $request->method('getServer')->withAnyParameters()->willReturn(false);
         $this->assertEquals('', $this->currentMock->getClientIp());
     }
@@ -1018,22 +1018,6 @@ JSON;
             ["cms_index_index"],
             $pageBlacklist
         );
-    }
-
-    /**
-     * @param  $object
-     * @param  $property
-     * @param  $value
-     * @throws \ReflectionException
-     */
-    private static function setInaccessibleProperty($object, $property, $value)
-    {
-        $reflection = new \ReflectionClass(
-            ($object instanceof MockObject) ? get_parent_class($object) : $object
-        );
-        $reflectionProperty = $reflection->getProperty($property);
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($object, $value);
     }
 
     /**

@@ -41,7 +41,7 @@ use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 
 /**
@@ -49,7 +49,7 @@ use PHPUnit\Framework\TestCase;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateCart
  */
-class UpdateCartTest extends TestCase
+class UpdateCartTest extends BoltTestCase
 {
     const PARENT_QUOTE_ID = "1000";
     const IMMUTABLE_QUOTE_ID = "1001";
@@ -126,7 +126,7 @@ class UpdateCartTest extends TestCase
      */
     private $cacheMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
             ->setMethods(['getSessionHelper', 'getCache'])
@@ -417,17 +417,17 @@ class UpdateCartTest extends TestCase
     {
         $this->initCurrentMock();
 
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             CartDataInterfaceFactory::class,
             'cartDataFactory',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             UpdateCartResultInterfaceFactory::class,
             'updateCartResultFactory',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             SessionHelper::class,
             'sessionHelper',
             $this->currentMock

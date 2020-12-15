@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\LoginPostPlugin;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Checkout\Model\Session as CheckoutSession;
@@ -31,7 +31,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard
  * @coversDefaultClass \Bolt\Boltpay\Plugin\LoginPostPlugin
  */
-class LoginPostPluginTest extends TestCase
+class LoginPostPluginTest extends BoltTestCase
 {
     /**
      * @var LoginPostPlugin
@@ -56,7 +56,7 @@ class LoginPostPluginTest extends TestCase
     /** @var @var Decider */
     private $decider;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);

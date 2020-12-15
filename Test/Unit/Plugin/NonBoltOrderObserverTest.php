@@ -41,14 +41,14 @@ use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Model\Order\Payment;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Plugin\NonBoltOrderPlugin as Plugin;
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Request;
 
 /**
  * Class NonBoltOrderPluginTest
  * @coversDefaultClass \Bolt\Boltpay\Plugin\NonBoltOrderPlugin
  */
-class NonBoltOrderObserverTest extends TestCase
+class NonBoltOrderObserverTest extends BoltTestCase
 {
     const IMMUTABLE_QUOTE_ID = 1001;
     const RESERVED_ORDER_ID = '100010001';
@@ -112,7 +112,7 @@ class NonBoltOrderObserverTest extends TestCase
      */
     protected $orderManagementInterface;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
     }

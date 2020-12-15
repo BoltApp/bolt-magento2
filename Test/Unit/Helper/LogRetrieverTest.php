@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\LogRetriever;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use org\bovigo\vfs\vfsStream;
 use Magento\Framework\Filesystem\Driver\File;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
 
-class LogRetrieverTest extends TestCase
+class LogRetrieverTest extends BoltTestCase
 {
     /**
      * @var string
@@ -48,7 +48,7 @@ class LogRetrieverTest extends TestCase
     private $bugsnag;
     private $file;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $structure = [
             'log' => [

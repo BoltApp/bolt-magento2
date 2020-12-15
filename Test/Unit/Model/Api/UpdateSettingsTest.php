@@ -27,7 +27,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CreateOrderTest
@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Debug
  */
-class UpdateTest extends TestCase
+class UpdateTest extends BoltTestCase
 {
     /**
      * @var UpdateSettings
@@ -80,7 +80,7 @@ class UpdateTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         // prepare bolt config setting factory
         $this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);

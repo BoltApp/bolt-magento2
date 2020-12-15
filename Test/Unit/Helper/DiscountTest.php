@@ -23,7 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use PHPUnit\Framework\MockObject\MockObject;
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Discount;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -50,7 +50,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Discount
  */
-class DiscountTest extends TestCase
+class DiscountTest extends BoltTestCase
 {
     /**
      * @var MockObject|Discount mocked instance of the class tested
@@ -206,7 +206,7 @@ class DiscountTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->context = $this->createMock(Context::class);
         $this->resource = $this->createMock(ResourceConnection::class);

@@ -26,7 +26,7 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -34,7 +34,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Controller\Cart
  * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Email
  */
-class EmailTest extends TestCase
+class EmailTest extends BoltTestCase
 {
     /**
      * @var Context
@@ -76,7 +76,7 @@ class EmailTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
@@ -134,10 +134,10 @@ class EmailTest extends TestCase
             $this->cartHelper
         );
         
-        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
-        $this->assertAttributeEquals($this->customerSession, 'customerSession', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        static::assertAttributeEquals($this->customerSession, 'customerSession', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     /**

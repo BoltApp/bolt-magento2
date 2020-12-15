@@ -24,7 +24,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Api\Data\PaymentMethodInterface;
 
 /**
@@ -32,7 +32,7 @@ use Magento\Quote\Api\Data\PaymentMethodInterface;
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin
  */
-class TogglePaymentMethodsPluginTest extends TestCase
+class TogglePaymentMethodsPluginTest extends BoltTestCase
 {
     /** @var ObserverInterface|MockObject  */
     protected $subject;
@@ -58,7 +58,7 @@ class TogglePaymentMethodsPluginTest extends TestCase
     /** @var DataObject|MockObject  */
     protected $result;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->plugin = (new ObjectManager($this))->getObject(TogglePaymentMethodsPlugin::class);
         $this->subject = $this->createMock(

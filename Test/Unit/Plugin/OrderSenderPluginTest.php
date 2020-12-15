@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\OrderSenderPlugin;
 use Magento\Sales\Model\Order;
@@ -27,7 +27,7 @@ use Bolt\Boltpay\Model\Payment;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderSenderPlugin
  */
-class OrderSenderPluginTest extends TestCase
+class OrderSenderPluginTest extends BoltTestCase
 {
     /**
      * @var OrderSender
@@ -52,7 +52,7 @@ class OrderSenderPluginTest extends TestCase
     /** @var callable */
     private $callback;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->order = $this->createPartialMock(Order::class, ['getPayment', 'getMethod', 'getState']);
         $this->subject = $this->createPartialMock(OrderSender::class, ['getPayment', 'getMethod']);

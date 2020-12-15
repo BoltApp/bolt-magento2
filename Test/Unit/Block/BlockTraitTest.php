@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Block;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Helper\Config;
@@ -27,7 +27,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
  * Class BlockTraitTest
  * @coversDefaultClass \Bolt\Boltpay\Block\BlockTrait
  */
-class BlockTraitTest extends TestCase
+class BlockTraitTest extends BoltTestCase
 {
     const CDN_URL = 'https://bolt-cdn.com';
     const STORE_ID = '1';
@@ -47,7 +47,7 @@ class BlockTraitTest extends TestCase
     /** @var Decider */
     private $featureSwitches;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->currentMock = $this->getMockBuilder(BlockTrait::class)
             ->enableOriginalConstructor()

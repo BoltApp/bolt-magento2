@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Store\Model\Store;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Directory\Model\Region as RegionModel;
@@ -45,7 +45,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\ShippingTax
  */
-class ShippingTaxTest extends TestCase
+class ShippingTaxTest extends BoltTestCase
 {
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
@@ -130,7 +130,7 @@ class ShippingTaxTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
@@ -198,62 +198,62 @@ class ShippingTaxTest extends TestCase
     {
         $this->initCurrentMock();
 
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             HookHelper::class,
             'hookHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             CartHelper::class,
             'cartHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             LogHelper::class,
             'logHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             ConfigHelper::class,
             'configHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             SessionHelper::class,
             'sessionHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             DiscountHelper::class,
             'discountHelper',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             Bugsnag::class,
             'bugsnag',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             MetricsClient::class,
             'metricsClient',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             BoltErrorResponse::class,
             'errorResponse',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             RegionModel::class,
             'regionModel',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             Response::class,
             'response',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             ShippingOptionInterfaceFactory::class,
             'shippingOptionFactory',
             $this->currentMock

@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Geolocation;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -30,7 +30,7 @@ use Magento\Framework\App\CacheInterface;
  * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Geolocation
  */
-class GeolocationTest extends TestCase
+class GeolocationTest extends BoltTestCase
 {
     const API_KEY = 'api_key';
     const CLIENT_IP = '127.0.0.1';
@@ -69,7 +69,7 @@ class GeolocationTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->context = $this->createPartialMock(Context::class, ['getMpGiftCards']);
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['getGeolocationApiKey', 'getClientIp']);
@@ -106,10 +106,10 @@ class GeolocationTest extends TestCase
             $this->cache
         );
         
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->httpClientFactory, 'httpClientFactory', $instance);
-        $this->assertAttributeEquals($this->cache, 'cache', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->httpClientFactory, 'httpClientFactory', $instance);
+        static::assertAttributeEquals($this->cache, 'cache', $instance);
     }
 
     /**

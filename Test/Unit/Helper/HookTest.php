@@ -22,7 +22,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\TestFramework\Inspection\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Webapi\Rest\Request;
@@ -42,7 +42,7 @@ use ReflectionException;
  * @coversDefaultClass \Bolt\Boltpay\Helper\Hook
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
-class HookTest extends TestCase
+class HookTest extends BoltTestCase
 {
     const PAYLOAD = 'payload';
     const CORRECT_HMAC = 'correct HMAC';
@@ -80,7 +80,7 @@ class HookTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->context = $this->createMock(Context::class);
         $this->request = $this->createMock(Request::class);
@@ -136,13 +136,13 @@ class HookTest extends TestCase
             $this->response
         );
         
-        $this->assertAttributeEquals($this->request, 'request', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        $this->assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
-        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->response, 'response', $instance);
+        static::assertAttributeEquals($this->request, 'request', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        static::assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->response, 'response', $instance);
     }
 
     /**

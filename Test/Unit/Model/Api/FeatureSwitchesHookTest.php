@@ -31,9 +31,9 @@ use Magento\Framework\Webapi\Exception;
 use Magento\Framework\Webapi\Rest\Response\RendererFactory;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class FeatureSwitchesHookTest extends TestCase
+class FeatureSwitchesHookTest extends BoltTestCase
 {
     /**
      * @var HookHelper
@@ -79,7 +79,7 @@ class FeatureSwitchesHookTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $rendererFactory = $this->createMock(RendererFactory::class);
         $errorProcessor = $this->createMock(ErrorProcessor::class);

@@ -17,13 +17,13 @@
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\CheckoutConfig
  */
-class CheckoutConfigTest extends TestCase
+class CheckoutConfigTest extends BoltTestCase
 {
     /**
      * @var \Magento\Framework\App\Action\Context
@@ -48,7 +48,7 @@ class CheckoutConfigTest extends TestCase
     /**
      * Setup method, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $om = new ObjectManager($this);
         $this->context = $om->getObject(\Magento\Framework\App\Action\Context::class);

@@ -17,10 +17,12 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Ui\Component\Form\Element;
 
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
+
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin
  */
-class SelectPluginTest extends \PHPUnit\Framework\TestCase
+class SelectPluginTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin|\PHPUnit_Framework_MockObject_MockObject
@@ -37,7 +39,7 @@ class SelectPluginTest extends \PHPUnit\Framework\TestCase
      */
     private $contextMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->subjectMock = $this->createMock(\Magento\Ui\Component\Form\Element\Select::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\UiComponent\Context::class);

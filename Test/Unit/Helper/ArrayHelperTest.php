@@ -16,7 +16,7 @@
  */
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\ArrayHelper;
 
 /**
@@ -24,7 +24,7 @@ use Bolt\Boltpay\Helper\ArrayHelper;
  *
  * @package Bolt\Boltpay\Test\Unit\Helper
  */
-class ArrayHelperTest extends TestCase
+class ArrayHelperTest extends BoltTestCase
 {
     /**
      * @test

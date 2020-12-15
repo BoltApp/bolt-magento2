@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\CheckboxesHandler;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -28,7 +28,7 @@ use Magento\Quote\Model\Quote\Address;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\CheckboxesHandler
  */
-class CheckboxesHandlerTest extends TestCase
+class CheckboxesHandlerTest extends BoltTestCase
 {
 
     const EMAIL = 'test@bolt.com';
@@ -52,7 +52,7 @@ class CheckboxesHandlerTest extends TestCase
     private $subscriber;
 
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->context = $this->getMockBuilder(Context::class)
             ->disableOriginalConstructor()

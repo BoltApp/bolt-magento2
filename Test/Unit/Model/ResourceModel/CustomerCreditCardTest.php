@@ -18,9 +18,9 @@
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class CustomerCreditCardTest extends TestCase
+class CustomerCreditCardTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard
@@ -30,7 +30,7 @@ class CustomerCreditCardTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
             ->disableOriginalConstructor()

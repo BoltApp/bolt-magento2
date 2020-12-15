@@ -18,12 +18,12 @@
 namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml;
 
 use Bolt\Boltpay\Observer\Adminhtml\ActionPredispatch;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Observer\Adminhtml\ActionPredispatch
  */
-class ActionPredispatchTest extends TestCase
+class ActionPredispatchTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\EventsForThirdPartyModules|\PHPUnit\Framework\MockObject\MockObject
@@ -38,7 +38,7 @@ class ActionPredispatchTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->eventsForThirdPartyModulesMock = $this->createMock(
             \Bolt\Boltpay\Model\EventsForThirdPartyModules::class

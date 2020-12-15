@@ -17,21 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 
 /**
  * Class PluginVersionTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  */
-class PluginVersionTest extends TestCase
+class PluginVersionTest extends BoltTestCase
 {
     /**
      * @var PluginVersion
      */
     protected $pluginVersion;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->pluginVersion = new PluginVersion();
     }

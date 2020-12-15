@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Setup;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Setup\Recurring;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
@@ -29,7 +29,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
  * Class RecurringTest
  * @coversDefaultClass \Bolt\Boltpay\Setup\Recurring
  */
-class RecurringTest extends TestCase
+class RecurringTest extends BoltTestCase
 {
     /**
      * @var ModuleDataSetupInterface
@@ -56,7 +56,7 @@ class RecurringTest extends TestCase
      */
     private $customTable;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->setup = $this->createMock(ModuleDataSetupInterface::class);
         $this->context = $this->createMock(ModuleContextInterface::class);

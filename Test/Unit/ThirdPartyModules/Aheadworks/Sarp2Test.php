@@ -5,9 +5,9 @@ namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\Aheadworks;
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Sarp2;
 use Magento\Framework\ObjectManager\ConfigLoaderInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class Sarp2Test extends TestCase
+class Sarp2Test extends BoltTestCase
 {
     const CHECK_SPECIFICATION_FACTORY_CLASS = 'Magento\Payment\Model\Checks\SpecificationFactory';
 
@@ -34,7 +34,7 @@ class Sarp2Test extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->objectManagerMock = $this->createMock(\Magento\Framework\ObjectManager\ObjectManager::class);
         $this->configLoaderMock = $this->createMock(\Magento\Framework\App\ObjectManager\ConfigLoader::class);

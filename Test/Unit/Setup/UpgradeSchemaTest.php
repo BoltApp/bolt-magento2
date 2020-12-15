@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Setup;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Setup\ModuleContextInterface;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Setup\UpgradeSchema;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -30,7 +30,7 @@ use ReflectionException;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Setup\UpgradeSchema
  */
-class UpgradeSchemaTest extends TestCase
+class UpgradeSchemaTest extends BoltTestCase
 {
 
     /** @var AdapterInterface|MockObject mocked instance of the database connection class */
@@ -51,7 +51,7 @@ class UpgradeSchemaTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->dbAdapter = $this->getMockBuilder(AdapterInterface::class)
             ->disableOriginalConstructor()

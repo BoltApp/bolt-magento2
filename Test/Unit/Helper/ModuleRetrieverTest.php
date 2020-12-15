@@ -24,9 +24,9 @@ use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class ModuleRetrieverTest extends TestCase
+class ModuleRetrieverTest extends BoltTestCase
 {
     /**
      * @var ModuleRetriever
@@ -62,7 +62,7 @@ class ModuleRetrieverTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->dbResult = [
             [

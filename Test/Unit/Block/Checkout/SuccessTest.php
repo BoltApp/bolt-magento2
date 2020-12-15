@@ -21,13 +21,14 @@ use Bolt\Boltpay\Block\Checkout\Success;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class SuccessTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block\Checkout
  */
-class SuccessTest extends \PHPUnit\Framework\TestCase
+class SuccessTest extends BoltTestCase
 {
     /**
      * @var HelperConfig
@@ -39,7 +40,7 @@ class SuccessTest extends \PHPUnit\Framework\TestCase
      */
     protected $block;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);

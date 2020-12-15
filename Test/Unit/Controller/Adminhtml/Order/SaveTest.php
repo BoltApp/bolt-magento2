@@ -30,7 +30,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -38,7 +38,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Order
  * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Order\Save
  */
-class SaveTest extends TestCase
+class SaveTest extends BoltTestCase
 {
     const ORDER_ID = '1234';
     const ORDER_STATUS = 'currentStatus';
@@ -84,7 +84,7 @@ class SaveTest extends TestCase
      */
     private $dataObjectFactory;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
     }
@@ -107,12 +107,12 @@ class SaveTest extends TestCase
             $this->dataObjectFactory
         );
         
-        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
-        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
-        $this->assertAttributeEquals($this->orderHelper, 'orderHelper', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        static::assertAttributeEquals($this->orderHelper, 'orderHelper', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
     }
 
     /**

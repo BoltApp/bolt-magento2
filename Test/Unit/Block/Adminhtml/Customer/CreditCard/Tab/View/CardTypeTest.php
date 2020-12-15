@@ -18,15 +18,16 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CardType;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class CardTypeTest extends \PHPUnit\Framework\TestCase
+class CardTypeTest extends BoltTestCase
 {
     const CARD_TYPE = 'Visa';
 
     /** @var CardType */
     private $block;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->block = $this->getMockBuilder(CardType::class)
             ->disableOriginalConstructor()

@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Session;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Backend\Model\Session\Quote as AdminCheckoutSession;
@@ -41,7 +41,7 @@ use Zend\Serializer\Adapter\PhpSerialize as Serialize;
  * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Session
  */
-class SessionTest extends TestCase
+class SessionTest extends BoltTestCase
 {
     const SESSION_ID = '1111';
     const QUOTE_ID = '1';
@@ -110,7 +110,7 @@ class SessionTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
@@ -216,16 +216,16 @@ class SessionTest extends TestCase
             $this->serialize
         );
         
-        $this->assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
-        $this->assertAttributeEquals($this->adminCheckoutSession, 'adminCheckoutSession', $instance);
-        $this->assertAttributeEquals($this->customerSession, 'customerSession', $instance);
-        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        $this->assertAttributeEquals($this->cache, 'cache', $instance);
-        $this->assertAttributeEquals($this->appState, 'appState', $instance);
-        $this->assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
-        $this->assertAttributeEquals($this->formKey, 'formKey', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->serialize, 'serialize', $instance);
+        static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
+        static::assertAttributeEquals($this->adminCheckoutSession, 'adminCheckoutSession', $instance);
+        static::assertAttributeEquals($this->customerSession, 'customerSession', $instance);
+        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        static::assertAttributeEquals($this->cache, 'cache', $instance);
+        static::assertAttributeEquals($this->appState, 'appState', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
+        static::assertAttributeEquals($this->formKey, 'formKey', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->serialize, 'serialize', $instance);
     }
 
     /**

@@ -19,9 +19,9 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\CustomerCreditCard;
 
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection;
 use Bolt\Boltpay\Model\CustomerCreditCard;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class CollectionTest extends TestCase
+class CollectionTest extends BoltTestCase
 {
     const ID = '1110';
     const CUSTOMER_ID = '1111';
@@ -42,7 +42,7 @@ class CollectionTest extends TestCase
     /**
      * Setup for CollectionTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->mockCustomerCreditCardCollection = $this->getMockBuilder(Collection::class)
             ->disableOriginalConstructor()

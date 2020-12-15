@@ -27,7 +27,7 @@ use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use ReflectionException;
@@ -35,7 +35,7 @@ use ReflectionException;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Bugsnag
  */
-class BugsnagTest extends TestCase
+class BugsnagTest extends BoltTestCase
 {
     /** @var string Dummy store url */
     const STORE_URL = 'http://store.local/';
@@ -64,7 +64,7 @@ class BugsnagTest extends TestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->contextMock = $this->createMock(Context::class);
         $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);

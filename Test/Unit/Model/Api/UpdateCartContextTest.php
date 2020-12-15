@@ -42,7 +42,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -50,7 +50,7 @@ use PHPUnit\Framework\MockObject\MockObject;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateCartContext
  */
-class UpdateCartContextTest extends TestCase
+class UpdateCartContextTest extends BoltTestCase
 {
     /**
      * @var Request|MockObject
@@ -177,7 +177,7 @@ class UpdateCartContextTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->request = $this->createMock(Request::class);
         $this->response = $this->createMock(Response::class);
@@ -273,30 +273,30 @@ class UpdateCartContextTest extends TestCase
             $this->cartRepositoryInterface
         );
         
-        $this->assertAttributeInstanceOf(Request::class, 'request', $instance);
-        $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
-        $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
-        $this->assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
-        $this->assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
-        $this->assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
-        $this->assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
-        $this->assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
-        $this->assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
-        $this->assertAttributeInstanceOf(CheckoutSession::class, 'checkoutSession', $instance);
-        $this->assertAttributeInstanceOf(RuleRepository::class, 'ruleRepository', $instance);
-        $this->assertAttributeInstanceOf(UsageFactory::class, 'usageFactory', $instance);
-        $this->assertAttributeInstanceOf(DataObjectFactory::class, 'objectFactory', $instance);
-        $this->assertAttributeInstanceOf(TimezoneInterface::class, 'timezone', $instance);
-        $this->assertAttributeInstanceOf(CustomerFactory::class, 'customerFactory', $instance);
-        $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
-        $this->assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
-        $this->assertAttributeInstanceOf(TotalsCollector::class, 'totalsCollector', $instance);
-        $this->assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
-        $this->assertAttributeInstanceOf(CacheInterface::class, 'cache', $instance);
-        $this->assertAttributeInstanceOf(EventsForThirdPartyModules::class, 'eventsForThirdPartyModules', $instance);
-        $this->assertAttributeInstanceOf(ProductRepositoryInterface::class, 'productRepositoryInterface', $instance);
-        $this->assertAttributeInstanceOf(StockStateInterface::class, 'stockStateInterface', $instance);
-        $this->assertAttributeInstanceOf(CartRepositoryInterface::class, 'cartRepositoryInterface', $instance);
+        static::assertAttributeInstanceOf(Request::class, 'request', $instance);
+        static::assertAttributeInstanceOf(Response::class, 'response', $instance);
+        static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
+        static::assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
+        static::assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
+        static::assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
+        static::assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
+        static::assertAttributeInstanceOf(OrderHelper::class, 'orderHelper', $instance);
+        static::assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
+        static::assertAttributeInstanceOf(CheckoutSession::class, 'checkoutSession', $instance);
+        static::assertAttributeInstanceOf(RuleRepository::class, 'ruleRepository', $instance);
+        static::assertAttributeInstanceOf(UsageFactory::class, 'usageFactory', $instance);
+        static::assertAttributeInstanceOf(DataObjectFactory::class, 'objectFactory', $instance);
+        static::assertAttributeInstanceOf(TimezoneInterface::class, 'timezone', $instance);
+        static::assertAttributeInstanceOf(CustomerFactory::class, 'customerFactory', $instance);
+        static::assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+        static::assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
+        static::assertAttributeInstanceOf(TotalsCollector::class, 'totalsCollector', $instance);
+        static::assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
+        static::assertAttributeInstanceOf(CacheInterface::class, 'cache', $instance);
+        static::assertAttributeInstanceOf(EventsForThirdPartyModules::class, 'eventsForThirdPartyModules', $instance);
+        static::assertAttributeInstanceOf(ProductRepositoryInterface::class, 'productRepositoryInterface', $instance);
+        static::assertAttributeInstanceOf(StockStateInterface::class, 'stockStateInterface', $instance);
+        static::assertAttributeInstanceOf(CartRepositoryInterface::class, 'cartRepositoryInterface', $instance);
     }
 
     /**

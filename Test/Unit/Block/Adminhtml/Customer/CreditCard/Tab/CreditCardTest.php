@@ -21,13 +21,14 @@ use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\CreditCard;
 use Magento\Customer\Controller\RegistryConstants;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Registry;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CreditCardTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class CreditCardTest extends \PHPUnit\Framework\TestCase
+class CreditCardTest extends BoltTestCase
 {
     const CUSTOMER_ID = '11111';
     const URL = 'https://www.bolt.com/boltpay/customer/creditcard';
@@ -50,7 +51,7 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

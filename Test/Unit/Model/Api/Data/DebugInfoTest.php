@@ -17,21 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 
 /**
  * Class DebugInfoTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  */
-class DebugInfoTest extends TestCase
+class DebugInfoTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\Api\Data\DebugInfo
      */
     protected $debugInfo;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->debugInfo = new DebugInfo();
         $this->debugInfo->setPhpVersion('7.1');

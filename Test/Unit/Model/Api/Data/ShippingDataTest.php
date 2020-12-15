@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingData;
@@ -27,7 +27,7 @@ use Bolt\Boltpay\Model\Api\Data\ShippingData;
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingData
  */
-class ShippingDataTest extends TestCase
+class ShippingDataTest extends BoltTestCase
 {
     /**
      * @var ShippingDataInterface
@@ -39,7 +39,7 @@ class ShippingDataTest extends TestCase
      */
     private $shippingOptions;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->shippingOptions = [new ShippingOption];
         $this->shippingData = new ShippingData;

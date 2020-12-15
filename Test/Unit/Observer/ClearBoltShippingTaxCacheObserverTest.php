@@ -19,7 +19,7 @@
 namespace Bolt\Boltpay\Test\Unit\Observer;
 
 use Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver;
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Model\Api\ShippingMethods;
  * Class ClearBoltShippingTaxCacheObserver
  * @coversDefaultClass \Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver
  */
-class ClearBoltShippingTaxCacheObserverTest extends TestCase
+class ClearBoltShippingTaxCacheObserverTest extends BoltTestCase
 {
     /**
      * @var ClearBoltShippingTaxCacheObserver
@@ -40,7 +40,7 @@ class ClearBoltShippingTaxCacheObserverTest extends TestCase
      */
     private $cache;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->cache = $this->createPartialMock(CacheInterface::class, ['clean', 'remove', 'save', 'load', 'getFrontend']);
         $this->currentMock = new ClearBoltShippingTaxCacheObserver($this->cache);

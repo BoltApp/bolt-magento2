@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Model\AdminOrder;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -29,7 +29,7 @@ use Magento\Sales\Model\AdminOrder\Create;
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\Model\AdminOrder;
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin
  */
-class CreatePluginTest extends TestCase
+class CreatePluginTest extends BoltTestCase
 {
     const STORE_PICKUP_ADDRESS_DATA = [
         'city' => 'Knoxville',
@@ -69,7 +69,7 @@ Room 1111',
     /** @var CreatePlugin */
     protected $plugin;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isStorePickupFeatureEnabled', 'isPickupInStoreShippingMethodCode', 'getPickupAddressData']);
         $this->adminCheckoutSession = $this->createPartialMock(AdminCheckoutSession::class, ['setData', 'getData', 'unsetData']);

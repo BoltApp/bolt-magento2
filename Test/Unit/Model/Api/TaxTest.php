@@ -25,7 +25,7 @@ use Magento\Checkout\Api\TotalsInformationManagementInterface;
 use Bolt\Boltpay\Api\Data\TaxDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\TaxDataInterface;
 use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Tax;
 use PHPUnit\Framework\MockObject\MockObject;
 use Magento\Quote\Api\Data\TotalsInterface;
@@ -38,7 +38,7 @@ use Magento\Quote\Model\Quote;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Tax
  */
-class TaxTest extends TestCase
+class TaxTest extends BoltTestCase
 {
     const CURRENCY_CODE = 'USD';
     const IMMUTABLE_QUOTE_ID = 1001;
@@ -76,7 +76,7 @@ class TaxTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
 
@@ -133,22 +133,22 @@ class TaxTest extends TestCase
     {
         $this->initCurrentMock();
 
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             TaxDataInterfaceFactory::class,
             'taxDataFactory',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             TaxResultInterfaceFactory::class,
             'taxResultFactory',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             TotalsInformationManagementInterface::class,
             'totalsInformationManagement',
             $this->currentMock
         );
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(
             TotalsInformationInterface::class,
             'addressInformation',
             $this->currentMock

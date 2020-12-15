@@ -6,9 +6,9 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Section\CustomerData\BoltHints;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class BoltHintsTest extends TestCase
+class BoltHintsTest extends BoltTestCase
 {
     /**
      * @var CartHelper
@@ -29,7 +29,7 @@ class BoltHintsTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
 
         $this->cartHelper = $this->createMock(CartHelper::class);

@@ -18,14 +18,14 @@
 namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CurrencyUtilsTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper\Shared
  */
-class CurrencyUtilsTest extends TestCase
+class CurrencyUtilsTest extends BoltTestCase
 {
     /**
      * @test

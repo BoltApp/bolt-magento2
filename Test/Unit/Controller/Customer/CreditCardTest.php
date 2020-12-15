@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Customer;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Controller\Customer\CreditCard;
 use Magento\Framework\App\ViewInterface;
@@ -27,7 +27,7 @@ use Magento\Framework\App\ViewInterface;
  * @package Bolt\Boltpay\Test\Unit\Controller\Customer
  * @coversDefaultClass \Bolt\Boltpay\Controller\Customer\CreditCard
  */
-class CreditCardTest extends TestCase
+class CreditCardTest extends BoltTestCase
 {
     /**
      * @var Context
@@ -44,7 +44,7 @@ class CreditCardTest extends TestCase
      */
     protected $_view;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->_context = $this->createPartialMock(Context::class, ['getView']);
         $this->_view = $this->createPartialMock(

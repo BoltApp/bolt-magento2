@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Bolt\Boltpay\Model\WebhookLog;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Model\Context;
@@ -26,7 +26,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Data\Collection\AbstractDb;
 
-class WebhookLogTest extends TestCase
+class WebhookLogTest extends BoltTestCase
 {
     const TRANSACTION_ID = '1111';
     const HOOK_TYPE = 'pending';
@@ -61,7 +61,7 @@ class WebhookLogTest extends TestCase
      */
     private $resourceCollection;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->coreDate = $this->createPartialMock(DateTime::class, ['gmtDate']);
         $this->context = $this->createMock(Context::class);
