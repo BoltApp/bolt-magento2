@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bugsnag\Report;
 use Exception;
@@ -35,7 +34,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use PHPUnit\Framework\Constraint\ArraySubset;
 use ReflectionException;
 use Bolt\Boltpay\Helper\Bugsnag;
-use \PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\TestCase;
 use Magento\Framework\HTTP\ZendClient;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend_Http_Response;
@@ -359,7 +358,8 @@ class ApiTest extends TestCase
         $this->zendClientFactory->expects(static::once())->method('create')->willReturn($client);
         $client->expects(static::once())->method('setRawData')->willReturnSelf();
         $client->expects(static::once())->method('request')
-            ->willThrowException(new Exception('Expected exception message'));
+            ->will($this->throwException(new LocalizedException(new \Magento\Framework\Phrase('Expected exception message'))));
+        $this->expectException(LocalizedException::class);
         $this->currentMock->sendRequest($request);
     }
     

@@ -213,7 +213,8 @@ class ShippingMethodsTest extends TestCase
                 'validateEmail',
                 'convertCustomAddressFieldsToCacheIdentifier',
                 'handleSpecialAddressCases',
-                'getCartItems'
+                'getCartItems',
+                'getImmutableQuoteIdFromBoltCartArray',
             ])->disableOriginalConstructor()
             ->getMock();
 
@@ -354,8 +355,12 @@ class ShippingMethodsTest extends TestCase
             ->willReturn(false);
 
         $this->initCurrentMock(['catchExceptionAndSendError']);
-
-        $exception =  new BoltException(
+        
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        
+        $exception = new BoltException(
             __('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID),
             null,
             6103
@@ -397,6 +402,10 @@ class ShippingMethodsTest extends TestCase
         $this->cartHelper->method('validateEmail')
             ->with($shippingAddress['email'])
             ->willReturn(true);
+        
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $this->configHelper->method('getResetShippingCalculation')
             ->withAnyParameters()
@@ -495,6 +504,10 @@ class ShippingMethodsTest extends TestCase
         $this->cartHelper->method('validateEmail')
             ->with($shippingAddress['email'])
             ->willReturn(true);
+
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $this->configHelper->method('getResetShippingCalculation')
             ->withAnyParameters()
@@ -612,6 +625,10 @@ class ShippingMethodsTest extends TestCase
         $this->cartHelper->method('getQuoteById')
             ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn($quote);
+        
+        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($cart)
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
 
         $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
             ->with($shippingAddress)

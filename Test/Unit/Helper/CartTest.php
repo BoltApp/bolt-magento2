@@ -1660,7 +1660,7 @@ class CartTest extends BoltTestCase
         $destinationQuoteShippingAddress = $this->createMock(Quote\Address::class);
         $destinationQuote->method('getBillingAddress')->willReturn($destinationQuoteBillingAddress);
         $destinationQuote->method('getShippingAddress')->willReturn($destinationQuoteShippingAddress);
-        $currentMock = $this->getCurrentMock(['transferData', 'quoteResourceSave']);
+        $currentMock = $this->getCurrentMock(['quoteResourceSave']);
         return [$sourceQuote, $destinationQuote, $currentMock];
     }
 
@@ -1680,7 +1680,6 @@ class CartTest extends BoltTestCase
         $destinationQuote->expects(self::once())->method('getId')->willReturn(self::PARENT_QUOTE_ID);
         $destinationQuote->expects(self::never())->method('removeAllItems');
         $sourceQuote->expects(self::never())->method('getAllVisibleItems');
-        $currentMock->expects(static::never())->method('transferData');
         $currentMock->expects(static::never())->method('quoteResourceSave');
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
     }

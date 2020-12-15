@@ -27,7 +27,6 @@ use PHPUnit\Framework\TestCase;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-
 use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
@@ -705,7 +704,7 @@ class DiscountCodeValidationTest extends TestCase
             'discount_amount' => $giftCardAmount * 100,
             'description'     => 'Gift Card',
             'discount_type'   => 'fixed_amount',
-            'cart'            => ['total_amount' => null, 'tax_amount' => null, 'discounts' => null]
+            'cart'            => ['total_amount' => 10000, 'tax_amount' => 0, 'discounts' => $giftCardAmount * 100]
         ];
 
         $parentQuoteMock = $this->getQuoteMock(
@@ -725,10 +724,16 @@ class DiscountCodeValidationTest extends TestCase
 
         $this->currentMock->expects(self::atLeastOnce())->method('getRequestContent')
             ->willReturn($requestContent);
-            
+         
         $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray')
             ->with($requestContent['cart'])
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        
+        $this->cartHelper->method('getCartData')->willReturn([
+            'total_amount' => 10000,
+            'tax_amount'   => 0,
+            'discounts'    => $giftCardAmount * 100,
+        ]);
         
         $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
             
@@ -745,11 +750,11 @@ class DiscountCodeValidationTest extends TestCase
         $giftcardMock->method('getId')->willReturn(123);
 
         $giftcardMock->expects(self::exactly(2))->method('removeFromCart')
-            ->withConsecutive($immutableQuoteMock, $parentQuoteMock)
+            ->withConsecutive([true, $immutableQuoteMock], [true, $parentQuoteMock])
             ->willReturn($giftcardMock);
 
         $giftcardMock->expects(self::exactly(2))->method('addToCart')
-            ->withConsecutive($immutableQuoteMock, $parentQuoteMock)
+            ->withConsecutive([true, $immutableQuoteMock], [true, $parentQuoteMock])
             ->willReturn($giftcardMock);
 
         $this->discountHelper->expects(self::once())->method('getBoltDiscountType')
@@ -801,6 +806,12 @@ class DiscountCodeValidationTest extends TestCase
         $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray')
             ->with($requestContent['cart'])
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        
+        $this->cartHelper->method('getCartData')->willReturn([
+            'total_amount' => 10000,
+            'tax_amount'   => 0,
+            'discounts'    => 0,
+        ]);
             
         $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
 
@@ -989,7 +1000,8 @@ class DiscountCodeValidationTest extends TestCase
                     'getStore',
                     'getWebsiteId',
                     'save',
-                    'getGiftCardsAmount'
+                    'getGiftCardsAmount',
+                    'getGiftCardsAmountUsed'
                 ]
             )
             ->disableOriginalConstructor()
@@ -1013,6 +1025,7 @@ class DiscountCodeValidationTest extends TestCase
         $quote->method('getStore')->willReturnSelf();
         $quote->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $quote->method('save')->willReturnSelf();
+        $quote->method('getGiftCardsAmountUsed')->willReturn(0);
 
         return $quote;
     }
