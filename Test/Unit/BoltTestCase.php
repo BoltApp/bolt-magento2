@@ -13,7 +13,7 @@ if (!defined('PHP_CURRENT_VERSION')) {
     define('PHP_CURRENT_VERSION', (float)phpversion());
 }
 
-if (PHP_CURRENT_VERSION < 7.2) {
+if (PHP_CURRENT_VERSION < 7.1) {
     class BoltTestCase extends TestCase
     {
         protected function skipTestInUnitTestsFlow()
