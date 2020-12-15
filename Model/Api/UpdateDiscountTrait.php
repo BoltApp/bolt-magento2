@@ -28,6 +28,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
@@ -128,19 +129,19 @@ trait UpdateDiscountTrait
      * @param string|int $websiteId
      * @param string|int $storeId
      *
+     * @throws BoltException
+     * 
      * @return object|null
      */
     protected function verifyCouponCode( $couponCode, $websiteId, $storeId )
     {
         // Check if empty coupon was sent
         if ($couponCode === '') {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                'No coupon code provided',
-                422
+            throw new BoltException(
+                __('No coupon code provided'),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
 
         // Load the Magento_GiftCardAccount object
@@ -163,13 +164,11 @@ trait UpdateDiscountTrait
 
         // Check if the coupon and gift card does not exist.
         if ((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                sprintf('The coupon code %s is not found', $couponCode),
-                422
+            throw new BoltException(
+                __(sprintf('The coupon code %s is not found', $couponCode)),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
         
         return [$coupon, $giftCard];
@@ -217,28 +216,22 @@ trait UpdateDiscountTrait
             /** @var \Magento\SalesRule\Model\Rule $rule */
             $rule = $this->ruleRepository->getById($coupon->getRuleId());
         } catch (NoSuchEntityException $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                sprintf('The coupon code %s is not found', $couponCode),
-                422,
-                $quote
+            throw new BoltException(
+                __('The coupon code %1 is not found', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-             return false;
         }
         $websiteId = $quote->getStore()->getWebsiteId();
         $ruleWebsiteIDs = $rule->getWebsiteIds();
 
         if (!in_array($websiteId, $ruleWebsiteIDs)) {
             $this->logHelper->addInfoLog('Error: coupon from another website.');
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                sprintf('The coupon code %s is not found', $couponCode),
-                422,
-                $quote
+            throw new BoltException(
+                __('The coupon code %1 is not found', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
 
         // get the rule id
@@ -247,14 +240,11 @@ trait UpdateDiscountTrait
         // Check date validity if "To" date is set for the rule
         $date = $rule->getToDate();
         if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_EXPIRED,
-                sprintf('The code [%s] has expired.', $couponCode),
-                422,
-                $quote
+            throw new BoltException(
+                __('The code [%1] has expired', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_EXPIRED
             );
-
-            return false;
         }
 
         // Check date validity if "From" date is set for the rule
@@ -264,26 +254,20 @@ trait UpdateDiscountTrait
                 new \DateTime($rule->getFromDate()),
                 \IntlDateFormatter::MEDIUM
             );
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
-                $desc,
-                422,
-                $quote
+            throw new BoltException(
+                __($desc),
+                null,
+                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE
             );
-
-            return false;
         }
 
         // Check coupon usage limits.
         if ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-                sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                422,
-                $quote
+            throw new BoltException(
+                __('The code [%1] has exceeded usage limit.', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_LIMIT_REACHED
             );
-
-            return false;
         }
 
         // Check per customer usage limits
@@ -297,28 +281,22 @@ trait UpdateDiscountTrait
                     $couponId
                 );
                 if ($couponUsage->getCouponId() && $couponUsage->getTimesUsed() >= $usagePerCustomer) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-                        sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                        422,
-                        $quote
+                    throw new BoltException(
+                        __('The code [%1] has exceeded usage limit', $couponCode),
+                        null,
+                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED
                     );
-
-                    return false;
                 }
             }
             // rule per customer usage
             if ($usesPerCustomer = $rule->getUsesPerCustomer()) {
                 $ruleCustomer = $this->customerFactory->create()->loadByCustomerRule($customerId, $ruleId);
                 if ($ruleCustomer->getId() && $ruleCustomer->getTimesUsed() >= $usesPerCustomer) {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
-                        sprintf('The code [%s] has exceeded usage limit.', $couponCode),
-                        422,
-                        $quote
+                    throw new BoltException(
+                        __('The code [%1] has exceeded usage limit', $couponCode),
+                        null,
+                        BoltErrorResponse::ERR_CODE_LIMIT_REACHED
                     );
-
-                    return false;
                 }
             }
         } else {
@@ -326,41 +304,26 @@ trait UpdateDiscountTrait
             $groupIds = $rule->getCustomerGroupIds();
             if (!in_array(0, $groupIds)) {
                 $this->logHelper->addInfoLog('Error: coupon requires login.');
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,
-                    sprintf('The coupon code %s requires login', $couponCode),
-                    422,
-                    $quote
+                throw new BoltException(
+                    __('The coupon code %1 requires login', $couponCode),
+                    null,
+                    BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN
                 );
-                return false;
             }
         }
 
-        try {
-            if (!is_null($addQuote)) {
-                $this->discountHelper->setCouponCode($addQuote, $couponCode);
-            }
-
-            $this->discountHelper->setCouponCode($quote, $couponCode);
-        } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
-                $e->getMessage(),
-                422,
-                $quote
-            );
-
-            return false;
+        if (!is_null($addQuote)) {
+            $this->discountHelper->setCouponCode($addQuote, $couponCode);
         }
+
+        $this->discountHelper->setCouponCode($quote, $couponCode);
 
         if ($quote->getCouponCode() != $couponCode) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
-                __('Coupon code does not equal with a quote code!'),
-                422,
-                $quote
+            throw new BoltException(
+                __('Coupon code does not equal with a quote code'),
+                null,
+                BoltErrorResponse::ERR_SERVICE
             );
-            return false;
         }
 
         $address = $quote->isVirtual() ?
@@ -369,13 +332,11 @@ trait UpdateDiscountTrait
             
         $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
         if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
-                sprintf('Fail to apply the coupon code %s.', $couponCode),
-                422,
-                $quote
+            throw new BoltException(
+                __('Failed to apply the coupon code %1', $couponCode),
+                null,
+                BoltErrorResponse::ERR_SERVICE
             );
-            return false;
         }
 
         $description = $rule->getDescription();
@@ -398,7 +359,7 @@ trait UpdateDiscountTrait
      * @param Quote $quote
      * 
      * @return boolean
-     * @throws \Exception
+     * @throws BoltException
      */
     private function applyingGiftCardCode($couponCode, $giftCard, $quote)
     {
@@ -427,14 +388,11 @@ trait UpdateDiscountTrait
                 }
             }
         } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
+            throw new BoltException(
                 $e->getMessage(),
-                422,
-                $quote
+                null,
+                BoltErrorResponse::ERR_SERVICE
             );
-
-            return false;
         }
 
         return true;
@@ -456,12 +414,16 @@ trait UpdateDiscountTrait
         try{
             if(array_key_exists($couponCode, $discounts)){
                 if ($discounts[$couponCode] == 'coupon') {
+                    //sends response
                     $this->removeCouponCode($quote);
                 } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
+                    //handles exceptions already, no return value
                     $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
                 } else {
+                    //throws BoltException that will be caught in UpdateCart::execute()
                     $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
                     list(, $giftCard) = $result;
+                    //sends response
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
                 }
             } else {
@@ -485,7 +447,7 @@ trait UpdateDiscountTrait
      * Remove coupon from quote
      *
      * @param Quote $quote
-     *
+     * 
      * @return boolean
      */
     protected function removeCouponCode($quote)

@@ -31,6 +31,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\SalesRule\Model\Rule\CustomerFactory;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -417,16 +418,16 @@ class UpdateDiscountTraitTest extends TestCase
 
     /**
      * @test
+     * that verifyCouponCode will throw an exception if the code string is empty
      *
      */
-    public function verifyCouponCode_withEmptyCode_returnFalse()
+    public function verifyCouponCode_withEmptyCode_throwsException()
     {
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_INVALID,'No coupon code provided',422);
+        $this->expectExceptionMessage('No coupon code provided');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+        $this->expectException(BoltException::class);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', ['', self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertFalse($result);
     }
 
     /**
@@ -470,10 +471,15 @@ class UpdateDiscountTraitTest extends TestCase
 
     /**
      * @test
+     * that verifyCouponCode throws an exception if the coupon is not found.
      *
      */
-    public function verifyCouponCode_couponObjNull_returnFalse()
+    public function verifyCouponCode_couponObjNull_throwsException()
     {
+        $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+        $this->expectException(BoltException::class);
+
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
 
@@ -484,15 +490,14 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn(null);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertFalse($result);
     }
 
     /**
      * @test
+     * that verifyCouponCode will throw an exception if the coupon object is new.
      *
      */
-    public function verifyCouponCode_couponObjNew_returnFalse()
+    public function verifyCouponCode_couponObjNew_throwsException()
     {
         $coupon = $this->getCouponMock([
                 'isObjectNew' => [
@@ -500,6 +505,10 @@ class UpdateDiscountTraitTest extends TestCase
                     'returnValue' => true,
                 ]
             ]);
+
+        $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+        $this->expectException(BoltException::class);
 
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
             ->willReturn(null);
@@ -511,8 +520,6 @@ class UpdateDiscountTraitTest extends TestCase
             ->willReturn($coupon);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertFalse($result);
     }
 
     /**
@@ -702,12 +709,11 @@ class UpdateDiscountTraitTest extends TestCase
 
         $quote = $this->getQuoteMock();
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_INVALID,'The coupon code ' . self::COUPON_CODE . ' is not found',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -731,12 +737,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_EXPIRED,'The code ['.self::COUPON_CODE.'] has expired.',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The code [%s] has expired', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_EXPIRED);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -770,12 +775,11 @@ class UpdateDiscountTraitTest extends TestCase
             )
             ->willReturn($fromDate);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,'Code available from ' . $fromDate,422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('Code available from %s', $fromDate));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_NOT_AVAILABLE);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -810,12 +814,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleMock->expects(self::once())->method('getFromDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_LIMIT_REACHED,'The code ['.self::COUPON_CODE.'] has exceeded usage limit.',422,$quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The code [%s] has exceeded usage limit', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_LIMIT_REACHED);
+        
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -848,12 +851,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleCustomerMock->method('getId')->willReturn(1);
         $this->ruleCustomerMock->method('getTimesUsed')->willReturn(1);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_LIMIT_REACHED,'The code ['.self::COUPON_CODE.'] has exceeded usage limit.',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The code [%s] has exceeded usage limit', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_LIMIT_REACHED);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -885,12 +887,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_LIMIT_REACHED,'The code ['.self::COUPON_CODE.'] has exceeded usage limit.',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The code [%s] has exceeded usage limit', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_LIMIT_REACHED);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -918,12 +919,11 @@ class UpdateDiscountTraitTest extends TestCase
         $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
             ->willReturn([1]);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,'The coupon code '.self::COUPON_CODE.' requires login',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The coupon code %s requires login', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -976,47 +976,6 @@ class UpdateDiscountTraitTest extends TestCase
      * @test
      *
      */
-    public function applyingCouponCode_errorWhenSetting()
-    {
-        $coupon = $this->getCouponMock([
-                'getId' => [
-                    'expects' => 'once'
-                ],
-                'getRuleId' => [
-                    'expects' => 'once'
-                ]
-            ]);
-
-        $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
-        $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
-        $this->ruleMock->expects(self::once())->method('getToDate')
-            ->willReturn(date('Y-m-d', strtotime('tomorrow')));
-        $this->ruleMock->expects(self::once())->method('getFromDate')
-            ->willReturn(date('Y-m-d', strtotime('yesterday')));
-        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
-            ->willReturn([0,1]);
-
-        $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
-        $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
-
-        $quote = $this->getQuoteMock();
-
-        $exception = new \Exception('General exception');
-        $this->discountHelper->expects(self::once())->method('setCouponCode')
-            ->with($quote, self::COUPON_CODE)->willThrowException($exception);
-
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
-    }
-
-    /**
-     * @test
-     *
-     */
     public function applyingCouponCode_couponCodeNotSet()
     {
         $coupon = $this->getCouponMock([
@@ -1043,12 +1002,11 @@ class UpdateDiscountTraitTest extends TestCase
         $quote = $this->getQuoteMock('');
         $quote->method('getCouponCode')->willReturn(null);
 
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'Coupon code does not equal with a quote code!',422,$quote);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage('Coupon code does not equal with a quote code');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
-
-        $this->assertFalse($result);
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
     /**
@@ -1140,10 +1098,13 @@ class UpdateDiscountTraitTest extends TestCase
         ];
         $quote = $this->getQuoteMock();
 
+        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
+            ->setMethods(['removeFromCart', 'addToCart'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with($couponCode, self::WEBSITE_ID)
-            ->willReturn(null);
-        $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with($couponCode, self::STORE_ID)
-            ->willReturn(null);
+            ->willReturn($giftcardMock);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [$couponCode, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
 

@@ -61,90 +61,10 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
      */
     public function validate()
     {
+        $this->logHelper->addInfoLog('[-= Validate discount request =-]');
+        $this->logHelper->addInfoLog(file_get_contents('php://input'));
         try {
-            $request = $this->getRequestContent();
-
-            $requestArray = json_decode(json_encode($request), true);
-            if (isset($requestArray['cart']['order_reference'])) {
-                $parentQuoteId = $requestArray['cart']['order_reference'];
-                $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
-                if (!$immutableQuoteId) {
-                    $immutableQuoteId = $parentQuoteId;
-                }                
-            } else {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
-                    'The cart.order_reference is not set or empty.',
-                    404
-                );
-                return false;
-            }
-            
-            // Get the coupon code
-            $discount_code = $requestArray['discount_code'] ?? $requestArray['cart']['discount_code'] ?? null;
-            $couponCode = trim($discount_code);
-
-            // Check if empty coupon was sent
-            if ($couponCode === '') {
-                $this->sendErrorResponse(
-                    BoltErrorResponse::ERR_CODE_INVALID,
-                    'No coupon code provided',
-                    422
-                );
-
-                return false;
-            }
-            
-            $this->requestArray = $requestArray;
-
-            $result = $this->validateQuote($immutableQuoteId);
-
-            list($parentQuote, $immutableQuote) = $result;
-            
-            $storeId = $parentQuote->getStoreId();
-            $websiteId = $parentQuote->getStore()->getWebsiteId();
-
-            $this->preProcessWebhook($storeId);
-            
-            $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
-            
-            // Set the shipment if request payload has that info.
-            if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
-                $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
-            }
-
-            // Verify if the code is coupon or gift card and return proper object
-            $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
-            
-            if( ! $result ){
-                // Already sent a response with error, so just return.
-                return false;
-            }
-            
-            list($coupon, $giftCard) = $result;
-
-            $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
-
-            if ($coupon && $coupon->getCouponId()) {
-                if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
-                    $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
-                } else {
-                    $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
-                }
-            } elseif ($giftCard && $giftCard->getId()) {
-                $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
-            } else {
-                throw new WebApiException(__('Something happened with current code.'));
-            }
-
-            if (!$result || (isset($result['status']) && $result['status'] === 'error')) {
-                // Already sent a response with error, so just return.
-                return false;
-            }
-
-            //remove previously cached Bolt order since we altered related immutable quote by applying a discount
-            $this->cache->clean([CartHelper::BOLT_ORDER_TAG . '_' . $parentQuoteId]);
-
+            list($result, $immutableQuote) = $this->handleRequest();
             $this->sendSuccessResponse($result, $immutableQuote);
         } catch (BoltException $e) {
             $this->sendErrorResponse(
@@ -158,7 +78,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
-                ($immutableQuote) ? $immutableQuote : null
+                (isset($immutableQuote)) ? $immutableQuote : null
             );
 
             return false;
@@ -181,6 +101,92 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         }
 
         return true;
+    }
+
+    /**
+     * @return array
+     * @throws BoltException
+     */
+    private function handleRequest()
+    {
+        $request = $this->getRequestContent();
+
+        $requestArray = json_decode(json_encode($request), true);
+        if (isset($requestArray['cart']['order_reference'])) {
+            $parentQuoteId = $requestArray['cart']['order_reference'];
+            $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
+            if (!$immutableQuoteId) {
+                $immutableQuoteId = $parentQuoteId;
+            }                
+        } else {
+            throw new BoltException(
+                __('The cart.order_reference is not set or empty.'),
+                null,
+                BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
+            );
+        }
+        
+        // Get the coupon code
+        $discount_code = $requestArray['discount_code'] ?? $requestArray['cart']['discount_code'] ?? null;
+        $couponCode = trim($discount_code);
+
+        // Check if empty coupon was sent
+        if ($couponCode === '') {
+            throw new BoltException(
+                __('No coupon code provided'),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
+            );
+        }
+        
+        $this->requestArray = $requestArray;
+
+        $result = $this->validateQuote($immutableQuoteId);
+
+        list($parentQuote, $immutableQuote) = $result;
+        
+        $storeId = $parentQuote->getStoreId();
+        $websiteId = $parentQuote->getStore()->getWebsiteId();
+
+        $this->preProcessWebhook($storeId);
+        
+        $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
+        
+        // Set the shipment if request payload has that info.
+        if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
+            $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
+        }
+
+        // Verify if the code is coupon or gift card and return proper object
+        $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+        
+        list($coupon, $giftCard) = $result;
+
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
+
+        if ($coupon && $coupon->getCouponId()) {
+            if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
+                $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
+            } else {
+                $result = $this->applyingCouponCode($couponCode, $coupon, $immutableQuote, $parentQuote);
+            }
+        } elseif ($giftCard && $giftCard->getId()) {
+            $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
+        } else {
+            throw new WebApiException(__('Something happened with current code.'));
+        }
+
+        // we shouldn't be able to get inside this if statement. Anything resulting in it 
+        // evaluating to true would have thrown an exception already
+        if (!$result || (isset($result['status']) && $result['status'] === 'error')) {
+            // Already sent a response with error, so just return.
+            return false;
+        }
+
+        //remove previously cached Bolt order since we altered related immutable quote by applying a discount
+        $this->cache->clean([CartHelper::BOLT_ORDER_TAG . '_' . $parentQuoteId]);
+
+        return array($result, $immutableQuote);
     }
 
     /**
@@ -254,14 +260,11 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 }
             }
         } catch (\Exception $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_SERVICE,
+            throw new BoltException(
                 $e->getMessage(),
-                422,
-                $immutableQuote
+                null,
+                BoltErrorResponse::ERR_SERVICE
             );
-
-            return false;
         }
 
         if (!$result) {
@@ -382,13 +385,11 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             // Load the coupon discount rule
             $rule = $this->ruleRepository->getById($coupon->getRuleId());
         } catch (NoSuchEntityException $e) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_INVALID,
-                sprintf('The coupon code %s is not found', $couponCode),
-                404
+            throw new BoltException(
+                __('The coupon code %s was not found', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID
             );
-
-            return false;
         }
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
