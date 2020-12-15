@@ -1666,7 +1666,7 @@ class Config extends AbstractHelper
     public function isGuestCheckoutForDownloadableProductDisabled()
     {
         return $this->getScopeConfig()->isSetFlag(
-            \Magento\Downloadable\Observer\IsAllowedGuestCheckoutObserver::XML_PATH_DISABLE_GUEST_CHECKOUT,
+            self::XML_PATH_DISABLE_GUEST_CHECKOUT,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
     }
