@@ -304,11 +304,11 @@ trait UpdateDiscountTrait
             $groupIds = $rule->getCustomerGroupIds();
             if (!in_array(0, $groupIds)) {
                 $this->logHelper->addInfoLog('Error: coupon requires login.');
-                    throw new BoltException(
-                        __('The coupon code %1 requires login', $couponCode),
-                        null,
-                        BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN
-                    );
+                throw new BoltException(
+                    __('The coupon code %1 requires login', $couponCode),
+                    null,
+                    BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN
+                );
             }
         }
 
