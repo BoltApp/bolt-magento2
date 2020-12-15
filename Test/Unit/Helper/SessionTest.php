@@ -174,7 +174,7 @@ class SessionTest extends TestCase
     private function initCurrentMock()
     {
         $this->currentMock = $this->getMockBuilder(Session::class)
-            ->setMethods(['replaceQuote', 'setSession'])
+            ->setMethods(['replaceQuote'])
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -300,7 +300,6 @@ class SessionTest extends TestCase
         $this->quote->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->cache->expects(self::once())->method('load')->willReturn('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}');
 
-        $this->currentMock->expects(self::any())->method('setSession')->withAnyParameters()->willReturnSelf();
         $this->customerSession->expects(self::once())->method('loginById')->with(self::CUSTOMER_ID)->willReturnSelf();
 
         $this->checkoutSession->expects(self::once())->method('replaceQuote')->with($this->quote)->willReturnSelf();

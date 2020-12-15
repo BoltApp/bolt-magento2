@@ -183,9 +183,7 @@ class SaveTest extends TestCase
 
         $save = $this->getMockBuilder(Save::class)
             ->setMethods([
-                'getRequest',
-                'clearQuoteSession',
-                'clearOrderSession'
+                'getRequest'
             ])
             ->setConstructorArgs([
                 $this->context,
@@ -199,8 +197,6 @@ class SaveTest extends TestCase
             ->getMock();
 
         $save->expects($this->exactly(2))->method('getRequest')->willReturn($request);
-        $save->method('clearQuoteSession')->with($quote);
-        $save->method('clearOrderSession')->with($order);
 
         $save->execute();
     }
