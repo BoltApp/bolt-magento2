@@ -22,6 +22,11 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface
 {
     /**
+     * @var FeatureSwitch[]
+     */
+    private $cache;
+
+    /**
      * @var FeatureSwitchFactory
      */
     private $featureSwitchFactory;
@@ -32,14 +37,23 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
         $this->featureSwitchFactory = $featureSwitchFactory;
     }
 
+    private function getSwitchesToCache() {
+        $switch = $this->featureSwitchFactory->create();
+        $collection = $switch->getCollection();
+        foreach ($collection as $item) {
+            $this->cache[$item->getName()] = $item;
+        }
+    }
+
     public function getByName($name)
     {
-        $switch = $this->featureSwitchFactory->create();
-        $switch->getResource()->load($switch, $name, FeatureSwitch::NAME);
-        if (! $switch->getName()) {
+        if (!$this->cache) {
+            $this->getSwitchesToCache();
+        }
+        if (!isset($this->cache[$name])) {
             throw new NoSuchEntityException(__('Unable to find switch with name "%1"', $name));
         }
-        return $switch;
+        return $this->cache[$name];
     }
 
     /**

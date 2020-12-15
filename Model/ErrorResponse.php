@@ -92,6 +92,6 @@ class ErrorResponse
             $errResponse += $additionalData;
         }
 
-        return json_encode($errResponse);
+        return str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($errResponse));
     }
 }

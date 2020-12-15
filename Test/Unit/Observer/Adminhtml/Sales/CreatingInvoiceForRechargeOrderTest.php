@@ -68,7 +68,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
 
     protected function setUp()
     {
-        $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice', 'setRequestedCaptureCase', 'register', 'save']);
+        $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice']);
         $this->invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);
         $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
         $this->observer = $this->createPartialMock(
@@ -83,7 +83,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
 
         $this->invoice = $this->createPartialMock(
             Order\Invoice::class,
-            ['getEmailSent']
+            ['getEmailSent', 'setRequestedCaptureCase', 'register', 'save']
         );
         $this->creatingInvoiceForRechargeOrderObserverTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
             ->setConstructorArgs([
@@ -107,15 +107,15 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
         $this->order->expects(self::once())->method('setIsCustomerNotified')->willReturnSelf();
         $this->observer->expects(self::once())->method('getEvent')->willReturnSelf();
         $this->observer->expects(self::once())->method('getOrder')->willReturn($this->order);
-        $this->invoiceService->expects(self::once())->method('prepareInvoice')->with($this->order)->willReturnSelf();
-        $this->invoiceService->expects(self::once())->method('setRequestedCaptureCase')->with(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)->willReturnSelf();
-        $this->invoiceService->expects(self::once())->method('register')->willReturnSelf();
+        $this->invoiceService->expects(self::once())->method('prepareInvoice')->with($this->order)->willReturn($this->invoice);
+        $this->invoice->expects(self::once())->method('setRequestedCaptureCase')->with(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)->willReturnSelf();
+        $this->invoice->expects(self::once())->method('register')->willReturnSelf();
 
         $this->order->expects(self::once())->method('addRelatedObject')->willReturnSelf();
         $this->invoice->expects(self::once())->method('getEmailSent')->willReturn(false);
         $this->invoiceSender->expects(self::once())->method('send')->with($this->invoice)->willReturnSelf();
 
-        $this->invoiceService->expects(self::once())->method('save')->willReturn($this->invoice);
+        $this->invoice->expects(self::once())->method('save')->willReturn($this->invoice);
         $this->creatingInvoiceForRechargeOrderObserverTest->execute($this->observer);
     }
 

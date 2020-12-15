@@ -44,7 +44,7 @@ class FeatureSwitch extends AbstractModel implements \Bolt\Boltpay\Api\Data\Feat
 
     public function getValue()
     {
-        return $this->_getData(self::VALUE);
+        return boolval($this->_getData(self::VALUE));
     }
 
     public function setValue($value)
@@ -54,7 +54,7 @@ class FeatureSwitch extends AbstractModel implements \Bolt\Boltpay\Api\Data\Feat
 
     public function getDefaultValue()
     {
-        return $this->_getData(self::DEFAULT_VALUE);
+        return boolval($this->_getData(self::DEFAULT_VALUE));
     }
 
     public function setDefaultValue($defaultValue)

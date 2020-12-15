@@ -395,12 +395,13 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
         $description = $address->getDiscountDescription();
+        $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')';
 
         return $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
             'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
-            'description'     =>  __('Discount ') . ($description !== '' ? $description : $couponCode),
+            'description'     => $description,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
     }

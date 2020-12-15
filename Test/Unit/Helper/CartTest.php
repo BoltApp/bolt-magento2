@@ -1660,7 +1660,7 @@ class CartTest extends BoltTestCase
         $destinationQuoteShippingAddress = $this->createMock(Quote\Address::class);
         $destinationQuote->method('getBillingAddress')->willReturn($destinationQuoteBillingAddress);
         $destinationQuote->method('getShippingAddress')->willReturn($destinationQuoteShippingAddress);
-        $currentMock = $this->getCurrentMock(['transferData', 'quoteResourceSave']);
+        $currentMock = $this->getCurrentMock(['quoteResourceSave']);
         return [$sourceQuote, $destinationQuote, $currentMock];
     }
 
@@ -1680,7 +1680,6 @@ class CartTest extends BoltTestCase
         $destinationQuote->expects(self::once())->method('getId')->willReturn(self::PARENT_QUOTE_ID);
         $destinationQuote->expects(self::never())->method('removeAllItems');
         $sourceQuote->expects(self::never())->method('getAllVisibleItems');
-        $currentMock->expects(static::never())->method('transferData');
         $currentMock->expects(static::never())->method('quoteResourceSave');
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
     }
@@ -3371,47 +3370,45 @@ ORDER
         */
         public function getCartData_paymentOnlyAndShippingMethodMissing_notifiesErrorAndReturnsEmptyArray()
         {
-        $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
-        ];
-        $getCartItemsResult = [[$testItem], 12345, 123];
-        $collectDiscountsResult = [[], 12345, 123];
-        $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
+            $this->skipTestInUnitTestsFlow();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = Bootstrap::getObjectManager()->create(Quote::class);
+            $quote->setQuoteCurrencyCode("USD");
 
-        $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
-        $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')->willReturn(null);
-        $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with(null);
+            $product = TestUtils::createSimpleProduct();
+            $this->objectsToClean[] = $product;
+            $quote->addProduct($product,1);
 
-        $this->bugsnag->expects(static::once())->method('notifyError')
-            ->with('Order create error', 'Shipping method not set.');
-        $result = $currentMock->getCartData(
-            true,
-            json_encode(
-                [
-                    'billingAddress' => [
-                        'firstname'    => "IntegrationBolt",
-                        'lastname'     => "BoltTest",
-                        'company'      => "Bolt",
-                        'telephone'    => "132 231 1234",
-                        'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'         => "New York",
-                        'region'       => "New York",
-                        'country'      => "United States",
-                        'country_code' => "US",
-                        'email'        => self::EMAIL_ADDRESS,
-                        'postal_code'  => "10011",
+            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
+            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
+
+            $quote->getShippingAddress()->setShippingMethod(null)->setCollectShippingRates(true);
+            $quote->collectTotals()->save();
+            TestUtils::setQuoteToSession($quote);
+            $result = $boltHelperCart->getCartData(
+                true,
+                json_encode(
+                    [
+                        'billingAddress' => [
+                            'firstname'    => "IntegrationBolt",
+                            'lastname'     => "BoltTest",
+                            'company'      => "Bolt",
+                            'telephone'    => "132 231 1234",
+                            'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                            'city'         => "New York",
+                            'region'       => "New York",
+                            'country'      => "United States",
+                            'country_code' => "US",
+                            'email'        => self::EMAIL_ADDRESS,
+                            'postal_code'  => "10011",
+                        ]
                     ]
-                ]
-            )
-        );
-        static::assertEquals([], $result);
+                )
+            );
+            static::assertEquals(
+                [],
+                $result
+            );
         }
 
         /**
@@ -3557,26 +3554,16 @@ ORDER
         */
         public function collectDiscounts_withNoDiscounts_returnsParametersUnchanged()
         {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-
-        $quote = $this->getQuoteMock($this->getAddressMock(), $this->getAddressMock());
-
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $quote->method('getTotals')->willReturn([]);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn(0);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setBoltParentQuoteId(999999);
+        $quote->setQuoteCurrencyCode(self::CURRENCY_CODE);
         $totalAmount = 10000;
         $diff = 0;
         $paymentOnly = false;
 
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+        list($discounts, $totalAmountResult, $diffResult) = $boltHelperCart->collectDiscounts(
             $totalAmount,
             $diff,
             $paymentOnly,
@@ -3690,7 +3677,7 @@ ORDER
         $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
             [
-                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
+                'description' => self::COUPON_DESCRIPTION,
                 'amount'      => $expectedDiscountAmount,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
@@ -3705,7 +3692,7 @@ ORDER
                 'type'   => 'fixed_amount',
             ],
             [
-                'description' => trim(__('Discount ' . self::COUPON_CODE)),
+                'description' => trim(__('Discount (' . self::COUPON_CODE . ')')),
                 'amount'      => $expectedDiscountAmount,
                 'reference'   => self::COUPON_CODE,
                 'discount_category' => 'coupon',
@@ -3727,27 +3714,18 @@ ORDER
         */
         public function collectDiscounts_withStoreCreditAndPaymentOnly_collectsDiscountFromQuote()
         {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getTotals')->willReturn([]);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $appliedDiscount = 10; // $
-        $quote->expects(static::once())->method('getCustomerBalanceAmountUsed')->willReturn($appliedDiscount);
+        $quote->setUseCustomerBalance(true);
+        $quote->setCustomerBalanceAmountUsed($appliedDiscount);
+        $quote->setBoltParentQuoteId(999999);
+        $quote->setQuoteCurrencyCode(self::CURRENCY_CODE);
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+        list($discounts, $totalAmountResult, $diffResult) = $boltHelperCart->collectDiscounts(
             $totalAmount,
             $diff,
             $paymentOnly,
@@ -3933,27 +3911,20 @@ ORDER
         */
         public function collectDiscounts_withRewardPointsAndPaymentOnly_collectsRewardPointsFromQuote()
         {
-        $currentMock = $this->getCurrentMock();
-        $shippingAddress = $this->getAddressMock();
-        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-        $quote->method('getBoltParentQuoteId')->willReturn(999999);
-        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-        $quote->method('getTotals')->willReturn([]);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
-        $quote->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
-        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
-        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
-        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
         $appliedDiscount = 10; // $
-        $quote->expects(static::once())->method('getRewardCurrencyAmount')->willReturn($appliedDiscount);
-        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $appliedDiscount = 10; // $
+        $quote->setUseRewardPoints(true);
+        $quote->setRewardCurrencyAmount($appliedDiscount);
+        $quote->setBoltParentQuoteId(999999);
+        $quote->setQuoteCurrencyCode(self::CURRENCY_CODE);
+
+        list($discounts, $totalAmountResult, $diffResult) = $boltHelperCart->collectDiscounts(
             $totalAmount,
             $diff,
             $paymentOnly,
@@ -4169,7 +4140,7 @@ ORDER
         $expectedTotalAmount = $totalAmount - $expectedRegularDiscountAmount - $expectedGiftVoucherAmount;
         $expectedDiscount = [
             [
-                'description' => trim(__('Discount ') . self::COUPON_DESCRIPTION),
+                'description' => self::COUPON_DESCRIPTION,
                 'amount'      => $expectedRegularDiscountAmount,
                 'reference'   => $giftVoucher,
                 'discount_category' => 'coupon',

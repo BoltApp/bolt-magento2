@@ -313,11 +313,12 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     protected function sendSuccessResponse($result, $quote = null)
     {
+        $result = str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($result));
         $this->logHelper->addInfoLog('### sendSuccessResponse');
-        $this->logHelper->addInfoLog(json_encode($result));
+        $this->logHelper->addInfoLog($result);
         $this->logHelper->addInfoLog('=== END ===');
 
-        $this->response->setBody(json_encode($result));
+        $this->response->setBody($result);
         $this->response->sendResponse();
     }
 
