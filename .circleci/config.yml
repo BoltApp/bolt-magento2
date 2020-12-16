@@ -174,11 +174,11 @@ jobs:
 
   unit-php74-magento24:
     docker:
-      - image: boltdev/m2-installed-plugin-ci-php74:2.4.0
+      - image: boltdev/m2-installed-plugin-ci-php74:2.4.0-v1
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: circleci/mysql:8.0
     steps:
       - m2-php-test:
           cache_key_separator: php74mag24installed
