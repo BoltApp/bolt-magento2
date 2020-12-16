@@ -26,7 +26,7 @@ composer show -i
 cd ../magento
 
 echo "Waiting for DB..."
-while ! mysql -uroot -h 127.0.0.1 -e "SELECT 1" >/dev/null 2>&1; do
+while ! mysqladmin ping -h 127.0.0.1 --silent; do
     sleep 1
 done
 
@@ -36,22 +36,45 @@ if [ -f "vendor/magento/module-inventory-catalog/etc/communication.xml" ]; then
 fi
 
 echo "Installing Magento..."
-mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
-php bin/magento setup:install -q \
-    --language="en_US" \
-    --timezone="UTC" \
-    --currency="USD" \
-    --db-host=127.0.0.1 \
-    --db-user=root \
-    --base-url="http://magento2.test/" \
-    --admin-firstname="Dev" \
-    --admin-lastname="Bolt" \
-    --backend-frontname="backend" \
-    --admin-email="admin@example.com" \
-    --admin-user="admin" \
-    --use-rewrites=1 \
-    --admin-use-security-key=0 \
-    --admin-password="123123q" \
-    --magento-init-params="MAGE_MODE=developer"
+mysql -uroot -h 127.0.0.1 -e "CREATE DATABASE magento2;"
+if [ "${MAGENTO_VERSION}" == "2.4.0" ]; then
+    sudo service elasticsearch start
+    sudo php bin/magento setup:install -q \
+        --language="en_US" \
+        --timezone="UTC" \
+        --currency="USD" \
+        --db-host=127.0.0.1 \
+        --db-user=root \
+        --base-url="http://magento2.test/" \
+        --admin-firstname="Dev" \
+        --admin-lastname="Bolt" \
+        --backend-frontname="backend" \
+        --admin-email="admin@example.com" \
+        --admin-user="admin" \
+        --use-rewrites=1 \
+        --admin-use-security-key=0 \
+        --admin-password="123123q" \
+        --magento-init-params="MAGE_MODE=developer" \
+        --search-engine=elasticsearch7 \
+        --elasticsearch-host="localhost" \
+        --elasticsearch-port=9200
+else
+    php bin/magento setup:install -q \
+        --language="en_US" \
+        --timezone="UTC" \
+        --currency="USD" \
+        --db-host=127.0.0.1 \
+        --db-user=root \
+        --base-url="http://magento2.test/" \
+        --admin-firstname="Dev" \
+        --admin-lastname="Bolt" \
+        --backend-frontname="backend" \
+        --admin-email="admin@example.com" \
+        --admin-user="admin" \
+        --use-rewrites=1 \
+        --admin-use-security-key=0 \
+        --admin-password="123123q" \
+        --magento-init-params="MAGE_MODE=developer"
+fi
 
 composer require --dev "mikey179/vfsstream:^1.6"
