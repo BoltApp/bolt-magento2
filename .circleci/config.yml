@@ -17,20 +17,21 @@ parameters:
 
 commands:
   notify-rc-tag:
-    description: 'Notify #eng-magento2 after a release candidate is tagged.'
+    description: "Notify #eng-magento2 after a release candidate is tagged."
     parameters:
       tag:
         type: string
-        default: ''
+        default: ""
     steps:
       - slack/notify:
-          color: '#58a359'
-          mentions: 'pavel,oleksii,'
+          color: "#58a359"
+          mentions: "pavel,oleksii,"
           message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
           webhook: $SLACK_MAGENTO2_WEBHOOK
           include_job_number_field: false
           include_project_field: false
           include_visit_job_action: false
+
   m2-php-test:
     description: PHP Unit tests for M2
     parameters:
@@ -117,7 +118,7 @@ commands:
             fi
       - slack/status:
           fail_only: true
-          failure_message: ':red_circle: M2: A $CIRCLE_JOB job has failed on branch $CIRCLE_BRANCH!'
+          failure_message: ":red_circle: M2: A $CIRCLE_JOB job has failed on branch $CIRCLE_BRANCH!"
           webhook: $SLACK_GREENKEEPER_WEBHOOK
 
   m2-php-test-for-merchant-branches:
@@ -133,75 +134,19 @@ commands:
             .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
-  auto-rebase:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-    steps:
-      - checkout
-      - run:
-          name: Auto-rebase
-          command: bash .circleci/scripts/auto-rebase.sh
-
-  rebase-and-unit-test:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - checkout
-      - run:
-          name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
-
-  tag-release-candidate:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-    steps:
-      - checkout
-      - run:
-          name: Tag master as release candidate every 2 weeks
-          command: .circleci/scripts/tag-rc-if-necessary.sh
-      - notify-rc-tag:
-          tag: $NEWTAGNAME
-
   unit-php74-magento24:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php74:2.4.0-v1
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: circleci/mysql:8.0
     steps:
       - m2-php-test:
           cache_key_separator: php74mag24installed
           m2_version: "2.4.0"
           php_version: "php74"
           is_integration: false
-
-  integration-php72-magento23:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: selenium/standalone-chrome:3.141.59-20200326 
-    resource_class: large      
-    environment:
-        MAGENTO_DIR: magento
-    steps:
-      - m2-php-test:
-          cache_key_separator: php72mag23installed
-          m2_version: "2.3.0"
-          php_version: "php72"
-          is_integration: true
 
   unit-php72-magento23:
     docker:
@@ -235,8 +180,8 @@ jobs:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
         auth:
-            username: $DOCKERHUB_USER
-            password: $DOCKERHUB_PASS
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
       - image: circleci/mysql:5.7
     steps:
       - m2-php-test:
@@ -244,16 +189,6 @@ jobs:
           m2_version: "2.2.0"
           php_version: "php70"
           is_integration: false
-
-  unit-php72-magento23-for-merchant-branches:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test-for-merchant-branches
 
   integration-magento-php72-magento23:
     docker:
@@ -268,6 +203,72 @@ jobs:
           m2_version: "2.3.0"
           php_version: "php72"
           is_magento_integration: true
+
+  tag-release-candidate:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Tag master as release candidate every 2 weeks
+          command: .circleci/scripts/tag-rc-if-necessary.sh
+      - notify-rc-tag:
+          tag: $NEWTAGNAME
+
+  integration-php72-magento23:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: selenium/standalone-chrome:3.141.59-20200326
+    resource_class: large
+    environment:
+      MAGENTO_DIR: magento
+    steps:
+      - m2-php-test:
+          cache_key_separator: php72mag23installed
+          m2_version: "2.3.0"
+          php_version: "php72"
+          is_integration: true
+
+  unit-php72-magento23-for-merchant-branches:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test-for-merchant-branches
+
+  auto-rebase:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+    steps:
+      - checkout
+      - run:
+          name: Auto-rebase
+          command: bash .circleci/scripts/auto-rebase.sh
+
+  rebase-and-unit-test:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - checkout
+      - run:
+          name: Rebase and Unit Test
+          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
 
   phpcs:
     docker:
@@ -284,11 +285,11 @@ workflows:
   build:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
+      - unit-php74-magento24
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22
       - integration-magento-php72-magento23
-      - unit-php74-magento24
   tagger:
     triggers:
       - schedule:
