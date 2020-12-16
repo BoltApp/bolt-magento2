@@ -142,6 +142,10 @@ jobs:
           password: $DOCKERHUB_PASS
       - image: circleci/mysql:8.0
     steps:
+      - run:
+          name: Set old authentication method
+          command: |
+            mysql --default-auth=mysql_native_password -p
       - m2-php-test:
           cache_key_separator: php74mag24installed
           m2_version: "2.4.0"
