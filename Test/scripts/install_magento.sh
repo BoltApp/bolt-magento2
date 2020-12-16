@@ -37,6 +37,7 @@ fi
 
 echo "Installing Magento..."
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
+php bin/magento module:disable Magento_Elasticsearch Magento_Elasticsearch6 Magento_Elasticsearch7
 php bin/magento setup:install -q \
     --language="en_US" \
     --timezone="UTC" \

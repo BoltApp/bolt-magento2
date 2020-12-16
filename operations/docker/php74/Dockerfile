@@ -31,6 +31,5 @@ RUN composer -vvv create-project --repository-url=https://repo.magento.com/ mage
 WORKDIR /home/circleci/magento
 RUN composer install
 RUN composer -vvv require "bugsnag/bugsnag:^3.0"
-RUN php bin/magento module:disable Magento_Elasticsearch Magento_Elasticsearch6 Magento_Elasticsearch7
 
 WORKDIR /home/circleci
