@@ -26,7 +26,7 @@ composer show -i
 cd ../magento
 
 echo "Waiting for DB..."
-while ! mysqladmin ping -h "127.0.0.1" --silent; do
+while ! mysqladmin ping -h 127.0.0.1 --silent; do
     sleep 1
 done
 
@@ -36,7 +36,8 @@ if [ -f "vendor/magento/module-inventory-catalog/etc/communication.xml" ]; then
 fi
 
 echo "Installing Magento..."
-mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
+mysql -uroot -h 127.0.0.1 -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+mysql -uroot -h 127.0.0.1 -e "CREATE DATABASE magento2;"
 if [ "${MAGENTO_VERSION}" == "2.4.0" ]; then
     sudo service elasticsearch start
     sudo php bin/magento setup:install -q \
