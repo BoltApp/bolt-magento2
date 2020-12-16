@@ -178,7 +178,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:8.0
+      - image: circleci/mysql:5.7
     steps:
       - m2-php-test:
           cache_key_separator: php74mag24installed
