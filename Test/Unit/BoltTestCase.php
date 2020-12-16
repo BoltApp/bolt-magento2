@@ -8,12 +8,9 @@ use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
 use PHPUnit\Framework\Constraint\IsType;
+use PHPUnit\Runner\Version as PHPUnitVersion;
 
-if (!defined('PHP_CURRENT_VERSION')) {
-    define('PHP_CURRENT_VERSION', (float)phpversion());
-}
-
-if (PHP_CURRENT_VERSION < 7.2) {
+if (PHPUnitVersion::id() < 9) {
     class BoltTestCase extends TestCase
     {
         protected function skipTestInUnitTestsFlow()
