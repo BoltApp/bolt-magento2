@@ -26,7 +26,7 @@ composer show -i
 cd ../magento
 
 echo "Waiting for DB..."
-while ! mysql -uroot -h 127.0.0.1 -e "SELECT 1" >/dev/null 2>&1; do
+while ! mysqladmin ping -h "127.0.0.1" --silent; do
     sleep 1
 done
 
