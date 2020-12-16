@@ -39,11 +39,11 @@ commands:
       m2_version:
         type: enum
         default: "2.3.0"
-        enum: ["2.2.0", "2.3.0"]
+        enum: ["2.2.0", "2.3.0", "2.4.0"]
       php_version:
         type: enum
         default: "php72"
-        enum: ["php70", "php71", "php72"]
+        enum: ["php70", "php71", "php72", "php74"]
       is_integration:
         type: boolean
         default: false
@@ -172,6 +172,20 @@ jobs:
       - notify-rc-tag:
           tag: $NEWTAGNAME
 
+  unit-php74-magento24:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php74:2.4.0
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test:
+          cache_key_separator: php74mag24installed
+          m2_version: "2.4.0"
+          php_version: "php74"
+          is_integration: false
+
   integration-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -274,6 +288,7 @@ workflows:
       - unit-php71-magento22
       - unit-php70-magento22
       - integration-magento-php72-magento23
+      - unit-php74-magento24
   tagger:
     triggers:
       - schedule:
