@@ -8,6 +8,14 @@ RUN cd /usr/local/etc/php/conf.d/ && echo 'memory_limit = -1' >> /usr/local/etc/
 
 RUN MAGENTO_VERSION=2.4.0
 
+RUN sudo apt install openjdk-11-jdk -y
+RUN curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+RUN sudo echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+RUN sudo apt update
+RUN sudo apt install elasticsearch -y
+RUN sudo sed -i '/network.host/c\network.host: localhost' /etc/elasticsearch/elasticsearch.yml
+RUN sudo service elasticsearch start
+
 RUN apt-get update && apt-get -y install curl default-mysql-client libmcrypt-dev mcrypt libpng-dev libjpeg-dev libxml2-dev libxslt-dev
 RUN pecl channel-update pecl.php.net
 RUN pecl install zip &&  docker-php-ext-enable zip
