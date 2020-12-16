@@ -45,6 +45,15 @@ class TestUtils {
     }
 
     /**
+     * @param $orderId
+     * @return mixed
+     */
+    public static function getOrderById($orderId)
+    {
+        return Bootstrap::getObjectManager()->get(Order::class)->load($orderId);
+    }
+
+    /**
      * @param $quote
      * @return mixed
      */
@@ -114,6 +123,7 @@ class TestUtils {
             ->setProductType('simple')
             ->setName($product->getName());
 
+
         /** @var Order $order */
         $order = $objectManager->create(Order::class);
         $order->setIncrementId('100000001')
@@ -123,6 +133,7 @@ class TestUtils {
             ->setGrandTotal(100)
             ->setBaseSubtotal(100)
             ->setBaseGrandTotal(100)
+            ->setOrderCurrencyCode('USD')
             ->setCustomerIsGuest(true)
             ->setCustomerEmail('johnmc@bolt.com')
             ->setBillingAddress($billingAddress)
@@ -130,6 +141,7 @@ class TestUtils {
             ->setStoreId($objectManager->get(StoreManagerInterface::class)->getStore()->getId())
             ->addItem($orderItem)
             ->setPayment($payment);
+
 
         if ($data){
             foreach ($data as $key => $value) {
@@ -227,6 +239,9 @@ class TestUtils {
         foreach ($objects as $object) {
             switch (get_class($object)) {
                 case "Magento\Catalog\Model\Product\Interceptor":
+                    $object->delete();
+                    break;
+                case "Magento\Sales\Model\Order\Interceptor":
                     $object->delete();
                     break;
                 default:
