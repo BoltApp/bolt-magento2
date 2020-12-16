@@ -14,11 +14,10 @@ RUN sudo echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | 
 RUN sudo apt update
 RUN sudo apt install elasticsearch -y
 RUN sudo sed -i '/network.host/c\network.host: localhost' /etc/elasticsearch/elasticsearch.yml
-RUN sudo service elasticsearch start
 
 RUN apt-get update && apt-get -y install curl default-mysql-client libmcrypt-dev mcrypt libpng-dev libjpeg-dev libxml2-dev libxslt-dev
 RUN pecl channel-update pecl.php.net
-RUN pecl install zip &&  docker-php-ext-enable zip
+RUN pecl install zip && docker-php-ext-enable zip
 RUN docker-php-ext-enable xdebug
 RUN docker-php-ext-configure gd --with-jpeg=/usr/include/
 RUN docker-php-ext-install gd

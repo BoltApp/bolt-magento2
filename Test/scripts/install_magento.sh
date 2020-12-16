@@ -38,7 +38,9 @@ fi
 echo "Installing Magento..."
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento2;'
 if [ "${MAGENTO_VERSION}" == "2.4.0" ]; then
-    php bin/magento setup:install -q \
+    sudo service elasticsearch start
+    sudo curl -X GET 'localhost:9200'
+    sudo php bin/magento setup:install -q \
         --language="en_US" \
         --timezone="UTC" \
         --currency="USD" \
