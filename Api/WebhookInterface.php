@@ -29,6 +29,8 @@
       * 
       * @param string $type
       * @param mixed $data
+      *
+      * @return bool
       */
      public function execute(
          $type = null,

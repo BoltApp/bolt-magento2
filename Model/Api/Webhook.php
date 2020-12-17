@@ -18,14 +18,52 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\WebhookInterface;
+use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 
 class Webhook implements WebhookInterface
 {
+    /**
+     * @var DiscountCodeValidationInterface
+     */
+    protected $discountCodeValidation;
+
+    public function __construct(
+        DiscountCodeValidationInterface $discountCodeValidation
+    )
+    {
+        $this->discountCodeValidation = $discountCodeValidation;
+    }
+
     public function execute(
         $type = null,
         $data = null
     )
     {
+        try {
+            switch($type){
+                case "create_order":
+                break;
+                case "manage_order":
+                break;
+                case "validate_discount":
+                    $this->discountCodeValidation->validate($data);
+                break;
+                case "cart_update":
+                break;
+                case "shipping_methods":
+                break;
+                case "shipping_options":
+                break;
+                case "tax":
+                break;
+                
+            }
 
+        }
+        catch (\Exception $e) {
+
+        }
+
+        return true;
     }
 }

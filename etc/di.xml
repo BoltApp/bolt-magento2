@@ -34,6 +34,9 @@
         </arguments>
     </type>
 
+    <!-- For V2 universal endpoint -->
+    <preference for="Bolt\Boltpay\Api\WebhookInterface" type="Bolt\Boltpay\Model\Api\Webhook" />
+
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
     <preference for="Bolt\Boltpay\Api\CreateOrderInterface" type="Bolt\Boltpay\Model\Api\CreateOrder" />
