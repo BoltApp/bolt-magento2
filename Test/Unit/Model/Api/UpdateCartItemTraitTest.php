@@ -29,13 +29,13 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class UpdateCartItemTraitTest
  * @coversDefaultClass \Bolt\Boltpay\Controller\UpdateCartItemTrait
  */
-class UpdateCartItemTraitTest extends TestCase
+class UpdateCartItemTraitTest extends BoltTestCase
 {
     /**
      * @var ProductRepository|MockObject
@@ -53,7 +53,7 @@ class UpdateCartItemTraitTest extends TestCase
     private $currentMock;
 
 
-    public function setUp()
+    public function setUpInternal()
     {            
         $this->currentMock = $this->getMockBuilder(UpdateCartItemTrait::class)
             ->setMethods(['sendErrorResponse'])

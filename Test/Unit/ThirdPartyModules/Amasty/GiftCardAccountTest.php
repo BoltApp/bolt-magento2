@@ -25,13 +25,13 @@ use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\Quote\Address\Total;
 use Magento\Quote\Model\Quote\Item;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Model\Quote;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount
  */
-class GiftCardAccountTest extends TestCase
+class GiftCardAccountTest extends BoltTestCase
 {
     /** @var int Test order id */
     const ORDER_ID = 10001;
@@ -157,7 +157,7 @@ class GiftCardAccountTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->giftcardAccountRepositoryMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface'

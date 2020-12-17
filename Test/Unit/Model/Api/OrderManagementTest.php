@@ -34,7 +34,7 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -46,7 +46,7 @@ use ReflectionException;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\OrderManagement
  */
-class OrderManagementTest extends TestCase
+class OrderManagementTest extends BoltTestCase
 {
     const ORDER_ID = 123;
     const QUOTE_ID = 456;
@@ -103,7 +103,7 @@ class OrderManagementTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock([]);

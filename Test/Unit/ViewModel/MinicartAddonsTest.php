@@ -17,13 +17,13 @@
 
 namespace Bolt\Boltpay\Test\Unit\ViewModel;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ViewModel\MinicartAddons
  */
-class MinicartAddonsTest extends TestCase
+class MinicartAddonsTest extends BoltTestCase
 {
     const DEFAULT_LAYOUT = [
         [
@@ -62,7 +62,7 @@ class MinicartAddonsTest extends TestCase
     /**
      * Setup test dependencies, called before each test
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->serializer = (new ObjectManager($this))

@@ -33,7 +33,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\UrlInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Framework\App\Response\RedirectInterface;
@@ -41,7 +41,7 @@ use Magento\Framework\App\Response\RedirectInterface;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Order\ReceivedUrl
  */
-class ReceivedUrlTest extends TestCase
+class ReceivedUrlTest extends BoltTestCase
 {
     //TODO: figure out proper values for these things, probably some reverse engineering to be done.
     const DECODED_BOLT_PAYLOAD = '{"display_id":"' .self::JSON_DISPLAY_ID. '", "transaction_reference":"' .self::TRANSACTION_REFERENCE. '"}';
@@ -653,7 +653,7 @@ class ReceivedUrlTest extends TestCase
         $receivedUrl->execute();
     }
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initAuthentication();

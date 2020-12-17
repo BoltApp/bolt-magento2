@@ -29,6 +29,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use \Magento\Catalog\Model\ProductRepository;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class JsTest
@@ -36,7 +37,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  * @package Bolt\Boltpay\Test\Unit\Block
  * @coversDefaultClass \Bolt\Boltpay\Block\JsProductPage
  */
-class JsProductPageTest extends \PHPUnit\Framework\TestCase
+class JsProductPageTest extends BoltTestCase
 {
     const CURRENCY_CODE = 'USD';
     const PRODUCT_ID = '1';
@@ -112,7 +113,7 @@ class JsProductPageTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);

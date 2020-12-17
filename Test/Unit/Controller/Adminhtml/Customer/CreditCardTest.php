@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Customer;
 
 use Bolt\Boltpay\Controller\Adminhtml\Customer\CreditCard;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Customer\Api\AccountManagementInterface;
 use Magento\Customer\Api\AddressRepositoryInterface;
@@ -46,7 +46,7 @@ use Magento\Framework\View\Result\PageFactory;
 use Magento\Backend\Model\View\Result\ForwardFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
 
-class CreditCardTest extends TestCase
+class CreditCardTest extends BoltTestCase
 {
     /**
      * @var MockObject|CreditCard
@@ -178,7 +178,7 @@ class CreditCardTest extends TestCase
      */
     private $resultJsonFactoryMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->contextMock = $this->createMock(Context::class);
         $this->coreRegistryMock = $this->createMock(Registry::class);

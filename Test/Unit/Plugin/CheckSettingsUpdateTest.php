@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Config\Model\Config as MagentoConfig;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Plugin\CheckSettingsUpdate;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\CheckSettingsUpdate
  */
-class CheckSettingsUpdateTest extends TestCase
+class CheckSettingsUpdateTest extends BoltTestCase
 {
     const OLD_KEY = 'old_key';
     const NEW_KEY = 'new_key';
@@ -64,7 +64,7 @@ class CheckSettingsUpdateTest extends TestCase
      */
     private $bugsnag;
 
-    public function setUp()
+    public function setUpInternal()
     {
         /*
         $this->context = $this->getMockBuilder(Context::class)

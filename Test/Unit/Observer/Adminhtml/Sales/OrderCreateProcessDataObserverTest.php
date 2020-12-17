@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
 use Magento\Framework\Event;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\OrderCreateProcessDataObserver;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -28,7 +28,7 @@ use Magento\Framework\App\ProductMetadataInterface;
  * Class OrderCreateProcessDataObserverTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Payment
  */
-class OrderCreateProcessDataObserverTest extends TestCase
+class OrderCreateProcessDataObserverTest extends BoltTestCase
 {
     /**
      * @var OrderCreateProcessDataObserver
@@ -55,7 +55,7 @@ class OrderCreateProcessDataObserverTest extends TestCase
      */
     protected $quote;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->observer = $this->createPartialMock(
             Observer::class,

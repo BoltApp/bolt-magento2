@@ -25,7 +25,7 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Observer\TrackingSaveObserver as Observer;
-use \PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Request;
@@ -34,7 +34,7 @@ use Bolt\Boltpay\Model\Request;
  * Class TrackingSaveObserverTest
  * @coversDefaultClass \Bolt\Boltpay\Observer\TrackingSaveObserver
  */
-class TrackingSaveObserverTest extends TestCase
+class TrackingSaveObserverTest extends BoltTestCase
 {
     const ENTITY_ID = 123;
     /**
@@ -77,7 +77,7 @@ class TrackingSaveObserverTest extends TestCase
      */
     protected $observer;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
     }

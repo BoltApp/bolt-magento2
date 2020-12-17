@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\ErrorResponse;
 
 /**
@@ -25,14 +25,14 @@ use Bolt\Boltpay\Model\ErrorResponse;
  * @package Bolt\Boltpay\Test\Unit\Model
  * @coversDefaultClass \Bolt\Boltpay\Model\ErrorResponse
  */
-class ErrorResponseTest extends TestCase
+class ErrorResponseTest extends BoltTestCase
 {
     /**
      * @var ErrorResponse
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->currentMock = new ErrorResponse();
     }

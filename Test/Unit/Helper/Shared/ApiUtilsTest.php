@@ -19,14 +19,14 @@ namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
 use Magento\Framework\Exception\LocalizedException;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class ApiUtilsTest
  *
  * @package Bolt\Boltpay\Test\Unit\Helper\Shared
  */
-class ApiUtilsTest extends TestCase
+class ApiUtilsTest extends BoltTestCase
 {
 
     /**

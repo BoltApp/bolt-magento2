@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterface;
 use Bolt\Boltpay\Model\Api\Data\CartData;
 use Bolt\Boltpay\Model\Api\Data\UpdateCartResult;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Reflection\TypeProcessor;
 use Zend\Code\Reflection\ClassReflection;
 
@@ -29,7 +29,7 @@ use Zend\Code\Reflection\ClassReflection;
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\UpdateCartResult
  */
-class UpdateCartResultTest extends TestCase
+class UpdateCartResultTest extends BoltTestCase
 {    
     const STATUS = 'STATUS';
     const ORDERREFERENCE = 'ORDERREFERENCE';
@@ -57,7 +57,7 @@ class UpdateCartResultTest extends TestCase
      */
     private $typeProcessor;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->updateCartResult = new UpdateCartResult;
         $this->orderCreate = new CartData;
@@ -106,7 +106,7 @@ class UpdateCartResultTest extends TestCase
      *
      * @covers ::getStatus
      */
-    public function getStatus()
+    public function getCartResultStatus()
     {
         $this->assertEquals(self::STATUS, $this->updateCartResult->getStatus());
     }

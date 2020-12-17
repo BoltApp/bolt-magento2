@@ -69,7 +69,6 @@ use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Magento\Store\Model\ScopeInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use ReflectionException;
@@ -264,7 +263,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException from initRequiredMocks and initCurrentMock methods
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock(
@@ -287,7 +286,7 @@ class OrderTest extends BoltTestCase
     /**
      * Cleanup changes made by tests
      */
-    protected function tearDown()
+    protected function tearDownInternal()
     {
         Hook::$fromBolt = false;
     }
@@ -536,38 +535,38 @@ class OrderTest extends BoltTestCase
             $this->creditmemoManagement,
             $this->eventsForThirdPartyModules
         );
-        $this->assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->regionModel, 'regionModel', $instance);
-        $this->assertAttributeEquals($this->quoteManagement, 'quoteManagement', $instance);
-        $this->assertAttributeEquals($this->emailSender, 'emailSender', $instance);
-        $this->assertAttributeEquals($this->invoiceService, 'invoiceService', $instance);
-        $this->assertAttributeEquals($this->invoiceSender, 'invoiceSender', $instance);
-        $this->assertAttributeEquals($this->searchCriteriaBuilder, 'searchCriteriaBuilder', $instance);
-        $this->assertAttributeEquals($this->orderRepository, 'orderRepository', $instance);
-        $this->assertAttributeEquals($this->transactionBuilder, 'transactionBuilder', $instance);
-        $this->assertAttributeEquals($this->timezone, 'timezone', $instance);
-        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
-        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
-        $this->assertAttributeEquals($this->resourceConnection, 'resourceConnection', $instance);
-        $this->assertAttributeEquals($this->sessionHelper, 'sessionHelper', $instance);
-        $this->assertAttributeEquals($this->discountHelper, 'discountHelper', $instance);
-        $this->assertAttributeEquals($this->date, 'date', $instance);
-        $this->assertAttributeEquals($this->webhookLogCollectionFactory, 'webhookLogCollectionFactory', $instance);
-        $this->assertAttributeEquals($this->webhookLogFactory, 'webhookLogFactory', $instance);
-        $this->assertAttributeEquals($this->featureSwitches, 'featureSwitches', $instance);
-        $this->assertAttributeEquals($this->checkboxesHandler, 'checkboxesHandler', $instance);
-        $this->assertAttributeEquals($this->customerCreditCardFactory, 'customerCreditCardFactory', $instance);
-        $this->assertAttributeEquals(
+        static::assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->regionModel, 'regionModel', $instance);
+        static::assertAttributeEquals($this->quoteManagement, 'quoteManagement', $instance);
+        static::assertAttributeEquals($this->emailSender, 'emailSender', $instance);
+        static::assertAttributeEquals($this->invoiceService, 'invoiceService', $instance);
+        static::assertAttributeEquals($this->invoiceSender, 'invoiceSender', $instance);
+        static::assertAttributeEquals($this->searchCriteriaBuilder, 'searchCriteriaBuilder', $instance);
+        static::assertAttributeEquals($this->orderRepository, 'orderRepository', $instance);
+        static::assertAttributeEquals($this->transactionBuilder, 'transactionBuilder', $instance);
+        static::assertAttributeEquals($this->timezone, 'timezone', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->resourceConnection, 'resourceConnection', $instance);
+        static::assertAttributeEquals($this->sessionHelper, 'sessionHelper', $instance);
+        static::assertAttributeEquals($this->discountHelper, 'discountHelper', $instance);
+        static::assertAttributeEquals($this->date, 'date', $instance);
+        static::assertAttributeEquals($this->webhookLogCollectionFactory, 'webhookLogCollectionFactory', $instance);
+        static::assertAttributeEquals($this->webhookLogFactory, 'webhookLogFactory', $instance);
+        static::assertAttributeEquals($this->featureSwitches, 'featureSwitches', $instance);
+        static::assertAttributeEquals($this->checkboxesHandler, 'checkboxesHandler', $instance);
+        static::assertAttributeEquals($this->customerCreditCardFactory, 'customerCreditCardFactory', $instance);
+        static::assertAttributeEquals(
             $this->customerCreditCardCollectionFactory,
             'customerCreditCardCollectionFactory',
             $instance
         );
-        $this->assertAttributeEquals($this->creditmemoFactory, 'creditmemoFactory', $instance);
-        $this->assertAttributeEquals($this->creditmemoManagement, 'creditmemoManagement', $instance);
-        $this->assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
+        static::assertAttributeEquals($this->creditmemoFactory, 'creditmemoFactory', $instance);
+        static::assertAttributeEquals($this->creditmemoManagement, 'creditmemoManagement', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
     }
 
     /**

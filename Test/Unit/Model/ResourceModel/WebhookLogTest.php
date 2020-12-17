@@ -18,10 +18,10 @@
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 
-class WebhookLogTest extends TestCase
+class WebhookLogTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog
@@ -31,7 +31,7 @@ class WebhookLogTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->wehookLogMock = $this->getMockBuilder(WebhookLog::class)
             ->disableOriginalConstructor()

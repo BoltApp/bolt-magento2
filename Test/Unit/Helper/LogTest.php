@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 use Bolt\Boltpay\Logger\Logger as BoltLogger;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\App\Helper\Context;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Log;
 
 /**
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\Log;
  * @package Bolt\Boltpay\Test\Unit\Helper
  * @coversDefaultClass \Bolt\Boltpay\Helper\Log
  */
-class LogTest extends TestCase
+class LogTest extends BoltTestCase
 {
     const INFO_MESSAGE = 'info';
 
@@ -55,7 +55,7 @@ class LogTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->context = $this->createMock(Context::class);
         $this->boltLoger = $this->createPartialMock(
@@ -95,8 +95,8 @@ class LogTest extends TestCase
             $this->configHelper
         );
         
-        $this->assertAttributeEquals($this->boltLoger, 'boltLogger', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->boltLoger, 'boltLogger', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**

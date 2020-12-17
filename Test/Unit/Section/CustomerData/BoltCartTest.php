@@ -20,14 +20,14 @@ namespace Bolt\Boltpay\Test\Unit\Section\CustomerData;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Section\CustomerData\BoltCart;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class BoltCartTest
  * @package Bolt\Boltpay\Test\Unit\Section\CustomerData
  * @coversDefaultClass \Bolt\Boltpay\Section\CustomerData\BoltCart
  */
-class BoltCartTest extends TestCase
+class BoltCartTest extends BoltTestCase
 {
     /**
      * @var CartHelper
@@ -42,7 +42,7 @@ class BoltCartTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->cartHelper = $this->createPartialMock(CartHelper::class, ['calculateCartAndHints']);
         $this->boltCart = (new ObjectManager($this))->getObject(

@@ -17,7 +17,7 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard;
 
 use Magento\Framework\Event\ObserverInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Magento\GiftCard\GenerateGiftCardAccountsOrderPlugin;
@@ -32,7 +32,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\GiftCard\GenerateGiftCardAccountsOrderPlugin
  */
-class GenerateGiftCardAccountsOrderPluginTest extends TestCase
+class GenerateGiftCardAccountsOrderPluginTest extends BoltTestCase
 {
     const OTHER_METHOD = 'NON_BOLT';
     const EXPECTS_NEVER = 'never';
@@ -62,7 +62,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends TestCase
     /** @var GenerateGiftCardAccountsOrderPlugin  */
     protected $plugin;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $objectManager = new ObjectManager($this);
         $this->plugin = $objectManager->getObject(

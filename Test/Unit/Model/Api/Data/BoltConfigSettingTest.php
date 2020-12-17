@@ -17,21 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
 
 /**
  * Class BoltConfigSettingTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  */
-class BoltConfigSettingTest extends TestCase
+class BoltConfigSettingTest extends BoltTestCase
 {
     /**
      * @var BoltConfigSetting
      */
     protected $boltConfigSetting;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->boltConfigSetting = new BoltConfigSetting();
     }

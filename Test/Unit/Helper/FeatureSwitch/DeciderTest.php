@@ -30,14 +30,14 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class DeciderTest
  * @package Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch
  * @coversDefaultClass \Bolt\Boltpay\Helper\FeatureSwitch\Decider
  */
-class DeciderTest  extends TestCase
+class DeciderTest  extends BoltTestCase
 {
     /**
      * @var Context
@@ -82,7 +82,7 @@ class DeciderTest  extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
 
         $this->context = $this->createMock(Context::class);
@@ -133,11 +133,11 @@ class DeciderTest  extends TestCase
             $this->fsFactory
         );
         
-        $this->assertAttributeEquals($this->session, '_session', $instance);
-        $this->assertAttributeEquals($this->state, '_state', $instance);
-        $this->assertAttributeEquals($this->manager, '_manager', $instance);
-        $this->assertAttributeEquals($this->fsRepo, '_fsRepo', $instance);
-        $this->assertAttributeEquals($this->fsFactory, '_fsFactory', $instance);
+        static::assertAttributeEquals($this->session, '_session', $instance);
+        static::assertAttributeEquals($this->state, '_state', $instance);
+        static::assertAttributeEquals($this->manager, '_manager', $instance);
+        static::assertAttributeEquals($this->fsRepo, '_fsRepo', $instance);
+        static::assertAttributeEquals($this->fsFactory, '_fsFactory', $instance);
     }
 
     /**

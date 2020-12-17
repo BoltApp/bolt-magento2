@@ -23,7 +23,7 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -31,7 +31,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Controller\Cart
  * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Data
  */
-class DataTest extends TestCase
+class DataTest extends BoltTestCase
 {
     const HINT = 'hint!';
     const ORDER_REFERENCE = 1234;
@@ -74,7 +74,7 @@ class DataTest extends TestCase
      */
     private $resultJsonFactory;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initResponseData();
         $this->initRequiredMocks();
@@ -150,8 +150,8 @@ class DataTest extends TestCase
             $this->cartHelper
         );
         
-        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     private function buildJsonMock($expected)

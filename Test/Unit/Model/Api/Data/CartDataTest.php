@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Model\Api\Data\CartData;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Reflection\TypeProcessor;
 use Zend\Code\Reflection\ClassReflection;
 
@@ -28,7 +28,7 @@ use Zend\Code\Reflection\ClassReflection;
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\CartData
  */
-class CartDataTest extends TestCase
+class CartDataTest extends BoltTestCase
 {
     const DISPLAYID = '10001';
     const CURRENCY = 'CURRENCY';
@@ -49,7 +49,7 @@ class CartDataTest extends TestCase
      */
     private $typeProcessor;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->cartData = new CartData;
         $this->cartData->setDisplayId(self::DISPLAYID);

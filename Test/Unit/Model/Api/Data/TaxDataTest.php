@@ -21,14 +21,14 @@ use Bolt\Boltpay\Api\Data\TaxDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 use Bolt\Boltpay\Model\Api\Data\TaxData;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class TaxDataTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\TaxData
  */
-class TaxDataTest extends TestCase
+class TaxDataTest extends BoltTestCase
 {
     /**
      * @var TaxDataInterface
@@ -45,7 +45,7 @@ class TaxDataTest extends TestCase
      */
     private $shippingOption;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->taxResult = new TaxResult;
         $this->shippingOption = new ShippingOption;

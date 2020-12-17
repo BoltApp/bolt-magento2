@@ -29,7 +29,7 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -37,7 +37,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Cart
  * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Cart\Data
  */
-class DataTest extends TestCase
+class DataTest extends BoltTestCase
 {
     const PLACE_ORDER_PAYLOAD = 'payload';
     const STORE_ID = '42';
@@ -93,7 +93,7 @@ class DataTest extends TestCase
      */
     private $request;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initData();
         $this->initRequiredMocks();
@@ -193,12 +193,12 @@ class DataTest extends TestCase
             $this->dataObjectFactory
         );
         
-        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
-        $this->assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
     }
 
     /**
@@ -290,12 +290,12 @@ class DataTest extends TestCase
      */
     public function execute_ThrowsException()
     {
-        $exception = new \Exception("This is an exception");
+        $exception = new \Exception('This is an exception');
 
         $bugsnag = $this->createMock(Bugsnag::class);
         $bugsnag->expects($this->at(0))
             ->method('notifyException')
-            ->with($exception);
+            ->with($this->equalTo($exception));
 
         $data = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest'])
@@ -310,6 +310,8 @@ class DataTest extends TestCase
             ])
             ->getMock();
         $this->cartHelper->method('getBoltpayOrder')->willThrowException($exception);
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('This is an exception');
         $data->execute();
     }
 }

@@ -16,7 +16,7 @@
  */
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\OrderPlugin;
 use Magento\Sales\Model\Order;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderPlugin
  */
-class OrderPluginTest extends TestCase
+class OrderPluginTest extends BoltTestCase
 {
     /**
      * @var OrderPlugin
@@ -53,7 +53,7 @@ class OrderPluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->plugin = (new ObjectManager($this))->getObject(OrderPlugin::class);
         $this->subject = $this->createPartialMock(Order::class, [

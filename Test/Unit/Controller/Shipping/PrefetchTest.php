@@ -27,7 +27,7 @@ use Magento\Customer\Model\Session;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\App\RequestInterface;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -35,7 +35,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Controller\Shipping
  * @coversDefaultClass \Bolt\Boltpay\Controller\Shipping\Prefetch
  */
-class PrefetchTest extends TestCase
+class PrefetchTest extends BoltTestCase
 {
     const COUNTRY = 'Canada';
     const REGION = 'Arctic';
@@ -87,7 +87,7 @@ class PrefetchTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
@@ -140,10 +140,10 @@ class PrefetchTest extends TestCase
             $this->geolocation
         );
         
-        $this->assertAttributeEquals($this->shippingMethods, 'shippingMethods', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->shippingMethods, 'shippingMethods', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**

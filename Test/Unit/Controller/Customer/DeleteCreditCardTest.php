@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Controller\Customer;
 
 use Bolt\Boltpay\Controller\Customer\DeleteCreditCard;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -28,7 +28,7 @@ use Magento\Store\App\Response\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Customer\Model\Session;
 
-class DeleteCreditCardTest extends TestCase
+class DeleteCreditCardTest extends BoltTestCase
 {
     const ID = '1';
     const CUSTOMER_ID = '111';
@@ -78,7 +78,7 @@ class DeleteCreditCardTest extends TestCase
      */
     private $validatorMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->contextMock = $this->createMock(Context::class);
 

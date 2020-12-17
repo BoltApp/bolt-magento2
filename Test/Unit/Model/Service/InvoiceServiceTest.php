@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Sales\Api\InvoiceRepositoryInterface;
 use Magento\Sales\Api\InvoiceCommentRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -36,7 +36,7 @@ use Magento\Sales\Model\Order\Item;
  * @package Bolt\Boltpay\Test\Unit\Model
  * @coversDefaultClass \Bolt\Boltpay\Model\Service\InvoiceService
  */
-class InvoiceServiceTest extends TestCase
+class InvoiceServiceTest extends BoltTestCase
 {
     const AMOUNT = 20;
 
@@ -100,7 +100,7 @@ class InvoiceServiceTest extends TestCase
      */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->repository = $this->createMock(InvoiceRepositoryInterface::class);
         $this->commentRepository = $this->createMock(InvoiceCommentRepositoryInterface::class);

@@ -21,7 +21,7 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Metric;
 use Magento\Framework\App\CacheInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
@@ -37,7 +37,7 @@ use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-class MetricsClientTest extends TestCase
+class MetricsClientTest extends BoltTestCase
 {
     /**
      * @var \GuzzleHttp\Client
@@ -127,7 +127,7 @@ class MetricsClientTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         // common values
         $this->timeStamp = 1567541470604;

@@ -17,12 +17,12 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Rewards\Controller\Cart;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin
  */
-class RemoveActionPluginTest extends TestCase
+class RemoveActionPluginTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Helper\Config|\PHPUnit\Framework\MockObject\MockObject
@@ -52,7 +52,7 @@ class RemoveActionPluginTest extends TestCase
     /**
      * Setup method, called before each test
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->subject = $this->getMockBuilder('\Magento\Reward\Controller\Cart\Remove')

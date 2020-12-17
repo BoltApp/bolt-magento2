@@ -19,9 +19,10 @@ class TestHelper extends TestCase
      */
     public static function getReflectedClass($class)
     {
-        if (is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
+        if (is_subclass_of($class, '\PHPUnit\Framework\MockObject\MockObject') || is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
             return new ReflectionClass(get_parent_class($class));
         }
+        
         return new ReflectionClass($class);
     }
 
@@ -139,9 +140,39 @@ class TestHelper extends TestCase
      * @param $data
      * @return mixed
      */
-    public static function serialize ($class, $data){
+    public static function serialize ($class, $data)
+    {
         return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
             ->getObject(\Zend\Serializer\Adapter\PhpSerialize::class)->serialize($data);
+    }
+    
+    /**
+     * @param  $object
+     * @param  $property
+     * @param  $value
+     * @throws \ReflectionException
+     */
+    public static function setInaccessibleProperty($object, $property, $value)
+    {
+        $reflection = self::getReflectedClass($object);
+
+        $reflectionProperty = $reflection->getProperty($property);
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($object, $value);
+    }
+    
+    /**
+     * @param array|\Traversable $subset
+     */
+    public static function buildArraySubset($subset)
+    {
+        // https://github.com/sebastianbergmann/phpunit/issues/3494
+        // Deprecate assertArraySubset()
+        if (class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
+            return new \PHPUnit\Framework\Constraint\ArraySubset($subset);
+        } else {
+            return new \Bolt\Boltpay\Test\Unit\ArraySubset($subset);
+        }
     }
 }
 class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');

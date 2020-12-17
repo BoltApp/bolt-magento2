@@ -18,11 +18,12 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider;
 
 use Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\DataProviderPlugin;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\DataProviderPlugin
  */
-class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
+class DataProviderPluginTest extends BoltTestCase
 {
     /**
      * @var \Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory|\PHPUnit_Framework_MockObject_MockObject
@@ -49,7 +50,7 @@ class DataProviderPluginTest extends \PHPUnit\Framework\TestCase
      */
     private $paymentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->paymentCollectionFactoryMock = $this->createPartialMock(
             \Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory::class,

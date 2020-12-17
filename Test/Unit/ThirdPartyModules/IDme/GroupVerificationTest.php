@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\IDme;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Customer\Model\Session;
 
 /**
@@ -28,7 +28,7 @@ use Magento\Customer\Model\Session;
  * @package Bolt\Boltpay\Test\Unit\ThirdPartyModules\IDme
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification
  */
-class GroupVerificationTest extends TestCase
+class GroupVerificationTest extends BoltTestCase
 {
     const IDME_UUID = 'IDME_UUID';
     const IDME_GROUP = 'IDME_GROUP';
@@ -52,7 +52,7 @@ class GroupVerificationTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->customerSession = $this->quote = $this->createPartialMock(Session::class, [
             'setIdmeUuid',

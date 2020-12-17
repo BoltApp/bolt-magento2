@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\QuotePlugin;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -28,7 +28,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
  * @package Bolt\Boltpay\Test\Unit\Plugin
  * @coversDefaultClass \Bolt\Boltpay\Plugin\QuotePlugin
  */
-class QuotePluginTest extends TestCase
+class QuotePluginTest extends BoltTestCase
 {
     /**
      * @var Quote
@@ -48,7 +48,7 @@ class QuotePluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->subject = $this->getMockBuilder(Quote::class)
             ->setMethods(['getBoltParentQuoteId', 'getId', 'getIsActive', 'getBoltCheckoutType', 'getPayment', 'getMethod'])

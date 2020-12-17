@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin\MageVision\FreeShippingAdmin;
 
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\State;
 use Magento\Shipping\Model\Rate\ResultFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory;
@@ -28,7 +28,7 @@ use Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin
  */
-class MethodPluginTest extends TestCase
+class MethodPluginTest extends BoltTestCase
 {
     /**
      * @var ResultFactory
@@ -57,7 +57,7 @@ class MethodPluginTest extends TestCase
 
     private $subject;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->rateResultFactory = $this->createPartialMock(ResultFactory::class, ['create', 'append']);
         $this->resultMethodFactory = $this->createPartialMock(MethodFactory::class, [

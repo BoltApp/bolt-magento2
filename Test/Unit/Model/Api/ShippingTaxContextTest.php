@@ -30,7 +30,7 @@ use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -38,7 +38,7 @@ use PHPUnit\Framework\MockObject\MockObject;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\ShippingTaxContext
  */
-class ShippingTaxContextTest extends TestCase
+class ShippingTaxContextTest extends BoltTestCase
 {
     /**
      * @var HookHelper|MockObject
@@ -105,7 +105,7 @@ class ShippingTaxContextTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
@@ -165,18 +165,18 @@ class ShippingTaxContextTest extends TestCase
             $this->shippingOptionFactory
         );
 
-        $this->assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
-        $this->assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
-        $this->assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
-        $this->assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
-        $this->assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
-        $this->assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
-        $this->assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
-        $this->assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
-        $this->assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
-        $this->assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
-        $this->assertAttributeInstanceOf(Response::class, 'response', $instance);
-        $this->assertAttributeInstanceOf(
+        static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
+        static::assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
+        static::assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
+        static::assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
+        static::assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
+        static::assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
+        static::assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
+        static::assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
+        static::assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
+        static::assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
+        static::assertAttributeInstanceOf(Response::class, 'response', $instance);
+        static::assertAttributeInstanceOf(
             ShippingOptionInterfaceFactory::class,
             'shippingOptionFactory',
             $instance

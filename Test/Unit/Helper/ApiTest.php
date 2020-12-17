@@ -31,10 +31,9 @@ use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Model\Response;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use PHPUnit\Framework\Constraint\ArraySubset;
 use ReflectionException;
 use Bolt\Boltpay\Helper\Bugsnag;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\HTTP\ZendClient;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend_Http_Response;
@@ -42,7 +41,7 @@ use Zend_Http_Response;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Api
  */
-class ApiTest extends TestCase
+class ApiTest extends BoltTestCase
 {
 
     /** @var string Dummy API url */
@@ -82,7 +81,7 @@ class ApiTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->currentMock = $this->getMockBuilder(ApiHelper::class)
@@ -159,12 +158,12 @@ class ApiTest extends TestCase
             $this->bugsnag
         );
         
-        $this->assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
-        $this->assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        $this->assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
-        $this->assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
-        $this->assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
+        static::assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
+        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
     }
 
     /**
@@ -249,13 +248,10 @@ class ApiTest extends TestCase
 
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
+
         $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
             [
-                new ArraySubset(
-                    [
-                        'BOLT API REQUEST' => $request->getData()
-                    ]
-                )
+                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
             ],
             [
                 [
@@ -394,13 +390,10 @@ class ApiTest extends TestCase
 
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
+
         $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
             [
-                new ArraySubset(
-                    [
-                        'BOLT API REQUEST' => $request->getData()
-                    ]
-                )
+                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
             ],
             [
                 [

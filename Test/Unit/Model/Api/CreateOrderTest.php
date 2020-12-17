@@ -35,7 +35,7 @@ use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\CreateOrder;
@@ -48,7 +48,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\CreateOrder
  */
-class CreateOrderTest extends TestCase
+class CreateOrderTest extends BoltTestCase
 {
     const STORE_ID = 1;
     const MINIMUM_ORDER_AMOUNT = 50;
@@ -153,7 +153,7 @@ class CreateOrderTest extends TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

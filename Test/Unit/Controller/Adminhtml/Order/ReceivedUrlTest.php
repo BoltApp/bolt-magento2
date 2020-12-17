@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Controller\Adminhtml\Order;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Controller\Adminhtml\Order\ReceivedUrl;
 use Magento\Sales\App\Action;
 use Magento\Backend\App\Action\Context;
@@ -35,7 +35,7 @@ use PHPUnit_Framework_MockObject_MockObject;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Order\ReceivedUrl
  */
-class ReceivedUrlTest extends TestCase
+class ReceivedUrlTest extends BoltTestCase
 {
     const ORDER_ID = '1234';
     const STORE_ID = '1';
@@ -87,7 +87,7 @@ class ReceivedUrlTest extends TestCase
 
     private $order;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->context = $this->createMock(Context::class, ['getBackendUrl']);
         $this->backendUrl = $this->createMock(UrlInterface::class, ['getUrl']);

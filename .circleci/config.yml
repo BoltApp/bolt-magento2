@@ -288,7 +288,7 @@ workflows:
   build:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
-      #- unit-php74-magento24
+      - unit-php74-magento24
       - unit-php72-magento23
       - unit-php71-magento22
       - unit-php70-magento22

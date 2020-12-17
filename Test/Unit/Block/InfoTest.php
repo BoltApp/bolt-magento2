@@ -21,15 +21,16 @@ use Bolt\Boltpay\Block\Info;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-class InfoTest extends \PHPUnit\Framework\TestCase
+class InfoTest extends BoltTestCase
 {
     /**
      * @var Info
      */
     protected $mock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder', 'getAdditionalData']);
     }

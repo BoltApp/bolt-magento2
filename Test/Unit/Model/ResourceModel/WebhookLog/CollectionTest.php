@@ -18,10 +18,10 @@
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\WebhookLog;
 
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 
-class CollectionTest extends TestCase
+class CollectionTest extends BoltTestCase
 {
     const TRANSACTION_ID = '1111';
     const HOOK_TYPE = 'pending';
@@ -34,7 +34,7 @@ class CollectionTest extends TestCase
     /**
      * Setup for CollectionTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->webhookLogCollectionMock = $this->getMockBuilder(Collection::class)
             ->disableOriginalConstructor()

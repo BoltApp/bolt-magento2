@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
 
 /**
@@ -25,7 +25,7 @@ use Bolt\Boltpay\Model\Api\Data\ShippingOption;
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\ShippingOption
  */
-class ShippingOptionTest extends TestCase
+class ShippingOptionTest extends BoltTestCase
 {
     const REFERENCE = 'REFERENCE';
     const SERVICE = 'SERVICE';
@@ -37,7 +37,7 @@ class ShippingOptionTest extends TestCase
      */
     protected $shippingOption;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->shippingOption = new ShippingOption();
         $this->shippingOption->setReference(self::REFERENCE);

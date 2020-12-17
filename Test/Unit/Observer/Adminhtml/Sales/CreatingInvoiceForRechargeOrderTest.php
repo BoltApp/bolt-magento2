@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder;
 use Magento\Sales\Model\Service\InvoiceService;
@@ -29,7 +29,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
  * Class OrderCreateProcessDataObserverTest
  * @coversDefaultClass \Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder
  */
-class CreateInvoiceForRechargedOrderTest extends TestCase
+class CreateInvoiceForRechargedOrderTest extends BoltTestCase
 {
     /**
      * @var InvoiceService
@@ -66,7 +66,7 @@ class CreateInvoiceForRechargedOrderTest extends TestCase
      */
     protected $invoice;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice']);
         $this->invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);

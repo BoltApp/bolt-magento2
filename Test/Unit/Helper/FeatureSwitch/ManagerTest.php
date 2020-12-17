@@ -23,14 +23,14 @@ use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class ManagerTest
  *
  * @coversDefaultClass \Bolt\Boltpay\Helper\FeatureSwitch\Manager
  */
-class ManagerTest extends TestCase
+class ManagerTest extends BoltTestCase
 {
     /**
      * @var Context
@@ -55,7 +55,7 @@ class ManagerTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
 
         $this->context = $this->createMock(Context::class);
@@ -86,8 +86,8 @@ class ManagerTest extends TestCase
             $this->fsRepo
         );
         
-        $this->assertAttributeEquals($this->gql, 'gql', $instance);
-        $this->assertAttributeEquals($this->fsRepo, 'fsRepo', $instance);
+        static::assertAttributeEquals($this->gql, 'gql', $instance);
+        static::assertAttributeEquals($this->fsRepo, 'fsRepo', $instance);
     }
 
     /**

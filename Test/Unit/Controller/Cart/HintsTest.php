@@ -23,14 +23,14 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class HintsTest
  * @package Bolt\Boltpay\Test\Unit\Controller\Cart
  * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\Hints
  */
-class HintsTest extends TestCase
+class HintsTest extends BoltTestCase
 {
     /** @var JsonFactory */
     private $resultJsonFactory;
@@ -47,7 +47,7 @@ class HintsTest extends TestCase
     /** @var Hints */
     private $currentMock;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
@@ -89,9 +89,9 @@ class HintsTest extends TestCase
             $this->cartHelper
         );
         
-        $this->assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
-        $this->assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        $this->assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
+        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
+        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
     }
 
     /**

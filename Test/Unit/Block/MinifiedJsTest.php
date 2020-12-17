@@ -19,13 +19,14 @@ namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\MinifiedJs;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class MinifiedJsTest
  * @coversDefaultClass \Bolt\Boltpay\Block\MinifiedJs
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class MinifiedJsTest extends \PHPUnit\Framework\TestCase
+class MinifiedJsTest extends BoltTestCase
 {
     const MINIFY_HTML = '<script>console.log("Bolt")</script>';
 
@@ -37,7 +38,7 @@ class MinifiedJsTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->block = $this->createPartialMock(MinifiedJs::class, ['minifyJs']);
     }

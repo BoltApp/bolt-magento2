@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\RestoreQuotePlugin;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
@@ -29,7 +29,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\RestoreQuotePlugin
  */
-class RestoreQuotePluginTest extends TestCase
+class RestoreQuotePluginTest extends BoltTestCase
 {
     /**
      * @var RestoreQuotePlugin
@@ -69,7 +69,7 @@ class RestoreQuotePluginTest extends TestCase
     /** @var callable|MockObject */
     protected $callback;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->checkoutSession = $this->createPartialMock(
             CheckoutSession::class,

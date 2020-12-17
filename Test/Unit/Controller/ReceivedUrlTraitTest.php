@@ -23,7 +23,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -32,7 +32,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
  * Class ReceivedUrlTraitTest
  * @coversDefaultClass \Bolt\Boltpay\Controller\ReceivedUrlTrait
  */
-class ReceivedUrlTraitTest extends TestCase
+class ReceivedUrlTraitTest extends BoltTestCase
 {
     const QUOTE_ID = 1;
     const ORDER_ID = 2;
@@ -75,7 +75,7 @@ class ReceivedUrlTraitTest extends TestCase
      */
     private $configHelper;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->currentMock = $this->getMockBuilder(ReceivedUrlTrait::class)
             ->enableOriginalConstructor()

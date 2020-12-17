@@ -25,13 +25,14 @@ use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Magento\Quote\Model\Quote\Address;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class FormTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class FormTest extends \PHPUnit\Framework\TestCase
+class FormTest extends BoltTestCase
 {
     /**
      * @var Context
@@ -81,7 +82,7 @@ class FormTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

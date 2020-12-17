@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer;
 use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
@@ -32,7 +32,7 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
  * Class RechargeCustomerTest
  * @coversDefaultClass \Bolt\Boltpay\Model\Payment
  */
-class RechargeCustomerTest extends TestCase
+class RechargeCustomerTest extends BoltTestCase
 {
     const ID  = '111';
     const QUOTE_ID  = '112';
@@ -77,7 +77,7 @@ class RechargeCustomerTest extends TestCase
      */
     private $customerCreditCardFactoryMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

@@ -32,7 +32,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CreateOrderTest
@@ -40,7 +40,7 @@ use PHPUnit\Framework\TestCase;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Debug
  */
-class DebugTest extends TestCase
+class DebugTest extends BoltTestCase
 {
     /**
      * @var Debug
@@ -95,7 +95,7 @@ class DebugTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         // prepare response
         $this->responseMock = $this->createMock(Response::class);

@@ -18,10 +18,10 @@
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\FeatureSwitch;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 
-class FeatureSwitchTest extends TestCase
+class FeatureSwitchTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\ResourceModel\FeatureSwitch
@@ -31,7 +31,7 @@ class FeatureSwitchTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->mockFeatureSwitch = $this->getMockBuilder(FeatureSwitch::class)
             ->disableOriginalConstructor()

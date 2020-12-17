@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\AbstractLoginPlugin;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -30,7 +30,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
  */
-class AbstractLoginPluginTest extends TestCase
+class AbstractLoginPluginTest extends BoltTestCase
 {
     /**
      * @var AbstractLoginPlugin
@@ -71,7 +71,7 @@ class AbstractLoginPluginTest extends TestCase
      */
     private $decider;
 
-    public function setUp()
+    public function setUpInternal()
     {
         $this->customerSession = $this->createPartialMock(
             CustomerSession::class,

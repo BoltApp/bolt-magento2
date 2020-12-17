@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Bolt\Boltpay\Model\CustomerCreditCard;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Request as BoltRequest;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\DataObjectFactory;
@@ -31,7 +31,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Data\Collection\AbstractDb;
 
-class CustomerCreditCardTest extends TestCase
+class CustomerCreditCardTest extends BoltTestCase
 {
     const QUOTE_ID = '111';
     const QUOTE_GRAND_TOTAL = '112';
@@ -101,7 +101,7 @@ class CustomerCreditCardTest extends TestCase
     /**
      * Setup for CustomerCreditCardTest Class
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
             ->disableOriginalConstructor()

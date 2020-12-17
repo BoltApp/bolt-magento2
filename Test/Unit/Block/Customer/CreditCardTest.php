@@ -25,13 +25,14 @@ use Magento\Framework\App\Request\Http;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CreditCardTest
  *
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class CreditCardTest extends \PHPUnit\Framework\TestCase
+class CreditCardTest extends BoltTestCase
 {
     const CUSTOMER_ID = '11111';
     const PAGE_SIZE = '1';
@@ -73,7 +74,7 @@ class CreditCardTest extends \PHPUnit\Framework\TestCase
     /**
      * @inheritdoc
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();

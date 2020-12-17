@@ -21,7 +21,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\ShippingMethods as BoltShippingMethods;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
@@ -49,6 +49,7 @@ use Magento\SalesRule\Model\Rule;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\Phrase;
 
 /**
  * Class ShippingMethodsTest
@@ -56,7 +57,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\ShippingMethods
  */
-class ShippingMethodsTest extends TestCase
+class ShippingMethodsTest extends BoltTestCase
 {
     const PARENT_QUOTE_ID = 1000;
     const IMMUTABLE_QUOTE_ID = 1001;
@@ -195,7 +196,7 @@ class ShippingMethodsTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    public function setUpInternal()
     {
         $this->createFactoryMocks();
 
@@ -547,7 +548,7 @@ class ShippingMethodsTest extends TestCase
         $this->currentMock->expects(self::once())->method('couponInvalidForShippingAddress')
             ->withAnyParameters()->willReturn(true);
 
-        self::setInaccessibleProperty($this->currentMock, 'taxAdjusted', true);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'taxAdjusted', true);
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $fn) use ($shippingOptions) {
                 $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
@@ -994,9 +995,9 @@ class ShippingMethodsTest extends TestCase
         $this->expectExceptionMessage('No Shipping Methods retrieved');
         $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
 
-        self::setInaccessibleProperty($this->currentMock, 'threshold', 0);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'threshold', 0);
         $this->currentMock->getShippingOptions($quote, $addressData);
-        self::setInaccessibleProperty($this->currentMock, 'threshold', 1);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'threshold', 1);
     }
 
     /**
@@ -1315,7 +1316,7 @@ Room 4000',
 
         $this->initCurrentMock();
 
-        self::setInaccessibleProperty(
+        TestHelper::setInaccessibleProperty(
             $this->currentMock,
             'quote',
             $immutableQuoteMock
@@ -1340,7 +1341,7 @@ Room 4000',
         $quote = $this->createPartialMock(Quote::class, ['getAllVisibleItems','getTotals']);
         $quote->expects(self::once())->method('getAllVisibleItems')->willReturn([]);
         $quote->expects(self::once())->method('getTotals')->willReturnSelf();
-        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(6103);
@@ -1375,7 +1376,7 @@ Room 4000',
 
         $this->initCurrentMock();
         $quote = $this->getQuoteMock([]);
-        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionCode(6103);
@@ -1425,7 +1426,7 @@ Room 4000',
         ];
         $this->initCurrentMock();
         $quote = $this->getQuoteMock([]);
-        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionCode(6103);
@@ -1477,7 +1478,7 @@ Room 4000',
         ];
         $this->initCurrentMock();
         $quote = $this->getQuoteMock([]);
-        self::setInaccessibleProperty($this->currentMock, 'quote', $quote);
+        TestHelper::setInaccessibleProperty($this->currentMock, 'quote', $quote);
 
         // no exception expected
 
@@ -1693,22 +1694,6 @@ Room 4000',
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $args);
-    }
-
-    /**
-     * @param  $object
-     * @param  $property
-     * @param  $value
-     * @throws \ReflectionException
-     */
-    private static function setInaccessibleProperty($object, $property, $value)
-    {
-        $reflection = new \ReflectionClass(
-            ($object instanceof MockObject) ? get_parent_class($object) : $object
-        );
-        $reflectionProperty = $reflection->getProperty($property);
-        $reflectionProperty->setAccessible(true);
-        $reflectionProperty->setValue($object, $value);
     }
 
     /**

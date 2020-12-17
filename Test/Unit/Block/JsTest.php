@@ -42,13 +42,14 @@ use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
 use Magento\Framework\Composer\ComposerFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class JsTest
  * @coversDefaultClass \Bolt\Boltpay\Block\Js
  * @package Bolt\Boltpay\Test\Unit\Block
  */
-class JsTest extends \PHPUnit\Framework\TestCase
+class JsTest extends BoltTestCase
 {
 
     /** @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings} */
@@ -127,7 +128,7 @@ class JsTest extends \PHPUnit\Framework\TestCase
      *
      * @throws ReflectionException if unable to create one of the required mocks
      */
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->objectManager = new ObjectManager($this);
         $this->helperContextMock = $this->createMock(Context::class);

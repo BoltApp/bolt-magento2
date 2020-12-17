@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Setup;
 
 use Bolt\Boltpay\Model\ErrorResponse;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Setup\RecurringData;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
@@ -31,7 +31,7 @@ use Magento\Framework\Setup\ModuleContextInterface;
  * Class RecurringDataTest
  * @coversDefaultClass \Bolt\Boltpay\Setup\RecurringData
  */
-class RecurringDataTest extends TestCase
+class RecurringDataTest extends BoltTestCase
 {
     /**
      * @var Manager
@@ -68,7 +68,7 @@ class RecurringDataTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->fsManager = $this->createPartialMock(Manager::class, ['updateSwitchesFromBolt']);
         $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);

@@ -19,14 +19,14 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
-use PHPUnit\Framework\TestCase;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class TaxResultTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api\Data
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\TaxResult
  */
-class TaxResultTest extends TestCase
+class TaxResultTest extends BoltTestCase
 {
     const SUBTOTAL_AMOUNT = 5;
 
@@ -35,7 +35,7 @@ class TaxResultTest extends TestCase
      */
     private $taxResult;
 
-    protected function setUp()
+    protected function setUpInternal()
     {
         $this->taxResult = new TaxResult;
         $this->taxResult->setSubtotalAmount(self::SUBTOTAL_AMOUNT);
