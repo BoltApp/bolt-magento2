@@ -22,7 +22,6 @@
          convertErrorsToExceptions="true"
          convertNoticesToExceptions="true"
          convertWarningsToExceptions="true"
-         strict="true"
          bootstrap="./framework/bootstrap.php"
         >
     <testsuite name="Bolt Unit Tests">
@@ -33,7 +32,7 @@
         <ini name="xdebug.max_nesting_level" value="300"/>
     </php>
     <filter>
-        <whitelist addUncoveredFilesFromWhiteList="true">
+        <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">../../../app/code/*</directory>
             <directory suffix=".php">../../../lib/internal/Magento</directory>
             <exclude>
@@ -48,8 +47,8 @@
     </listeners>
     <logging>
         <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
-        <coverage_html_placeholder>
+        <!--<coverage_html_placeholder>-->
             <log type="coverage-html" target="{{coverage_dir}}/test-reports/coverage" charset="UTF-8" yui="true" highlight="true"/>
-        </coverage_html_placeholder>
+        <!--</coverage_html_placeholder>-->
     </logging>
 </phpunit>
