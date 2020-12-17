@@ -46,7 +46,7 @@ class Webhook implements WebhookInterface
                 case "manage_order":
                 break;
                 case "validate_discount":
-                    $this->discountCodeValidation->validate($data);
+                    $this->discountCodeValidation->validate();
                 break;
                 case "cart_update":
                 break;
