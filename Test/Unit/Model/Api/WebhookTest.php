@@ -89,15 +89,9 @@ class WebhookTest extends TestCase
     private function initRequiredMocks()
     {
         $this->discountCodeValidation = $this->createMock(DiscountCodeValidation::class);
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
-        $this->errorResponse = $this->getMockBuilder(BoltErrorResponse::class)
-            ->setMethods(['prepareErrorMessage'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->response = $this->createMock(Response::class);
         
         $this->initCurrentMock();
