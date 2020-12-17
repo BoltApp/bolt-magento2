@@ -118,6 +118,17 @@ class Order extends AbstractHelper
     ];
 
     /**
+     * @var string[] Associative array containing supported credit card networks as keys and their respective labels as
+     *               values. Used for displaying in Order grids when related configuration is enabled.
+     */
+    const SUPPORTED_CC_TYPES = [
+        'amex'       => 'Amex',
+        'discover'   => 'Discover',
+        'mastercard' => 'MC',
+        'visa'       => 'Visa',
+    ];
+
+    /**
      * @var ApiHelper
      */
     private $apiHelper;

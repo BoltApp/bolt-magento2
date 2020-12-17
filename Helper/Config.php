@@ -101,6 +101,11 @@ class Config extends AbstractHelper
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
 
     /**
+     * Path for show card type in the order grid
+     */
+    const XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID = 'payment/boltpay/show_cc_type_in_order_grid';
+
+    /**
      * Path for Additional Checkout Button Class
      */
     const XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS = 'payment/boltpay/additional_checkout_button_class';
@@ -767,6 +772,16 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
+    }
+
+    /**
+     * Get show card type in the order grid
+     *
+     * @return  string
+     */
+    public function getShowCcTypeInOrderGrid()
+    {
+        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID);
     }
 
     /**

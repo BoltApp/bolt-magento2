@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element;
 
+use Bolt\Boltpay\Helper\Order;
+
 class SelectPlugin
 {
 
@@ -40,7 +42,7 @@ class SelectPlugin
                 ]
         ) && $subject->getName() == 'payment_method') {
             $config = $subject->getData('config');
-            foreach (\Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY as $key => $suffix) {
+            foreach (array_merge(Order::TP_METHOD_DISPLAY, Order::SUPPORTED_CC_TYPES) as $key => $suffix) {
                 $config['options'][] = [
                     'value'         => \Bolt\Boltpay\Model\Payment::METHOD_CODE . '_' . $key,
                     'label'         => 'Bolt-' . $suffix,

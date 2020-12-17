@@ -746,6 +746,7 @@ JSON;
     {
         return [
             ['getGlobalCSS', BoltConfig::XML_PATH_GLOBAL_CSS, '.replaceable-example-selector1 {color: black;}]'],
+            ['getShowCcTypeInOrderGrid', BoltConfig::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID, '1'],
             ['getAdditionalCheckoutButtonClass', BoltConfig::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS, 'with-cards'],
             ['getPrefetchAddressFields', BoltConfig::XML_PATH_PREFETCH_ADDRESS_FIELDS, 'address_field1, address_field2'],
             ['getButtonColor', BoltConfig::XML_PATH_BUTTON_COLOR],

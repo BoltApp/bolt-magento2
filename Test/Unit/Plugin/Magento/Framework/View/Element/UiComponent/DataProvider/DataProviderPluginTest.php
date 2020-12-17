@@ -50,14 +50,20 @@ class DataProviderPluginTest extends BoltTestCase
      */
     private $paymentMock;
 
+    /**
+     * @var \Bolt\Boltpay\Helper\Config|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $configHelperMock;
+
     protected function setUpInternal()
     {
         $this->paymentCollectionFactoryMock = $this->createPartialMock(
             \Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory::class,
             ['create']
         );
+        $this->configHelperMock = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->currentMock = $this->getMockBuilder(DataProviderPlugin::class)
-            ->setConstructorArgs([$this->paymentCollectionFactoryMock])
+            ->setConstructorArgs([$this->paymentCollectionFactoryMock, $this->configHelperMock])
             ->setMethods(null)
             ->getMock();
         $this->subjectMock = $this->createMock(
@@ -76,10 +82,15 @@ class DataProviderPluginTest extends BoltTestCase
      */
     public function __construct_always_setsProperty()
     {
-        $instance = new DataProviderPlugin($this->paymentCollectionFactoryMock);
+        $instance = new DataProviderPlugin($this->paymentCollectionFactoryMock, $this->configHelperMock);
         static::assertAttributeEquals(
             $this->paymentCollectionFactoryMock,
             'paymentCollectionFactory',
+            $instance
+        );
+        static::assertAttributeEquals(
+            $this->configHelperMock,
+            'configHelper',
             $instance
         );
     }
@@ -102,6 +113,8 @@ class DataProviderPluginTest extends BoltTestCase
      * @param array  $processors
      * @param array  $additionalData
      * @param array  $resultAfter
+     * @param array  $ccTypes
+     * @param bool   $showCcTypeInOrderGrid
      */
     public function afterGetData_withVariousOrderGridData_appendsProcessorToPaymentMethod(
         $name,
@@ -109,7 +122,9 @@ class DataProviderPluginTest extends BoltTestCase
         $expectedIds,
         $processors,
         $additionalData,
-        $resultAfter
+        $resultAfter,
+        $ccTypes = [],
+        $showCcTypeInOrderGrid = false
     ) {
         $this->subjectMock->expects(static::once())->method('getName')->willReturn($name);
         $this->paymentCollectionFactoryMock->method('create')
@@ -126,6 +141,8 @@ class DataProviderPluginTest extends BoltTestCase
             ->willReturnOnConsecutiveCalls(...$processors);
         $this->paymentMock->method('getAdditionalData')
             ->willReturnOnConsecutiveCalls(...$additionalData);
+        $this->paymentMock->method('getCcType')->willReturnOnConsecutiveCalls(...$ccTypes);
+        $this->configHelperMock->method('getShowCcTypeInOrderGrid')->willReturn($showCcTypeInOrderGrid);
         $resultActual = $this->currentMock->afterGetData($this->subjectMock, $resultBefore);
         static::assertEquals($resultAfter, $resultActual);
     }
@@ -306,6 +323,78 @@ class DataProviderPluginTest extends BoltTestCase
                     ],
                     'totalRecords' => 170,
                 ]
+            ],
+            'Valid CC Types but disabled in configuration - does not append' => [
+                'dataSourceName'        => 'sales_order_grid_data_source',
+                'resultBefore'          => [
+                    'items'        => [
+                        ['order_id' => '1', 'payment_method' => 'checkmo'],
+                        ['order_id' => '2', 'payment_method' => 'boltpay'],
+                        ['order_id' => '3', 'payment_method' => 'boltpay'],
+                        ['order_id' => '4', 'payment_method' => 'boltpay'],
+                        ['order_id' => '5', 'payment_method' => 'boltpay'],
+                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                    ],
+                    'totalRecords' => 170,
+                ],
+                'expectedIds'           => [2, 3, 4, 5],
+                'processors'            => [],
+                'additionalData'        => [],
+                'resultAfter'           => [
+                    'items'        => [
+                        ['order_id' => '1', 'payment_method' => 'checkmo'],
+                        ['order_id' => '2', 'payment_method' => 'boltpay'],
+                        ['order_id' => '3', 'payment_method' => 'boltpay'],
+                        ['order_id' => '4', 'payment_method' => 'boltpay'],
+                        ['order_id' => '5', 'payment_method' => 'boltpay'],
+                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                    ],
+                    'totalRecords' => 170,
+                ],
+                'ccTypes'               => [
+                    'amex',
+                    'mastercard',
+                    'visa',
+                    'discover',
+                    'mastercard',
+                ],
+                'showCcTypeInOrderGrid' => false,
+            ],
+            'Valid CC Types and enabled in configuration - does append'  => [
+                'dataSourceName'        => 'sales_order_grid_data_source',
+                'resultBefore'          => [
+                    'items'        => [
+                        ['order_id' => '1', 'payment_method' => 'checkmo'],
+                        ['order_id' => '2', 'payment_method' => 'boltpay'],
+                        ['order_id' => '3', 'payment_method' => 'boltpay'],
+                        ['order_id' => '4', 'payment_method' => 'boltpay'],
+                        ['order_id' => '5', 'payment_method' => 'boltpay'],
+                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                    ],
+                    'totalRecords' => 170,
+                ],
+                'expectedIds'           => [2, 3, 4, 5],
+                'processors'            => [],
+                'additionalData'        => [],
+                'resultAfter'           => [
+                    'items'        => [
+                        ['order_id' => '1', 'payment_method' => 'checkmo'],
+                        ['order_id' => '2', 'payment_method' => 'boltpay_amex'],
+                        ['order_id' => '3', 'payment_method' => 'boltpay_mastercard'],
+                        ['order_id' => '4', 'payment_method' => 'boltpay_visa'],
+                        ['order_id' => '5', 'payment_method' => 'boltpay_discover'],
+                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                    ],
+                    'totalRecords' => 170,
+                ],
+                'ccTypes'               => [
+                    'amex',
+                    'mastercard',
+                    'visa',
+                    'discover',
+                    'mastercard',
+                ],
+                'showCcTypeInOrderGrid' => true,
             ],
         ];
     }

@@ -59,8 +59,8 @@ class SelectPluginTest extends BoltTestCase
      *
      * @param string $namespace
      * @param string $name
-     * @param array $configBefore
-     * @param array $configAfter
+     * @param array  $configBefore
+     * @param array  $configAfter
      */
     public function afterPrepare($namespace, $name, $configBefore, $configAfter)
     {
@@ -91,18 +91,38 @@ class SelectPluginTest extends BoltTestCase
                 '__disableTmpl' => true,
             ],
             [
-		        'value'         => 'boltpay_affirm',
-		        'label'         => 'Bolt-Affirm',
-		        '__disableTmpl' => true,
+                'value'         => 'boltpay_affirm',
+                'label'         => 'Bolt-Affirm',
+                '__disableTmpl' => true,
             ],
-	        [
-		        'value'         => 'boltpay_braintree',
-		        'label'         => 'Bolt-Braintree',
-		        '__disableTmpl' => true,
+            [
+                'value'         => 'boltpay_braintree',
+                'label'         => 'Bolt-Braintree',
+                '__disableTmpl' => true,
             ],
             [
                 'value'         => 'boltpay_applepay',
                 'label'         => 'Bolt-ApplePay',
+                '__disableTmpl' => true,
+            ],
+            [
+                'value'         => 'boltpay_amex',
+                'label'         => 'Bolt-Amex',
+                '__disableTmpl' => true,
+            ],
+            [
+                'value'         => 'boltpay_discover',
+                'label'         => 'Bolt-Discover',
+                '__disableTmpl' => true,
+            ],
+            [
+                'value'         => 'boltpay_mastercard',
+                'label'         => 'Bolt-MC',
+                '__disableTmpl' => true,
+            ],
+            [
+                'value'         => 'boltpay_visa',
+                'label'         => 'Bolt-Visa',
                 '__disableTmpl' => true,
             ],
         ];

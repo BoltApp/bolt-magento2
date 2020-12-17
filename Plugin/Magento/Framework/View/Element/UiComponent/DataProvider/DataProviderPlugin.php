@@ -17,23 +17,32 @@
 
 namespace Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider;
 
+use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\Order;
 use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider;
 use Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory;
 
 class DataProviderPlugin
 {
     /**
-     * @var CollectionFactory
+     * @var CollectionFactory Order payment collection factory
      */
     private $paymentCollectionFactory;
 
     /**
+     * @var Config Bolt configuration helper
+     */
+    private $configHelper;
+
+    /**
      * DataProviderPlugin constructor.
      * @param CollectionFactory $paymentCollectionFactory
+     * @param Config            $configHelper
      */
-    public function __construct(CollectionFactory $paymentCollectionFactory)
+    public function __construct(CollectionFactory $paymentCollectionFactory, Config $configHelper)
     {
         $this->paymentCollectionFactory = $paymentCollectionFactory;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -74,6 +83,7 @@ class DataProviderPlugin
         $paymentCollection = $this->paymentCollectionFactory->create()
             ->addFieldToFilter('parent_id', ['in' => $ids]);
         foreach ($result['items'] as &$item) {
+            /** @var \Magento\Sales\Model\Order\Payment $payment */
             $payment = $paymentCollection->getItemByColumnValue(
                 'parent_id',
                 key_exists('order_id', $item) ? $item['order_id'] : $item['entity_id']
@@ -83,9 +93,14 @@ class DataProviderPlugin
             }
             if ($intersection = array_intersect(
                 [$payment->getData('additional_information/processor'), $payment->getAdditionalData()],
-                array_keys(\Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY)
+                array_keys(Order::TP_METHOD_DISPLAY)
             )) {
                 $item['payment_method'] .= '_' . reset($intersection);
+                continue;
+            }
+            $ccType = strtolower($payment->getCcType());
+            if (key_exists($ccType, Order::SUPPORTED_CC_TYPES) && $this->configHelper->getShowCcTypeInOrderGrid()) {
+                $item['payment_method'] .= '_' . $ccType;
             }
         }
         return $result;
