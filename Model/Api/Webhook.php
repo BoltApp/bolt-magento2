@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\WebhookInterface;
+use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -27,6 +28,11 @@ use Magento\Framework\Webapi\Rest\Response;
 
 class Webhook implements WebhookInterface
 {
+    /**
+     * @var CreateOrderInterface
+     */
+    protected $createOrder;
+
     /**
      * @var DiscountCodeValidationInterface
      */
@@ -53,6 +59,7 @@ class Webhook implements WebhookInterface
     protected $response;
 
     public function __construct(
+        CreateOrderInterface $createOrder,
         DiscountCodeValidationInterface $discountCodeValidation,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
@@ -60,6 +67,7 @@ class Webhook implements WebhookInterface
         Response $response
     )
     {
+        $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
