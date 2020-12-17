@@ -83,6 +83,11 @@ class Webhook implements WebhookInterface
         try {
             switch($type){
                 case "create_order":
+                    $this->createOrder->execute(
+                        $data['type'],
+                        $data['order'],
+                        $data['currency']
+                    );
                     break;
                 case "manage_order":
                     break;
