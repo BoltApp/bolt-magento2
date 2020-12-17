@@ -47,8 +47,6 @@
     </listeners>
     <logging>
         <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
-        <!--<coverage_html_placeholder>-->
-            <log type="coverage-html" target="{{coverage_dir}}/test-reports/coverage" charset="UTF-8" yui="true" highlight="true"/>
-        <!--</coverage_html_placeholder>-->
+        <log type="coverage-html" target="{{coverage_dir}}/test-reports/coverage" charset="UTF-8" yui="true" highlight="true"/>
     </logging>
 </phpunit>
