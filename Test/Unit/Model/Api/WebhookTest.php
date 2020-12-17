@@ -86,6 +86,19 @@ class WebhookTest extends TestCase
         $this->currentMock->execute($invalidType, $data);
     }
 
+    /**
+     * @test
+     */
+    public function discountValidation_returnsTrue()
+    {
+        $type = "validate_discount";
+        $data = ['data1' => 'not important'];
+        
+        $this->discountCodeValidation->expects(self::once())->method('validate')->willReturn(true);
+
+        $this->assertTrue($this->currentMock->execute($type, $data));
+    }
+
     private function initRequiredMocks()
     {
         $this->discountCodeValidation = $this->createMock(DiscountCodeValidation::class);
