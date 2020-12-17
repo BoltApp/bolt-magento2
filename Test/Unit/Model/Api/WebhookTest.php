@@ -67,6 +67,7 @@ class WebhookTest extends TestCase
     public function setUp()
     {
         $this->initRequiredMocks();
+        $this->initCurrentMock();
     }
 
     /**
@@ -94,7 +95,9 @@ class WebhookTest extends TestCase
         $type = "validate_discount";
         $data = ['data1' => 'not important'];
         
-        $this->discountCodeValidation->expects(self::once())->method('validate')->willReturn(true);
+        $this->discountCodeValidation->expects(self::once())
+            ->method('validate')
+            ->willReturn(true);
 
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
@@ -106,8 +109,6 @@ class WebhookTest extends TestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->response = $this->createMock(Response::class);
-        
-        $this->initCurrentMock();
     }
 
     private function initCurrentMock($methods = null)
@@ -134,13 +135,23 @@ class WebhookTest extends TestCase
         //TODO: Additional response stays here for now as it will be fleshed out in the handler
         $additionalErrorResponseData = [];
         $encodeErrorResult = '';
-        $this->errorResponse->expects(self::once())->method('prepareErrorMessage')
-            ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with(
-            new \Exception($message)
-        );
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
-        $this->response->expects(self::once())->method('setBody')->with($encodeErrorResult);
-        $this->response->expects(self::once())->method('sendResponse');
+
+        $this->errorResponse->expects(self::once())
+            ->method('prepareErrorMessage')
+            ->with($errCode, $message, $additionalErrorResponseData)
+            ->willReturn($encodeErrorResult);
+
+        $this->bugsnag->expects(self::once())
+            ->method('notifyException')
+            ->with(new \Exception($message));
+
+        $this->response->expects(self::once())
+            ->method('setHttpResponseCode')
+            ->with($httpStatusCode);
+        $this->response->expects(self::once())
+            ->method('setBody')
+            ->with($encodeErrorResult);
+        $this->response->expects(self::once())
+            ->method('sendResponse');
     }
 }
