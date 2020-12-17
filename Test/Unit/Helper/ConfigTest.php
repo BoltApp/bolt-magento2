@@ -143,7 +143,7 @@ JSON;
     /**
      * @var WriterInterface
      */
-    private $configWriter; 
+    private $configWriter;
 
     /**
      * @inheritdoc
@@ -249,7 +249,7 @@ JSON;
             $this->regionFactory,
             $this->composerFactory
         );
-        
+
         static::assertAttributeEquals($this->encryptor, 'encryptor', $instance);
         static::assertAttributeEquals($this->moduleResource, 'moduleResource', $instance);
         static::assertAttributeEquals($this->productMetadata, 'productMetadata', $instance);
@@ -1213,7 +1213,7 @@ JSON;
             ['track_checkout_funnel', 'false'],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(42, count($actual));
+        $this->assertEquals(43, count($actual));
         for ($i = 0; $i < 2; $i ++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
@@ -1534,7 +1534,7 @@ Room 4000',
             ],
         ];
     }
-  
+
     /**
      * @test
      * @covers ::getComposerVersion
@@ -1590,9 +1590,9 @@ Room 4000',
                     $localMock->setting = $settingValue;
                 }
             );
-        
+
         $localMock->setConfigSetting($key_name, $expected);
-        
+
         $result = $localMock->setting;
         $this->assertEquals($expected, $result);
     }
@@ -1639,10 +1639,10 @@ Room 4000',
                     $localMock->setting = $settingValue;
                 }
             );
-        
+
         // Value of property should not have changed
         $localMock->setConfigSetting($key_name, $original);
-        
+
         $result = $localMock->setting;
         $this->assertEquals($original, $result);
     }
