@@ -19,11 +19,10 @@ class TestHelper extends TestCase
      */
     public static function getReflectedClass($class)
     {
-        if (is_subclass_of($class, '\PHPUnit\Framework\MockObject\MockObject')) {
-            return new ReflectionClass(get_parent_class($class));
-        } else if (is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
+        if (is_subclass_of($class, '\PHPUnit\Framework\MockObject\MockObject') || is_subclass_of($class, 'PHPUnit_Framework_MockObject_MockObject')) {
             return new ReflectionClass(get_parent_class($class));
         }
+        
         return new ReflectionClass($class);
     }
 
@@ -160,6 +159,20 @@ class TestHelper extends TestCase
         $reflectionProperty = $reflection->getProperty($property);
         $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($object, $value);
+    }
+    
+    /**
+     * @param array|\Traversable $subset
+     */
+    public static function buildArraySubset($subset)
+    {
+        // https://github.com/sebastianbergmann/phpunit/issues/3494
+        // Deprecate assertArraySubset()
+        if (class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
+            return new \PHPUnit\Framework\Constraint\ArraySubset($subset);
+        } else {
+            return new \Bolt\Boltpay\Test\Unit\ArraySubset($subset);
+        }
     }
 }
 class_alias(UnirgyMock::class, '\Unirgy\Giftcert\Model\Cert');

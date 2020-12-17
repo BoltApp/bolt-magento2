@@ -248,24 +248,10 @@ class ApiTest extends BoltTestCase
 
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
-        // https://github.com/sebastianbergmann/phpunit/issues/3494
-        // Deprecate assertArraySubset()
-        if (class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
-            $boltApiRequest = new \PHPUnit\Framework\Constraint\ArraySubset(
-                [
-                    'BOLT API REQUEST' => $request->getData()
-                ]
-            );
-        } else {
-            $boltApiRequest = new \Bolt\Boltpay\Test\Unit\ArraySubset(
-                [
-                    'BOLT API REQUEST' => $request->getData()
-                ]
-            );
-        }
+
         $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
             [
-                $boltApiRequest
+                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
             ],
             [
                 [
@@ -404,24 +390,10 @@ class ApiTest extends BoltTestCase
 
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
-        // https://github.com/sebastianbergmann/phpunit/issues/3494
-        // Deprecate assertArraySubset()
-        if (class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
-            $boltApiRequest = new \PHPUnit\Framework\Constraint\ArraySubset(
-                [
-                    'BOLT API REQUEST' => $request->getData()
-                ]
-            );
-        } else {
-            $boltApiRequest = new \Bolt\Boltpay\Test\Unit\ArraySubset(
-                [
-                    'BOLT API REQUEST' => $request->getData()
-                ]
-            );
-        }
+
         $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
             [
-                $boltApiRequest
+                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
             ],
             [
                 [
