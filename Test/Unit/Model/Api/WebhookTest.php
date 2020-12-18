@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\DiscountCodeValidation;
+use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
@@ -51,6 +52,11 @@ class WebhookTest extends TestCase
      * @var MockObject|DiscountCodeValidation
      */
     private $discountCodeValidation;
+
+    /**
+     * @var MockObject|OrderManagement
+     */
+    private $orderManagement;
 
     /**
      * @var MockObject|Request
@@ -112,6 +118,7 @@ class WebhookTest extends TestCase
     {
         $this->createOrder = $this->createMock(CreateOrder::class);
         $this->discountCodeValidation = $this->createMock(DiscountCodeValidation::class);
+        $this->orderManagement = $this->createMock(OrderManagement::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
@@ -124,6 +131,7 @@ class WebhookTest extends TestCase
             ->setConstructorArgs([
                 $this->createOrder,
                 $this->discountCodeValidation,
+                $this->orderManagement,
                 $this->bugsnag,
                 $this->logHelper,
                 $this->errorResponse,

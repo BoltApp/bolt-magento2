@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\WebhookInterface;
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
+use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -37,6 +38,11 @@ class Webhook implements WebhookInterface
      * @var DiscountCodeValidationInterface
      */
     protected $discountCodeValidation;
+    
+    /**
+     * @var OrderManagementInterface
+     */
+    protected $orderManagement;
 
     /**
      * @var Bugsnag
@@ -61,6 +67,7 @@ class Webhook implements WebhookInterface
     public function __construct(
         CreateOrderInterface $createOrder,
         DiscountCodeValidationInterface $discountCodeValidation,
+        OrderManagementInterface $orderManagement,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -69,6 +76,7 @@ class Webhook implements WebhookInterface
     {
         $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
+        $this->orderManagement = $orderManagement;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
