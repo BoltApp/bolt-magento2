@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 
 class WebhookTest extends TestCase
 {
+    const DATA = ['data1' => 'not important'];
 
     /** 
      * @var MockObject|Bugsnag 
@@ -88,7 +89,6 @@ class WebhookTest extends TestCase
     public function invalidWebhookType_sendsErrorResponse()
     {
         $invalidType = "invalid_hook_type";
-        $data = ['data1' => 'not important'];
 
         $this->expectErrorResponse(
             BoltErrorResponse::ERR_SERVICE,
@@ -96,7 +96,7 @@ class WebhookTest extends TestCase
             422
         );
 
-        $this->currentMock->execute($invalidType, $data);
+        $this->currentMock->execute($invalidType, self::DATA);
     }
 
     /**
@@ -105,12 +105,27 @@ class WebhookTest extends TestCase
     public function discountValidation_returnsTrue()
     {
         $type = "validate_discount";
-        $data = ['data1' => 'not important'];
         
         $this->discountCodeValidation->expects(self::once())
             ->method('validate')
             ->willReturn(true);
 
+        $this->assertTrue($this->currentMock->execute($type, self::DATA));
+    }
+
+    /**
+     * @test
+     */
+    public function orderCreation_returnsTrue()
+    {
+        $type = "create_order";
+        $data = ['type' => 'type', 'order' => 'order', 'currency' => 'currency'];
+
+        $this->createOrder->expects(self::once())
+            ->method('execute')
+            ->with($data['type'], $data['order'], $data['currency'])
+            ->willReturn(true);
+        
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
 
