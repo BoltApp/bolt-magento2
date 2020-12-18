@@ -219,6 +219,10 @@ class CreateOrder implements CreateOrderInterface
             $this->preProcessWebhook($immutableQuote->getStoreId());
 
             $transaction = json_decode($payload);
+            // V2 webhooks send requests as {"type": ... "data":{requestContent}} so we need to extract the data we want
+            if (isset($transaction->data)) {
+                $transaction = $transaction->data;
+            }
             $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
 

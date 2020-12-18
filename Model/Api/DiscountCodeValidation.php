@@ -113,6 +113,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         $requestArray = json_decode(json_encode($request), true);
 
+        // V2 webhooks send requests as {"type": ... "data":{requestContent}} so we need to extract the data we want
         if (isset($requestArray['data'])) {
             $requestArray = $requestArray['data'];
         }
