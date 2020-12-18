@@ -84,9 +84,9 @@ class Webhook implements WebhookInterface
             switch($type){
                 case "create_order":
                     $this->createOrder->execute(
-                        $data['type'],
-                        $data['order'],
-                        $data['currency']
+                        isset($data['type']) ? $data['type'] : null,
+                        isset($data['order']) ? $data['order'] : null,
+                        isset($data['currency']) ? $data['currency'] : null
                     );
                     break;
                 case "manage_order":
@@ -121,6 +121,11 @@ class Webhook implements WebhookInterface
             return false;
         }
         catch (\Exception $e) {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                500
+            );
             return false;
         }
 
