@@ -13,6 +13,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Catalog\Model\Product\Type as ProductType;
 
 class TestUtils {
 
@@ -25,12 +26,19 @@ class TestUtils {
     }
 
     /**
+     * @param array $data
      * @return mixed
      */
-    public static function createQuote()
+    public static function createQuote($data = [])
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
+        if ($data) {
+            foreach ($data as $key => $value) {
+                $quote->setData($key, $value);
+            }
+        }
+
         $quote->save();
         return $quote;
     }
@@ -153,6 +161,22 @@ class TestUtils {
         $orderRepository = $objectManager->create(OrderRepositoryInterface::class);
         $orderRepository->save($order);
         return $order;
+    }
+
+    public static function getSimpleProduct() {
+        $objectManager = Bootstrap::getObjectManager();
+        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        if ($productCollection->getSize() > 0) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
+            $product =  $productCollection->getFirstItem();
+
+            if ($product->getTypeId() === ProductType::TYPE_SIMPLE) {
+                return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+            }
+        }
+
+        return self::createSimpleProduct();
     }
 
     /**

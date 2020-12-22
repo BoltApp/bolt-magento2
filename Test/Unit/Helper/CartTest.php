@@ -827,20 +827,11 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdNotCached_loadsQuoteById()
     {
-        TestHelper::setProperty($this->currentMock, 'quotes', []);
-        $quoteMock = $this->createMock(Quote::class);
-        $this->searchCriteriaBuilder->expects(static::once())->method('addFilter')
-            ->with('main_table.entity_id', self::IMMUTABLE_QUOTE_ID)->willReturnSelf();
-        $searchCriteriaMock = $this->createMock(SearchCriteria::class);
-        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteriaMock);
-        $this->quoteRepository->expects(static::once())->method('getList')->willReturnSelf();
-        $this->quoteRepository->expects(static::once())->method('getItems')->willReturn([$quoteMock]);
-        static::assertEquals($quoteMock, $this->currentMock->getQuoteById(self::IMMUTABLE_QUOTE_ID));
-        static::assertAttributeEquals(
-            [self::IMMUTABLE_QUOTE_ID => $quoteMock],
-            'quotes',
-            $this->currentMock
-        );
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals($quoteId, $boltHelperCart->getQuoteById($quoteId)->getId());
     }
 
     /**
@@ -853,15 +844,9 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdNotCachedAndNotLoaded_returnsFalse()
     {
-        TestHelper::setProperty($this->currentMock, 'quotes', []);
-        $this->searchCriteriaBuilder->expects(static::once())->method('addFilter')
-            ->with('main_table.entity_id', self::IMMUTABLE_QUOTE_ID)->willReturnSelf();
-        $searchCriteriaMock = $this->createMock(SearchCriteria::class);
-        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteriaMock);
-        $this->quoteRepository->expects(static::once())->method('getList')->willReturnSelf();
-        $this->quoteRepository->expects(static::once())->method('getItems')->willReturn([]);
-        static::assertFalse($this->currentMock->getQuoteById(self::IMMUTABLE_QUOTE_ID));
-        static::assertAttributeEquals([], 'quotes', $this->currentMock);
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertFalse($boltHelperCart->getQuoteById(self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -874,22 +859,17 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdCached_returnsFromPropertyCache()
     {
-        $quoteMock = $this->quoteMock;
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
         TestHelper::setProperty(
-            $this->currentMock,
+            $boltHelperCart,
             'quotes',
-            [self::IMMUTABLE_QUOTE_ID => $quoteMock]
+            [$quoteId => $quote]
         );
-        $this->searchCriteriaBuilder->expects(static::never())->method('addFilter');
-        $this->searchCriteriaBuilder->expects(static::never())->method('create');
-        $this->quoteRepository->expects(static::never())->method('getList');
-        $this->quoteRepository->expects(static::never())->method('getItems');
-        static::assertEquals($quoteMock, $this->currentMock->getQuoteById(self::IMMUTABLE_QUOTE_ID));
-        static::assertAttributeEquals(
-            [self::IMMUTABLE_QUOTE_ID => $quoteMock],
-            'quotes',
-            $this->currentMock
-        );
+        static::assertEquals($quote, $boltHelperCart->getQuoteById($quoteId));
+
     }
 
     /**
@@ -902,9 +882,11 @@ class CartTest extends BoltTestCase
      */
     public function getActiveQuoteById_always_getsActiveQuoteFromRepository()
     {
-        $this->quoteRepository->expects(static::once())->method('getActive')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        static::assertEquals($this->quoteMock, $this->currentMock->getActiveQuoteById(self::IMMUTABLE_QUOTE_ID));
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote(['is_active' => true]);
+        $quoteId = $quote->getId();
+        static::assertEquals($quoteId, $boltHelperCart->getActiveQuoteById($quoteId)->getId());
     }
 
     /**
@@ -918,21 +900,16 @@ class CartTest extends BoltTestCase
      */
     public function getOrderByIncrementId_whenOrderCachedAndForceLoadTrue_loadsOrderByIncrementId()
     {
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty(
-            $this->currentMock,
+            $boltHelperCart,
             'orderData',
-            [self::ORDER_INCREMENT_ID => $this->orderMock]
+            [$order->getIncrementId() => $order]
         );
-        $this->searchCriteriaBuilder->expects(static::once())->method('addFilter')
-            ->with('increment_id', self::ORDER_INCREMENT_ID, 'eq')->willReturnSelf();
-        $searchCriteriaMock = $this->createMock(SearchCriteria::class);
-        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteriaMock);
-        $this->orderRepository->expects(static::once())->method('getList')->willReturnSelf();
-        $this->orderRepository->expects(static::once())->method('getItems')->willReturn([$this->orderMock]);
-        static::assertEquals(
-            $this->orderMock,
-            $this->currentMock->getOrderByIncrementId(self::ORDER_INCREMENT_ID, true)
-        );
+        static::assertEquals($order->getId(), $boltHelperCart->getOrderByIncrementId($order->getIncrementId(), true)->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -2356,16 +2333,14 @@ ORDER
         */
         public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
         {
-        $currentMock = $this->getCurrentMock(['getOrderByIncrementId']);
-        $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
-            ->willReturn($this->orderMock);
-        static::assertEquals(
-            $this->orderMock,
-            $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID],
-                $this->quoteMock
-            )
-        );
+            $this->skipTestInUnitTestsFlow();
+            $order = TestUtils::createDumpyOrder();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            static::assertEquals($order->getId(), $boltHelperCart->doesOrderExist(
+                ['display_id' => $order->getIncrementId()],
+                null
+            )->getId());
+            TestUtils::cleanupSharedFixtures([$order]);
         }
 
         /**
@@ -2377,21 +2352,15 @@ ORDER
         */
         public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
         {
-        $currentMock = $this->getCurrentMock(['getOrderByIncrementId','getOrderByQuoteId']);
-        $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
-            ->willReturn(false);
-        $this->quoteMock->expects(static::once())->method('getId')
-            ->willReturn(self::PARENT_QUOTE_ID);
-        $currentMock->expects(static::once())->method('getOrderByQuoteId')->with(self::PARENT_QUOTE_ID)
-            ->willReturn($this->orderMock);
-
-        static::assertEquals(
-            $this->orderMock,
-            $currentMock->doesOrderExist(
-                ['display_id' => self::ORDER_INCREMENT_ID],
-                $this->quoteMock
-            )
-        );
+            $this->skipTestInUnitTestsFlow();
+            $quote = TestUtils::createQuote();
+            $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            static::assertEquals(
+                $order->getId(),
+                $boltHelperCart->doesOrderExist(['display_id' => self::ORDER_INCREMENT_ID], $quote)->getId()
+            );
+            TestUtils::cleanupSharedFixtures([$order]);
         }
 
         /**
@@ -2404,17 +2373,10 @@ ORDER
         */
         public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
         {
-        $currentMock = $this->getCurrentMock(['getOrderByIncrementId','getOrderByQuoteId']);
-        $currentMock->expects(static::once())->method('getOrderByIncrementId')->with(self::ORDER_INCREMENT_ID)
-            ->willReturn(false);
-
-        $this->quoteMock->expects(static::once())->method('getId')
-            ->willReturn(self::PARENT_QUOTE_ID);
-        $currentMock->expects(static::once())->method('getOrderByQuoteId')->with(self::PARENT_QUOTE_ID)
-            ->willReturn(false);
-
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
-            $currentMock->doesOrderExist(
+            $boltHelperCart->doesOrderExist(
                 ['display_id' => self::ORDER_INCREMENT_ID],
                 $this->quoteMock
             )
@@ -2426,21 +2388,11 @@ ORDER
         */
         public function getOrderByQuoteId()
         {
-        $quoteId = self::QUOTE_ID;
-
-        $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
-
-        $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('quote_id', $quoteId, 'eq')->willReturnSelf();
-        $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
-
-        $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-        $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-        $collection = [$orderInterface, $orderInterface2];
-        $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
-        $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
-
-        $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
-        $this->assertSame($orderInterface, $this->currentMock->getOrderByQuoteId($quoteId));
+            $this->skipTestInUnitTestsFlow();
+            $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            static::assertEquals($order->getId(), $boltHelperCart->getOrderByQuoteId(self::QUOTE_ID)->getId());
+            TestUtils::cleanupSharedFixtures([$order]);
         }
 
         /**
@@ -2448,21 +2400,12 @@ ORDER
          */
         public function getOrderById()
         {
-            $orderId = 1;
-
-            $searchCriteria = $this->createMock(\Magento\Framework\Api\SearchCriteria::class);
-
-            $this->searchCriteriaBuilder->expects($this->once())->method('addFilter')->with('main_table.entity_id', $orderId)->willReturnSelf();
-            $this->searchCriteriaBuilder->expects($this->once())->method('create')->willReturn($searchCriteria);
-
-            $orderInterface = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-            $orderInterface2 = $this->createMock(\Magento\Sales\Api\Data\OrderInterface::class);
-            $collection = [$orderInterface, $orderInterface2];
-            $orderSearchResultInterface = $this->createMock(\Magento\Sales\Api\Data\OrderSearchResultInterface::class);
-            $orderSearchResultInterface->expects($this->once())->method('getItems')->willReturn($collection);
-
-            $this->orderRepository->expects($this->once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResultInterface);
-            $this->assertSame($orderInterface, $this->currentMock->getOrderById($orderId));
+            $this->skipTestInUnitTestsFlow();
+            $order = TestUtils::createDumpyOrder();
+            $orderId = $order->getId();
+            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            static::assertEquals($order->getId(), $boltHelperCart->getOrderById($orderId)->getId());
+            TestUtils::cleanupSharedFixtures([$order]);
         }
 
         /**
@@ -2604,7 +2547,7 @@ ORDER
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             TestUtils::setQuoteToSession($quote);
-            $product = TestUtils::createSimpleProduct();
+            $product = TestUtils::getSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
 
@@ -2699,7 +2642,7 @@ ORDER
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
 
-        $product = TestUtils::createSimpleProduct();
+        $product = TestUtils::getSimpleProduct();
         $this->objectsToClean[] = $product;
         $quote->addProduct($product,1);
 
@@ -3375,7 +3318,7 @@ ORDER
             $quote = Bootstrap::getObjectManager()->create(Quote::class);
             $quote->setQuoteCurrencyCode("USD");
 
-            $product = TestUtils::createSimpleProduct();
+            $product = TestUtils::getSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
 
