@@ -301,4 +301,9 @@
                 sortOrder="1"/>
     </type>
 
+    <type name="Magento\Quote\Observer\Frontend\Quote\Address\CollectTotalsObserver">
+        <plugin name="bolt_boltpay_magento_quote_observer_frontend_quote_address_collect_totals_observer_plugin"
+                type="Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin"
+                sortOrder="10"/>
+    </type>
 </config>
