@@ -124,6 +124,11 @@
                         <comment>This CSS will be added to any page that displays the Bolt Checkout button.</comment>
                         <config_path>payment/boltpay/global_css</config_path>
                     </field>
+                    <field id="show_cc_type_in_order_grid" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Show card type in the order grid</label>
+                        <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                 </group>
                 <group id="boltpay_advanced" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Advanced options</label>

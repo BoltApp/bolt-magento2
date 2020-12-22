@@ -101,6 +101,11 @@ class Config extends AbstractHelper
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
 
     /**
+     * Path for show card type in the order grid
+     */
+    const XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID = 'payment/boltpay/show_cc_type_in_order_grid';
+
+    /**
      * Path for Additional Checkout Button Class
      */
     const XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS = 'payment/boltpay/additional_checkout_button_class';
@@ -436,7 +441,7 @@ class Config extends AbstractHelper
         "capture_merchant_metrics" => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         "track_checkout_funnel" => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
     ];
-    
+
     /**
      *  Xml path to disable checkout
      *  From Magento 2.4.1, it makes Magento\Downloadable\Observer\IsAllowedGuestCheckoutObserver::XML_PATH_DISABLE_GUEST_CHECKOUT as private,
@@ -767,6 +772,16 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
+    }
+
+    /**
+     * Get show card type in the order grid
+     *
+     * @return  string
+     */
+    public function getShowCcTypeInOrderGrid()
+    {
+        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID);
     }
 
     /**
@@ -1848,6 +1863,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('track_checkout_funnel')
                                                          ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
+        // Show card type in the order grid
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+                                                         ->setName('show_cc_type_in_order_grid')
+                                                         ->setValue($this->getShowCcTypeInOrderGrid());
 
         return $boltSettings;
     }
@@ -1868,8 +1887,8 @@ class Config extends AbstractHelper
 
         if ($currentValue != $settingValue) {
             $this->getConfigWriter()->save(
-                self::CONFIG_SETTING_PATHS[$settingName], 
-                $settingValue, 
+                self::CONFIG_SETTING_PATHS[$settingName],
+                $settingValue,
                 ScopeInterface::SCOPE_STORE,
                 $storeId
             );
