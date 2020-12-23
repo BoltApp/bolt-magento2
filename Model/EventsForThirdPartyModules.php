@@ -479,6 +479,7 @@ class EventsForThirdPartyModules
                 [
                     "module" => "Amasty_StoreCredit",
                     "boltClass" => Amasty_StoreCredit::class,
+                    "alwaysRun" => true,
                 ]
             ],
         ],
@@ -591,7 +592,7 @@ class EventsForThirdPartyModules
      */
     private function prepareForListenerRun($listener, $createInstance = true)
     {
-        if (!$this->isModuleAvailable($listener["module"])) {
+        if (!$this->isModuleAvailable($listener["module"]) && empty($listener["alwaysRun"])) {
             return [false, null];
         }
         if (isset($listener["checkClasses"])) {
