@@ -71,21 +71,26 @@ class ReceivedUrl extends Action
     }
 
     /**
-     * Determines if referrer to the current request is admin order creation page
+     * Determines if the referrer header to the current request is not set.
+     * This sometimes happens for pay-by-link requests.
      *
-     * @return bool true if request referrer is admin order create page otherwise false
+     * @return bool true if the request referrer is not set otherwise false
      */
-    private function hasAdminUrlReferer()
+    private function hasNoUrlReferer()
     {
-        $this->backendUrl->setScope(0);
-        /**
-         * @see \Magento\Framework\App\Response\RedirectInterface::getRefererUrl can't be used
-         * because {@see \Magento\Store\App\Response\Redirect::_isUrlInternal} check fails
-         * when admin is on a different (sub)domain compared to store
-         */
+        return ! $this->getRequest()->getServer('HTTP_REFERER');
+    }
+
+    /**
+     * Determines if the referrer to the current request is from Bolt CDN (pay-by-link request).
+     *
+     * @return bool true if the request referrer is a page on Bolt CDN otherwise false
+     */
+    private function hasBoltUrlReferer()
+    {
         $refererUrl = $this->getRequest()->getServer('HTTP_REFERER');
-        $adminUrl = $this->backendUrl->getUrl("sales/order_create/index", ['_nosecret' => true]);
-        return substr($refererUrl, 0, strlen($adminUrl)) === $adminUrl;
+        $cdnUrl = $this->configHelper->getCdnUrl();
+        return substr($refererUrl, 0, strlen($cdnUrl)) === $cdnUrl;
     }
 
     /**
@@ -99,7 +104,7 @@ class ReceivedUrl extends Action
             return false;
         }
 
-        if (!$this->hasAdminUrlReferer()) {
+        if ($this->hasNoUrlReferer() || $this->hasBoltUrlReferer()) {
             return false;
         }
 
