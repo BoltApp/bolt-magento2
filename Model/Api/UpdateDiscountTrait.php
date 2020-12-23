@@ -345,10 +345,10 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
-        
+
         if ($quote->getCouponCode() != $couponCode) {
             throw new BoltException(
-                __('Coupon code does not equal with a quote code'),
+                __('Coupon code %1 does not equal with the quote code %2.', $couponCode, $quote->getCouponCode()),
                 null,
                 BoltErrorResponse::ERR_SERVICE,
                 $quote

@@ -1072,11 +1072,12 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
-
-        $quote = $this->getQuoteMock('OTHER');
+        
+        $quoteCouponCode = 'OTHER';
+        $quote = $this->getQuoteMock($quoteCouponCode);
 
         $this->expectException(BoltException::class);
-        $this->expectExceptionMessage('Coupon code does not equal with a quote code');
+        $this->expectExceptionMessage(sprintf('Coupon code %s does not equal with the quote code %s.', self::COUPON_CODE, $quoteCouponCode));
         $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
