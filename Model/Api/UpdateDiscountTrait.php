@@ -235,6 +235,16 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
+        
+        if (!$rule->getIsActive()) {
+            $this->logHelper->addInfoLog('Error: coupon is inactive.');
+            throw new BoltException(
+                __('The coupon code %1 is inactive', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID,
+                $quote
+            );
+        }
 
         // get the rule id
         $ruleId = $rule->getRuleId();
@@ -326,6 +336,16 @@ trait UpdateDiscountTrait
 
         $this->discountHelper->setCouponCode($quote, $couponCode);
 
+        if ($quote->getCouponCode() === '') {
+            $this->logHelper->addInfoLog('Error: quote does not meet rule\'s conditions.');
+            throw new BoltException(
+                __('The quote does not meet rule\'s conditions of coupon code %1.', $couponCode),
+                null,
+                BoltErrorResponse::ERR_CODE_INVALID,
+                $quote
+            );
+        }
+        
         if ($quote->getCouponCode() != $couponCode) {
             throw new BoltException(
                 __('Coupon code does not equal with a quote code'),
