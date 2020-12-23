@@ -5309,6 +5309,8 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        $this->quoteResource->expects(static::once())->method('save')->with($this->quoteMock);
+        $this->quoteRepository->expects(static::exactly(2))->method('save')->with($this->quoteMock);
 
         static::assertEquals($expectedCartData, $cartMock->createCart($items));
     }
@@ -5423,6 +5425,8 @@ ORDER
         $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        $this->quoteResource->expects(static::once())->method('save')->with($this->quoteMock);
+        $this->quoteRepository->expects(static::exactly(2))->method('save')->with($this->quoteMock);
 
         static::assertEquals($expectedCartData, $cartMock->createCart($items));
     }
@@ -5500,6 +5504,8 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        $this->quoteResource->expects(static::once())->method('save')->with($this->quoteMock);
+        $this->quoteRepository->expects(static::exactly(2))->method('save')->with($this->quoteMock);
 
         static::assertEquals($expectedCartData, $cartMock->createCart($items));
     }

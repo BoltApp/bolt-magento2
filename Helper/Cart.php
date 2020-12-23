@@ -2354,9 +2354,11 @@ class Cart extends AbstractHelper
         }
 
         $quote->setIsActive(false);
-
+        $this->saveQuote($quote);
         $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
+        $this->saveQuote($quote);
+        
         return $cart_data;
     }
 
