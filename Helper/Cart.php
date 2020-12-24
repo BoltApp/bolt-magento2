@@ -1108,7 +1108,7 @@ class Cart extends AbstractHelper
         $save = true,
         $emailFields = ['customer_email', 'email'],
         $excludeFields = ['entity_id', 'address_id', 'reserved_order_id',
-            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
+            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all', 'customer_note']
     ) {
         foreach ($parent->getData() as $key => $value) {
             if (in_array($key, $excludeFields)) {
@@ -2358,7 +2358,7 @@ class Cart extends AbstractHelper
         $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
         $this->saveQuote($quote);
-        
+
         return $cart_data;
     }
 
