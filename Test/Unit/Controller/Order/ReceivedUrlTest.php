@@ -124,60 +124,58 @@ class ReceivedUrlTest extends BoltTestCase
 
     /**
      * @test
-     * that hasAdminUrlReferer returns true when referrer for current request is admin order create page
+     * that hasBoltUrlReferer returns true when referrer for current request is a page on Bolt CDN (pay-by-link)
      *
-     * @covers ::hasAdminUrlReferer
+     * @covers ::hasBoltUrlReferer
      *
-     * @dataProvider hasAdminUrlReferer_withVariousHttpReferrersProvider
+     * @dataProvider hasBoltUrlReferer_withVariousHttpReferrersProvider
      *
      * @param string $referrerUrl of the currenct request
      * @param bool   $isAdminReferrer expected output of the method call
      *
      * @throws \ReflectionException if class tested doesn't have _request property or hasAdminUrlReferer method
      */
-    public function hasAdminUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsAdminOrderCreate(
+    public function hasBoltUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsBoltCDN(
         $referrerUrl,
-        $isAdminReferrer
+        $isBoltCDNReferrer
     ) {
         $om = new ObjectManager($this);
-        $backendUrl = $this->createMock(\Magento\Backend\Model\UrlInterface::class);
-        $instance = $om->getObject(\Bolt\Boltpay\Controller\Order\ReceivedUrl::class, ['backendUrl' => $backendUrl]);
+        $configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
+        $configHelper->expects(static::atMost(1))->method('getCdnUrl')->willReturn('https://connect-sandbox.bolt.com');
+        $instance = $om->getObject(\Bolt\Boltpay\Controller\Order\ReceivedUrl::class, ['configHelper' => $configHelper]);
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
-        $backendUrl->expects(static::once())->method('setScope')->with(0);
         $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')->willReturn($referrerUrl);
-        $backendUrl->expects(static::once())->method('getUrl')->with("sales/order_create/index", ['_nosecret' => true])
-            ->willReturn('https://example.com/admin/sales/order/create');
         TestHelper::setProperty($instance, '_request', $request);
-        static::assertEquals($isAdminReferrer, TestHelper::invokeMethod($instance, 'hasAdminUrlReferer'));
+        static::assertEquals($isBoltCDNReferrer, TestHelper::invokeMethod($instance, 'hasBoltUrlReferer'));
     }
 
     /**
-     * Data provider for {@see hasAdminUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsAdminOrderCreate}
+     * Data provider for {@see hasBoltUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsBoltCDN}
      *
      * @return array[] containing referrer url and expected result of the method tested
      */
-    public function hasAdminUrlReferer_withVariousHttpReferrersProvider()
+    public function hasBoltUrlReferer_withVariousHttpReferrersProvider()
     {
         return [
             [
-                'referrerUrl'     => 'https://example.com/admin/sales/order/create/key/' . sha1('bolt'),
-                'isAdminReferrer' => true
+                'referrerUrl'     => 'https://connect-sandbox.bolt.com',
+                'isBoltCDNReferrer' => true
             ],
             [
-                'referrerUrl'     => 'https://example.com/admin/sales/order/create',
-                'isAdminReferrer' => true
+                'referrerUrl'     => 'https://connect-sandbox.bolt.com/checkout',
+                'isBoltCDNReferrer' => true
             ],
             [
                 'referrerUrl'     => '',
-                'isAdminReferrer' => false
+                'isBoltCDNReferrer' => false
             ],
             [
                 'referrerUrl'     => 'https://example.com/',
-                'isAdminReferrer' => false
+                'isBoltCDNReferrer' => false
             ],
             [
                 'referrerUrl'     => 'https://example.com/admin',
-                'isAdminReferrer' => false
+                'isBoltCDNReferrer' => false
             ],
         ];
     }
@@ -304,7 +302,7 @@ class ReceivedUrlTest extends BoltTestCase
      * that customer will be redirected to backend received url endpoint if backoffice order is placed by admin
      *
      * @covers ::execute
-     * @covers ::hasAdminUrlReferer
+     * @covers ::hasBoltUrlReferer
      * @covers ::redirectToAdminIfNeeded
      */
     public function execute_ifBackofficeOrderPlacedByAdmin_redirectsToAdminReceivedUrl()
@@ -351,10 +349,10 @@ class ReceivedUrlTest extends BoltTestCase
         );
 
         $this->redirect->expects(static::never())->method('getRefererUrl');
-        $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')
+        $request->expects(static::atLeast(1))->method('getServer')->with('HTTP_REFERER')
             ->willReturn('https://example.com/admin/sales/order/create');
         $this->backendUrl->method('getUrl')
-             ->willReturnOnConsecutiveCalls('https://example.com/admin/sales/order/create', self::BACKEND_REDIRECT_URL);
+             ->willReturn(self::BACKEND_REDIRECT_URL);
 
         $receivedUrl->method('getRequest')
                     ->willReturn($request);
