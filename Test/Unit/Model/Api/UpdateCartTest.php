@@ -205,6 +205,7 @@ class UpdateCartTest extends BoltTestCase
                 [
                     'replicateQuoteData',
                     'resetCheckoutSession',
+                    'getCartData',
                 ]
             )
             ->disableOriginalConstructor()
@@ -269,7 +270,8 @@ class UpdateCartTest extends BoltTestCase
                     'getWebsiteId',
                     'save',
                     'getGiftCardsAmount',
-                    'setCurrentCurrencyCode'
+                    'setCurrentCurrencyCode',
+                    'setTotalsCollectedFlag'
                 ]
             )
             ->disableOriginalConstructor()
@@ -292,6 +294,7 @@ class UpdateCartTest extends BoltTestCase
         $quote->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $quote->method('save')->willReturnSelf();
         $quote->method('setCurrentCurrencyCode')->with('USD')->willReturnSelf();
+        $quote->method('setTotalsCollectedFlag')->with(false);
 
         return $quote;
     }
@@ -967,5 +970,60 @@ class UpdateCartTest extends BoltTestCase
             ->willReturn($quoteCart);
             
         self::assertEquals($result, $this->currentMock->generateResult($immutableQuoteMock));
+    }
+    
+    /**
+     * @test
+     *
+     * @covers ::getQuoteCart
+     */
+    public function getQuoteCart()
+    {
+        $this->initCurrentMock();
+        
+        $cartData = [
+            'total_amount' => 10000,
+            'tax_amount'   => 0,
+            'discounts'    => [],
+        ];
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+        
+        $this->cartHelper->expects(self::once())->method('getCartData')
+            ->with(false, null, $parentQuoteMock)
+            ->willReturn($cartData);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getQuoteCart', [$parentQuoteMock]);
+        
+        $this->assertEquals($cartData, $result);
+    }
+    
+    /**
+     * @test
+     *
+     * @covers ::getQuoteCart
+     */
+    public function getQuoteCart_throwException()
+    {
+        $this->initCurrentMock();
+        
+        $cartData = [];
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+        
+        $this->cartHelper->expects(self::once())->method('getCartData')
+            ->with(false, null, $parentQuoteMock)
+            ->willReturn($cartData);
+        
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Something went wrong when getting cart data.');
+        
+        TestHelper::invokeMethod($this->currentMock, 'getQuoteCart', [$parentQuoteMock]);
     }
 }
