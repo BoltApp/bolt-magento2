@@ -293,6 +293,9 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
         $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
+        if (empty($cart) || !isset($cart['total_amount']) || !isset($cart['tax_amount']) || !isset($cart['discounts'])) {
+            throw new \Exception('Something went wrong when getting cart data.');
+        }
         return [
             'total_amount' => $cart['total_amount'],
             'tax_amount'   => $cart['tax_amount'],
