@@ -39,6 +39,7 @@ use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Class UpdateCartCommon
@@ -121,6 +122,11 @@ abstract class UpdateCartCommon
      * @var CartRepository
      */
     protected $cartRepository;
+    
+    /**
+     * @var SessionHelper
+     */
+    protected $sessionHelper;
 
     /**
      * UpdateCartCommon constructor.
@@ -146,6 +152,7 @@ abstract class UpdateCartCommon
         $this->checkoutSession = $updateCartContext->getCheckoutSession();
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->cartRepository = $updateCartContext->getCartRepositoryInterface();
+        $this->sessionHelper = $updateCartContext->getSessionHelper();
     }
 
     /**
@@ -312,6 +319,19 @@ abstract class UpdateCartCommon
         );
 
         return $products;
+    }
+    
+    /**
+     * Load logged in customer checkout and customer sessions from cached session id.
+     * Replace the quote with $parentQuote in checkout session.
+     * In this way, the quote object can be associated with cart properly as well.
+     * 
+     * @param Quote $quote
+     */
+    public function updateSession($quote)
+    {
+        $this->sessionHelper->loadSession($quote);
+        $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
     }
 
     /**
