@@ -153,6 +153,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         
         $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
         
+        $this->updateSession($parentQuote);
+     
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
             $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);

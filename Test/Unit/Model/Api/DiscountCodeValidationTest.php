@@ -316,7 +316,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validate_simpleCoupon()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode','updateSession']);
         $couponCode = 'FIXED20';
         $request_data = [
             'discount_code' => $couponCode,
@@ -359,6 +359,9 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->willReturn($request_data);
         
         $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuote);
             
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
@@ -412,7 +415,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validateWithShippingOnlyCoupon()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode','setShipment','applyingCouponCode','shouldUseParentQuoteShippingAddressDiscount']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','setShipment','updateSession','applyingCouponCode','shouldUseParentQuoteShippingAddressDiscount']);
         $couponCode = 'FREESHIPPINGFIXED';
 
         $request_shipping_addr = [
@@ -492,6 +495,9 @@ class DiscountCodeValidationTest extends BoltTestCase
         
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
             ->with($couponCode, self::WEBSITE_ID, self::STORE_ID)->willReturn([$this->couponMock, null]);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuote);
         
         $this->currentMock->expects(self::once())->method('setShipment')
             ->with($request_data['cart']['shipments'][0], $immutableQuote);
@@ -600,7 +606,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validate_coupon_useParentQuoteShippingAddressDiscount()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode','updateSession']);
         
         $shippingDiscountAmount = 10;
         $requestContent = [
@@ -625,22 +631,7 @@ class DiscountCodeValidationTest extends BoltTestCase
                 'discounts' => $shippingDiscountAmount * 100
             ]
         ];
-
-        $this->currentMock->expects(self::atLeastOnce())->method('getRequestContent')
-            ->willReturn($requestContent);
         
-        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray')
-            ->with($requestContent['cart'])
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
-        
-        $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
-        
-        $this->configHelper->expects(self::once())->method('getIgnoredShippingAddressCoupons')
-            ->with(self::STORE_ID)->willReturn([self::COUPON_CODE]);
-        
-        $this->shippingAddressMock->method('getDiscountAmount')->willReturn($shippingDiscountAmount);
-        $this->shippingAddressMock->method('getDiscountDescription')->willReturn('Test Shipping Discount Description');
-
         $parentQuoteMock = $this->getQuoteMock(
             self::COUPON_CODE,
             null,
@@ -657,7 +648,25 @@ class DiscountCodeValidationTest extends BoltTestCase
             self::IMMUTABLE_QUOTE_ID,
             self::PARENT_QUOTE_ID
         );
+
+        $this->currentMock->expects(self::atLeastOnce())->method('getRequestContent')
+            ->willReturn($requestContent);
         
+        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray')
+            ->with($requestContent['cart'])
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        
+        $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuoteMock);
+        
+        $this->configHelper->expects(self::once())->method('getIgnoredShippingAddressCoupons')
+            ->with(self::STORE_ID)->willReturn([self::COUPON_CODE]);
+        
+        $this->shippingAddressMock->method('getDiscountAmount')->willReturn($shippingDiscountAmount);
+        $this->shippingAddressMock->method('getDiscountDescription')->willReturn('Test Shipping Discount Description');
+ 
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
             ->willReturn([$parentQuoteMock, $immutableQuoteMock]);
@@ -689,7 +698,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validate_giftCardAccount()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','updateSession']);
         $giftCardAmount = 15;
         $requestContent = [
             'cart' => [
@@ -738,6 +747,9 @@ class DiscountCodeValidationTest extends BoltTestCase
         ]);
         
         $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuoteMock);
             
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
@@ -778,7 +790,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validate_neitherCouponNorGiftcard()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','updateSession']);
         $websiteId = 11;
         $requestContent = [
             'cart' => [
@@ -816,6 +828,9 @@ class DiscountCodeValidationTest extends BoltTestCase
         ]);
             
         $this->currentMock->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuoteMock);
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
             ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)->willReturn([null, null]);

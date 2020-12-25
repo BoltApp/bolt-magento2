@@ -248,7 +248,8 @@ class UpdateCartCommonTest extends BoltTestCase
                     $this->eventsForThirdPartyModules,
                     $this->productRepositoryInterface,
                     $this->stockStateInterface,
-                    $this->cartRepository
+                    $this->cartRepository,
+                    $this->sessionHelper
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -302,49 +303,6 @@ class UpdateCartCommonTest extends BoltTestCase
         $quote->method('getStoreId')
             ->willReturn(self::STORE_ID);
         return $quote;
-    }
-    
-    private function createHelperMocks()
-    {
-        $this->hookHelper = $this->createMock(HookHelper::class);
-
-        $this->logHelper = $this->createMock(LogHelper::class);
-
-        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods(
-                [
-                    'getActiveQuoteById',
-                    'getQuoteById',
-                    'handleSpecialAddressCases',
-                    'validateEmail',
-                    'getCartData'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getIgnoredShippingAddressCoupons'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->discountHelper = $this->getMockBuilder(DiscountHelper::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(
-                [
-                    'getExistingOrder',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException', 'notifyError'])
-            ->disableOriginalConstructor()
-            ->getMock();
     }
     
     /**
@@ -440,6 +398,11 @@ class UpdateCartCommonTest extends BoltTestCase
         static::assertAttributeInstanceOf(
             RegionModel::class,
             'regionModel',
+            $this->currentMock
+        );
+        static::assertAttributeInstanceOf(
+            SessionHelper::class,
+            'sessionHelper',
             $this->currentMock
         );
     }
@@ -758,5 +721,32 @@ class UpdateCartCommonTest extends BoltTestCase
         $result = TestHelper::invokeMethod($this->currentMock, 'getCartItems', [$quote]);
         
         $this->assertEquals($expected_result, $result);
+    }
+    
+    /**
+     * @test
+     * @covers ::updateSession
+     *
+     */
+    public function updateSession()
+    {
+        $this->initCurrentMock();
+        
+        $quote = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            null
+        );
+        $this->sessionHelper->expects(self::once())->method('loadSession')
+            ->with($quote);
+        
+        $checkoutSession = $this->createMock(CheckoutSession::class);
+        
+        $this->sessionHelper->expects(self::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $this->cartHelper->expects(self::once())->method('resetCheckoutSession')
+            ->with($checkoutSession);
+        
+        $this->currentMock->updateSession($quote);
     }
 }

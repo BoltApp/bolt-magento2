@@ -28,7 +28,6 @@ use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Exception\BoltException;
 
@@ -58,11 +57,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     protected $cartRequest;
 
-    /**
-     * @var SessionHelper
-     */
-    protected $sessionHelper;
-
 
     /**
      * UpdateCart constructor.
@@ -81,7 +75,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         $this->UpdateCartItemTraitConstructor($updateCartContext);
         $this->cartDataFactory = $cartDataFactory;
         $this->updateCartResultFactory = $updateCartResultFactory;
-        $this->sessionHelper = $updateCartContext->getSessionHelper();
     }
 
     /**
@@ -113,10 +106,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
 
-            // Load logged in customer checkout and customer sessions from cached session id.
-            // Replace the quote with $parentQuote in checkout session.
-            $this->sessionHelper->loadSession($parentQuote);
-            $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
+            $this->updateSession($parentQuote);
 
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
