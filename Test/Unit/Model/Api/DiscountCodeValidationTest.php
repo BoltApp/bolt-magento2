@@ -958,6 +958,49 @@ class DiscountCodeValidationTest extends BoltTestCase
             [self::COUPON_CODE, $this->couponMock, $this->parentQuoteMock]
         );
     }
+    
+    /**
+     * @test
+     * @covers ::getCartTotals
+     */
+    public function getCartTotals()
+    {
+        $this->initCurrentMock();
+        
+        $cartData = [
+            'total_amount' => 10000,
+            'tax_amount'   => 0,
+            'discounts'    => [],
+        ];
+        
+        $this->cartHelper->expects(self::once())->method('getCartData')
+            ->with(false, null, $this->parentQuoteMock)
+            ->willReturn($cartData);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'getCartTotals', [$this->parentQuoteMock]);
+        
+        $this->assertEquals($cartData, $result);
+    }
+    
+    /**
+     * @test
+     * @covers ::getCartTotals
+     */
+    public function getCartTotals_throwException()
+    {
+        $this->initCurrentMock();
+        
+        $cartData = [];
+        
+        $this->cartHelper->expects(self::once())->method('getCartData')
+            ->with(false, null, $this->parentQuoteMock)
+            ->willReturn($cartData);
+        
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Something went wrong when getting cart data.');
+        
+        TestHelper::invokeMethod($this->currentMock, 'getCartTotals', [$this->parentQuoteMock]);
+    }
 
     /**
      * Get quote mock with quote items
