@@ -2114,7 +2114,7 @@ class OrderTest extends BoltTestCase
         $transaction = new stdClass();
         @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
 
-        $this->processNewOrderSetUp($originalIncrementId, $editIncrement);
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
         $this->orderMock->expects(static::once())->method('save');
         $this->orderManagementMock->expects(static::once())->method('cancel')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID);
         self::assertEquals(
@@ -2139,7 +2139,7 @@ class OrderTest extends BoltTestCase
         $transaction = new stdClass();
         @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
 
-        $this->processNewOrderSetUp($originalIncrementId, $editIncrement);
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
         $this->orderMock->expects(static::never())->method('save');
         $exception = new LocalizedException(__('We cannot cancel this order.'));
         $this->orderManagementMock->expects(static::once())->method('cancel')
@@ -2172,7 +2172,7 @@ class OrderTest extends BoltTestCase
         $transaction = new stdClass();
         @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
 
-        $this->processNewOrderSetUp($originalIncrementId, $editIncrement);
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
         $this->orderMock->expects(static::once())->method('save');
         $this->orderManagementMock->expects(static::once())->method('cancel')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID);
         self::assertEquals(
