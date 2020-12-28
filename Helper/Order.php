@@ -269,7 +269,7 @@ class Order extends AbstractHelper
     /**
      * @var OrderIncrementIdChecker|null
      */
-    protected $orderIncrementIdChecker;
+    private $orderIncrementIdChecker;
 
     /**
      * Order constructor.

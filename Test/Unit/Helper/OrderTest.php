@@ -352,7 +352,6 @@ class OrderTest extends BoltTestCase
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'discountHelper', $this->discountHelper);
         TestHelper::setProperty($this->currentMock, 'scopeConfig', $this->scopeConfigMock);
-        TestHelper::setProperty($this->currentMock, 'orderIncrementIdChecker', $this->orderIncrementIdChecker);
     }
 
     /**
