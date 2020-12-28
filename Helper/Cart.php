@@ -571,11 +571,11 @@ class Cart extends AbstractHelper
     /**
      * Cache the session id for the quote
      *
-     * @param int|string $qouoteId
+     * @param int|string $quoteId
      */
-    protected function saveCartSession($qouoteId)
+    protected function saveCartSession($quoteId)
     {
-        $this->sessionHelper->saveSession($qouoteId, $this->checkoutSession);
+        $this->sessionHelper->saveSession($quoteId, $this->checkoutSession);
     }
 
     /**
@@ -1020,6 +1020,8 @@ class Cart extends AbstractHelper
 
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
+
+
 
         // Logged in customes.
         // Merchant scope and prefill.
