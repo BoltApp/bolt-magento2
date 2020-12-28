@@ -545,7 +545,9 @@ class OrderTest extends BoltTestCase
             $this->customerCreditCardCollectionFactory,
             $this->creditmemoFactory,
             $this->creditmemoManagement,
-            $this->eventsForThirdPartyModules
+            $this->eventsForThirdPartyModules,
+            $this->orderManagementMock,
+            $this->orderIncrementIdChecker
         );
         static::assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
