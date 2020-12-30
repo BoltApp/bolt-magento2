@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\DiscountCodeValidation;
 use Bolt\Boltpay\Model\Api\OrderManagement;
+use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
@@ -60,6 +61,11 @@ class WebhookTest extends TestCase
      * @var MockObject|OrderManagement
      */
     private $orderManagement;
+
+    /**
+     * @var MockObject|Shipping
+     */
+    private $shipping;
 
     /**
      * @var MockObject|ShippingMethods
@@ -231,6 +237,7 @@ class WebhookTest extends TestCase
         $this->createOrder = $this->createMock(CreateOrder::class);
         $this->discountCodeValidation = $this->createMock(DiscountCodeValidation::class);
         $this->orderManagement = $this->createMock(OrderManagement::class);
+        $this->shipping = $this->createMock(Shipping::class);
         $this->shippingMethods = $this->createMock(ShippingMethods::class);
         $this->updateCart = $this->createMock(UpdateCart::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
@@ -246,6 +253,7 @@ class WebhookTest extends TestCase
                 $this->createOrder,
                 $this->discountCodeValidation,
                 $this->orderManagement,
+                $this->shipping,
                 $this->shippingMethods,
                 $this->updateCart,
                 $this->bugsnag,
