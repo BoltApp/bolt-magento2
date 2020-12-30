@@ -232,6 +232,29 @@ class WebhookTest extends TestCase
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
 
+    /**
+     * @test
+     */
+    public function shippingOptions_returnsTrue()
+    {
+        $type = "shipping_options";
+        $data = [
+            'cart' => 'cart',
+            'shipping_address' => 'shipping_address',
+            'shipping_option' => 'shipping_option'
+        ];
+
+        $this->shipping->expects(self::once())
+            ->method('execute')
+            ->with(
+                $data['cart'],
+                $data['shipping_address'],
+                $data['shipping_option']
+            );
+        
+        $this->assertTrue($this->currentMock->execute($type, $data));
+    }
+
     private function initRequiredMocks()
     {
         $this->createOrder = $this->createMock(CreateOrder::class);
