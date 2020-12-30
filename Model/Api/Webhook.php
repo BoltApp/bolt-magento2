@@ -121,6 +121,13 @@ class Webhook implements WebhookInterface
                     $this->discountCodeValidation->validate();
                     break;
                 case "cart_update":
+                    $this->updateCart->execute(
+                        isset($data['cart']) ? $data['cart'] : null,
+                        isset($data['add_items']) ? $data['add_items'] : null,
+                        isset($data['remove_items']) ? $data['remove_items'] : null,
+                        isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null,
+                        isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
+                    );
                     break;
                 case "shipping_methods":
                     break;

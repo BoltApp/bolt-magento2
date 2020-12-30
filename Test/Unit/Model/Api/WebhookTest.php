@@ -167,6 +167,32 @@ class WebhookTest extends TestCase
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
 
+    /**
+     * @test
+     */
+    public function updateCart_returnsTrue()
+    {
+        $type = "cart_update";
+        $data = [
+            'cart' => 'cart',
+            'add_items' => 'add_items',
+            'remove_items' => 'remove_items',
+            'discount_codes_to_add' => 'discount_codes_to_add',
+            'discount_codes_to_remove' => 'discount_codes_to_remove',
+        ];
+
+        $this->updateCart->expects(self::once())
+            ->method('execute')
+            ->with(
+                $data['cart'],
+                $data['add_items'],
+                $data['remove_items'],
+                $data['discount_codes_to_add'],
+                $data['discount_codes_to_remove']);
+        
+        $this->assertTrue($this->currentMock->execute($type, $data));
+    }
+
     private function initRequiredMocks()
     {
         $this->createOrder = $this->createMock(CreateOrder::class);
