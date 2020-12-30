@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\WebhookInterface;
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -43,6 +44,11 @@ class Webhook implements WebhookInterface
      * @var OrderManagementInterface
      */
     protected $orderManagement;
+
+    /**
+     * @var UpdateCartInterface
+     */
+    protected $updateCart;
 
     /**
      * @var Bugsnag
@@ -68,6 +74,7 @@ class Webhook implements WebhookInterface
         CreateOrderInterface $createOrder,
         DiscountCodeValidationInterface $discountCodeValidation,
         OrderManagementInterface $orderManagement,
+        UpdateCartInterface $updateCart,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -77,6 +84,7 @@ class Webhook implements WebhookInterface
         $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
         $this->orderManagement = $orderManagement;
+        $this->updateCart = $updateCart;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
@@ -98,7 +106,6 @@ class Webhook implements WebhookInterface
                     );
                     break;
                 case "manage_order":
-                    $this->logHelper->addInfoLog("calling manage");
                     $this->orderManagement->manage(
                         isset($data['id']) ? $data['id'] : null,
                         isset($data['reference']) ? $data['reference'] : null,
