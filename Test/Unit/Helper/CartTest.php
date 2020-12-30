@@ -960,12 +960,19 @@ class CartTest extends BoltTestCase
      */
     public function isBoltOrderCachingEnabled_always_returnsValueFromConfigHelper()
     {
+        $this->skipTestInUnitTestsFlow();
         $isBoltOrderCachingEnabled = true;
-        $this->configHelper->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
-            ->willReturn($isBoltOrderCachingEnabled);
+        $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
+        $configWriter->save(ConfigHelper::XML_PATH_BOLT_ORDER_CACHING,
+            $isBoltOrderCachingEnabled,
+            $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+            self::STORE_ID
+        );
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+
         static::assertEquals(
             $isBoltOrderCachingEnabled,
-            TestHelper::invokeMethod($this->currentMock, 'isBoltOrderCachingEnabled', [self::STORE_ID])
+            TestHelper::invokeMethod($cartHelper, 'isBoltOrderCachingEnabled', [self::STORE_ID])
         );
     }
 
@@ -979,8 +986,12 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierNotFoundInCache_returnsFalse()
     {
-        $this->cache->expects(static::once())->method('load')->with(self::CACHE_IDENTIFIER)->willReturn(false);
-        static::assertFalse(TestHelper::invokeMethod($this->currentMock, 'loadFromCache', [self::CACHE_IDENTIFIER]));
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
+        $cachedValue = false;
+        $cache->save($cachedValue, self::CACHE_IDENTIFIER);
+        static::assertFalse(TestHelper::invokeMethod($cartHelper, 'loadFromCache', [self::CACHE_IDENTIFIER]));
     }
 
     /**
@@ -994,12 +1005,16 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeFalse_returnsValue()
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
         $cachedValue = 'Test cache value';
-        $this->cache->expects(static::once())->method('load')->with(self::CACHE_IDENTIFIER)->willReturn($cachedValue);
+        $cache->save($cachedValue, self::CACHE_IDENTIFIER);
+
         static::assertEquals(
             $cachedValue,
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $cartHelper,
                 'loadFromCache',
                 [self::CACHE_IDENTIFIER, false]
             )
@@ -1017,13 +1032,15 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeTrue_returnsUnserializedValue()
     {
+        $this->skipTestInUnitTestsFlow();
         $cachedValue = $this->getTestCartData();
-        $this->cache->expects(static::once())->method('load')->with(self::CACHE_IDENTIFIER)
-            ->willReturn($this->serialize->serialize($cachedValue));
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
+        $cache->save($this->serialize->serialize($cachedValue), self::CACHE_IDENTIFIER);
         static::assertEquals(
             $cachedValue,
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $cartHelper,
                 'loadFromCache',
                 [self::CACHE_IDENTIFIER, true]
             )
@@ -1087,15 +1104,18 @@ class CartTest extends BoltTestCase
      */
     public function setLastImmutableQuote_always_setsLastImmutableQuoteProperty()
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $cartHelper,
             'setLastImmutableQuote',
-            [$this->quoteMock]
+            [$quote]
         );
         static::assertAttributeEquals(
-            $this->quoteMock,
+            $quote,
             'lastImmutableQuote',
-            $this->currentMock
+            $cartHelper
         );
     }
 
@@ -1109,12 +1129,18 @@ class CartTest extends BoltTestCase
      */
     public function getLastImmutableQuote_always_returnsLastImmutableQuoteProperty()
     {
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty(
-            $this->currentMock,
+            $cartHelper,
             'lastImmutableQuote',
-            $this->quoteMock
+            $quote
         );
-        static::assertEquals($this->quoteMock, TestHelper::invokeMethod($this->currentMock, 'getLastImmutableQuote'));
+        static::assertEquals(
+            $quote,
+            TestHelper::invokeMethod($cartHelper, 'getLastImmutableQuote')
+        );
     }
 
     /**
@@ -1141,9 +1167,13 @@ class CartTest extends BoltTestCase
      */
     public function getSessionQuoteStoreId_withSessionQuote_returnsSessionQuoteStoreId()
     {
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
-        static::assertEquals(self::STORE_ID, $this->currentMock->getSessionQuoteStoreId());
+        $this->skipTestInUnitTestsFlow();
+        $cartSession = Bootstrap::getObjectManager()->create(CheckoutSession::class);
+        $quote = TestUtils::createQuote(['store_id'=>self::STORE_ID]);
+        $cartSession->setQuote($quote);
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals(self::STORE_ID, $cartHelper->getSessionQuoteStoreId());
+        $cartSession->setQuote(null);
     }
 
     /**
@@ -1154,8 +1184,9 @@ class CartTest extends BoltTestCase
      */
     public function getSessionQuoteStoreId_withoutSessionQuote_returnsNull()
     {
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn(null);
-        static::assertEquals(null, $this->currentMock->getSessionQuoteStoreId());
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals(null, $cartHelper->getSessionQuoteStoreId());
     }
 
     /**
@@ -1200,20 +1231,12 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_always_returnsCartCacheIdentifier()
     {
-        $currentMock = $this->getCurrentMock(
-            [
-                'convertCustomAddressFieldsToCacheIdentifier',
-                'getLastImmutableQuote',
-            ]
-        );
+        $this->skipTestInUnitTestsFlow();
         $testCartData = $this->getTestCartData();
-        $addressCacheIdentifier = 'Test_Test_Test';
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
-            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
-        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier), $result);
+        static::assertEquals(hash('md5',json_encode($testCartData)), $result);
     }
 
     /**
@@ -1224,21 +1247,16 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_withGiftMessageID_returnsCartCacheIdentifier()
     {
-        $currentMock = $this->getCurrentMock(
-            [
-                'convertCustomAddressFieldsToCacheIdentifier',
-                'getLastImmutableQuote',
-            ]
-        );
+        $this->skipTestInUnitTestsFlow();
         $testCartData = $this->getTestCartData();
-        $addressCacheIdentifier = 'Test_Test_Test';
-        $this->quoteMock->expects(static::once())->method('getGiftMessageId')->willReturn(self::GIFT_MESSAGE_ID);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
-            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
-        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        $quote = TestUtils::createQuote(['gift_message_id'=> self::GIFT_MESSAGE_ID]);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        TestHelper::setProperty($cartHelper, 'lastImmutableQuote', $quote);
+
+        $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_MESSAGE_ID), $result);
+        static::assertEquals(hash('md5',json_encode($testCartData).self::GIFT_MESSAGE_ID), $result);
     }
 
     /**
@@ -1249,21 +1267,16 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_withGiftWrappingId_returnsCartCacheIdentifier()
     {
-        $currentMock = $this->getCurrentMock(
-            [
-                'convertCustomAddressFieldsToCacheIdentifier',
-                'getLastImmutableQuote',
-            ]
-        );
+        $this->skipTestInUnitTestsFlow();
         $testCartData = $this->getTestCartData();
-        $addressCacheIdentifier = 'Test_Test_Test';
-        $this->quoteMock->expects(static::once())->method('getGwId')->willReturn(self::GIFT_WRAPPING_ID);
-        $currentMock->expects(static::once())->method('getLastImmutableQuote')->willReturn($this->quoteMock);
-        $currentMock->expects(static::once())->method('convertCustomAddressFieldsToCacheIdentifier')
-            ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
-        $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
+        $quote = TestUtils::createQuote(['gw_id'=> self::GIFT_WRAPPING_ID]);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        TestHelper::setProperty($cartHelper, 'lastImmutableQuote', $quote);
+
+        $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::GIFT_WRAPPING_ID), $result);
+        static::assertEquals(hash('md5',json_encode($testCartData).self::GIFT_WRAPPING_ID), $result);
     }
 
     /**
@@ -1363,6 +1376,8 @@ class CartTest extends BoltTestCase
      */
     public function getImmutableQuoteIdFromBoltOrder_always_returnsImmutableQuote()
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $boltOrder = (object)[
             'cart' => (object)[
                 'metadata' => (object)[
@@ -1373,7 +1388,7 @@ class CartTest extends BoltTestCase
         static::assertEquals(
             self::IMMUTABLE_QUOTE_ID,
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $cartHelper,
                 'getImmutableQuoteIdFromBoltOrder',
                 [$boltOrder]
             )
@@ -1390,10 +1405,11 @@ class CartTest extends BoltTestCase
      */
     public function isQuoteAvailable_always_determinesIfQuoteIsAvailable()
     {
-        $currentMock = $this->getCurrentMock(['getQuoteById']);
-        $currentMock->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        static::assertTrue(TestHelper::invokeMethod($currentMock, 'isQuoteAvailable', [self::IMMUTABLE_QUOTE_ID]));
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertTrue(TestHelper::invokeMethod($cartHelper, 'isQuoteAvailable', [$quoteId]));
     }
 
     /**
@@ -1406,19 +1422,12 @@ class CartTest extends BoltTestCase
      */
     public function updateQuoteTimestamp_always_updatesQuoteTimestamp()
     {
-        $connectionMock = $this->createMock(Mysql::class);
-        $this->resourceConnection->expects(static::once())->method('getConnection')->willReturn($connectionMock);
-        $connectionMock->expects(static::once())->method('beginTransaction');
-        $this->resourceConnection->expects(static::once())->method('getTableName')->with('quote')
-            ->willReturn('quote');
-        $connectionMock->expects(static::once())->method('query')->with(
-            "UPDATE quote SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id",
-            [
-                'entity_id' => self::IMMUTABLE_QUOTE_ID
-            ]
-        );
-        $connectionMock->expects(static::once())->method('commit');
-        TestHelper::invokeMethod($this->currentMock, 'updateQuoteTimestamp', [self::IMMUTABLE_QUOTE_ID]);
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        TestHelper::invokeMethod($cartHelper, 'updateQuoteTimestamp', [$quoteId]);
+        self::assertNotNull(TestUtils::getQuoteById($quoteId)->getUpdatedAt());
     }
 
     /**
@@ -1825,9 +1834,11 @@ class CartTest extends BoltTestCase
      */
     public function isAddressComplete_withVariousAddresses_determinesIfAddressIsComplete($address, $expectedResult)
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertEquals(
             $expectedResult,
-            TestHelper::invokeMethod($this->currentMock, 'isAddressComplete', [$address])
+            TestHelper::invokeMethod($cartHelper, 'isAddressComplete', [$address])
         );
     }
 
@@ -1897,8 +1908,9 @@ class CartTest extends BoltTestCase
         $sessionObject,
         $expectedResult
     ) {
-        TestHelper::setProperty($this->currentMock, 'checkoutSession', $sessionObject);
-        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'isBackendSession'));
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        TestHelper::setProperty($cartHelper, 'checkoutSession', $sessionObject);
+        static::assertEquals($expectedResult, TestHelper::invokeMethod($cartHelper, 'isBackendSession'));
     }
 
     /**
@@ -1908,13 +1920,14 @@ class CartTest extends BoltTestCase
      */
     public function isBackendSession_withVariousSessionObjectsProvider()
     {
+        $this->skipTestInUnitTestsFlow();
         return [
             'Backend session' => [
-                'sessionObject'  => $this->createMock(\Magento\Backend\Model\Session\Quote::class),
+                'sessionObject'  => Bootstrap::getObjectManager()->create(\Magento\Backend\Model\Session\Quote::class),
                 'expectedResult' => true
             ],
             'Generic session' => [
-                'sessionObject'  => $this->createMock(GenericSession::class),
+                'sessionObject'  => Bootstrap::getObjectManager()->create(GenericSession::class),
                 'expectedResult' => false
             ],
         ];
@@ -1977,7 +1990,9 @@ class CartTest extends BoltTestCase
      */
     public function validateEmail_withVarousEmailAddresses_determinesIfEmailIsValid($email, $expectedResult)
     {
-        static::assertEquals($expectedResult, $this->currentMock->validateEmail($email));
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals($expectedResult, $cartHelper->validateEmail($email));
     }
 
     /**
@@ -2006,11 +2021,14 @@ class CartTest extends BoltTestCase
      */
     public function getWebsiteId_always_returnsWebsiteIdFromSessionQuote()
     {
-        $storeMock = $this->createMock(Store::class);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('getStore')->willReturn($storeMock);
-        $storeMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
-        static::assertEquals(self::WEBSITE_ID, TestHelper::invokeMethod($this->currentMock, 'getWebsiteId'));
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $checkoutSession = Bootstrap::getObjectManager()->create(CheckoutSession::class);
+        $store = Bootstrap::getObjectManager()->create(Store::class)->setWebsiteId(self::WEBSITE_ID);
+        $quote = TestUtils::createQuote(['store'=> $store]);
+        $checkoutSession->setQuote($quote);
+
+        static::assertEquals(self::WEBSITE_ID, TestHelper::invokeMethod($cartHelper, 'getWebsiteId'));
     }
 
     /**
