@@ -135,7 +135,11 @@ class WebhookTest extends TestCase
 
         $this->createOrder->expects(self::once())
             ->method('execute')
-            ->with($data['type'], $data['order'], $data['currency'])
+            ->with(
+                $data['type'], 
+                $data['order'], 
+                $data['currency']
+            )
             ->willReturn(true);
         
         $this->assertTrue($this->currentMock->execute($type, $data));
@@ -168,7 +172,8 @@ class WebhookTest extends TestCase
                 $data['amount'],
                 $data['currency'],
                 $data['status'],
-                $data['display_id']);
+                $data['display_id']
+            );
         
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
@@ -194,7 +199,29 @@ class WebhookTest extends TestCase
                 $data['add_items'],
                 $data['remove_items'],
                 $data['discount_codes_to_add'],
-                $data['discount_codes_to_remove']);
+                $data['discount_codes_to_remove']
+            );
+        
+        $this->assertTrue($this->currentMock->execute($type, $data));
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingMethods_returnsTrue()
+    {
+        $type = "shipping_methods";
+        $data = [
+            'cart' => 'cart',
+            'shipping_address' => 'shipping_address'
+        ];
+
+        $this->shippingMethods->expects(self::once())
+            ->method('getShippingMethods')
+            ->with(
+                $data['cart'],
+                $data['shipping_address']
+            );
         
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
