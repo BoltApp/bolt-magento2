@@ -98,6 +98,17 @@ class Webhook implements WebhookInterface
                     );
                     break;
                 case "manage_order":
+                    $this->logHelper->addInfoLog("calling manage");
+                    $this->orderManagement->manage(
+                        isset($data['id']) ? $data['id'] : null,
+                        isset($data['reference']) ? $data['reference'] : null,
+                        isset($data['order']) ? $data['order'] : null,
+                        isset($data['type']) ? $data['type'] : null,
+                        isset($data['amount']) ? $data['amount'] : null,
+                        isset($data['currency']) ? $data['currency'] : null,
+                        isset($data['status']) ? $data['status'] : null,
+                        isset($data['display_id']) ? $data['display_id'] : null
+                    );
                     break;
                 case "validate_discount":
                     $this->discountCodeValidation->validate();

@@ -260,12 +260,20 @@ class OrderManagement implements OrderManagementInterface
             return;
         }
 
+        $request = $this->request->getBodyParams();
+        $this->logHelper->addInfoLog('management checking if request has [data]');
+        if (isset($request['data'])) {
+            $request = $request['data'];
+        }
+
+        $this->logHelper->addInfoLog('[data] check complete');
+
         list(, $order) = $this->orderHelper->saveUpdateOrder(
             $reference,
             $storeId,
             $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
             $type,
-            $this->request->getBodyParams()
+            $request
         );
 
         $orderData = json_encode($order->getData());

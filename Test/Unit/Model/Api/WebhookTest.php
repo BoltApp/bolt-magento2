@@ -128,6 +128,38 @@ class WebhookTest extends TestCase
         
         $this->assertTrue($this->currentMock->execute($type, $data));
     }
+    
+    /**
+     * @test
+     */
+    public function orderManagement_returnsTrue()
+    {
+        $type = "manage_order";
+        $data = [
+            'id' => 'id',
+            'reference' => 'reference',
+            'order' => 'order',
+            'type' => 'type',
+            'amount' => 'amount',
+            'currency' => 'currency',
+            'status' => 'status',
+            'display_id' => 'display_id'
+        ];
+
+        $this->orderManagement->expects(self::once())
+            ->method('manage')
+            ->with(
+                $data['id'],
+                $data['reference'],
+                $data['order'],
+                $data['type'],
+                $data['amount'],
+                $data['currency'],
+                $data['status'],
+                $data['display_id']);
+        
+        $this->assertTrue($this->currentMock->execute($type, $data));
+    }
 
     private function initRequiredMocks()
     {
