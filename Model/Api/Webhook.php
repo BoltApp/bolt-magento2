@@ -152,6 +152,11 @@ class Webhook implements WebhookInterface
                     );
                     break;
                 case "shipping_options":
+                    $this->shipping->execute(
+                        isset($data['cart']) ? $data['cart'] : null,
+                        isset($data['shipping_address']) ? $data['shipping_address'] : null,
+                        isset($data['shipping_option']) ? $data['shipping_option'] : null
+                    );
                     break;
                 case "tax":
                     break;
