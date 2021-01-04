@@ -26,6 +26,7 @@ use Bolt\Boltpay\Model\Api\DiscountCodeValidation;
 use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
+use Bolt\Boltpay\Model\Api\Tax;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Rest\Request;
@@ -71,6 +72,11 @@ class WebhookTest extends TestCase
      * @var MockObject|ShippingMethods
      */
     private $shippingMethods;
+
+    /**
+     * @var MockObject|Tax
+     */
+    private $tax;
 
     /**
      * @var MockObject|UpdateCart
@@ -262,6 +268,7 @@ class WebhookTest extends TestCase
         $this->orderManagement = $this->createMock(OrderManagement::class);
         $this->shipping = $this->createMock(Shipping::class);
         $this->shippingMethods = $this->createMock(ShippingMethods::class);
+        $this->tax = $this->createMock(Tax::class);
         $this->updateCart = $this->createMock(UpdateCart::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
@@ -278,6 +285,7 @@ class WebhookTest extends TestCase
                 $this->orderManagement,
                 $this->shipping,
                 $this->shippingMethods,
+                $this->tax,
                 $this->updateCart,
                 $this->bugsnag,
                 $this->logHelper,

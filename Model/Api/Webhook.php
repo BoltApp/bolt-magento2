@@ -23,6 +23,7 @@ use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Api\ShippingInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
+use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -58,6 +59,11 @@ class Webhook implements WebhookInterface
     protected $shippingMethods;
 
     /**
+     * @var TaxInterface
+     */
+    protected $tax;
+
+    /**
      * @var UpdateCartInterface
      */
     protected $updateCart;
@@ -88,6 +94,7 @@ class Webhook implements WebhookInterface
         OrderManagementInterface $orderManagement,
         ShippingInterface $shipping,
         ShippingMethodsInterface $shippingMethods,
+        TaxInterface $tax,
         UpdateCartInterface $updateCart,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
@@ -100,6 +107,7 @@ class Webhook implements WebhookInterface
         $this->orderManagement = $orderManagement;
         $this->shipping = $shipping;
         $this->shippingMethods = $shippingMethods;
+        $this->tax = $tax;
         $this->updateCart = $updateCart;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
