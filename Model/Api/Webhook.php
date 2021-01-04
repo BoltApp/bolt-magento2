@@ -116,15 +116,15 @@ class Webhook implements WebhookInterface
     }
 
     public function execute(
-        $type = null,
+        $event = null,
         $data = null
     )
     {
         try {
-            switch($type){
-                case "create_order":
+            switch($event){
+                case "order.create":
                     $this->createOrder->execute(
-                        isset($data['type']) ? $data['type'] : null,
+                        $event,
                         isset($data['order']) ? $data['order'] : null,
                         isset($data['currency']) ? $data['currency'] : null
                     );
@@ -144,7 +144,7 @@ class Webhook implements WebhookInterface
                 case "validate_discount":
                     $this->discountCodeValidation->validate();
                     break;
-                case "cart_update":
+                case "cart.update":
                     $this->updateCart->execute(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['add_items']) ? $data['add_items'] : null,
@@ -153,24 +153,29 @@ class Webhook implements WebhookInterface
                         isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
                     );
                     break;
-                case "shipping_methods":
+                case "order.shipping_and_tax":
                     $this->shippingMethods->getShippingMethods(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['shipping_address']) ? $data['shipping_address'] : null
                     );
                     break;
-                case "shipping_options":
+                case "order.shipping":
                     $this->shipping->execute(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['shipping_address']) ? $data['shipping_address'] : null,
                         isset($data['shipping_option']) ? $data['shipping_option'] : null
                     );
                     break;
-                case "tax":
+                case "order.tax":
+                    $this->tax->execute(
+                        isset($data['cart']) ? $data['cart'] : null,
+                        isset($data['shipping_address']) ? $data['shipping_address'] : null,
+                        isset($data['shipping_option']) ? $data['shipping_option'] : null
+                    );
                     break;
                 default:
                     throw new BoltException(
-                        __('Invalid webhook type %1', $type),
+                        __('Invalid webhook type %1', $event),
                         null,
                         BoltErrorResponse::ERR_SERVICE
                     );
