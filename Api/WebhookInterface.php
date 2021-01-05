@@ -27,13 +27,13 @@
       * {"type":"create_order", "data":{requestData}}
       * @api
       * 
-      * @param string $type
+      * @param string $event
       * @param mixed $data
       *
       * @return bool
       */
      public function execute(
-         $type = null,
+         $event = null,
          $data = null
      );
  }
