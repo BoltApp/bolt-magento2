@@ -121,6 +121,9 @@ class Webhook implements WebhookInterface
     )
     {
         try {
+
+            $response = null;
+
             switch($event){
                 case "order.create":
                     $this->createOrder->execute(
@@ -154,7 +157,7 @@ class Webhook implements WebhookInterface
                     );
                     break;
                 case "order.shipping_and_tax":
-                    $this->shippingMethods->getShippingMethods(
+                    $response = $this->shippingMethods->getShippingMethods(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['shipping_address']) ? $data['shipping_address'] : null
                     );
@@ -182,6 +185,7 @@ class Webhook implements WebhookInterface
                     break;
             }
 
+            return $response;
         }
         catch (BoltException $e) {
             $this->sendErrorResponse(

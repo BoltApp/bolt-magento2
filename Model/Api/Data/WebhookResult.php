@@ -15,23 +15,11 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
- namespace Bolt\Boltpay\Api;
+namespace Bolt\Boltpay\Model\Api\Data;
 
- /**
-  * Universal webhook interface. Passes the request data to the right helper functions to handle the request
-  */
- interface WebhookInterface
- {
-     /**
-      * Hook format:
-      * {"type":"create_order", "data":{requestData}}
-      * @api
-      * 
-      * @param string $event
-      * @param mixed $data
-      */
-     public function execute(
-         $event = null,
-         $data = null
-     );
- }
+use Bolt\Boltpay\Api\Data\WebhookResultInterface;
+
+class WebhookResult implements WebhookResultInterface
+{
+
+}
