@@ -25,6 +25,7 @@ use Bolt\Boltpay\Api\ShippingInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
+use Bolt\Boltpay\Api\Data\WebhookResultInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -69,6 +70,11 @@ class Webhook implements WebhookInterface
     protected $updateCart;
 
     /**
+     * @var WebhookResultInterface
+     */
+    protected $result;
+
+    /**
      * @var Bugsnag
      */
     protected $bugsnag;
@@ -88,6 +94,7 @@ class Webhook implements WebhookInterface
      */
     protected $response;
 
+
     public function __construct(
         CreateOrderInterface $createOrder,
         DiscountCodeValidationInterface $discountCodeValidation,
@@ -96,6 +103,7 @@ class Webhook implements WebhookInterface
         ShippingMethodsInterface $shippingMethods,
         TaxInterface $tax,
         UpdateCartInterface $updateCart,
+        WebhookResultInterface $result,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
@@ -109,6 +117,7 @@ class Webhook implements WebhookInterface
         $this->shippingMethods = $shippingMethods;
         $this->tax = $tax;
         $this->updateCart = $updateCart;
+        $this->result = $result;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
@@ -121,11 +130,16 @@ class Webhook implements WebhookInterface
     )
     {
         try {
-
-            $response = null;
-
             switch($event){
                 case "order.create":
+                    /**
+                     * Response data:
+                     * {
+                     *     "display_id": string
+                     *     "order_received_url": string
+                     * }
+                     */
+                    //currently sends its own response, no return
                     $this->createOrder->execute(
                         $event,
                         isset($data['order']) ? $data['order'] : null,
@@ -147,22 +161,57 @@ class Webhook implements WebhookInterface
                 case "validate_discount":
                     $this->discountCodeValidation->validate();
                     break;
+                case "discounts.code.apply":
+                    $this->result->setData(
+                        $this->updateCart->execute(
+                            isset($data['cart']) ? $data['cart'] : null,
+                            isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null
+                        )
+                    );
+                    break;
                 case "cart.update":
-                    $this->updateCart->execute(
-                        isset($data['cart']) ? $data['cart'] : null,
-                        isset($data['add_items']) ? $data['add_items'] : null,
-                        isset($data['remove_items']) ? $data['remove_items'] : null,
-                        isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null,
-                        isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
+                    /**
+                     * Response data:
+                     * {
+                     *     "order_create": { ... }
+                     * }
+                     */
+                    //says it returns a value but just sends a response.
+                    $this->result->setData(
+                        $this->updateCart->execute(
+                            isset($data['cart']) ? $data['cart'] : null,
+                            isset($data['add_items']) ? $data['add_items'] : null,
+                            isset($data['remove_items']) ? $data['remove_items'] : null,
+                            isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null,
+                            isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
+                        )
                     );
                     break;
                 case "order.shipping_and_tax":
-                    $response = $this->shippingMethods->getShippingMethods(
-                        isset($data['cart']) ? $data['cart'] : null,
-                        isset($data['shipping_address']) ? $data['shipping_address'] : null
+                    /**
+                     * Response data
+                     * {
+                     *     "shipping_options": [ ... ]
+                     *     "tax_results": { ... }
+                     *     "currency": string
+                     * }
+                     */
+                    //Returns ShippingOptionsInterface
+                    $this->result->setData(
+                        $this->shippingMethods->getShippingMethods(
+                            isset($data['cart']) ? $data['cart'] : null,
+                            isset($data['shipping_address']) ? $data['shipping_address'] : null
+                        )
                     );
                     break;
                 case "order.shipping":
+                    /**
+                     * Response data
+                     * {
+                     *     "shipping_options": [ ... ]
+                     * }
+                     */
+                    //Returns ShippingDataInterface
                     $this->shipping->execute(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['shipping_address']) ? $data['shipping_address'] : null,
@@ -170,6 +219,15 @@ class Webhook implements WebhookInterface
                     );
                     break;
                 case "order.tax":
+                    /**
+                     * Response data
+                     * {
+                     *     "tax_result": { ... }
+                     *     "shipping_option": { ... }
+                     *     "items": [ ... ]
+                     * }
+                     */
+                    //Returns TaxDataInterface
                     $this->tax->execute(
                         isset($data['cart']) ? $data['cart'] : null,
                         isset($data['shipping_address']) ? $data['shipping_address'] : null,
@@ -185,7 +243,10 @@ class Webhook implements WebhookInterface
                     break;
             }
 
-            return $response;
+            $this->result->setEvent($event);
+            $this->result->setStatus("success");
+
+            return $this->result;
         }
         catch (BoltException $e) {
             $this->sendErrorResponse(
@@ -231,5 +292,16 @@ class Webhook implements WebhookInterface
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);
         $this->response->sendResponse();
+    }
+
+    protected function createReturnObject($event, $data)
+    {
+        $status = "success";
+
+        $this->result->setEvent($event);
+        $this->result->setStatus($status);
+        $this->result->setData($data);
+
+        return $result;
     }
 }

@@ -29,6 +29,8 @@
       * 
       * @param string $event
       * @param mixed $data
+      * 
+      * @return Bolt\Boltpay\Api\Data\WebhookResultInterface
       */
      public function execute(
          $event = null,
