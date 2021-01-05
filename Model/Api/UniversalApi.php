@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\WebhookInterface;
+use Bolt\Boltpay\Api\UniversalApiInterface;
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
@@ -25,14 +25,14 @@ use Bolt\Boltpay\Api\ShippingInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
-use Bolt\Boltpay\Api\Data\WebhookResultInterface;
+use Bolt\Boltpay\Api\Data\UniversalApiResultInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Rest\Response;
 
-class Webhook implements WebhookInterface
+class UniversalApi implements UniversalApiInterface
 {
     /**
      * @var CreateOrderInterface
@@ -70,7 +70,7 @@ class Webhook implements WebhookInterface
     protected $updateCart;
 
     /**
-     * @var WebhookResultInterface
+     * @var UniversalApiResultInterface
      */
     protected $result;
 
@@ -103,7 +103,7 @@ class Webhook implements WebhookInterface
         ShippingMethodsInterface $shippingMethods,
         TaxInterface $tax,
         UpdateCartInterface $updateCart,
-        WebhookResultInterface $result,
+        UniversalApiResultInterface $result,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,

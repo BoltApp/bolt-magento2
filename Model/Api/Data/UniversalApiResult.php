@@ -17,10 +17,10 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\WebhookResultInterface;
+use Bolt\Boltpay\Api\Data\UniversalApiResultInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 
-class WebhookResult implements WebhookResultInterface
+class UniversalApiResult implements WebhookResultInterface
 {
     /**
      * @var string

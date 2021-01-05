@@ -18,11 +18,11 @@
 namespace Bolt\Boltpay\Api\Data;
 
 /**
- * Webhook result interface. Wrapping response object for universal api
+ * UniversalApi result interface. Wrapping response object for universal api
  * 
  * @api
  */
-interface WebhookResultInterface
+interface UniversalApiResultInterface
 {
     /**
      * Set event string

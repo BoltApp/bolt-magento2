@@ -18,9 +18,9 @@
  namespace Bolt\Boltpay\Api;
 
  /**
-  * Universal webhook interface. Passes the request data to the right helper functions to handle the request
+  * Universal api interface. Passes the request data to the right helper functions to handle the request
   */
- interface WebhookInterface
+ interface UniversalApiInterface
  {
      /**
       * Hook format:
@@ -30,7 +30,7 @@
       * @param string $event
       * @param mixed $data
       * 
-      * @return Bolt\Boltpay\Api\Data\WebhookResultInterface
+      * @return Bolt\Boltpay\Api\Data\UniversalApiResultInterface
       */
      public function execute(
          $event = null,

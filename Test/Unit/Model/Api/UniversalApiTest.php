@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Bolt\Boltpay\Model\Api\Webhook;
+use Bolt\Boltpay\Model\Api\UniversalApi;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -34,7 +34,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use PHPUnit\Framework\TestCase;
 
-class WebhookTest extends TestCase
+class UniversalApiTest extends TestCase
 {
     const DATA = ['data1' => 'not important'];
 
@@ -94,7 +94,7 @@ class WebhookTest extends TestCase
     private $response;
 
     /**
-     * @var MockObject|Webhook
+     * @var MockObject|UniversalApi
      */
     private $currentMock;
 
@@ -110,7 +110,7 @@ class WebhookTest extends TestCase
     /**
      * @test
      */
-    public function invalidWebhookType_sendsErrorResponse()
+    public function invalidRequestEvent_sendsErrorResponse()
     {
         $invalidType = "invalid_hook_type";
 
@@ -142,7 +142,7 @@ class WebhookTest extends TestCase
      */
     public function orderCreation_returnsTrue()
     {
-        $type = "create_order";
+        $event = "order.create";
         $data = ['type' => 'type', 'order' => 'order', 'currency' => 'currency'];
 
         $this->createOrder->expects(self::once())
@@ -154,7 +154,7 @@ class WebhookTest extends TestCase
             )
             ->willReturn(true);
         
-        $this->assertTrue($this->currentMock->execute($type, $data));
+        $this->assertTrue($this->currentMock->execute($event, $data));
     }
     
     /**
@@ -195,7 +195,7 @@ class WebhookTest extends TestCase
      */
     public function updateCart_returnsTrue()
     {
-        $type = "cart_update";
+        $event = "cart.update";
         $data = [
             'cart' => 'cart',
             'add_items' => 'add_items',
@@ -214,7 +214,7 @@ class WebhookTest extends TestCase
                 $data['discount_codes_to_remove']
             );
         
-        $this->assertTrue($this->currentMock->execute($type, $data));
+        $this->assertTrue($this->currentMock->execute($event, $data));
     }
 
     /**
@@ -222,7 +222,7 @@ class WebhookTest extends TestCase
      */
     public function getShippingMethods_returnsTrue()
     {
-        $type = "shipping_methods";
+        $event = "order.shipping_and_tax";
         $data = [
             'cart' => 'cart',
             'shipping_address' => 'shipping_address'
@@ -235,7 +235,7 @@ class WebhookTest extends TestCase
                 $data['shipping_address']
             );
         
-        $this->assertTrue($this->currentMock->execute($type, $data));
+        $this->assertTrue($this->currentMock->execute($event, $data));
     }
 
     /**
@@ -243,7 +243,7 @@ class WebhookTest extends TestCase
      */
     public function shippingOptions_returnsTrue()
     {
-        $type = "shipping_options";
+        $event = "order.shipping";
         $data = [
             'cart' => 'cart',
             'shipping_address' => 'shipping_address',
@@ -258,7 +258,7 @@ class WebhookTest extends TestCase
                 $data['shipping_option']
             );
         
-        $this->assertTrue($this->currentMock->execute($type, $data));
+        $this->assertTrue($this->currentMock->execute($event, $data));
     }
 
     private function initRequiredMocks()
@@ -278,7 +278,7 @@ class WebhookTest extends TestCase
 
     private function initCurrentMock($methods = null)
     {
-        $mockBuilder = $this->getMockBuilder(Webhook::class)
+        $mockBuilder = $this->getMockBuilder(UniversalApi::class)
             ->setConstructorArgs([
                 $this->createOrder,
                 $this->discountCodeValidation,
