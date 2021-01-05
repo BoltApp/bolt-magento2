@@ -293,15 +293,4 @@ class UniversalApi implements UniversalApiInterface
         $this->response->setBody($encodeErrorResult);
         $this->response->sendResponse();
     }
-
-    protected function createReturnObject($event, $data)
-    {
-        $status = "success";
-
-        $this->result->setEvent($event);
-        $this->result->setStatus($status);
-        $this->result->setData($data);
-
-        return $result;
-    }
 }

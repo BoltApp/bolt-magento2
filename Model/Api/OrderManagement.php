@@ -261,12 +261,9 @@ class OrderManagement implements OrderManagementInterface
         }
 
         $request = $this->request->getBodyParams();
-        $this->logHelper->addInfoLog('management checking if request has [data]');
         if (isset($request['data'])) {
             $request = $request['data'];
         }
-
-        $this->logHelper->addInfoLog('[data] check complete');
 
         list(, $order) = $this->orderHelper->saveUpdateOrder(
             $reference,
