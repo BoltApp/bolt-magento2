@@ -64,9 +64,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                 'sessionHelper' => $this->sessionHelper
             ]
         );
-        $this->shippingAssignment = $this->createPartialMock(ShippingAssignmentInterface::class,
-            ['getItems']
-        );
+        $this->shippingAssignment = $this->createMock(ShippingAssignmentInterface::class);
     }
 
     /**
@@ -83,7 +81,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                             ->willReturn($this->checkoutSession);
         $this->shippingAssignment->expects(self::once())
                             ->method('getItems')
-                            ->with([['item']]);
+                            ->willReturn(['item']);
         $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
     }
     
@@ -101,7 +99,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                             ->willReturn($this->checkoutSession);
         $this->shippingAssignment->expects(self::once())
                             ->method('getItems')
-                            ->with([]);
+                            ->willReturn([]);
         $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
     }
 }

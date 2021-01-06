@@ -584,7 +584,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $checkoutSession->expects(static::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
                         ->willReturn([self::RULE_ID => 10]);
-        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+        $this->sessionHelper->expects(static::exactly(2))->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, $coupon, null, $quote]);
@@ -676,10 +676,10 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $checkoutSession = $this->createPartialMock(CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
-        $checkoutSession->expects(static::once())
+        $checkoutSession->expects(self::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
                         ->willReturn([self::RULE_ID => 10]);
-        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+        $this->sessionHelper->expects(self::exactly(2))->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
         $result = [
@@ -999,7 +999,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $checkoutSession->expects(static::once())
                         ->method('getBoltCollectSaleRuleDiscounts')
                         ->willReturn([self::RULE_ID => 10]);
-        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+        $this->sessionHelper->expects(static::exactly(2))->method('getCheckoutSession')
              ->willReturn($checkoutSession);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
