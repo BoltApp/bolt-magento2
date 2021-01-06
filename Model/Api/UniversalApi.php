@@ -132,21 +132,21 @@ class UniversalApi implements UniversalApiInterface
         try {
             switch($event){
                 case "order.create":
-                    /**
-                     * Response data:
-                     * {
-                     *     "display_id": string
-                     *     "order_received_url": string
-                     * }
-                     */
-                    //currently sends its own response, no return
+                    //currently sends its own response updated for v2, no return
                     $this->createOrder->execute(
                         $event,
                         isset($data['order']) ? $data['order'] : null,
                         isset($data['currency']) ? $data['currency'] : null
                     );
                     break;
-                case "manage_order":
+                case "cart.create":
+                    //sends response itself, updated for v2
+                    $this->orderManagement->createCart(
+                        isset($data['items']) ? $data['items'] : null,
+                        isset($data['currency']) ? $data['currency'] : null
+                    );
+                case "manage_order": 
+                    //this will be moved to the webhooks side I believe
                     $this->orderManagement->manage(
                         isset($data['id']) ? $data['id'] : null,
                         isset($data['reference']) ? $data['reference'] : null,
@@ -158,10 +158,12 @@ class UniversalApi implements UniversalApiInterface
                         isset($data['display_id']) ? $data['display_id'] : null
                     );
                     break;
-                case "validate_discount":
+                case "validate_discount": 
+                    //may not be necessary here.
                     $this->discountCodeValidation->validate();
                     break;
                 case "discounts.code.apply":
+                    //not yet functional
                     $this->result->setData(
                         $this->updateCart->execute(
                             isset($data['cart']) ? $data['cart'] : null,
@@ -170,13 +172,7 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "cart.update":
-                    /**
-                     * Response data:
-                     * {
-                     *     "order_create": { ... }
-                     * }
-                     */
-                    //says it returns a value but just sends a response.
+                    //returns a value if v2. in the v1 case still just sends its own response
                     $this->result->setData(
                         $this->updateCart->execute(
                             isset($data['cart']) ? $data['cart'] : null,
@@ -188,14 +184,6 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "order.shipping_and_tax":
-                    /**
-                     * Response data
-                     * {
-                     *     "shipping_options": [ ... ]
-                     *     "tax_results": { ... }
-                     *     "currency": string
-                     * }
-                     */
                     //Returns ShippingOptionsInterface
                     $this->result->setData(
                         $this->shippingMethods->getShippingMethods(
@@ -205,12 +193,6 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "order.shipping":
-                    /**
-                     * Response data
-                     * {
-                     *     "shipping_options": [ ... ]
-                     * }
-                     */
                     //Returns ShippingDataInterface
                     $this->shipping->execute(
                         isset($data['cart']) ? $data['cart'] : null,
@@ -219,14 +201,6 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "order.tax":
-                    /**
-                     * Response data
-                     * {
-                     *     "tax_result": { ... }
-                     *     "shipping_option": { ... }
-                     *     "items": [ ... ]
-                     * }
-                     */
                     //Returns TaxDataInterface
                     $this->tax->execute(
                         isset($data['cart']) ? $data['cart'] : null,
@@ -243,10 +217,14 @@ class UniversalApi implements UniversalApiInterface
                     break;
             }
 
-            $this->result->setEvent($event);
-            $this->result->setStatus("success");
+            //not everything returns a value for result here. They send their own responses for now.
+            //TODO: fix this so that everything returns an interface to this class
+            if (isset($this->result->getData)) {
+                $this->result->setEvent($event);
+                $this->result->setStatus("success");
 
-            return $this->result;
+                return $this->result;
+            }
         }
         catch (BoltException $e) {
             $this->sendErrorResponse(
