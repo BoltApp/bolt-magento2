@@ -145,6 +145,7 @@ class UniversalApi implements UniversalApiInterface
                         isset($data['items']) ? $data['items'] : null,
                         isset($data['currency']) ? $data['currency'] : null
                     );
+                    break;
                 case "manage_order": 
                     //this will be moved to the webhooks side I believe
                     $this->orderManagement->manage(
@@ -219,7 +220,7 @@ class UniversalApi implements UniversalApiInterface
 
             //not everything returns a value for result here. They send their own responses for now.
             //TODO: fix this so that everything returns an interface to this class
-            if (isset($this->result->getData)) {
+            if ($this->result->getData() != null) {
                 $this->result->setEvent($event);
                 $this->result->setStatus("success");
 
@@ -243,7 +244,7 @@ class UniversalApi implements UniversalApiInterface
             return false;
         }
 
-        return true;
+        // return true;
     }
 
     /**
