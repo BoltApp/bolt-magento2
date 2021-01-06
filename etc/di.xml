@@ -35,8 +35,8 @@
     </type>
 
     <!-- For V2 universal endpoint -->
-    <preference for="Bolt\Boltpay\Api\WebhookInterface" type="Bolt\Boltpay\Model\Api\Webhook" />
-    <preference for="Bolt\Boltpay\Api\Data\WebhookResultInterface" type="Bolt\Boltpay\Model\Api\Data\WebhookResult" />
+    <preference for="Bolt\Boltpay\Api\UniversalApiInterface" type="Bolt\Boltpay\Model\Api\UniversalApi" />
+    <preference for="Bolt\Boltpay\Api\Data\UniversalApiResultInterface" type="Bolt\Boltpay\Model\Api\Data\UniversalApiResult" />
 
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
