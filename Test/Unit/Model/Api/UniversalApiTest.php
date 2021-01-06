@@ -28,6 +28,7 @@ use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Model\Api\Tax;
 use Bolt\Boltpay\Model\Api\UpdateCart;
+use Bolt\Boltpay\Model\Api\Data\UniversalApiResult;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
@@ -82,6 +83,11 @@ class UniversalApiTest extends TestCase
      * @var MockObject|UpdateCart
      */
     private $updateCart;
+
+    /**
+     * @var MockObject|UniversalApiResult
+     */
+    private $universalApiResult;
 
     /**
      * @var MockObject|Request
@@ -270,6 +276,7 @@ class UniversalApiTest extends TestCase
         $this->shippingMethods = $this->createMock(ShippingMethods::class);
         $this->tax = $this->createMock(Tax::class);
         $this->updateCart = $this->createMock(UpdateCart::class);
+        $this->universalApiResult = $this->createMock(UniversalApiResult::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
@@ -287,6 +294,7 @@ class UniversalApiTest extends TestCase
                 $this->shippingMethods,
                 $this->tax,
                 $this->updateCart,
+                $this->universalApiResult,
                 $this->bugsnag,
                 $this->logHelper,
                 $this->errorResponse,

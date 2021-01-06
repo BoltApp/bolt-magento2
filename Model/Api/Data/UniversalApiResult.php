@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\UniversalApiResultInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 
-class UniversalApiResult implements WebhookResultInterface
+class UniversalApiResult implements UniversalApiResultInterface
 {
     /**
      * @var string
