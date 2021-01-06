@@ -23,6 +23,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Quote\Discount;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Quote\Api\Data\ShippingAssignmentInterface;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
@@ -44,6 +45,9 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
     
     /** @var Discount */
     protected $subject;
+    
+    /** @var ShippingAssignmentInterface */
+    protected $shippingAssignment;
 
     public function setUpInternal()
     {
@@ -60,6 +64,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                 'sessionHelper' => $this->sessionHelper
             ]
         );
+        $this->shippingAssignment = $this->createMock(ShippingAssignmentInterface::class);
     }
 
     /**
@@ -74,6 +79,27 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->beforeCollect($this->subject, null, null, null);
+        $this->shippingAssignment->expects(self::once())
+                            ->method('getItems')
+                            ->willReturn(['item']);
+        $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
+    }
+    
+    /**
+     * @test
+     * @covers ::beforeCollect
+     */
+    public function beforeCollecte_noItemInShippingAssignment_doNothing()
+    {
+        $this->checkoutSession->expects(self::never())
+                            ->method('setBoltCollectSaleRuleDiscounts')
+                            ->with([]);
+        $this->sessionHelper->expects(self::never())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
+        $this->shippingAssignment->expects(self::once())
+                            ->method('getItems')
+                            ->willReturn([]);
+        $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
     }
 }
