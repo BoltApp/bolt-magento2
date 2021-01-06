@@ -71,7 +71,7 @@ interface UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return Bolt\Boltpay\Api\Data\ShippingOptionsInterface
+     * @return Bolt\Boltpay\Api\Data\ShippingOptionsInterface $this
      */
     public function getData();
 }

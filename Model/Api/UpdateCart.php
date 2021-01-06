@@ -28,6 +28,7 @@ use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
+use Bolt\Boltpay\Api\Data\DiscountUpdateInterface;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Exception\BoltException;
@@ -264,6 +265,66 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         }
 
         return true;
+    }
+
+    /**
+     * Handles discounts.code.apply event type in universal api
+     * 
+     * This is mostly just pulled from UpdateCart::execute as all the functionality is there
+     * but discounts.code.apply requires a specific subset of the functionality in execute
+     * 
+     * @api
+     * @param string $discount_code
+     * @param mixed $cart
+     * @param string $customer_name
+     * @param string $customer_email
+     * @param int $customer_phone
+     * @return DiscountUpdateInterface
+     */
+    public function discountHandler($discount_code, $cart, $customer_name = null, $customer_email = null, $customer_phone = null)
+    {
+        // Bolt server sends immutableQuoteId as order reference
+        $immutableQuoteId = $cart['order_reference'];
+
+        $result = $this->validateQuote($immutableQuoteId);
+        list($parentQuote, $immutableQuote) = $result;
+
+        $storeId = $parentQuote->getStoreId();
+        $websiteId = $parentQuote->getStore()->getWebsiteId();
+
+        $this->preProcessWebhook($storeId);
+
+        $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
+
+        // Load logged in customer checkout and customer sessions from cached session id.
+        // Replace the quote with $parentQuote in checkout session.
+        $this->sessionHelper->loadSession($parentQuote);
+        $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
+
+        if(!empty($discount_code)){
+            // Get the coupon code
+            $couponCode = trim($discount_code);
+
+            $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+
+            list($coupon, $giftCard) = $result;
+
+            $result = $this->applyDiscount($couponCode, $coupon, $giftCard, $parentQuote);
+        }
+
+        //need to rename one of the keys of the result array for universal api
+        $result['discount_description'] = $result['description'];
+        unset($result['description']);
+        unset($result['status']);
+
+        $responseBody = [
+            'event' => 'discounts.code.apply',
+            'status' => 'success',
+            'data' => $result
+        ];
+
+        $this->sendSuccessResponse($responseBody);
+
     }
 
     /**

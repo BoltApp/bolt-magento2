@@ -40,4 +40,23 @@ interface UpdateCartInterface
         $discount_codes_to_add = null,
         $discount_codes_to_remove = null
     );
+
+    /**
+     * Handles discounts.code.apply event in universal API
+     * 
+     * @api
+     * @param string $discount_code
+     * @param mixed $cart
+     * @param string $customer_name
+     * @param string $customer_email
+     * @param int $customer_phone
+     * @return array
+     */
+    public function discountHandler(
+        $discount_code,
+        $cart,
+        $customer_name = null,
+        $customer_email = null,
+        $customer_phone = null
+    );
 }

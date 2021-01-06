@@ -147,12 +147,13 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "discounts.code.apply":
-                    //not yet functional
-                    $this->result->setData(
-                        $this->updateCart->execute(
-                            isset($data['cart']) ? $data['cart'] : null,
-                            isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null
-                        )
+                    //sends response itself
+                    $this->updateCart->discountHandler(
+                        isset($data['discount_code']) ? $data['discount_code'] : null,
+                        isset($data['cart']) ? $data['cart'] : null,
+                        isset($data['customer_name']) ? $data['customer_name'] : null,
+                        isset($data['customer_email']) ? $data['customer_email'] : null,
+                        isset($data['customer_phone']) ? $data['customer_phone'] : null
                     );
                     break;
                 case "cart.update":

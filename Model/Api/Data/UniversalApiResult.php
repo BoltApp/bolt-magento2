@@ -33,7 +33,7 @@ class UniversalApiResult implements UniversalApiResultInterface
     private $status;
 
     /**
-     * @var ShippingOptionsInterface
+     * @var ShippingOptionsInterface|DiscountUpdateInterface
      */
     private $data;
 
