@@ -228,7 +228,7 @@ class UniversalApi implements UniversalApiInterface
             return false;
         }
 
-        // return true;
+        return true;
     }
 
     /**
