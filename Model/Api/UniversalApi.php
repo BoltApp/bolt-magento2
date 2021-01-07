@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\UniversalApiInterface;
 use Bolt\Boltpay\Api\CreateOrderInterface;
-use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Api\ShippingInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
@@ -39,11 +38,6 @@ class UniversalApi implements UniversalApiInterface
      */
     protected $createOrder;
 
-    /**
-     * @var DiscountCodeValidationInterface
-     */
-    protected $discountCodeValidation;
-    
     /**
      * @var OrderManagementInterface
      */
@@ -97,7 +91,6 @@ class UniversalApi implements UniversalApiInterface
 
     public function __construct(
         CreateOrderInterface $createOrder,
-        DiscountCodeValidationInterface $discountCodeValidation,
         OrderManagementInterface $orderManagement,
         ShippingInterface $shipping,
         ShippingMethodsInterface $shippingMethods,
@@ -111,7 +104,6 @@ class UniversalApi implements UniversalApiInterface
     )
     {
         $this->createOrder = $createOrder;
-        $this->discountCodeValidation = $discountCodeValidation;
         $this->orderManagement = $orderManagement;
         $this->shipping = $shipping;
         $this->shippingMethods = $shippingMethods;

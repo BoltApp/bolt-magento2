@@ -28,7 +28,6 @@ use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;
-use Bolt\Boltpay\Api\Data\DiscountUpdateInterface;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Exception\BoltException;

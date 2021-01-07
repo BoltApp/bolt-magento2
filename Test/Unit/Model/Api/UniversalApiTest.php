@@ -22,7 +22,6 @@ use Bolt\Boltpay\Model\Api\UniversalApi;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
-use Bolt\Boltpay\Model\Api\DiscountCodeValidation;
 use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
@@ -53,11 +52,6 @@ class UniversalApiTest extends TestCase
      * @var MockObject|CreateOrder
      */
     private $createOrder;
-
-    /**
-     * @var MockObject|DiscountCodeValidation
-     */
-    private $discountCodeValidation;
 
     /**
      * @var MockObject|OrderManagement
@@ -223,7 +217,6 @@ class UniversalApiTest extends TestCase
     private function initRequiredMocks()
     {
         $this->createOrder = $this->createMock(CreateOrder::class);
-        $this->discountCodeValidation = $this->createMock(DiscountCodeValidation::class);
         $this->orderManagement = $this->createMock(OrderManagement::class);
         $this->shipping = $this->createMock(Shipping::class);
         $this->shippingMethods = $this->createMock(ShippingMethods::class);
@@ -241,7 +234,6 @@ class UniversalApiTest extends TestCase
         $mockBuilder = $this->getMockBuilder(UniversalApi::class)
             ->setConstructorArgs([
                 $this->createOrder,
-                $this->discountCodeValidation,
                 $this->orderManagement,
                 $this->shipping,
                 $this->shippingMethods,
