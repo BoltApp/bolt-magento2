@@ -224,10 +224,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $result = $this->generateResult($immutableQuote);
 
-            if (!isset($this->request->data)) {
-                $this->sendSuccessResponse($result);
+            if (isset($this->request->data)) {
+                return $result;
             }
-            return $result;
+            $this->sendSuccessResponse($result);
 
         } catch (BoltException $e) {
             $this->sendErrorResponse(
