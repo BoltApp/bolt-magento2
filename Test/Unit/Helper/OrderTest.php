@@ -82,7 +82,6 @@ use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogC
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\CheckboxesHandler;
-use Bolt\Boltpay\Test\Unit\Model\Api\OrderManagementTest;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Magento\Sales\Model\Order\CreditmemoFactory;
@@ -102,6 +101,7 @@ class OrderTest extends BoltTestCase
     const QUOTE_ID = 5678;
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
     const DISPLAY_ID = self::INCREMENT_ID;
+    const REFERENCE = 'AAAA-BBBB-PYQ9';
     const REFERENCE_ID = '1123123123';
     const PROCESSOR_VANTIV = 'vantiv';
     const PROCESSOR_PAYPAL = 'paypal';
@@ -4726,7 +4726,7 @@ class OrderTest extends BoltTestCase
     public function testSaveCustomerCreditCard_invalidData($data)
     {
         $this->initCurrentMock(['fetchTransactionInfo']);
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($data['transaction']);
         $this->quoteMock->expects(static::once())->method('getCustomerId')
             ->willReturn($data['customer_id']);
@@ -4736,7 +4736,7 @@ class OrderTest extends BoltTestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4786,7 +4786,7 @@ class OrderTest extends BoltTestCase
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = $this->mockTransactionData();
 
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($transaction);
         $this->quoteMock->expects(self::once())->method('getCustomerId')
             ->willReturn(self::CUSTOMER_ID);
@@ -4799,7 +4799,7 @@ class OrderTest extends BoltTestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertTrue($result);
     }
 
@@ -4812,7 +4812,7 @@ class OrderTest extends BoltTestCase
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = $this->mockTransactionData();
 
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($transaction);
         $this->quoteMock->expects(self::once())->method('getCustomerId')
             ->willReturn(self::CUSTOMER_ID);
@@ -4827,7 +4827,7 @@ class OrderTest extends BoltTestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertTrue($result);
     }
 
@@ -4840,7 +4840,7 @@ class OrderTest extends BoltTestCase
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = $this->mockTransactionData();
 
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($transaction);
 
 
@@ -4849,7 +4849,7 @@ class OrderTest extends BoltTestCase
             ->willReturnOnConsecutiveCalls(null, null);
 
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4862,7 +4862,7 @@ class OrderTest extends BoltTestCase
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = $this->mockTransactionData();
 
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($transaction);
         $this->quoteMock->expects(self::once())->method('getCustomerId')
             ->willReturn(self::CUSTOMER_ID);
@@ -4875,7 +4875,7 @@ class OrderTest extends BoltTestCase
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willThrowException(new \Exception());
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
 
@@ -4888,7 +4888,7 @@ class OrderTest extends BoltTestCase
         $this->initCurrentMock(['fetchTransactionInfo']);
         $transaction = $this->mockTransactionData();
 
-        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID)
+        $this->currentMock->expects(static::once())->method('fetchTransactionInfo')->with(self::REFERENCE, self::STORE_ID)
             ->willReturn($transaction);
         $this->quoteMock->expects(self::once())->method('getCustomerId')
             ->willReturn(self::CUSTOMER_ID);
@@ -4902,7 +4902,7 @@ class OrderTest extends BoltTestCase
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
 
-        $result = $this->currentMock->saveCustomerCreditCard(OrderManagementTest::REFERENCE, OrderManagementTest::STORE_ID);
+        $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
 
