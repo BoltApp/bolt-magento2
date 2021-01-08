@@ -62,7 +62,7 @@ interface UniversalApiResultInterface
      * Set response data
      * 
      * @api
-     * @param Bolt\Boltpay\Api\Data\ShippingOptionsInterface $data
+     * @param mixed $data
      * @return $this
      */
     public function setData($data);
@@ -71,7 +71,7 @@ interface UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return Bolt\Boltpay\Api\Data\ShippingOptionsInterface $this
+     * @return mixed $this
      */
     public function getData();
 }

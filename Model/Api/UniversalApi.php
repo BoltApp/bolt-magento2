@@ -170,18 +170,22 @@ class UniversalApi implements UniversalApiInterface
                     break;
                 case "order.shipping":
                     //Returns ShippingDataInterface
-                    $this->shipping->execute(
-                        isset($data['cart']) ? $data['cart'] : null,
-                        isset($data['shipping_address']) ? $data['shipping_address'] : null,
-                        isset($data['shipping_option']) ? $data['shipping_option'] : null
+                    $this->result->setData(
+                        $this->shipping->execute(
+                            isset($data['cart']) ? $data['cart'] : null,
+                            isset($data['shipping_address']) ? $data['shipping_address'] : null,
+                            isset($data['shipping_option']) ? $data['shipping_option'] : null
+                        )
                     );
                     break;
                 case "order.tax":
                     //Returns TaxDataInterface
-                    $this->tax->execute(
-                        isset($data['cart']) ? $data['cart'] : null,
-                        isset($data['shipping_address']) ? $data['shipping_address'] : null,
-                        isset($data['shipping_option']) ? $data['shipping_option'] : null
+                    $this->result->setData(
+                        $this->tax->execute(
+                            isset($data['cart']) ? $data['cart'] : null,
+                            isset($data['shipping_address']) ? $data['shipping_address'] : null,
+                            isset($data['shipping_option']) ? $data['shipping_option'] : null
+                        )
                     );
                     break;
                 default:
@@ -199,7 +203,7 @@ class UniversalApi implements UniversalApiInterface
                 $this->result->setEvent($event);
                 $this->result->setStatus("success");
 
-                return $this->result;
+                $this->sendSuccessResponse($this->formatResponseBody($this->result));
             }
         }
         catch (BoltException $e) {
@@ -246,5 +250,26 @@ class UniversalApi implements UniversalApiInterface
         $this->response->setHttpResponseCode($httpStatusCode);
         $this->response->setBody($encodeErrorResult);
         $this->response->sendResponse();
+    }
+    
+    protected function sendSuccessResponse($data)
+    {
+        $this->logHelper->addInfoLog('### sendSuccessREsponse');
+        // $this->logHelper->addInfoLog($data);
+        $this->logHelper->addInfoLog('=== END ===');
+
+        $this->response->setBody($data);
+        $this->response->sendResponse();
+    }
+
+    private function formatResponseBody($data)
+    {
+        $responseBody = [
+            'event' => $data->getEvent(),
+            'status' => $data->getStatus(),
+            'data' => $data->getData()
+        ];
+
+        return json_encode($responseBody);
     }
 }

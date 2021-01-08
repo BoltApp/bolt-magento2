@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\UniversalApiResultInterface;
-use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 
 class UniversalApiResult implements UniversalApiResultInterface
 {
@@ -33,7 +32,7 @@ class UniversalApiResult implements UniversalApiResultInterface
     private $status;
 
     /**
-     * @var ShippingOptionsInterface|UpdateCartResultInterface
+     * @var mixed
      */
     private $data;
 
@@ -89,7 +88,7 @@ class UniversalApiResult implements UniversalApiResultInterface
      * Set response data
      * 
      * @api
-     * @param ShippingOptionsInterface $data
+     * @param mixed $data
      * @return $this
      */
     public function setData($data)
@@ -102,7 +101,7 @@ class UniversalApiResult implements UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return ShippingOptionsInterface $data
+     * @return mixed $data
      */
     public function getData()
     {
