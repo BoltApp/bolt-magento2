@@ -48,6 +48,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\App\Config\MutableScopeConfigInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\Quote\Model\QuoteFactory;
@@ -267,14 +268,32 @@ class OrderManagementTest extends BoltTestCase
     public function setupBoltConfig()
     {
         $model = $this->objectManager->get(Config::class);
+
         $encryptor = $this->objectManager->get(EncryptorInterface::class);
         
         $secret = $encryptor->encrypt(self::SECRET);
         $apikey = $encryptor->encrypt(self::APIKEY);
-        
+     
         $model->saveConfig('payment/boltpay/signing_secret', $secret, ScopeInterface::SCOPE_STORE, $this->storeId);
         $model->saveConfig('payment/boltpay/api_key', $apikey, ScopeInterface::SCOPE_STORE, $this->storeId);
         $model->saveConfig('payment/boltpay/active', 1, ScopeInterface::SCOPE_STORE, $this->storeId);
+        
+        $scopeConfig = $this->objectManager->get(MutableScopeConfigInterface::class);
+        $scopeConfig->setValue(
+            'payment/boltpay/signing_secret',
+            $secret,
+            ScopeInterface::SCOPE_STORE
+        );
+        $scopeConfig->setValue(
+            'payment/boltpay/api_key',
+            $apikey,
+            ScopeInterface::SCOPE_STORE
+        );
+        $scopeConfig->setValue(
+            'payment/boltpay/active',
+            1,
+            ScopeInterface::SCOPE_STORE
+        );
     }
     
     private function getAddressInfo()
@@ -685,7 +704,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -762,7 +781,7 @@ class OrderManagementTest extends BoltTestCase
         
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -850,7 +869,7 @@ class OrderManagementTest extends BoltTestCase
         
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1465,7 +1484,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_CLOSED, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1652,7 +1671,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_CANCELED, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1723,7 +1742,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
-        $this->assertStringContainsString('Order creation / update was successful', $responseData['message']);
+        $this->assertRegexp('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1804,13 +1823,11 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();
-        
         $productOptions = [
-            'product' => $product->getId(),
+            'product' => 1010,
             'selected_configurable_option' => '',
             'related_product' => '',
-            'item' => $product->getId(),
+            'item' => 1010,
             'form_key' => 'eY1ngRv1NFOyFC2N',
             'qty'      => 101,
             'storeId'  => $this->storeId,
@@ -1820,8 +1837,8 @@ class OrderManagementTest extends BoltTestCase
             'type'  => 'cart.create',
             'items' => [
                 [
-                    'reference'    => $product->getId(),
-                    'name'         => $product->getName(),
+                    'reference'    => 1010,
+                    'name'         => 'Test',
                     'description'  => NULL,
                     'options'      => json_encode($productOptions),
                     'total_amount' => 101*self::PRODUCT_PRICE*100,
@@ -1848,9 +1865,9 @@ class OrderManagementTest extends BoltTestCase
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
-        $this->assertEquals('failure', $responseData['status']);
-        $this->assertEquals(6303, $responseData['error']['code']);
-        $this->assertEquals('The requested qty is not available', $responseData['error']['message']);
+        $this->assertEquals('error', $responseData['status']);
+        $this->assertEquals(6009, $responseData['code']);
+        $this->assertEquals('Unprocessable Entity: The product that was requested doesn\'t exist. Verify the product and try again.', $responseData['message']);
     }
     
     /**
