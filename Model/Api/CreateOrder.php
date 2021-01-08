@@ -220,15 +220,15 @@ class CreateOrder implements CreateOrderInterface
 
             $transaction = json_decode($payload);
             // V2 webhooks send requests as {"event": ... "data":{requestContent}} so we need to extract the data we want
-            $isV2 = false;
+            $isUniversal = false;
             if (isset($transaction->data)) {
                 $transaction = $transaction->data;
-                $isV2 = true;
+                $isUniversal = true;
             }
             $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
 
-            if ($isV2) {
+            if ($isUniversal) {
                 $this->sendResponse(200, [
                     'event' => 'order.create',
                     'status' => 'success',

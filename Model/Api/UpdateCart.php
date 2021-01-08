@@ -223,8 +223,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $result = $this->generateResult($immutableQuote);
 
-            //this is only true for universal api requests, in which case we want to return the result and
-            //let UniversalApi::execute deal with sending the response
+            //this is only true for universal api requests which requires a different format of response.
+            //TODO: MA-493 refactoring will have this return an interface
             if (isset($this->request->getBodyParams()['data'])) {
                 $result = [
                     'event' => "cart.update",
