@@ -33,7 +33,7 @@ class UniversalApiResult implements UniversalApiResultInterface
     private $status;
 
     /**
-     * @var ShippingOptionsInterface|DiscountUpdateInterface
+     * @var ShippingOptionsInterface|UpdateCartResultInterface
      */
     private $data;
 
@@ -102,7 +102,7 @@ class UniversalApiResult implements UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return ShippingOptionsInterface
+     * @return ShippingOptionsInterface $data
      */
     public function getData()
     {

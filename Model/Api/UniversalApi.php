@@ -149,15 +149,14 @@ class UniversalApi implements UniversalApiInterface
                     );
                     break;
                 case "cart.update":
-                    //returns a value if v2. in the v1 case still just sends its own response
-                    $this->result->setData(
-                        $this->updateCart->execute(
-                            isset($data['cart']) ? $data['cart'] : null,
-                            isset($data['add_items']) ? $data['add_items'] : null,
-                            isset($data['remove_items']) ? $data['remove_items'] : null,
-                            isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null,
-                            isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
-                        )
+                    //tried to get this to return a result but the M2 dataobject processor didn't want to play
+                    //nice, so this will also just send a response itself until MA-483
+                    $updateResult = $this->updateCart->execute(
+                        isset($data['cart']) ? $data['cart'] : null,
+                        isset($data['add_items']) ? $data['add_items'] : null,
+                        isset($data['remove_items']) ? $data['remove_items'] : null,
+                        isset($data['discount_codes_to_add']) ? $data['discount_codes_to_add'] : null,
+                        isset($data['discount_codes_to_remove']) ? $data['discount_codes_to_remove'] : null
                     );
                     break;
                 case "order.shipping_and_tax":

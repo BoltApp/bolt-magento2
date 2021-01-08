@@ -50,7 +50,7 @@ interface UpdateCartInterface
      * @param string $customer_name
      * @param string $customer_email
      * @param int $customer_phone
-     * @return array
+     * @return void
      */
     public function discountHandler(
         $discount_code,

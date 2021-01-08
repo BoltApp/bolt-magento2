@@ -62,8 +62,8 @@ interface UniversalApiResultInterface
      * Set response data
      * 
      * @api
-     * @param $data
-     * @return Bolt\Boltpay\Api\Data\ShippingOptionsInterface $this
+     * @param Bolt\Boltpay\Api\Data\ShippingOptionsInterface $data
+     * @return $this
      */
     public function setData($data);
 

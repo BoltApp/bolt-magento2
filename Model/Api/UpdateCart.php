@@ -223,8 +223,16 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $result = $this->generateResult($immutableQuote);
 
-            if (isset($this->request->data)) {
-                return $result;
+            //this is only true for universal api requests, in which case we want to return the result and
+            //let UniversalApi::execute deal with sending the response
+            if (isset($this->request->getBodyParams()['data'])) {
+                $result = [
+                    'event' => "cart.update",
+                    'status' => "success",
+                    'data' => [
+                        'order_create' => $result['order_create']
+                    ]
+                ];
             }
             $this->sendSuccessResponse($result);
 
@@ -278,7 +286,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      * @param string $customer_name
      * @param string $customer_email
      * @param int $customer_phone
-     * @return DiscountUpdateInterface
+     * @return void
      */
     public function discountHandler($discount_code, $cart, $customer_name = null, $customer_email = null, $customer_phone = null)
     {
