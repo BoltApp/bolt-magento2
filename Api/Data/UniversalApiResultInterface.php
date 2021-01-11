@@ -71,7 +71,7 @@ interface UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return mixed $this
+     * @return mixed
      */
     public function getData();
 }

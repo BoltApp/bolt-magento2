@@ -101,7 +101,7 @@ class UniversalApiResult implements UniversalApiResultInterface
      * Get response data
      * 
      * @api
-     * @return mixed $data
+     * @return mixed
      */
     public function getData()
     {
