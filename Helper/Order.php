@@ -45,6 +45,7 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Magento\Sales\Model\OrderIncrementIdChecker;
 use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
@@ -266,37 +267,44 @@ class Order extends AbstractHelper
     private $orderManagement;
 
     /**
+     * @var OrderIncrementIdChecker|null
+     */
+    private $orderIncrementIdChecker;
+
+    /**
      * Order constructor.
-     * @param Context $context
-     * @param Api $apiHelper
-     * @param Config $configHelper
-     * @param RegionModel $regionModel
-     * @param QuoteManagement $quoteManagement
-     * @param OrderSender $emailSender
-     * @param InvoiceService $invoiceService
-     * @param InvoiceSender $invoiceSender
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param OrderRepository $orderRepository
-     * @param TransactionBuilder $transactionBuilder
-     * @param TimezoneInterface $timezone
-     * @param DataObjectFactory $dataObjectFactory
-     * @param Log $logHelper
-     * @param Bugsnag $bugsnag
-     * @param Cart $cartHelper
-     * @param ResourceConnection $resourceConnection
-     * @param Session $sessionHelper
-     * @param Discount $discountHelper
-     * @param DateTime $date
-     * @param WebhookLogCollectionFactory $webhookLogCollectionFactory
-     * @param WebhookLogFactory $webhookLogFactory
-     * @param Decider $featureSwitches
-     * @param CheckboxesHandler $checkboxesHandler
-     * @param CustomerCreditCardFactory $customerCreditCardFactory
+     *
+     * @param Context                             $context
+     * @param Api                                 $apiHelper
+     * @param Config                              $configHelper
+     * @param RegionModel                         $regionModel
+     * @param QuoteManagement                     $quoteManagement
+     * @param OrderSender                         $emailSender
+     * @param InvoiceService                      $invoiceService
+     * @param InvoiceSender                       $invoiceSender
+     * @param SearchCriteriaBuilder               $searchCriteriaBuilder
+     * @param OrderRepository                     $orderRepository
+     * @param TransactionBuilder                  $transactionBuilder
+     * @param TimezoneInterface                   $timezone
+     * @param DataObjectFactory                   $dataObjectFactory
+     * @param Log                                 $logHelper
+     * @param Bugsnag                             $bugsnag
+     * @param Cart                                $cartHelper
+     * @param ResourceConnection                  $resourceConnection
+     * @param Session                             $sessionHelper
+     * @param Discount                            $discountHelper
+     * @param DateTime                            $date
+     * @param WebhookLogCollectionFactory         $webhookLogCollectionFactory
+     * @param WebhookLogFactory                   $webhookLogFactory
+     * @param Decider                             $featureSwitches
+     * @param CheckboxesHandler                   $checkboxesHandler
+     * @param CustomerCreditCardFactory           $customerCreditCardFactory
      * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
-     * @param CreditmemoFactory $creditmemoFactory
-     * @param CreditmemoManagementInterface $creditmemoManagement
-     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param OrderManagementInterface|null $orderManagement
+     * @param CreditmemoFactory                   $creditmemoFactory
+     * @param CreditmemoManagementInterface       $creditmemoManagement
+     * @param EventsForThirdPartyModules          $eventsForThirdPartyModules
+     * @param OrderManagementInterface|null       $orderManagement
+     * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
      */
     public function __construct(
         Context $context,
@@ -328,7 +336,8 @@ class Order extends AbstractHelper
         CreditmemoFactory $creditmemoFactory,
         CreditmemoManagementInterface $creditmemoManagement,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        OrderManagementInterface $orderManagement = null
+        OrderManagementInterface $orderManagement = null,
+        OrderIncrementIdChecker $orderIncrementIdChecker = null
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -361,6 +370,8 @@ class Order extends AbstractHelper
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->orderManagement = $orderManagement
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
+        $this->orderIncrementIdChecker = $orderIncrementIdChecker
+            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderIncrementIdChecker::class);
     }
 
     /**
@@ -1153,14 +1164,16 @@ class Order extends AbstractHelper
 
     /**
      * @param Quote $quote
+     * @param array $orderData
+     *
      * @return false|OrderModel|null
-     * @throws \Exception
+     * @throws LocalizedException
      */
-    public function submitQuote($quote)
+    public function submitQuote($quote, $orderData = [])
     {
         /** @var OrderModel $order */
         try {
-            $order = $this->quoteManagement->submit($quote);
+            $order = $this->quoteManagement->submit($quote, $orderData);
         } catch (\Exception $e) {
             $order = $this->getOrderByQuoteId($quote->getId());
             if ($order && $order->getPayment() && $order->getPayment()->getMethod() === Payment::METHOD_CODE) {
@@ -1193,7 +1206,48 @@ class Order extends AbstractHelper
      */
     public function processNewOrder($quote, $transaction)
     {
-        $order = $this->submitQuote($quote);
+        $orderData = [];
+        if (
+            isset($transaction->order->cart->metadata->original_order_entity_id) &&
+            $originalOrderId = $transaction->order->cart->metadata->original_order_entity_id
+        ) {
+            try {
+                $originalOrder = $this->orderRepository->get($originalOrderId);
+                $originalId = $originalOrder->getOriginalIncrementId();
+                if (!$originalId) {
+                    $originalId = $originalOrder->getIncrementId();
+                }
+                /**
+                 * If expected increment id is already used, we must generate a new one by incrementing the edit digit
+                 * This happens when a failed payment occurred while editing an order
+                 * and failed orders are cancelled instead of deleted
+                 *
+                 * @see \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING
+                 *
+                 * Example:
+                 * Regular order is created with increment id 100000000
+                 * Payment fails when editing said order after the pre-auth already created order 100000000-1
+                 * Our next order should have increment id equal to 100000000-2 while being linked to the first order
+                 */
+                $previousEditIncrement = $originalOrder->getEditIncrement();
+                $editIncrement = $previousEditIncrement + 1;
+                while ($this->orderIncrementIdChecker->isIncrementIdUsed($originalId . '-' . $editIncrement)) {
+                    $editIncrement++;
+                }
+                $orderData = [
+                    'original_increment_id'   => $originalId,
+                    'relation_parent_id'      => $originalOrder->getId(),
+                    'relation_parent_real_id' => $originalOrder->getIncrementId(),
+                    'edit_increment'          => $editIncrement,
+                    'increment_id'            => $originalId . '-' . $editIncrement
+                ];
+                $quote->setReservedOrderId($orderData['increment_id']);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+                //original order doesn't exist, proceed regularly
+            }
+        }
+        $order = $this->submitQuote($quote, $orderData);
 
         if (!$order) {
             $this->bugsnag->registerCallback(function ($report) use ($quote) {
@@ -1231,6 +1285,19 @@ class Order extends AbstractHelper
         $order->addStatusHistoryComment(
             "BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook"
         );
+
+        if (isset($originalOrder)) {
+            try {
+                $originalOrder->setRelationChildId($order->getId());
+                $originalOrder->setRelationChildRealId($order->getIncrementId());
+                $originalOrder->save();
+                $this->orderManagement->cancel($originalOrder->getEntityId());
+                $order->save();
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }
+        }
+
         $this->orderPostprocess($order, $quote, $transaction);
         return $order;
     }

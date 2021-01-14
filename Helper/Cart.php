@@ -1702,6 +1702,11 @@ class Cart extends AbstractHelper
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
+        //store order id from session to add support for order edit
+        if ($this->checkoutSession->getOrderId()) {
+            $cart['metadata']['original_order_entity_id'] = $this->checkoutSession->getOrderId();
+        }
+
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
         $cart['currency'] = $currencyCode;

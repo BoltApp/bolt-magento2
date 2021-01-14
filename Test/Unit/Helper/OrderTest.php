@@ -98,7 +98,7 @@ use Magento\TestFramework\Helper\Bootstrap;
  */
 class OrderTest extends BoltTestCase
 {
-    const INCREMENT_ID = 1234;
+    const INCREMENT_ID = 1000001;
     const QUOTE_ID = 5678;
     const IMMUTABLE_QUOTE_ID = self::QUOTE_ID + 1;
     const DISPLAY_ID = self::INCREMENT_ID;
@@ -259,6 +259,11 @@ class OrderTest extends BoltTestCase
     private $orderManagementMock;
 
     /**
+     * @var \Magento\Sales\Model\OrderIncrementIdChecker|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $orderIncrementIdChecker;
+
+    /**
      * Setup test dependencies, called before each test
      *
      * @throws ReflectionException from initRequiredMocks and initCurrentMock methods
@@ -333,7 +338,8 @@ class OrderTest extends BoltTestCase
                     $this->creditmemoFactory,
                     $this->creditmemoManagement,
                     $this->eventsForThirdPartyModules,
-                    $this->orderManagementMock
+                    $this->orderManagementMock,
+                    $this->orderIncrementIdChecker,
                 ]
             )
             ->setMethods($methods);
@@ -468,6 +474,11 @@ class OrderTest extends BoltTestCase
                 'setData',
                 'addData',
                 'getData',
+                'getOriginalIncrementId',
+                'getEditIncrement',
+                'setRelationChildId',
+                'setRelationChildRealId',
+                'getEntityId',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -494,6 +505,10 @@ class OrderTest extends BoltTestCase
         $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
         $this->orderManagementMock = $this->createMock(\Magento\Sales\Api\OrderManagementInterface::class);
+        $this->orderIncrementIdChecker = $this->getMockBuilder(\Magento\Sales\Model\OrderIncrementIdChecker::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isIncrementIdUsed'])
+            ->getMock();
     }
 
     /**
@@ -2008,8 +2023,234 @@ class OrderTest extends BoltTestCase
         $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
         $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Payment method assigned to order 1234 is: paypal');
+        $this->expectExceptionMessage(sprintf("Payment method assigned to order %s is: paypal", self::INCREMENT_ID));
         $this->currentMock->processNewOrder($this->quoteMock, $transaction);
+    }
+
+    /**
+     * Setup method for tests covering the cases when transaction has original order entity id (edit order flow)
+     *
+     * @param int $originalIncrementId
+     * @param int $editIncrement
+     *
+     * @throws ReflectionException if unable to init current mock
+     */
+    protected function processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement)
+    {
+        $this->initCurrentMock(['submitQuote', 'orderPostprocess']);
+        $originalOrderMock = $this->createPartialMock(
+            Order::class,
+            [
+                'getOriginalIncrementId',
+                'getEditIncrement',
+                'getId',
+                'getIncrementId',
+                'setRelationChildId',
+                'setRelationChildRealId',
+                'save',
+                'getEntityId',
+            ]
+        );
+        $transaction = new stdClass();
+        @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
+        $this->orderRepository->expects(static::once())->method('get')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID)
+            ->willReturn($originalOrderMock);
+        $originalOrderMock->expects(static::once())->method('getOriginalIncrementId')->willReturn($originalIncrementId);
+        $originalOrderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $originalOrderMock->method('getId')->willReturn(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+
+        $this->quoteMock = $this->createPartialMock(Quote::class, ['setReservedOrderId']);
+        $this->quoteMock->expects(static::once())->method('setReservedOrderId')->with(
+            self::INCREMENT_ID . '-' . $editIncrement
+        );
+        $this->currentMock->expects(static::once())->method('submitQuote')
+            ->with(
+                $this->quoteMock,
+                [
+                    'original_increment_id' => self::INCREMENT_ID,
+                    'relation_parent_id' => CartTest::ORIGINAL_ORDER_ENTITY_ID,
+                    'relation_parent_real_id' => self::INCREMENT_ID,
+                    'edit_increment' => $editIncrement,
+                    'increment_id' => self::INCREMENT_ID . '-' . $editIncrement,
+                ]
+            )
+            ->willReturn($this->orderMock);
+
+        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
+        $paymentMock = $this->createMock(OrderPaymentInterface::class);
+        $paymentMock->expects(self::any())->method('getMethod')->willReturn(Payment::METHOD_CODE);
+        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
+        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn(
+            $this->orderMock
+        );
+
+        $this->orderMock->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+
+        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
+            ->with('BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook');
+
+        $originalOrderMock->expects(static::once())->method('setRelationChildId')->with(self::ORDER_ID);
+        $originalOrderMock->expects(static::once())->method('setRelationChildRealId')->with(self::INCREMENT_ID);
+        $originalOrderMock->expects(static::once())->method('save');
+        $originalOrderMock->expects(static::once())->method('getEntityId')->willReturn(
+            CartTest::ORIGINAL_ORDER_ENTITY_ID
+        );
+
+        $this->currentMock->expects(self::once())->method('orderPostprocess')
+            ->with($this->orderMock, $this->quoteMock, $transaction);
+    }
+
+    /**
+     * @test
+     * that processNewOrder will supply the correct order data to {@see \Magento\Quote\Model\QuoteManagement::submit}
+     * in order to support Magento edit order functionality. Original order id is read from Bolt transaction metadata.
+     *
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_withOriginalOrderEntityId_submitsQuoteWithOriginalOrderData()
+    {
+        $previousEditIncrement = 0;
+        $editIncrement = $previousEditIncrement + 1;
+        $originalIncrementId = null;
+        $this->orderIncrementIdChecker->expects(static::once())->method('isIncrementIdUsed')
+            ->with(self::INCREMENT_ID . '-' . $editIncrement)->willReturn(false);
+        $transaction = new stdClass();
+        @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
+
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
+        $this->orderMock->expects(static::once())->method('save');
+        $this->orderManagementMock->expects(static::once())->method('cancel')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+        self::assertEquals(
+            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
+    }
+
+    /**
+     * @test
+     * that processNewOrder will successfully proceed after canceling the previous(edited) order fails
+     *
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_ifUnableToCancelPreviousOrder_proceedsWithExceptionNotify()
+    {
+        $previousEditIncrement = 0;
+        $editIncrement = $previousEditIncrement + 1;
+        $originalIncrementId = null;
+        $this->orderIncrementIdChecker->expects(static::once())->method('isIncrementIdUsed')
+            ->with(self::INCREMENT_ID . '-' . $editIncrement)->willReturn(false);
+        $transaction = new stdClass();
+        @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
+
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
+        $this->orderMock->expects(static::never())->method('save');
+        $exception = new LocalizedException(__('We cannot cancel this order.'));
+        $this->orderManagementMock->expects(static::once())->method('cancel')
+            ->with(CartTest::ORIGINAL_ORDER_ENTITY_ID)
+            ->willThrowException($exception);
+        $this->bugsnag->expects(static::once())->method('notifyException')->with($exception);
+        self::assertEquals(
+            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
+    }
+
+    /**
+     * @test
+     * that processNewOrder will recover from expected increment id being taken by incrementing edit number suffix until
+     * a free one is found
+     *
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_withOriginalOrderIncrementIdTaken_submitsQuoteWithOriginalOrderData()
+    {
+        $previousEditIncrement = 0;
+        $editIncrement = $previousEditIncrement + 2;
+        $originalIncrementId = null;
+        $this->orderIncrementIdChecker->expects(static::exactly(2))->method('isIncrementIdUsed')
+            ->withConsecutive(
+                [self::INCREMENT_ID . '-' . ($previousEditIncrement + 1)],
+                [self::INCREMENT_ID . '-' . ($previousEditIncrement + 2)]
+            )->willReturnOnConsecutiveCalls(true, false);
+        $transaction = new stdClass();
+        @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
+
+        $this->processNewOrder_withOriginalOrderId_SetUp($originalIncrementId, $editIncrement);
+        $this->orderMock->expects(static::once())->method('save');
+        $this->orderManagementMock->expects(static::once())->method('cancel')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+        self::assertEquals(
+            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
+    }
+
+    /**
+     * @test
+     * that processNewOrder will only notify exception to Bugsnag if the original order doesn't exist for editing
+     *
+     * @covers ::processNewOrder
+     */
+    public function processNewOrder_withOriginalOrderNotFound_createsOrderWithoutEditOrderData()
+    {
+        $previousEditIncrement = 0;
+        $editIncrement = $previousEditIncrement + 1;
+        $originalIncrementId = null;
+        $this->initCurrentMock(['submitQuote', 'orderPostprocess']);
+        $originalOrderMock = $this->createPartialMock(
+            Order::class,
+            [
+                'getOriginalIncrementId',
+                'getEditIncrement',
+                'getId',
+                'getIncrementId',
+                'setRelationChildId',
+                'setRelationChildRealId',
+                'save',
+                'getEntityId',
+            ]
+        );
+        $transaction = new stdClass();
+        @$transaction->order->cart->metadata->original_order_entity_id = CartTest::ORIGINAL_ORDER_ENTITY_ID;
+        $exception = new NoSuchEntityException(__("The entity that was requested doesn't exist. Verify the entity and try again."));
+        $this->orderRepository->expects(static::once())->method('get')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID)
+            ->willThrowException($exception);
+        $this->bugsnag->expects(static::once())->method('notifyException')->with($exception);
+        $originalOrderMock->expects(static::never())->method('getOriginalIncrementId')->willReturn($originalIncrementId);
+        $originalOrderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+        $originalOrderMock->method('getId')->willReturn(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+        $this->orderIncrementIdChecker->expects(static::never())->method('isIncrementIdUsed')
+            ->with(self::INCREMENT_ID . '-' . $editIncrement)->willReturn(false);
+
+        $this->quoteMock = $this->createPartialMock(Quote::class, ['setReservedOrderId']);
+        $this->quoteMock->expects(static::never())->method('setReservedOrderId')->with(self::INCREMENT_ID . '-' . $editIncrement);
+        $this->currentMock->expects(static::once())->method('submitQuote')
+            ->with($this->quoteMock, [])
+            ->willReturn($this->orderMock);
+
+        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
+        $paymentMock = $this->createMock(OrderPaymentInterface::class);
+        $paymentMock->expects(self::any())->method('getMethod')->willReturn(Payment::METHOD_CODE);
+        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
+        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
+
+        $this->orderMock->expects(self::never())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
+
+        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
+            ->with('BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook');
+
+        $originalOrderMock->expects(static::never())->method('setRelationChildId')->with(self::ORDER_ID);
+        $originalOrderMock->expects(static::never())->method('setRelationChildRealId')->with(self::INCREMENT_ID);
+        $originalOrderMock->expects(static::never())->method('save');
+        $this->orderManagementMock->expects(static::never())->method('cancel')->with(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+        $originalOrderMock->expects(static::never())->method('getEntityId')->willReturn(CartTest::ORIGINAL_ORDER_ENTITY_ID);
+        $this->orderMock->expects(static::never())->method('save');
+
+        $this->currentMock->expects(self::once())->method('orderPostprocess')
+            ->with($this->orderMock, $this->quoteMock, $transaction);
+        self::assertEquals(
+            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
+            $this->orderMock
+        );
     }
 
     /**

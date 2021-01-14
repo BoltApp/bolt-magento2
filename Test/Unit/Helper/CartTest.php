@@ -167,6 +167,9 @@ class CartTest extends BoltTestCase
 
     const COUPON_DESCRIPTION = 'test coupon';
 
+    /** @var int Test original order entity id when editing orders */
+    const ORIGINAL_ORDER_ENTITY_ID = 234567;
+
     /** @var Context|MockObject */
     private $contextHelper;
 
@@ -390,7 +393,7 @@ class CartTest extends BoltTestCase
             'assignCustomer','setIsActive','getGiftMessageId',
             'getGwId'
         ]);
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts']);
+        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
@@ -2886,7 +2889,7 @@ ORDER
         {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote']
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
             'reference'    => self::PRODUCT_ID,
@@ -2976,6 +2979,99 @@ ORDER
         );
         }
 
+    /**
+     * @test
+     * that getCartData adds original_order_entity_id for editted orders (order id is present on session)
+     *
+     * @covers ::getCartData
+     * @covers ::buildCartFromQuote
+     */
+    public function getCartData_forEdittedBackendOrders_addsOriginalOrderEntityIdToMetadata()
+    {
+        $this->checkoutSession = $this->createPartialMock(
+            \Magento\Backend\Model\Session\Quote::class,
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
+        );
+        $testItem = [
+            'reference'    => self::PRODUCT_ID,
+            'name'         => 'Test Product',
+            'total_amount' => 12345,
+            'unit_price'   => 12345,
+            'quantity'     => 1.0,
+            'sku'          => self::PRODUCT_SKU,
+            'type'         => 'physical',
+            'description'  => '',
+        ];
+        $getCartItemsResult = [[$testItem], 12345, 0];
+        $collectDiscountsResult = [[], 12345, 0];
+        $currentMock = $this->getCurrentMock(
+            [
+                'setLastImmutableQuote',
+                'getCartItems',
+                'getQuoteById',
+                'collectDiscounts',
+                'createImmutableQuote',
+                'getCalculationAddress'
+            ]
+        );
+        $this->setUpAddressMock($this->quoteBillingAddress);
+        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
+            ->willReturn($this->immutableQuoteMock);
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
+            ->willReturn($this->quoteBillingAddress);
+        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
+        $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
+        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
+        $this->quoteMock->expects(static::any())->method('getShippingAddress')
+            ->willReturn($this->quoteShippingAddress);
+        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
+            ->willReturn($this->quoteBillingAddress);
+        $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
+            ->willReturn($this->getAddressMock());
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
+            ->willReturn(self::CURRENCY_CODE);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getCustomerGroupId')
+            ->willReturn(null);
+
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getId')->willReturn(self::STORE_ID);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+
+        $this->checkoutSession->method('getStore')->willReturn($storeMock);
+        $this->checkoutSession->method('getCustomerGroupId')
+            ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
+
+        $this->checkoutSession->method('getOrderId')->willReturn(self::ORIGINAL_ORDER_ENTITY_ID);
+        $result = $currentMock->getCartData(
+            true,
+            json_encode(
+                [
+                    'billingAddress' => [
+                        'firstname' => "IntegrationBolt",
+                        'lastname'  => "BoltTest",
+                        'company'   => "Bolt",
+                        'telephone' => "132 231 1234",
+                        'street'    => ["228 7th Avenue", "228 7th Avenue"],
+                        'city'      => "New York",
+                        'region'    => "New York",
+                        'country'   => "United States",
+                        'countryId' => "US",
+                        'email'     => self::EMAIL_ADDRESS,
+                        'postcode'  => "10011",
+                    ]
+                ]
+            )
+        );
+        static::assertEquals(self::ORIGINAL_ORDER_ENTITY_ID, $result['metadata']['original_order_entity_id']);
+    }
+
         /**
         * @test
         * that getCartData populates registry rule_data when executed from backend
@@ -2986,7 +3082,7 @@ ORDER
         {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote']
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
             'reference'    => self::PRODUCT_ID,
