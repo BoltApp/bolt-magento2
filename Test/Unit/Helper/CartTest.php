@@ -2564,10 +2564,10 @@ ORDER
             $this->skipTestInUnitTestsFlow();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
-            TestUtils::setQuoteToSession($quote);
             $product = TestUtils::getSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
+            TestUtils::setQuoteToSession($quote);
 
             $result = $boltHelperCart->getCartData(false, "");
 
@@ -2585,7 +2585,7 @@ ORDER
 
             $expected = [
                 'order_reference' => $quote->getId(),
-                'display_id'      => $quote->getBoltReservedOrderId(),
+                'display_id'      => '',
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => [
                     [
@@ -2594,7 +2594,7 @@ ORDER
                         'total_amount' => 10000,
                         'unit_price'   => 10000,
                         'quantity'     => 1,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
