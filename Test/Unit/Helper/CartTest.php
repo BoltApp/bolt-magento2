@@ -3314,6 +3314,7 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    'encrypted_session_id' => ''
                 ],
             ],
             $result
@@ -3411,6 +3412,7 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    'encrypted_session_id' => ''
                 ],
             ],
             $result
