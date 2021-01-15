@@ -29,12 +29,12 @@ use Bolt\Boltpay\Model\Api\Tax;
 use Bolt\Boltpay\Model\Api\UpdateCart;
 use Bolt\Boltpay\Model\Api\Data\UniversalApiResult;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use PHPUnit\Framework\TestCase;
 
-class UniversalApiTest extends TestCase
+class UniversalApiTest extends BoltTestCase
 {
     const DATA = ['data1' => 'not important'];
 
@@ -98,7 +98,10 @@ class UniversalApiTest extends TestCase
      */
     private $currentMock;
 
-    protected function setUp()
+    /**
+     * @inheritdoc
+     */
+    protected function setUpInternal()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
