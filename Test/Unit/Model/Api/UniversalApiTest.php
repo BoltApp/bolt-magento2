@@ -101,7 +101,7 @@ class UniversalApiTest extends TestCase
     /**
      * @inheritdoc
      */
-    public function setUp()
+    protected function setUp()
     {
         $this->initRequiredMocks();
         $this->initCurrentMock();
