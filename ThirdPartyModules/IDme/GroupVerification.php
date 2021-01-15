@@ -17,10 +17,14 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\IDme;
 
+use Bolt\Boltpay\Model\ThirdPartyEvents;
 use Magento\Customer\Model\Session;
 
 class GroupVerification
 {
+    use ThirdPartyEvents\CollectsSessionData;
+    use ThirdPartyEvents\RestoresSessionData;
+
     /**
      * @var Session
      */
@@ -51,6 +55,46 @@ class GroupVerification
     public function afterLoadSession($quote)
     {
         $this->applyIDMeDataToCustomerSession($quote);
+    }
+
+    /**
+     * @param array                      $sessionData
+     * @param \Magento\Quote\Model\Quote $quote
+     * @param \Magento\Quote\Model\Quote $immutableQuote
+     *
+     * @return array
+     */
+    public function collectSessionData($sessionData, $quote, $immutableQuote)
+    {
+        if ($this->customerSession->getData('idme_uuid')) {
+            $sessionData['idme_uuid'] = $this->customerSession->getData('idme_uuid');
+        }
+        if ($this->customerSession->getData('idme_group')) {
+            $sessionData['idme_group'] = $this->customerSession->getData('idme_group');
+        }
+        if ($this->customerSession->getData('idme_subgroups')) {
+            $sessionData['idme_subgroups'] = $this->customerSession->getData('idme_subgroups');
+        }
+        return $sessionData;
+    }
+
+    /**
+     * @param array                      $sessionData
+     * @param \Magento\Quote\Model\Quote $quote
+     *
+     * @return void
+     */
+    public function restoreSessionData($sessionData, $quote = null)
+    {
+        if (key_exists('idme_uuid', $sessionData)) {
+            $this->customerSession->setData('idme_uuid', $sessionData['idme_uuid']);
+        }
+        if (key_exists('idme_group', $sessionData)) {
+            $this->customerSession->setData('idme_group', $sessionData['idme_group']);
+        }
+        if (key_exists('idme_subgroups', $sessionData)) {
+            $this->customerSession->setData('idme_subgroups', $sessionData['idme_subgroups']);
+        }
     }
 
     /**

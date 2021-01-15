@@ -2619,7 +2619,8 @@ class OrderTest extends BoltTestCase
                         'cart' => [
                             'billing_address' => [
                                 'email_address' => 'test@bolt.com'
-                            ]
+                            ],
+                            'metadata' => []
                         ]
                     ]
                 ]

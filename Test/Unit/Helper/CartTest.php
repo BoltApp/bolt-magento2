@@ -2981,12 +2981,12 @@ ORDER
 
     /**
      * @test
-     * that getCartData adds original_order_entity_id for editted orders (order id is present on session)
+     * that getCartData adds original_order_entity_id for edited orders (order id is present on session)
      *
      * @covers ::getCartData
      * @covers ::buildCartFromQuote
      */
-    public function getCartData_forEdittedBackendOrders_addsOriginalOrderEntityIdToMetadata()
+    public function getCartData_forEditedBackendOrders_addsOriginalOrderEntityIdToMetadata()
     {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,

@@ -33,6 +33,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use PHPUnit\Framework\MockObject\MockObject;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 
 /**
@@ -51,7 +52,7 @@ class SessionTest extends BoltTestCase
     const FORM_KEY = '2222';
 
     /**
-     * @var Session
+     * @var Session|MockObject
      */
     private $currentMock;
 
@@ -89,10 +90,10 @@ class SessionTest extends BoltTestCase
     /** @var FormKey */
     private $formKey;
 
-    /** @var EventsForThirdPartyModules */
+    /** @var EventsForThirdPartyModules|MockObject */
     private $eventsForThirdPartyModules;
 
-    /** @var ConfigHelper */
+    /** @var ConfigHelper|MockObject */
     private $configHelper;
 
     /**
@@ -100,6 +101,9 @@ class SessionTest extends BoltTestCase
      */
     protected $objectManager;
 
+    /**
+     * @var Quote|MockObject
+     */
     protected $quote;
 
     /**
@@ -156,7 +160,7 @@ class SessionTest extends BoltTestCase
         );
         $this->quote = $this->createPartialMock(
             Quote::class,
-            ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID']
+            ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID', 'getData']
         );
 
         $this->eventsForThirdPartyModules = $this->createMock(
@@ -165,16 +169,16 @@ class SessionTest extends BoltTestCase
 
         $this->configHelper = $this->createPartialMock(
             ConfigHelper::class,
-            ['isSessionEmulationEnabled']
+            ['isSessionEmulationEnabled', 'encrypt', 'decrypt']
         );
 
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
     }
 
-    private function initCurrentMock()
+    private function initCurrentMock($methods = ['replaceQuote'])
     {
         $this->currentMock = $this->getMockBuilder(Session::class)
-            ->setMethods(['replaceQuote'])
+            ->setMethods($methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -325,6 +329,95 @@ class SessionTest extends BoltTestCase
         $result = $this->currentMock->loadSession($this->quote);
 
         $this->assertNull($result);
+    }
+
+    /**
+     * @test
+     * that loadSession dispatches the restoreSessionData third party event when session data is present in the metadata
+     *
+     * @covers ::loadSession
+     */
+    public function loadSession_withEncryptedSessionDataInMetadata_dispatchesRestoreSessionDataThirdPartyEvent()
+    {
+        $this->initCurrentMock();
+        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
+
+        $sessionData = [
+            'idme_group' => 'nurse'
+        ];
+
+        $this->configHelper->expects(static::once())->method('decrypt')
+            ->willReturn(json_encode($sessionData));
+        $this->eventsForThirdPartyModules->expects(static::exactly(2))
+            ->method('dispatchEvent')
+            ->withConsecutive(
+                ['restoreSessionData', $sessionData, $this->quote],
+                ['afterLoadSession', $this->quote]
+            );
+        $this->currentMock->loadSession(
+            $this->quote,
+            [
+                Session::ENCRYPTED_SESSION_DATA_KEY => base64_encode(json_encode($sessionData))
+            ]
+        );
+    }
+
+    /**
+     * @test
+     * that loadSession dispatches the appropriate third party event when session data is present in the metadata
+     *
+     * @covers ::loadSession
+     *
+     * @dataProvider loadSession_withEncryptedSessionIdInMetadataProvider
+     *
+     * @param string $checkoutType
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function loadSession_withEncryptedSessionIdInMetadata_configuresSessionIdFromTheOneInMetadata($checkoutType)
+    {
+        $this->initCurrentMock(['replaceQuote', 'setSession']);
+        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
+
+        $sessionId = md5('bolt');
+
+        $this->configHelper->expects(static::once())->method('decrypt')
+            ->willReturn($sessionId);
+        $this->quote->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->quote->method('getData')->with('bolt_checkout_type')->willReturn($checkoutType);
+
+        if ($checkoutType == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+            $this->currentMock->expects(static::once())->method('setSession')
+                ->with($this->adminCheckoutSession, $sessionId, self::STORE_ID);
+        } else {
+            $this->currentMock->expects(static::exactly(2))->method('setSession')
+                ->withConsecutive(
+                    [$this->checkoutSession, $sessionId, self::STORE_ID],
+                    [$this->customerSession, $sessionId, self::STORE_ID]
+                );
+        }
+
+        $this->currentMock->loadSession(
+            $this->quote,
+            [
+                Session::ENCRYPTED_SESSION_ID_KEY => base64_encode($sessionId)
+            ]
+        );
+    }
+
+    /**
+     * Data provider for {@see loadSession_withEncryptedSessionIdInMetadata_configuresSessionIdFromTheOneInMetadata}
+     *
+     * @return array[]
+     */
+    public function loadSession_withEncryptedSessionIdInMetadataProvider()
+    {
+        return [
+            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_MULTISTEP],
+            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_PPC],
+            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE],
+            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_PPC_COMPLETE],
+        ];
     }
 
     /**

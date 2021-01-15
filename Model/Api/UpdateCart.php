@@ -106,7 +106,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
 
-            $this->updateSession($parentQuote);
+            $this->updateSession($parentQuote, $cart['metadata']);
 
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
