@@ -104,46 +104,96 @@ trait UpdateCartItemTrait
      *
      * @return boolean
      */
-    protected function verifyItemData($product, $itemToAdd, $websiteId)
+    protected function verifyItemData($product, $updateItem, $quoteItem, $websiteId)
     {
-        if (CurrencyUtils::toMinor($product->getPrice(), $itemToAdd['currency']) != $itemToAdd['price']) {
+        if (!$this->stockState->verifyStock($updateItem['product_id'])) {
             $this->sendErrorResponse(
-                BoltErrorResponse::ERR_ITEM_PRICE_HAS_BEEN_UPDATED,
-                sprintf('The price of item [%s] does not match product price.', $itemToAdd['product_id']),
+                BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
+                sprintf('The item [%s] is out of stock.', $updateItem['product_id']),
                 422
             );
 
             return false;
         }
         
-        if (!$this->stockState->verifyStock($itemToAdd['product_id'])) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
-                sprintf('The item [%s] is out of stock.', $itemToAdd['product_id']),
-                422
+        if ($quoteItem) {
+            if (isset($updateItem['currency']) && CurrencyUtils::toMinor($quoteItem['unit_price'], $updateItem['currency']) != $updateItem['price']) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_ITEM_PRICE_HAS_BEEN_UPDATED,
+                    sprintf('The price of item [%s] does not match related quote item\'s price.', $updateItem['product_id']),
+                    422
+                );
+    
+                return false;
+            }
+            
+            $qtyToCheck = ($updateItem['update'] == 'add')
+                    ? (int)$quoteItem['quantity'] + (int)$updateItem['quantity']
+                    : (int)$quoteItem['quantity'] - (int)$updateItem['quantity'];
+
+            // The module Magento_InventorySales has plugin to replace legacy quote item check,
+            // so we send $qtyToCheck as $itemQty to follow its logic
+            $checkQty = $this->stockState->checkQuoteItemQty(
+                $updateItem['product_id'],
+                $qtyToCheck,
+                $qtyToCheck,
+                $quoteItem['quantity'],
+                $websiteId
             );
 
-            return false;
-        }
-        
-        $checkQty = $this->stockState->checkQuoteItemQty(
-            $itemToAdd['product_id'],
-            $itemToAdd['quantity'],
-            $itemToAdd['quantity'],
-            $itemToAdd['quantity'],
-            $websiteId
-        );
-        if ($checkQty->getHasError()) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
-                $checkQty->getMessage(),
-                422
+            if ($checkQty->getHasError()) { 
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
+                    $checkQty->getMessage(),
+                    422
+                );
+    
+                return false;
+            }
+        } else {
+            if (isset($updateItem['currency']) && CurrencyUtils::toMinor($product->getPrice(), $updateItem['currency']) != $updateItem['price']) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_ITEM_PRICE_HAS_BEEN_UPDATED,
+                    sprintf('The price of item [%s] does not match product price.', $updateItem['product_id']),
+                    422
+                );
+    
+                return false;
+            }
+            
+            $suggestQty = $this->stockState->suggestQty(
+                $product->getId(),
+                (int)$updateItem['quantity'],
+                $product->getStore()->getWebsiteId()
             );
-
-            return false;
+            
+            if ($suggestQty != (int)$updateItem['quantity']) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
+                    sprintf('The requested qty of item [%s] is not available.', $updateItem['product_id']),
+                    422
+                );
+    
+                return false;
+            }
         }
         
         return true;
+    }
+    
+    protected function getQuoteItemByProduct($itemToUpdate, $quoteItems)
+    {
+        foreach ($quoteItems as $quoteItem) {
+            if (empty($quoteItem['quote_item_id'])) {
+                continue;
+            }
+            
+            if ($quoteItem['reference'] == $itemToUpdate['product_id']) {
+                return $quoteItem;
+            }
+        }
+        
+        return null;
     }
     
     /**
@@ -155,14 +205,37 @@ trait UpdateCartItemTrait
      *
      * @return boolean
      */
-    protected function addItemToQuote($product, $quote, $itemToAdd)
+    protected function addItemToQuote($product, $quote, $itemToAdd, $quoteItem)
     {            
         try {
-            $quote->addProduct($product, intval($itemToAdd['quantity']));
+            $added = false;
+            
+            if ($quoteItem) {
+                $quoteItem['quote_item']->setQty((int)$quoteItem['quantity'] + (int)$itemToAdd['quantity']);
+                $quoteItem['quote_item']->save();
+                $added = true;
+            }
+
+            if (!$added) {
+                $result = $quote->addProduct($product, intval($itemToAdd['quantity']));
+                if (is_string($result)) {
+                    $this->sendErrorResponse(
+                        BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,
+                        sprintf('Fail to add item [%s]. Reason: [%s].', $itemToAdd['product_id'], $result),
+                        422
+                    );
+                    
+                    return false;
+                }
+                
+                $added = true;
+            }
+            
+            return $added;
         } catch (\Exception $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,
-                sprintf('Fail to add item [%s].', $itemToAdd['product_id']),
+                sprintf('Fail to add item [%s]. Reason: [%s].', $itemToAdd['product_id'], $e->getMessage()),
                 422
             );
             
@@ -181,40 +254,26 @@ trait UpdateCartItemTrait
      *
      * @return boolean
      */
-    protected function removeItemFromQuote($cartItems, $itemToRemove, $quote)
+    protected function removeItemFromQuote($quoteItem, $itemToRemove, $quote)
     {
-        foreach ($cartItems as $cartItem) {
-            if (empty($cartItem['quote_item_id'])) {
-                continue;
-            }
+        if ($quoteItem['quantity'] > $itemToRemove['quantity']) {
+            $quoteItem['quote_item']->setQty((int)$quoteItem['quantity'] - (int)$itemToRemove['quantity']);
+            $quoteItem['quote_item']->save();
             
-            if ($cartItem['reference'] == $itemToRemove['product_id']) {
-                if ($cartItem['quantity'] > $itemToRemove['quantity']) {
-                    $quote->updateItem($cartItem['quote_item_id'], new \Magento\Framework\DataObject(['qty' => (int)$cartItem['quantity'] - (int)$itemToRemove['quantity']]));
-                
-                    return true;
-                } else if ($cartItem['quantity'] == $itemToRemove['quantity']) {
-                    $quote->removeItem($cartItem['quote_item_id']);
-                    
-                    return true;
-                } else {
-                    $this->sendErrorResponse(
-                        BoltErrorResponse::ERR_CART_ITEM_REMOVE_FAILED,
-                        sprintf('Could not update the item [%s] with quantity [%s].', $itemToRemove['product_id'], $itemToRemove['quantity']),
-                        422
-                    );
-                    
-                    return false;
-                }
-            }
+            return true;
+        } else if ($quoteItem['quantity'] == $itemToRemove['quantity']) {
+            $quote->removeItem($quoteItem['quote_item_id']);
+            
+            return true;
+        } else {
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_CART_ITEM_REMOVE_FAILED,
+                sprintf('Could not update the item [%s] with quantity [%s].', $itemToRemove['product_id'], $itemToRemove['quantity']),
+                422
+            );
+            
+            return false;
         }
-        
-        // The quote item isn't found.
-        $this->sendErrorResponse(
-            BoltErrorResponse::ERR_CART_ITEM_REMOVE_FAILED,
-            sprintf('The quote item [%s] isn\'t found.', $itemToRemove['product_id']),
-            422
-        );
         
         return false;
     }

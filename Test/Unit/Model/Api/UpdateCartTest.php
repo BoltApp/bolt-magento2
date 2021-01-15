@@ -641,10 +641,11 @@ class UpdateCartTest extends BoltTestCase
                 'currency'   => 'USD',
                 'product_id' => 100,
                 'quantity'   => 1,
+                'update'     => 'add'
             ]
         ];
         $requestCart['add_items'] = $add_items;
-        
+
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID            
@@ -659,13 +660,31 @@ class UpdateCartTest extends BoltTestCase
             'getProduct',
             'verifyItemData',
             'addItemToQuote',
-            'updateTotals'
+            'updateTotals',
+            'getCartItems',
+            'getQuoteItemByProduct'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
         
+        $quoteItem = [
+            'reference'    => 100,
+            'quantity'     => 1,
+            'quote_item_id'=> 60,
+        ];
+        $cartItems = [
+            $quoteItem
+        ];
+        $this->currentMock->expects(self::once())->method('getCartItems')
+            ->with($parentQuoteMock)
+            ->willReturn($cartItems);
+            
         $this->currentMock->expects(self::once())->method('updateSession')
             ->with($parentQuoteMock);
+            
+        $this->currentMock->expects(self::once())->method('getQuoteItemByProduct')
+            ->with($add_items[0], $cartItems)
+            ->willReturn($quoteItem);
             
         $this->currentMock->expects($this->exactly(2))
             ->method('setShipment')
@@ -687,11 +706,11 @@ class UpdateCartTest extends BoltTestCase
             ->willReturn($product);
         
         $this->currentMock->expects(self::once())->method('verifyItemData')
-            ->with($product, $add_items[0], self::WEBSITE_ID)
+            ->with($product, $add_items[0], $quoteItem, self::WEBSITE_ID)
             ->willReturn(true);
         
         $this->currentMock->expects(self::once())->method('addItemToQuote')
-            ->with($product, $parentQuoteMock, $add_items[0])
+            ->with($product, $parentQuoteMock, $add_items[0], $quoteItem)
             ->willReturn(true);
         
         $this->currentMock->expects(self::once())->method('updateTotals')
@@ -746,10 +765,11 @@ class UpdateCartTest extends BoltTestCase
                 'currency'   => 'USD',
                 'product_id' => 100,
                 'quantity'   => 1,
+                'update'     => 'remove'
             ]
         ];
         $requestCart['remove_items'] = $remove_items;
-        
+       
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID            
@@ -763,7 +783,10 @@ class UpdateCartTest extends BoltTestCase
             'generateResult',
             'removeItemFromQuote',
             'updateTotals',
-            'getCartItems'
+            'getCartItems',
+            'getProduct',
+            'verifyItemData',
+            'getQuoteItemByProduct'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -807,8 +830,21 @@ class UpdateCartTest extends BoltTestCase
             ->with($parentQuoteMock)
             ->willReturn($cartItems);
         
+        $this->currentMock->expects(self::once())->method('getQuoteItemByProduct')
+            ->with($remove_items[0], $cartItems)
+            ->willReturn($cartItems[0]);
+            
+        $product = $this->createMock(ProductInterface::class);
+        $this->currentMock->expects(self::once())->method('getProduct')
+            ->with(100,self::STORE_ID)
+            ->willReturn($product);
+            
+        $this->currentMock->expects(self::once())->method('verifyItemData')
+            ->with($product, $remove_items[0], $cartItems[0], self::WEBSITE_ID)
+            ->willReturn(true);
+            
         $this->currentMock->expects(self::once())->method('removeItemFromQuote')
-            ->with($cartItems, $remove_items[0], $parentQuoteMock)
+            ->with($cartItems[0], $remove_items[0], $parentQuoteMock)
             ->willReturn(true);
 
         $this->cacheMock->expects(static::once())

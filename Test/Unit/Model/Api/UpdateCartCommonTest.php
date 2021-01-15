@@ -51,6 +51,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Catalog\Model\Product;
 
 /**
  * Class UpdateCartCommonTest
@@ -693,12 +694,19 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->initCurrentMock();
         
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getProductId', 'getQty', 'getId'])
+            ->setMethods(['getProductId', 'getQty', 'getId', 'getSku', 'getCalculationPrice'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getProductId')->willReturn(100);
         $quoteItem->method('getQty')->willReturn(1);
         $quoteItem->method('getId')->willReturn(60);
+        $quoteItem->method('getSku')->willReturn('psku');
+        $quoteItem->method('getCalculationPrice')->willReturn(1000);
+        
+        $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(100);
+        $this->productRepositoryInterface->expects(static::once())->method('get')->with('psku')
+            ->willReturn($productMock);
         
         $quote = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
@@ -715,6 +723,8 @@ class UpdateCartCommonTest extends BoltTestCase
                 'reference'     => 100,
                 'quantity'      => 1,
                 'quote_item_id' => 60,
+                'unit_price'    => 1000,
+                'quote_item'    => $quoteItem
             ]
         ];
         
