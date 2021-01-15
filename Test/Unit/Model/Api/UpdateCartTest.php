@@ -22,6 +22,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Coupon;
 use Magento\Catalog\Api\Data\ProductInterface;
@@ -109,6 +110,11 @@ class UpdateCartTest extends BoltTestCase
      * @var Bugsnag|MockObject
      */
     private $bugsnag;
+
+    /**
+     * @var Request|MockObject
+     */
+    private $request;
 
     /**
      * @var UpdateCart|MockObject
@@ -202,12 +208,18 @@ class UpdateCartTest extends BoltTestCase
             ->setMethods(['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
+
+        $this->request = $this->getMockBuilder(Request::class)
+            ->setMethods(['getBodyParams'])
+            ->disableOriginalConstructor()
+            ->getMock();
         
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
         TestHelper::setProperty($this->currentMock, 'errorResponse', $this->errorResponse);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
+        TestHelper::setProperty($this->currentMock, 'request', $this->request);
     }
     
     /**
