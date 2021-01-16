@@ -169,20 +169,28 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             // Add items
             if ( !empty($add_items) ) {
-                foreach ($add_items as $add_item) {
-                    $product = $this->getProduct($add_item['product_id'], $storeId);
+                $cartItems = $this->getCartItems($parentQuote);
+                
+                foreach ($add_items as $addItem) {
+                    $product = $this->getProduct($addItem['product_id'], $storeId);
                     if (!$product) {
                         // Already sent a response with error, so just return.
                         return false;
                     }
+                    
+                    $quoteItem = $this->getQuoteItemByProduct($addItem, $cartItems);
 
-                    $result = $this->verifyItemData($product, $add_item, $websiteId);
+                    if (!isset($addItem['currency'])) {
+                        $addItem['currency'] = $parentQuote->getQuoteCurrencyCode();
+                    }
+                    $addItem['update'] = 'add';
+                    $result = $this->verifyItemData($product, $addItem, $quoteItem, $websiteId);
                     if (!$result) {
                         // Already sent a response with error, so just return.
                         return false;
-                    }
+                    }                    
 
-                    $result = $this->addItemToQuote($product, $parentQuote, $add_item);
+                    $result = $this->addItemToQuote($product, $parentQuote, $addItem, $quoteItem);
                     if (!$result) {
                         // Already sent a response with error, so just return.
                         return false;
@@ -196,8 +204,32 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             if ( !empty($remove_items) ) {
                 $cartItems = $this->getCartItems($parentQuote);
 
-                foreach ($remove_items as $remove_item) {
-                    $result = $this->removeItemFromQuote($cartItems, $remove_item, $parentQuote);
+                foreach ($remove_items as $removeItem) {
+                    $quoteItem = $this->getQuoteItemByProduct($removeItem, $cartItems);
+                    if (!$quoteItem) {
+                        $this->sendErrorResponse(
+                            BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,
+                            sprintf('The product [%s] does not exist in the quote.', $removeItem['product_id']),
+                            422
+                        );
+                        
+                        return false;
+                    }
+                    
+                    $product = $this->getProduct($removeItem['product_id'], $storeId);
+                    if (!$product) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+
+                    $removeItem['update'] = 'remove';
+                    $result = $this->verifyItemData($product, $removeItem, $quoteItem, $websiteId);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
+                    
+                    $result = $this->removeItemFromQuote($quoteItem, $removeItem, $parentQuote);
                     if (!$result) {
                         // Already sent a response with error, so just return.
                         return false;
@@ -206,7 +238,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
                 $this->updateTotals($parentQuote);
             }
-
+            
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
 
             $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);

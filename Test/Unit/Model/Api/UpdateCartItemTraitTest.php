@@ -133,11 +133,14 @@ class UpdateCartItemTraitTest extends BoltTestCase
         
         $product = $this->createMock(ProductInterface::class);
         $product->expects(static::once())->method('getPrice')->willReturn(41);
+        
+        $this->stockState->expects(static::once())->method('verifyStock')
+             ->with(100)->willReturn(true);
             
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_ITEM_PRICE_HAS_BEEN_UPDATED,'The price of item [100] does not match product price.',422);
+            ->with(6604,'The price of item [100] does not match product price.',422);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 1]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, [], 1]);
         
         $this->assertFalse($result);
     }
@@ -155,7 +158,6 @@ class UpdateCartItemTraitTest extends BoltTestCase
         ];
         
         $product = $this->createMock(ProductInterface::class);
-        $product->expects(static::once())->method('getPrice')->willReturn(45);
         
         $this->stockState->expects(static::once())->method('verifyStock')
              ->with(100)->willReturn(false);
@@ -163,7 +165,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,'The item [100] is out of stock.',422);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 1]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, [], 1]);
         
         $this->assertFalse($result);
     }
@@ -178,26 +180,30 @@ class UpdateCartItemTraitTest extends BoltTestCase
             'price'      => 4500,
             'currency'   => 'USD',
             'product_id' => 100,
-            'quantity'   => 1,
+            'quantity'   => 10,
         ];
         
-        $product = $this->createMock(ProductInterface::class);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        
+        $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
+            ->setMethods(['getPrice', 'getStore', 'getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $product->expects(static::once())->method('getId')->willReturn(100);
         $product->expects(static::once())->method('getPrice')->willReturn(45);
+        $product->expects(static::once())->method('getStore')->willReturn($storeMock);
         
+        $this->stockState->expects(static::once())->method('suggestQty')
+             ->with(100, 10, 1)->willReturn(8);
         $this->stockState->expects(static::once())->method('verifyStock')
-             ->with(100)->willReturn(true);
-        
-        $checkQtyResult = new \Magento\Framework\DataObject();
-        $checkQtyResult->setHasError(true)
-                       ->setMessage('The fewest you may purchase is 2.');
-        
-        $this->stockState->expects(static::once())->method('checkQuoteItemQty')
-             ->with(100,1,1,1,3)->willReturn($checkQtyResult);
+             ->with(100)->willReturn(true);     
+             
         
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,'The fewest you may purchase is 2.',422);
+            ->with(BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,'The requested qty of item [100] is not available.',422);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 3]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, [], 3]);
         
         $this->assertFalse($result);
     }
@@ -215,19 +221,24 @@ class UpdateCartItemTraitTest extends BoltTestCase
             'quantity'   => 1,
         ];
         
-        $product = $this->createMock(ProductInterface::class);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        
+        $product = $this->getMockBuilder(\Magento\Catalog\Model\Product::class)
+            ->setMethods(['getPrice', 'getStore', 'getId'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $product->expects(static::once())->method('getId')->willReturn(100);
         $product->expects(static::once())->method('getPrice')->willReturn(45);
+        $product->expects(static::once())->method('getStore')->willReturn($storeMock);
         
         $this->stockState->expects(static::once())->method('verifyStock')
              ->with(100)->willReturn(true);
         
-        $checkQtyResult = new \Magento\Framework\DataObject();
-        $checkQtyResult->setHasError(false);
+        $this->stockState->expects(static::once())->method('suggestQty')
+             ->with(100, 1, 1)->willReturn(1);
         
-        $this->stockState->expects(static::once())->method('checkQuoteItemQty')
-             ->with(100,1,1,1,3)->willReturn($checkQtyResult);
-        
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, 3]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyItemData', [$product, $itemToAdd, [], 3]);
         
         $this->assertTrue($result);
     }
@@ -256,7 +267,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
             ->getMock();
         $quote->expects(static::once())->method('addProduct')->with($product,1);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'addItemToQuote', [$product, $quote, $itemToAdd]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'addItemToQuote', [$product, $quote, $itemToAdd, []]);
         
         $this->assertTrue($result);
     }
@@ -288,46 +299,9 @@ class UpdateCartItemTraitTest extends BoltTestCase
               ->with($product,1)->willThrowException($exception);
         
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,'Fail to add item [100].',422);
+            ->with(BoltErrorResponse::ERR_CART_ITEM_ADD_FAILED,'Fail to add item [100]. Reason: [General exception].',422);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'addItemToQuote', [$product, $quote, $itemToAdd]);
-        
-        $this->assertFalse($result);
-    }
-    
-    /**
-     * @test
-     * 
-     */
-    public function removeItemFromQuote_itemNotExist_returnFalse()
-    {
-        $itemToRemove = [
-            'price'      => 4500,
-            'currency'   => 'USD',
-            'product_id' => 100,
-            'quantity'   => 1,
-        ];
-        
-        $cartItems = [
-            'reference'    => 101,
-            'name'         => 'Test Product',
-            'total_amount' => 56,
-            'unit_price'   => 56,
-            'quantity'     => 1,
-            'sku'          => 'test-product-101',
-            'type'         => 'physical',
-            'description'  => '',
-            'quote_item_id'=> 1
-        ];
-        
-        $quote = $this->getMockBuilder(Quote::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_CART_ITEM_REMOVE_FAILED,'The quote item [100] isn\'t found.',422);
-        
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItems, $itemToRemove, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'addItemToQuote', [$product, $quote, $itemToAdd, []]);
         
         $this->assertFalse($result);
     }
@@ -345,34 +319,34 @@ class UpdateCartItemTraitTest extends BoltTestCase
             'quantity'   => 1,
         ];
         
-        $cartItems = [
-            [
-                'reference'    => 100,
-                'name'         => 'Test Product',
-                'total_amount' => 56,
-                'unit_price'   => 56,
-                'quantity'     => 2,
-                'sku'          => 'test-product-101',
-                'type'         => 'physical',
-                'description'  => '',
-                'quote_item_id'=> 2,
-            ]
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods(['setQty', 'save'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('setQty')->willReturnSelf();
+        $quoteItem->method('save')->willReturnSelf();
+        
+        $cartItem = [
+            'reference'    => 100,
+            'name'         => 'Test Product',
+            'total_amount' => 56,
+            'unit_price'   => 56,
+            'quantity'     => 2,
+            'sku'          => 'test-product-101',
+            'type'         => 'physical',
+            'description'  => '',
+            'quote_item_id'=> 2,
+            'quote_item'   => $quoteItem,
         ];
         
         $quote = $this->getMockBuilder(Quote::class)
             ->setMethods(
-                [
-                    'updateItem',
-                ]
+                []
             )
             ->disableOriginalConstructor()
             ->getMock();
         
-        $buyRequest = new \Magento\Framework\DataObject();
-        $buyRequest->setQty(1);
-        $quote->expects(static::once())->method('updateItem')->with(2,$buyRequest);
-        
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItems, $itemToRemove, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItem, $itemToRemove, $quote]);
         
         $this->assertTrue($result);
     }
@@ -390,18 +364,16 @@ class UpdateCartItemTraitTest extends BoltTestCase
             'quantity'   => 1,
         ];
         
-        $cartItems = [
-            [
-                'reference'    => 100,
-                'name'         => 'Test Product',
-                'total_amount' => 56,
-                'unit_price'   => 56,
-                'quantity'     => 1,
-                'sku'          => 'test-product-101',
-                'type'         => 'physical',
-                'description'  => '',
-                'quote_item_id'=> 5,
-            ]
+        $cartItem = [
+            'reference'    => 100,
+            'name'         => 'Test Product',
+            'total_amount' => 56,
+            'unit_price'   => 56,
+            'quantity'     => 1,
+            'sku'          => 'test-product-101',
+            'type'         => 'physical',
+            'description'  => '',
+            'quote_item_id'=> 5,
         ];
         
         $quote = $this->getMockBuilder(Quote::class)
@@ -414,7 +386,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
             ->getMock();
         $quote->expects(static::once())->method('removeItem')->with(5);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItems, $itemToRemove, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItem, $itemToRemove, $quote]);
         
         $this->assertTrue($result);
     }
@@ -432,18 +404,24 @@ class UpdateCartItemTraitTest extends BoltTestCase
             'quantity'   => 3,
         ];
         
-        $cartItems = [
-            [
-                'reference'    => 100,
-                'name'         => 'Test Product',
-                'total_amount' => 56,
-                'unit_price'   => 56,
-                'quantity'     => 1,
-                'sku'          => 'test-product-101',
-                'type'         => 'physical',
-                'description'  => '',
-                'quote_item_id'=> 5,
-            ]
+        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
+            ->setMethods(['setQty', 'save'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quoteItem->method('setQty')->willReturnSelf();
+        $quoteItem->method('save')->willReturnSelf();
+        
+        $cartItem = [
+            'reference'    => 100,
+            'name'         => 'Test Product',
+            'total_amount' => 56,
+            'unit_price'   => 56,
+            'quantity'     => 1,
+            'sku'          => 'test-product-101',
+            'type'         => 'physical',
+            'description'  => '',
+            'quote_item_id'=> 5,
+            'quote_item'   => $quoteItem
         ];
         
         $quote = $this->getMockBuilder(Quote::class)
@@ -453,7 +431,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
             ->with(BoltErrorResponse::ERR_CART_ITEM_REMOVE_FAILED,'Could not update the item [100] with quantity [3].',422);
         
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItems, $itemToRemove, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeItemFromQuote', [$cartItem, $itemToRemove, $quote]);
         
         $this->assertFalse($result);
     }

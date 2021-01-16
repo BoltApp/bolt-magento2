@@ -127,6 +127,11 @@ abstract class UpdateCartCommon
      * @var SessionHelper
      */
     protected $sessionHelper;
+    
+    /**
+     * @var ProductRepositoryInterface
+     */
+    protected $productRepository;
 
     /**
      * UpdateCartCommon constructor.
@@ -153,6 +158,7 @@ abstract class UpdateCartCommon
         $this->ruleRepository = $updateCartContext->getRuleRepository();
         $this->cartRepository = $updateCartContext->getCartRepositoryInterface();
         $this->sessionHelper = $updateCartContext->getSessionHelper();
+        $this->productRepository = $updateCartContext->getProductRepositoryInterface();
     }
 
     /**
@@ -304,19 +310,21 @@ abstract class UpdateCartCommon
     protected function getCartItems($quote)
     {
         $items = $quote->getAllVisibleItems();
+        $currencyCode = $quote->getQuoteCurrencyCode();
 
-        $products = array_map(
-            function ($item) {
-                $product = [];
+        foreach ($items as $item) {
+            $product = [];
+                
+            $_product = $this->productRepository->get(trim($item->getSku()));           
 
-                $product['reference']    = $item->getProductId();
-                $product['quantity']     = round($item->getQty());
-                $product['quote_item_id']= $item->getId();
-
-                return $product;
-            },
-            $items
-        );
+            $product['reference']    = $_product->getId();
+            $product['quantity']     = round($item->getQty());
+            $product['unit_price']   = $item->getCalculationPrice();
+            $product['quote_item_id']= $item->getId();
+            $product['quote_item']   = $item;
+            
+            $products[] = $product;
+        }
 
         return $products;
     }
