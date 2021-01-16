@@ -2567,10 +2567,10 @@ ORDER
             $this->skipTestInUnitTestsFlow();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
-            TestUtils::setQuoteToSession($quote);
             $product = TestUtils::getSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
+            TestUtils::setQuoteToSession($quote);
 
             $result = $boltHelperCart->getCartData(false, "");
 
@@ -2592,7 +2592,7 @@ ORDER
 
             $expected = [
                 'order_reference' => $quote->getId(),
-                'display_id'      => $quote->getBoltReservedOrderId(),
+                'display_id'      => '',
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => [
                     [
@@ -2601,7 +2601,7 @@ ORDER
                         'total_amount' => 10000,
                         'unit_price'   => 10000,
                         'quantity'     => 1,
-                        'sku'          => self::PRODUCT_SKU,
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2677,6 +2677,7 @@ ORDER
 
         $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->setCollectShippingRates(true);
         $quote->collectTotals()->save();
+
         TestUtils::setQuoteToSession($quote);
         $result = $boltHelperCart->getCartData(
             true,
@@ -2721,7 +2722,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2863,7 +2864,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'digital',
                         'description'  => 'Product Description',
                     ]
@@ -4307,6 +4308,9 @@ ORDER
             ->getMock();
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+        
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($this->productMock);
 
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
@@ -4381,14 +4385,8 @@ ORDER
         $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
-        $productMock = $this->getMockBuilder(Product::class)
-                                          ->setMethods(['getData', 'getAttributeText'])
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
-        $productMock->method('getData')->with($attributeName)->willReturn(true);
-        $productMock->method('getAttributeText')->with($attributeName)->willReturn('Yes');
 
-        $this->productRepository->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)->willReturn($productMock);
+        $this->productRepository->method('get')->with(self::PRODUCT_SKU)->willReturn($this->productMock);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4401,7 +4399,6 @@ ORDER
         static::assertEquals(
             [
                 (object)['name' => 'Size', 'value' => 'S'],
-                (object)['name' => 'test_attribute', 'value' => 'Yes', 'type' => 'attribute'],
             ],
             $resultProductProperties
         );
@@ -4430,6 +4427,10 @@ ORDER
             ]
         );
         $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+        $productMock->method('getName')->willReturn('Test Product');
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4520,6 +4521,10 @@ ORDER
             ]
         );
         $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+        $productMock->method('getName')->willReturn('Test Product');
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4582,6 +4587,10 @@ ORDER
               ]
           );
           $productMock = $this->createMock(Product::class);
+          $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+          $productMock->method('getName')->willReturn('Test Product');
+          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
           $quoteItem->method('getName')->willReturn('Test Product');
           $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
           $quoteItem->method('getQty')->willReturn(1);

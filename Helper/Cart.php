@@ -1354,10 +1354,10 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $item->getProduct();
+                $_product = $this->productRepository->get(trim($item->getSku()));
 
-                $product['reference']    = $item->getProductId();
-                $product['name']         = $item->getName();
+                $product['reference']    = $_product->getId();
+                $product['name']         = $_product->getName();
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
