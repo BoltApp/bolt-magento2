@@ -2594,7 +2594,7 @@ ORDER
                         'total_amount' => 10000,
                         'unit_price'   => 10000,
                         'quantity'     => 1,
-                        'sku'          => self::PRODUCT_SKU,
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2709,7 +2709,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2845,7 +2845,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'digital',
                         'description'  => 'Product Description',
                     ]

@@ -149,7 +149,31 @@ class OrderManagementTest extends BoltTestCase
         $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
         $this->websiteId = $websiteRepository->get('base')->getId();
         
-        $this->setupBoltConfig();
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
+        
+        $configData = [
+            [
+                'path'    => 'payment/boltpay/signing_secret',
+                'value'   => $secret,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/api_key',
+                'value'   => $apikey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/active',
+                'value'   => 1,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
         $this->getResponse();
     }
     
@@ -265,36 +289,7 @@ class OrderManagementTest extends BoltTestCase
         $stockRegistryStorage->removeStockItem(1);
     }
     
-    public function setupBoltConfig()
-    {
-        $model = $this->objectManager->get(Config::class);
-
-        $encryptor = $this->objectManager->get(EncryptorInterface::class);
-        
-        $secret = $encryptor->encrypt(self::SECRET);
-        $apikey = $encryptor->encrypt(self::APIKEY);
-     
-        $model->saveConfig('payment/boltpay/signing_secret', $secret, ScopeInterface::SCOPE_STORE, $this->storeId);
-        $model->saveConfig('payment/boltpay/api_key', $apikey, ScopeInterface::SCOPE_STORE, $this->storeId);
-        $model->saveConfig('payment/boltpay/active', 1, ScopeInterface::SCOPE_STORE, $this->storeId);
-        
-        $scopeConfig = $this->objectManager->get(MutableScopeConfigInterface::class);
-        $scopeConfig->setValue(
-            'payment/boltpay/signing_secret',
-            $secret,
-            ScopeInterface::SCOPE_STORE
-        );
-        $scopeConfig->setValue(
-            'payment/boltpay/api_key',
-            $apikey,
-            ScopeInterface::SCOPE_STORE
-        );
-        $scopeConfig->setValue(
-            'payment/boltpay/active',
-            1,
-            ScopeInterface::SCOPE_STORE
-        );
-    }
+    
     
     private function getAddressInfo()
     {
@@ -403,22 +398,15 @@ class OrderManagementTest extends BoltTestCase
         return $requetData;
     }
     
-    
-    
     private function createProduct()
     {
-        $product = $this->objectManager->create(ProductInterface::class);
+        $product = TestUtils::createSimpleProduct();
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
         
-        $product->setTypeId(ProductType::TYPE_SIMPLE)
-            ->setAttributeSetId(4)
-            ->setName(self::PRODUCT_NAME)
+        $product->setName(self::PRODUCT_NAME)
             ->setSku(self::PRODUCT_SKU)
             ->setPrice(self::PRODUCT_PRICE)
-            ->setVisibility(ProductVisibility::VISIBILITY_BOTH)
-            ->setStatus(ProductStatus::STATUS_ENABLED)
             ->setStoreId($this->storeId)
-            ->setCategoryIds([])
             ->setIsObjectNew(true);
         
         $stockItem = $this->objectManager->create(StockItemInterface::class);
@@ -431,7 +419,6 @@ class OrderManagementTest extends BoltTestCase
         
         return $product;
     }
-    
     
     private function createQoute($product, $parentQuoteId = null)
     {
@@ -526,11 +513,7 @@ class OrderManagementTest extends BoltTestCase
             'country_id' => $addressInfo['country_code'],
         ];
         
-        $billingAddress = $this->objectManager->create(OrderAddress::class, ['data' => $addressData]);
-        $billingAddress->setAddressType('billing');
-        
-        $shippingAddress = clone $billingAddress;
-        $shippingAddress->setId(null)->setAddressType('shipping');
+        $orderItems = [];
         
         $orderItem = $this->objectManager->create(OrderItem::class);
         $orderItem->setProductId($product->getId());
@@ -542,18 +525,16 @@ class OrderManagementTest extends BoltTestCase
         $orderItem->setRowTotalInclTax($product->getPrice());
         $orderItem->setBaseRowTotalInclTax($product->getPrice());
         $orderItem->setProductType($product->getTypeId());
-       
-        $order = $this->objectManager->create(Order::class);
+        
+        $orderItems[] = $orderItem;
+        
+        $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, $orderStatus, $orderStatus, $payment);
+
         $order->setIncrementId(self::ORDER_INCREMENTID)
-            ->setState($orderStatus)
-            ->setStatus($order->getConfig()->getStateDefaultStatus($orderStatus))
             ->setCustomerIsGuest(true)
             ->setCustomerEmail($addressInfo['email_address'])
             ->setCustomerFirstname($addressInfo['first_name'])
-            ->setCustomerLastname($addressInfo['last_name'])
-            ->setBillingAddress($billingAddress)
-            ->setShippingAddress($shippingAddress)
-            ->setAddresses([$billingAddress, $shippingAddress])            
+            ->setCustomerLastname($addressInfo['last_name'])           
             ->setStoreId($this->storeId)
             ->setShippingAmount(self::ORDER_SHIPPING_TOTAL)
             ->setBaseShippingAmount(self::ORDER_SHIPPING_TOTAL)
@@ -571,7 +552,6 @@ class OrderManagementTest extends BoltTestCase
             ->setPayment($payment)
             ->isObjectNew(true);
 
-        $order->addItem($orderItem);
         $order->save();
           
         $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
@@ -580,37 +560,7 @@ class OrderManagementTest extends BoltTestCase
         return $order;
     }
     
-    private function createCustomer()
-    {
-        $addressInfo = $this->getAddressInfo();
         
-        $repository = $this->objectManager->create(\Magento\Customer\Api\CustomerRepositoryInterface::class);
-        $customer = $this->objectManager->create(\Magento\Customer\Model\Customer::class);
-        /** @var CustomerRegistry $customerRegistry */
-        $customerRegistry = $this->objectManager->get(\Magento\Customer\Model\CustomerRegistry::class);
-        /** @var Magento\Customer\Model\Customer $customer */
-        $customer->setWebsiteId($this->websiteId)
-            ->setStoreId($this->storeId)
-            ->setId(1)
-            ->setEmail($addressInfo['email_address'])
-            ->setPassword('password')
-            ->setGroupId(1)
-            ->setIsActive(1)
-            ->setPrefix('Mr.')
-            ->setFirstname($addressInfo['first_name'])
-            ->setLastname($addressInfo['last_name'])
-            ->setDefaultBilling(1)
-            ->setDefaultShipping(1)
-            ->setTaxvat('12')
-            ->setGender(0);
-        
-        $customer->isObjectNew(true);
-        $customer->save();
-        $customerRegistry->remove($customer->getId());
-        
-        return $customer;
-    }
-    
     private function createOrderHelperStubProperty($boltOrderManagement)
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -652,7 +602,8 @@ class OrderManagementTest extends BoltTestCase
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
         
-        $this->createCustomer();
+        $addressInfo = $this->getAddressInfo();
+        TestUtils::createCustomer($this->websiteId, $this->storeId, $addressInfo);
         
         $customerRepository = $this->objectManager->get(CustomerRepositoryInterface::class);
         $customer = $customerRepository->get('admin@test.com');
