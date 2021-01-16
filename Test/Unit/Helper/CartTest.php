@@ -2586,6 +2586,10 @@ ORDER
             );
             unset($result['items'][0]['image_url']);
 
+            // check that session id is saved in metadata
+            $encrypted_session_id = $result['metadata']['encrypted_session_id'];
+            static::assertNotEmpty($encrypted_session_id);
+
             $expected = [
                 'order_reference' => $quote->getId(),
                 'display_id'      => $quote->getBoltReservedOrderId(),
@@ -2607,6 +2611,7 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => $immutable_quote_id,
+                    'encrypted_session_id' => $encrypted_session_id,
                 ],
             ];
 
@@ -2700,6 +2705,10 @@ ORDER
         );
         unset($result['items'][0]['image_url']);
 
+        // check that session id is saved in metadata
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'];
+        static::assertNotEmpty($encrypted_session_id);
+
         static::assertEquals(
             [
                 'order_reference' => $quote->getId(),
@@ -2743,6 +2752,7 @@ ORDER
                 ],
                 'metadata'        => [
                     'immutable_quote_id' => $quote->getId() + 1,
+                    'encrypted_session_id' => $encrypted_session_id,
                 ],
             ],
             $result
@@ -2836,6 +2846,11 @@ ORDER
             )
         );
         unset($result['items'][0]['image_url']);
+
+        // check that session id is saved in metadata
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'];
+        static::assertNotEmpty($encrypted_session_id);
+
         static::assertEquals(
             [
                 'order_reference' => $quote->getId(),
@@ -2873,6 +2888,7 @@ ORDER
                 'metadata'        =>
                     [
                         'immutable_quote_id' => $quote->getId() + 1,
+                        'encrypted_session_id' => $encrypted_session_id,
                     ]
             ],
             $result

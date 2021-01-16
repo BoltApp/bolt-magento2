@@ -191,7 +191,6 @@ class EventsForThirdPartyModules
                 [
                     "module"      => "IDme_GroupVerification",
                     "boltClass"   => IDme_GroupVerification::class,
-                    "sendClasses" => []
                 ],
             ],
         ],
@@ -554,7 +553,6 @@ class EventsForThirdPartyModules
                 [
                     "module"      => "IDme_GroupVerification",
                     "boltClass"   => IDme_GroupVerification::class,
-                    "sendClasses" => []
                 ],
             ],
         ],
