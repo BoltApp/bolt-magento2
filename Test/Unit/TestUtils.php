@@ -58,7 +58,15 @@ class TestUtils {
      */
     public static function getOrderById($orderId)
     {
-        return Bootstrap::getObjectManager()->get(Order::class)->load($orderId);
+        $orderCollection = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order\Collection::class)
+            ->addFieldToSelect('*')
+            ->addFilter('entity_id', $orderId);
+
+        if ($orderCollection->getSize() > 0 ){
+            return $orderCollection->getFirstItem();
+        }
+
+        return false;
     }
 
     /**
@@ -232,7 +240,7 @@ class TestUtils {
         return $product;
     }
 
-    private static function setSecureAreaIfNeeded()
+    public static function setSecureAreaIfNeeded()
     {
         $registry = Bootstrap::getObjectManager()->get("\Magento\Framework\Registry");
         if ($registry->registry('isSecureArea') === null) {
