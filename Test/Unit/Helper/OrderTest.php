@@ -2323,10 +2323,12 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrder()
     {
-        $this->orderMock->expects(self::once())->method('cancel')->willReturnSelf();
-        $this->orderMock->expects(self::once())->method('save')->willReturnSelf();
-        $this->orderMock->expects(self::once())->method('delete')->willReturnSelf();
-        TestHelper::invokeMethod($this->currentMock, 'deleteOrder', [$this->orderMock]);
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder();
+        $orderId = $order->getId();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        TestHelper::invokeMethod($boltHelperOrder, 'deleteOrder', [$order]);
+        self::assertFalse(TestUtils::getOrderById($orderId));
     }
 
     /**
@@ -2456,11 +2458,8 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrderByIncrementId_noOrder()
     {
-        $this->currentMock->expects(static::once())->method('getExistingOrder')->with(self::INCREMENT_ID)
-            ->willReturn(null);
+        $this->skipTestInUnitTestsFlow();
         $this->bugsnag->expects(self::once())->method('notifyError');
-        $this->orderMock->expects(static::never())->method('getState');
-        $this->currentMock->expects(static::never())->method('deleteOrder');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
 
@@ -2708,14 +2707,14 @@ class OrderTest extends BoltTestCase
      */
     public function formatReferenceUrl()
     {
-        $this->configHelper->expects(self::once())->method('getMerchantDashboardUrl')
-            ->willReturn('https://merchant-sandbox.bolt.com');
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals(
             sprintf(
                 '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
                 self::REFERENCE_ID
             ),
-            $this->currentMock->formatReferenceUrl(self::REFERENCE_ID)
+            $boltHelperOrder->formatReferenceUrl(self::REFERENCE_ID)
         );
     }
 
@@ -2737,13 +2736,16 @@ class OrderTest extends BoltTestCase
         $itemTypeAdditionalInformation,
         $expectedResult
     ) {
-        $paymentMock = $this->createMock(OrderPaymentInterface::class);
-        $paymentMock->expects(self::once())->method('getAdditionalInformation')->with($itemType)->willReturn(
-            $itemTypeAdditionalInformation
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $payment = Bootstrap::getObjectManager()->create(Payment::class);
+        $payment->setAdditionalInformation(
+            [$itemType => $itemTypeAdditionalInformation]
         );
+
         static::assertEquals(
             $expectedResult,
-            TestHelper::invokeMethod($this->currentMock, 'getProcessedItems', [$paymentMock, $itemType])
+            TestHelper::invokeMethod($boltHelperOrder, 'getProcessedItems', [$payment, $itemType])
         );
     }
 
@@ -2782,18 +2784,21 @@ class OrderTest extends BoltTestCase
      */
     public function getProcessedRefunds()
     {
-        $paymentMock = $this->createMock(OrderPayment::class);
-        $paymentMock->expects(self::once())->method('getAdditionalInformation')->with('refunds')
-            ->willReturn('refund1,refund2');
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $payment = Bootstrap::getObjectManager()->create(Payment::class);
+        $payment->setAdditionalInformation(
+            ['refunds' => 'refund1,refund2']
+        );
         static::assertEquals(
             [
                 'refund1',
                 'refund2',
             ],
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $boltHelperOrder,
                 'getProcessedRefunds',
-                [$paymentMock]
+                [$payment]
             )
         );
     }
@@ -2806,25 +2811,27 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_CreditCardAuthorize()
     {
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])
-            ->getMockForAbstractClass();
-        $map = [
-            ['transaction_state', OrderHelper::TS_PENDING],
-            ['transaction_reference', '000123'],
-            ['real_transaction_id', self::TRANSACTION_ID],
-            ['captures', ""],
-            ['processor', self::PROCESSOR_VANTIV],
-        ];
-        $this->paymentMock->expects(static::exactly(4))
-            ->method('getAdditionalInformation')
-            ->will(static::returnValueMap($map));
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $payment = Bootstrap::getObjectManager()->create(Payment::class);
+
+        $payment->setAdditionalInformation(
+            [
+                'transaction_state' => OrderHelper::TS_PENDING,
+                'transaction_reference' => '000123',
+                'real_transaction_id' => self::TRANSACTION_ID,
+                'captures' => null,
+                'processor' => self::PROCESSOR_VANTIV,
+            ]
+        );
+
 
         $transactionMock = (object)([
             'type'     => OrderHelper::TT_PAYMENT,
             'status'   => "authorized",
             'captures' => [],
         ]);
-        $state = $this->currentMock->getTransactionState($transactionMock, $this->paymentMock, null);
+        $state = $boltHelperOrder->getTransactionState($transactionMock, $payment, null);
         static::assertEquals(OrderHelper::TS_AUTHORIZED, $state);
     }
 
@@ -2835,25 +2842,25 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_PaypalCompleted()
     {
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])
-            ->getMockForAbstractClass();
-        $map = [
-            ['transaction_state', OrderHelper::TS_PENDING],
-            ['transaction_reference', '000123'],
-            ['real_transaction_id', self::TRANSACTION_ID],
-            ['captures', ""],
-            ['processor', self::PROCESSOR_PAYPAL],
-        ];
-        $this->paymentMock->expects(static::exactly(4))
-            ->method('getAdditionalInformation')
-            ->will(static::returnValueMap($map));
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $payment = Bootstrap::getObjectManager()->create(Payment::class);
+        $payment->setAdditionalInformation(
+            [
+                'transaction_state' => OrderHelper::TS_PENDING,
+                'transaction_reference' => '000123',
+                'real_transaction_id' => self::TRANSACTION_ID,
+                'captures' => null,
+                'processor' => self::PROCESSOR_PAYPAL,
+            ]
+        );
 
         $transactionMock = (object)([
             'type'     => OrderHelper::TT_PAYPAL_PAYMENT,
             'status'   => "completed",
             'captures' => [],
         ]);
-        $state = $this->currentMock->getTransactionState($transactionMock, $this->paymentMock, null);
+        $state = $boltHelperOrder->getTransactionState($transactionMock, $payment, null);
         static::assertEquals("cc_payment:completed", $state);
     }
 
@@ -2863,6 +2870,8 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_APMInitialAuthorized()
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
             null,
             OrderHelper::TT_APM_PAYMENT,
@@ -2870,7 +2879,7 @@ class OrderTest extends BoltTestCase
             []
         );
         static::assertEquals(
-            $this->currentMock->getTransactionState($transaction, $paymentMock, null),
+            $boltHelperOrder->getTransactionState($transaction, $paymentMock, null),
             OrderHelper::TS_PENDING
         );
     }
@@ -2888,26 +2897,23 @@ class OrderTest extends BoltTestCase
     private function getTransactionStateSetUp($prevTransactionState, $transactionType, $transactionStatus, $captures = [])
     {
         /** @var MockObject|OrderPaymentInterface $paymentMock */
-        $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder'])
-            ->getMockForAbstractClass();
-        $paymentMock->expects(static::exactly(4))
-            ->method('getAdditionalInformation')
-            ->willReturnMap(
-                [
-                    ['transaction_state', $prevTransactionState],
-                    ['transaction_reference', null],
-                    ['real_transaction_id', null],
-                    ['captures', ""],
-                    ['processor', self::PROCESSOR_VANTIV],
-                ]
-            );
+        $payment = Bootstrap::getObjectManager()->create(Payment::class);
+        $payment->setAdditionalInformation(
+            [
+                'transaction_state' => $prevTransactionState,
+                'transaction_reference' => null,
+                'real_transaction_id' => null,
+                'captures' => null,
+                'processor' => self::PROCESSOR_VANTIV,
+            ]
+        );
 
         $transaction = (object)([
             'type'     => $transactionType,
             'status'   => $transactionStatus,
             'captures' => $captures,
         ]);
-        return [$paymentMock, $transaction];
+        return [$payment, $transaction];
     }
 
     /**
@@ -2917,14 +2923,16 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCreditCompleted()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             null,
             OrderHelper::TT_PAYPAL_REFUND,
             "completed"
         );
         static::assertEquals(
             OrderHelper::TS_CREDIT_COMPLETED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -2935,7 +2943,9 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSAuthorized()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_PENDING,
             OrderHelper::TT_PAYMENT,
             'authorized',
@@ -2943,7 +2953,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_AUTHORIZED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -2954,7 +2964,9 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSAuthorizedFromPending()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_PENDING,
             OrderHelper::TT_PAYMENT,
             'completed',
@@ -2962,7 +2974,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_AUTHORIZED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -2973,7 +2985,9 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCaptured()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_AUTHORIZED,
             OrderHelper::TT_PAYMENT,
             'completed',
@@ -2981,7 +2995,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_CAPTURED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -2992,7 +3006,9 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCapturedFromAuthorized()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_AUTHORIZED,
             OrderHelper::TT_PAYMENT,
             'authorized',
@@ -3000,7 +3016,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_CAPTURED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -3011,7 +3027,9 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCapturedFromACompleted()
     {
-        list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_CREDIT_COMPLETED,
             OrderHelper::TT_PAYMENT,
             'authorized',
@@ -3019,7 +3037,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_CAPTURED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock)
+            $boltHelperOrder->getTransactionState($transaction, $payment)
         );
     }
 
@@ -3030,6 +3048,8 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSPartialVoided()
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_CAPTURED,
             OrderHelper::TT_PAYMENT,
@@ -3038,7 +3058,7 @@ class OrderTest extends BoltTestCase
         );
         static::assertEquals(
             OrderHelper::TS_PARTIAL_VOIDED,
-            $this->currentMock->getTransactionState($transaction, $paymentMock, Transaction::TYPE_VOID)
+            $boltHelperOrder->getTransactionState($transaction, $paymentMock, Transaction::TYPE_VOID)
         );
     }
 
@@ -4333,8 +4353,10 @@ class OrderTest extends BoltTestCase
         $transactionState,
         $expectedResult
     ) {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
-        static::assertEquals($expectedResult, $this->currentMock->isZeroAmountHook($transactionState));
+        static::assertEquals($expectedResult, $boltHelperOrder->isZeroAmountHook($transactionState));
     }
 
     /**
@@ -4365,10 +4387,12 @@ class OrderTest extends BoltTestCase
      */
     public function isCaptureHookRequest($isHookFromBolt, $newCapture, $expectedResult)
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
         static::assertEquals(
             $expectedResult,
-            TestHelper::invokeMethod($this->currentMock, 'isCaptureHookRequest', [$newCapture])
+            TestHelper::invokeMethod($boltHelperOrder, 'isCaptureHookRequest', [$newCapture])
         );
     }
 
@@ -5187,53 +5211,51 @@ class OrderTest extends BoltTestCase
         $grandTotal,
         $priceFaultTolerance
     ) {
+        $this->skipTestInUnitTestsFlow();
+        $orderHelper = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id'=> $quoteId,
+                'grand_total' => $grandTotal,
+                'base_grand_total' => $grandTotal,
+
+
+            ]
+        );
 
         $transaction = new \stdClass();
         $transaction->order = new \stdClass();
         $transaction->order->cart = new \stdClass();
         $transaction->order->cart->total_amount = new \stdClass();
+        $transaction->order->cart->total_amount->amount = $cartTotalAmount;
 
-
-        $boltTotalAmount = $transaction->order->cart->total_amount->amount = $cartTotalAmount;
-        $currencyCode = 'USD';
-        $this->orderMock->expects(static::once())->method('getOrderCurrencyCode')->willReturn($currencyCode);
-        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
-        $this->configHelper->method('getPriceFaultTolerance')->willReturn($priceFaultTolerance);
-        $magentoTotalAmount = CurrencyUtils::toMinor($grandTotal, $currencyCode);
-        $totalMismatch = $boltTotalAmount - $magentoTotalAmount;
-        $recordMismatch = abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance;
-        $this->orderMock->expects($recordMismatch ? static::once() : static::never())
-            ->method('setBaseGrandTotal')
-            ->willReturnSelf();
-        $this->orderMock->expects($recordMismatch ? static::once() : static::never())
-            ->method('setGrandTotal')
-            ->willReturnSelf();
-        CurrencyUtils::toMajor($boltTotalAmount, $currencyCode);
-        $quoteMock = $this->quoteMock;
-        $this->bugsnag->expects($recordMismatch ? static::once() : static::never())
-            ->method('registerCallback')
-            ->willReturnCallback(
-            function (callable $callback) use ($quoteMock, $boltTotalAmount, $magentoTotalAmount) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $quoteMock->expects(static::once())->method('getId')->willReturn(static::QUOTE_ID);
-                $reportMock->expects(static::once())
-                    ->method('setMetaData')->with(
-                        [
-                            'TOTAL MISMATCH' => [
-                                'Bolt Total Amount' => $boltTotalAmount,
-                                'Magento Total Amount' => $magentoTotalAmount,
-                                'Quote ID' => static::QUOTE_ID,
-                            ]
-                        ]
-                    );
-                $callback($reportMock);
-            }
+        $priceFaultToleranceConfiguration = '{"priceFaultTolerance":'.$priceFaultTolerance.'}';
+        $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
+        $configWriter->save(
+            ConfigHelper::XML_PATH_ADDITIONAL_CONFIG,
+            $priceFaultToleranceConfiguration
         );
+
+        $magentoTotalAmount = CurrencyUtils::toMinor($grandTotal,'USD');
+        $totalMismatch = $cartTotalAmount - $magentoTotalAmount;
+        $recordMismatch = abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance;
 
         TestHelper::invokeMethod(
-            $this->currentMock, 'adjustPriceMismatch',
-            [$transaction, $this->orderMock, $quoteMock]
+            $orderHelper, 'adjustPriceMismatch',
+            [$transaction, $order, $quote]
         );
+
+        if ($recordMismatch) {
+            self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getGrandTotal());
+            self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getBaseGrandTotal());
+        }else {
+            self::assertEquals($grandTotal, $order->getGrandTotal());
+            self::assertEquals($grandTotal, $order->getBaseGrandTotal());
+        }
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -5284,35 +5306,6 @@ class OrderTest extends BoltTestCase
         $this->orderManagementMock->expects(static::never())->method('cancel');
         $this->orderRepository->expects(static::never())->method('save');
         $this->currentMock->cancelFailedPaymentOrder(self::DISPLAY_ID, self::IMMUTABLE_QUOTE_ID);
-    }
-
-    /**
-     * @test
-     * that cancelFailedPaymentOrder throws an exception if order to be canceled is not in the pending payment state
-     * @covers ::cancelFailedPaymentOrder
-     *
-     * @param string $orderState current order state
-     *
-     * @throws AlreadyExistsException from the tested method
-     */
-    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
-    {
-        $this->skipTestInUnitTestsFlow();
-        $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
-        $incrementId = $order->getIncrementId();
-        $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionMessage(
-            sprintf(
-                "Order Delete Error. Order is in invalid state. Order #: %d State: %s Immutable Quote ID: %d",
-                $order->getIncrementId(),
-                OrderModel::STATE_PROCESSING,
-                self::QUOTE_ID
-            )
-        );
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        $orderHelper->cancelFailedPaymentOrder($incrementId, self::QUOTE_ID);
-        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -5384,49 +5377,76 @@ class OrderTest extends BoltTestCase
 
     /**
      * @test
-     *
      * @covers ::deleteOrCancelFailedPaymentOrder
-     *
-     * @dataProvider deleteOrCancelFailedPaymentOrderProvider
-     *
-     * @param bool $isPPC
-     *
-     * @throws AlreadyExistsException
      */
-    public function deleteOrCancelFailedPaymentOrder($isCancelFailedPaymentOrderInsteadOfDeleting)
-    {
-        $this->initCurrentMock(['cancelFailedPaymentOrder','deleteOrderByIncrementId']);
-
-        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
-            ->willReturn($isCancelFailedPaymentOrderInsteadOfDeleting);
-        if ($isCancelFailedPaymentOrderInsteadOfDeleting) {
-            $this->currentMock->expects(static::once())->method('cancelFailedPaymentOrder')
-                ->with(self::DISPLAY_ID, self::QUOTE_ID);
-        } else {
-            $this->currentMock->expects(self::once())->method('deleteOrderByIncrementId')
-                ->with(self::DISPLAY_ID);
-        }
-        $expected_message = $isCancelFailedPaymentOrderInsteadOfDeleting
-                ? 'Order was canceled: ' . self::DISPLAY_ID
-                : 'Order was deleted: ' . self::DISPLAY_ID;
-        $message = $this->currentMock->deleteOrCancelFailedPaymentOrder(
-            self::DISPLAY_ID,
-            self::QUOTE_ID
+    public function deleteOrCancelFailedPaymentOrder_deleteOrderByIncrementId() {
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(
+            [
+                'state' => OrderModel::STATE_PENDING_PAYMENT,
+                'quote_id' => $quote->getId()
+            ]
         );
-        static::assertEquals($expected_message, $message);
+        $orderHelper = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $displayId = $order->getIncrementId();
+        TestUtils::setSecureAreaIfNeeded();
+        self::assertEquals(
+            'Order was deleted: '.$displayId,
+            $orderHelper->deleteOrCancelFailedPaymentOrder($displayId, $quote->getId())
+        );
     }
 
-        /**
-     * Data provider for tests that depend on isCancelFailedPaymentOrderInsteadOfDeleting feature switch
-     *
-     * @return array
+    /**
+     * @test
+     * @covers ::deleteOrCancelFailedPaymentOrder
      */
-    public function deleteOrCancelFailedPaymentOrderProvider()
-    {
-        return [
-            ['isCancelFailedPaymentOrderInsteadOfDeleting' => false],
-            ['isCancelFailedPaymentOrderInsteadOfDeleting' => true],
-        ];
+    public function deleteOrCancelFailedPaymentOrder_cancelFailedPaymentOrder() {
+        $this->skipTestInUnitTestsFlow();
+        $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
+            ->willReturn(true);
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(
+            [
+                'state' => OrderModel::STATE_PENDING_PAYMENT,
+                'quote_id' => $quote->getId()
+            ]
+        );
+        $displayId = $order->getIncrementId();
+        
+        self::assertEquals(
+            'Order was canceled: '.$displayId,
+            $this->currentMock->deleteOrCancelFailedPaymentOrder($displayId, $quote->getId())
+        );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
+    /**
+     * @test
+     * that cancelFailedPaymentOrder throws an exception if order to be canceled is not in the pending payment state
+     * @covers ::cancelFailedPaymentOrder
+     *
+     * @param string $orderState current order state
+     *
+     * @throws AlreadyExistsException from the tested method
+     */
+    public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
+    {
+        $this->skipTestInUnitTestsFlow();
+        $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
+        $incrementId = $order->getIncrementId();
+        $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                "Order Delete Error. Order is in invalid state. Order #: %d State: %s Immutable Quote ID: %d",
+                $order->getIncrementId(),
+                OrderModel::STATE_PROCESSING,
+                self::QUOTE_ID
+            )
+        );
+        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
+        $orderHelper->cancelFailedPaymentOrder($incrementId, self::QUOTE_ID);
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
 }
