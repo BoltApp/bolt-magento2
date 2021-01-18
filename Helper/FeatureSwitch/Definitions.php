@@ -147,6 +147,11 @@ class Definitions
      */
     const M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING = "M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING";
 
+    /**
+     * Store encrypted session id in cart metadata
+     */
+    const M2_ADD_SESSION_ID_TO_CART_METADATA = "M2_ADD_SESSION_ID_TO_CART_METADATA";
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME =>  [
           self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
@@ -276,6 +281,12 @@ class Definitions
         ],
         self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING =>  [
             self::NAME_KEY            => self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ],
+        self::M2_ADD_SESSION_ID_TO_CART_METADATA =>  [
+            self::NAME_KEY            => self::M2_ADD_SESSION_ID_TO_CART_METADATA,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0

@@ -1700,9 +1700,12 @@ class Cart extends AbstractHelper
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
 
-        $cart['metadata'][SessionHelper::ENCRYPTED_SESSION_ID_KEY] = $this->encryptMetadataValue(
-            $this->checkoutSession->getSessionId()
-        );
+        // Transmit session ID via cart metadata, making it available for session emulation in API calls
+        if ($this->deciderHelper->isAddSessionIdToCartMetadata()) {
+            $cart['metadata'][SessionHelper::ENCRYPTED_SESSION_ID_KEY] = $this->encryptMetadataValue(
+                $this->checkoutSession->getSessionId()
+            );
+        }
 
         $sessionData = $this->eventsForThirdPartyModules->runFilter('collectSessionData', [], $quote, $immutableQuote);
         if (!empty($sessionData)) {

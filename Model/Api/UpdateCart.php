@@ -106,7 +106,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
 
-            $this->updateSession($parentQuote, $cart['metadata']);
+            $this->updateSession($parentQuote, $cart['metadata'] ?? []);
 
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
@@ -170,14 +170,14 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             // Add items
             if ( !empty($add_items) ) {
                 $cartItems = $this->getCartItems($parentQuote);
-                
+
                 foreach ($add_items as $addItem) {
                     $product = $this->getProduct($addItem['product_id'], $storeId);
                     if (!$product) {
                         // Already sent a response with error, so just return.
                         return false;
                     }
-                    
+
                     $quoteItem = $this->getQuoteItemByProduct($addItem, $cartItems);
 
                     if (!isset($addItem['currency'])) {
@@ -188,7 +188,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     if (!$result) {
                         // Already sent a response with error, so just return.
                         return false;
-                    }                    
+                    }
 
                     $result = $this->addItemToQuote($product, $parentQuote, $addItem, $quoteItem);
                     if (!$result) {
@@ -212,10 +212,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                             sprintf('The product [%s] does not exist in the quote.', $removeItem['product_id']),
                             422
                         );
-                        
+
                         return false;
                     }
-                    
+
                     $product = $this->getProduct($removeItem['product_id'], $storeId);
                     if (!$product) {
                         // Already sent a response with error, so just return.
@@ -228,7 +228,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                         // Already sent a response with error, so just return.
                         return false;
                     }
-                    
+
                     $result = $this->removeItemFromQuote($quoteItem, $removeItem, $parentQuote);
                     if (!$result) {
                         // Already sent a response with error, so just return.
@@ -238,7 +238,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
                 $this->updateTotals($parentQuote);
             }
-            
+
             $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
 
             $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
@@ -298,10 +298,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
     /**
      * Handles discounts.code.apply event type in universal api
-     * 
+     *
      * This is mostly just pulled from UpdateCart::execute as all the functionality is there
      * but discounts.code.apply requires a specific subset of the functionality in execute
-     * 
+     *
      * @api
      * @param string $discount_code
      * @param mixed $cart
@@ -327,7 +327,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace the quote with $parentQuote in checkout session.
-        $this->sessionHelper->loadSession($parentQuote);
+        $this->sessionHelper->loadSession($parentQuote, $cart['metadata'] ?? []);
         $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
 
         if(!empty($discount_code)){
