@@ -445,7 +445,7 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
-            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart']);
+            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata']);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -2974,6 +2974,7 @@ ORDER
                 ]
             )
         );
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
             json_encode(
@@ -3066,6 +3067,7 @@ ORDER
             ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
 
         $this->checkoutSession->method('getOrderId')->willReturn(self::ORIGINAL_ORDER_ENTITY_ID);
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
@@ -3166,6 +3168,7 @@ ORDER
                 ]
             )
         );
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
             json_encode(
@@ -3276,6 +3279,7 @@ ORDER
         );
         $this->bugsnag->expects(static::once())->method('notifyError')
             ->with('Cart Totals Mismatch', 'Totals adjusted by 123.');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
@@ -3376,6 +3380,7 @@ ORDER
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
             ->willReturn('flatrate_flatrate');
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
@@ -3547,6 +3552,7 @@ ORDER
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
         $this->bugsnag->expects(static::once())->method('notifyError')
             ->with('Order create error', 'Shipping address data insufficient.');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]));
         static::assertEquals([], $result);
         }
@@ -3614,6 +3620,7 @@ ORDER
         ];
         $currentMock->expects(static::once())->method('getCartItems')->willReturn([$testItems, 123456, 0]);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn([[], 12345, 0]);
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]), $this->immutableQuoteMock);
         static::assertEquals(self::EMAIL_ADDRESS, $result['shipments'][0]['shipping_address']['email']);
         }
@@ -4308,7 +4315,7 @@ ORDER
             ->getMock();
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
-        
+
         $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($this->productMock);
 
