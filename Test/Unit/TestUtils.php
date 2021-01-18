@@ -211,7 +211,6 @@ class TestUtils {
      */
     public static function createSimpleProduct()
     {
-
         $product = Bootstrap::getObjectManager()->create(Product::class);
         $product->setTypeId(ProductType::TYPE_SIMPLE)
             ->setAttributeSetId(4)
@@ -382,5 +381,109 @@ class TestUtils {
         $customerRegistry->remove($customer->getId());
         
         return $customer;
+    }
+    
+    public static function createSampleAddress()
+    {
+        return array(
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality"        => "Los Angeles",
+            "region"          => "California",
+            'region_code'     => 'CA',
+            'region_id'       => '12',
+            "postal_code"     => "11111",
+            "country_code"    => "US",
+            "country"         => "United States",
+            "name"            => "lastname firstname",
+            "first_name"      => "firstname",
+            "last_name"       => "lastname",
+            "phone_number"    => "11111111",
+            "email_address"   => "buy@test.com",
+        );
+    }
+    
+    public static function createMagentoSampleAddress()
+    {
+        $sampleAddress = self::createSampleAddress();
+        
+        $sampleMagentoData = [
+            'region'     => $sampleAddress['region_code'],
+            'region_id'  => $sampleAddress['region_id'],
+            'postcode'   => $sampleAddress['postal_code'],
+            'lastname'   => $sampleAddress['last_name'],
+            'firstname'  => $sampleAddress['first_name'],
+            'street'     => $sampleAddress['street_address1'],
+            'city'       => $sampleAddress['locality'],
+            'email'      => $sampleAddress['email_address'],
+            'telephone'  => $sampleAddress['phone_number'],
+            'country_id' => $sampleAddress['country_code'],
+        ];
+        
+        return $sampleMagentoData;
+    }
+    
+    public static function createStockItemForProduct($product, $qty)
+    {
+        $stockItem = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\Data\StockItemInterface::class);
+        $stockItem->setQty($qty)
+            ->setIsInStock(true);
+        $extensionAttributes = $product->getExtensionAttributes();
+        $extensionAttributes->setStockItem($stockItem);
+    }
+    
+    public static function createQuoteAddress($addressData, $addressType)
+    {
+        $quoteAddress = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\Data\AddressInterface::class, ['data' => $addressData]);
+        $quoteAddress->setAddressType($addressType)
+            ->setCustomerAddressId('not_existing');
+        
+        return $quoteAddress;
+    }
+    
+    public static function createQuoteShippingRate($shippingCode, $shippingCost, $addressId)
+    {
+        $rate = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\Quote\Address\Rate::class);
+        $rate->setCode($shippingCode)
+             ->setPrice($shippingCost)
+             ->setAddressId($addressId)
+             ->save();
+            
+        return $rate;
+    }
+    
+    public static function setQuotePayment($quote, $paymentMethodCode)
+    {        
+        $paymentFactory = Bootstrap::getObjectManager()->get(\Magento\Quote\Api\Data\PaymentInterfaceFactory::class);
+        $paymentMethodManagement = Bootstrap::getObjectManager()->get(\Magento\Quote\Api\PaymentMethodManagementInterface::class);
+        $quotePayment = $paymentFactory->create([
+            'data' => [
+                \Magento\Quote\Api\Data\PaymentInterface::KEY_METHOD => $paymentMethodCode,
+            ]
+        ]);
+        
+        $quoteId = $quote->getId();
+        $paymentMethodManagement->set($quoteId, $quotePayment);
+        
+        $quoteRepository = Bootstrap::getObjectManager()->get(\Magento\Quote\Model\QuoteRepository::class);
+        $quoteRepository->save($quote);
+        
+        return $quote;
+    }
+    
+    public static function createOrderItemByProduct($product, $qty)
+    {
+        $orderItem = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order\Item::class);
+        $orderItem->setProductId($product->getId());
+        $orderItem->setQtyOrdered($qty);
+        $orderItem->setBasePrice($product->getPrice());
+        $orderItem->setPrice($product->getPrice());
+        $orderItem->setRowTotal($product->getPrice());
+        $orderItem->setBaseRowTotal($product->getPrice());
+        $orderItem->setRowTotalInclTax($product->getPrice());
+        $orderItem->setBaseRowTotalInclTax($product->getPrice());
+        $orderItem->setProductType($product->getTypeId());
+        
+        return $orderItem;
     }
 }
