@@ -18,27 +18,56 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Model\Api\CreateOrder;
-use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Phrase;
-use Magento\Framework\Webapi\Exception as WebapiException;
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use ReflectionException;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\ArrayHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\Api\OrderManagement as BoltOrderManagement;
+use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
+use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Bolt\Boltpay\Model\Payment as BoltPayment;
+
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Catalog\Model\Product\Type as ProductType;
+use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
+use Magento\CatalogInventory\Model\StockRegistryStorage;
+use Magento\CatalogInventory\Api\Data\StockItemInterface;
+use Magento\Config\Model\ResourceModel\Config;
+use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Model\ResourceModel\Customer\Collection as CustomerCollection;
+use Magento\Framework\Registry;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\App\Config\MutableScopeConfigInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\ResourceModel\Quote\Collection as QuoteCollection;
+use Magento\Quote\Api\Data\PaymentInterfaceFactory;
+use Magento\Quote\Api\PaymentMethodManagementInterface;
+use Magento\Quote\Api\Data\PaymentInterface;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
+use Magento\Sales\Model\Order\Address as OrderAddress;
+use Magento\Sales\Model\Order\Payment as OrderPayment;
+use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+
+
 
 /**
  * Class OrderManagementTest
@@ -48,875 +77,1915 @@ use ReflectionException;
  */
 class OrderManagementTest extends BoltTestCase
 {
-    const ORDER_ID = 123;
-    const QUOTE_ID = 456;
-    const STORE_ID = 1;
-    const ID = "AAAABBBBCCCCD";
-    const REFERENCE = "AAAA-BBBB-CCCC";
-    const AMOUNT = 11800;
-    const CURRENCY = "USD";
-    const DISPLAY_ID = "000000123";
-    const REQUEST_HEADER_TRACE_ID = 'aaaabbbbcccc';
-    const TYPE = 'pending';
-    const STATUS = 'pending';
-    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
+    const BOLT_METHOD_CODE = 'boltpay';
+    const TRANSACTION_ID = 'TAb6hFi4Upjft';
+    const REFERENCE = 'B74N-PQXW-PYQ9';
+    const CURRENCY = 'USD';
+    const CURRENCY_USD_SYMBOL = '$';
+    const PROCESSOR_VANTIV = 'vantiv';
+    const TT_PAYMENT = 'cc_payment';
+    const TT_CREDIT = 'cc_credit';
+    
+    const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
 
-    /** @var MockObject|HookHelper mocked instance of the Bolt hook helper */
-    private $hookHelper;
-
-    /** @var MockObject|OrderHelper mocked instance of the Bolt order helper */
-    private $orderHelperMock;
-
-    /** @var MockObject|LogHelper mocked instance of the Bolt log helper */
-    private $logHelper;
-
-    /** @var MockObject|Request mocked instance of the Webapi Rest Request */
-    private $request;
-
-    /** @var MockObject|Bugsnag  mocked instance of the Bugsnag class */
-    private $bugsnag;
-
-    /** @var MockObject|MetricsClient mocked instance of the Bolt metrics client helper */
-    private $metricsClient;
-
-    /** @var MockObject|Response mocked instance of the Webapi Response */
+    const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
+    const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+    
+    const PRODUCT_PRICE = 100;
+    const PRODUCT_NAME = 'SIMPLE 1';
+    const PRODUCT_SKU = 'simple_1';
+    
+    const QUOTE_SUBTOTAL = 100;
+    const QUOTE_TOTAL = 105;
+    const QUOTE_SHIPPING_TOTAL = 5;
+    const QUOTE_SHIPPING_TAX_TOTAL = 0;
+    const QUOTE_TAX_TOTAL = 0;
+    const QUOTE_PRODUCT_QTY = 1;
+    
+    const ORDER_SUBTOTAL = 100;
+    const ORDER_SHIPPING_TOTAL = 5;
+    const ORDER_TAX = 0;
+    const ORDER_SHIPPING_TAX = 0;
+    const ORDER_TOTAL = 105;
+    const ORDER_INCREMENTID = '100000001';
+    
+    /** @var Response */
     private $response;
-
-    /** @var MockObject|ConfigHelper mocked instance of the Bolt configuration helper */
-    private $configHelper;
-
-    /** @var MockObject|OrderManagement  mocked instance of the tested class */
-    private $currentMock;
-
-    /** @var MockObject|CartHelper mocked instance of the Bolt cart helper */
-    private $cartHelper;
-
-    /** @var string stubbed json string response for {@see \Zend\Http\PhpEnvironment\Request::getContent} */
-    private $requestContent;
-
-    /** @var MockObject|Order mocked instance of the Order Model */
-    private $order;
-
-    /** @var MockObject|Decider mocked instance of the Bolt feature switch helper */
-    private $decider;
-
+    
+    /** @var Request */
+    private $request;
+    
+    /**
+     * @var ObjectManagerInterface
+     */
+    private $objectManager;
+    
+    private $storeId;
+    
+    private $websiteId;
+    
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock([]);
-
-        $this->requestContent = json_encode(
-            [
-                "id" => self::ID, "reference" => self::REFERENCE, "order" => self::ORDER_ID, "type" => self::TYPE,
-                "amount" => self::AMOUNT, "currency" => self::CURRENCY, "status" => self::STATUS, "display_id" => self::DISPLAY_ID
-            ]
-        );
-    }
-
-    private function initRequiredMocks()
-    {
-        $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->orderHelperMock = $this->createPartialMock(
-            OrderHelper::class,
-            [
-                'saveUpdateOrder',
-                'getStoreIdByQuoteId',
-                'cancelFailedPaymentOrder',
-                'tryDeclinedPaymentCancelation',
-                'deleteOrderByIncrementId',
-                'saveCustomerCreditCard',
-                'fetchTransactionInfo',
-                'deleteOrCancelFailedPaymentOrder',
-            ]
-        );
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->request = $this->createMock(Request::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->response = $this->createMock(Response::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->order = $this->createPartialMock(Order::class, ['getData','getIncrementId']);
-
-        $this->quoteMock = $this->createMock(Quote::class);
-        $this->decider = $this->createPartialMock(
-            Decider::class,
-            [
-                'isIgnoreHookForInvoiceCreationEnabled',
-                'isIgnoreHookForCreditMemoCreationEnabled',
-                'isCancelFailedPaymentOrderInsteadOfDeleting'
-            ]
-        );
-
-        $this->order->expects(self::any())->method('getData')
-            ->willReturn([
-                'id' => '1111',
-                'increment_id'=> SELF::DISPLAY_ID,
-                'grand_total' => '$11.00'
-            ]);
-        $this->order->expects(self::any())->method('getIncrementId')
-            ->willReturn(SELF::DISPLAY_ID);
-
-        $this->orderHelperMock->expects(self::any())->method('saveUpdateOrder')
-            ->willReturn([$this->quoteMock, $this->order]);
-
-        $this->orderHelperMock->expects(self::any())->method('getStoreIdByQuoteId')
-            ->will(self::returnValueMap([
-                [self::ORDER_ID,self::STORE_ID],
-                [null,null]
-            ]));
-
-        $this->cartHelper = $this->createMock(CartHelper::class);
-    }
-
-    private function initCurrentMock($methods)
-    {
-        $mockBuilder = $this->getMockBuilder(OrderManagement::class)
-            ->setConstructorArgs([
-                $this->hookHelper,
-                $this->orderHelperMock,
-                $this->logHelper,
-                $this->request,
-                $this->bugsnag,
-                $this->metricsClient,
-                $this->response,
-                $this->configHelper,
-                $this->cartHelper,
-                $this->decider
-            ]);
-        if ($methods) {
-            $mockBuilder->setMethods($methods);
-        } else {
-            $mockBuilder->enableProxyingToOriginalMethods();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;    
         }
-        $this->currentMock = $mockBuilder->getMock();
-    }
+        
+        $this->objectManager = Bootstrap::getObjectManager();
 
-    /**
-     * @test
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_common()
+        $registry = $this->objectManager->get(Registry::class);
+        $registry->unregister('isSecureArea');
+        $registry->register('isSecureArea', true);
+
+        $this->resetRequest();
+        $this->resetResponse();
+        $this->resetTestObj();
+        
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+        
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
+        
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
+        
+        $configData = [
+            [
+                'path'    => 'payment/boltpay/signing_secret',
+                'value'   => $secret,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/api_key',
+                'value'   => $apikey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/active',
+                'value'   => 1,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $this->getResponse();
+    }
+    
+    protected function tearDownInternal()
     {
-        $startTime = microtime(true) * 1000;
-
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-        $this->request->expects(self::once())->method('getContent')->willReturn($this->requestContent);
-        $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
-            ->withConsecutive([$this->requestContent], ['StoreId: ' . self::STORE_ID]);
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(self::anything(), 1, 'webhooks.latency', $startTime);
-        $this->response->expects(self::once())->method('sendResponse');
-
-
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            null,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID,
-            self::QUOTE_ID
-        );
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;    
+        }
+        
+        $this->resetRequest();
+        $this->resetResponse();
+        $this->resetTestObj();
+        
+        $registry = $this->objectManager->get(Registry::class);
+        $registry->unregister('isSecureArea');
+        $registry->register('isSecureArea', false);
     }
-
-    private function mockTransactionData()
-    {
-        $transactionData = new \stdClass();
-        $transactionData->order = new \stdClass();
-        $transactionData->order->cart = new \stdClass();
-        $transactionData->order->cart->metadata = new \stdClass();
-        $transactionData->order->cart->metadata->immutable_quote_id = self::QUOTE_ID;
-        return $transactionData;
-    }
-
+    
     /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_rejectedIrreversible_success()
-    {
-        $type = "rejected_irreversible";
-
-        $this->orderHelperMock->expects(self::once())->method('tryDeclinedPaymentCancelation')
-            ->willReturn(true);
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'message' => 'Order was canceled due to declined payment: ' . self::DISPLAY_ID,
-        ]));
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_rejectedIrreversible_fail()
-    {
-        $type = "rejected_irreversible";
-
-        $this->orderHelperMock->expects(self::once())->method('tryDeclinedPaymentCancelation')
-            ->willReturn(false);
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
-            ->willReturn(self::REQUEST_HEADER_TRACE_ID);
-        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')
-            ->with(self::REFERENCE, self::STORE_ID, self::REQUEST_HEADER_TRACE_ID, $type)
-            ->willReturn([null, $this->order]);
-
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'display_id' => SELF::DISPLAY_ID,
-            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"'.SELF::DISPLAY_ID.'","grand_total":"$11.00"}',
-        ]));
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_rejectedIrreversible_exception()
-    {
-        $type = "rejected_irreversible";
-        $exception = new BoltException(
-            new Phrase(
-                'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
-                [
-                    self::ORDER_ID,
-                    self::QUOTE_ID
-                ]
-            ),
-            null,
-            CreateOrder::E_BOLT_GENERAL_ERROR
-        );
-
-        $this->orderHelperMock->expects(self::once())->method('tryDeclinedPaymentCancelation')
-            ->with(self::DISPLAY_ID)->willThrowException(
-                $exception
-            );
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [
-                'code' => 2001001,
-                'message' => $exception->getMessage(),
-            ]
-        ]));
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     * @param bool $isCancelFailedPaymentOrderInsteadOfDeleting
-     */
-    public function manage_failedPayment_success()
-    {
-        $type = "failed_payment";
-
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
-            ->willReturn(self::QUOTE_ID);
-        $this->orderHelperMock->expects(self::once())->method('deleteOrCancelFailedPaymentOrder')
-            ->with(self::DISPLAY_ID, self::QUOTE_ID)
-            ->willReturn('Order was canceled: ' . self::DISPLAY_ID);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'message' => 'Order was canceled: ' . self::DISPLAY_ID
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.success', 1, "webhooks.latency", self::anything());
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_failedPayment_exception()
-    {
-        $type = "failed_payment";
-        $exception = new BoltException(
-            new Phrase(
-                'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
-                [
-                    self::ORDER_ID,
-                    Order::STATE_PROCESSING,
-                    self::QUOTE_ID
-                ]
-            ),
-            null,
-            CreateOrder::E_BOLT_GENERAL_ERROR
-        );
-        $this->orderHelperMock->expects(self::once())->method('deleteOrCancelFailedPaymentOrder')
-                ->with(self::DISPLAY_ID)->willThrowException($exception);
-
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [
-                'code' => 2001001,
-                'message' => $exception->getMessage(),
-            ]
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_failed_success()
-    {
-        $type = "failed";
-
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-            ->willReturn($this->mockTransactionData());
-        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
-            ->willReturn(self::QUOTE_ID);
-        $this->orderHelperMock->expects(self::once())->method('deleteOrCancelFailedPaymentOrder')
-            ->with(self::DISPLAY_ID, self::QUOTE_ID)
-            ->willReturn('Order was canceled: ' . self::DISPLAY_ID);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'message' => 'Order was canceled: ' . self::DISPLAY_ID
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.success', 1, "webhooks.latency", self::anything());
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_failed_exception()
-    {
-        $type = "failed";
-        $exception = new BoltException(
-            new Phrase(
-                'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
-                [
-                    self::ORDER_ID,
-                    Order::STATE_PROCESSING,
-                    self::QUOTE_ID
-                ]
-            ),
-            null,
-            CreateOrder::E_BOLT_GENERAL_ERROR
-        );
-
-        $this->orderHelperMock->expects(self::once())->method('fetchTransactionInfo')
-        ->willReturn($this->mockTransactionData());
-        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltOrder')
-        ->willReturn(self::QUOTE_ID);
-
-        $this->orderHelperMock->expects(self::once())->method('deleteOrCancelFailedPaymentOrder')
-                ->with(self::DISPLAY_ID)->willThrowException($exception);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [
-                'code' => 2001001,
-                'message' => $exception->getMessage(),
-            ]
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_webApiException()
-    {
-        $exception = new WebapiException(__('Precondition Failed'), 6001, 412);
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID)
-            ->willThrowException($exception);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with($exception->getHttpCode());
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => $exception->getCode(),
-            'message' => $exception->getMessage(),
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            null,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_emptyReference()
-    {
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'error',
-            'code' => '6009',
-            'message' => 'Unprocessable Entity: Missing required parameters.',
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, "webhooks.latency", self::anything());
-        $this->currentMock->manage(
-            self::ID,
-            null,
-            self::ORDER_ID,
-            null,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_pending()
-    {
-        $type = "pending";
-
-        $this->orderHelperMock->expects(self::never())->method('tryDeclinedPaymentCancelation');
-        $this->orderHelperMock->expects(self::never())->method('deleteOrderByIncrementId');
-        $this->request->expects(self::once())->method('getHeader')->with(ConfigHelper::BOLT_TRACE_ID_HEADER)
-            ->willReturn(self::REQUEST_HEADER_TRACE_ID);
-        $this->request->expects(self::once())->method('getBodyParams')
-            ->willReturn(self::HOOK_PAYLOAD);
-        $this->orderHelperMock->expects(self::once())->method('saveUpdateOrder')->with(
-            self::REFERENCE,
-            self::STORE_ID,
-            self::REQUEST_HEADER_TRACE_ID,
-            $type,
-            self::HOOK_PAYLOAD
-        );
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'display_id' => SELF::DISPLAY_ID,
-            'message' => 'Order creation / update was successful. Order Data: {"id":"1111","increment_id":"'.SELF::DISPLAY_ID.'","grand_total":"$11.00"}',
-        ]));
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * that __construct sets internal properties
+     * Response getter
      *
-     * @covers ::__construct
+     * @return \Magento\Framework\App\ResponseInterface
      */
-    public function __construct_always_setsInternalProperties()
+    public function getResponse()
     {
-        $instance = new OrderManagement(
-            $this->hookHelper,
-            $this->orderHelperMock,
-            $this->logHelper,
-            $this->request,
-            $this->bugsnag,
-            $this->metricsClient,
-            $this->response,
-            $this->configHelper,
-            $this->cartHelper,
-            $this->decider
-        );
-
-        static::assertAttributeEquals($this->hookHelper, 'hookHelper', $instance);
-        static::assertAttributeEquals($this->orderHelperMock, 'orderHelper', $instance);
-        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        static::assertAttributeEquals($this->request, 'request', $instance);
-        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
-        static::assertAttributeEquals($this->response, 'response', $instance);
-        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
-        static::assertAttributeEquals($this->decider, 'decider', $instance);
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+        
+        $this->response->sendResponse();
+        
+        return $this->response;
     }
-
-    private function manage_cartCreate_basicAssertion()
+    
+    /**
+     * Request getter
+     *
+     * @param array $bodyParams
+     * 
+     * @return \Magento\Framework\App\RequestInterface
+     */
+    public function createRequest($bodyParams)
     {
-        $this->startTime = microtime(true) * 1000;
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($this->startTime);
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+        
+        $requestContent = json_encode($bodyParams);
+         
+        $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
 
-        $this->requestArray = [
-            'type' => 'cart.create',
-            'items' =>
-                [
+        $this->request->getHeaders()->clearHeaders();
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256',$computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id',self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type','application/json');
+
+        $this->request->setParams($bodyParams);
+        
+        $this->request->setContent($requestContent);
+      
+        return $this->request;
+    }
+    
+    public function resetRequest()
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+     
+        $this->objectManager->removeSharedInstance(Request::class);
+        $this->request = null;
+
+    }
+    
+    public function resetResponse()
+    {
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+     
+        $this->objectManager->removeSharedInstance(Response::class);
+        $this->response = null;
+
+    }
+    
+    public function resetTestObj()
+    {        
+        $quoteCollection = $this->objectManager->create(QuoteCollection::class);
+        foreach ($quoteCollection as $quote) {
+            $quote->delete();
+        }
+        
+        /** @var $order \Magento\Sales\Model\Order */
+        $orderCollection = $this->objectManager->create(OrderCollection::class);
+        foreach ($orderCollection as $order) {
+            $order->delete();
+        }
+        
+        /** @var $product \Magento\Catalog\Model\Product */
+        $productCollection = $this->objectManager->create(ProductCollection::class);
+        foreach ($productCollection as $product) {
+            $product->delete();
+        }
+        
+        $customerCollection = $this->objectManager->create(CustomerCollection::class);
+        foreach ($customerCollection as $customer) {
+            $customer->delete();
+        }        
+        
+        /** @var \Magento\CatalogInventory\Model\StockRegistryStorage $stockRegistryStorage */
+        $stockRegistryStorage = $this->objectManager->get(StockRegistryStorage::class);
+        //$stockRegistryStorage->clean();
+        $stockRegistryStorage->removeStockItem(1);
+    }
+    
+    
+    
+    private function getAddressInfo()
+    {
+        return array(
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality"        => "Los Angeles",
+            "region"          => "California",
+            'region_code'     => 'CA',
+            'region_id'       => '12',
+            "postal_code"     => "11111",
+            "country_code"    => "US",
+            "country"         => "United States",
+            "name"            => "lastname firstname",
+            "first_name"      => "firstname",
+            "last_name"       => "lastname",
+            "phone_number"    => "11111111",
+            "email_address"   => "admin@test.com",
+        );
+    }
+    
+    private function createRequestData($quoteId, $immutableQuoteId, $status, $display_id = '', $captures = NULL, $type = self::TT_PAYMENT)
+    {
+        $addressInfo = $this->getAddressInfo();
+        $requetData = [
+            'id'        => self::TRANSACTION_ID,
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount'    => [
+                'amount' => self::QUOTE_TOTAL*100,
+                'currency' => self::CURRENCY,
+                'currency_symbol' => self::CURRENCY_USD_SYMBOL,
+            ],
+            'date' => microtime(true) * 1000,
+            "type" => $type,
+            "status" => $status,
+            "reference" => self::REFERENCE,
+            'captures' => $captures,
+            "order" => [
+                "token" => "f34fff50f8b89db7cbe867326404d782fb688bdd8b26ab3affe8c0ba22b2ced5",
+                "cart" => [
+                    "order_reference" => $quoteId,
+                    "display_id" => $display_id,
+                    'total_amount'    => [
+                        'amount' => self::QUOTE_TOTAL*100,
+                    ],
+                    "subtotal_amount" => self::QUOTE_SUBTOTAL*100,
+                    "items" => [
+                        [
+                            "reference" => "",
+                            "name" => "AdvancedPricingSimple 1",
+                            "total_amount" => [
+                                "amount" => self::QUOTE_PRODUCT_QTY*self::PRODUCT_PRICE*100,
+                                "currency" => self::CURRENCY,
+                                "currency_symbol" => self::CURRENCY_USD_SYMBOL,
+                            ],
+                            "unit_price" => [
+                                "amount" => self::PRODUCT_PRICE*100,
+                                "currency" => self::CURRENCY,
+                                "currency_symbol" =>  self::CURRENCY_USD_SYMBOL,
+                            ],
+                            "quantity" => self::QUOTE_PRODUCT_QTY,
+                            "type" => "physical"
+                        ]
+                    ],
+                    'billing_address' =>
                     [
-                        'reference' => '20102',
-                        'name' => 'Product name',
-                        'description' => null,
-                        'options' => null,
-                        'total_amount' => 100,
-                        'unit_price' => 100,
-                        'tax_amount' => 0,
-                        'quantity' => 1,
-                        'uom' => null,
-                        'upc' => null,
-                        'sku' => null,
-                        'isbn' => null,
-                        'brand' => null,
-                        'manufacturer' => null,
-                        'category' => null,
-                        'tags' => null,
-                        'properties' => null,
-                        'color' => null,
-                        'size' => null,
-                        'weight' => null,
-                        'weight_unit' => null,
-                        'image_url' => null,
-                        'details_url' => null,
-                        'tax_code' => null,
-                        'type' => 'unknown'
-                    ]
-                ],
-            'currency' => 'USD',
-            'metadata' => null,
+                        "street_address1" => $addressInfo["street_address1"],
+                        "locality"        => $addressInfo["locality"],
+                        "region"          => $addressInfo["region"],
+                        "postal_code"     => $addressInfo["postal_code"],
+                        "country_code"    => $addressInfo["country_code"],
+                        "country"         => $addressInfo["country"],
+                        "name"            => $addressInfo["name"],
+                        "first_name"      => $addressInfo["first_name"],
+                        "last_name"       => $addressInfo["last_name"],
+                        "phone_number"    => $addressInfo["phone_number"],
+                        "email_address"   => $addressInfo["email_address"],
+                    ],
+                    "shipments" => [
+                        [
+                            'cost'             => self::QUOTE_SHIPPING_TOTAL*100,
+                            'tax_amount'       => self::QUOTE_SHIPPING_TAX_TOTAL*100,
+                            "shipping_address" => [                                
+                                "street_address1" => $addressInfo["street_address1"],
+                                "locality"        => $addressInfo["locality"],
+                                "region"          => $addressInfo["region"],
+                                "postal_code"     => $addressInfo["postal_code"],
+                                "country_code"    => $addressInfo["country_code"],
+                                "country"         => $addressInfo["country"],
+                                "name"            => $addressInfo["name"],
+                                "first_name"      => $addressInfo["first_name"],
+                                "last_name"       => $addressInfo["last_name"],
+                            ],
+                            'service'          => 'Flat Rate - Fixed',
+                            'reference'        => 'flatrate_flatrate',
+                            "shipping_method"  => "unknown"
+                        ]
+                    ],
+                    'metadata'        => [
+                        'immutable_quote_id' => $immutableQuoteId,
+                    ],
+                ]
+            ]
         ];
-
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(null);
-        $this->request->expects(self::once())->method('getBodyParams')->willReturn($this->requestArray);
+        
+        return $requetData;
     }
-
-    /**
-     * @test
-     * @covers ::manage
-     * @covers ::handleCartCreateApiCall
-     */
-    public function manage_cartCreate()
+    
+    private function createProduct()
     {
-        $this->manage_cartCreate_basicAssertion();
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.success', 1, 'webhooks.latency', $this->startTime);
-        $cart = [
-            'order_reference' => '1001',
-            'display_id' => '100010001 / 1001',
-            'currency' => 'USD',
-            'items' => [ [
-                'reference' => '20102',
-                'name' => 'Product name',
-                'total_amount' => 100,
-                'unit_price' => 100,
-                'quantity' => 100,
-                'sku' => 'TestProduct',
-                'type' => 'physical',
-                'description' => ''
-            ] ],
-            'discounts' => [],
-            'total_amount' => 100,
-            'tax_amount' => 0,
+        $product = TestUtils::createSimpleProduct();
+        $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
+        
+        $product->setName(self::PRODUCT_NAME)
+            ->setSku(self::PRODUCT_SKU)
+            ->setPrice(self::PRODUCT_PRICE)
+            ->setStoreId($this->storeId)
+            ->setIsObjectNew(true);
+        
+        $stockItem = $this->objectManager->create(StockItemInterface::class);
+        $stockItem->setQty(100)
+            ->setIsInStock(true);
+        $extensionAttributes = $product->getExtensionAttributes();
+        $extensionAttributes->setStockItem($stockItem);
+        
+        $product = $productRepository->save($product);
+        
+        return $product;
+    }
+    
+    private function createQoute($product, $parentQuoteId = null)
+    {
+        $addressInfo = $this->getAddressInfo();
+        
+        $addressData = [
+            'region'     => $addressInfo['region_code'],
+            'region_id'  => $addressInfo['region_id'],
+            'postcode'   => $addressInfo['postal_code'],
+            'lastname'   => $addressInfo['last_name'],
+            'firstname'  => $addressInfo['first_name'],
+            'street'     => $addressInfo['street_address1'],
+            'city'       => $addressInfo['locality'],
+            'email'      => $addressInfo['email_address'],
+            'telephone'  => $addressInfo['phone_number'],
+            'country_id' => $addressInfo['country_code'],
         ];
-        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willReturn($cart);
-        $this->response->expects(self::once())->method('sendResponse');
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'cart' => $cart,
-        ]));
+        
+        $quote = TestUtils::createQuote();
+        $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
+        
+        $quoteBillingAddress = $this->objectManager->create(\Magento\Quote\Api\Data\AddressInterface::class, ['data' => $addressData]);
+        $quoteBillingAddress->setAddressType(QuoteAddress::ADDRESS_TYPE_BILLING)
+            ->setCustomerAddressId('not_existing');
+        
+        $quoteShippingAddress = clone $quoteBillingAddress;
+        $quoteShippingAddress->setId(null)->setAddressType(QuoteAddress::ADDRESS_TYPE_SHIPPING)
+            ->setCustomerAddressId('not_existing');
 
-        $this->currentMock->manage(
-            null,
-            null,
-            null,
-            'cart.create',
-            null,
-            null,
-            null,
-            null
-        );
-    }
+        $quoteId = $quote->getId();
 
-    /**
-     * @test
-     * @dataProvider manage_cartCreate_error_dataProvider
-     * @covers ::manage
-     * @covers ::handleCartCreateApiCall
-     */
-    public function manage_cartCreate_error($exception, $error_code, $error_message)
-    {
-        $this->manage_cartCreate_basicAssertion();
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('webhooks.failure', 1, 'webhooks.latency', $this->startTime);
+        $quote->setStoreId($this->storeId)
+            ->setIsActive(true)
+            ->setCustomerEmail($addressInfo['email_address'])
+            ->setCustomerIsGuest(true)
+            ->setIsMultiShipping(false)
+            ->setBillingAddress($quoteBillingAddress)
+            ->setShippingAddress($quoteShippingAddress)
+            ->addProduct($product, self::QUOTE_PRODUCT_QTY);
+            
+        $quote->setItems($quote->getAllItems())->save();
+        
+        $quoteShippingAddress = $quote->getShippingAddress();
+       
+        $rate = $this->objectManager->create(\Magento\Quote\Model\Quote\Address\Rate::class);
+        $rate->setCode('flatrate_flatrate')
+             ->setPrice(5.00)
+             ->setAddressId($quoteShippingAddress->getId())
+             ->save();
+   
+        
+        $quoteShippingAddress->setShippingMethod('flatrate_flatrate')
+            ->setCollectShippingRates(true);
 
-        $this->cartHelper->expects(self::once())->method('createCartByRequest')->with($this->requestArray)->willThrowException($exception);
-        $this->response->expects(self::once())->method('sendResponse');
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => ['code' => $error_code, 'message' => $error_message],
-        ]));
-
-        $this->currentMock->manage(
-            null,
-            null,
-            null,
-            'cart.create',
-            null,
-            null,
-            null,
-            null
-        );
-    }
-
-    public function manage_cartCreate_error_dataProvider()
-    {
-        return [
-            [new BoltException(__('The requested qty is not available'), null, 6303), 6303, 'The requested qty is not available'],
-            [new BoltException(__('Product that you are trying to add is not available.'), null, 6301), 6301, 'Product that you are trying to add is not available.'],
-        ];
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_capture_IgnoreHookForInvoiceCreationIsEnabled()
-    {
-        $type = "capture";
-        $this->decider->expects(self::once())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'message' => 'Ignore the capture hook for the invoice creation',
-        ]));
-
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     * @depends manage_common
-     * @covers ::manage
-     * @covers ::saveUpdateOrder
-     */
-    public function manage_credit_IgnoreHookForCreditMemoCreationIsEnabled()
-    {
-        $type = "credit";
-        $this->decider->expects(self::once())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(200);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'success',
-            'message' => 'Ignore the credit hook for the credit memo creation',
-        ]));
-
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function testSaveCustomerCreditCardWhenPendingHookIsSentToMagento()
-    {
-        $type = "pending";
-        $this->orderHelperMock->expects(self::once())->method('saveCustomerCreditCard')
-            ->with(self::REFERENCE, self::STORE_ID)->willReturnSelf();
-
-        $this->currentMock->manage(
-            self::ID,
-            self::REFERENCE,
-            self::ORDER_ID,
-            $type,
-            self::AMOUNT,
-            self::CURRENCY,
-            null,
-            self::DISPLAY_ID,
-            self::QUOTE_ID
-        );
-    }
-
-    /**
-     * @test
-     * that setSuccessResponse sets response code to 200 and body to JSON containing success status and provided message
-     *
-     * @covers ::setSuccessResponse
-     *
-     * @throws ReflectionException if setSuccessResponse method doesn't exist
-     */
-    public function setSuccessResponse_always_setsSuccessResponse()
-    {
-        $message = 'Test message';
-
-        $bodyData = json_encode([
-            'status' => 'success',
-            'message' => $message,
+        $quote->setTotalsCollectedFlag(false)->collectTotals()->setDataChanges(true);
+        $quoteRepository->save($quote);
+        
+        $paymentFactory = $this->objectManager->get(PaymentInterfaceFactory::class);
+        $paymentMethodManagement = $this->objectManager->get(PaymentMethodManagementInterface::class);
+        $quotePayment = $paymentFactory->create([
+            'data' => [
+                PaymentInterface::KEY_METHOD => self::BOLT_METHOD_CODE,
+            ]
         ]);
-        $this->response->expects(static::once())->method('setHttpResponseCode')->with(200)->willReturnSelf();
-        $this->response->expects(static::once())->method('setBody')->with($bodyData)->willReturnSelf();
 
-        TestHelper::invokeMethod($this->currentMock, 'setSuccessResponse', [$message]);
+        $paymentMethodManagement->set($quoteId, $quotePayment);
+        $quote->getPayment()->setMethod(self::BOLT_METHOD_CODE);
+        
+        $quote->setBoltParentQuoteId($parentQuoteId ?: $quoteId);
+        
+        $quoteRepository->save($quote);
+        
+        return $quote;
+    }
+    
+    private function createOrder($quote, $product, $payment, $orderStatus)
+    {
+        $addressInfo = $this->getAddressInfo();
+        
+        $quoteId = $quote->getId();
+        
+        $addressData = [
+            'region'     => $addressInfo['region_code'],
+            'region_id'  => $addressInfo['region_id'],
+            'postcode'   => $addressInfo['postal_code'],
+            'lastname'   => $addressInfo['last_name'],
+            'firstname'  => $addressInfo['first_name'],
+            'street'     => $addressInfo['street_address1'],
+            'city'       => $addressInfo['locality'],
+            'email'      => $addressInfo['email_address'],
+            'telephone'  => $addressInfo['phone_number'],
+            'country_id' => $addressInfo['country_code'],
+        ];
+        
+        $orderItems = [];
+        
+        $orderItem = $this->objectManager->create(OrderItem::class);
+        $orderItem->setProductId($product->getId());
+        $orderItem->setQtyOrdered(1);
+        $orderItem->setBasePrice($product->getPrice());
+        $orderItem->setPrice($product->getPrice());
+        $orderItem->setRowTotal($product->getPrice());
+        $orderItem->setBaseRowTotal($product->getPrice());
+        $orderItem->setRowTotalInclTax($product->getPrice());
+        $orderItem->setBaseRowTotalInclTax($product->getPrice());
+        $orderItem->setProductType($product->getTypeId());
+        
+        $orderItems[] = $orderItem;
+        
+        $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, $orderStatus, $orderStatus, $payment);
+
+        $order->setIncrementId(self::ORDER_INCREMENTID)
+            ->setCustomerIsGuest(true)
+            ->setCustomerEmail($addressInfo['email_address'])
+            ->setCustomerFirstname($addressInfo['first_name'])
+            ->setCustomerLastname($addressInfo['last_name'])           
+            ->setStoreId($this->storeId)
+            ->setShippingAmount(self::ORDER_SHIPPING_TOTAL)
+            ->setBaseShippingAmount(self::ORDER_SHIPPING_TOTAL)
+            ->setShippingInclTax(self::ORDER_SHIPPING_TOTAL)
+            ->setBaseShippingInclTax(self::ORDER_SHIPPING_TOTAL)
+            ->setShippingTaxAmount(self::ORDER_SHIPPING_TAX)
+            ->setTaxAmount(self::ORDER_TAX)
+            ->setSubtotal(self::ORDER_SUBTOTAL)
+            ->setGrandTotal(self::ORDER_TOTAL)
+            ->setBaseSubtotal(self::ORDER_SUBTOTAL)
+            ->setBaseGrandTotal(self::ORDER_TOTAL)
+            ->setBaseCurrencyCode(self::CURRENCY)
+            ->setOrderCurrencyCode(self::CURRENCY)
+            ->setQuoteId($quoteId)
+            ->setPayment($payment)
+            ->isObjectNew(true);
+
+        $order->save();
+          
+        $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
+        $orderRepository->save($order);
+       
+        return $order;
+    }
+    
+        
+    private function createOrderHelperStubProperty($boltOrderManagement)
+    {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
+        
+        $orderHelperProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'orderHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
+        
+        return $boltOrderManagement;
     }
 
     /**
      * @test
-     * that handleCartCreateApiCall throws an exception if the first request item is not found
-     *
-     * @covers ::handleCartCreateApiCall
-     *
-     * @throws ReflectionException if handleCartCreateApiCall method doesn't exist
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
      */
-    public function handleCartCreateApiCall_ifRequestItemsNotFound_throwsLocalizedException()
+    public function testManageCommonPending()
     {
-        $this->request->expects(static::once())->method('getBodyParams')->willReturn(null);
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Missing required parameters.');
-        TestHelper::invokeMethod($this->currentMock, 'handleCartCreateApiCall');
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $addressInfo = $this->getAddressInfo();
+        TestUtils::createCustomer($this->websiteId, $this->storeId, $addressInfo);
+        
+        $customerRepository = $this->objectManager->get(CustomerRepositoryInterface::class);
+        $customer = $customerRepository->get('admin@test.com');
+        
+        $quote->setCustomer($customer);
+        $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
+        $quoteRepository->save($quote);
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'pending',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'authorized',
+            'display_id' => '',
+        );
+        
+        $this->createRequest($requestbodyParams);
+            
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);    
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized');
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'pending',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'authorized'
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonAuth()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'auth',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'authorized',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:pending',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);        
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'auth',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'authorized',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+        
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCapture()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'capture',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'completed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:authorized',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);        
+        
+        $captures = [
+            [
+                'id' => 'CA4TxELPMng12',
+                'status' => 'succeeded',
+                'amount' => [
+                    'amount' => self::QUOTE_TOTAL*100,
+                    'currency' => self::CURRENCY,
+                    'currency_symbol' => self::CURRENCY_USD_SYMBOL,
+                ]
+            ]
+        ];
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'completed', self::ORDER_INCREMENTID, $captures);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'capture',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'completed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+        
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCaptureIgnoreHookForInvoiceCreationIsEnabled()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'capture',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'completed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:authorized',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $featureSwitch = $this->getMockBuilder(Decider::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled'])
+            ->getMock();
+        $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
+        
+        $featureSwitchProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'decider'
+        );
+        $featureSwitchProperty->setAccessible(true);
+        $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);        
+        
+        $captures = [
+            [
+                'id' => 'CA4TxELPMng12',
+                'status' => 'succeeded',
+                'amount' => [
+                    'amount' => self::QUOTE_TOTAL*100,
+                    'currency' => self::CURRENCY,
+                    'currency_symbol' => self::CURRENCY_USD_SYMBOL,
+                ]
+            ]
+        ];
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'completed', self::ORDER_INCREMENTID, $captures);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'capture',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'completed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
+        
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals('Ignore the capture hook for the invoice creation', $responseData['message']);
+        $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonFailedPayment()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'failed_payment',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'failed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'failed_payment',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'failed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
+        
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals('Order was deleted: '.self::ORDER_INCREMENTID, $responseData['message']);
+        $this->assertTrue(empty($order));
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonFailedPaymentCancelled()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'failed_payment',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'failed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
+        
+        $featureSwitch = $this->getMockBuilder(Decider::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->getMock();
+        $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
+        
+        $featureSwitchProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'featureSwitches'
+        );
+        $featureSwitchProperty->setAccessible(true);
+        $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
+        
+        $orderHelperProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'orderHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'failed_payment',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'failed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+       
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals('Order was canceled: '.self::ORDER_INCREMENTID, $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonFailedPaymentCancelledInvalidOrderState()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'failed_payment',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'failed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $featureSwitch = $this->getMockBuilder(Decider::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->getMock();
+        $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
+        
+        $featureSwitchProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'featureSwitches'
+        );
+        $featureSwitchProperty->setAccessible(true);
+        $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'failed_payment',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'failed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+       
+        $this->assertEquals('failure', $responseData['status']);
+        $this->assertEquals(2001001, $responseData['error']['code']);
+        $errMsg = __(
+            'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
+            self::ORDER_INCREMENTID,
+            Order::STATE_PROCESSING,
+            $immutableQuoteId
+        );
+        $this->assertEquals($errMsg, $responseData['error']['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonRejectedIrreversible()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+        
+        $quoteFactory = $this->objectManager->create(QuoteFactory::class);
+        $immutableQuote = $quoteFactory->create();
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
+        $immutableQuoteId = $immutableQuote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'rejected_irreversible',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'rejected_irreversible',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'rejected_irreversible', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'rejected_irreversible',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'rejected_irreversible',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals('Order was canceled due to declined payment: '.self::ORDER_INCREMENTID, $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonRejectedIrreversibleOrderNotExist()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'rejected_irreversible',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'rejected_irreversible',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+          
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+
+        $requetData = $this->createRequestData($quoteId, $quoteId, 'rejected_irreversible', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+        
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'rejected_irreversible',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'rejected_irreversible',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+
+        $this->assertEquals('failure', $responseData['status']);
+        $this->assertEquals(2001001, $responseData['error']['code']);
+        $errMsg = __(
+            'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
+            self::ORDER_INCREMENTID,
+            $quoteId
+        );
+        $this->assertEquals($errMsg, $responseData['error']['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCredit()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'credit',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'completed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:completed',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
+        foreach ($order->getAllItems() as $orderItem) {
+            $orderItem->setQtyInvoiced(1)
+                      ->setRowInvoiced($orderItem->getRowTotal())
+                      ->setBaseRowInvoiced($orderItem->getBaseRowTotal())
+                      ->setAmountRefunded(0)
+                      ->setBaseAmountRefunded(0)
+                      ->setQtyRefunded(0);
+        }
+        $order->setBaseTotalPaid(self::ORDER_TOTAL)
+              ->setTotalPaid(self::ORDER_TOTAL)
+              ->setShippingRefunded(0)
+              ->setBaseShippingRefunded(0)
+              ->setShippingTaxRefunded(0)
+              ->save();
+        
+        $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
+        $orderRepository->save($order);
+          
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
+        
+        $featureSwitch = $this->getMockBuilder(Decider::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled'])
+            ->getMock();
+        $featureSwitch->expects($this->any())->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
+        $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(false);
+        
+        $featureSwitchProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'featureSwitches'
+        );
+        $featureSwitchProperty->setAccessible(true);
+        $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
+        
+        $orderHelperProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'orderHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
+        
+        $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'credit',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'completed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_CLOSED, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCreditIgnoreHookForCreditMemoCreationIsEnabled()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'credit',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'completed',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:completed',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
+        foreach ($order->getAllItems() as $orderItem) {
+            $orderItem->setQtyInvoiced(1)
+                      ->setRowInvoiced($orderItem->getRowTotal())
+                      ->setBaseRowInvoiced($orderItem->getBaseRowTotal())
+                      ->setAmountRefunded(0)
+                      ->setBaseAmountRefunded(0)
+                      ->setQtyRefunded(0);
+        }
+        $order->setBaseTotalPaid(self::ORDER_TOTAL)
+              ->setTotalPaid(self::ORDER_TOTAL)
+              ->setShippingRefunded(0)
+              ->setBaseShippingRefunded(0)
+              ->setShippingTaxRefunded(0)
+              ->save();
+        
+        $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
+        $orderRepository->save($order);
+          
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            OrderHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
+        
+        $featureSwitch = $this->getMockBuilder(Decider::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled'])
+            ->getMock();
+        $featureSwitch->expects($this->any())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
+        
+        $featureSwitchProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'decider'
+        );
+        $featureSwitchProperty->setAccessible(true);
+        $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
+        
+        $orderHelperProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'orderHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
+        
+        $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'credit',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'completed',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
+        
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals('Ignore the credit hook for the credit memo creation', $responseData['message']);
+        $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonVoid()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'void',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'cancelled',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:authorized',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
+        
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $requetData = $this->createRequestData($quoteId, $quoteId, 'cancelled', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'void',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'cancelled',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_CANCELED, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonRejectedReversible()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();        
+        
+        $quote = $this->createQoute($product);
+        $quoteId = $quote->getId();
+
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => self::REFERENCE,
+            'order' => $quoteId,
+            'type' => 'rejected_reversible',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => self::QUOTE_TOTAL*100,
+            'currency' => self::CURRENCY,
+            'status' => 'rejected_reversible',
+            'display_id' => self::ORDER_INCREMENTID,
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        
+        $paymentData = [
+            'transaction_reference' => self::REFERENCE,
+            'transaction_state' => 'cc_payment:pending',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
+        
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
+        
+        $requetData = $this->createRequestData($quoteId, $quoteId, 'rejected_reversible', self::ORDER_INCREMENTID);
+        $apiRequestResult = json_decode(json_encode($requetData));
+        
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            self::REFERENCE,
+            $quoteId,
+            'rejected_reversible',
+            self::ORDER_TOTAL*100,
+            self::CURRENCY,
+            'rejected_reversible',
+            self::ORDER_INCREMENTID
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        $orderIncrementId = $responseData['display_id'];
+        $order = $this->objectManager->create(Order::class);
+        $order = $order->loadByIncrementId($orderIncrementId);
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
+        $this->assertRegexp('/update was successful/', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCartCreate()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();
+        
+        $productOptions = [
+            'product' => $product->getId(),
+            'selected_configurable_option' => '',
+            'related_product' => '',
+            'item' => $product->getId(),
+            'form_key' => 'eY1ngRv1NFOyFC2N',
+            'qty'      => self::QUOTE_PRODUCT_QTY,
+            'storeId'  => $this->storeId,
+        ];
+        
+        $requestbodyParams = [
+            'type'  => 'cart.create',
+            'items' => [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => $product->getName(),
+                    'description'  => NULL,
+                    'options'      => json_encode($productOptions),
+                    'total_amount' => self::QUOTE_PRODUCT_QTY*self::PRODUCT_PRICE*100,
+                    'unit_price'   => self::PRODUCT_PRICE*100,
+                    'tax_amount'   => self::QUOTE_TAX_TOTAL*100,
+                    'quantity'     => self::QUOTE_PRODUCT_QTY,
+                ]
+            ],
+            'currency' => self::CURRENCY,
+            'metadata' => NULL,
+        ];
+        
+        $this->createRequest($requestbodyParams);
+        
+        $boltOrderManagement->manage(
+            NULL,
+            NULL,
+            NULL,
+            'cart.create',
+            NULL,
+            self::CURRENCY
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+
+        $quoteId = $responseData['cart']['order_reference'];
+        $boltCartHelper = $this->objectManager->create(CartHelper::class);
+        $quote = $boltCartHelper->getQuoteById($quoteId);
+        $totals = $quote->getTotals();
+
+        $this->assertEquals('success', $responseData['status']);
+        $this->assertEquals(CurrencyUtils::toMinor($totals['subtotal']['value'], self::CURRENCY), CurrencyUtils::toMinor(self::QUOTE_SUBTOTAL, self::CURRENCY));
+
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManageCommonCartCreateError()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $productOptions = [
+            'product' => 1010,
+            'selected_configurable_option' => '',
+            'related_product' => '',
+            'item' => 1010,
+            'form_key' => 'eY1ngRv1NFOyFC2N',
+            'qty'      => 101,
+            'storeId'  => $this->storeId,
+        ];
+        
+        $requestbodyParams = [
+            'type'  => 'cart.create',
+            'items' => [
+                [
+                    'reference'    => 1010,
+                    'name'         => 'Test',
+                    'description'  => NULL,
+                    'options'      => json_encode($productOptions),
+                    'total_amount' => 101*self::PRODUCT_PRICE*100,
+                    'unit_price'   => self::PRODUCT_PRICE*100,
+                    'tax_amount'   => self::QUOTE_TAX_TOTAL*100,
+                    'quantity'     => 101,
+                ]
+            ],
+            'currency' => self::CURRENCY,
+            'metadata' => NULL,
+        ];
+        
+        $this->createRequest($requestbodyParams);
+        
+        $boltOrderManagement->manage(
+            NULL,
+            NULL,
+            NULL,
+            'cart.create',
+            NULL,
+            self::CURRENCY
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+
+        $this->assertEquals('error', $responseData['status']);
+        $this->assertEquals(6009, $responseData['code']);
+        $this->assertEquals('Unprocessable Entity: The product that was requested doesn\'t exist. Verify the product and try again.', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     * @covers ::saveUpdateOrder
+     */
+    public function testManagePreconditionFailed()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        global $apiRequestResult;
+        
+        $apiRequestResult = 'exception';
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+      
+        $product = $this->createProduct();
+        
+        $productOptions = [
+            'product' => $product->getId(),
+            'selected_configurable_option' => '',
+            'related_product' => '',
+            'item' => $product->getId(),
+            'form_key' => 'eY1ngRv1NFOyFC2N',
+            'qty'      => self::QUOTE_PRODUCT_QTY,
+            'storeId'  => $this->storeId,
+        ];
+        
+        $requestbodyParams = [
+            'type'  => 'cart.create',
+            'items' => [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => $product->getName(),
+                    'description'  => NULL,
+                    'options'      => json_encode($productOptions),
+                    'total_amount' => self::QUOTE_PRODUCT_QTY*self::PRODUCT_PRICE*100,
+                    'unit_price'   => self::PRODUCT_PRICE*100,
+                    'tax_amount'   => self::QUOTE_TAX_TOTAL*100,
+                    'quantity'     => self::QUOTE_PRODUCT_QTY,
+                ]
+            ],
+            'currency' => self::CURRENCY,
+            'metadata' => NULL,
+        ];
+        
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+        
+        $requestContent = json_encode($requestbodyParams);
+         
+        $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, '12425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809', true));
+
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256',$computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id',self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type','application/json');
+
+        $this->request->setParams($requestbodyParams);
+        
+        $this->request->setContent($requestContent);
+        
+        $hookHelper = $this->objectManager->create(HookHelper::class);
+        
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            HookHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
+        
+        $orderHelperProperty = new \ReflectionProperty(
+            BoltOrderManagement::class,
+            'hookHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($boltOrderManagement, $hookHelper);
+        
+        $boltOrderManagement->manage(
+            NULL,
+            NULL,
+            NULL,
+            'cart.create',
+            NULL,
+            self::CURRENCY
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+       
+        $this->assertEquals('error', $responseData['status']);
+        $this->assertEquals(6001, $responseData['code']);
+        $this->assertEquals('Precondition Failed', $responseData['message']);
+    }
+    
+    /**
+     * @test
+     * 
+     * @covers ::manage
+     */
+    public function testManageEmptyReference()
+    {
+        $this->skipTestInUnitTestsFlow();
+        
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+        
+        $requestbodyParams = array (
+            'id' => self::TRANSACTION_ID,
+            'reference' => '',
+            'order' => '',
+            'type' => 'pending',
+            'processor' => self::PROCESSOR_VANTIV,
+            'amount' => '',
+            'currency' => self::CURRENCY,
+            'status' => 'authorized',
+            'display_id' => '',
+        );
+        
+        $this->createRequest($requestbodyParams);
+        
+        $boltOrderManagement->manage(
+            self::TRANSACTION_ID,
+            null,
+            null,
+            'pending',
+            null,
+            self::CURRENCY,
+            'authorized'
+        );
+        
+        $schema = $this->getResponse()->getBody();
+        $responseData = json_decode($schema, true);
+        
+        $this->assertEquals('error', $responseData['status']);
+        $this->assertEquals('6009', $responseData['code']);
+        $this->assertEquals('Unprocessable Entity: Missing required parameters.', $responseData['message']);
+    }
+
+}
+
+class stubBoltApiHelper {
+	public function __construct() {
+		
+	}
+
+	public function sendRequest($request)
+    {
+        global $apiRequestResult;
+        
+        if ($apiRequestResult == 'exception') {
+            throw new \Exception('Request fails');
+        }
+        
+        $result = Bootstrap::getObjectManager()->create(BoltResponseFactory::class)->create();
+        
+        $result->setResponse($apiRequestResult);
+        
+        return $result;
+    }
+    
+    public function buildRequest($requestData)
+    {
+        $request = Bootstrap::getObjectManager()->create(BoltRequestFactory::class);
+        
+        return $request;
     }
 }
