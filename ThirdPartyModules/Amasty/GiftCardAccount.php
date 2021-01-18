@@ -129,6 +129,7 @@ class GiftCardAccount
             ///////////////////////////////////////////////////////////////////////////
             if ($totalDiscount && $totalDiscount->getValue() && $this->discountHelper->getAmastyPayForEverything()) {
                 $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
+                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 foreach ($giftcardQuote->getGiftCards() as $appliedGiftcardData) {
                     $giftcard = $giftcardAccountRepository->getById($appliedGiftcardData['id']);
                     $amount = abs($giftcard->getCurrentValue());
@@ -139,9 +140,9 @@ class GiftCardAccount
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $giftCardCode,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'discount_type'     => $discountType,
                         // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'type'              => $discountType,
                         // For v1/merchant/order
                     ];
                     $discountAmount += $amount;
@@ -312,5 +313,81 @@ class GiftCardAccount
         );
 
         $connection->commit();
+    }
+    
+    /**
+     * @param Quote $quote
+     */
+    public function clearExternalData($quote)
+    {        
+        try {
+            $connection = $this->resourceConnection->getConnection();
+            $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
+            $bind = [
+                'quote_id' => $quote->getId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Quote $quote
+     */
+    public function deleteRedundantDiscounts($quote)
+    {
+        try {
+            $connection = $this->resourceConnection->getConnection();
+            $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
+            $quoteTable = $this->resourceConnection->getTableName('quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
+                    (SELECT entity_id FROM {$quoteTable} 
+                    WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+            
+            $bind = [
+                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+                'entity_id' => $quote->getBoltParentQuoteId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * Remove Amasty Gift Card and update quote totals
+     *
+     * @param int $codeId
+     * @param Quote $quote
+     */
+    public function removeAmastyGiftCard($amastyGiftCardAccountManagement, $codeId, $quote)
+    {
+        try {
+            if ($quote->getExtensionAttributes() && $quote->getExtensionAttributes()->getAmGiftcardQuote()) {
+                $cards = $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards();
+            }
+
+            $giftCodeExists = false;
+            $giftCode = '';
+            foreach ($cards as $k => $card) {
+                if($card['id'] == $codeId) {
+                    $giftCodeExists = true;
+                    $giftCode = $card['code'];
+                    break;
+                }
+            }
+            
+            if($giftCodeExists) {
+                $amastyGiftCardAccountManagement->removeGiftCardFromCart($quote->getId(), $giftCode);                   
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
     }
 }

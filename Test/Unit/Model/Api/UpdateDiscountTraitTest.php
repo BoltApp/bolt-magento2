@@ -1254,7 +1254,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->getMock();
         $giftcardMock->expects(static::never())->method('getCodeId')->willReturn($codeId);
-        $this->discountHelper->expects(static::never())->method('removeAmastyGiftCard')->with($codeId, $quote);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
 

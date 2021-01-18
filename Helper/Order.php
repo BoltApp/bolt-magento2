@@ -937,9 +937,8 @@ class Order extends AbstractHelper
 
         if ($parentQuote) {
             $this->dispatchPostCheckoutEvents($order, $parentQuote);
-            // If Amasty Gif Cart Extension is present
-            // clear gift carts applied to immutable quotes
-            $this->discountHelper->deleteRedundantAmastyGiftCards($parentQuote);
+            
+            $this->eventsForThirdPartyModules->dispatchEvent("deleteRedundantDiscounts", $parentQuote);
 
             // If Amasty Reward Points Extension is present
             // clear reward points applied to immutable quotes

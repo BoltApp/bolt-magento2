@@ -1239,7 +1239,6 @@ class OrderTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
         $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
-        $this->discountHelper->expects(self::once())->method('deleteRedundantAmastyGiftCards')->with($this->quoteMock);
         $this->discountHelper->expects(self::once())->method('deleteRedundantAmastyRewardPoints')->with(
             $this->quoteMock
         );

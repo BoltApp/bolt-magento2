@@ -66,51 +66,6 @@ class Discount extends AbstractHelper
     private $resource;
 
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyAccountFactory;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyGiftCardManagement;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyQuoteFactory;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyQuoteResource;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyQuoteRepository;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyLegacyAccountCollection;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyAccountFactory;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyGiftCardAccountManagement;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyGiftCardAccountCollection;
-
-    /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
      */
     protected $unirgyCertRepository;
@@ -181,11 +136,6 @@ class Discount extends AbstractHelper
     protected $ruleRepository;
 
     /**
-     * @var ThirdPartyModuleFactory Amasty GiftCard V2 quote extension attribute repository factory
-     */
-    private $amastyGiftCardAccountQuoteExtensionRepository;
-
-    /**
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
@@ -194,16 +144,6 @@ class Discount extends AbstractHelper
      * Discount constructor.
      * @param Context $context
      * @param ResourceConnection $resource
-     * @param ThirdPartyModuleFactory $amastyLegacyAccountFactory
-     * @param ThirdPartyModuleFactory $amastyLegacyGiftCardManagement
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteFactory
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteResource
-     * @param ThirdPartyModuleFactory $amastyLegacyQuoteRepository
-     * @param ThirdPartyModuleFactory $amastyLegacyAccountCollection
-     * @param ThirdPartyModuleFactory $amastyAccountFactory
-     * @param ThirdPartyModuleFactory $amastyGiftCardAccountManagement
-     * @param ThirdPartyModuleFactory $amastyGiftCardAccountCollection
-     * @param ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository
      * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
      * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
@@ -223,16 +163,6 @@ class Discount extends AbstractHelper
     public function __construct(
         Context $context,
         ResourceConnection $resource,
-        ThirdPartyModuleFactory $amastyLegacyAccountFactory,
-        ThirdPartyModuleFactory $amastyLegacyGiftCardManagement,
-        ThirdPartyModuleFactory $amastyLegacyQuoteFactory,
-        ThirdPartyModuleFactory $amastyLegacyQuoteResource,
-        ThirdPartyModuleFactory $amastyLegacyQuoteRepository,
-        ThirdPartyModuleFactory $amastyLegacyAccountCollection,
-        ThirdPartyModuleFactory $amastyAccountFactory,
-        ThirdPartyModuleFactory $amastyGiftCardAccountManagement,
-        ThirdPartyModuleFactory $amastyGiftCardAccountCollection,
-        ThirdPartyModuleFactory $amastyGiftCardAccountQuoteExtensionRepository,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
         ThirdPartyModuleFactory $amastyRewardsResourceQuote,
@@ -251,15 +181,6 @@ class Discount extends AbstractHelper
     ) {
         parent::__construct($context);
         $this->resource = $resource;
-        $this->amastyLegacyAccountFactory = $amastyLegacyAccountFactory;
-        $this->amastyLegacyGiftCardManagement = $amastyLegacyGiftCardManagement;
-        $this->amastyLegacyQuoteFactory = $amastyLegacyQuoteFactory;
-        $this->amastyLegacyQuoteResource = $amastyLegacyQuoteResource;
-        $this->amastyLegacyQuoteRepository = $amastyLegacyQuoteRepository;
-        $this->amastyLegacyAccountCollection = $amastyLegacyAccountCollection;
-        $this->amastyAccountFactory = $amastyAccountFactory;
-        $this->amastyGiftCardAccountManagement = $amastyGiftCardAccountManagement;
-        $this->amastyGiftCardAccountCollection = $amastyGiftCardAccountCollection;
         $this->unirgyCertRepository = $unirgyCertRepository;
         $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
@@ -274,7 +195,6 @@ class Discount extends AbstractHelper
         $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
-        $this->amastyGiftCardAccountQuoteExtensionRepository = $amastyGiftCardAccountQuoteExtensionRepository;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
     
@@ -289,135 +209,6 @@ class Discount extends AbstractHelper
         $quote->collectTotals();
         $quote->setDataChanges(true);
         $this->quoteRepository->save($quote);
-    }
-
-    /**
-     * Check whether the Amasty Gift Card module is available (installed and enabled)
-     * @return bool
-     */
-    public function isAmastyGiftCardAvailable()
-    {
-        return ($this->amastyAccountFactory->isAvailable() || $this->amastyLegacyAccountFactory->isAvailable());
-    }
-    
-    /**
-     * Check whether the Amasty Gift Card module is legacy version
-     * @return bool
-     */
-    public function isAmastyGiftCardLegacyVersion()
-    {
-        return $this->amastyLegacyAccountFactory->isExists();
-    }
-
-    /**
-     * Remove Amasty Gift Card quote info
-     *
-     * @param Quote $quote
-     */
-    public function clearAmastyGiftCard($quote)
-    {
-        if (! $this->isAmastyGiftCardAvailable()) {
-            return;
-        }
-        $connection = $this->resource->getConnection();
-        try {
-            if ($this->isAmastyGiftCardLegacyVersion()) {
-                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
-            } else {
-                $giftCardTable = $this->resource->getTableName('amasty_giftcard_quote');    
-            }
-
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
-            $bind = [
-                'quote_id' => $quote->getId()
-            ];
-
-            $connection->query($sql, $bind);
-        } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
-    }
-
-    /**
-     * Try to clear Amasty Gift Cart data for the unused immutable quotes
-     *
-     * @param Quote $quote parent quote
-     */
-    public function deleteRedundantAmastyGiftCards($quote)
-    {
-        if (! $this->isAmastyGiftCardAvailable()) {
-            return;
-        }
-        $connection = $this->resource->getConnection();
-        try {
-            if ($this->isAmastyGiftCardLegacyVersion()) {
-                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
-            } else {
-                $giftCardTable = $this->resource->getTableName('amasty_giftcard_quote');    
-            }
-
-            $quoteTable = $this->resource->getTableName('quote');
-
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
-                    (SELECT entity_id FROM {$quoteTable} 
-                    WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
-            
-            $bind = [
-                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
-                'entity_id' => $quote->getBoltParentQuoteId()
-            ];
-
-            $connection->query($sql, $bind);
-        } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
-    }
-
-    /**
-     * Remove Amasty Gift Card and update quote totals
-     *
-     * @param int $codeId
-     * @param Quote $quote
-     */
-    public function removeAmastyGiftCard($codeId, $quote)
-    {
-        if (! $this->isAmastyGiftCardAvailable()) {
-            return;
-        }
-        
-        try {
-            $connection = $this->resource->getConnection();
-            if ($this->isAmastyGiftCardLegacyVersion()) {
-                $giftCardTable = $this->resource->getTableName('amasty_amgiftcard_quote');
-
-                $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
-                $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
-    
-                $this->updateTotals($quote);
-            } else {
-                if ($quote->getExtensionAttributes() && $quote->getExtensionAttributes()->getAmGiftcardQuote()) {
-                    $cards = $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards();
-                }
-
-                $giftCodeExists = false;
-                $giftCode = '';
-                foreach ($cards as $k => $card) {
-                    if($card['id'] == $codeId) {
-                        $giftCodeExists = true;
-                        $giftCode = $card['code'];
-                        break;
-                    }
-                }
-                
-                if($giftCodeExists) {
-                    $this->amastyGiftCardAccountManagement->getInstance()->removeGiftCardFromCart($quote->getId(), $giftCode);                   
-                }                
-            }
-        } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
     }
 
     /**

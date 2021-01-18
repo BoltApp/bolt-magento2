@@ -821,7 +821,7 @@ class Cart extends AbstractHelper
      */
     protected function clearExternalData($quote)
     {
-        $this->discountHelper->clearAmastyGiftCard($quote);
+        $this->eventsForThirdPartyModules->dispatchEvent("clearExternalData", $quote);
         $this->discountHelper->clearAmastyRewardPoints($quote);
     }
 

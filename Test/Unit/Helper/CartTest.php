@@ -1473,7 +1473,6 @@ class CartTest extends BoltTestCase
      */
     public function clearExternalData_always_callsDiscountHelperMethods()
     {
-        $this->discountHelper->expects(static::once())->method('clearAmastyGiftCard')->with($this->quoteMock);
         $this->discountHelper->expects(static::once())->method('clearAmastyRewardPoints')->with($this->quoteMock);
         TestHelper::invokeMethod($this->currentMock, 'clearExternalData', [$this->quoteMock]);
     }
