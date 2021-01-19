@@ -2879,7 +2879,7 @@ ORDER
         unset($result['items'][0]['image_url']);
 
         // check that session id is saved in metadata
-        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ? null;
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
         static::$metadataSessionIdAssertMethod($encrypted_session_id);
 
         static::assertEquals(
