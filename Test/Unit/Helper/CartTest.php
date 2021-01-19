@@ -2561,10 +2561,13 @@ ORDER
 
         /**
         * @test
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @covers ::getCartData
         */
-        public function getCartData_inMultistepWithNoDiscount_returnsCartData()
-        {
+        public function getCartData_inMultistepWithNoDiscount_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
             $this->skipTestInUnitTestsFlow();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
@@ -2573,7 +2576,10 @@ ORDER
             $quote->addProduct($product,1);
             TestUtils::setQuoteToSession($quote);
 
-            $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
+            $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+                Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+                $addSessionIdToMetadataValue
+            );
             $result = $boltHelperCart->getCartData(false, "");
             TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
@@ -2590,8 +2596,8 @@ ORDER
             unset($result['items'][0]['image_url']);
 
             // check that session id is saved in metadata
-            $encrypted_session_id = $result['metadata']['encrypted_session_id'];
-            static::assertNotEmpty($encrypted_session_id);
+            $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+            static::$metadataSessionIdAssertMethod($encrypted_session_id);
 
             $expected = [
                 'order_reference' => $quote->getId(),
@@ -2620,6 +2626,13 @@ ORDER
 
             static::assertEquals($expected, $result);
         }
+
+    public function dataProvider_sessionIdToCartMetadataSwitch() {
+        return [
+            [true, 'assertNotEmpty'],
+            [false, 'assertEmpty'],
+        ];
+    }
 
         /**
         * @test
@@ -2661,11 +2674,13 @@ ORDER
         * that getCartData returns expected cart data when checkout type is payment and order payload is valid
         *
         * @covers ::getCartData
-        *
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @throws Exception from tested method
         */
-        public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData()
-        {
+        public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
         $this->skipTestInUnitTestsFlow();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2683,7 +2698,10 @@ ORDER
 
         TestUtils::setQuoteToSession($quote);
 
-        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+            Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            $addSessionIdToMetadataValue
+        );
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2713,8 +2731,8 @@ ORDER
         unset($result['items'][0]['image_url']);
 
         // check that session id is saved in metadata
-        $encrypted_session_id = $result['metadata']['encrypted_session_id'];
-        static::assertNotEmpty($encrypted_session_id);
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+        static::$metadataSessionIdAssertMethod($encrypted_session_id);
 
         static::assertEquals(
             [
@@ -2812,11 +2830,13 @@ ORDER
         * that getCartData returns expected cart data when checkout type is payment and quote is virtual
         *
         * @covers ::getCartData
-        *
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @throws Exception from tested method
         */
-        public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData()
-        {
+        public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
         $this->skipTestInUnitTestsFlow();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2831,7 +2851,10 @@ ORDER
 
         TestUtils::setQuoteToSession($quote);
 
-        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+            Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            $addSessionIdToMetadataValue
+        );
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2853,12 +2876,11 @@ ORDER
             )
         );
         TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
-
         unset($result['items'][0]['image_url']);
 
         // check that session id is saved in metadata
-        $encrypted_session_id = $result['metadata']['encrypted_session_id'];
-        static::assertNotEmpty($encrypted_session_id);
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ? null;
+        static::$metadataSessionIdAssertMethod($encrypted_session_id);
 
         static::assertEquals(
             [

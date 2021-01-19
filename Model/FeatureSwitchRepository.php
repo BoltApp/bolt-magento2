@@ -84,11 +84,17 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
     public function save(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch)
     {
         $switch->getResource()->save($switch);
+        if ($this->cache) {
+            $this->cache[$switch->getName()] = $switch;
+        }
         return $switch;
     }
 
     public function delete(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch)
     {
         $switch->getResource()->delete($switch);
+        if ($this->cache) {
+            unset($this->cache[$switch->getName()]);
+        }
     }
 }
