@@ -2572,10 +2572,9 @@ ORDER
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
             TestUtils::setQuoteToSession($quote);
+
             $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
-
             $result = $boltHelperCart->getCartData(false, "");
-
             TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
             // check that created immutuble quote has correct parent quote id
@@ -2683,6 +2682,8 @@ ORDER
         $quote->collectTotals()->save();
 
         TestUtils::setQuoteToSession($quote);
+
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2703,6 +2704,7 @@ ORDER
                 ]
             )
         );
+        TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
         // check image url
         static::assertRegExp("|http://localhost/pub/static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
@@ -2829,7 +2831,7 @@ ORDER
 
         TestUtils::setQuoteToSession($quote);
 
-
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2850,6 +2852,8 @@ ORDER
                 ]
             )
         );
+        TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
+
         unset($result['items'][0]['image_url']);
 
         // check that session id is saved in metadata

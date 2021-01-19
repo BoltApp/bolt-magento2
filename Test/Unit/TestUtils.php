@@ -396,7 +396,7 @@ class TestUtils {
     {
         $objectManager = Bootstrap::getObjectManager();
         /** @var \Bolt\Boltpay\Model\FeatureSwitchRepository $featureSwitchRepository */
-        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Model\FeatureSwitchRepository::class);
+        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface::class);
         return $featureSwitchRepository->upsertByName($name, $value, $defaultValue, $rolloutPercentage);
     }
 
@@ -404,7 +404,7 @@ class TestUtils {
     {
         $objectManager = Bootstrap::getObjectManager();
         /** @var \Bolt\Boltpay\Model\FeatureSwitchRepository $featureSwitchRepository */
-        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Model\FeatureSwitchRepository::class);
+        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface::class);
         $featureSwitchRepository->delete($switch);
     }
 }
