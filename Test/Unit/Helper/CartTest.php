@@ -2598,6 +2598,7 @@ ORDER
             // check that session id is saved in metadata
             $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
             static::$metadataSessionIdAssertMethod($encrypted_session_id);
+            unset($result['metadata']['encrypted_session_id']);
 
             $expected = [
                 'order_reference' => $quote->getId(),
@@ -2620,7 +2621,6 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => $immutable_quote_id,
-                    'encrypted_session_id' => $encrypted_session_id,
                 ],
             ];
 
@@ -2733,6 +2733,7 @@ ORDER
         // check that session id is saved in metadata
         $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
         static::$metadataSessionIdAssertMethod($encrypted_session_id);
+        unset($result['metadata']['encrypted_session_id']);
 
         static::assertEquals(
             [
@@ -2777,7 +2778,6 @@ ORDER
                 ],
                 'metadata'        => [
                     'immutable_quote_id' => $quote->getId() + 1,
-                    'encrypted_session_id' => $encrypted_session_id,
                 ],
             ],
             $result
@@ -2881,6 +2881,7 @@ ORDER
         // check that session id is saved in metadata
         $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
         static::$metadataSessionIdAssertMethod($encrypted_session_id);
+        unset($result['metadata']['encrypted_session_id']);
 
         static::assertEquals(
             [
@@ -2919,7 +2920,6 @@ ORDER
                 'metadata'        =>
                     [
                         'immutable_quote_id' => $quote->getId() + 1,
-                        'encrypted_session_id' => $encrypted_session_id,
                     ]
             ],
             $result
