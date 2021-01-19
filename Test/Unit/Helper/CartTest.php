@@ -89,6 +89,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -2571,8 +2572,11 @@ ORDER
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
             TestUtils::setQuoteToSession($quote);
+            $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
 
             $result = $boltHelperCart->getCartData(false, "");
+
+            TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
             // check that created immutuble quote has correct parent quote id
             $immutable_quote_id = $result['metadata']['immutable_quote_id'];
