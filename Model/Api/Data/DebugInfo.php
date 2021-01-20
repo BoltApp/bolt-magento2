@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
+use Bolt\Boltpay\Model\Api\Data\IntegrationTest\Config as IntegrationTestConfig;
+
 class DebugInfo implements \JsonSerializable
 {
     /**
@@ -50,6 +52,11 @@ class DebugInfo implements \JsonSerializable
     private $logs;
 
     /**
+     * @var IntegrationTestConfig
+     */
+    private $integrationTestConfig;
+
+    /**
      * @return string
      */
     public function getPhpVersion()
@@ -68,6 +75,14 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
+     * @return string
+     */
+    public function getComposerVersion()
+    {
+        return $this->composerVersion;
+    }
+
+    /**
      * @param string $composerVersion
      * @return $this
      */
@@ -75,14 +90,6 @@ class DebugInfo implements \JsonSerializable
     {
         $this->composerVersion = $composerVersion;
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getComposerVersion()
-    {
-        return $this->composerVersion;
     }
 
     /**
@@ -112,7 +119,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
+     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[] $boltConfigSettings
      * @return $this
      */
     public function setBoltConfigSettings($boltConfigSettings)
@@ -130,7 +137,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
+     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[] $otherPluginVersions
      * @return $this
      */
     public function setOtherPluginVersions($otherPluginVersions)
@@ -159,6 +166,24 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
+     * @return IntegrationTestConfig
+     */
+    public function getIntegrationTestConfig()
+    {
+        return $this->integrationTestConfig;
+    }
+
+    /**
+     * @param IntegrationTestConfig $integrationTestConfig
+     * @return $this
+     */
+    public function setIntegrationTestConfig($integrationTestConfig)
+    {
+        $this->integrationTestConfig = $integrationTestConfig;
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function jsonSerialize()
@@ -169,7 +194,8 @@ class DebugInfo implements \JsonSerializable
             'platform_version' => $this->platformVersion,
             'bolt_config_settings' => $this->boltConfigSettings,
             'other_plugin_versions' => $this->otherPluginVersions,
-            'logs' => $this->logs
+            'logs' => $this->logs,
+            'integration_test_config' => $this->integrationTestConfig
         ];
     }
 }
