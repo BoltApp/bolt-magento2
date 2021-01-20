@@ -127,6 +127,7 @@ class DataProviderPluginTest extends BoltTestCase
         $showCcTypeInOrderGrid = false
     ) {
         $this->subjectMock->expects(static::once())->method('getName')->willReturn($name);
+
         $this->paymentCollectionFactoryMock->method('create')
             ->willReturn($this->paymentCollectionMock);
         $this->paymentCollectionMock->method('addFieldToFilter')
@@ -333,21 +334,35 @@ class DataProviderPluginTest extends BoltTestCase
                         ['order_id' => '3', 'payment_method' => 'boltpay'],
                         ['order_id' => '4', 'payment_method' => 'boltpay'],
                         ['order_id' => '5', 'payment_method' => 'boltpay'],
-                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                        ['order_id' => '6', 'payment_method' => 'boltpay'],
+                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],
                     ],
                     'totalRecords' => 170,
                 ],
-                'expectedIds'           => [2, 3, 4, 5],
-                'processors'            => [],
-                'additionalData'        => [],
+                'expectedIds'           => [2, 3, 4, 5, 6],
+                'processors'     => [
+                    'vantiv',
+                    'braintree',
+                    'afterpay',
+                    'paypal',
+                    null,
+                ],
+                'additionalData' => [
+                    null,
+                    null,
+                    null,
+                    null,
+                    'applepay',
+                ],
                 'resultAfter'           => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
                         ['order_id' => '2', 'payment_method' => 'boltpay'],
-                        ['order_id' => '3', 'payment_method' => 'boltpay'],
-                        ['order_id' => '4', 'payment_method' => 'boltpay'],
-                        ['order_id' => '5', 'payment_method' => 'boltpay'],
-                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                        ['order_id' => '3', 'payment_method' => 'boltpay_braintree'],
+                        ['order_id' => '4', 'payment_method' => 'boltpay_afterpay'],
+                        ['order_id' => '5', 'payment_method' => 'boltpay_paypal'],
+                        ['order_id' => '6', 'payment_method' => 'boltpay_applepay'],
+                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],
                     ],
                     'totalRecords' => 170,
                 ],
@@ -356,7 +371,6 @@ class DataProviderPluginTest extends BoltTestCase
                     'mastercard',
                     'visa',
                     'discover',
-                    'mastercard',
                 ],
                 'showCcTypeInOrderGrid' => false,
             ],
@@ -369,13 +383,22 @@ class DataProviderPluginTest extends BoltTestCase
                         ['order_id' => '3', 'payment_method' => 'boltpay'],
                         ['order_id' => '4', 'payment_method' => 'boltpay'],
                         ['order_id' => '5', 'payment_method' => 'boltpay'],
-                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
+                        ['order_id' => '6', 'payment_method' => 'boltpay'],
+                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],
                     ],
                     'totalRecords' => 170,
                 ],
-                'expectedIds'           => [2, 3, 4, 5],
-                'processors'            => [],
-                'additionalData'        => [],
+                'expectedIds'           => [2, 3, 4, 5, 6],
+                'processors'     => [
+                    'vantiv',
+                    'braintree',
+                    'afterpay',
+                    'paypal',
+                    null,
+                ],
+                'additionalData' => [
+                    'applepay',
+                ],
                 'resultAfter'           => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -383,8 +406,8 @@ class DataProviderPluginTest extends BoltTestCase
                         ['order_id' => '3', 'payment_method' => 'boltpay_mastercard'],
                         ['order_id' => '4', 'payment_method' => 'boltpay_visa'],
                         ['order_id' => '5', 'payment_method' => 'boltpay_discover'],
-                        ['order_id' => '6', 'payment_method' => 'cashondelivery'],
-                    ],
+                        ['order_id' => '6', 'payment_method' => 'boltpay_applepay'],
+                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],                    ],
                     'totalRecords' => 170,
                 ],
                 'ccTypes'               => [
@@ -392,7 +415,6 @@ class DataProviderPluginTest extends BoltTestCase
                     'mastercard',
                     'visa',
                     'discover',
-                    'mastercard',
                 ],
                 'showCcTypeInOrderGrid' => true,
             ],
