@@ -113,6 +113,12 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         $request = $this->getRequestContent();
 
         $requestArray = json_decode(json_encode($request), true);
+
+        // V2 webhooks send requests as {"type": ... "data":{requestContent}} so we need to extract the data we want
+        if (isset($requestArray['data'])) {
+            $requestArray = $requestArray['data'];
+        }
+
         if (isset($requestArray['cart']['order_reference'])) {
             $parentQuoteId = $requestArray['cart']['order_reference'];
             $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
@@ -153,6 +159,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         
         $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
         
+        $this->updateSession($parentQuote);
+     
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
             $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
@@ -293,6 +301,9 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
         $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
+        if (empty($cart)) {
+            throw new \Exception('Something went wrong when getting cart data.');
+        }
         return [
             'total_amount' => $cart['total_amount'],
             'tax_amount'   => $cart['tax_amount'],

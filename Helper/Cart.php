@@ -571,11 +571,11 @@ class Cart extends AbstractHelper
     /**
      * Cache the session id for the quote
      *
-     * @param int|string $qouoteId
+     * @param int|string $quoteId
      */
-    protected function saveCartSession($qouoteId)
+    protected function saveCartSession($quoteId)
     {
-        $this->sessionHelper->saveSession($qouoteId, $this->checkoutSession);
+        $this->sessionHelper->saveSession($quoteId, $this->checkoutSession);
     }
 
     /**
@@ -1021,6 +1021,8 @@ class Cart extends AbstractHelper
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
 
+
+
         // Logged in customes.
         // Merchant scope and prefill.
         if ($this->customerSession->isLoggedIn()) {
@@ -1108,7 +1110,7 @@ class Cart extends AbstractHelper
         $save = true,
         $emailFields = ['customer_email', 'email'],
         $excludeFields = ['entity_id', 'address_id', 'reserved_order_id',
-            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all']
+            'address_sales_rule_id', 'cart_fixed_rules', 'cached_items_all', 'customer_note']
     ) {
         foreach ($parent->getData() as $key => $value) {
             if (in_array($key, $excludeFields)) {
@@ -1354,10 +1356,10 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $item->getProduct();
+                $_product = $this->productRepository->get(trim($item->getSku()));
 
-                $product['reference']    = $item->getProductId();
-                $product['name']         = $item->getName();
+                $product['reference']    = $_product->getId();
+                $product['name']         = $_product->getName();
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
@@ -1699,6 +1701,11 @@ class Cart extends AbstractHelper
 
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
+
+        //store order id from session to add support for order edit
+        if ($this->checkoutSession->getOrderId()) {
+            $cart['metadata']['original_order_entity_id'] = $this->checkoutSession->getOrderId();
+        }
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
@@ -2354,9 +2361,11 @@ class Cart extends AbstractHelper
         }
 
         $quote->setIsActive(false);
-
+        $this->saveQuote($quote);
         $cart_data = $this->getCartData(false, '', $quote);
         $this->quoteResourceSave($quote);
+        $this->saveQuote($quote);
+
         return $cart_data;
     }
 

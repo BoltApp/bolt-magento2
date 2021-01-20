@@ -234,6 +234,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                     'getUsesPerCustomer',
                     'getDescription',
                     'getCustomerGroupIds',
+                    'getIsActive',
                 ]
             )
             ->disableOriginalConstructor()
@@ -566,6 +567,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -654,6 +656,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -714,6 +717,32 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingCouponCode_couponInactive()
+    {
+        $coupon = $this->getCouponMock([
+                'getId' => [
+                    'expects' => 'once'
+                ],
+                'getRuleId' => [
+                    'expects' => 'once'
+                ]
+            ]);
+        $quote = $this->getQuoteMock();
+
+        $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(0);
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The coupon code %s is inactive', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
+    }
 
     /**
      * @test
@@ -733,6 +762,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('yesterday')));
 
@@ -761,6 +791,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $fromDate = date('Y-m-d', strtotime('tomorrow'));
@@ -808,6 +839,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -841,6 +873,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -878,6 +911,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -911,6 +945,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -944,6 +979,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -988,6 +1024,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
         $this->ruleMock->expects(self::once())->method('getToDate')
             ->willReturn(date('Y-m-d', strtotime('tomorrow')));
         $this->ruleMock->expects(self::once())->method('getFromDate')
@@ -999,10 +1036,48 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
 
         $quote = $this->getQuoteMock('');
-        $quote->method('getCouponCode')->willReturn(null);
+        $quote->method('getCouponCode')->willReturn('');
 
         $this->expectException(BoltException::class);
-        $this->expectExceptionMessage('Coupon code does not equal with a quote code');
+        $this->expectExceptionMessage(sprintf('The quote does not meet rule\'s conditions of coupon code %s.', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
+
+        TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
+    }
+    
+    /**
+     * @test
+     *
+     */
+    public function applyingCouponCode_couponCodeNotEqual()
+    {
+        $coupon = $this->getCouponMock([
+                'getId' => [
+                    'expects' => 'once'
+                ],
+                'getRuleId' => [
+                    'expects' => 'once'
+                ]
+            ]);
+
+        $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
+        $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
+        $this->ruleMock->expects(self::once())->method('getToDate')
+            ->willReturn(date('Y-m-d', strtotime('tomorrow')));
+        $this->ruleMock->expects(self::once())->method('getFromDate')
+            ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0,1]);
+
+        $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
+        $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
+        
+        $quoteCouponCode = 'OTHER';
+        $quote = $this->getQuoteMock($quoteCouponCode);
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('Coupon code %s does not equal with the quote code %s.', self::COUPON_CODE, $quoteCouponCode));
         $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);

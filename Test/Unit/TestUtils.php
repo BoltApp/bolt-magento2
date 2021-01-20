@@ -1,18 +1,29 @@
 <?php
 namespace Bolt\Boltpay\Test\Unit;
 
-use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Config\Model\ResourceModel\Config;
 use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Type;
+use Magento\Catalog\Model\Product\Type as ProductType;
+
+use Magento\TestFramework\Helper\Bootstrap;
+
 use Magento\Quote\Model\Quote;
-use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Sales\Model\Order\Item as OrderItem;
 use Magento\Sales\Model\Order\Address as OrderAddress;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
+
+
+
+
+use Magento\Framework\App\Config\MutableScopeConfigInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Session\SessionManagerInterface;
+
 
 class TestUtils {
 
@@ -25,12 +36,19 @@ class TestUtils {
     }
 
     /**
+     * @param array $data
      * @return mixed
      */
-    public static function createQuote()
+    public static function createQuote($data = [])
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
+        if ($data) {
+            foreach ($data as $key => $value) {
+                $quote->setData($key, $value);
+            }
+        }
+
         $quote->save();
         return $quote;
     }
@@ -50,7 +68,15 @@ class TestUtils {
      */
     public static function getOrderById($orderId)
     {
-        return Bootstrap::getObjectManager()->get(Order::class)->load($orderId);
+        $orderCollection = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\ResourceModel\Order\Collection::class)
+            ->addFieldToSelect('*')
+            ->addFilter('entity_id', $orderId);
+
+        if ($orderCollection->getSize() > 0 ){
+            return $orderCollection->getFirstItem();
+        }
+
+        return false;
     }
 
     /**
@@ -71,29 +97,28 @@ class TestUtils {
      * @return Order
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public static function createDumpyOrder($data = [])
+    public static function createDumpyOrder($data = [],
+                                            $addressData = [],
+                                            $orderItems = [],
+                                            $state = Order::STATE_PENDING_PAYMENT,
+                                            $status = Order::STATE_PENDING_PAYMENT,
+                                            $payment = null)
     {
         $objectManager = Bootstrap::getObjectManager();
 
-        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
-
-        if ($productCollection->getSize() > 0) {
-            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
-            $product =  $productCollection->getFirstItem();
-        }else {
-            $product = self::createSimpleProduct();
-        }
-
-        $addressData = [
-            'firstname' => 'John',
-            'lastname' => 'McCombs',
-            'street' => "4553 Annalee Way",
-            'city' => 'Knoxville',
-            'postcode' => '37921',
-            'telephone' => '111111111',
-            'country_id' => 'US',
-            'region_id' => '56'
-        ];
+        if (empty($addressData)) {
+            $addressData = [
+                'firstname' => 'John',
+                'lastname' => 'McCombs',
+                'street' => "4553 Annalee Way",
+                'city' => 'Knoxville',
+                'postcode' => '37921',
+                'telephone' => '111111111',
+                'country_id' => 'US',
+                'region_id' => '56',
+                'email'     => 'test@bolt.com',
+            ];
+        }       
 
         $billingAddress = $objectManager->create(OrderAddress::class, ['data' => $addressData]);
         $billingAddress->setAddressType('billing');
@@ -102,46 +127,64 @@ class TestUtils {
         $shippingAddress->setId(null)->setAddressType('shipping');
 
         /** @var Payment $payment */
-        $payment = $objectManager->create(Payment::class);
-        $payment->setMethod('boltpay')
-            ->setAdditionalInformation('last_trans_id', '11122')
-            ->setAdditionalInformation(
-                'metadata',
-                [
-                    'type' => 'free',
-                    'fraudulent' => false,
-                ]
-            );
+        if (empty($payment)) {
+            $payment = $objectManager->create(Payment::class);
+            $payment->setMethod('boltpay')
+                ->setAdditionalInformation('last_trans_id', '11122')
+                ->setAdditionalInformation(
+                    'metadata',
+                    [
+                        'type' => 'free',
+                        'fraudulent' => false,
+                    ]
+                );
+        }
+            
+        if (empty($orderItems)) {
+            $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
 
-        /** @var OrderItem $orderItem */
-        $orderItem = $objectManager->create(OrderItem::class);
-        $orderItem->setProductId($product->getId())
-            ->setQtyOrdered(2)
-            ->setBasePrice($product->getPrice())
-            ->setPrice($product->getPrice())
-            ->setRowTotal($product->getPrice())
-            ->setProductType('simple')
-            ->setName($product->getName());
-
-
+            if ($productCollection->getSize() > 0) {
+                /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
+                $product =  $productCollection->getFirstItem();
+            }else {
+                $product = self::createSimpleProduct();
+            }
+        
+            /** @var OrderItem $orderItem */
+            $orderItem = $objectManager->create(OrderItem::class);
+            $orderItem->setProductId($product->getId())
+                ->setQtyOrdered(2)
+                ->setBasePrice($product->getPrice())
+                ->setPrice($product->getPrice())
+                ->setRowTotal($product->getPrice())
+                ->setProductType('simple')
+                ->setName($product->getName());
+            
+            $orderItems = [];
+            $orderItems[] = $orderItem;
+        }
+        
         /** @var Order $order */
         $order = $objectManager->create(Order::class);
         $order->setIncrementId('100000001')
-            ->setState(Order::STATE_PENDING_PAYMENT)
-            ->setStatus($order->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT))
+            ->setState($state)
+            ->setStatus($order->getConfig()->getStateDefaultStatus($status))
             ->setSubtotal(100)
             ->setGrandTotal(100)
             ->setBaseSubtotal(100)
             ->setBaseGrandTotal(100)
             ->setOrderCurrencyCode('USD')
             ->setCustomerIsGuest(true)
-            ->setCustomerEmail('johnmc@bolt.com')
+            ->setCustomerEmail($addressData['email'])
             ->setBillingAddress($billingAddress)
             ->setShippingAddress($shippingAddress)
+            ->setAddresses([$billingAddress, $shippingAddress])
             ->setStoreId($objectManager->get(StoreManagerInterface::class)->getStore()->getId())
-            ->addItem($orderItem)
             ->setPayment($payment);
-
+        
+        foreach ($orderItems as $orderItem) {
+            $order->addItem($orderItem);
+        }
 
         if ($data){
             foreach ($data as $key => $value) {
@@ -155,6 +198,22 @@ class TestUtils {
         return $order;
     }
 
+    public static function getSimpleProduct() {
+        $objectManager = Bootstrap::getObjectManager();
+        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        if ($productCollection->getSize() > 0) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
+            $product =  $productCollection->getFirstItem();
+
+            if ($product->getTypeId() === ProductType::TYPE_SIMPLE) {
+                return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+            }
+        }
+
+        return self::createSimpleProduct();
+    }
+
     /**
      * @return mixed
      */
@@ -162,11 +221,11 @@ class TestUtils {
     {
 
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        $product->setTypeId(\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE)
+        $product->setTypeId(ProductType::TYPE_SIMPLE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Product')
-            ->setSku('TestProduct')
+            ->setSku(md5(uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -188,11 +247,11 @@ class TestUtils {
     public static function createVirtualProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        $product->setTypeId(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL)
+        $product->setTypeId(ProductType::TYPE_VIRTUAL)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Virtual Product')
-            ->setSku('TestProduct')
+            ->setSku(md5(uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -208,7 +267,7 @@ class TestUtils {
         return $product;
     }
 
-    private static function setSecureAreaIfNeeded()
+    public static function setSecureAreaIfNeeded()
     {
         $registry = Bootstrap::getObjectManager()->get("\Magento\Framework\Registry");
         if ($registry->registry('isSecureArea') === null) {
@@ -278,5 +337,58 @@ class TestUtils {
         $address->setPostcode($addressData['postal_code']);
         $address->setCountryId($addressData['country_code']);
         $address->setEmail($addressData['email']);
+    }
+    
+    public static function setupBoltConfig($configData)
+    {
+        // don't need to clean up on unit test mode
+        if (!self::isMagentoIntegrationMode()) {
+            return;
+        }
+        
+        $objectManager = Bootstrap::getObjectManager();
+        
+        $model = $objectManager->get(Config::class);
+        $scopeConfig = $objectManager->get(MutableScopeConfigInterface::class);
+        
+        foreach ($configData as $data) {
+            $model->saveConfig($data['path'], $data['value'], $data['scope'], $data['scopeId']);
+            $scopeConfig->setValue(
+                $data['path'],
+                $data['value'],
+                $data['scope']
+            );
+        }
+    }
+    
+    public static function createCustomer($websiteId, $storeId, $addressInfo)
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        
+        $repository = $objectManager->create(\Magento\Customer\Api\CustomerRepositoryInterface::class);
+        $customer = $objectManager->create(\Magento\Customer\Model\Customer::class);
+        /** @var CustomerRegistry $customerRegistry */
+        $customerRegistry = $objectManager->get(\Magento\Customer\Model\CustomerRegistry::class);
+        /** @var Magento\Customer\Model\Customer $customer */
+        $customer->setWebsiteId($websiteId)
+            ->setStoreId($storeId)
+            ->setId(1)
+            ->setEmail($addressInfo['email_address'])
+            ->setPassword('password')
+            ->setGroupId(1)
+            ->setIsActive(1)
+            ->setPrefix('Mr.')
+            ->setFirstname($addressInfo['first_name'])
+            ->setLastname($addressInfo['last_name'])
+            ->setDefaultBilling(1)
+            ->setDefaultShipping(1)
+            ->setTaxvat('12')
+            ->setGender(0);
+        
+        $customer->isObjectNew(true);
+        $customer->save();
+        $customerRegistry->remove($customer->getId());
+        
+        return $customer;
     }
 }

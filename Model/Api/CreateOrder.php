@@ -219,16 +219,33 @@ class CreateOrder implements CreateOrderInterface
             $this->preProcessWebhook($immutableQuote->getStoreId());
 
             $transaction = json_decode($payload);
+            // V2 webhooks send requests as {"event": ... "data":{requestContent}} so we need to extract the data we want
+            $isUniversal = false;
+            if (isset($transaction->data)) {
+                $transaction = $transaction->data;
+                $isUniversal = true;
+            }
             $createdOrder = $this->createOrder($transaction, $immutableQuote);
             $orderData = json_encode($createdOrder->getData());
 
-            $this->sendResponse(200, [
-                'status'    => 'success',
-                'message'   => "Order create was successful. Order Data: $orderData",
-                'display_id' => $createdOrder->getIncrementId(),
-                'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
-                'order_received_url' => $this->getReceivedUrl($immutableQuote),
-            ]);
+            if ($isUniversal) {
+                $this->sendResponse(200, [
+                    'event' => 'order.create',
+                    'status' => 'success',
+                    'data' => [
+                        'display_id' => $createdOrder->getIncrementId(),
+                        'order_received_url' => $this->getReceivedUrl($immutableQuote)
+                    ]
+                ]);
+            } else {
+                $this->sendResponse(200, [
+                    'status'    => 'success',
+                    'message'   => "Order create was successful. Order Data: $orderData",
+                    'display_id' => $createdOrder->getIncrementId(),
+                    'total'      => CurrencyUtils::toMinor($createdOrder->getGrandTotal(), $currency),
+                    'order_received_url' => $this->getReceivedUrl($immutableQuote),
+                ]);
+            }
             $this->metricsClient->processMetric("order_creation.success", 1, "order_creation.latency", $startTime);
         } catch (\Magento\Framework\Webapi\Exception $e) {
             $this->bugsnag->notifyException($e);
