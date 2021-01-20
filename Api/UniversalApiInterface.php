@@ -24,7 +24,7 @@
  {
      /**
       * Hook format:
-      * {"type":"create_order", "data":{requestData}}
+      * {"event":"create_order", "data":{requestData}}
       * @api
       * 
       * @param string $event
