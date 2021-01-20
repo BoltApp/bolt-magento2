@@ -82,6 +82,7 @@ class DataProviderPlugin
         );
         $paymentCollection = $this->paymentCollectionFactory->create()
             ->addFieldToFilter('parent_id', ['in' => $ids]);
+        $showCcTypeInOrderGrid = $this->configHelper->getShowCcTypeInOrderGrid();
         foreach ($result['items'] as &$item) {
             /** @var \Magento\Sales\Model\Order\Payment $payment */
             $payment = $paymentCollection->getItemByColumnValue(
@@ -91,16 +92,20 @@ class DataProviderPlugin
             if (!$payment) {
                 continue;
             }
+            if ($showCcTypeInOrderGrid &&
+                key_exists(
+                    $ccType = strtolower($payment->getCcType()),
+                    Order::SUPPORTED_CC_TYPES
+                )
+            ) {
+                $item['payment_method'] .= '_' . $ccType;
+                continue;
+            }
             if ($intersection = array_intersect(
                 [$payment->getData('additional_information/processor'), $payment->getAdditionalData()],
                 array_keys(Order::TP_METHOD_DISPLAY)
             )) {
                 $item['payment_method'] .= '_' . reset($intersection);
-                continue;
-            }
-            $ccType = strtolower($payment->getCcType());
-            if (key_exists($ccType, Order::SUPPORTED_CC_TYPES) && $this->configHelper->getShowCcTypeInOrderGrid()) {
-                $item['payment_method'] .= '_' . $ccType;
             }
         }
         return $result;
