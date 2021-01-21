@@ -175,10 +175,13 @@
  - Improvement: Made general improvements related to Mirasvit rewards points usage such as tax calculations and shipping discounts.
  - Added: Merchants can now selectively configure Product Page Checkout to display only for specific products that have the `bolt_ppc` attribute.
 
- ## [v2.18.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.18.0) 2021-01-06
+## [v2.18.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.18.0) 2021-01-06
 - Added: Merchants can now recognize Apple Pay orders from their Payment Information as `Bolt-Applepay` in the Magento Admin console.
 - Improvement: We added an optional feature switch that updates orders with failed payment hooks to a `canceled` status instead of deleting them. This can be useful for merchants that use ERP systems. For activation, reach out to your customer success manager.   
 - Improvement: Now merchants can see the cart type and last four digits when reviewing orders from all processors.
 - Improvement: Discounts got a small refresh in the way their information is displayed.
 - Improvement: We did some refactoring for our payment-only checkout flow.
 - Fixed: There was a very unlikely (but still possible) chance that changes to Mirsavit credit applied to the cart did not update, so we made sure it will update every time.
+## [v2.18.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.18.1) 2021-01-21
+- Improvement: The order grid in Magento Commerce now prioritizes displaying credit card details over payment processor information.
+- Fixed: Resolved issue where the order grid in Magento Commerce would freeze when no order records matched the user's defined filtering criteria. 
