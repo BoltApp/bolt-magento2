@@ -126,7 +126,7 @@ class DataProviderPluginTest extends BoltTestCase
         $ccTypes = [],
         $showCcTypeInOrderGrid = false
     ) {
-        $this->subjectMock->expects(static::once())->method('getName')->willReturn($name);
+        $this->subjectMock->expects(static::atMost(1))->method('getName')->willReturn($name);
 
         $this->paymentCollectionFactoryMock->method('create')
             ->willReturn($this->paymentCollectionMock);
@@ -407,7 +407,8 @@ class DataProviderPluginTest extends BoltTestCase
                         ['order_id' => '4', 'payment_method' => 'boltpay_visa'],
                         ['order_id' => '5', 'payment_method' => 'boltpay_discover'],
                         ['order_id' => '6', 'payment_method' => 'boltpay_applepay'],
-                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],                    ],
+                        ['order_id' => '7', 'payment_method' => 'cashondelivery'],
+                    ],
                     'totalRecords' => 170,
                 ],
                 'ccTypes'               => [
@@ -417,6 +418,38 @@ class DataProviderPluginTest extends BoltTestCase
                     'discover',
                 ],
                 'showCcTypeInOrderGrid' => true,
+            ],
+            'Empty result set, show cc - no change'  => [
+                'dataSourceName'        => 'sales_order_grid_data_source',
+                'resultBefore'          => [
+                    'items'        => [],
+                    'totalRecords' => 0,
+                ],
+                'expectedIds'           => [],
+                'processors'     => [],
+                'additionalData' => [],
+                'resultAfter'           => [
+                    'items'        => [],
+                    'totalRecords' => 0,
+                ],
+                'ccTypes'               => [],
+                'showCcTypeInOrderGrid' => true,
+            ],
+            'Empty result set, do not show cc - no change'  => [
+                'dataSourceName'        => 'sales_order_grid_data_source',
+                'resultBefore'          => [
+                    'items'        => [],
+                    'totalRecords' => 0,
+                ],
+                'expectedIds'           => [],
+                'processors'     => [],
+                'additionalData' => [],
+                'resultAfter'           => [
+                    'items'        => [],
+                    'totalRecords' => 0,
+                ],
+                'ccTypes'               => [],
+                'showCcTypeInOrderGrid' => false,
             ],
         ];
     }

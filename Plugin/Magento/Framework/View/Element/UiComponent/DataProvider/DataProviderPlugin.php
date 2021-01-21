@@ -60,6 +60,9 @@ class DataProviderPlugin
      */
     public function afterGetData(DataProvider $subject, $result)
     {
+        if (empty($result['items'])) {
+            return $result;
+        }
         if (!in_array(
             $subject->getName(),
             [
