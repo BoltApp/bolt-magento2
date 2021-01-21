@@ -94,6 +94,7 @@ class OrderManagementTest extends BoltTestCase
     const PRODUCT_PRICE = 100;
     const PRODUCT_NAME = 'SIMPLE 1';
     const PRODUCT_SKU = 'simple_1';
+    const PRODUCT_QTY = 100;
     
     const QUOTE_SUBTOTAL = 100;
     const QUOTE_TOTAL = 105;
@@ -108,6 +109,9 @@ class OrderManagementTest extends BoltTestCase
     const ORDER_SHIPPING_TAX = 0;
     const ORDER_TOTAL = 105;
     const ORDER_INCREMENTID = '100000001';
+    
+    const FLAT_SHIPPING_CODE = 'flatrate_flatrate';
+    const FLAT_SHIPPING_COST = 5.00;
     
     /** @var Response */
     private $response;
@@ -289,31 +293,9 @@ class OrderManagementTest extends BoltTestCase
         $stockRegistryStorage->removeStockItem(1);
     }
     
-    
-    
-    private function getAddressInfo()
-    {
-        return array(
-            "street_address1" => "street",
-            "street_address2" => "",
-            "locality"        => "Los Angeles",
-            "region"          => "California",
-            'region_code'     => 'CA',
-            'region_id'       => '12',
-            "postal_code"     => "11111",
-            "country_code"    => "US",
-            "country"         => "United States",
-            "name"            => "lastname firstname",
-            "first_name"      => "firstname",
-            "last_name"       => "lastname",
-            "phone_number"    => "11111111",
-            "email_address"   => "admin@test.com",
-        );
-    }
-    
     private function createRequestData($quoteId, $immutableQuoteId, $status, $display_id = '', $captures = NULL, $type = self::TT_PAYMENT)
     {
-        $addressInfo = $this->getAddressInfo();
+        $addressInfo = TestUtils::createSampleAddress();
         $requetData = [
             'id'        => self::TRANSACTION_ID,
             'processor' => self::PROCESSOR_VANTIV,
@@ -384,7 +366,7 @@ class OrderManagementTest extends BoltTestCase
                                 "last_name"       => $addressInfo["last_name"],
                             ],
                             'service'          => 'Flat Rate - Fixed',
-                            'reference'        => 'flatrate_flatrate',
+                            'reference'        => self::FLAT_SHIPPING_CODE,
                             "shipping_method"  => "unknown"
                         ]
                     ],
@@ -409,11 +391,7 @@ class OrderManagementTest extends BoltTestCase
             ->setStoreId($this->storeId)
             ->setIsObjectNew(true);
         
-        $stockItem = $this->objectManager->create(StockItemInterface::class);
-        $stockItem->setQty(100)
-            ->setIsInStock(true);
-        $extensionAttributes = $product->getExtensionAttributes();
-        $extensionAttributes->setStockItem($stockItem);
+        TestUtils::createStockItemForProduct($product, self::PRODUCT_QTY);
         
         $product = $productRepository->save($product);
         
@@ -422,119 +400,60 @@ class OrderManagementTest extends BoltTestCase
     
     private function createQoute($product, $parentQuoteId = null)
     {
-        $addressInfo = $this->getAddressInfo();
-        
-        $addressData = [
-            'region'     => $addressInfo['region_code'],
-            'region_id'  => $addressInfo['region_id'],
-            'postcode'   => $addressInfo['postal_code'],
-            'lastname'   => $addressInfo['last_name'],
-            'firstname'  => $addressInfo['first_name'],
-            'street'     => $addressInfo['street_address1'],
-            'city'       => $addressInfo['locality'],
-            'email'      => $addressInfo['email_address'],
-            'telephone'  => $addressInfo['phone_number'],
-            'country_id' => $addressInfo['country_code'],
-        ];
+        $addressData = TestUtils::createMagentoSampleAddress();
         
         $quote = TestUtils::createQuote();
         $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
         
-        $quoteBillingAddress = $this->objectManager->create(\Magento\Quote\Api\Data\AddressInterface::class, ['data' => $addressData]);
-        $quoteBillingAddress->setAddressType(QuoteAddress::ADDRESS_TYPE_BILLING)
-            ->setCustomerAddressId('not_existing');
-        
-        $quoteShippingAddress = clone $quoteBillingAddress;
-        $quoteShippingAddress->setId(null)->setAddressType(QuoteAddress::ADDRESS_TYPE_SHIPPING)
-            ->setCustomerAddressId('not_existing');
+        $quoteBillingAddress = TestUtils::createQuoteAddress($addressData, QuoteAddress::ADDRESS_TYPE_BILLING);
+        $quoteShippingAddress = TestUtils::createQuoteAddress($addressData, QuoteAddress::ADDRESS_TYPE_SHIPPING);
 
         $quoteId = $quote->getId();
 
         $quote->setStoreId($this->storeId)
             ->setIsActive(true)
-            ->setCustomerEmail($addressInfo['email_address'])
+            ->setCustomerEmail($addressData['email'])
             ->setCustomerIsGuest(true)
             ->setIsMultiShipping(false)
             ->setBillingAddress($quoteBillingAddress)
             ->setShippingAddress($quoteShippingAddress)
+            ->setBoltParentQuoteId($parentQuoteId ?: $quoteId)
             ->addProduct($product, self::QUOTE_PRODUCT_QTY);
             
         $quote->setItems($quote->getAllItems())->save();
         
         $quoteShippingAddress = $quote->getShippingAddress();
-       
-        $rate = $this->objectManager->create(\Magento\Quote\Model\Quote\Address\Rate::class);
-        $rate->setCode('flatrate_flatrate')
-             ->setPrice(5.00)
-             ->setAddressId($quoteShippingAddress->getId())
-             ->save();
-   
+
+        TestUtils::createQuoteShippingRate(self::FLAT_SHIPPING_CODE, self::FLAT_SHIPPING_COST, $quoteShippingAddress->getId());
         
-        $quoteShippingAddress->setShippingMethod('flatrate_flatrate')
-            ->setCollectShippingRates(true);
+        $quoteShippingAddress->setShippingMethod(self::FLAT_SHIPPING_CODE)
+                             ->setCollectShippingRates(true);
 
         $quote->setTotalsCollectedFlag(false)->collectTotals()->setDataChanges(true);
         $quoteRepository->save($quote);
         
-        $paymentFactory = $this->objectManager->get(PaymentInterfaceFactory::class);
-        $paymentMethodManagement = $this->objectManager->get(PaymentMethodManagementInterface::class);
-        $quotePayment = $paymentFactory->create([
-            'data' => [
-                PaymentInterface::KEY_METHOD => self::BOLT_METHOD_CODE,
-            ]
-        ]);
-
-        $paymentMethodManagement->set($quoteId, $quotePayment);
-        $quote->getPayment()->setMethod(self::BOLT_METHOD_CODE);
-        
-        $quote->setBoltParentQuoteId($parentQuoteId ?: $quoteId);
-        
-        $quoteRepository->save($quote);
+        $quote = TestUtils::setQuotePayment($quote, self::BOLT_METHOD_CODE);
         
         return $quote;
     }
     
     private function createOrder($quote, $product, $payment, $orderStatus)
-    {
-        $addressInfo = $this->getAddressInfo();
-        
+    {        
         $quoteId = $quote->getId();
         
-        $addressData = [
-            'region'     => $addressInfo['region_code'],
-            'region_id'  => $addressInfo['region_id'],
-            'postcode'   => $addressInfo['postal_code'],
-            'lastname'   => $addressInfo['last_name'],
-            'firstname'  => $addressInfo['first_name'],
-            'street'     => $addressInfo['street_address1'],
-            'city'       => $addressInfo['locality'],
-            'email'      => $addressInfo['email_address'],
-            'telephone'  => $addressInfo['phone_number'],
-            'country_id' => $addressInfo['country_code'],
-        ];
+        $addressData = TestUtils::createMagentoSampleAddress();
         
-        $orderItems = [];
-        
-        $orderItem = $this->objectManager->create(OrderItem::class);
-        $orderItem->setProductId($product->getId());
-        $orderItem->setQtyOrdered(1);
-        $orderItem->setBasePrice($product->getPrice());
-        $orderItem->setPrice($product->getPrice());
-        $orderItem->setRowTotal($product->getPrice());
-        $orderItem->setBaseRowTotal($product->getPrice());
-        $orderItem->setRowTotalInclTax($product->getPrice());
-        $orderItem->setBaseRowTotalInclTax($product->getPrice());
-        $orderItem->setProductType($product->getTypeId());
-        
+        $orderItems = [];        
+        $orderItem = TestUtils::createOrderItemByProduct($product, 1);        
         $orderItems[] = $orderItem;
         
         $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, $orderStatus, $orderStatus, $payment);
 
         $order->setIncrementId(self::ORDER_INCREMENTID)
             ->setCustomerIsGuest(true)
-            ->setCustomerEmail($addressInfo['email_address'])
-            ->setCustomerFirstname($addressInfo['first_name'])
-            ->setCustomerLastname($addressInfo['last_name'])           
+            ->setCustomerEmail($addressData['email'])
+            ->setCustomerFirstname($addressData['firstname'])
+            ->setCustomerLastname($addressData['lastname'])           
             ->setStoreId($this->storeId)
             ->setShippingAmount(self::ORDER_SHIPPING_TOTAL)
             ->setBaseShippingAmount(self::ORDER_SHIPPING_TOTAL)
@@ -602,11 +521,11 @@ class OrderManagementTest extends BoltTestCase
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
         
-        $addressInfo = $this->getAddressInfo();
+        $addressInfo = TestUtils::createSampleAddress();
         TestUtils::createCustomer($this->websiteId, $this->storeId, $addressInfo);
         
         $customerRepository = $this->objectManager->get(CustomerRepositoryInterface::class);
-        $customer = $customerRepository->get('admin@test.com');
+        $customer = $customerRepository->get($addressInfo['email_address']);
         
         $quote->setCustomer($customer);
         $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
