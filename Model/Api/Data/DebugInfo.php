@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Model\Api\Data\IntegrationTest\Config as IntegrationTestConfig;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Config as AutomatedTestingConfig;
 
 class DebugInfo implements \JsonSerializable
 {
@@ -52,9 +52,9 @@ class DebugInfo implements \JsonSerializable
     private $logs;
 
     /**
-     * @var IntegrationTestConfig
+     * @var AutomatedTestingConfig
      */
-    private $integrationTestConfig;
+    private $automatedTestingConfig;
 
     /**
      * @return string
@@ -166,20 +166,20 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @return IntegrationTestConfig
+     * @return AutomatedTestingConfig
      */
-    public function getIntegrationTestConfig()
+    public function getAutomatedTestingConfig()
     {
-        return $this->integrationTestConfig;
+        return $this->automatedTestingConfig;
     }
 
     /**
-     * @param IntegrationTestConfig $integrationTestConfig
+     * @param AutomatedTestingConfig $automatedTestingConfig
      * @return $this
      */
-    public function setIntegrationTestConfig($integrationTestConfig)
+    public function setAutomatedTestingConfig($automatedTestingConfig)
     {
-        $this->integrationTestConfig = $integrationTestConfig;
+        $this->automatedTestingConfig = $automatedTestingConfig;
         return $this;
     }
 
@@ -195,7 +195,7 @@ class DebugInfo implements \JsonSerializable
             'bolt_config_settings' => $this->boltConfigSettings,
             'other_plugin_versions' => $this->otherPluginVersions,
             'logs' => $this->logs,
-            'integration_test_config' => $this->integrationTestConfig
+            'automated_testing_config' => $this->automatedTestingConfig
         ];
     }
 }
