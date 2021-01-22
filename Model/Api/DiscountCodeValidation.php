@@ -46,6 +46,7 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Magento\Framework\Module\Manager as ModuleManager;
 
 /**
  * Discount Code Validation class
@@ -172,6 +173,11 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
     private $cache;
 
     /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
      * DiscountCodeValidation constructor.
      *
      * @param Request                 $request
@@ -198,6 +204,7 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
      * @param TotalsCollector         $totalsCollector
      * @param OrderHelper             $orderHelper
      * @param CacheInterface          $cache
+     * @param ModuleManager           $moduleManager
      */
     public function __construct(
         Request $request,
@@ -223,7 +230,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         RegionModel $regionModel,
         TotalsCollector $totalsCollector,
         OrderHelper $orderHelper,
-        CacheInterface $cache = null
+        CacheInterface $cache = null,
+        ModuleManager $moduleManager = null
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -250,6 +258,8 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         $this->orderHelper = $orderHelper;
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Magento\Framework\App\CacheInterface::class);
+        $this->moduleManager = $moduleManager ?: \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Framework\Module\Manager::class);
     }
 
     /**
@@ -561,34 +571,38 @@ class DiscountCodeValidation implements DiscountCodeValidationInterface
         // get the rule id
         $ruleId = $rule->getRuleId();
 
-        // Check date validity if "To" date is set for the rule
-        $date = $rule->getToDate();
-        if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_EXPIRED,
-                sprintf('The code [%s] has expired.', $couponCode),
-                422,
-                $immutableQuote
-            );
+        $isSalesRuleStagingModuleEnabled = $this->moduleManager->isEnabled('Magento_SalesRuleStaging');
 
-            return false;
-        }
+        if (!$isSalesRuleStagingModuleEnabled) {
+            // Check date validity if "To" date is set for the rule
+            $date = $rule->getToDate();
+            if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_CODE_EXPIRED,
+                    sprintf('The code [%s] has expired.', $couponCode),
+                    422,
+                    $immutableQuote
+                );
 
-        // Check date validity if "From" date is set for the rule
-        $date = $rule->getFromDate();
-        if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
-            $desc = 'Code available from ' . $this->timezone->formatDate(
-                new \DateTime($rule->getFromDate()),
-                \IntlDateFormatter::MEDIUM
-            );
-            $this->sendErrorResponse(
-                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
-                $desc,
-                422,
-                $immutableQuote
-            );
+                return false;
+            }
 
-            return false;
+            // Check date validity if "From" date is set for the rule
+            $date = $rule->getFromDate();
+            if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
+                $desc = 'Code available from ' . $this->timezone->formatDate(
+                        new \DateTime($rule->getFromDate()),
+                        \IntlDateFormatter::MEDIUM
+                    );
+                $this->sendErrorResponse(
+                    BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
+                    $desc,
+                    422,
+                    $immutableQuote
+                );
+
+                return false;
+            }
         }
 
         // Check coupon usage limits.
