@@ -118,7 +118,7 @@ class TestUtils {
                 'region_id' => '56',
                 'email'     => 'test@bolt.com',
             ];
-        }       
+        }
 
         $billingAddress = $objectManager->create(OrderAddress::class, ['data' => $addressData]);
         $billingAddress->setAddressType('billing');
@@ -139,7 +139,7 @@ class TestUtils {
                     ]
                 );
         }
-            
+
         if (empty($orderItems)) {
             $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
 
@@ -149,7 +149,7 @@ class TestUtils {
             }else {
                 $product = self::createSimpleProduct();
             }
-        
+
             /** @var OrderItem $orderItem */
             $orderItem = $objectManager->create(OrderItem::class);
             $orderItem->setProductId($product->getId())
@@ -159,11 +159,11 @@ class TestUtils {
                 ->setRowTotal($product->getPrice())
                 ->setProductType('simple')
                 ->setName($product->getName());
-            
+
             $orderItems = [];
             $orderItems[] = $orderItem;
         }
-        
+
         /** @var Order $order */
         $order = $objectManager->create(Order::class);
         $order->setIncrementId('100000001')
@@ -181,7 +181,7 @@ class TestUtils {
             ->setAddresses([$billingAddress, $shippingAddress])
             ->setStoreId($objectManager->get(StoreManagerInterface::class)->getStore()->getId())
             ->setPayment($payment);
-        
+
         foreach ($orderItems as $orderItem) {
             $order->addItem($orderItem);
         }
@@ -337,19 +337,19 @@ class TestUtils {
         $address->setCountryId($addressData['country_code']);
         $address->setEmail($addressData['email']);
     }
-    
+
     public static function setupBoltConfig($configData)
     {
         // don't need to clean up on unit test mode
         if (!self::isMagentoIntegrationMode()) {
             return;
         }
-        
+
         $objectManager = Bootstrap::getObjectManager();
-        
+
         $model = $objectManager->get(Config::class);
         $scopeConfig = $objectManager->get(MutableScopeConfigInterface::class);
-        
+
         foreach ($configData as $data) {
             $model->saveConfig($data['path'], $data['value'], $data['scope'], $data['scopeId']);
             $scopeConfig->setValue(
@@ -359,11 +359,11 @@ class TestUtils {
             );
         }
     }
-    
+
     public static function createCustomer($websiteId, $storeId, $addressInfo)
     {
         $objectManager = Bootstrap::getObjectManager();
-        
+
         $repository = $objectManager->create(\Magento\Customer\Api\CustomerRepositoryInterface::class);
         $customer = $objectManager->create(\Magento\Customer\Model\Customer::class);
         /** @var CustomerRegistry $customerRegistry */
@@ -383,14 +383,31 @@ class TestUtils {
             ->setDefaultShipping(1)
             ->setTaxvat('12')
             ->setGender(0);
-        
+
         $customer->isObjectNew(true);
         $customer->save();
         $customerRegistry->remove($customer->getId());
-        
+
         return $customer;
     }
-    
+
+
+    public static function saveFeatureSwitch($name, $value = true, $defaultValue = true, $rolloutPercentage = 100)
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        /** @var \Bolt\Boltpay\Model\FeatureSwitchRepository $featureSwitchRepository */
+        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface::class);
+        return $featureSwitchRepository->upsertByName($name, $value, $defaultValue, $rolloutPercentage);
+    }
+
+    public static function cleanupFeatureSwitch($switch)
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        /** @var \Bolt\Boltpay\Model\FeatureSwitchRepository $featureSwitchRepository */
+        $featureSwitchRepository = $objectManager->get(\Bolt\Boltpay\Api\FeatureSwitchRepositoryInterface::class);
+        $featureSwitchRepository->delete($switch);
+    }
+
     public static function createSampleAddress()
     {
         return array(
@@ -410,11 +427,11 @@ class TestUtils {
             "email_address"   => "buy@test.com",
         );
     }
-    
+
     public static function createMagentoSampleAddress()
     {
         $sampleAddress = self::createSampleAddress();
-        
+
         $sampleMagentoData = [
             'region'     => $sampleAddress['region_code'],
             'region_id'  => $sampleAddress['region_id'],
@@ -427,10 +444,10 @@ class TestUtils {
             'telephone'  => $sampleAddress['phone_number'],
             'country_id' => $sampleAddress['country_code'],
         ];
-        
+
         return $sampleMagentoData;
     }
-    
+
     public static function createStockItemForProduct($product, $qty)
     {
         $stockItem = Bootstrap::getObjectManager()->create(\Magento\CatalogInventory\Api\Data\StockItemInterface::class);
@@ -439,16 +456,16 @@ class TestUtils {
         $extensionAttributes = $product->getExtensionAttributes();
         $extensionAttributes->setStockItem($stockItem);
     }
-    
+
     public static function createQuoteAddress($addressData, $addressType)
     {
         $quoteAddress = Bootstrap::getObjectManager()->create(\Magento\Quote\Api\Data\AddressInterface::class, ['data' => $addressData]);
         $quoteAddress->setAddressType($addressType)
             ->setCustomerAddressId('not_existing');
-        
+
         return $quoteAddress;
     }
-    
+
     public static function createQuoteShippingRate($shippingCode, $shippingCost, $addressId)
     {
         $rate = Bootstrap::getObjectManager()->create(\Magento\Quote\Model\Quote\Address\Rate::class);
@@ -456,12 +473,12 @@ class TestUtils {
              ->setPrice($shippingCost)
              ->setAddressId($addressId)
              ->save();
-            
+
         return $rate;
     }
-    
+
     public static function setQuotePayment($quote, $paymentMethodCode)
-    {        
+    {
         $paymentFactory = Bootstrap::getObjectManager()->get(\Magento\Quote\Api\Data\PaymentInterfaceFactory::class);
         $paymentMethodManagement = Bootstrap::getObjectManager()->get(\Magento\Quote\Api\PaymentMethodManagementInterface::class);
         $quotePayment = $paymentFactory->create([
@@ -469,16 +486,16 @@ class TestUtils {
                 \Magento\Quote\Api\Data\PaymentInterface::KEY_METHOD => $paymentMethodCode,
             ]
         ]);
-        
+
         $quoteId = $quote->getId();
         $paymentMethodManagement->set($quoteId, $quotePayment);
-        
+
         $quoteRepository = Bootstrap::getObjectManager()->get(\Magento\Quote\Model\QuoteRepository::class);
         $quoteRepository->save($quote);
-        
+
         return $quote;
     }
-    
+
     public static function createOrderItemByProduct($product, $qty)
     {
         $orderItem = Bootstrap::getObjectManager()->create(\Magento\Sales\Model\Order\Item::class);
@@ -491,7 +508,7 @@ class TestUtils {
         $orderItem->setRowTotalInclTax($product->getPrice());
         $orderItem->setBaseRowTotalInclTax($product->getPrice());
         $orderItem->setProductType($product->getTypeId());
-        
+
         return $orderItem;
     }
 }

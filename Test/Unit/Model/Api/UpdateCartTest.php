@@ -346,6 +346,7 @@ class UpdateCartTest extends BoltTestCase
             ],
             'add_items' => [],
             'remove_items' => [],
+            'metadata' => []
         ];
         
         return $request_cart;

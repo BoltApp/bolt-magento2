@@ -1502,7 +1502,7 @@ class Order extends AbstractHelper
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace quote in checkout session.
-        $this->sessionHelper->loadSession($quote);
+        $this->sessionHelper->loadSession($quote, (array)$transaction->order->cart->metadata);
 
         $this->setShippingAddress($quote, $transaction);
         $this->setBillingAddress($quote, $transaction);

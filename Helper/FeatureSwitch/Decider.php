@@ -278,4 +278,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING);
     }
+
+    public function isAddSessionIdToCartMetadata()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
+    }
 }
