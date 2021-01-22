@@ -183,5 +183,5 @@
 - Improvement: We did some refactoring for our payment-only checkout flow.
 - Fixed: There was a very unlikely (but still possible) chance that changes to Mirsavit credit applied to the cart did not update, so we made sure it will update every time.
 ## [v2.18.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.18.1) 2021-01-21
-- Improvement: The order grid in Magento Commerce now prioritizes displaying credit card details over payment processor information.
-- Fixed: Resolved issue where the order grid in Magento Commerce would freeze when no order records matched the user's defined filtering criteria. 
+- Improvement: The order grid in the Magento admin console now prioritizes displaying credit card details over payment processor information.
+- Fixed: Resolved issue where the order grid in the Magento admin console would freeze when no order records matched the user's defined filtering criteria. 
